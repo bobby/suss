@@ -1,0 +1,8 @@
+"(let [^long x (identity 5.5)] [(unchecked-inc x) (unchecked-dec x)])" [:value [6 4]]
+"(let [^double x (identity 5)] [(unchecked-inc x) (unchecked-dec x)])" [:value [6.0 4.0]]
+"[(unchecked-inc (identity 9223372036854775807)) (unchecked-dec (identity -9223372036854775808))]" [:value [-9223372036854775808 9223372036854775807]]
+"(let [^long x (identity 5.5)] [(max x 1) (min x 1) (max x) (min x) (max x 1 2)])" [:value [5 1 5.5 5.5 5]]
+"(let [^double x (identity -0.0)] [(/ 1.0 (max x 0.0)) (/ 1.0 (max 0.0 x)) (/ 1.0 (min x 0.0)) (/ 1.0 (min 0.0 x))])" [:value [##Inf ##Inf ##-Inf ##-Inf]]
+"(let [^double x (identity -0.0)] [(/ 1.0 (max x (identity 0.0))) (/ 1.0 (max (identity 0.0) x)) (/ 1.0 (min x (identity 0.0))) (/ 1.0 (min (identity 0.0) x))])" [:value [##Inf ##-Inf ##Inf ##-Inf]]
+"(let [^long x (identity 5.5) ^double y (identity 6)] [(max x y) (min x y) (max x (identity 6)) (min x (identity 6))])" [:value [6.0 5 6 5]]
+"(let [^double x (identity ##NaN)] [(max x 1.0) (min 1.0 x) (max x (identity 1)) (min (identity 1) x)])" [:value [##NaN ##NaN ##NaN ##NaN]]

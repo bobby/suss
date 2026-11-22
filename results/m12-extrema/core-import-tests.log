@@ -1,0 +1,20 @@
+test_contextual_declarations_are_not_flattened_into_unconditional_source (test_core_import.CoreImportBuildTests.test_contextual_declarations_are_not_flattened_into_unconditional_source) ... ok
+test_license_path_escaping_repository_is_rejected (test_core_import.CoreImportBuildTests.test_license_path_escaping_repository_is_rejected) ... ok
+test_loader_inputs_are_ordered_hashed_and_cannot_escape_repository (test_core_import.CoreImportBuildTests.test_loader_inputs_are_ordered_hashed_and_cannot_escape_repository) ... ok
+test_loader_trailing_comments_do_not_swallow_following_stages (test_core_import.CoreImportBuildTests.test_loader_trailing_comments_do_not_swallow_following_stages) ... ok
+test_modified_upstream_license_does_not_become_new_provenance (test_core_import.CoreImportBuildTests.test_modified_upstream_license_does_not_become_new_provenance) ... ok
+test_original_loader_is_ordered_hashed_and_rejects_unknown_stages (test_core_import.CoreImportBuildTests.test_original_loader_is_ordered_hashed_and_rejects_unknown_stages) ... ok
+test_recipe_duplicate_phase_stale_hash_and_missing_notice_fail (test_core_import.CoreImportBuildTests.test_recipe_duplicate_phase_stale_hash_and_missing_notice_fail) ... ok
+test_reproduction_retains_exact_form_notices_and_licenses (test_core_import.CoreImportBuildTests.test_reproduction_retains_exact_form_notices_and_licenses) ... ok
+test_selection_without_review_is_rejected (test_core_import.CoreImportBuildTests.test_selection_without_review_is_rejected) ... ok
+test_stale_review_and_unreviewed_selection_fail (test_core_import.CoreImportBuildTests.test_stale_review_and_unreviewed_selection_fail) ... ok
+test_discarded_and_quoted_forms_are_never_extracted (test_core_import.CoreImportTests.test_discarded_and_quoted_forms_are_never_extracted) ... ok
+test_duplicate_json_fields_are_rejected (test_core_import.CoreImportTests.test_duplicate_json_fields_are_rejected) ... ok
+test_exact_utf8_ranges_keep_metadata_and_reader_context (test_core_import.CoreImportTests.test_exact_utf8_ranges_keep_metadata_and_reader_context) ... ok
+test_generated_file_tampering_missing_files_and_extras_fail (test_core_import.CoreImportTests.test_generated_file_tampering_missing_files_and_extras_fail) ... ok
+test_patch_is_bound_to_exact_source_and_preserves_identity (test_core_import.CoreImportTests.test_patch_is_bound_to_exact_source_and_preserves_identity) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.193s
+
+OK

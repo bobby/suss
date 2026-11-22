@@ -1,0 +1,9 @@
+Running as unit: run-p67074-i88134553.scope; invocation ID: be4b939e8e52409dafcf6a0528e1c148
+All5 input files match the reconstructed source byte-for-byte.
+before raw [919.699456, 920.162304] 8547.44962
+before boxed [919.400448, 920.489984] 8660.45231
+before direct [0.0, 0.0] 17.95209
+after raw [904.351744, 903.938048] 8463.61498
+after boxed [919.32672, 920.354816] 8660.54226
+after direct [0.0, 0.0] 18.00262
+All5 input files match the reconstructed source byte-for-byte.

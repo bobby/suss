@@ -11,6 +11,7 @@ const BITMAP: u32 = MAP + 1;
 const ARRAY: u32 = MAP + 2;
 const TOKEN: u32 = MAP + 3;
 const VECTOR: u32 = MAP + 4;
+pub(super) const GLOBAL_LIMIT: u32 = VECTOR + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     assert_eq!(globals.len(), MAP);

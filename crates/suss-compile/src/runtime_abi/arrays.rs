@@ -174,6 +174,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(0),
         ],
     );
+    // Core registers its closed MapEntry type with one ordinary witness.
+    // The private slot is appended; no existing global/type offset changes.
+    b.function("map-entry-type-register", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(OBJECT)),
+        StructGet { struct_type_index: OBJECT, field_index: 0 },
+        GlobalSet(MAP_ENTRY_DESCRIPTOR_GLOBAL), LocalGet(0),
+    ]);
     // `vector-count(v)`: a PersistentVector's cnt field, or undefined for
     // anything else.
     b.function(
@@ -244,8 +251,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(3),
         Block(BlockType::Result(ValType::Ref(exact(7)))), LocalGet(0)]);
     body.extend(cast(7, 0));
-    // Only PersistentVector, by its registered descriptor.
-    body.extend([End, LocalTee(9), StructGet { struct_type_index: 7, field_index: 0 },
+    // A canonical MapEntry exposes its two values directly (#351). Invalid
+    // owner layouts and indices miss before reading a field, just as vectors.
+    body.extend([End, LocalTee(9), StructGet { struct_type_index: OBJECT, field_index: 0 },
+        GlobalGet(MAP_ENTRY_DESCRIPTOR_GLOBAL), RefEq,
+        GlobalGet(MAP_ENTRY_DESCRIPTOR_GLOBAL), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32And,
+        If(BlockType::Empty),
+        LocalGet(3), I32Const(2), I32GeU, BrIf(1),
+        LocalGet(9), StructGet { struct_type_index: OBJECT, field_index: 1 },
+        LocalTee(2), ArrayLen, I32Const(3), I32Ne, BrIf(1),
+        LocalGet(2), LocalGet(3), ArrayGet(ARGS), Return, End,
+        LocalGet(9), StructGet { struct_type_index: OBJECT, field_index: 0 },
         GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, I32Eqz, BrIf(0),
         LocalGet(9), StructGet { struct_type_index: 7, field_index: 1 },
         LocalTee(2), ArrayLen, I32Const(6), I32LtU, BrIf(0)]);

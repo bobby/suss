@@ -1,0 +1,30 @@
+Running as unit: run-p3953380-i87801666.scope; invocation ID: 230389a093514371ac19a95ea2dc7290
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 53s
+     Running tests/clojure_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/clojure_nonescaping_vectors-bb22d22335216a18)
+
+running 2 tests
+test aot_preserves_nonescaping_vectors has been running for over 60 seconds
+test runtime_and_macro_preserve_nonescaping_vectors has been running for over 60 seconds
+test runtime_and_macro_preserve_nonescaping_vectors ... FAILED
+test aot_preserves_nonescaping_vectors ... ok
+
+failures:
+
+---- runtime_and_macro_preserve_nonescaping_vectors stdout ----
+
+thread 'runtime_and_macro_preserve_nonescaping_vectors' (3976928) panicked at crates/suss-cli/tests/clojure_nonescaping_vectors.rs:89:13:
+assertion `left == right` failed: (with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))
+  left: "14"
+ right: "3"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    runtime_and_macro_preserve_nonescaping_vectors
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 73.29s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_nonescaping_vectors`

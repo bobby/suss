@@ -1,0 +1,22 @@
+[
+  {
+    "compiler": "before",
+    "source": "raw",
+    "value": "[false false false false 2 :miss]"
+  },
+  {
+    "compiler": "before",
+    "source": "boxed",
+    "value": "[false false false false 2 :miss]"
+  },
+  {
+    "compiler": "optimized",
+    "source": "raw",
+    "value": "[false false false false 2 :miss]"
+  },
+  {
+    "compiler": "optimized",
+    "source": "boxed",
+    "value": "[false false false false 2 :miss]"
+  }
+]

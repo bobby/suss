@@ -1,0 +1,76 @@
+{
+  "source_base": "b6252e641ffe70d7ce73178e2b2b03b23c4bf625",
+  "rebased_identical_base": "941409d62f09d61f127f6576c80d9bfdd0c33c1f",
+  "base_tree": "60a685c59f64251d66f8d8357e6b43152cfdee0f",
+  "source_patch_sha256": "f6f4f11d33b01c72502a00f175f3dc6d393ed9b22a3b42b6cc9895a4073a66de",
+  "compiler_executable_sha256": "610af0748fd61cac6de04ca8735712748f28beaa32dea94c2cf0d20b24617d6a",
+  "command": "cargo +stable test --workspace --locked --test clojure_local_numeric_hints --test clojure_division_overloads --test clojure_unboxed_locals --test clojure_numeric_box_reuse --test compiled_core_casts --test compiled_macro_cumulative_fuel --test compiled_primitive_params --test portable_primitive_entries --test portable_unboxed_locals -- --test-threads=2",
+  "environment": {
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_BUILD_JOBS": 2,
+    "scope": "MemoryMax=4G",
+    "target": "m12-hints-target",
+    "native_cache": "outer target/suss"
+  },
+  "exit_code": 0,
+  "passed": 47,
+  "failed": 0,
+  "ignored": 0,
+  "source_matrix": {
+    "values": 48,
+    "diagnostics": 8,
+    "routes": [
+      "Runtime",
+      "Macro",
+      "actual AOT"
+    ],
+    "jvm": "1.12.6"
+  },
+  "negative_runs": {
+    "before": 101,
+    "unchecked_before": 101,
+    "reflective_before": 101
+  },
+  "limitations": "Focused execution, not full workspace, quiet timing or complete numeric conformance. Native negative runs stop at the first failing row. The 41- and 44-value logs identify earlier source patches; they are not relabeled as final-source runs. Bootstrap/Binaryen/suite gate receipts refer to the earlier unmodified b625 cache source. max/min and capture-aware return/recur checks remain additional work.",
+  "sha256": {
+    "README.md": "59c73210bd5d297755bf6886ec5bbb1029751263d70acf43737da280d7758cdb",
+    "before.log": "943f82bf9090d42fd2cae8354824a4d21a5e90c555e29e5b5c8d3ab7afafe4e6",
+    "descriptors.clj": "08fbc867ededdfe3542e98e1e7ce583a97144e0bec5fb74058dcd0fd3a47b58f",
+    "descriptors.log": "6f6edcab2aa05dfacca2494f941f4c7abda7e9e350da6ea7bb8bc75f3701086a",
+    "extrema-context-oracle.clj": "1cd0af7b7431a22918489af389845d080611599830dc66913e4857464c09decd",
+    "extrema-context-oracle.log": "e3f21280c6b2c85bc651c6d28ec7b8d084a7298b23f5c7768b4a04c2e31104dd",
+    "final-focused.log": "f9472ad8debe23f6a5c566f65e80a5589e97a8d7234dbdee53810fb59bdc50eb",
+    "final-source.patch": "f6f4f11d33b01c72502a00f175f3dc6d393ed9b22a3b42b6cc9895a4073a66de",
+    "first-executable-sha256.txt": "ae4019a1cdcbfb7c6e6285fdc6337322cbe5ec1926c998fadbd78d126262fa18",
+    "first-source.patch": "a85bffbf4cff5dd85ba1e421b90cf4ac86eddd08dd61d15f74b77e70bcff03e6",
+    "first.log": "905ec5dfc954aab2fe34dc76292fc9ac94ea504348b5891bd985c75eec9d1595",
+    "oracle-44.clj": "4de89eb868e398ecd46639b50340d2c4047756bd3b1e53412ff5f24d19b2a2c8",
+    "oracle-44.log": "78283adaa7eb33f888c25fb912b14058180cdf3310b571ae7d5b6a9c1f642b1d",
+    "oracle-48.clj": "ebc7858d7e22c1fb992246450c17d61ac0b3aedb7ad0382b00b604b7d539d5f3",
+    "oracle-48.log": "4470aaaf7aec8ba92b9ce95e6645bb720d26e187eb1f7674c849b25e79a2b4ca",
+    "oracle.clj": "01c2578ac46a2d5b67f6c27c50332d12c854448b2d1eeed754112857754c9cd8",
+    "oracle.log": "73f78b69f3e03f6e1345211999745e1a6285b06e202b52d8b35d3710388007a7",
+    "overloads.clj": "ffe2d06b4b3a2f72cd1d6c31ed1bbc21732feee54537d5c4c11ab38907a6c743",
+    "reflective-before-source.patch": "eb6e95c18f5a27595e33e6159228ce9cc9f332bb0cc4d7fe651595496f6523c1",
+    "reflective-before.log": "ed5e070bae12c17f01ec92066035db4be8a8a31e779f6e95dec42997378208ed",
+    "reflective-context-oracle.clj": "d3e8810ccb7ce308ada46f87fb50fdd2aabf887e1029a29986517229b0284f29",
+    "reflective-context-oracle.log": "c2e0bcbc74fdb30a9c458df127fff161b65721603f36481a8cc7d51f79e5f8e0",
+    "second-executable-sha256.txt": "536870be5f3d3cdf3ac9e14ea657b0bb2a40f67aebaa0276e68087427d6d1ef4",
+    "second-focused.log": "87bce253d3c9f833cef19d8ed44ff97d6b11248c7b8aa687acac7918626989ea",
+    "second-source.patch": "7d874398a35edcd3f34dd91c58952ba70665231ac59237106fe8006586e9f924",
+    "unchecked-before.log": "a2dc89f1f574a3e42a1235e95a65ccaf6e98d29125261bfd17d6017ffd26deae",
+    "unchecked-extrema-oracle.clj": "aa175a9ca21c3b994ea41d0b75eda2b6784e7d453e6bb3eca050e0a14b34ff04",
+    "unchecked-extrema-oracle.log": "e3673b17936060568f65733a0d30dfe750365bcd4eec31f3649e6267f1d032c5",
+    "source-check.py": "ed74ef8749324859fd21cfbef56dd6fbd2b3ca1726f0048ea85183064ab48abd",
+    "source-reconstruction.log": "0b206c059b58d8ef2e46b2583725fbb75becf8890db521845acbd94cfa533f96"
+  },
+  "published_source_revision": "5cee174ee0857af8025f0d687e5b1c2474b5faf0",
+  "committed_source_sha256": {
+    "crates/suss-compile/src/portable/hir/local_hints.rs": "031e1e4e49d77f062f8bd8859b249edfe16236122ca2c498a14234c07b6c3cc5",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "7b031c5b0e0e8f1f15dbd09a87bcc56539783bd36ee53b9db87512f787449088",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "a70f0e1e18ef683730b9e5c35cc22c5e07ef7bb12018881505b3415ad4462439",
+    "crates/suss-cli/tests/clojure_local_numeric_hints.rs": "d86ae6be899eefbd5a1bb5190cbffd101f5f1731fb9695f9258a36b084834203"
+  },
+  "reconstruction": "source-check.py applies the retained final-source.patch to the exact measured base and compares every reconstructed file with the published source revision, byte-for-byte. All four match.",
+  "patch_prefix_note": "Initial raw diff comparison failed because diff.mnemonicPrefix uses i/w for working-tree and a/b for committed diffs. Reconstruction proves source equality; the original patch and logs are retained unchanged."
+}

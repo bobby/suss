@@ -1,0 +1,6 @@
+{
+  "executable_sha256": "bb5b357a747babb8f1218bcbe913335227ca8db8027df250651dcc5a26b127a6",
+  "component_sha256": "fc2e0f46553ea1760b762cbe13b516433381bc56e1faf0ba06bc92a0f158bdea",
+  "stdout": "[1.0 1.0 [5 5] [##-Inf ##-Inf] [:threw :threw]]\n",
+  "exit_code": 0
+}

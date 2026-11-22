@@ -1,0 +1,3 @@
+(ns vectorprobe)
+(def case-nth (fn [] (with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))))
+(def case-vector (fn [] (with-redefs [vector (fn [& xs] nil)] (let [[a b] [1 2]] (+ a b)))))

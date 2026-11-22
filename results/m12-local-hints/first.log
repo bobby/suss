@@ -1,0 +1,33 @@
+Running as unit: run-p2703378-i86560733.scope; invocation ID: 09e6ebc76d10456690f81c415e0cdf92
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 27s
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 2 tests
+test runtime_and_macro_preserve_local_hint_semantics ... FAILED
+test aot_preserves_local_hint_semantics ... FAILED
+
+failures:
+
+---- runtime_and_macro_preserve_local_hint_semantics stdout ----
+
+thread 'runtime_and_macro_preserve_local_hint_semantics' (2706744) panicked at crates/suss-cli/tests/clojure_local_numeric_hints.rs:34:76:
+(let [^long x (identity 5.5)] [x (+ x 1) (inc x) (dec x) (- x) (+ x) (* x)]): Invalid nominal HIR shape at bytes 49..50
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_preserves_local_hint_semantics stdout ----
+
+thread 'aot_preserves_local_hint_semantics' (2706743) panicked at crates/suss-cli/tests/clojure_local_numeric_hints.rs:66:5:
+Compilation error: Semantic error: While compiling localhints.sus: Invalid nominal HIR shape at bytes 136..137
+
+
+
+failures:
+    aot_preserves_local_hint_semantics
+    runtime_and_macro_preserve_local_hint_semantics
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.44s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_local_numeric_hints`

@@ -1,0 +1,308 @@
+{
+  "compiler_source": "cda523ffebcf546e7033a3adac1c54d401c37f91 plus retained dynamic-cache source patch",
+  "executable_sha256": "a3f306b87563e3c7d6736947560af387ded1502240112f572cbd77ff3eb9d6df",
+  "component_sha256": "795c953e0994c50bcd495dd94a4bc2fdbfa174b1e03f871e48aa95e33b6dd7ef",
+  "allocation_method": "bench.py null-collector peak-RSS slope; numeric bytes are process-RSS estimates, not exact object counts",
+  "rows": [
+    {
+      "name": "double-raw",
+      "rss": [
+        {
+          "n": 2000000,
+          "seconds": 0.1598898903466761,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.15619317814707756,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.16009017499163747,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.14121732022613287,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.17978856805711985,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.18518135184422135,
+          "peak_rss_bytes": 86245376
+        }
+      ],
+      "instruction_samples": [
+        {
+          "n": 100000,
+          "seconds": 0.17403235519304872,
+          "peak_rss_bytes": 86245376,
+          "instructions": 279288049
+        },
+        {
+          "n": 100000,
+          "seconds": 0.15941769676283002,
+          "peak_rss_bytes": 86245376,
+          "instructions": 279297934
+        },
+        {
+          "n": 100000,
+          "seconds": 0.15803471533581614,
+          "peak_rss_bytes": 86245376,
+          "instructions": 279294343
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15634278114885092,
+          "peak_rss_bytes": 86245376,
+          "instructions": 288783232
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15767442900687456,
+          "peak_rss_bytes": 86245376,
+          "instructions": 288792168
+        },
+        {
+          "n": 200000,
+          "seconds": 0.14918312523514032,
+          "peak_rss_bytes": 86245376,
+          "instructions": 288788708
+        }
+      ],
+      "bytes_per_iteration": 0.0,
+      "instructions_per_iteration": 94.94365
+    },
+    {
+      "name": "double-boxed",
+      "rss": [
+        {
+          "n": 2000000,
+          "seconds": 0.16171061480417848,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.1568079199641943,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.11616438534110785,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.14287878293544054,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.20303953904658556,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.13808062300086021,
+          "peak_rss_bytes": 86245376
+        }
+      ],
+      "instruction_samples": [
+        {
+          "n": 100000,
+          "seconds": 0.11483103781938553,
+          "peak_rss_bytes": 86245376,
+          "instructions": 282012685
+        },
+        {
+          "n": 100000,
+          "seconds": 0.13053188612684608,
+          "peak_rss_bytes": 86245376,
+          "instructions": 281988532
+        },
+        {
+          "n": 100000,
+          "seconds": 0.15442120004445314,
+          "peak_rss_bytes": 86245376,
+          "instructions": 281989053
+        },
+        {
+          "n": 200000,
+          "seconds": 0.14856341714039445,
+          "peak_rss_bytes": 86245376,
+          "instructions": 294188939
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15846342500299215,
+          "peak_rss_bytes": 86245376,
+          "instructions": 294197674
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15590950520709157,
+          "peak_rss_bytes": 86245376,
+          "instructions": 294188961
+        }
+      ],
+      "bytes_per_iteration": 0.0,
+      "instructions_per_iteration": 121.99908
+    },
+    {
+      "name": "long-raw",
+      "rss": [
+        {
+          "n": 2000000,
+          "seconds": 0.16658175503835082,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.1538387192413211,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.14693641010671854,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.1768338792026043,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.16212638188153505,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.16774831619113684,
+          "peak_rss_bytes": 86245376
+        }
+      ],
+      "instruction_samples": [
+        {
+          "n": 100000,
+          "seconds": 0.16102359304204583,
+          "peak_rss_bytes": 86245376,
+          "instructions": 278900224
+        },
+        {
+          "n": 100000,
+          "seconds": 0.1616396508179605,
+          "peak_rss_bytes": 86245376,
+          "instructions": 278889624
+        },
+        {
+          "n": 100000,
+          "seconds": 0.18272851593792439,
+          "peak_rss_bytes": 86245376,
+          "instructions": 278887566
+        },
+        {
+          "n": 200000,
+          "seconds": 0.1532925241626799,
+          "peak_rss_bytes": 86245376,
+          "instructions": 287992632
+        },
+        {
+          "n": 200000,
+          "seconds": 0.14349475177004933,
+          "peak_rss_bytes": 86245376,
+          "instructions": 287985167
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15639187907800078,
+          "peak_rss_bytes": 86245376,
+          "instructions": 287999383
+        }
+      ],
+      "bytes_per_iteration": 0.0,
+      "instructions_per_iteration": 91.03008
+    },
+    {
+      "name": "long-boxed",
+      "rss": [
+        {
+          "n": 2000000,
+          "seconds": 0.15305612608790398,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.16432672273367643,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 2000000,
+          "seconds": 0.17827716516330838,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.21738106478005648,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.2230651918798685,
+          "peak_rss_bytes": 86245376
+        },
+        {
+          "n": 4000000,
+          "seconds": 0.21423195488750935,
+          "peak_rss_bytes": 86245376
+        }
+      ],
+      "instruction_samples": [
+        {
+          "n": 100000,
+          "seconds": 0.18100061127915978,
+          "peak_rss_bytes": 86245376,
+          "instructions": 281808660
+        },
+        {
+          "n": 100000,
+          "seconds": 0.1674172030761838,
+          "peak_rss_bytes": 86245376,
+          "instructions": 281790785
+        },
+        {
+          "n": 100000,
+          "seconds": 0.15204996289685369,
+          "peak_rss_bytes": 86245376,
+          "instructions": 281785885
+        },
+        {
+          "n": 200000,
+          "seconds": 0.17483373684808612,
+          "peak_rss_bytes": 86245376,
+          "instructions": 293808706
+        },
+        {
+          "n": 200000,
+          "seconds": 0.15024494985118508,
+          "peak_rss_bytes": 86245376,
+          "instructions": 293790409
+        },
+        {
+          "n": 200000,
+          "seconds": 0.1559434849768877,
+          "peak_rss_bytes": 86245376,
+          "instructions": 293788166
+        }
+      ],
+      "bytes_per_iteration": 0.0,
+      "instructions_per_iteration": 119.99624
+    }
+  ]
+}

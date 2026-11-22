@@ -1,0 +1,52 @@
+[
+  {
+    "name": "bootstrap",
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "environment": {
+      "TMPDIR": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/tmp"
+    },
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-bootstrap.log"
+  },
+  {
+    "name": "binaryen",
+    "command": [
+      "cargo",
+      "+stable",
+      "test",
+      "--workspace",
+      "--locked",
+      "--test",
+      "compiled_optimize",
+      "--",
+      "--test-threads=2"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-binaryen.log"
+  },
+  {
+    "name": "suite",
+    "command": [
+      "cargo",
+      "+stable",
+      "test",
+      "--workspace",
+      "--locked",
+      "--test",
+      "clojure_test_suite",
+      "clojure_test_suite_matches_reviewed_baseline",
+      "--",
+      "--exact",
+      "--test-threads=2"
+    ],
+    "environment": {
+      "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-suite-capture"
+    },
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-suite.log"
+  }
+]

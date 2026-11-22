@@ -1,0 +1,401 @@
+diff --git a/crates/suss-cli/tests/compiled_primitive_params.rs b/crates/suss-cli/tests/compiled_primitive_params.rs
+index fbe6141f..c5b2bcf4 100644
+--- a/crates/suss-cli/tests/compiled_primitive_params.rs
++++ b/crates/suss-cli/tests/compiled_primitive_params.rs
+@@ -122,16 +122,24 @@ fn primitive_parameter_hints_match_the_repl() {
+ fn wit_parameter_specialization_does_not_change_source_return_typing() {
+     let root = tempfile::tempdir().unwrap();
+     std::fs::write(root.path().join("app.sus"),
+-        "(ns app) (defn as-long ^long [x] x) (defn as-double ^double [x] x)").unwrap();
++        "(ns app) (defn as-long ^long [x] x) (defn as-double ^double [x] x)
++         (defn capture-long [x] ((fn ^long [] x)))
++         (defn capture-double [x] ((fn ^double [] x)))
++         (defn recur-wit [x] (if (zero? x) (recur (identity 1)) x))").unwrap();
+     std::fs::write(root.path().join("app.wit"),
+-        "package test:source-tags; world w { export as-long: func(x: f64) -> s64; export as-double: func(x: s64) -> f64; }").unwrap();
++        "package test:source-tags; world w { export as-long: func(x: f64) -> s64; export as-double: func(x: s64) -> f64;
++         export capture-long: func(x: f64) -> s64; export capture-double: func(x: s64) -> f64;
++         export recur-wit: func(x: s64) -> s64; }").unwrap();
+     let output = Command::new(env!("CARGO_BIN_EXE_suss"))
+         .current_dir(root.path())
+         .args(["compile", "app.sus", "-w", "app.wit", "-o", "app.wasm",
+-               "--export", "as-long=app/as-long", "--export", "as-double=app/as-double"])
++               "--export", "as-long=app/as-long", "--export", "as-double=app/as-double",
++               "--export", "capture-long=app/capture-long", "--export", "capture-double=app/capture-double",
++               "--export", "recur-wit=app/recur-wit"])
+         .output().unwrap();
+     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+-    for (name, argument, expected) in [("as-long", "1.75", 1.0_f64), ("as-double", "3", 3.0)] {
++    for (name, argument, expected) in [("as-long", "1.75", 1.0_f64), ("as-double", "3", 3.0),
++        ("capture-long", "1.75", 1.0), ("capture-double", "3", 3.0), ("recur-wit", "0", 1.0)] {
+         let output = Command::new(env!("CARGO_BIN_EXE_suss"))
+             .current_dir(root.path())
+             .args(["run", "app.wasm", "--invoke", name, "--", argument])
+diff --git a/crates/suss-compile/src/portable/hir.rs b/crates/suss-compile/src/portable/hir.rs
+index 36cbe0b6..a047425d 100644
+--- a/crates/suss-compile/src/portable/hir.rs
++++ b/crates/suss-compile/src/portable/hir.rs
+@@ -1189,6 +1189,7 @@ struct Analyzer<'a> {
+     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
+     target: Option<(LoopId, usize)>,
+     method_recurrence: Vec<(LoopId, bool)>,
++    primitive_methods: HashMap<LoopId, primitive_returns::Method>,
+ }
+ impl Analyzer<'_> {
+     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
+@@ -2914,7 +2915,8 @@ impl Analyzer<'_> {
+         // fns: its name in the body is the checked cast of the argument, a
+         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
+         let mut casts = Vec::new();
+-        let mut source_primitives = primitive_returns::SourceFacts::default();
++        let mut source_casts = Vec::new();
++        let mut source_parameters = vec![None; parameters.len()];
+         let return_hint = primitive_tag(&args[0])?
+             .or(if receiver_type.is_none() { self.pending_return_hint } else { None });
+         // An exported fn's numeric WIT parameters, when its arity matches. The
+@@ -2931,11 +2933,12 @@ impl Analyzer<'_> {
+             let read = self.local(form, current);
+             let value = self.nominal(form, cast, vec![read]);
+             let binding = self.fresh_binding(form, value);
+-            if let Some(declared) = declared {
+-                source_primitives.insert(binding.id, if declared == Nominal::LongCast {
+-                    primitive_returns::Primitive::Long
+-                } else { primitive_returns::Primitive::Double });
+-            }
++            let primitive = declared.map(|cast| if cast == Nominal::LongCast {
++                primitive_returns::Primitive::Long
++            } else { primitive_returns::Primitive::Double });
++            source_parameters[position] = primitive;
++            // A WIT-only conversion changes storage, not the source type.
++            source_casts.push((binding.id, primitive.unwrap_or(primitive_returns::Primitive::Boxed)));
+             self.remap_local(&parameter.name, binding.id, Type::Value);
+             casts.push(binding);
+         }
+@@ -2946,9 +2949,14 @@ impl Analyzer<'_> {
+             super::AnalysisContext::Return,
+             true,
+         )?;
+-        if let Some(hint) = return_hint {
+-            primitive_returns::validate(&inner_body, hint, &mut source_primitives,
+-                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
++        if return_hint.is_some() || !source_casts.is_empty() {
++            // Validate after lexical source facts are available, including
++            // captures. Keep the genuine body before parameter conversions.
++            self.primitive_methods.insert(target, primitive_returns::Method {
++                body: inner_body.clone(), return_hint, casts: source_casts,
++                parameters: parameters.iter().zip(source_parameters).skip(usize::from(object_method))
++                    .map(|(parameter, primitive)| (parameter.name.clone(), primitive)).collect(),
++            });
+         }
+         if exported.is_none() {
+             self.pending_param_hints = pending;
+@@ -4428,6 +4436,7 @@ pub(crate) fn prepare_with_origin(
+         catch_aliases: Vec::new(),
+         target: None,
+         method_recurrence: Vec::new(),
++        primitive_methods: HashMap::new(),
+     };
+     // The frame's own forms take the fragment's extent, not the source's, so
+     // a fragment's IR and cache key do not change with the rest of its file.
+@@ -4437,7 +4446,7 @@ pub(crate) fn prepare_with_origin(
+     };
+     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+     let source_span = hir.span.clone();
+-    division_overloads::annotate(&mut hir,
++    division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
+         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
+     if let Expression::Do(items) = &*hir.kind {
+         super::analysis_record::analyzed_forms(origin, items);
+diff --git a/crates/suss-compile/src/portable/hir/division_overloads.rs b/crates/suss-compile/src/portable/hir/division_overloads.rs
+index 923263a5..22e3eb44 100644
+--- a/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ b/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -6,20 +6,30 @@ use std::sync::Arc;
+ 
+ pub(super) fn annotate(
+     hir: &mut Hir,
++    methods: &HashMap<LoopId, primitive_returns::Method>,
+     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+ ) -> Result<(), Diagnostic> {
+     // Keep original expression addresses alive while the memoized rewrite
+     // makes shallow copies. Analyzer BindingIds are unique within this HIR,
+     // so every shared expression has one settled lexical source context.
+     let original = hir.clone();
+-    let mut pass = Pass { hints: false, validate_only: false, needed: HashMap::new(), rewritten: HashMap::new(), meter };
++    let mut validate_methods = false;
++    let mut source_casts = HashMap::new();
++    for method in methods.values() {
++        meter(1 + method.parameters.len() as u64 + method.casts.len() as u64)?;
++        validate_methods |= method.needs_validation();
++        source_casts.extend(method.casts.iter().copied());
++    }
++    let mut pass = Pass { hints: false, validate_methods, methods, source_casts: &source_casts,
++        validate_only: false, needed: HashMap::new(), rewritten: HashMap::new(), meter };
+     let hints = pass.features(hir)?.hints;
+     pass.hints = hints;
+-    if hints {
++    if hints || validate_methods {
+         // Clojure diagnoses hints while first parsing the loop, before a
+         // mismatched recur triggers boxing/reanalysis. Include captured fn
+         // bodies in that initial validation context.
+-        Pass { hints, validate_only: true, needed: HashMap::new(), rewritten: HashMap::new(), meter: &mut *pass.meter }
++        Pass { hints, validate_methods, methods, source_casts: &source_casts, validate_only: true,
++            needed: HashMap::new(), rewritten: HashMap::new(), meter: &mut *pass.meter }
+             .walk(&mut hir.clone(), &mut SourceFacts::default())?;
+     }
+     let result = pass.walk(hir, &mut SourceFacts::default());
+@@ -35,6 +45,9 @@ impl Features {
+ 
+ struct Pass<'a> {
+     hints: bool,
++    validate_methods: bool,
++    methods: &'a HashMap<LoopId, primitive_returns::Method>,
++    source_casts: &'a HashMap<BindingId, Primitive>,
+     validate_only: bool,
+     needed: HashMap<usize, Features>,
+     rewritten: HashMap<usize, (Arc<Expression>, Type)>,
+@@ -92,7 +105,7 @@ impl Pass<'_> {
+ 
+     fn walk(&mut self, hir: &mut Hir, facts: &mut SourceFacts) -> Result<(), Diagnostic> {
+         (self.meter)(1)?;
+-        if !self.hints {
++        if !self.hints && !self.validate_methods {
+             let needed = self.features(hir)?;
+             if !needed.division && !needed.extrema { return Ok(()); }
+         }
+@@ -114,8 +127,13 @@ impl Pass<'_> {
+                     let mut previous = Vec::with_capacity(bindings.len());
+                     for binding in bindings {
+                         self.walk(&mut binding.value, facts)?;
+-                        let ty = primitive_returns::binding_type(binding, facts, self.meter)?;
+-                        previous.push((binding.id, facts.insert_type(binding.id, ty)));
++                        let old = if let Some(kind) = self.source_casts.get(&binding.id) {
++                            facts.insert(binding.id, *kind)
++                        } else {
++                            let ty = primitive_returns::binding_type(binding, facts, self.meter)?;
++                            facts.insert_type(binding.id, ty)
++                        };
++                        previous.push((binding.id, old));
+                     }
+                     let result = self.walk(body, facts);
+                     restore(facts, previous);
+@@ -144,6 +162,9 @@ impl Pass<'_> {
+                     let result = self.walk(body, facts);
+                     restore(facts, previous);
+                     result?;
++                    if let Some(method) = self.methods.get(target) {
++                        method.validate_return(facts, self.meter)?;
++                    }
+                 }
+                 Function { parameters, body, .. } => {
+                     let previous = parameters.iter().map(|parameter|
+@@ -212,7 +233,13 @@ impl Pass<'_> {
+                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
+                     }
+                 }
+-                Array { arguments, .. } | Recur { arguments, .. } | Do(arguments) => {
++                Recur { target, arguments } => {
++                    for argument in arguments.iter_mut() { self.walk(argument, facts)?; }
++                    if let Some(method) = self.methods.get(target) {
++                        method.validate_recur(arguments, facts, self.meter)?;
++                    }
++                }
++                Array { arguments, .. } | Do(arguments) => {
+                     for argument in arguments { self.walk(argument, facts)?; }
+                 }
+                 DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } => {
+diff --git a/crates/suss-compile/src/portable/hir/primitive_returns.rs b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index 7784bf61..13796feb 100644
+--- a/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -124,6 +124,55 @@ fn restore(facts: &mut SourceFacts, previous: Vec<(BindingId, Option<SourceType>
+     }
+ }
+ 
++/// Analyzer facts retained before the physical parameter/return wrappers.
++/// WIT-only casts have Object source type and do not impose recur diagnostics.
++pub(super) struct Method {
++    pub body: Hir,
++    pub return_hint: Option<Nominal>,
++    pub casts: Vec<(BindingId, Primitive)>,
++    pub parameters: Vec<(String, Option<Primitive>)>,
++}
++impl Method {
++    pub fn needs_validation(&self) -> bool {
++        self.return_hint.is_some() || self.parameters.iter().any(|(_, kind)| kind.is_some())
++    }
++    pub fn validate_return(
++        &self, facts: &mut SourceFacts,
++        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++    ) -> Result<(), Diagnostic> {
++        let Some(hint) = self.return_hint else { return Ok(()) };
++        meter(self.casts.len() as u64)?;
++        let previous = self.casts.iter().map(|(id, kind)| (*id, facts.insert(*id, *kind))).collect();
++        let result = validate(&self.body, hint, facts, meter);
++        restore(facts, previous);
++        result
++    }
++    pub fn validate_recur(
++        &self, arguments: &[Hir], facts: &mut SourceFacts,
++        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++    ) -> Result<(), Diagnostic> {
++        for (argument, (name, expected)) in arguments.iter().zip(&self.parameters) {
++            meter(1)?;
++            let Some(expected) = expected else { continue };
++            let actual = kind(argument, facts, meter)?;
++            if !compatible(*expected, actual) {
++                // A hinted Object still cannot emit a primitive recur operand,
++                // even though the diagnostic reports its hinted Java class.
++                let class = class(argument, facts, meter)?;
++                return Err(fail(argument.span.clone(), format!(
++                    "recur arg for primitive local: {name} is not matching primitive, had: {}, needed: {}",
++                    class.name(), expected.name(),
++                )));
++            }
++        }
++        Ok(())
++    }
++}
++fn compatible(expected: Primitive, actual: Primitive) -> bool {
++    expected == actual || (expected == Primitive::Long && actual == Primitive::Int)
++        || (expected == Primitive::Double && actual == Primitive::Float)
++}
++
+ pub(super) fn validate(
+     body: &Hir,
+     hint: Nominal,
+@@ -132,9 +181,7 @@ pub(super) fn validate(
+ ) -> Result<(), Diagnostic> {
+     let actual = infer(body, bindings, meter, &mut Vec::new())?;
+     let expected = if hint == Nominal::LongCast { Primitive::Long } else { Primitive::Double };
+-    if actual != Primitive::Boxed && actual != Primitive::Never && actual != expected
+-        && !(expected == Primitive::Long && actual == Primitive::Int)
+-        && !(expected == Primitive::Double && actual == Primitive::Float)
++    if actual != Primitive::Boxed && actual != Primitive::Never && !compatible(expected, actual)
+     {
+         return Err(fail(body.span.clone(), format!(
+             "Mismatched primitive return, expected: {}, had: {}", expected.name(), actual.name(),
+diff --git a/crates/suss-cli/tests/clojure_primitive_method_types.rs b/crates/suss-cli/tests/clojure_primitive_method_types.rs
+new file mode 100644
+index 00000000..0087cd18
+--- /dev/null
++++ b/crates/suss-cli/tests/clojure_primitive_method_types.rs
+@@ -0,0 +1,118 @@
++//! Primitive method checks use lexical source types, including captures (#337).
++use suss_cli::portable_session::Session;
++
++// Fresh JVM Clojure 1.12.6; results/m12-primitive-methods retains source and output.
++const CASES: &[(&str, &str)] = &[
++    ("(let [^double x (identity 5)] ((fn ^double [] (bit-and x 1))))", "1.0"),
++    ("(let [^long x (identity 5.5)] ((fn ^double [] x)))", "5.5"),
++    ("((fn [^long x] (if (zero? x) (recur (int 1)) x)) 0)", "1"),
++    ("((fn [^double x] (if (zero? x) (recur (float 1)) x)) 0.0)", "1.0"),
++    ("((fn ^long [x] (if (zero? x) (recur (identity 1)) x)) 0)", "1"),
++    ("(let [x (float 1)] ((fn ^double [] x)))", "1.0"),
++    ("(let [x (int 1)] ((fn ^long [] x)))", "1"),
++    ("(let [x 1.0] ((fn ^double [] (loop [n 0] (if (zero? n) (recur 1) x)))))", "1.0"),
++    ("(let [x 1.0] ((fn ^double ([] x) ([n] x))))", "1.0"),
++    ("(let [x 1.0] ((fn ^long [x] x) 5.5))", "5"),
++    ("((fn [^long x] (loop [y (identity 0)] (if (zero? y) (recur (identity 1)) y))) 0)", "1"),
++    ("(let [^long y (identity 1)] ((fn [^long x] (if (zero? x) (recur (+ y 0)) x)) 0))", "1"),
++    ("(let [^double x (identity 5)] ((fn f (^double [] (bit-and x 1)) (^long [n] n))))", "1.0"),
++    ("(let [x 1.0] ((fn ^long [] (loop [y x n 0] (if (zero? n) (recur (identity y) 1) y)))))", "1"),
++    ("((fn [x] ((fn ^long [] x))) 1.75)", "1"),
++    ("((fn [x] ((fn ^double [] x))) 3)", "3.0"),
++    ("((fn [x] (if (zero? x) (recur (identity 1)) x)) 0)", "1"),
++];
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_primitive_method_types() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in CASES {
++            let value = session.eval(&observed(source)).unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session.inspect(&value, |mut store, value| {
++                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++            }).unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_primitive_method_types() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = String::from("(ns localhints)\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in CASES.iter().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!("(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n", observed(expression)));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args(["compile", "localhints.sus", "-w", "localhints.wit", "-o", "localhints.wasm"]);
++    for index in 0..CASES.len() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
++    for (index, (expression, _)) in CASES.iter().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["run", "localhints.wasm", "--invoke", &format!("case{index}"), "--", "0"])
++            .output().unwrap();
++        assert!(output.status.success(), "{expression}: {}", String::from_utf8_lossy(&output.stderr));
++        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "1", "{expression}");
++    }
++}
++
++const DECLARATION_ERRORS: &[(&str, &str)] = &[
++    ("(let [x 5.5] ((fn ^long [] x)))", "Mismatched primitive return, expected: long, had: double"),
++    ("(let [x 1] ((fn ^double [] x)))", "Mismatched primitive return, expected: double, had: long"),
++    ("(let [^long x (identity 5.5)] ((fn ^double [] (+ x 1))))", "Mismatched primitive return, expected: double, had: long"),
++    ("(let [^double x (identity 5)] ((fn ^long [] (+ x 1))))", "Mismatched primitive return, expected: long, had: double"),
++    ("(loop [x 1.0 n 0] (let [f (fn ^long [] x)] (if (zero? n) (recur (identity x) 1) (f))))", "Mismatched primitive return, expected: long, had: double"),
++    ("((fn [^long x] (if (zero? x) (recur (identity 1)) x)) 0)", "recur arg for primitive local: x is not matching primitive, had: Object, needed: long"),
++    ("((fn [^double x] (if (zero? x) (recur 1) x)) 0.0)", "recur arg for primitive local: x is not matching primitive, had: long, needed: double"),
++    ("(let [^long y (identity 1)] ((fn [^long x] (if (zero? x) (recur y) x)) 0))", "recur arg for primitive local: x is not matching primitive, had: long, needed: long"),
++    ("(let [x (byte 1)] ((fn ^long [] x)))", "Mismatched primitive return, expected: long, had: byte"),
++    ("((fn [^long x] (if (zero? x) (recur (byte 1)) x)) 0)", "recur arg for primitive local: x is not matching primitive, had: byte, needed: long"),
++    ("(let [x 1.0] ((fn f ^long [] x)))", "Mismatched primitive return, expected: long, had: double"),
++    ("((fn [^double x] ((fn ^long [] x))) 1.0)", "Mismatched primitive return, expected: long, had: double"),
++    ("((fn [^long x] ((fn ^double [] x))) 1)", "Mismatched primitive return, expected: double, had: long"),
++    ("(let [^double y (identity 1)] ((fn [^double x] (if (zero? x) (recur y) x)) 0.0))", "recur arg for primitive local: x is not matching primitive, had: double, needed: double"),
++    ("(let [x 1.0] ((fn f (^long [] x) (^double [n] x))))", "Mismatched primitive return, expected: long, had: double"),
++];
++
++#[test]
++fn primitive_method_diagnostics_use_lexical_source_types() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in DECLARATION_ERRORS {
++            let error = session.eval(source).err().unwrap_or_else(|| panic!("accepted {source}"));
++            assert!(error.to_string().contains(expected), "{source}: {error}");
++        }
++    }
++}
++
++#[test]
++fn aot_rejects_invalid_primitive_method_types() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    std::fs::write(root.path().join("invalid.wit"),
++        "package test:invalid-hints; world w { export check: func() -> u32; }").unwrap();
++    for (source, expected) in DECLARATION_ERRORS {
++        std::fs::write(root.path().join("invalid.sus"),
++            format!("(ns invalid) (def check (fn [] {source} 1))")).unwrap();
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["compile", "invalid.sus", "-w", "invalid.wit", "-o", "invalid.wasm", "--export", "check=invalid/check"])
++            .output().unwrap();
++        assert!(!output.status.success(), "accepted {source}");
++        assert!(String::from_utf8_lossy(&output.stderr).contains(expected), "{source}: {}", String::from_utf8_lossy(&output.stderr));
++    }
++}

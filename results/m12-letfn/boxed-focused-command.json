@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "clojure_letfn",
+    "--",
+    "--test-threads=2"
+  ],
+  "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-boxed-source",
+  "source_inputs": "boxed-inputs.json",
+  "exit_code": 0,
+  "seconds": 197.1753284931183
+}

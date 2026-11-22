@@ -1,0 +1,23 @@
+{
+  "base": "020e5a0da015e96f37bfacbd6f4027e02f8d7e05",
+  "command": "cargo +stable test --workspace --locked --test clojure_local_numeric_hints --test clojure_division_overloads --test clojure_unboxed_locals --test compiled_core_casts --test compiled_macro_cumulative_fuel --test compiled_primitive_params --test portable_primitive_entries --test portable_unboxed_locals -- --test-threads=2",
+  "exit_code": 0,
+  "passed": 45,
+  "failed": 0,
+  "ignored": 0,
+  "jvm": {
+    "version": "1.12.6",
+    "values": 31,
+    "diagnostics": 7,
+    "exit_code": 0
+  },
+  "executed": "31 values in Runtime, Macro and actual AOT; seven diagnostics rejected in both phases and actual AOT",
+  "compiler_executable_sha256": "7526b349853742a9fd2e3694aaf66206e37ca0703fb4febb18655c99382cc45a",
+  "source_patch_sha256": "ecf6e43462f1743b682bd2a36de5dd3ceb141dc1c70a009efa977613224d84f0",
+  "sha256": {
+    "oracle.log": "535642b1a28c7a774144196df34a277a9072159e5ef1f9c59d672375df30425e",
+    "focused.log": "f4cb6f6d3f96d1a4c44352d10b6af9571e3d8e12da5f320ce4fd68d9a02efa1c",
+    "source.patch": "ecf6e43462f1743b682bd2a36de5dd3ceb141dc1c70a009efa977613224d84f0"
+  },
+  "limitations": "Focused evidence, not full workspace. Remaining numeric inline families and cross-block box reuse are not claimed complete."
+}

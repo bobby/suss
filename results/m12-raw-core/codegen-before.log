@@ -1,0 +1,32 @@
+Running as unit: run-p3367474-i87227384.scope; invocation ID: 756cc15e97fe4812ba3a53b0118e4e3e
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 34s
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-6c74e2ba22f4b192)
+
+running 2 tests
+test known_double_core_results_stay_raw_and_execute ... FAILED
+test known_long_core_results_stay_raw_and_execute ... FAILED
+
+failures:
+
+---- known_double_core_results_stay_raw_and_execute stdout ----
+
+thread 'known_double_core_results_stay_raw_and_execute' (3371352) panicked at crates/suss-compile/tests/portable_unboxed_locals.rs:244:9:
+assertion failed: operators.iter().any(|op| matches!(op, Operator::F64Div))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- known_long_core_results_stay_raw_and_execute stdout ----
+
+thread 'known_long_core_results_stay_raw_and_execute' (3371353) panicked at crates/suss-compile/tests/portable_unboxed_locals.rs:215:9:
+assertion failed: operators.iter().any(|op| matches!(op, Operator::I64DivS))
+
+
+failures:
+    known_double_core_results_stay_raw_and_execute
+    known_long_core_results_stay_raw_and_execute
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 5 filtered out; finished in 2.60s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_unboxed_locals`

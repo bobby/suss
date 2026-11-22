@@ -1,0 +1,4 @@
+{
+  "expression": "(let [run (fn [] (max (extrema-guard) -0.0)) boxed (fn [] ((identity max) (extrema-guard) -0.0))] [(run) (boxed) (with-redefs [extrema-guard (fn [] (identity 5))] [(run) (boxed)]) (with-redefs [extrema-guard (fn [] (identity 0))] [(/ 1.0 (run)) (/ 1.0 (boxed))]) (with-redefs [extrema-guard (fn [] :replacement)] [(try (run) (catch :default e :threw)) (try (boxed) (catch :default e :threw))])])",
+  "expected": "[1.0 1.0 [5 5] [##-Inf ##-Inf] [:threw :threw]]"
+}

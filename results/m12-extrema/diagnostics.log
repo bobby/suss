@@ -1,0 +1,4 @@
+"(fn ^double [] (max 1 2))" "Mismatched primitive return, expected: double, had: long"
+"(fn ^long [] (min 1.0 2.0))" "Mismatched primitive return, expected: long, had: double"
+"(let [^long x (max 1 2)] x)" "Can't type hint a local with a primitive initializer"
+"(let [^double x (min 1.0 2.0)] x)" "Can't type hint a local with a primitive initializer"

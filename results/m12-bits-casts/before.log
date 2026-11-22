@@ -1,0 +1,34 @@
+Running as unit: run-p3478646-i87330809.scope; invocation ID: 64003dce1475494c82fd4335434011cd
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.30s
+     Running tests/clojure_raw_bits_and_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_bits_and_casts-125577e13d1b01d5)
+
+running 2 tests
+test runtime_and_macro_preserve_raw_bits_and_casts ... FAILED
+test aot_preserves_raw_bits_and_casts ... FAILED
+
+failures:
+
+---- runtime_and_macro_preserve_raw_bits_and_casts stdout ----
+
+thread 'runtime_and_macro_preserve_raw_bits_and_casts' (3478739) panicked at crates/suss-cli/tests/clojure_raw_bits_and_casts.rs:52:13:
+assertion `left == right` failed: (with-redefs [bit-set (fn [x y] :replaced) bit-test (fn [x y] :replaced)] [(bit-set 0 1) ((identity bit-set) 0 1) (bit-test 1 0) ((identity bit-test) 1 0)])
+  left: "[2 :replaced true :replaced]"
+ right: "[:replaced :replaced :replaced :replaced]"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_preserves_raw_bits_and_casts stdout ----
+
+thread 'aot_preserves_raw_bits_and_casts' (3478738) panicked at crates/suss-cli/tests/clojure_raw_bits_and_casts.rs:84:9:
+assertion `left == right` failed: (with-redefs [bit-set (fn [x y] :replaced) bit-test (fn [x y] :replaced)] [(bit-set 0 1) ((identity bit-set) 0 1) (bit-test 1 0) ((identity bit-test) 1 0)])
+  left: "0"
+ right: "1"
+
+
+failures:
+    aot_preserves_raw_bits_and_casts
+    runtime_and_macro_preserve_raw_bits_and_casts
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.70s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_raw_bits_and_casts`

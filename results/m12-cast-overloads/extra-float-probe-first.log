@@ -1,0 +1,7 @@
+"(let [x (unchecked-float 2147483648.0)] [(int x) (try (int (identity x)) (catch Throwable e :error))])" "[2147483647 :error]"
+"[(double (float (unchecked-float ##Inf))) (try (float (identity (unchecked-float ##Inf))) (catch Throwable e :error)) (try ((identity float) (unchecked-float ##Inf)) (catch Throwable e :error))]" "[##Inf ##Inf ##Inf]"
+Execution error (AssertionError) at user/eval142 (extra-float-probe.clj:3).
+Assert failed: (= "[##Inf :error :error]" actual)
+
+Full report at:
+/tmp/clojure-3223891680729618883.edn

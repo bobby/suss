@@ -1,0 +1,687 @@
+mod support;
+/// First type index a fragment appends after the shared ABI v3 prelude.
+/// Fragment types follow the shared group.
+const APPENDED: u32 = suss_compile::runtime_abi::TYPE_COUNT;
+use suss_compile::{portable, runtime_abi};
+use wasmtime::{Instance, Linker, Module, Store, Val};
+fn execute(source: &str) -> (Store<()>, Val) {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(&engine, runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = Linker::new(&engine);
+    linker
+        .instance(&mut store, "suss.runtime", runtime)
+        .unwrap();
+    let bytes = portable::compile(source).unwrap();
+    runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+    let fragment = linker
+        .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
+        .unwrap();
+    let mut result = [Val::null_any_ref()];
+    fragment
+        .get_func(&mut store, "eval")
+        .unwrap()
+        .call(&mut store, &[], &mut result)
+        .unwrap();
+    store.gc(None).unwrap();
+    (store, result[0].clone())
+}
+use suss_compile::portable_session::{RuntimeNumber, runtime_number};
+fn number<T>(store: &mut Store<T>, value: &Val) -> RuntimeNumber {
+    runtime_number(store, value).unwrap().expect("a runtime number")
+}
+fn long<T>(store: &mut Store<T>, value: &Val) -> i64 {
+    match number(store, value) {
+        RuntimeNumber::Long(value) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
+}
+#[test]
+fn source_closures_capture_values_and_execute_universal_calls() {
+    let (mut store, value) = execute("(let [x 7 f (fn [] x) x 9] (f))");
+    assert_eq!(long(&mut store, &value), 7);
+}
+
+fn runtime<T>(store: &mut Store<T>) -> Instance {
+    let module = Module::new(store.engine(), runtime_abi::module()).unwrap();
+    Instance::new(store, &module, &[]).unwrap()
+}
+fn call<T>(store: &mut Store<T>, instance: Instance, name: &str, args: &[Val]) -> Val {
+    let func = instance.get_func(&mut *store, name).unwrap();
+    let mut result = [Val::null_any_ref()];
+    func.call(store, args, &mut result).unwrap();
+    result[0].clone()
+}
+fn fragment<T>(
+    store: &mut Store<T>,
+    linker: &Linker<T>,
+    source: &str,
+    env: &portable::resolve::Environment,
+) -> Instance {
+    let bytes = portable::compile_in(source, env, portable::resolve::Phase::Runtime).unwrap();
+    runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
+    let module = Module::new(store.engine(), bytes).unwrap();
+    linker.instantiate(store, &module).unwrap()
+}
+fn define<T>(
+    store: &mut Store<T>,
+    linker: &mut Linker<T>,
+    id: &portable::resolve::Global,
+    cell: &Val,
+) {
+    use wasmtime::{Global, GlobalType, Mutability, RefType, ValType};
+    let object = cell
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&*store)
+        .unwrap()
+        .unwrap();
+    let ty = object.ty(&*store).unwrap();
+    let global = Global::new(
+        &mut *store,
+        GlobalType::new(
+            ValType::Ref(RefType::new(false, ty.into())),
+            Mutability::Const,
+        ),
+        cell.clone(),
+    )
+    .unwrap();
+    linker
+        .define(&*store, id.import_module(), &id.import_name(), global)
+        .unwrap();
+}
+fn catcher(arity: usize, module: &str, name: &str) -> Vec<u8> {
+    use std::borrow::Cow;
+    use wasm_encoder::*;
+    let value = ValType::Ref(RefType::EQREF);
+    let mut types = runtime_abi::prelude();
+    types.ty().function(vec![value; arity], [value]);
+    types.ty().function([value], []);
+    let mut imports = ImportSection::new();
+    imports.import(module, name, EntityType::Function(APPENDED));
+    imports.import(
+        "suss.runtime",
+        "language-exception",
+        EntityType::Tag(TagType {
+            kind: TagKind::Exception,
+            func_type_idx: APPENDED + 1,
+        }),
+    );
+    let mut functions = FunctionSection::new();
+    functions.function(APPENDED);
+    let mut exports = ExportSection::new();
+    exports.export("call", ExportKind::Func, 1);
+    let mut function = Function::new([]);
+    function
+        .instruction(&Instruction::Block(BlockType::Result(value)))
+        .instruction(&Instruction::TryTable(
+            BlockType::Result(value),
+            Cow::Borrowed(&[Catch::One { tag: 0, label: 0 }]),
+        ));
+    for index in 0..arity {
+        function.instruction(&Instruction::LocalGet(index as u32));
+    }
+    function
+        .instruction(&Instruction::Call(0))
+        .instruction(&Instruction::End)
+        .instruction(&Instruction::End)
+        .instruction(&Instruction::End);
+    let mut code = CodeSection::new();
+    code.function(&function);
+    let mut module = wasm_encoder::Module::new();
+    module
+        .section(&runtime_abi::Manifest::default().section())
+        .section(&types)
+        .section(&imports)
+        .section(&functions)
+        .section(&exports)
+        .section(&code);
+    module.finish()
+}
+fn load_catcher<T>(store: &mut Store<T>, linker: &Linker<T>, bytes: Vec<u8>) -> Instance {
+    let module = Module::new(store.engine(), bytes).unwrap();
+    linker.instantiate(store, &module).unwrap()
+}
+fn exception<T>(store: &mut Store<T>, value: &Val, descriptor: i64, expected: &str) {
+    let fields = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&*store)
+        .unwrap()
+        .unwrap()
+        .fields(&mut *store)
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert_eq!(fields.len(), 5);
+    let kind = fields[0]
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&*store)
+        .unwrap()
+        .unwrap();
+    assert_eq!(kind.field(&mut *store, 0).unwrap().i64(), Some(descriptor));
+    let message = fields[1]
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&*store)
+        .unwrap()
+        .unwrap();
+    assert!(matches!(
+        message.ty(&*store).unwrap().element_type(),
+        wasmtime::StorageType::I16
+    ));
+    let units = message
+        .elems(&mut *store)
+        .unwrap()
+        .map(|unit| unit.unwrap_i32() as u16)
+        .collect::<Vec<_>>();
+    assert_eq!(String::from_utf16(&units).unwrap(), expected);
+    // Data and cause are nil.
+    for nil in &fields[2..4] {
+        assert_eq!(
+            suss_compile::portable_session::sentinel_tag(&mut *store, nil)
+                .unwrap()
+                .unwrap(),
+            0
+        );
+    }
+    // The identity UID is private runtime state: an unassigned i31 0.
+    assert_eq!(
+        fields[4]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&*store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
+}
+
+#[test]
+fn nested_closures_parameters_shadowing_and_computed_callees_execute() {
+    for (source, expected) in [
+        ("((fn [x] x) 9)", RuntimeNumber::Long(9)),
+        ("(((fn [x] (fn [] x)) -0.0))", RuntimeNumber::Double(-0.0)),
+        ("((fn [f] (f 7)) (fn [x] x))", RuntimeNumber::Long(7)),
+        ("(let [x 5 f (fn [] (+ x 1))] (f))", RuntimeNumber::Long(6)),
+        ("(let [x 1] (let [x 2] ((fn [] x))))", RuntimeNumber::Long(2)),
+        ("((if false (fn [] 1) (fn [] 2)))", RuntimeNumber::Long(2)),
+        ("(let [fn (fn [x] x)] (fn 3))", RuntimeNumber::Long(3)),
+        ("((cljs.core/fn [x] x) 6)", RuntimeNumber::Long(6)),
+        ("((fn* [x] x) 8)", RuntimeNumber::Long(8)),
+    ] {
+        let (mut store, value) = execute(source);
+        let found = number(&mut store, &value);
+        // Compare a double's bits so -0.0 keeps its sign.
+        match (found, expected) {
+            (RuntimeNumber::Double(found), RuntimeNumber::Double(expected)) => {
+                assert_eq!(found.to_bits(), expected.to_bits(), "{source}")
+            }
+            _ => assert_eq!(found, expected, "{source}"),
+        }
+    }
+    let (mut store, value) = execute("((fn [x] x) \"\\uD800\")");
+    let units = value
+        .unwrap_anyref()
+        .unwrap()
+        .as_array(&store)
+        .unwrap()
+        .unwrap()
+        .elems(&mut store)
+        .unwrap()
+        .map(|unit| unit.unwrap_i32() as u16)
+        .collect::<Vec<_>>();
+    assert_eq!(units, [0xd800]);
+    let (mut store, value) = execute("((fn []))");
+    assert_eq!(
+        suss_compile::portable_session::sentinel_tag(&mut store, &value)
+            .unwrap()
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn captures_use_lexical_identity_and_retain_parameter_metadata() {
+    use portable::hir::Expression;
+    let source = "(let [unused 1 x 2] (fn [^:argument a] (fn [] (if a x 3))))";
+    let hir = portable::analyze(source).unwrap();
+    let Expression::Do(top) = &*hir.kind else {
+        panic!()
+    };
+    let Expression::Let { bindings, body } = &*top[0].kind else {
+        panic!()
+    };
+    let Expression::Do(items) = &*body.kind else {
+        panic!()
+    };
+    let Expression::Function {
+        captures,
+        parameters,
+        ..
+    } = &*items[0].kind
+    else {
+        panic!()
+    };
+    assert_eq!(captures, &[bindings[1].id]);
+    assert_eq!(parameters[0].metadata.len(), 1);
+    assert_eq!(&source[parameters[0].span.clone()], "^:argument a");
+    // A hint is not an unchecked cast: actual non-number values are rejected.
+    for (source, expected) in [
+        ("((fn [^number x] (+ x 1)) 7)", 8),
+        ("(try ((fn [^number x] (+ x 1)) false) (catch :default e 42))", 42),
+    ] {
+        let (mut store, value) = execute(source);
+        assert_eq!(long(&mut store, &value), expected);
+    }
+}
+
+#[test]
+fn source_wrong_arity_and_missing_rest_class_are_located_diagnostics() {
+    // A known closure called with another count compiles, as in Clojure, and
+    // throws Clojure's arity error when it runs (ADR-0004).
+    for source in ["((fn [x] x))", "(let [f (fn [x] x)] (f 1 2))"] {
+        assert!(portable::compile(source).is_ok(), "{source}");
+    }
+    let source = "(fn [& xs] xs)";
+    let error = portable::compile(source).unwrap_err();
+    assert_eq!(&source[error.span], source);
+    // Variadic lowering requires the actual source-backed core class.
+    // This standalone compiler fixture has not loaded that core artifact.
+    assert!(error.message.contains("IndexedSeq"));
+    // Vector parameter destructuring is supported with provisioned core;
+    // portable_function_parameters executes the pinned binding corpus.
+}
+
+#[test]
+fn bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions() {
+    for source in [
+        "((fn ^{:pre [false]} [] 1))",
+        "((cljs.core/fn ^{:post [false]} [] 1))",
+        "((fn ^:pre [] 1))",
+    ] {
+        let error = portable::compile(source).unwrap_err();
+        assert!(error.message.contains("pre/post"));
+        assert!(source[error.span].starts_with('^'));
+    }
+    let mut env = portable::resolve::Environment::default();
+    env.refer(
+        portable::resolve::Phase::Runtime,
+        "function",
+        "cljs.core",
+        "fn",
+    )
+    .unwrap();
+    let error = portable::compile_in(
+        "((function ^{:pre [false]} [] 1))",
+        &env,
+        portable::resolve::Phase::Runtime,
+    )
+    .unwrap_err();
+    assert!(error.message.contains("pre/post"));
+    // Only the fn macro interprets signature conditions; fn* is already expanded.
+    let (mut store, value) = execute("((fn* ^{:pre [false]} [] 1))");
+    assert_eq!(long(&mut store, &value), 1);
+    let (mut store, value) = execute("((fn ^:signature [] 2))");
+    assert_eq!(long(&mut store, &value), 2);
+}
+
+/// Mark a cell bound and dynamic (`runtime_abi::CELL_BOUND | CELL_DYNAMIC`),
+/// so its reads call the imported binding-get these tests observe: a static
+/// cell's read is inline (#354).
+fn dynamic<T>(store: &mut Store<T>, cell: &Val) {
+    let cell = cell.unwrap_anyref().unwrap().as_struct(&*store).unwrap().unwrap();
+    cell.set_field(&mut *store, 1, Val::I32(3)).unwrap();
+}
+
+#[test]
+fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
+    use portable::resolve::{Environment, Phase};
+    use wasmtime::Func;
+    let engine = support::engine();
+    let mut store = Store::new(&engine, Vec::<String>::new());
+    let rt = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", rt).unwrap();
+    let mut env = Environment::default();
+    let maker = fragment(&mut store, &linker, "(fn [] (fn [a b] a))", &env);
+    let maker = call(&mut store, maker, "eval", &[]);
+    linker.allow_shadowing(true);
+    for name in ["binding-get", "invoke"] {
+        let func = rt.get_func(&mut store, name).unwrap();
+        let ty = func.ty(&store);
+        let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
+            if name == "invoke" {
+                let array = args[1].unwrap_anyref().unwrap().as_array(&caller)?.unwrap();
+                let count = array.len(&caller)?;
+                caller.data_mut().push(format!("invoke:{count}"));
+            }
+            func.call(&mut caller, args, results)?;
+            if name == "binding-get" {
+                let text = match runtime_number(&mut caller, &results[0])? {
+                    Some(RuntimeNumber::Long(value)) => format!("read:{value}"),
+                    Some(RuntimeNumber::Double(value)) => format!("read:{value:?}"),
+                    None => "read:closure".into(),
+                };
+                caller.data_mut().push(text);
+            }
+            Ok(())
+        });
+        linker
+            .define(&store, "suss.runtime", name, wrapper)
+            .unwrap();
+    }
+    for (name, value) in [
+        ("maker", maker),
+        (
+            "a",
+            call(&mut store, rt, "long-box", &[Val::I64(1)]),
+        ),
+        (
+            "b",
+            call(&mut store, rt, "long-box", &[Val::I64(2)]),
+        ),
+    ] {
+        let id = env.declare_cell(Phase::Runtime, "app", name).unwrap();
+        let cell = call(&mut store, rt, "binding-new", &[value]);
+        dynamic(&mut store, &cell);
+        define(&mut store, &mut linker, &id, &cell);
+    }
+    let target = fragment(&mut store, &linker, "((app/maker) app/a app/b)", &env);
+    let value = call(&mut store, target, "eval", &[]);
+    assert_eq!(
+        store.data(),
+        // A closure is called through its code struct's entry (ADR-0004),
+        // not an import, so only the reads are traced: the computed callee,
+        // then each argument, once each.
+        &["read:closure", "read:1", "read:2"]
+    );
+    store.gc(None).unwrap();
+    assert_eq!(long(&mut store, &value), 1);
+}
+
+#[test]
+fn old_closure_values_and_live_global_calls_survive_rebinding_and_gc() {
+    use portable::resolve::{Environment, Phase};
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let rt = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", rt).unwrap();
+    let mut env = Environment::default();
+    let id = env.declare_cell(Phase::Runtime, "app", "f").unwrap();
+    let first = fragment(&mut store, &linker, "(let [x 7] (fn [] x))", &env);
+    let first = call(&mut store, first, "eval", &[]);
+    let cell = call(&mut store, rt, "binding-new", &[first]);
+    define(&mut store, &mut linker, &id, &cell);
+    let old = fragment(&mut store, &linker, "(let [f app/f] (fn [] (f)))", &env);
+    let old = call(&mut store, old, "eval", &[]);
+    let live = fragment(&mut store, &linker, "(fn [] (app/f))", &env);
+    let live = call(&mut store, live, "eval", &[]);
+    let caller_id = env.declare_cell(Phase::Runtime, "app", "caller").unwrap();
+    let caller_cell = call(&mut store, rt, "binding-new", &[old.clone()]);
+    define(&mut store, &mut linker, &caller_id, &caller_cell);
+    let caller = fragment(&mut store, &linker, "(app/caller)", &env);
+    let second = fragment(&mut store, &linker, "(fn [] 9)", &env);
+    let second = call(&mut store, second, "eval", &[]);
+    rt.get_func(&mut store, "binding-set")
+        .unwrap()
+        .call(&mut store, &[cell, second], &mut [])
+        .unwrap();
+    store.gc(None).unwrap();
+    let value = call(&mut store, caller, "eval", &[]);
+    assert_eq!(long(&mut store, &value), 7);
+    rt.get_func(&mut store, "binding-set")
+        .unwrap()
+        .call(&mut store, &[caller_cell, live], &mut [])
+        .unwrap();
+    store.gc(None).unwrap();
+    let value = call(&mut store, caller, "eval", &[]);
+    assert_eq!(long(&mut store, &value), 9);
+}
+
+#[test]
+fn dynamic_arity_errors_are_language_exceptions_and_store_remains_usable() {
+    use portable::resolve::{Environment, Phase};
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let rt = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", rt).unwrap();
+    let mut env = Environment::default();
+    let id = env.declare_cell(Phase::Runtime, "app", "f").unwrap();
+    let function = fragment(&mut store, &linker, "(fn [x] x)", &env);
+    let function = call(&mut store, function, "eval", &[]);
+    let cell = call(&mut store, rt, "binding-new", &[function]);
+    define(&mut store, &mut linker, &id, &cell);
+    let target = fragment(&mut store, &linker, "(app/f)", &env);
+    linker.instance(&mut store, "target", target).unwrap();
+    let catch = load_catcher(&mut store, &linker, catcher(0, "target", "eval"));
+    let error = call(&mut store, catch, "call", &[]);
+    store.gc(None).unwrap();
+    exception(&mut store, &error, 1, "Wrong number of args (0) passed to: fn");
+    let replacement = fragment(&mut store, &linker, "(fn [] 11)", &env);
+    let replacement = call(&mut store, replacement, "eval", &[]);
+    rt.get_func(&mut store, "binding-set")
+        .unwrap()
+        .call(&mut store, &[cell, replacement], &mut [])
+        .unwrap();
+    let value = call(&mut store, target, "eval", &[]);
+    assert_eq!(long(&mut store, &value), 11);
+}
+
+#[test]
+fn invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps() {
+    let engine = support::engine();
+    let mut store = Store::new(&engine, ());
+    let rt = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", rt).unwrap();
+    let catch = load_catcher(&mut store, &linker, catcher(2, "suss.runtime", "invoke"));
+    let number = call(&mut store, rt, "long-box", &[Val::I64(1)]);
+    let args = call(&mut store, rt, "args-new", &[Val::I32(0)]);
+    for non_callable in [number.clone(), Val::null_any_ref()] {
+        let error = call(&mut store, catch, "call", &[non_callable, args.clone()]);
+        exception(&mut store, &error, 3, "Not callable");
+    }
+    // A name left unbound holds the undefined sentinel (#288).
+    let undefined = rt
+        .get_global(&mut store, "sentinel-undefined")
+        .unwrap()
+        .get(&mut store);
+    let error = call(&mut store, catch, "call", &[undefined, args.clone()]);
+    exception(&mut store, &error, 3, "Attempting to call unbound fn");
+    let function = fragment(
+        &mut store,
+        &linker,
+        "(fn [] 1)",
+        &portable::resolve::Environment::default(),
+    );
+    let function = call(&mut store, function, "eval", &[]);
+    let error = call(&mut store, catch, "call", &[function, number]);
+    exception(&mut store, &error, 4, "Invalid argument array");
+}
+
+#[test]
+fn verifier_rejects_malformed_closure_shapes_calls_and_capture_facts() {
+    use portable::{
+        hir::Type,
+        ir::{self, Operation, ValueId},
+    };
+    let original = ir::lower(&portable::analyze("(let [x 1] (fn [a] x))").unwrap()).unwrap();
+    for mutation in 0..4 {
+        let mut bad = original.clone();
+        let closure = bad.blocks[0]
+            .instructions
+            .iter_mut()
+            .find(|instruction| matches!(instruction.operation, Operation::MakeClosure { .. }))
+            .unwrap();
+        let Operation::MakeClosure { body, captures } = &mut closure.operation else {
+            unreachable!()
+        };
+        match mutation {
+            0 => {
+                body.capture_types[0] = Type::String;
+            }
+            1 => {
+                body.arity += 1;
+            }
+            2 => {
+                captures[0] = ValueId(99);
+            }
+            _ => {
+                body.function.blocks[0].parameters.clear();
+            }
+        }
+        assert!(portable::compile_ir(&bad).is_err());
+    }
+    let original = ir::lower(&portable::analyze("((fn [x] x) 1)").unwrap()).unwrap();
+    for mutation in 0..3 {
+        let mut bad = original.clone();
+        let call = bad.blocks[0]
+            .instructions
+            .iter_mut()
+            .find(|instruction| matches!(instruction.operation, Operation::Call { .. }))
+            .unwrap();
+        let Operation::Call { operands, .. } = &mut call.operation else {
+            unreachable!()
+        };
+        match mutation {
+            0 => operands.clear(),
+            1 => {
+                operands[0] = ValueId(99);
+            }
+            _ => {
+                // Another argument count is a valid call, which reaches the
+                // definition's arity-error entry (ADR-0004).
+                operands.pop();
+                assert!(portable::compile_ir(&bad).is_ok());
+                continue;
+            }
+        }
+        assert!(portable::compile_ir(&bad).is_err());
+    }
+}
+
+#[test]
+fn non_callable_errors_happen_after_argument_effects() {
+    use portable::resolve::{Environment, Phase};
+    use wasmtime::Func;
+    let engine = support::engine();
+    let mut store = Store::new(&engine, Vec::<String>::new());
+    let rt = runtime(&mut store);
+    let mut linker = Linker::new(&engine);
+    linker.instance(&mut store, "suss.runtime", rt).unwrap();
+    linker.allow_shadowing(true);
+    let getter = rt.get_func(&mut store, "binding-get").unwrap();
+    let ty = getter.ty(&store);
+    let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
+        caller.data_mut().push("argument".into());
+        getter.call(&mut caller, args, results)
+    });
+    linker
+        .define(&store, "suss.runtime", "binding-get", wrapper)
+        .unwrap();
+    let mut env = Environment::default();
+    let id = env.declare_cell(Phase::Runtime, "app", "arg").unwrap();
+    let number = call(&mut store, rt, "long-box", &[Val::I64(2)]);
+    let cell = call(&mut store, rt, "binding-new", &[number]);
+    dynamic(&mut store, &cell);
+    define(&mut store, &mut linker, &id, &cell);
+    let target = fragment(&mut store, &linker, "(1 app/arg)", &env);
+    linker.instance(&mut store, "target", target).unwrap();
+    let catch = load_catcher(&mut store, &linker, catcher(0, "target", "eval"));
+    let error = call(&mut store, catch, "call", &[]);
+    assert_eq!(store.data(), &["argument"]);
+    exception(&mut store, &error, 3, "Not callable");
+}
+
+#[test]
+fn malformed_public_closure_arity_does_not_allocate_unbounded_entry_metadata() {
+    use portable::{
+        hir::Type,
+        ir::{self, Operation},
+    };
+    let mut ir = ir::lower(&portable::analyze("(fn [] 1)").unwrap()).unwrap();
+    let instruction = &mut ir.blocks[0].instructions[0];
+    let Operation::MakeClosure { body, .. } = &mut instruction.operation else {
+        panic!()
+    };
+    body.arity = i32::MAX as usize;
+    ir.values[instruction.result.0].ty = Type::Closure(body.arity);
+    assert!(
+        portable::compile_ir(&ir)
+            .unwrap_err()
+            .message
+            .contains("entry shape")
+    );
+}
+
+#[test]
+fn multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets() {
+    use portable::{hir::Type, ir::Operation};
+    let source = "(let [outside 10] (fn local ([x] (+ x outside)) ([flag x] (if flag (recur false (local x)) x))))";
+    let hir = portable::analyze(source).unwrap();
+    let ir = portable::ir::lower(&hir).unwrap();
+    portable::ir::verify(&ir).unwrap();
+    for mutation in 0..5 {
+        let mut bad = ir.clone();
+        let closure = bad
+            .blocks
+            .iter_mut()
+            .flat_map(|block| &mut block.instructions)
+            .find(|instruction| {
+                matches!(instruction.operation, Operation::MakeGeneralClosure { .. })
+            })
+            .unwrap();
+        let Operation::MakeGeneralClosure { body, .. } = &mut closure.operation else {
+            unreachable!()
+        };
+        match mutation {
+            0 => body.methods.clear(),
+            1 => body.methods[1].arity = body.methods[0].arity,
+            2 => body.methods[0].capture_types[0] = Type::String,
+            3 => body.self_capture = false,
+            4 => body.methods[0].arity = usize::MAX,
+            _ => unreachable!(),
+        }
+        assert!(portable::compile_ir(&bad).is_err(), "mutation {mutation}");
+    }
+    for source in [
+        "(fn local ([x] (recur)) ([] 1))",
+        "(fn local ([flag x] (fn [y] (recur flag x))) ([x] x))",
+        "(fn local ([] 1) ([x] (+ (recur x) 1)))",
+    ] {
+        let error = portable::compile(source).unwrap_err();
+        assert!(source[error.span].starts_with("(recur"), "{source}");
+    }
+}
+
+#[test]
+fn verified_variadic_entries_require_class_and_valid_persistent_rest_shape() {
+    use portable::ir;
+    // The executable applyTo entry also imports its retained sequence dependency.
+    let hir = portable::analyze("(ns suss.core) (declare IndexedSeq seq) (fn [& xs] xs)").unwrap();
+    let original = ir::lower(&hir).unwrap();
+    portable::compile_ir(&original).unwrap();
+    for damage in 0..3 {
+        let mut broken = original.clone();
+        let body = broken.blocks.iter_mut().flat_map(|block| &mut block.instructions)
+            .find_map(|instruction| match &mut instruction.operation {
+                ir::Operation::MakeGeneralClosure { body, .. } => Some(body),
+                _ => None,
+            }).unwrap();
+        match damage {
+            0 => body.rest_class = None,
+            1 => body.methods[0].arity = 0,
+            _ => body.methods[0].variadic = false,
+        }
+        assert!(portable::compile_ir(&broken).is_err());
+    }
+}

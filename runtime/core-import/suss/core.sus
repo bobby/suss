@@ -5387,30 +5387,16 @@
 (def ^number max
 "Returns the greatest of the nums."
 (fn ([x] x)
-  ([x y]
-   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
-     (cond
-       (NaN? x) x
-       (NaN? y) y
-       (> x y) x
-       :else y)
-     (throw (suss.bootstrap/error "max requires number operands"))))
+  ([x y] (suss.bootstrap/max x y))
   ([x y & more]
-   (reduce max (cljs.core/max x y) more))))
+   (reduce max (suss.bootstrap/max x y) more))))
 
 (def ^number min
 "Returns the least of the nums."
 (fn ([x] x)
-  ([x y]
-   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
-     (cond
-       (NaN? x) x
-       (NaN? y) y
-       (< x y) x
-       :else y)
-     (throw (suss.bootstrap/error "min requires number operands"))))
+  ([x y] (suss.bootstrap/min x y))
   ([x y & more]
-   (reduce min (cljs.core/min x y) more))))
+   (reduce min (suss.bootstrap/min x y) more))))
 
 (def even?
 "Returns true if n is even, throws an exception if n is not an integer"
@@ -11966,6 +11952,8 @@ reduces them without incurring seq initialization"
 ;; PersistentVector's type, registered so the runtime's vector-nth and
 ;; vector-count read vectors directly (#378).
 (suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
+;; MapEntry has closed indexed storage too; register its canonical descriptor (#351).
+(suss.bootstrap/map-entry-type! (MapEntry. nil nil nil))
 ;; PersistentArrayMap's type, registered so the runtime's array-map-get
 ;; reads array maps directly (#442).
 (suss.bootstrap/array-map-type! (.-EMPTY PersistentArrayMap))

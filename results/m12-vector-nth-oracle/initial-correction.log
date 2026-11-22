@@ -1,0 +1,22 @@
+Running as unit: run-p4105507-i87971993.scope; invocation ID: 47cf4b157b5f433f96f30c3138655ee9
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 13s
+     Running tests/clojure_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/clojure_nonescaping_vectors-bb22d22335216a18)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_vectors ... ok
+test aot_preserves_nonescaping_vectors has been running for over 60 seconds
+test aot_preserves_nonescaping_vectors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 65.56s
+
+     Running tests/portable_function_parameters.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/portable_function_parameters-0c461169e50345f2)
+
+running 2 tests
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.92s
+

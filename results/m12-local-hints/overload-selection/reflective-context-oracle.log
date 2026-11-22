@@ -1,0 +1,5 @@
+"(let [^double x (identity 5) ^double y (identity 1)] [(bit-and x 1) (= (bit-and x 1) y)])" [:value [1 false]]
+"(let [^long x (identity 1.0E30) events (atom [])] [(try (+ x (zero? (do (swap! events conj :later) 0))) (catch Throwable e :number-error)) @events])" [:value [:number-error [:later]]]
+"(let [^long x (identity 1.0E30) events (atom [])] [(try (< x (zero? (do (swap! events conj :later) 0))) (catch Throwable e :number-error)) @events])" [:value [:number-error [:later]]]
+"(fn ^double [] (let [^double x (identity 5)] (bit-and x 1)))" [:value #object[user$eval160$fn__161 0x6c2d4cc6 "user$eval160$fn__161@6c2d4cc6"]]
+"(fn ^double [] (bit-and (identity 5) 1))" [:error "Syntax error compiling fn* at (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-reflective-context-oracle.clj:2:1)." "Mismatched primitive return, expected: double, had: long"]

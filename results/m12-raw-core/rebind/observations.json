@@ -1,0 +1,24 @@
+[
+  {
+    "name": "before",
+    "compiler_sha256": "9fd1022ca07b57dca4cea325d63eb2a36c02f08333885157d7e87cdcfb19d79b",
+    "component_sha256": "a821ab047ce793f0a4bbedd8a16f8cc1567bd86b300d22316057125f9f2ba647",
+    "outputs": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ]
+  },
+  {
+    "name": "after",
+    "compiler_sha256": "9d9bdc0e2282262547b58b8c8ae8200bb072f6424549ab4b07a14aab362ccec6",
+    "component_sha256": "cd96d02b213be613d73d21ccf90abe82495db347b9809a217d178b4c6ad1e6e4",
+    "outputs": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ]
+  }
+]

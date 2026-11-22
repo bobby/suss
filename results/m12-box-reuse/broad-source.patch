@@ -1,0 +1,81 @@
+diff --git i/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index e908a7e9..e8e00de7 100644
+--- i/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -2274,6 +2274,9 @@ fn emit_function(
+         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
+         let mut boxed = std::collections::HashSet::new();
+         let mut code = Vec::new();
++        locals.invalidate(&mut code, block.parameters.iter().copied()
++            .chain(instructions.iter().map(|instruction| instruction.result)));
++        for instruction in code.drain(..) { function.instruction(&instruction); }
+         for inst in instructions {
+             if continuation.is_none()
+                 && let Operation::Call { operands, primitive: Some(shape) } = &inst.operation
+diff --git i/crates/suss-compile/src/portable/emit/unboxed.rs w/crates/suss-compile/src/portable/emit/unboxed.rs
+index 0f11c543..ac0defff 100644
+--- i/crates/suss-compile/src/portable/emit/unboxed.rs
++++ w/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -472,6 +472,8 @@ pub(super) struct Locals {
+     pub repr: Vec<Repr>,
+     raw: Vec<Option<u32>>,
+     valid: Vec<Option<u32>>,
++    /// Whether a raw value's current dynamic definition has a GC copy.
++    cached: Vec<Option<u32>>,
+     long_literals: Vec<Option<i64>>,
+     pub declarations: Vec<(u32, ValType)>,
+     /// GC locals are `value + offset`.
+@@ -509,8 +511,12 @@ impl Locals {
+         for (value, item) in repr.iter().enumerate() {
+             if item.maybe() { valid[value] = Some(next); next += 1; }
+         }
++        let mut cached = vec![None; repr.len()];
++        for (value, item) in repr.iter().enumerate() {
++            if item.definite().numeric() { cached[value] = Some(next); next += 1; }
++        }
+         if next > start { declarations.push((next - start, ValType::I32)); }
+-        Self { repr, raw, valid, long_literals, declarations, offset, sentinels }
++        Self { repr, raw, valid, cached, long_literals, declarations, offset, sentinels }
+     }
+     pub(super) fn of(&self, value: ValueId) -> Repr {
+         self.repr[value.0]
+@@ -534,9 +540,28 @@ impl Locals {
+             StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
+             End, LocalSet(self.raw(value))]);
+     }
+-    /// Pushes `value` as a GC value, boxing a raw one.
++    /// A block parameter or instruction result is a new dynamic value each
++    /// time its defining block executes. Invariants defined in another block
++    /// retain their cached box. Only flags change here; boxing stays lazy.
++    pub(super) fn invalidate(
++        &self, code: &mut Vec<Instruction<'static>>, values: impl IntoIterator<Item = ValueId>,
++    ) {
++        for value in values {
++            if let Some(flag) = self.cached[value.0] {
++                code.extend([Instruction::I32Const(0), Instruction::LocalSet(flag)]);
++            }
++        }
++    }
++    /// Pushes a GC value, reusing a numeric box until its definition changes.
+     pub(super) fn push_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+-        self.push_kind_boxed(code, value, self.of(value));
++        if let Some(flag) = self.cached[value.0] {
++            use Instruction::*;
++            code.extend([LocalGet(flag), I32Eqz, If(BlockType::Empty)]);
++            self.push_kind_boxed(code, value, self.of(value));
++            code.extend([LocalSet(self.boxed(value)), I32Const(1), LocalSet(flag), End, LocalGet(self.boxed(value))]);
++        } else {
++            self.push_kind_boxed(code, value, self.of(value));
++        }
+     }
+     fn push_kind_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId, kind: Repr) {
+         use Instruction::*;
+@@ -572,7 +597,7 @@ impl Locals {
+             }
+         }
+     }
+-    /// Stores a GC copy of each raw operand in its GC local, once per block.
++    /// Stores GC copies lazily; the dynamic cache also spans other blocks.
+     pub(super) fn materialize(
+         &self,
+         code: &mut Vec<Instruction<'static>>,

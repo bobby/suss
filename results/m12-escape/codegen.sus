@@ -1,0 +1,4 @@
+(defn ^:export bound [] (loop [i 0 acc 0.0]
+          (if (< i 1234591)
+            (let [x (+ 3000000000 i) y (double i) f (fn [] (+ x y))]
+              (recur (inc i) (unchecked-add acc (double (f))))) acc)))

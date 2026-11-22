@@ -1,0 +1,12 @@
+Running as unit: run-p56092-i88107472.scope; invocation ID: 63ecdbbbed0a48d481b44e22a9dae6c9
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 49s
+     Running tests/portable_numeric_captures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-target/debug/deps/portable_numeric_captures-863c73090cff2a93)
+
+running 2 tests
+test capture_object_uses_and_join_aliases_keep_the_shared_box ... ok
+test numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

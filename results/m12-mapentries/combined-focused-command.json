@@ -1,0 +1,29 @@
+{
+  "source_commit": "9514fd576cf667a345a67da1f16c256fc34d1bb2",
+  "source_inputs": "source-inputs.json",
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "clojure_nonescaping_map_entries",
+    "--test",
+    "clojure_nonescaping_vectors",
+    "--test",
+    "portable_nonescaping_vectors",
+    "--test",
+    "portable_function_parameters",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "passed": 9,
+  "failed": 0,
+  "ignored": 0,
+  "mapentry_jvm_pairs": 16,
+  "vector_jvm_pairs": 21,
+  "vector_separate_suss_controls": 2,
+  "parameter_cases_per_phase": 39
+}

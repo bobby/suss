@@ -1,0 +1,14 @@
+[
+  {
+    "name": "fixed-sum",
+    "expected": 762077221461,
+    "actual": "762077221461",
+    "exit_code": 0
+  },
+  {
+    "name": "dynamic-sum",
+    "expected": 1234588,
+    "actual": "1234588",
+    "exit_code": 0
+  }
+]

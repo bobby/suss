@@ -1,0 +1,6 @@
+"(vector (run-long) (with-redefs [raw-long (fn [] (identity 3.5))] (run-long)))" "[[2 0 4 5 -4] [:error :error :error :error :error]]"
+"(vector (run-double) (with-redefs [raw-double (fn [] (identity 5))] (run-double)))" "[[2.0 0.0 4.0 5.0 -4.0] [:error :error :error :error :error]]"
+"(with-redefs [raw-long (fn [] :bad) raw-double (fn [] nil)] [(run-long) (run-double)])" "[[:error :error :error :error :error] [:error :error :error :error :error]]"
+"(with-redefs [raw-long (fn [] (identity -0.0))] (run-long))" "[:error :error :error :error :error]"
+:long-replacement-cause ["class java.lang.ClassCastException" "class user$eval187$fn__188 cannot be cast to class clojure.lang.IFn$L (user$eval187$fn__188 is in unnamed module of loader clojure.lang.DynamicClassLoader @6105f8a3; clojure.lang.IFn$L is in unnamed module of loader 'app')"]
+:double-replacement-cause ["class java.lang.ClassCastException" "class user$eval194$fn__195 cannot be cast to class clojure.lang.IFn$D (user$eval194$fn__195 is in unnamed module of loader clojure.lang.DynamicClassLoader @2c1dc8e; clojure.lang.IFn$D is in unnamed module of loader 'app')"]

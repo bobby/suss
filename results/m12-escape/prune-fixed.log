@@ -1,0 +1,33 @@
+Running as unit: run-p3739611-i87610255.scope; invocation ID: 8094cfbcf35f41e4ac4860c992879fe2
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 19s
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_nonescaping_closures-eca119f52b94d8a1)
+
+running 2 tests
+test aot_preserves_nonescaping_closures ... FAILED
+test runtime_and_macro_preserve_nonescaping_closures ... FAILED
+
+failures:
+
+---- aot_preserves_nonescaping_closures stdout ----
+
+thread 'aot_preserves_nonescaping_closures' (3742246) panicked at crates/suss-cli/tests/clojure_nonescaping_closures.rs:182:5:
+Compilation error: Semantic error: While compiling localhints.sus: Unresolved Runtime name ifn? at bytes 4499..4503
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- runtime_and_macro_preserve_nonescaping_closures stdout ----
+
+thread 'runtime_and_macro_preserve_nonescaping_closures' (3742247) panicked at crates/suss-cli/tests/clojure_nonescaping_closures.rs:135:37:
+(let [f (fn [] 1)] [(fn? f) (ifn? f) (f)]): Unresolved Runtime name ifn? at bytes 42..46
+
+
+failures:
+    aot_preserves_nonescaping_closures
+    runtime_and_macro_preserve_nonescaping_closures
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.30s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_nonescaping_closures`

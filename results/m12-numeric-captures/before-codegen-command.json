@@ -1,0 +1,73 @@
+{
+  "compiler_source_commit": "5b40654fcc63cdc59bc44f8090bdff8ad1338109",
+  "libraries": {
+    "suss_compile": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+      "sha256": "7c6789281415f46cf4370df23086836289773753a7b7e514d4585c05f9347ec3"
+    },
+    "wasmparser": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libwasmparser-595a3b9373360848.rlib",
+      "sha256": "940400d480d24de109d0e76e21ceaa3f2ad9fbbe7759a4e310b75af4eece6f8c"
+    },
+    "wasm_encoder": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+      "sha256": "e6d2657ac393d6142d50528c3b1e0b65280c3faa781481181e3a7e2712cb1d9e"
+    }
+  },
+  "tests": [
+    {
+      "source": "crates/suss-compile/tests/portable_numeric_captures.rs",
+      "sha256": "04da6ec8bb25220659164093df17993504a260de491879fe2592579c8e365465",
+      "compile": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "--test",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile/tests/portable_numeric_captures.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/ittapi-sys-af3edab9573ad7ab/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/ittapi-sys-c27a1f4a19b516df/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/psm-a54e190f8049c334/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/psm-b71bd53d6104d00d/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/psm-c0a75e4c9aeac366/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/wasmtime-ae9a6963fe79805c/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/wasmtime-ca5e76a35dc74282/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/wasmtime-dd93141727963422/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/wasmtime-internal-jit-debug-4817df6d63ff8c82/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/wasmtime-internal-jit-debug-a68e70ea90770a20/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/zstd-sys-6ba5941bb2e1981a/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/build/zstd-sys-a64027c75eb5d2b6/out",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+        "--extern",
+        "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libwasmparser-595a3b9373360848.rlib",
+        "--extern",
+        "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/target/probe/numeric-captures-before/portable_numeric_captures"
+      ],
+      "run": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/target/probe/numeric-captures-before/portable_numeric_captures",
+        "numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "exit_code": 101
+    }
+  ]
+}

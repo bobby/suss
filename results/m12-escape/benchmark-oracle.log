@@ -1,0 +1,12 @@
+"escape-control" 10 3.000000009E10
+"escape-control" 1000000 3.000999999E15
+"escape-control" 2000000 6.003999998E15
+"escape-vector" 10 3.000000009E10
+"escape-vector" 1000000 3.000999999E15
+"escape-vector" 2000000 6.003999998E15
+"escape-entry" 10 3.000000009E10
+"escape-entry" 1000000 3.000999999E15
+"escape-entry" 2000000 6.003999998E15
+"escape-closure" 10 3.000000009E10
+"escape-closure" 1000000 3.000999999E15
+"escape-closure" 2000000 6.003999998E15

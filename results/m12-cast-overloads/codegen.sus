@@ -1,0 +1,5 @@
+(defn ^:export bound [] (loop [i 0 acc 0]
+          (if (< i 1234587) (recur (inc i) (unchecked-add acc
+            (+ (byte (loop [] (+ 127.1 (* 0.0 (double i)))))
+               (short (loop [] 32767.1)) (int (loop [] 2147483647.9))
+               (int (unchecked-float 2147483648.0))))) acc)))

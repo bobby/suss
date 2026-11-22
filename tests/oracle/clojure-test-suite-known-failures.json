@@ -134,10 +134,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071"
   },
-  "clojure.core-test.every-qmark": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.every-qmark (Some(\"<root>/clojure/core_test/every_qmark.cljc\")): Unresolved Runtime name letfn at bytes 292..1825"
-  },
   "clojure.core-test.false-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
@@ -236,7 +232,7 @@
   },
   "clojure.core-test.not-every-qmark": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.every-qmark (Some(\"<root>/clojure/core_test/every_qmark.cljc\")): Unresolved Runtime name letfn at bytes 292..1825"
+   "diagnostic": "clojure.core-test.not-every-qmark (Some(\"<root>/clojure/core_test/not_every_qmark.cljc\")): Unresolved Runtime name not-every? at bytes 266..364"
   },
   "clojure.core-test.nth": {
    "stage": "read",

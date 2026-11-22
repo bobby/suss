@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(let [source "(fn ^double [] (max 1 2))" expected "Mismatched primitive return, expected: double, had: long" actual (try (eval (read-string source)) :accepted (catch Throwable e (some-> e ex-cause ex-message)))] (prn source actual) (assert (= expected actual)))
+(let [source "(fn ^long [] (min 1.0 2.0))" expected "Mismatched primitive return, expected: long, had: double" actual (try (eval (read-string source)) :accepted (catch Throwable e (some-> e ex-cause ex-message)))] (prn source actual) (assert (= expected actual)))
+(let [source "(let [^long x (max 1 2)] x)" expected "Can't type hint a local with a primitive initializer" actual (try (eval (read-string source)) :accepted (catch Throwable e (some-> e ex-cause ex-message)))] (prn source actual) (assert (= expected actual)))
+(let [source "(let [^double x (min 1.0 2.0)] x)" expected "Can't type hint a local with a primitive initializer" actual (try (eval (read-string source)) :accepted (catch Throwable e (some-> e ex-cause ex-message)))] (prn source actual) (assert (= expected actual)))

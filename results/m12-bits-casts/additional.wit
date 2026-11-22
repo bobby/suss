@@ -1,0 +1,10 @@
+package test:additional; world w {
+export case0: func() -> u32;
+export case1: func() -> u32;
+export case2: func() -> u32;
+export case3: func() -> u32;
+export case4: func() -> u32;
+export case5: func() -> u32;
+export case6: func() -> u32;
+export case7: func() -> u32;
+}

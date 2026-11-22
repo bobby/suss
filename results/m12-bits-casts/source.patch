@@ -1,0 +1,1007 @@
+diff --git a/crates/suss-compile/src/portable/emit.rs b/crates/suss-compile/src/portable/emit.rs
+index e8e00de7..34c05e81 100644
+--- a/crates/suss-compile/src/portable/emit.rs
++++ b/crates/suss-compile/src/portable/emit.rs
+@@ -297,6 +297,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+                     },
+                     Operation::Bitwise { operation, .. } => {
+                         names.insert(operation.export());
++                        if let Some(raw) = operation.raw_export() { names.insert(raw); }
++                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int) {
++                            names.extend(runtime_abi::CAST_RAW_EXPORTS);
++                        }
+                     }
+                     Operation::Comparison { operation, .. } => {
+                         names.insert(operation.export());
+@@ -767,6 +771,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+     let type_count = runtime_abi::TYPE_COUNT;
+     for (i, name) in names.iter().enumerate() {
+         let (params, results) = match *name {
++            name if name.starts_with("number-cast-") && name.ends_with("-raw") =>
++                (vec![VALUE], vec![if name.contains("float") || name.contains("double") { ValType::F64 } else { ValType::I64 }]),
++            name if name.starts_with("primitive-bit-") && name.ends_with("-raw") =>
++                (vec![VALUE; if name == "primitive-bit-not-raw" { 1 } else { 2 }],
++                    vec![if name == "primitive-bit-test-raw" { ValType::I32 } else { ValType::I64 }]),
++            name if name == "primitive-unsigned-bit-shift-right-raw" => (vec![VALUE; 2], vec![ValType::I64]),
++            name if name.starts_with("int32-") && name.ends_with("-raw") =>
++                (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
+             "future-pending-new" | "dynamic-fork" | "dynamic-save" => (vec![], vec![VALUE]),
+             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
+             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
+@@ -2289,6 +2301,14 @@ fn emit_function(
+                 for instruction in code.drain(..) { function.instruction(&instruction); }
+                 continue;
+             }
++            if !unboxed::inline(&locals, inst)
++                && let Some((export, arguments)) = unboxed::raw_helper(&locals, inst)
++            {
++                for argument in arguments { locals.push_boxed(&mut code, argument); }
++                code.extend([Call(index(export)), LocalSet(locals.raw(inst.result))]);
++                for instruction in code.drain(..) { function.instruction(&instruction); }
++                continue;
++            }
+             if unboxed::inline(&locals, inst) {
+                 match &inst.operation {
+                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
+@@ -2301,6 +2321,7 @@ fn emit_function(
+                     ),
+                     Operation::Bitwise { operation, arguments } => locals.bitwise(
+                         &mut code, *operation, arguments, inst.result, index(operation.export()),
++                        unboxed::raw_helper(&locals, inst).map(|(export, _)| index(export)),
+                     ),
+                     _ => unreachable!("inline numeric instruction"),
+                 }
+@@ -2811,11 +2832,11 @@ fn emit_function(
+                             .instruction(&Call(index(operation.export())))
+                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                     }
+-                    if locals.of(inst.result) == unboxed::Repr::Long {
+-                        // Core's int32 helper has completed the original
++                    if matches!(locals.of(inst.result), unboxed::Repr::Long | unboxed::Repr::Double | unboxed::Repr::Flag) {
++                        // A checked numeric helper has completed the original
+                         // operand conversions and returned a long. Reuse its
+                         // GC value while keeping subsequent numeric uses raw.
+-                        locals.unbox_long(&mut code, inst.result);
++                        locals.unbox_result(&mut code, inst.result);
+                         for instruction in code.drain(..) { function.instruction(&instruction); }
+                         boxed.insert(inst.result.0);
+                     }
+diff --git a/crates/suss-compile/src/portable/emit/unboxed.rs b/crates/suss-compile/src/portable/emit/unboxed.rs
+index 9bb25cac..291c73d9 100644
+--- a/crates/suss-compile/src/portable/emit/unboxed.rs
++++ b/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -15,6 +15,8 @@ use crate::runtime_abi;
+ use wasm_encoder::{BlockType, HeapType, Instruction, ValType};
+ 
+ mod numeric_core;
++mod numeric_casts;
++mod long_bitwise;
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub(super) enum Repr {
+@@ -142,18 +144,6 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, divis
+     }
+ }
+ 
+-/// Clojure's `bit-and`, `bit-or` and `bit-xor` of two longs are a long
+-/// (#387); anything else takes the runtime operation, which throws for a
+-/// double as Clojure does.
+-pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+-    match operation {
+-        Bitwise::And if count == 2 => Some(Instruction::I64And),
+-        Bitwise::Or if count == 2 => Some(Instruction::I64Or),
+-        Bitwise::Xor if count == 2 => Some(Instruction::I64Xor),
+-        _ => None,
+-    }
+-}
+-
+ /// Core's ToInt32 operations consume a long's low 32 bits. The result is
+ /// signed except for zero-fill right shift, exactly as their boxed helpers.
+ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+@@ -170,7 +160,11 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+         _ => return None,
+     })
+ }
+-fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
++fn bitwise(operation: Bitwise, arguments: &[Lattice], cast: Option<usize>) -> Lattice {
++    if let Some(index) = cast { return Lattice::Known(numeric_casts::result(index)); }
++    if long_bitwise::accepts(operation, arguments.len()) {
++        return Lattice::Known(if operation == Bitwise::Test { Repr::Flag } else { Repr::Long });
++    }
+     if numeric_core::accepts(operation, arguments.len()) {
+         return arithmetic(Arithmetic::Add, arguments, false, false);
+     }
+@@ -201,18 +195,7 @@ fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+     if raw_int32(operation, arguments.len()).is_some() {
+         return Lattice::Known(Repr::Long);
+     }
+-    let test = operation == Bitwise::Test && arguments.len() == 2;
+-    if (test || raw_bitwise(operation, arguments.len()).is_some())
+-        && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
+-    {
+-        if arguments.iter().all(|argument| *argument == Lattice::Top) {
+-            Lattice::Top
+-        } else {
+-            Lattice::Known(if test { Repr::Flag } else { Repr::Long })
+-        }
+-    } else {
+-        Lattice::Known(Repr::Boxed)
+-    }
++    Lattice::Known(Repr::Boxed)
+ }
+ 
+ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
+@@ -242,10 +225,33 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
+     }
+ }
+ 
++fn long_literals(function: &Function) -> Vec<Option<i64>> {
++    let mut values = vec![None; function.values.len()];
++    for block in &function.blocks {
++        for instruction in &block.instructions {
++            if let Operation::Literal(Literal::Long(value)) = instruction.operation {
++                values[instruction.result.0] = Some(value);
++            }
++        }
++    }
++    values
++}
++fn bitwise_inline_inputs(operation: Bitwise, arguments: &[Repr], cast: Option<usize>) -> bool {
++    if cast.is_some() { return arguments[0].definite().numeric(); }
++    if raw_int32(operation, arguments.len()).is_some() || long_bitwise::accepts(operation, arguments.len()) {
++        return arguments.iter().all(|kind| kind.definite() == Repr::Long);
++    }
++    if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
++        return arguments.iter().all(|kind| kind.definite() == Repr::Double);
++    }
++    true
++}
++
+ /// Each value's representation. Resumable functions, whose locals are spilled
+ /// as GC values across suspensions, keep every value boxed.
+ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>) -> Vec<Repr> {
+     let count = function.values.len();
++    let literals = long_literals(function);
+     if resumable {
+         return vec![Repr::Boxed; count];
+     }
+@@ -344,7 +350,8 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+                         Operation::Comparison { operation, arguments } => {
+                             comparison(*operation, &operands(arguments))
+                         }
+-                        Operation::Bitwise { operation, arguments } => bitwise(*operation, &operands(arguments)),
++                        Operation::Bitwise { operation, arguments } => bitwise(*operation, &operands(arguments),
++                            numeric_casts::index(*operation, arguments, &literals)),
+                         _ => unreachable!("seeded numeric instruction"),
+                     };
+                     if next != state[instruction.result.0] {
+@@ -401,11 +408,11 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+             {
+                 raw_use[arguments[0].0] = true;
+             }
+-            let boxed_int32 = matches!(&instruction.operation,
++            let boxed_bitwise = matches!(&instruction.operation,
+                 Operation::Bitwise { operation, arguments }
+-                if raw_int32(*operation, arguments.len()).is_some()
+-                    && arguments.iter().any(|argument| repr[argument.0].definite() != Repr::Long));
+-            if repr[instruction.result.0] != Repr::Boxed && !boxed_int32
++                if !bitwise_inline_inputs(*operation, &arguments.iter().map(|value| repr[value.0]).collect::<Vec<_>>(),
++                    numeric_casts::index(*operation, arguments, &literals)));
++            if repr[instruction.result.0] != Repr::Boxed && !boxed_bitwise
+                 && matches!(
+                     instruction.operation,
+                     Operation::Arithmetic { .. } | Operation::Comparison { .. } | Operation::Bitwise { .. }
+@@ -509,14 +516,7 @@ pub(super) struct Locals {
+ }
+ impl Locals {
+     pub(super) fn new(repr: Vec<Repr>, function: &Function, base: u32, offset: u32, sentinels: u32) -> Self {
+-        let mut long_literals = vec![None; repr.len()];
+-        for block in &function.blocks {
+-            for instruction in &block.instructions {
+-                if let Operation::Literal(Literal::Long(value)) = &instruction.operation {
+-                    long_literals[instruction.result.0] = Some(*value);
+-                }
+-            }
+-        }
++        let long_literals = long_literals(function);
+         let mut raw = vec![None; repr.len()];
+         let mut declarations = Vec::new();
+         let mut next = base;
+@@ -622,15 +622,29 @@ impl Locals {
+         value.0 as u32 + self.offset
+     }
+     /// Read an already-boxed result whose operation guarantees a long.
+-    pub(super) fn unbox_long(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
++    pub(super) fn unbox_result(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+         use Instruction::*;
+         let boxed = self.boxed(value);
++        match self.of(value) {
++            Repr::Long => {
+         code.extend([LocalGet(boxed), RefTestNonNull(HeapType::I31),
+             If(BlockType::Result(ValType::I64)), LocalGet(boxed),
+             RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S,
+             Else, LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+             StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
+             End, LocalSet(self.raw(value))]);
++            }
++            Repr::Double => code.extend([LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
++                StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, LocalSet(self.raw(value))]),
++            Repr::Flag => {
++                code.push(LocalGet(boxed));
++                code.push(runtime_abi::sentinel_in(runtime_abi::TRUE, self.sentinels));
++                code.extend([RefEq, LocalSet(self.raw(value))]);
++            }
++            _ => unreachable!("guaranteed helper result"),
++        }
++        if let Some(flag) = self.cached[value.0] { code.extend([I32Const(1), LocalSet(flag)]); }
++
+     }
+     /// A block parameter or instruction result is a new dynamic value each
+     /// time its defining block executes. Invariants defined in another block
+@@ -1039,11 +1053,13 @@ impl Locals {
+ 
+     /// A raw long bitwise operation, which can't fail. bit-test produces a
+     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
+-    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
++    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32, raw_slow: Option<u32>) {
+         use Instruction::*;
+         if raw_int32(operation, arguments.len()).is_some()
+             || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
+             || numeric_core::accepts(operation, arguments.len())
++            || long_bitwise::accepts(operation, arguments.len())
++            || numeric_casts::index(operation, arguments, &self.long_literals).is_some()
+         {
+             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+             if !inputs.is_empty() {
+@@ -1055,11 +1071,19 @@ impl Locals {
+                 self.bitwise_raw(code, operation, arguments, result, slow);
+                 if self.of(result).maybe() { code.extend([I32Const(1), LocalSet(self.valid(result))]); }
+                 code.push(Else);
++                if let Some(raw_slow) = raw_slow {
++                    let inputs = if numeric_casts::index(operation, arguments, &self.long_literals).is_some() {
++                        &arguments[..1]
++                    } else { arguments };
++                    for argument in inputs { self.push_boxed(code, *argument); }
++                    code.extend([Call(raw_slow), LocalSet(self.raw(result)), End]);
++                    return;
++                }
+                 for argument in arguments { self.push_boxed(code, *argument); }
+                 code.extend([Call(slow), LocalSet(self.boxed(result))]);
+                 if self.of(result).maybe() {
+                     code.extend([I32Const(0), LocalSet(self.valid(result))]);
+-                } else { self.unbox_long(code, result); }
++                } else { self.unbox_result(code, result); }
+                 code.push(End);
+                 return;
+             }
+@@ -1068,6 +1092,14 @@ impl Locals {
+     }
+     fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+         use Instruction::*;
++        if let Some(index) = numeric_casts::index(operation, arguments, &self.long_literals) {
++            self.numeric_cast_raw(code, index, arguments, result, slow);
++            return;
++        }
++        if long_bitwise::accepts(operation, arguments.len()) {
++            self.long_bitwise_raw(code, operation, arguments, result);
++            return;
++        }
+         if numeric_core::accepts(operation, arguments.len()) {
+             self.numeric_core_raw(code, operation, arguments, result, slow);
+             return;
+@@ -1113,17 +1145,7 @@ impl Locals {
+             code.push(Instruction::LocalSet(self.raw(result)));
+             return;
+         }
+-        code.extend([
+-            Instruction::LocalGet(self.raw(arguments[0])),
+-            Instruction::LocalGet(self.raw(arguments[1])),
+-        ]);
+-        if operation == Bitwise::Test {
+-            code.extend([Instruction::I64ShrU, Instruction::I64Const(1),
+-                Instruction::I64And, Instruction::I32WrapI64]);
+-        } else {
+-            code.push(raw_bitwise(operation, arguments.len()).expect("raw bitwise"));
+-        }
+-        code.push(Instruction::LocalSet(self.raw(result)));
++        unreachable!("raw bitwise operation");
+     }
+ 
+     pub(super) fn literal(&self, code: &mut Vec<Instruction<'static>>, literal: &Literal, result: ValueId) {
+@@ -1169,15 +1191,10 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool
+ 
+ /// Whether an instruction is emitted inline on raw values.
+ pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
+-    if let Operation::Bitwise { operation: Bitwise::DoubleMax | Bitwise::DoubleMin, arguments } = &instruction.operation
+-        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Double)
+-    { return false; }
+     if let Operation::Bitwise { operation, arguments } = &instruction.operation
+-        && raw_int32(*operation, arguments.len()).is_some()
+-        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)
+-    {
+-        return false;
+-    }
++        && !bitwise_inline_inputs(*operation, &arguments.iter().map(|value| locals.of(*value)).collect::<Vec<_>>(),
++            numeric_casts::index(*operation, arguments, &locals.long_literals))
++    { return false; }
+     locals.of(instruction.result) != Repr::Boxed
+         && matches!(
+             instruction.operation,
+@@ -1187,3 +1204,13 @@ pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
+                 | Operation::Bitwise { .. }
+         )
+ }
++
++/// Checked numeric helpers can supply a raw result even with unknown inputs.
++pub(super) fn raw_helper(locals: &Locals, instruction: &ir::Instruction) -> Option<(&'static str, Vec<ValueId>)> {
++    if locals.of(instruction.result) == Repr::Boxed { return None; }
++    let Operation::Bitwise { operation, arguments } = &instruction.operation else { return None };
++    if let Some(index) = numeric_casts::index(*operation, arguments, &locals.long_literals) {
++        return Some((runtime_abi::CAST_RAW_EXPORTS[index], vec![arguments[0]]));
++    }
++    operation.raw_export().map(|export| (export, arguments.clone()))
++}
+diff --git a/crates/suss-compile/src/portable/hir.rs b/crates/suss-compile/src/portable/hir.rs
+index a047425d..4be43b31 100644
+--- a/crates/suss-compile/src/portable/hir.rs
++++ b/crates/suss-compile/src/portable/hir.rs
+@@ -347,6 +347,33 @@ impl Bitwise {
+             _ => return None,
+         })
+     }
++    /// A raw result from the same checked/coercing boxed operand helper.
++    pub(crate) fn raw_export(self) -> Option<&'static str> {
++        Some(match self {
++            Self::And => "primitive-bit-and-raw",
++            Self::Or => "primitive-bit-or-raw",
++            Self::Xor => "primitive-bit-xor-raw",
++            Self::AndNot => "primitive-bit-and-not-raw",
++            Self::Not => "primitive-bit-not-raw",
++            Self::Clear => "primitive-bit-clear-raw",
++            Self::Flip => "primitive-bit-flip-raw",
++            Self::Set => "primitive-bit-set-raw",
++            Self::Test => "primitive-bit-test-raw",
++            Self::Left => "primitive-bit-shift-left-raw",
++            Self::Right => "primitive-bit-shift-right-raw",
++            Self::Unsigned => "primitive-unsigned-bit-shift-right-raw",
++            Self::Int32 => "int32-int-raw",
++            Self::Int32And => "int32-bit-and-raw",
++            Self::Int32Or => "int32-bit-or-raw",
++            Self::Int32Xor => "int32-bit-xor-raw",
++            Self::Int32Left => "int32-bit-shift-left-raw",
++            Self::Int32Right => "int32-bit-shift-right-raw",
++            Self::Int32Unsigned => "int32-unsigned-bit-shift-right-raw",
++            Self::Imul => "int32-imul-raw",
++            Self::BitCount => "int32-bit-count-raw",
++            _ => return None,
++        })
++    }
+     /// Shipped core's 32-bit form of an inline bit operation.
+     pub(crate) fn int32(self) -> Self {
+         match self {
+@@ -3698,6 +3725,16 @@ impl Analyzer<'_> {
+             return self.protocol_site_call(form, items, &protocol);
+         }
+         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
++            if !self.privileged && matches!(operation, Bitwise::Clear | Bitwise::Flip | Bitwise::Set | Bitwise::Test) {
++                let callee = self.form(&items[0])?;
++                let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
++                *self.source_nodes.last_mut().expect("source node fact slot") =
++                    Some(std::sync::Arc::new(SourceNode::Invoke {
++                        callee: std::sync::Arc::new(callee.clone()), arguments: arguments.clone().into(),
++                    }));
++                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
++                    ty: Type::Value, kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) });
++            }
+             return self.bitwise_form(form, args, *operation);
+         }
+         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
+diff --git a/crates/suss-compile/src/portable/hir/local_hints.rs b/crates/suss-compile/src/portable/hir/local_hints.rs
+index d30fe744..4b8372c2 100644
+--- a/crates/suss-compile/src/portable/hir/local_hints.rs
++++ b/crates/suss-compile/src/portable/hir/local_hints.rs
+@@ -15,7 +15,9 @@ pub(super) fn numeric_call(hir: &Hir) -> bool {
+     let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
+     global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
+         ("quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
+-        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec", 1))
++        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec"
++            | "byte" | "short" | "int" | "float" | "unchecked-byte" | "unchecked-short"
++            | "unchecked-int" | "unchecked-float", 1))
+ }
+ 
+ /// These Clojure core functions have :inline primitive implementations. An
+@@ -93,7 +95,8 @@ pub(super) fn inline(
+     }
+     if arguments.len() != 1 { return Ok(()); }
+     let index = match global.name() {
+-        "byte" => 3, "short" => 2, "int" => 1, "float" => 8,
++        "byte" => 3, "short" => 2, "int" => 1,
++        "float" => if primitive_returns::class(&arguments[0], facts, meter)? == Primitive::Long { 11 } else { 8 },
+         "unchecked-byte" => 7, "unchecked-short" => 6, "unchecked-int" => 5, "unchecked-float" => 9,
+         _ => return Ok(()),
+     };
+diff --git a/crates/suss-compile/src/runtime_abi.rs b/crates/suss-compile/src/runtime_abi.rs
+index b8333404..197ef16b 100644
+--- a/crates/suss-compile/src/runtime_abi.rs
++++ b/crates/suss-compile/src/runtime_abi.rs
+@@ -1,6 +1,8 @@
+ //! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
+ //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
+ //! Construction indices below are implementation details, not artifact ABI IDs.
++pub(crate) use bitwise::CAST_RAW_EXPORTS;
++
+ use std::borrow::Cow;
+ use wasm_encoder::*;
+ mod arithmetic;
+diff --git a/crates/suss-compile/src/runtime_abi/bitwise.rs b/crates/suss-compile/src/runtime_abi/bitwise.rs
+index af00bed0..11993938 100644
+--- a/crates/suss-compile/src/runtime_abi/bitwise.rs
++++ b/crates/suss-compile/src/runtime_abi/bitwise.rs
+@@ -9,7 +9,7 @@
+ use super::*;
+ 
+ /// `number-cast`'s kinds, as core's coercions pass them.
+-pub(crate) const CASTS: [(&str, Cast); 11] = [
++pub(crate) const CASTS: [(&str, Cast); 12] = [
+     ("long", Cast::Checked(64)),
+     ("int", Cast::Checked(32)),
+     ("short", Cast::Checked(16)),
+@@ -21,6 +21,21 @@ pub(crate) const CASTS: [(&str, Cast); 11] = [
+     ("float", Cast::Float(true)),
+     ("unchecked-float", Cast::Float(false)),
+     ("double", Cast::Double),
++    ("float-long", Cast::FloatLong),
++];
++pub(crate) const CAST_RAW_EXPORTS: [&str; 12] = [
++    "number-cast-long-raw",
++    "number-cast-int-raw",
++    "number-cast-short-raw",
++    "number-cast-byte-raw",
++    "number-cast-unchecked-long-raw",
++    "number-cast-unchecked-int-raw",
++    "number-cast-unchecked-short-raw",
++    "number-cast-unchecked-byte-raw",
++    "number-cast-float-raw",
++    "number-cast-unchecked-float-raw",
++    "number-cast-double-raw",
++    "number-cast-float-long-raw",
+ ];
+ #[derive(Clone, Copy)]
+ pub(crate) enum Cast {
+@@ -31,6 +46,8 @@ pub(crate) enum Cast {
+     Unchecked(u32),
+     /// Binary32 rounding, returned as a double; checked against the float range.
+     Float(bool),
++    /// Source float(long) rounds directly; replacement doubles remain checked.
++    FloatLong,
+     Double,
+ }
+ 
+@@ -144,8 +161,9 @@ pub(super) fn intrinsics(b: &mut Builder) {
+ 
+ /// The body of one cast of the value in local 0. Local 1 is an i64, local 2
+ /// an f64.
+-fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
++fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'static>> {
+     use Instruction::*;
++    let name = if name == "float-long" { "float" } else { name };
+     let long = b.names["long-test"];
+     let unbox = b.names["long-unbox"];
+     let boxed = b.names["long-box"];
+@@ -182,7 +200,9 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
+                 }
+                 code.push(End);
+             }
+-            code.extend([LocalGet(0), Return, End]);
++            code.push(LocalGet(0));
++            if raw { code.push(Call(unbox)); }
++            code.extend([Return, End]);
+             // A double is compared itself, untruncated. Clojure's long and
+             // int casts let NaN through, as 0; short and byte reject it. The
+             // long cast's upper limit, 2^63, saturates to Long/MAX_VALUE.
+@@ -217,7 +237,8 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
+             }
+             code.push(If(BlockType::Empty));
+             code.extend(throw_with_value(b, &range, 0));
+-            code.extend([End, LocalGet(2), I64TruncSatF64S, Call(boxed)]);
++            code.extend([End, LocalGet(2), I64TruncSatF64S]);
++            if !raw { code.push(Call(boxed)); }
+         }
+         Cast::Unchecked(bits) => {
+             code.extend([LocalGet(0), Call(long), If(BlockType::Result(ValType::I64))]);
+@@ -235,7 +256,7 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
+                 let shift = I64Const(i64::from(64 - bits));
+                 code.extend([shift.clone(), I64Shl, shift, I64ShrS]);
+             }
+-            code.push(Call(boxed));
++            if !raw { code.push(Call(boxed)); }
+         }
+         Cast::Float(false) => {
+             // Java's (float) of a long rounds once, straight to binary32.
+@@ -252,11 +273,17 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
+                 F32DemoteF64,
+                 End,
+                 F64PromoteF32,
+-                Call(b.names["number-box"]),
+             ]);
++            if !raw { code.push(Call(b.names["number-box"])); }
+         }
+-        Cast::Float(true) => {
+-            // Clojure's floatCast widens a long to a double first.
++        Cast::Float(true) | Cast::FloatLong => {
++            if matches!(kind, Cast::FloatLong) {
++                code.extend([LocalGet(0), Call(long), If(BlockType::Empty),
++                    LocalGet(0), Call(unbox), F32ConvertI64S, F64PromoteF32]);
++                if !raw { code.push(Call(b.names["number-box"])); }
++                code.extend([Return, End]);
++            }
++            // Generic float(Object) widens a long to a double first.
+             code.extend([
+                 LocalGet(0),
+                 Call(double),
+@@ -267,10 +294,12 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
+                 If(BlockType::Empty),
+             ]);
+             code.extend(throw_with_value(b, &range, 0));
+-            code.extend([End, LocalGet(2), F32DemoteF64, F64PromoteF32, Call(b.names["number-box"])]);
++            code.extend([End, LocalGet(2), F32DemoteF64, F64PromoteF32]);
++            if !raw { code.push(Call(b.names["number-box"])); }
+         }
+         Cast::Double => {
+-            code.extend([LocalGet(0), Call(double), Call(b.names["number-box"])]);
++            code.extend([LocalGet(0), Call(double)]);
++            if !raw { code.push(Call(b.names["number-box"])); }
+         }
+     }
+     code
+@@ -280,8 +309,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+     use Instruction::*;
+     // Each cast, then `number-cast` selecting one by its index in CASTS.
+     let mut casts = Vec::new();
+-    for (name, kind) in CASTS {
+-        let body = cast(b, name, kind);
++    for (index, (name, kind)) in CASTS.into_iter().enumerate() {
++        let body = cast(b, name, kind, false);
+         casts.push(b.function_with_locals(
+             &format!("number-cast-{name}"),
+             &[VALUE],
+@@ -289,6 +318,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+             &[(1, ValType::I64), (1, ValType::F64)],
+             &body,
+         ));
++        let raw_body = cast(b, name, kind, true);
++        b.function_with_locals(CAST_RAW_EXPORTS[index], &[VALUE],
++            &[if index < 8 { ValType::I64 } else { ValType::F64 }],
++            &[(1, ValType::I64), (1, ValType::F64)], &raw_body);
+     }
+     let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
+     dispatch.extend(numeric::error("Invalid numeric cast", nominal::ERROR_GLOBAL));
+@@ -360,7 +393,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+             "bit-count" => body.push(I32Popcnt),
+             _ => unreachable!(),
+         }
+-        // The result, boxed inline (#387): an i31 when it fits, else a long.
++        // Raw-return consumers avoid creating a temporary GC result.
++        let mut raw_body = body.clone();
++        raw_body.push(if name == "unsigned-bit-shift-right" { I64ExtendI32U } else { I64ExtendI32S });
++        b.function_with_locals(&format!("int32-{name}-raw"), &vec![VALUE; arity],
++            &[ValType::I64], &[(1, ValType::I64)], &raw_body);
++        // The boxed entry retains its original canonical long copy.
+         body.push(if name == "unsigned-bit-shift-right" { I64ExtendI32U } else { I64ExtendI32S });
+         body.extend([
+             LocalTee(arity as u32), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, If(BlockType::Result(VALUE)),
+@@ -440,6 +478,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+                 "unsigned-bit-shift-right" => body.extend([LocalGet(2), I64ShrU]),
+                 _ => unreachable!(),
+             }
++            b.function_with_locals(&format!("primitive-{name}-raw"), &vec![VALUE; arity],
++                &[if name == "bit-test" { ValType::I32 } else { ValType::I64 }],
++                &[(1, ValType::I64)], &body);
+             if name == "bit-test" {
+                 body.extend(super::boolean());
+             } else {
+diff --git a/crates/suss-compile/tests/portable_unboxed_locals.rs b/crates/suss-compile/tests/portable_unboxed_locals.rs
+index cc4d0f29..33ac713f 100644
+--- a/crates/suss-compile/tests/portable_unboxed_locals.rs
++++ b/crates/suss-compile/tests/portable_unboxed_locals.rs
+@@ -259,3 +259,160 @@ fn known_double_core_results_stay_raw_and_execute() {
+     assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
+     run.post_return(&mut store).unwrap();
+ }
++
++mod raw_bits_and_casts {
++    use super::*;
++    fn check(operators: &[Operator]) {
++        for (i, op) in operators.iter().enumerate() {
++            match op {
++                Operator::Call { .. } => assert!(throwing_call(operators, i), "normal path calls: {operators:?}"),
++                Operator::CallRef { .. } | Operator::ReturnCall { .. } | Operator::ReturnCallRef { .. } =>
++                    panic!("normal path calls: {operators:?}"),
++                Operator::StructNew { .. } => {
++                    let end = operators[i..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
++                        .map(|offset| i + offset).unwrap();
++                    assert!(!operators[i..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
++                    assert!(matches!(operators[end], Operator::Return) || throwing_call(operators, end));
++                }
++                _ => {}
++            }
++        }
++    }
++    #[test]
++    fn long_bits_execute_without_normal_calls_or_boxes() {
++        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
++          (if (< i 1234581)
++            (recur (inc i) (unchecked-add acc
++              (bit-xor (bit-and-not (bit-not i) 255)
++                (bit-shift-right (bit-shift-left i i) i)
++                (unsigned-bit-shift-right -1 i)))) acc)))";
++        let bytes = Compiler::new().compile(source,
++            "package test:raw-bits; world api { export bound: func() -> s64; }").unwrap();
++        for operators in functions_with(&bytes, 1234581) {
++            check(&operators);
++            assert!(operators.iter().any(|op| matches!(op, Operator::I64Shl)));
++            assert!(operators.iter().any(|op| matches!(op, Operator::I64ShrS)));
++            assert!(operators.iter().any(|op| matches!(op, Operator::I64ShrU)));
++        }
++        let expected = (0..1234581_i64).fold(0_i64, |sum, i| {
++            let shift = i as u32;
++            let a = !i & !255_i64;
++            let c = i.wrapping_shl(shift).wrapping_shr(shift);
++            let d = ((-1_i64 as u64).wrapping_shr(shift)) as i64;
++            sum.wrapping_add(a ^ c ^ d)
++        });
++        let (mut store, instance) = extrema_component(&bytes);
++        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
++        assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
++        run.post_return(&mut store).unwrap();
++    }
++    #[test]
++    fn narrow_integer_casts_execute_without_normal_calls_or_boxes() {
++        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
++          (if (< i 1234583) (recur (inc i) (unchecked-add acc
++            (+ (byte (bit-and i 63)) (short (bit-and i 1023)) (int i)
++              (unchecked-byte i) (unchecked-short i) (unchecked-int i)))) acc)))";
++        let bytes = Compiler::new().compile(source,
++            "package test:raw-casts; world api { export bound: func() -> s64; }").unwrap();
++        for operators in functions_with(&bytes, 1234583) { check(&operators); }
++        let expected: i64 = (0..1234583_i64).map(|i|
++            (i & 63) + (i & 1023) + i + i as i8 as i64 + i as i16 as i64 + i as i32 as i64).sum();
++        let (mut store, instance) = extrema_component(&bytes);
++        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
++        assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
++        run.post_return(&mut store).unwrap();
++    }
++    #[test]
++    fn float_casts_execute_without_normal_calls_or_boxes() {
++        let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
++          (if (< i 1234585) (recur (inc i)
++            (unchecked-add acc (double (float (unchecked-float i))))) acc)))";
++        let bytes = Compiler::new().compile(source,
++            "package test:raw-floats; world api { export bound: func() -> f64; }").unwrap();
++        for operators in functions_with(&bytes, 1234585) {
++            check(&operators);
++            assert!(operators.iter().any(|op| matches!(op, Operator::F32ConvertI64S)));
++            assert!(operators.iter().any(|op| matches!(op, Operator::F32DemoteF64)));
++        }
++        let expected = (1234585_i64 * 1234584 / 2) as f64;
++        let (mut store, instance) = extrema_component(&bytes);
++        let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
++        assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
++        run.post_return(&mut store).unwrap();
++    }
++}
++
++#[test]
++fn raw_numeric_helpers_return_scalars_without_numeric_boxes() {
++    use std::collections::BTreeMap;
++    let bytes = suss_compile::runtime_abi::module();
++    wasmparser::Validator::new().validate_all(&bytes).unwrap();
++    let mut exports = BTreeMap::new();
++    let mut boxes = Vec::new();
++    let mut results = Vec::new();
++    let mut functions = Vec::new();
++    for payload in Parser::new(0).parse_all(&bytes) {
++        match payload.unwrap() {
++            Payload::ImportSection(reader) => assert_eq!(reader.count(), 0),
++            Payload::TypeSection(reader) => for group in reader {
++                for ty in group.unwrap().into_types() {
++                    results.push(match ty.composite_type.inner {
++                        wasmparser::CompositeInnerType::Func(ty) => ty.results().first().copied(), _ => None,
++                    });
++                }
++            },
++            Payload::FunctionSection(reader) => for ty in reader { functions.push(ty.unwrap()); },
++            Payload::ExportSection(reader) => for export in reader {
++                let export = export.unwrap();
++                if matches!(export.name, "number-box" | "long-box") { boxes.push(export.index); }
++                if export.kind == wasmparser::ExternalKind::Func && export.name.ends_with("-raw")
++                    && (export.name.starts_with("number-cast-") || export.name.starts_with("primitive-") || export.name.starts_with("int32-"))
++                {
++                    exports.insert(export.index, export.name.to_string());
++                }
++            },
++            _ => {}
++        }
++    }
++    assert_eq!(exports.len(), 33);
++    assert_eq!(boxes.len(), 2);
++    for (index, name) in &exports {
++        let result = results[functions[*index as usize] as usize].unwrap();
++        assert!(matches!(result, wasmparser::ValType::I64 | wasmparser::ValType::I32 | wasmparser::ValType::F64), "{name}: {result:?}");
++    }
++    // Discover numeric box layouts from their actual exported constructors.
++    // Internal type indices are not a public artifact contract.
++    let mut numeric_types = Vec::new();
++    let mut function = 0;
++    for payload in Parser::new(0).parse_all(&bytes) {
++        if let Payload::CodeSectionEntry(body) = payload.unwrap() {
++            if boxes.contains(&function) {
++                for op in body.get_operators_reader().unwrap().into_iter() {
++                    if let Operator::StructNew { struct_type_index } = op.unwrap() {
++                        if !numeric_types.contains(&struct_type_index) { numeric_types.push(struct_type_index); }
++                    }
++                }
++            }
++            function += 1;
++        }
++    }
++    assert_eq!(numeric_types.len(), 2);
++    let mut function = 0;
++    for payload in Parser::new(0).parse_all(&bytes) {
++        if let Payload::CodeSectionEntry(body) = payload.unwrap() {
++            if let Some(name) = exports.get(&function) {
++                for op in body.get_operators_reader().unwrap().into_iter() {
++                    let op = op.unwrap();
++                    if let Operator::Call { function_index } = op {
++                        assert!(!boxes.contains(&function_index), "raw helper {name} calls a numeric boxer");
++                    }
++                    if let Operator::StructNew { struct_type_index } = op {
++                        assert!(!numeric_types.contains(&struct_type_index),
++                            "raw helper {name} must not construct a numeric box");
++                    }
++                }
++            }
++            function += 1;
++        }
++    }
++}
+diff --git a/crates/suss-compile/src/portable/emit/unboxed/long_bitwise.rs b/crates/suss-compile/src/portable/emit/unboxed/long_bitwise.rs
+new file mode 100644
+index 00000000..3926ebcb
+--- /dev/null
++++ b/crates/suss-compile/src/portable/emit/unboxed/long_bitwise.rs
+@@ -0,0 +1,40 @@
++//! Raw counterparts of the strict 64-bit bitwise helpers.
++use super::*;
++pub(super) fn accepts(operation: Bitwise, count: usize) -> bool {
++    matches!((operation, count), (Bitwise::Not, 1)
++        | (Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot
++            | Bitwise::Clear | Bitwise::Flip | Bitwise::Set | Bitwise::Test
++            | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned, 2))
++}
++impl Locals {
++    pub(super) fn long_bitwise_raw(&self, code: &mut Vec<Instruction<'static>>,
++        operation: Bitwise, arguments: &[ValueId], result: ValueId)
++    {
++        use Instruction::*;
++        code.push(LocalGet(self.raw(arguments[0])));
++        match operation {
++            Bitwise::Not => code.extend([I64Const(-1), I64Xor]),
++            Bitwise::Clear | Bitwise::Flip | Bitwise::Set => {
++                code.extend([I64Const(1), LocalGet(self.raw(arguments[1])), I64Shl]);
++                match operation {
++                    Bitwise::Clear => code.extend([I64Const(-1), I64Xor, I64And]),
++                    Bitwise::Flip => code.push(I64Xor),
++                    _ => code.push(I64Or),
++                }
++            }
++            _ => {
++                code.push(LocalGet(self.raw(arguments[1])));
++                match operation {
++                    Bitwise::And => code.push(I64And), Bitwise::Or => code.push(I64Or),
++                    Bitwise::Xor => code.push(I64Xor),
++                    Bitwise::AndNot => code.extend([I64Const(-1), I64Xor, I64And]),
++                    Bitwise::Left => code.push(I64Shl), Bitwise::Right => code.push(I64ShrS),
++                    Bitwise::Unsigned => code.push(I64ShrU),
++                    Bitwise::Test => code.extend([I64ShrU, I64Const(1), I64And, I32WrapI64]),
++                    _ => unreachable!("raw long bit operation"),
++                }
++            }
++        }
++        code.push(LocalSet(self.raw(result)));
++    }
++}
+diff --git a/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs b/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs
+new file mode 100644
+index 00000000..1db6f44a
+--- /dev/null
++++ b/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs
+@@ -0,0 +1,79 @@
++//! Checked/unchecked casts on raw values; slow paths preserve original errors.
++use super::*;
++pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Option<i64>]) -> Option<usize> {
++    if operation == Bitwise::Int && arguments.len() == 1 { return Some(1); }
++    if operation != Bitwise::Cast || arguments.len() != 2 { return None; }
++    literals[arguments[1].0].filter(|index| (0..=11).contains(index)).map(|index| index as usize)
++}
++pub(super) fn result(index: usize) -> Repr {
++    if index < 8 { Repr::Long } else { Repr::Double }
++}
++impl Locals {
++    pub(super) fn numeric_cast_raw(&self, code: &mut Vec<Instruction<'static>>, index: usize,
++        arguments: &[ValueId], result: ValueId, slow: u32)
++    {
++        use Instruction::*;
++        let value = arguments[0];
++        let from = self.of(value).definite();
++        let raw = self.raw(value);
++        match index {
++            0..=3 => {
++                let bits = [64, 32, 16, 8][index];
++                if from == Repr::Long {
++                    if bits < 64 {
++                        let shift = I64Const(64 - bits);
++                        code.extend([LocalGet(raw), shift.clone(), I64Shl, shift, I64ShrS,
++                            LocalGet(raw), I64Ne, If(BlockType::Empty)]);
++                        self.slow(code, arguments, slow);
++                        code.push(End);
++                    }
++                    code.push(LocalGet(raw));
++                } else {
++                    let bound = 2_f64.powi((bits - 1) as i32);
++                    let high = if bits == 64 { bound } else { bound - 1.0 };
++                    if bits >= 32 {
++                        code.extend([LocalGet(raw), F64Const((-bound).into()), F64Lt,
++                            LocalGet(raw), F64Const(high.into()), F64Gt, I32Or]);
++                    } else {
++                        code.extend([LocalGet(raw), F64Const((-bound).into()), F64Ge,
++                            LocalGet(raw), F64Const(high.into()), F64Le, I32And, I32Eqz]);
++                    }
++                    code.push(If(BlockType::Empty));
++                    self.slow(code, arguments, slow);
++                    code.extend([End, LocalGet(raw), I64TruncSatF64S]);
++                }
++            }
++            4..=7 => {
++                let bits = [64, 32, 16, 8][index - 4];
++                code.push(LocalGet(raw));
++                if from == Repr::Double {
++                    if bits == 64 { code.push(I64TruncSatF64S); }
++                    else { code.extend([I32TruncSatF64S, I64ExtendI32S]); }
++                }
++                if bits < 64 {
++                    code.extend([I64Const(64 - bits), I64Shl, I64Const(64 - bits), I64ShrS]);
++                }
++            }
++            8 | 11 => {
++                if index == 11 && from == Repr::Long {
++                    code.extend([LocalGet(raw), F32ConvertI64S, F64PromoteF32]);
++                } else {
++                    self.push_as(code, value, Repr::Double);
++                    code.extend([F64Abs, F64Const(f64::from(f32::MAX).into()), F64Gt, If(BlockType::Empty)]);
++                    self.slow(code, arguments, slow);
++                    code.push(End);
++                    self.push_as(code, value, Repr::Double);
++                    code.extend([F32DemoteF64, F64PromoteF32]);
++                }
++            }
++            9 => {
++                code.push(LocalGet(raw));
++                code.push(if from == Repr::Long { F32ConvertI64S } else { F32DemoteF64 });
++                code.push(F64PromoteF32);
++            }
++            10 => self.push_as(code, value, Repr::Double),
++            _ => unreachable!("numeric cast index"),
++        }
++        code.push(LocalSet(self.raw(result)));
++    }
++}
+diff --git a/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs b/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs
+new file mode 100644
+index 00000000..22982a3f
+--- /dev/null
++++ b/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs
+@@ -0,0 +1,102 @@
++//! Remaining bitwise/narrow cast values and raw paths follow Clojure (#337).
++use suss_cli::portable_session::Session;
++
++const DEFINITIONS: &str = r#"(def ^{:redef true :arglists '(^long [])} cast-long (fn ^long [] (identity 4)))
++(def ^{:redef true :arglists '(^double [])} cast-double (fn ^double [] (identity 4.0)))
++(def run-long-casts (fn [] [(try (byte (cast-long)) (catch :default e :error)) (try (int (cast-long)) (catch :default e :error)) (try (double (float (cast-long))) (catch :default e :error)) (try (double (unchecked-float (cast-long))) (catch :default e :error))]))
++(def run-double-casts (fn [] [(try (byte (cast-double)) (catch :default e :error)) (try (int (cast-double)) (catch :default e :error)) (try (double (float (cast-double))) (catch :default e :error)) (try (double (unchecked-float (cast-double))) (catch :default e :error))]))
++"#;
++
++// Fresh JVM Clojure 1.12.6; results/m12-bits-casts retains source and output.
++const CASES: &[(&str, &str)] = &[
++    ("[(bit-not 0) (bit-not -9223372036854775808) (bit-and-not -1 255) (bit-and-not -1 1 2 4)]", "[-1 9223372036854775807 -256 -8]"),
++    ("[(bit-shift-left 1 -1) (bit-shift-left 1 63) (bit-shift-left 1 64) (bit-shift-left 1 65) (bit-shift-left 1 -65)]", "[-9223372036854775808 -9223372036854775808 1 2 -9223372036854775808]"),
++    ("[(bit-shift-right -9223372036854775808 -1) (bit-shift-right -9223372036854775808 64) (unsigned-bit-shift-right -1 0) (unsigned-bit-shift-right -1 63) (unsigned-bit-shift-right -1 64)]", "[-1 -9223372036854775808 -1 1 -1]"),
++    ("[(bit-clear -9223372036854775808 63) (bit-set 0 -1) (bit-flip -1 64) (bit-test -9223372036854775808 63)]", "[0 -9223372036854775808 -2 true]"),
++    ("[(bit-and-not (identity -1) 15) (bit-not (identity 1)) (bit-set (identity 0) 32) (bit-test (identity 1) 64)]", "[-16 -2 4294967296 true]"),
++    ("(let [^long x (identity 5.5)] [(bit-not x) (bit-and-not x 1) (bit-shift-left x 1) (try (bit-set x 1) (catch :default e :error)) (try (bit-test x 1) (catch :default e :error))])", "[-6 4 10 :error :error]"),
++    ("(let [^double x (identity 5)] [(bit-not x) (bit-and-not x 1) (bit-shift-left x 1) (bit-set x 1) (bit-test x 0)])", "[-6 4 10 7 true]"),
++    ("[(try (bit-not 1.0) (catch :default e :error)) (try (bit-shift-left 1 1.0) (catch :default e :error)) (try (bit-clear 1.0 0) (catch :default e :error)) (try (bit-set 1 1.0) (catch :default e :error))]", "[:error :error :error :error]"),
++    ("(with-redefs [bit-not (fn [x] :replaced)] [(bit-not 1) ((identity bit-not) 1)])", "[-2 :replaced]"),
++    ("(with-redefs [bit-set (fn [x y] :replaced) bit-test (fn [x y] :replaced)] [(bit-set 0 1) ((identity bit-set) 0 1) (bit-test 1 0) ((identity bit-test) 1 0)])", "[:replaced :replaced :replaced :replaced]"),
++    ("[(byte 127) (short -32768) (int 2147483647) (unchecked-byte 128) (unchecked-short 32768) (unchecked-int 2147483648)]", "[127 -32768 2147483647 -128 -32768 -2147483648]"),
++    ("[(byte -127.5) (short -32767.75) (int -2147483647.5) (unchecked-byte 255.5) (unchecked-short 65535.5) (unchecked-int 2147483648.0)]", "[-127 -32767 -2147483647 -1 -1 2147483647]"),
++    ("[(try (byte 127.1) (catch :default e :error)) (try (short 32767.1) (catch :default e :error)) (try (int 2147483647.1) (catch :default e :error)) (int ##NaN)]", "[:error :error :error 0]"),
++    ("[(try (byte ##NaN) (catch :default e :error)) (try (short ##NaN) (catch :default e :error)) (try (int ##Inf) (catch :default e :error)) (try (int 9223372036854775807) (catch :default e :error))]", "[:error :error :error :error]"),
++    ("[(unchecked-byte ##Inf) (unchecked-byte ##-Inf) (unchecked-short ##Inf) (unchecked-short ##-Inf) (unchecked-int ##Inf) (unchecked-int ##-Inf) (unchecked-int ##NaN)]", "[-1 0 -1 0 2147483647 -2147483648 0]"),
++    ("[(unchecked-byte 9223372036854775807) (unchecked-short -9223372036854775808) (unchecked-int 9223372036854775807)]", "[-1 0 -1]"),
++    ("[(double (float 1.2)) (double (unchecked-float 1.2)) (double (float -0.0)) (double (unchecked-float ##NaN))]", "[1.2000000476837158 1.2000000476837158 -0.0 ##NaN]"),
++    ("[(double (float 18014399583223809)) (double (unchecked-float 18014399583223809))]", "[1.801440065696563E16 1.801440065696563E16]"),
++    ("[(try (float ##Inf) (catch :default e :error)) (try (float 3.402823466385289E38) (catch :default e :error)) (double (unchecked-float ##Inf)) (double (float ##NaN))]", "[:error :error ##Inf ##NaN]"),
++    ("[(double (float 3.4028234663852886E38)) (double (float -3.4028234663852886E38)) (double (unchecked-float 1.0E300))]", "[3.4028234663852886E38 -3.4028234663852886E38 ##Inf]"),
++    ("(let [^long x (identity 5.5)] [(byte x) (short x) (int x) (double (float x)) (double (unchecked-float x))])", "[5 5 5 5.0 5.0]"),
++    ("[(byte (identity 7)) (short (identity 300)) (try (int (identity 3000000000.0)) (catch :default e :error))]", "[7 300 :error]"),
++    ("(with-redefs [byte (fn [x] :replaced)] [(byte 7) ((identity byte) 7)])", "[7 :replaced]"),
++    ("(with-redefs [unchecked-float (fn [x] :replaced)] [(double (unchecked-float 7)) ((identity unchecked-float) 7)])", "[7.0 :replaced]"),
++    ("[(try (byte nil) (catch :default e :error)) (try (float :bad) (catch :default e :error)) (try (unchecked-int true) (catch :default e :error))]", "[:error :error :error]"),
++    ("(let [events (atom [])] [(try (do (byte 128) (swap! events conj :after) :ok) (catch :default e :error)) @events])", "[:error []]"),
++    ("(let [events (atom [])] [(try (bit-shift-left (do (swap! events conj :first) :bad) (do (swap! events conj :second) 1)) (catch :default e :error)) @events])", "[:error [:first :second]]"),
++    ("[(== (double (float (identity 18014399583223809))) 1.8014398509481984E16) (== (double (unchecked-float (identity 18014399583223809))) 1.8014400656965632E16)]", "[true true]"),
++    ("(let [x (loop [] 18014399583223809)] [(== (double (float x)) 1.8014398509481984E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
++    ("(let [^long x (identity 18014399583223809)] [(== (double (float x)) 1.8014400656965632E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
++];
++
++// Suss ADR-0004 fallback controls; these are not JVM numeric value matches.
++const REBIND_CASES: &[(&str, &str)] = &[
++    ("(with-redefs [cast-long (fn [] (identity 1.2))] (run-long-casts))", "[1 1 1.2000000476837158 1.2000000476837158]"),
++    ("(with-redefs [cast-long (fn [] nil)] (run-long-casts))", "[:error :error :error :error]"),
++    ("(with-redefs [cast-long (fn [] (identity 1.0E300))] (run-long-casts))", "[:error :error :error ##Inf]"),
++    ("(with-redefs [cast-double (fn [] (identity 18014399583223809))] (let [xs (run-double-casts)] [(nth xs 0) (nth xs 1) (== (nth xs 2) 1.8014398509481984E16) (== (nth xs 3) 1.8014400656965632E16)]))", "[:error :error true true]"),
++];
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> { CASES.iter().chain(REBIND_CASES) }
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_raw_bits_and_casts() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        session.eval(DEFINITIONS).unwrap();
++        for (source, expected) in cases() {
++            let value = session.eval(&observed(source)).unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session.inspect(&value, |mut store, value| {
++                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++            }).unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_raw_bits_and_casts() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = format!("(ns localhints)\n{DEFINITIONS}\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!("(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n", observed(expression)));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args(["compile", "localhints.sus", "-w", "localhints.wit", "-o", "localhints.wasm"]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["run", "localhints.wasm", "--invoke", &format!("case{index}"), "--", "0"])
++            .output().unwrap();
++        assert!(output.status.success(), "{expression}: {}", String::from_utf8_lossy(&output.stderr));
++        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "1", "{expression}");
++    }
++}

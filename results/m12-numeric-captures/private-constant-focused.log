@@ -1,0 +1,18 @@
+Running as unit: run-p63980-i88116210.scope; invocation ID: c4b8a9c76f1e487e8d02ba229342d9f7
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-cli)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile)
+error[E0603]: constant `NUMBER` is private
+   --> crates/suss-compile/tests/portable_numeric_captures.rs:57:87
+    |
+ 57 |                 assert!(![suss_compile::runtime_abi::LONG, suss_compile::runtime_abi::NUMBER]
+    |                                                                                       ^^^^^^ private constant
+    |
+note: the constant `NUMBER` is defined here
+   --> crates/suss-compile/src/runtime_abi.rs:196:1
+    |
+196 | pub(crate) const NUMBER: u32 = 0;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0603`.
+error: could not compile `suss-compile` (test "portable_numeric_captures") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

@@ -1,0 +1,4 @@
+package test:vectorprobe; world w {
+export case-nth: func() -> s64;
+export case-vector: func() -> s64;
+}

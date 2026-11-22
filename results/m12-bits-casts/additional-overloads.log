@@ -1,0 +1,8 @@
+"(double (float (unchecked-float ##Inf)))" [:value "##Inf"]
+"(int (unchecked-float 2147483648.0))" [:value "2147483647"]
+"(try (byte (identity 127.1)) (catch Throwable e :error))" [:value "127"]
+"(try (short (identity 32767.1)) (catch Throwable e :error))" [:value "32767"]
+"(try (int (identity 2147483647.9)) (catch Throwable e :error))" [:value "2147483647"]
+"(try (long (identity 1.0E300)) (catch Throwable e :error))" [:value ":error"]
+"(try (byte (identity ##NaN)) (catch Throwable e :error))" [:value "0"]
+"(try (int (unchecked-float ##Inf)) (catch Throwable e :error))" [:value ":error"]

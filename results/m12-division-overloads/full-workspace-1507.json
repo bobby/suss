@@ -1,0 +1,39 @@
+{
+  "source_head": "1507a4fcc4d775c01a6e9b8c122360c94a9116b3",
+  "command": "cargo +stable test --workspace --locked -- --test-threads=2",
+  "exit_code": 0,
+  "passed": 2263,
+  "failed": 0,
+  "ignored": 14,
+  "result_groups": 331,
+  "log_sha256": "1d3375a98f37ff65fbd19107027587f278ea2871c1d708e9e4784ca57977423d",
+  "environment": {
+    "toolchain": "stable",
+    "jobs": 2,
+    "scope": "MemoryMax=6G",
+    "target": "m11-print-after-target",
+    "wasm_opt": "Binaryen 133"
+  },
+  "limitations": "The earlier frozen division source, not the later local-hint/cache/extrema source. Ten existing legacy tests awaiting compiled support, three recording tests and one doc example are ignored, not passing. Reviewed conformance baseline comparisons do not mean every upstream assertion passes.",
+  "ignored_tests": [
+    "test test_cond_thread_first ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support",
+    "test test_cond_thread_first_false ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support",
+    "test test_print_no_newline ... ignored, compiled pipeline: Unresolved Runtime name print; see prototype_cases_awaiting_compiled_support",
+    "test test_println_basic ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_no_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_number ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_prn_basic ... ignored, compiled pipeline: Unresolved Runtime name prn; see prototype_cases_awaiting_compiled_support",
+    "test test_some_thread_first ... ignored, compiled pipeline: Unresolved Runtime name some->; see prototype_cases_awaiting_compiled_support",
+    "test test_when_first ... ignored, compiled pipeline: Unresolved Runtime name when-first; see prototype_cases_awaiting_compiled_support",
+    "test record_case_catalog ... ignored, manual input catalog update; review removed cases and changed expectations",
+    "test record_known_failures ... ignored, manual evidence capture; review the diff before accepting this baseline",
+    "test record_observations ... ignored, manual observation capture only; never updates expected failures",
+    "test crates/suss-compile/src/lib.rs - (line 20) ... ignored"
+  ],
+  "ignored_breakdown": {
+    "legacy_awaiting_compiled_support": 10,
+    "manual_recording": 3,
+    "doc_example": 1
+  }
+}

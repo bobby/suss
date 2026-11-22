@@ -1,0 +1,6 @@
+package test:escape; world w {
+export case-control: func(n: u32) -> f64;
+export case-vector: func(n: u32) -> f64;
+export case-entry: func(n: u32) -> f64;
+export case-closure: func(n: u32) -> f64;
+}

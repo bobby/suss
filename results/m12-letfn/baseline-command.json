@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-target/debug/suss",
+    "-e",
+    "(let [x 3000000000] (letfn [(f [n] (if (zero? n) (+ x 1) (g (dec n)))) (g [n] (if (zero? n) (+ x 2) (f (dec n))))] [(f 0) (f 1) (g 1)]))"
+  ],
+  "compiler_source_commit": "e8d0ed9f5459cb154c55d3ab1755f771221562c4",
+  "compiler_sha256": "ca35f0656d81fea24cea1070c72e37f87300e91e1865117fedfea55975e7cf82",
+  "exit_code": 1,
+  "seconds": 4.73383355140686
+}

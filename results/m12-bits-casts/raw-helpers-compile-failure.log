@@ -1,0 +1,47 @@
+Running as unit: run-p3509831-i87381356.scope; invocation ID: 40860d05ff4449a39a8f2acf06b7394b
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+error[E0061]: this method takes 5 arguments but 6 arguments were supplied
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:2319:78
+     |
+2319 |                     Operation::Comparison { operation, arguments } => locals.comparison(
+     |                                                                              ^^^^^^^^^^
+2320 |                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+2321 |                         unboxed::raw_helper(&locals, inst).map(|(export, _)| index(export)),
+     |                         ------------------------------------------------------------------- unexpected argument #6 of type `std::option::Option<u32>`
+     |
+note: method defined here
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit/unboxed.rs:873:19
+     |
+ 873 |     pub(super) fn comparison(
+     |                   ^^^^^^^^^^
+help: remove the extra argument
+     |
+2320 -                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+2321 -                         unboxed::raw_helper(&locals, inst).map(|(export, _)| index(export)),
+2320 +                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+     |
+
+error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:2323:75
+     |
+2323 |                       Operation::Bitwise { operation, arguments } => locals.bitwise(
+     |  ___________________________________________________________________________^^^^^^^-
+2324 | |                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+2325 | |                     ),
+     | |_____________________- argument #6 of type `std::option::Option<u32>` is missing
+     |
+note: method defined here
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit/unboxed.rs:1056:19
+     |
+1056 | ...fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32, raw_slow: Option<u32>) {
+     |       ^^^^^^^                                                                                                                     ---------------------
+help: provide the argument
+     |
+2323 -                     Operation::Bitwise { operation, arguments } => locals.bitwise(
+2324 -                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+2325 -                     ),
+2323 +                     Operation::Bitwise { operation, arguments } => locals.bitwise(&mut code, *operation, arguments, inst.result, index(operation.export()), /* Option<u32> */),
+     |
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `suss-compile-generator` (lib) due to 2 previous errors

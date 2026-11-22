@@ -1,0 +1,4 @@
+(def ^{:redef true :arglists '(^long [])} cast-long (fn ^long [] (identity 4)))
+(def ^{:redef true :arglists '(^double [])} cast-double (fn ^double [] (identity 4.0)))
+(def run-long-casts (fn [] [(try (byte (cast-long)) (catch :default e :error)) (try (int (cast-long)) (catch :default e :error)) (try (double (float (cast-long))) (catch :default e :error)) (try (double (unchecked-float (cast-long))) (catch :default e :error))]))
+(def run-double-casts (fn [] [(try (byte (cast-double)) (catch :default e :error)) (try (int (cast-double)) (catch :default e :error)) (try (double (float (cast-double))) (catch :default e :error)) (try (double (unchecked-float (cast-double))) (catch :default e :error))]))

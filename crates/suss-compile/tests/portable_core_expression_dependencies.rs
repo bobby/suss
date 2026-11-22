@@ -42,8 +42,12 @@ fn retained_numeric_and_stack_definitions_preserve_scalar_edges_in_both_phases()
             ("(max 1 5 3 4)", "5"),
             ("(min 42)", "42"),
             ("(min 5 1 3 4)", "1"),
-            ("(max 0.0 -0.0)", "-0.0"),
-            ("(min -0.0 0.0)", "0.0"),
+            // JVM Clojure primitive double/double uses Math.max/min;
+            // ordinary Object function calls still return the second tie.
+            ("(max 0.0 -0.0)", "0.0"),
+            ("(min -0.0 0.0)", "-0.0"),
+            ("((identity max) 0.0 -0.0)", "-0.0"),
+            ("((identity min) -0.0 0.0)", "0.0"),
             ("(max ##NaN 1)", "##NaN"),
             ("(min 1 ##NaN)", "##NaN"),
             (

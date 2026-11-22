@@ -1,0 +1,3 @@
+"(with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))" "3"
+"(with-redefs [vector (fn [& xs] nil)] (let [[a b] [1 2]] (+ a b)))" "3"
+"(let [events (atom []) [a b] [(do (swap! events conj :a) 1) (do (swap! events conj :b) 2)]] [(+ a b) @events])" "[3 [:a :b]]"

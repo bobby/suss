@@ -1,0 +1,6 @@
+:compiler-options nil
+first {:static true}
+next {:static true}
+nth {:inline #object[clojure.core$nth__inliner__5611 0x59221b97 "clojure.core$nth__inliner__5611@59221b97"]}
+(let [f first n next t nth effects (atom 0)] (try (alter-var-root (var first) (fn [_] (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 1))) (f v))))) (alter-var-root (var next) (fn [_] (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 2))) (n v))))) (alter-var-root (var nth) (fn [_] (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) 3))) (alter-var-root (var nth) (fn [_] t)) (try (t v i) (finally (alter-var-root (var nth) (fn [_] replacement)))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) 3))) (alter-var-root (var nth) (fn [_] t)) (try (t v i missing) (finally (alter-var-root (var nth) (fn [_] replacement))))))))) [((fn [[[a] & [b]]] [a b]) [[17] 23]) (clojure.core/deref effects)] (finally (alter-var-root (var first) (fn [_] f)) (alter-var-root (var next) (fn [_] n)) (alter-var-root (var nth) (fn [_] t)))))
+[[17 23] 12]

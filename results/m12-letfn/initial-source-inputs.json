@@ -1,0 +1,20 @@
+{
+  "base_commit": "e8d0ed9f5459cb154c55d3ab1755f771221562c4",
+  "files": {
+    "crates/suss-cli/tests/clojure_letfn.rs": "c5f3c7c44efcba499c2234951d7b71bc4fefa2919c8e02237919abeac082c400",
+    "crates/suss-cli/tests/compiled_macro_letfn_source.rs": "fa5e411acf794a88d71a55416c6a08f175483ea95cd71bae9a5162cea503050b",
+    "crates/suss-compile/src/portable/analyzer_edn.rs": "778c24915f086e8806c28321004575c8303acfcccfd8518381b1eb841786678f",
+    "crates/suss-compile/src/portable/hir.rs": "f30979a4001d72412b376d154914e5cfe4f48d3731ba268da7e646c55640e06f",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "55982445b8a9128fc6266ed0ccca9391ea0a962c9920688928c6b05279a40c23",
+    "crates/suss-compile/src/portable/hir/letfn.rs": "132478d163e4d848b03ea0f80f19c6c42aacc56d928b9b5dc20e42d67bca8ae6",
+    "crates/suss-compile/src/portable/hir/local_bindings.rs": "9df0ded2507e098885945e58a479f725ac37be902040d4f0158ae6563ed29dde",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "8e633de12ea6c0f3dc662913a9bb8295b33e4f9a666354f18398a145bdcaa906",
+    "crates/suss-compile/src/portable/hir/source_tags.rs": "6161ba6d9a2733ae2cf070351089b14fbaf64fd85b151df102e99dead34b3937",
+    "crates/suss-compile/src/portable/ir.rs": "6416b9e6644261fd38fd16f3b51d80d8e57b51fccbcfdc5669d64770e8df2cb9",
+    "crates/suss-compile/src/portable/ir/async.rs": "c0daf0f2df13c767c8783c6ce6d74a37a683ceb8b2e129c8c62be89c4c849f4b",
+    "crates/suss-compile/src/portable/primitive.rs": "06e8a19afc7e1aed4bd16c84ffabb4dc4adf169ca4b5c367dfc9513f608cc530",
+    "crates/suss-compile/src/portable/resolve.rs": "6ecbb67844f4668b0493359283936f9fdfbf5a05bfab3b3caa065d0f22fc75e5",
+    "crates/suss-compile/src/portable_macro_graph.rs": "a7133e1ddfb3c6d3e17d33e4664f828c010ed2ada36c1c8433f22e483211afff",
+    "crates/suss-compile/tests/portable_letfn.rs": "31b18eb080437460d3b106f4bc3abc5209d41f3f3d7d6722ca8ef43aef6b7efb"
+  }
+}

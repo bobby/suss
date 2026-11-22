@@ -724,7 +724,8 @@ pub(super) fn append(b: &mut Builder) {
 }
 
 /// Clojure's `quot`, `rem`, `abs`, `unchecked-*` and the `long?` and
-/// `double?` tests, on operands core has already checked are numbers.
+/// `double?` tests. Numeric operations also check their own operands so direct
+/// source inlining preserves language errors rather than trapping on a cast.
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
     let boxed = b.names["long-box"];
@@ -732,8 +733,10 @@ pub(super) fn functions(b: &mut Builder) {
     let number = b.names["number-unbox"];
     let locals = [(3, ValType::I64), (3, ValType::F64)];
     // Longs are locals 2 and 3; doubles 5 and 6.
-    let operands = |b: &Builder| {
-        let mut code = both_longs(b).to_vec();
+    let operands = |b: &Builder, symbol: &str| {
+        let mut code = Vec::new();
+        super::numeric_operands::require_numbers(b, &mut code, symbol, 2);
+        code.extend(both_longs(b));
         code.extend([
             If(BlockType::Empty),
             LocalGet(0),
@@ -761,7 +764,7 @@ pub(super) fn functions(b: &mut Builder) {
     };
     // quot truncates. Long MIN / -1 wraps to MIN, as in Clojure, rather
     // than trapping; a double quotient is truncated toward zero.
-    let mut code = operands(b);
+    let mut code = operands(b, "quot");
     zero(&mut code, vec![LocalGet(3), I64Eqz]);
     code.extend([
         LocalGet(3),
@@ -807,7 +810,7 @@ pub(super) fn functions(b: &mut Builder) {
     code.extend([LocalGet(7), StructNew(NUMBER)]);
     b.function_with_locals("number-quot", &[VALUE, VALUE], &[VALUE], &locals, &code);
     // rem has the dividend's sign; wasm's rem_s doesn't trap on MIN % -1.
-    let mut code = operands(b);
+    let mut code = operands(b, "rem");
     zero(&mut code, vec![LocalGet(3), I64Eqz]);
     code.extend([LocalGet(2), LocalGet(3), I64RemS, Call(boxed), Return, End]);
     code.extend(doubles);
@@ -841,14 +844,17 @@ pub(super) fn functions(b: &mut Builder) {
         StructNew(NUMBER),
         End,
     ];
-    b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &code);
+    let mut checked = Vec::new();
+    super::numeric_operands::require_numbers(b, &mut checked, "abs", 1);
+    checked.extend(code);
+    b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &checked);
     // unchecked-* wrap longs and are ordinary double arithmetic otherwise.
     for (name, exact, floating) in [
         ("add", I64Add, F64Add),
         ("subtract", I64Sub, F64Sub),
         ("multiply", I64Mul, F64Mul),
     ] {
-        let mut code = operands(b);
+        let mut code = operands(b, &format!("unchecked-{name}"));
         code.extend([LocalGet(2), LocalGet(3), exact, Call(boxed), Return, End]);
         code.extend([
             LocalGet(0),
@@ -882,7 +888,10 @@ pub(super) fn functions(b: &mut Builder) {
         StructNew(NUMBER),
         End,
     ];
-    b.function("number-unchecked-negate", &[VALUE], &[VALUE], &code);
+    let mut checked = Vec::new();
+    super::numeric_operands::require_numbers(b, &mut checked, "unchecked-negate", 1);
+    checked.extend(code);
+    b.function("number-unchecked-negate", &[VALUE], &[VALUE], &checked);
     for (name, test) in [("long?", "long-test"), ("double?", "double-test")] {
         let mut code = vec![LocalGet(0), Call(b.names[test])];
         code.extend(super::boolean());

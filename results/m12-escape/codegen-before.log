@@ -1,0 +1,23 @@
+Running as unit: run-p3691033-i87543658.scope; invocation ID: 18d424838b4745089c7ec91e23388a78
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3.32s
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 1 test
+test raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls ... FAILED
+
+failures:
+
+---- raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls stdout ----
+
+thread 'raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls' (3691240) panicked at crates/suss-compile/tests/portable_unboxed_locals.rs:275:21:
+assertion failed: matches!(operators[end], Operator::Return) || throwing_call(operators, end)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 18.54s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_unboxed_locals`

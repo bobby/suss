@@ -1,0 +1,19 @@
+{
+  "base_commit": "9596dce64e4fd4f94054c2b78cb689f32e22d7cf",
+  "files": {
+    "crates/suss-compile/src/portable/emit.rs": "0d877ea9b220f56a6a7aa2b7f3d49d509df488abffa30a0407128402098e115f",
+    "crates/suss-compile/src/portable/hir.rs": "b9eca9d81a50e7a05dd3e0b491d92aa502125b0c1b9922758071776e0d8d1232",
+    "crates/suss-compile/src/portable/ir.rs": "b99c520bb8a698c6793f50e2d98651e0f7af8dabfae37537a7aa73eb79428adc",
+    "crates/suss-compile/src/portable/ir/aggregates.rs": "08fd08f61add1eef3b616157d1a0ad663941909e8da7f7cdcd4ddaaccc3d7f48",
+    "crates/suss-compile/src/runtime_abi.rs": "f942e700f2554ebdb6850417061cef2ff7b76c8f865b06b77d4783067f302053",
+    "crates/suss-compile/src/runtime_abi/arrays.rs": "723a66e7ad3586af4c88b2e60b808213c944fbbe3f4e3778fdc0515229c509d5",
+    "crates/suss-compile/src/runtime_abi/error_constructors.rs": "42543482542fe576e462f2f5e4ee6b97163361dd983ac80ec694d9d19c7c82c4",
+    "crates/suss-compile/src/runtime_abi/transient_maps.rs": "e4612b8145e067382514a3fe4b0ea49119b4338be351d343404a07708f5118c1",
+    "crates/suss-compile/tests/portable_nonescaping_vectors.rs": "784db05ff9163ffbe89070a13a899469dae14bcf48e7924542e7637b616788d3",
+    "docs/compatibility/bootstrap/exact-integers.sus": "a76f64fd66f33a08755bfce7a5b6e1a90433f2be8eb7ffffd475d545bd9f0a2e",
+    "docs/compatibility/core-import.json": "21b15965b2281e88dbf64595739c64e7c3d2c861c9e37958bdf8779094ea330e",
+    "runtime/core-import/manifest.json": "37e1a3eafaad59125bd63a488adb4045219c930d2cd3110c4e72018651a9a55f",
+    "runtime/core-import/suss/core.sus": "27e0ea6a300f4e2560ad5e39703549cbbc0916e00a25e32b35c7c9de9f495432",
+    "crates/suss-cli/tests/clojure_nonescaping_map_entries.rs": "13245db92fb2df1ffb314642488a5da6a55b599db6267fbc6f0f02ba9a4570ad"
+  }
+}

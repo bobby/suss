@@ -1,0 +1,9 @@
+[
+  {
+    "source": "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])",
+    "expected_jvm": "[true false true]",
+    "observed_f5056ffe": "[false false false]",
+    "scope": "Already documented scalar-predicate difference; the optimized path must preserve the boxed baseline. The original failing JVM test remains archived.",
+    "baseline_probe": "initial-oracle/nan-identity-baseline.json"
+  }
+]

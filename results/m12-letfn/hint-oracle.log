@@ -1,0 +1,3 @@
+"(letfn [(^double f [] 127.1)] (try (byte (f)) (catch Throwable e :error)))" 127
+"(letfn [(f ^double [] 127.1)] (try (byte (f)) (catch Throwable e :error)))" 127
+"((fn ^long [] (letfn [(^double f [] 1.5)] (f))))" 1

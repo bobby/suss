@@ -1,0 +1,20 @@
+{
+  "old_assertions": 2758,
+  "new_assertions": 2789,
+  "added_primary_passing_assertions": 31,
+  "removed_or_changed_old_assertions": 0,
+  "changed_namespace_failures": [
+    "clojure.core-test.every-qmark",
+    "clojure.core-test.not-every-qmark"
+  ],
+  "other_failure_fields_unchanged": true,
+  "primary_compare_counts": {
+    "pass": 2313,
+    "guest-judged": 54,
+    "fail": 429,
+    "not-executed": 4143,
+    "skipped": 0,
+    "namespaces-failed": 124
+  },
+  "observations_sha256": "0156b86135f81e977f0bfc4940650e7d51e937a02290d4eadcaa00fe9e8a5646"
+}

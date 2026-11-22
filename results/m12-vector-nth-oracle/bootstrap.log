@@ -1,0 +1,18 @@
+Running as unit: run-p4176352-i88048695.scope; invocation ID: 4ded8f6dd5624161af0fa20880666698
+    Finished `test` profile [optimized] target(s) in 0.89s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/tmp/tmp.Gf4oXeZ3LK/first`
+    Finished `test` profile [optimized] target(s) in 0.44s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/tmp/tmp.Gf4oXeZ3LK/second`
+compiled build-script identity: checkout-independent; embedded libraries, numeric assets and pinned command WIT graph invalidate
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.55s
+     Running tests/compiled_bootstrap.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/compiled_bootstrap-759510bfa36f85b7)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.31s
+

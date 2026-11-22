@@ -747,6 +747,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
                 None => return Ok(Some(named("clj-nil"))),
             },
             Expression::Let { body, .. }
+            | Expression::LetFn { body, .. }
             | Expression::Loop { body, .. }
             | Expression::DynamicScope { body, .. }
             | Expression::AsyncDynamicScope { body, .. }
@@ -826,6 +827,7 @@ pub(super) fn source_tags_metered(
                 Expression::Throw(_) | Expression::Recur { .. } => Some(named("ignore")),
                 Expression::Do(_)
                 | Expression::Let { .. }
+                | Expression::LetFn { .. }
                 | Expression::Loop { .. }
                 | Expression::DynamicScope { .. }
                 | Expression::AsyncDynamicScope { .. }

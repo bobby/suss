@@ -1,3 +1,606 @@
+## Letfn CI helper and suite review (2026-11-22)
+
+CI exposed two old test helpers with exhaustive matches on the previous
+binding/node shape. The method-role helper now maps LetFn explicitly, and
+both control-source patterns require is_letfn=false. The two targets pass14
+tests, zero failed/ignored; production compiler inputs and measurements stay
+unchanged. Original shard0/2 logs remain in results/m12-letfn/ci.
+
+The reviewed-suite run on1ae534da terminates101 because letfn unlocks the every?
+namespace. Its2789 actual assertions retain all2758 prior observations exactly
+and add31 passing every? assertions, independently rerun on JVM1.12.6 with
+zero failures/errors. Only two namespace failure records change: every? is
+removed, and not-every? now reports its own unsupported function rather than
+its previously blocked dependency. Assertion/test/skip failure records stay
+byte-equivalent as JSON values. The guarded compare/write and compare command
+passes; raw old baseline and new capture remain losslessly compressed. No
+unknown result becomes success and the not-every? failure stays explicit.
+
+## Recursive lexical function probes (2026-11-22)
+
+results/m12-letfn retains28 fresh JVM Clojure1.12.6 pairs and actual Runtime,
+Macro and AOT execution (84 observations), including duplicate names, forward
+references, mutual recursion, variadic/destructured signatures, Object casts,
+primitive hints, overflow, NaN, signed zero, arity and exception recovery. The
+four-target command passes22 tests, zero failed/ignored, on the earlier25-pair
+fixture; the expanded28-pair command passes all3 execution/GC tests. Source
+snapshots and original errors remain. An actual pending future retains a peer
+group across await/GC and returns42 after resolution; all14 async tests pass.
+Macro transport checks provisional and complete binding snapshots separately.
+
+Public letfn expands through genuine core fn forms into letfn*. All names are
+visible before initializer analysis; the JVM-confirmed last duplicate wins.
+The IR fills a private object array with function values before the body runs.
+Closures/futures carry a group reference for peer lookup, while ordinary
+numeric-only captures retain raw fields. The array is absent from source facts.
+No shared ABI layout or shipped dependency changes. Group/closure allocations
+remain; these observations do not claim full escape acceptance.
+
+python3 results/m12-letfn/source-check.py reconstructs16 exact inputs frome8d0ed9f.
+python3 results/m12-letfn/run-gates.py is active:48 focused targets, Java-free
+bootstrap, Binaryen133 and reviewed-suite comparison. Use stable Rust, two
+jobs/threads, MemoryMax4G, m12-recursive-target and outer target/suss. The source
+inputs stay frozen while gates run; terminal stage records accumulate in
+commands.json and the focused log is broad-focused.log.
+
+A separate documented boxed development reference disables only capture-field
+planning. boxed-source.patch/boxed-inputs.json reconstruct17 inputs; run-boxed.py
+executes the same28-case fixture there. The original published compiler cannot
+execute letfn, so it is not reported as a measured before success. Inspect the
+boxed command's terminal result: it passes all3 tests on the28-pair fixture.
+measure.py verifies both snapshots and identical group/direct benchmark sources.
+All16 RSS/8 perf/8 warm sums pass. The group estimates1832 to1816 bytes per
+iteration (one numeric box), with17956.96 to17486.72 instructions. Direct
+arithmetic stays below RSS resolution/about18. Group, closure and signature
+allocations dominate the remaining roughly1.8KB; these are not quiet timings.
+
+The earlier e8d0ed9f capture source now passes177 tests across39 targets, zero
+failed/ignored, Java-free bootstrap, Binaryen and reviewed-suite comparison.
+Its required unfiltered workspace command is active in m12-letfn-target, still
+frozen separately. It does not establish the full baseline for the letfn source.
+GitHub owns issue acceptance; BigInt/Ratio and BigDecimal remain required work.
+
+## Numeric-only closure capture fields (2026-11-22)
+
+results/m12-numeric-captures retains five-input reconstruction from5b40654f,
+18 fresh JVM pairs and actual Runtime/Macro/AOT execution (54 observations).
+The five-target command passes24 tests, zero failed/ignored, including three
+code-generation checks. The raw-field regression fails against the immutable
+parent compiler. Original inference/fixture/JVM assertion failures remain.
+Source classes and generic entry types stay unchanged. Numeric-only captures
+use private immutable i64/f64 fields; object uses, alias joins, unknown numeric
+alternatives and resumable makers stay conservative. A backward SSA demand
+worklist handles all captures of a method together. Named/general/variadic
+closures can use raw fields while their closure objects still allocate.
+
+SUSS_CAPTURE_TARGET=<m12-letfn-target> python3
+results/m12-numeric-captures/measure.py asserts24 RSS/12 perf runs and12 warm
+checks against frozen5b40654f, with immutable executable/component identities.
+The numeric capture loop estimates920 to904 bytes per iteration and8547.45 to
+8463.61 instructions. The object-return control remains about920 bytes/8661
+instructions; direct arithmetic remains below RSS resolution/about18. Source
+signature wrappers and named closure allocations dominate this sample. No
+quiet timing or elimination of the closure object is claimed.
+
+python3 results/m12-numeric-captures/run-gates.py is active on the frozen five
+inputs:39 focused targets, Java-free bootstrap, Binaryen133, reviewed-suite
+comparison, then cargo test --workspace --locked -- --test-threads=2. Use stable
+Rust, two jobs/threads, MemoryMax4G, m12-letfn-target and outer target/suss.
+The focused stage writes broad-focused.log; terminal stage receipts accumulate
+in commands.json. Do not infer a full pass before the process terminates.
+
+The parent vector snapshot finishes169 passes across36 targets; the MapEntry
+snapshot finishes172 across37. Both also pass Java-free bootstrap (4 tests),
+Binaryen133 (2 tests) and reviewed-suite comparison. These comparisons preserve
+known failures; they are not complete Clojure conformance. The original frozen
+f5056ffe full command terminates101 after8781.84s on
+portable_calling_convention::known_callees_are_static_calls. That stale call
+shape assertion is repaired on the current branch and passes in the parent
+focused run. The raw original full log/receipt remains in results/m12-escape;
+it does not prove the current full baseline. letfn and numeric-tower work
+remain outside these bounded observations; GitHub owns acceptance state.
+
+## Canonical MapEntry scalar probes (2026-11-22)
+
+results/m12-mapentries retains16 fresh JVM Clojure1.12.6 assertions, both-phase
+and actual AOT execution, generated-source checks and14-input reconstruction
+from9596dce6. The combined MapEntry/vector/parameter/IR command passes9 tests,
+zero failed/ignored; the earlier pre-rebase snapshot passes5 separately. Existing
+39-case parameter coverage remains, with the two explicit JVM corrections.
+The portable three-field constructor uses JVM MapEntry/create as its oracle
+adapter. No copied core body or shipped Java dependency is introduced.
+
+Core registers a canonical MapEntry witness in the original-Suss bootstrap
+extension. The private global is appended, preserving existing global indices
+and shared type group. Native reads require the registered descriptor, a valid
+three-field owner and indices0/1. A non-escaping constructor can keep key/value
+scalars through generic SSA parameters; key/value/hash effects remain once-only
+and ordered. Only the admitted public MapEntry construction guard disappears;
+private vector construction still keeps its protection. Constructor misses and
+unknown indices use the original guarded path. Copying stays source-relative;
+normalized async/future graphs stay conservative. One aggregate per function
+remains the current bound. Generated recipe/manifest/source checks pass.
+
+SUSS_MAPENTRY_TARGET=<m12-mapentry-target> python3
+results/m12-mapentries/measure.py compares the actual frozen9596dce6 executable
+with the combined source. All48 measured sums plus16 warm checks pass. MapEntry
+RSS slopes at1M/2M estimate135.12/136.37 bytes per iteration before and below
+resolution after; instruction deltas at100K/200K fall5578.89 to179.98. Vector
+remains about449 instructions and below resolution; control/closure about28
+and below resolution. These are not quiet walltimes. Raw source/component/
+compiler hashes, commands, unsuccessful import attempt and exact outputs remain.
+
+python3 results/m12-mapentries/run-gates.py is running37 focused targets, then
+Java-free bootstrap, Binaryen133 and reviewed-suite comparison. It uses stable
+Rust, two jobs/threads, MemoryMax4G scopes, m12-mapentry-target and outer
+ target/suss. Inspect terminal outcomes before claiming a broader pass. The
+parent vector/inline-nth gate runs separately in m12-aggregate-target; the
+required old full baseline remains frozen on f5056ffe. Final-head CI and
+independent review remain required before any draft promotion. letfn and the
+remaining numeric tower still need work; no complete escape result is inferred.
+
+## Inline nth fallback and primary parameter traces (2026-11-22)
+
+The36-target vector gate failed on live-nth-order: Suss9 versus pinned
+ClojureScript901. Fresh JVM1.12.6, with only global set! adapted to
+alter-var-root, independently asserts[[17 23]9]. Its rest/next trace asserts
+[[17 23]12], versus pinned1233; first/next still execute, while inline nth
+bypasses both replacements. The initial partial fix returned123 on a sequence
+miss, exposing the remaining live fallback. The genuine shipped nth now calls
+its owned core link on native misses. Public source AST identity remains,
+lexical/unknown calls and aliases retain ordinary behavior. MapEntry rebinding
+also now returns JVM3; its old14 result stays archived with the original hash.
+
+results/m12-vector-nth-oracle retains JVM forms/logs, the original local and CI
+failures, a compile-placement error and exact five-input reconstruction from
+5e06fede. The unchanged original39-case corpus is explicitly checked alongside
+the two JVM corrections in function-parameter-clojure-cases.json. Both parameter
+tests and both expanded vector tests pass:4 tests, zero failed/ignored. The
+vector fixture now executes23 pairs in Runtime/Macro and actual AOT (69
+observations:21 fresh JVM values plus2 separate Suss baseline controls).
+
+Run python3 results/m12-vector-nth-oracle/source-check.py; run-gates.py reruns
+all36 focused targets on this changed compiler, then Java-free bootstrap,
+Binaryen133 and reviewed-suite comparison. It is active; the original failed
+run did not reach those follow-on stages. Use stable Rust, two jobs/threads,
+MemoryMax4G scopes, m12-aggregate-target and outer target/suss, with Binaryen133.
+No RUSTFLAGS are set. The required unfiltered workspace run remains separate
+and active on frozen f5056ffe; no current full-baseline pass is inferred.
+
+Identical-source remeasurement asserts all48 measured sums plus16 warm checks.
+Vector allocation estimates167.85/167.65 bytes per iteration before, below RSS
+resolution after; instructions1628.87 to448.79. MapEntry allocation still about
+136 bytes/5579 instructions; direct/closure controls about28 and below RSS
+resolution. These are not quiet walltimes. Aliased NaN remains a documented JVM
+difference, not a compatibility success. MapEntry storage and letfn are next;
+no complete escape/numeric-tower result is claimed.
+
+## Guarded literal-vector probes (2026-11-22)
+
+results/m12-vectors retains17 fresh JVM value pairs and the original failed NaN
+alias observation. The cached18-case fixture (17 JVM values plus one boxed Suss
+NaN control) passes Runtime/Macro and actual AOT plus both IR checks:4 tests,
+zero failed/ignored. A subsequently added constructor-rebinding control uses a
+fresh frozen-compiler result; both vector execution tests pass all19 pairs
+(57 phase/component observations), retained in focused-progress.log/json.
+The broader36-target gate is still active. The original Runtime/Macro nth-rebinding failure
+is independently confirmed on f5056ffe (14 versus JVM3); the shipped core nth
+now gets indexed vector reads in sessions as well. Clojure1.12.6 metadata and
+EPL1.0 source/JAR provenance are recorded without a shipped Java dependency.
+
+Run python3 results/m12-vectors/source-check.py for exact eight-input
+reconstruction. Cached measurement inputs and the later test-only change remain
+separate, with production hashes and compiler bytes verified unchanged. Run
+SUSS_VECTOR_TARGET=<m12-aggregate-target> python3 results/m12-vectors/measure.py
+after Cargo completes. Identical benchmark source, warmed normal/null-GC caches,
+32 RSS and16 perf runs plus16 warm checks all assert their sums. Vector RSS
+slopes at1M/2M estimate167.96/168.94 bytes per iteration before, below resolution
+after; instruction deltas at100K/200K fall1628.61 to449.00. MapEntry remains about
+136 bytes/5579 instructions; direct/closure controls remain about28 instructions
+and below RSS resolution. These are not quiet walltimes. The uncached guard's
+2771-instruction regression is retained with its source and raw measurements.
+
+The pass handles one eligible1–31-element literal vector per function, constant
+in-bounds projections, complete non-escape use checks and a source-relative copy
+budget. Guard misses execute the original constructor/lookup path after once-only
+ordered elements. Generic SSA types and source overloads remain; earlier CFG
+boundaries must dominate the constructor. Async/region/future plans stay
+conservative. Successful constructor/schema admission is cached, but current
+canonical vector registration is checked on every call. No shared ABI layout
+change. Aliased NaN still differs from JVM as documented; the probe is retained
+as a negative observation, not relabeled as a JVM success.
+
+python3 results/m12-vectors/run-gates.py selects36 focused targets, then
+Java-free bootstrap reproduction, Binaryen133 and reviewed-suite comparison in
+MemoryMax4G user scopes, stable Rust, two jobs/threads, m12-aggregate-target and
+outer target/suss. Raw commands retain actual terminal statuses. This broader
+run is active; do not infer its result from the focused cached snapshot. The
+required original unfiltered workspace command remains separately active on its
+frozen f5056ffe checkout/target. MapEntry storage/rebinding and letfn remain
+explicit next limitations; no complete numeric tower or escape result is claimed.
+
+## Closure optimization CI fixture checks (2026-11-22)
+
+CI run44990307919, integration6 on f5056ffe, found two code-shape expectations
+invalidated by local closure elimination: portable_calling_convention expected a
+static call for a fully local closure, and portable_inline_predicates expected a
+call for a locally defined shadow of nil?. The captured failure log is under
+results/m12-closure-ci. The static-call fixture now returns its closure so that
+it escapes, preserving the original static/direct-entry assertions. A separate
+fixture checks that a fully local call is removed. An unknown lexical nil?
+parameter retains the ordinary-call shadowing check; locally defined nil? and
+identical? execute their own bodies in Runtime and Macro after GC, with no
+accidental identical-value lowering. Wrong-arity, live core-predicate, recursive
+static-call and ABI rejection assertions remain.
+
+While the original unfiltered Cargo baseline continues on its frozen f5056ffe
+checkout, run SUSS_EXISTING_TARGET=<m12-hints-target> python3
+results/m12-closure-ci/run-existing-compiler.py in the isolated repair checkout.
+This compiles the two repaired tests with stable rustc against that Cargo-built
+compiler, selecting exact direct dependencies from Cargo fingerprints; it does
+not rebuild or overwrite the running baseline's libraries or suss executable.
+commands.json records the commands and source/library hashes. All6 tests pass
+(4 calling-convention, 2 predicate), with zero failed or ignored. This is focused
+validation, not a Cargo full-baseline result; current-head CI and the terminal
+status of the original full run must be inspected separately. Subsequently,
+the ordinary cargo +stable test -p suss-compile --locked command with those two
+--test targets and -- --test-threads=2 also passes all6, zero failed/ignored,
+in a dedicated m12-aggregate-target directory cloned using btrfs reflinks.
+cargo-focused-command.json and cargo-focused.log retain that command/result.
+ Aggregate scalar
+replacement remains isolated exploratory source and is not part of this repair.
+
+## Local closure scalar storage probes (2026-11-21)
+
+results/m12-escape retains30 fresh JVM Clojure1.12.6 value assertions, executed
+in Runtime/Macro and actual AOT. Fixed-arity closures whose complete uses are
+correctly sized calls can be removed after source overload/return/recur checks.
+Captures and evaluated arguments flow through CFG parameters with their declared
+IR types, while raw numeric storage propagates independently. Return paths join
+at the original result; always-throwing paths remove unreachable blocks and
+unused SSA records. Single-use bodies move; repeated sites share a metered,
+source-relative copying allowance. Escaped/general/variadic/CFG-carried closures
+and normalized continuation/spill plans stay conservative. ABI layout unchanged.
+
+Actual before/after components execute identical four-case source with wide longs
+and doubles. Null-GC RSS slopes at1M/2M iterations (two samples) estimate closure
+allocation at119.5–119.8 bytes/iteration before, below resolution after; the direct
+control remains below resolution. Perf user-instruction deltas at100K/200K fall
+from1777.5 to28.0, matching the direct control. Vectors/MapEntries remain about
+168/136 bytes and1629/5579 instructions. All16 perf-run sums and all RSS-run sums
+are checked. These are allocation/instruction measurements, not quiet walltimes.
+Official bench.py adds the four cases; fresh JVM checks their exact loop sources
+at10/1M/2M (12 assertions), with the JVM MapEntry factory adapter recorded.
+
+Run python3 results/m12-escape/run-gates.py from m12-hints-source. Cargo +stable
+test --workspace --locked selects28 --test targets, then -- --test-threads=2:
+144 passed, zero failed/ignored. Java-free bootstrap reproduction passes both
+phases byte-exact plus4 execution tests; actual Binaryen133 passes2; reviewed-suite
+comparison passes1 in156.59s with10 unrelated tests filtered. All2758 assertion
+observations and existing known failures remain unchanged. Builds use stable
+Rust, two jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss.
+No RUSTFLAGS are set. The new exact inspected component executes1,234,591
+iterations and matches JVM's3705297213702690.0 with no normal-path calls or
+loop-carried boxes. Six production/test/benchmark inputs reconstruct byte-exact.
+
+Initial compile/IR failures, the always-throwing regression, unsupported ifn?
+fixture and original verifier fixture are retained. The verifier test now returns
+its closure to retain an escaping call boundary; all seven mutation assertions
+remain. ifn? is also unresolved in the frozen baseline, and fn? is the supported
+observation control. The main oracle was restored/rerun after separating the
+vector probe files; all30 recorded fixture pairs are checked. Vector redefinition
+probes match fresh JVM's3 for both nth and vector replacements. An earlier
+analyzer probe retains unresolved letfn. Next address vector/MapEntry storage
+and that explicit letfn limitation. The helper run-full-workspace.py contains
+the required unfiltered baseline command; no current full-workspace result or
+complete numeric-tower/escape coverage is inferred from the focused gates.
+
+## Source-selected cast overload probes (2026-11-21)
+
+results/m12-cast-overloads retains48 fresh JVM Clojure1.12.6 assertions, executed
+in Runtime/Macro and actual AOT, plus4 separately labeled Suss redefinition
+controls. Object byte/short/int casts truncate before narrowing while genuine
+double casts check the original value; byte/short failures still print the
+original operand. Source float identity and int(float)'s rounded upper bound
+have separate modes. Generic aliases use Object conversions. Source kinds
+remain independent of physical raw storage and int retains its primitive source
+kind. Final review limits source-class queries to the affected casts.
+
+The original eight additional AOT checks now all pass, correcting the six
+failures preserved at the predecessor snapshots. Two extra AOT probes pass:
+source float locals versus Object int conversion match JVM, while boxed Float
+infinity follows ADR-0003's explicit double-valued float contract. The latter
+is separately labeled, not counted as a JVM value match. Both initial incorrect
+oracle expectations and their fresh JVM corrections remain as exact source/logs.
+No Float value type or Java implementation is introduced.
+
+Run python3 results/m12-cast-overloads/run-gates.py from m12-hints-source. It
+uses cargo +stable test --workspace --locked with14 named --test targets and
+-- --test-threads=2:75 passed, zero failed/ignored. Java-free bootstrap reproduction
+passes both phases byte-exact plus4 execution tests; actual Binaryen133 passes2;
+the reviewed-suite comparison passes1 in210.85s,10 unrelated tests filtered,
+known failures retained. Commands use stable Rust, two jobs/threads, MemoryMax4G,
+m12-hints-target and outer target/suss. No RUSTFLAGS are set. The intermediate
+source/gates are retained separately; all gates reexecute the final source.
+Nine production/test inputs reconstruct byte-for-byte with source-check.py.
+
+The new inspected loop executes1,234,587 iterations and matches fresh JVM's
+5302551397102356, with no normal-path calls or loop-carried boxes. The library
+artifact verifies exact scalar signatures and no numeric box construction for
+all37 raw helper exports, including integer-valued int-float. Actual original/
+additional component and compiler hashes, full raw logs and compressed suite
+observations are retained. These probes do not establish a current unfiltered
+full-workspace baseline, a new quiet ratio or complete numeric-tower/escape
+coverage. Next investigate temporary vector/MapEntry and local closure numeric
+storage; a preliminary analyze probe reports unresolved Runtime name letfn, so
+that example's support must be addressed explicitly rather than skipped.
+
+## Bitwise and narrow-cast source/storage probes (2026-11-21)
+
+The working probe in results/m12-bits-casts retains30 fresh JVM1.12.6 value
+assertions, source patches and raw failures. Direct bit-clear/flip/set/test use
+ordinary calls and observe var replacements. Genuine inline bit forms keep raw
+64-bit operations and Java's masked shift counts. Checked float(long) rounds
+straight to binary32; boxed float(Object) retains its double intermediate. The
+private float-long cast mode preserves checked Double replacements on a signature
+miss. Source kinds remain separate from physical numeric storage.
+
+Checked/unchecked casts and strict/private-int32 helpers now offer raw-return
+entries for boxed operands; a helper need not allocate a temporary numeric result.
+An artifact check discovers numeric box types from the actual constructors and
+checks33 helper exports for scalar results and absence of numeric box construction.
+The first iteration's CLI2/code-generation10 tests pass, including three exact
+new loop executions. The expanded matrix adds four separately labeled Suss
+ADR-0004 replacement controls; all34 values pass in Runtime/Macro and actual AOT.
+The same four controls also match frozen-before/current component execution.
+
+Run python3 target/probe/m12-bits-casts-run-gates.py in m12-hints-source. It uses
+cargo +stable test --workspace --locked with14 --test targets and
+-- --test-threads=2, then Java-free bootstrap reproduction, actual Binaryen133 and
+the reviewed-suite comparison. Logs/exit receipts are written under
+results/m12-bits-casts. Final focused checks pass74 across14 targets, zero
+failed/ignored. Java-free bootstrap reproduction passes both phases byte-exact
+plus4 execution tests; actual Binaryen133 passes2. The reviewed-suite comparison
+passes1 (222.27s),10 unrelated harness tests filtered, with known failures retained. Use stable Rust, two jobs/threads, MemoryMax4G, m12-hints-target and
+outer target/suss. The initial bit-loop fixture incorrectly required ordinary bit
+functions to inline; its exact original failure remains, while the final no-call
+fixture tests genuine inline forms and separate value cases test ordinary calls.
+The raw-helper argument wiring and a test's reference to a private type constant
+also have retained compile failures, followed by their corrections.
+
+An additional fresh JVM/AOT probe is separate from the passing30-case matrix:
+2 controls match and6 overload cases fail in both frozen-before/current Suss.
+Object byte/short/int casts truncate before narrowing; primitive float identity
+and float-to-int upper-bound handling differ from primitive Double. Exact source,
+expected values, all16 exported checks and component/compiler hashes are retained
+in additional-observations.json. These failures are not successes or regressions
+introduced by the current change. They remain outside this bounded evidence.
+
+These probes do not establish complete numeric-tower/escape coverage, a new quiet
+ratio or a current full-workspace baseline. No Java implementation is shipped.
+
+## Raw numeric core result probes (2026-11-21)
+
+results/m12-raw-core retains22 fresh JVM Clojure1.12.6 value assertions,26 native
+values (four separately labeled Suss-only redefinition controls), exact seven-input
+source reconstruction, the original four failing tests and actual gate logs.
+Runtime/Macro and actual AOT preserve direct source inlining versus ordinary
+aliases. Known quot/rem/abs and unchecked arithmetic results now stay in raw
+long/double locals without relying on unrelated hint metadata. Long MIN/-1 quotient
+and unchecked arithmetic wrap; zero/non-finite failures take the original helper.
+Boxed inline helpers reject nonnumbers with the original language errors.
+
+The four ADR-0004 controls execute identical source with frozen before and current
+compilers:long->double/double->long replacements, nonnumbers and signed zero retain
+their original boxed fallback. The separate JVM reference records IFn$L/IFn$D
+ClassCastException behavior, not the Suss expected numeric values. Both new loop
+components are inspected and executed from the exact same bytes:1,234,577 long
+iterations return3703728;1,234,579 double iterations return4012373.5. Fresh JVM
+execution independently asserts those same loop sources/results. No normal-path
+helper calls or loop-carried boxes appear; throwing paths/final returns may box.
+
+Run cargo +stable test --workspace --locked with the thirteen --test targets in
+results/m12-raw-core/commands.json, then -- --test-threads=2:68 passed, zero
+failed/ignored. Java-free sh scripts/verify-bootstrap.sh reproduces both phases
+byte-for-byte and passes4 execution tests. Builds use stable Rust, two Cargo
+jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss. Actual Binaryen133
+compiled_optimize passes2. The reviewed-suite comparison passes1 (286.03s),
+10 unrelated tests filtered, zero failed/ignored. Complete observations are gzip
+with compressed/uncompressed hashes; known failures remain known failures.
+These observations cover the named operations, not raw narrow numeric casts,
+other bitwise paths, complete collection/closure escape elimination or the numeric
+tower. No new quiet ratio or current full-workspace result is inferred. No Java
+implementation is copied or shipped.
+
+## Primitive method lexical source checks (2026-11-21)
+
+results/m12-primitive-methods retains the original failing-before fixture/log,
+compiler and source hashes, exact five-input source reconstruction, fresh JVM
+Clojure1.12.6 assertions and final native logs. The expanded matrix checks17
+values and15 diagnostics in Runtime/Macro and actual AOT. Captured genuine
+primitives now participate in return checking; captured hinted Objects retain
+Object source kind, including reflective bitwise results. Primitive function
+recurrence requires a matching source primitive (Int->Long, Float->Double).
+A hinted Object alone is rejected even when its diagnostic class says long or
+double. Ordinary loop boxing, return-only hints and lexical shadowing remain
+covered. WIT-only conversions keep raw numeric storage without inventing source
+primitive return/capture/recur errors; five actual compiled exports cover this.
+
+Run cargo +stable test --workspace --locked with the twelve --test targets in
+results/m12-primitive-methods/commands.json, then -- --test-threads=2:64 passed,
+zero failed/ignored. The exact inspected long/double extrema components execute,
+and the checked long-sum allocation check passes. Java-free
+sh scripts/verify-bootstrap.sh reproduces both phases byte-for-byte and passes4
+execution tests. Actual Binaryen133 compiled_optimize passes2. Builds use stable
+Rust, two Cargo jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss.
+The reviewed vendored-suite comparison passes1 (208.31s),10 filtered out, zero
+failed/ignored. Its complete observations are retained as gzip with compressed
+and uncompressed hashes; known failures remain known failures.
+No Java implementation is copied or shipped. Broader raw core-result/escape
+coverage, the remaining numeric tower, a new quiet benchmark ratio and a current
+full-workspace result are outside this evidence.
+
+## Clojure extrema source/storage probes (2026-11-21)
+
+results/m12-extrema retains exact source patches and all16 reconstructed input
+hashes, fresh JVM1.12.6 oracles, actual failing-before controls and raw final logs.
+The final matrix executes26 JVM-matched values and four diagnostic rejections in
+Runtime, Macro and actual AOT, plus one separately labeled Suss redefinition case.
+Long/long max/min stays raw; double/double uses IEEE Math zero rules. Mixed and
+Object overloads preserve the selected argument type and generic tie behavior.
+Nary pairs finish conversion/operation before later operand effects. Object source
+loops with raw double storage retain generic NaN/zero behavior. Boxed public
+functions share the scalar helper, which propagates NaN before other-type checks.
+
+The initial double fast path coerced a replacement long after a var lost its
+primitive signature. A frozen before compiler and actual AOT strings show the
+5.0-versus5 and positive-versusnegative infinity regression. The correction keeps
+MaybeDouble's raw hit and original boxed miss, and the same component probe again
+matches before. Suss's ordinary-IFn fallback is ADR-0004's contract; the separate
+JVM reference records IFn$D's ClassCastException rather than treating its result as
+a numeric oracle. No Java code is copied or shipped; EPL references are retained.
+
+Run cargo +stable test --workspace --locked with the ten --test targets in
+receipts.json, then -- --test-threads=2:55 passes, zero failed/ignored. The separate
+portable_unboxed_locals target passes5, including exact execution of both inspected
+1,234,573/1,234,575-iteration components. Their max/min loops have no hot-path helper
+calls or loop-carried boxes. The final CLI fixture rerun passes4 after EOF cleanup.
+Use stable Rust, two Cargo jobs, MemoryMax4G scopes, m12-hints-target and outer
+ target/suss. The final source also passes Java-free scripts/verify-bootstrap.sh
+(two phases byte-exact plus4 execution tests), actual Binaryen133 optimization2,
+and the reviewed vendored-suite comparison1. The complete observations are gzip
+with compressed/uncompressed hashes; known failures remain known failures.
+Core recipes, generated source/manifest and compatibility review dependencies/tests
+are regenerated together. Captured primitive return/recur checks, further escape
+elimination and the full numeric tower remain outside this evidence; no new quiet
+benchmark ratio or current-source full-workspace result is inferred.
+
+The earlier frozen division source1507 full command
+cargo +stable test --workspace --locked -- --test-threads=2 exits0:2263 passed,
+14 existing ignores (10 legacy awaiting compiled support,3 recording,1 doc
+example). results/m12-division-overloads/full-workspace-1507.* retains the complete
+log and exact ignored names. That source predates local-hint/cache/extrema changes.
+
+## Source numeric overload conversion probes (2026-11-21)
+
+results/m12-local-hints/overload-selection retains fresh JVM1.12.6 value assertions,
+AOT/ASM descriptors, actual failing Runtime/AOT controls, immutable source patches,
+compiler hashes and final focused logs. The final matrix executes48 values in
+Runtime, Macro and actual AOT and rejects eight invalid declarations in each route.
+Selected same-category equality compares raw primitives; primitive/Object equality
+converts only selected numeric formals. Mixed long/double equality and floating
+bitwise calls retain original Objects. Reflective bitwise results have Object
+source type, and a primitive Boolean class suppresses numeric hint conversion so
+later operand effects still execute. Unchecked inc/dec consume numeric local hints
+while the boxed overflow controls retain wrapping results.
+
+Run cargo +stable test --workspace --locked with --test for each of
+clojure_local_numeric_hints, clojure_division_overloads, clojure_unboxed_locals,
+clojure_numeric_box_reuse, compiled_core_casts, compiled_macro_cumulative_fuel,
+compiled_primitive_params, portable_primitive_entries and portable_unboxed_locals,
+then -- --test-threads=2. All47 tests pass, zero failed/ignored, including record
+macro default-budget, primitive-entry and checked sum allocation checks. Use
+RUSTUP_TOOLCHAIN=stable, two Cargo jobs, MemoryMax4G user scope, m12-hints-target
+and the outer target/suss native cache. The exact command is in receipts.json.
+The measured dirty-source base b6252e64 and externally rebased941409d6 have the
+same60a685c5 tree; only branch history changed before this evidence was published.
+
+results/m12-box-reuse/gates retains the earlier b625 cache source's Java-free
+scripts/verify-bootstrap.sh byte-exact two-phase reproduction and four execution
+passes, actual Binaryen133 compiled_optimize two passes, and the vendored
+clojure_test_suite_matches_reviewed_baseline one pass (220.54s). The complete
+suite observations are retained as gzip with compressed/uncompressed hashes.
+That comparison preserves the reviewed known failures, not full conformance;
+these gates precede the later overload patch. No new full-workspace or quiet-timing
+result is claimed. At that snapshot, max/min source overloads and capture-aware primitive
+return/recur checks still required further work; the later extrema probes above
+supersede the max/min limitation with their stated scope.
+
+## Lazy numeric box reuse measurements (2026-11-21)
+
+results/m12-box-reuse retains frozen source patches, executable/component hashes,
+full samples and commands. Warm-first median-three null-collector peak-RSS slopes
+at2M/4M iterations estimate double-raw13.496 and wide-long13.355 bytes/iteration
+before, both below resolution afterward. Boxed controls stay below resolution.
+Normal-collector perf instructions:u slopes at100k/200k change double-raw
+103.833->96.101 and long-raw100.057->91.984; boxed controls115.918->116.049 and
+112.998->113.038. Both control and raw counts are retained. The broad initial cache
+removed allocations but raised control instructions; its code and samples remain.
+Concurrent wall times are not quiet timing acceptance.
+
+Selective flags track only repeated materializations or cycle uses without
+redefinition. Numeric boxes remain lazy, and dynamic definitions including loop
+parameters invalidate their copies. Nine focused targets pass47 tests, zero
+failed/ignored, including default-budget records and numeric-loop allocation
+checks. The extended changing-value and NaN cases pass both cache tests again in
+Runtime/Macro and actual AOT. Three value cases match fresh JVM1.12.6; numeric
+identity preserves Suss's documented contract, independently checked against the
+frozen before binary. Its initial wrong JVM expectation remains a negative control.
+
+All361 Python tests pass; new bench.py cases match16 fresh JVM observations.
+An independent locked wasmparser0.258 code probe validates both full components;
+marked309-byte and380-byte checked sum bodies match byte-for-byte before/after,
+and both exports execute correctly. This preserves existing checked-loop code,
+not a newly measured quiet time ratio. Builds use stable Rust, two jobs/threads,
+MemoryMax4G, m12-hints-target and the shared native cache.
+
+At the frozen cache source, fresh JVM signatures and actual AOT negatives
+establish incomplete mixed bitwise and = formal overload selection, alongside
+max/min and unchecked inc/dec. The later overload probes above supersede those
+particular negatives without changing the retained before artifacts. Those source cases are retained under results/m12-local-hints and
+results/m12-box-reuse/optimized. No full workspace or complete numeric-tower
+acceptance is inferred from these focused checks.
+
+## Primitive local hint conversion evidence (2026-11-21)
+
+Fresh JVM1.12.6 verifies31 value rows and seven compile-time diagnostic rows in
+results/m12-local-hints/oracle.clj. All31 values execute in Runtime, Macro and
+actual AOT. All seven diagnostics are rejected in both phases and actual AOT,
+including captured fn bodies before loop reanalysis. Eight focused targets pass45
+tests, zero failures or ignores, including the38-row division matrix and complete
+M11 record requests at the unchanged default budget. Generated long-sum and cast
+loops still pass their no-allocation/call checks. These are focused checks,
+not a full-workspace pass. The separate frozen926fde51 full workspace command
+continues in target/probe/m12-source/target/probe/m12-division-full-workspace.log.
+
+The source pass tracks primitive expression kinds separately from numeric Java
+classes. Hinted Object locals keep their values for reads, escapes and function
+arguments; inline numeric uses insert the existing checked casts. Initial
+validation preserves Clojure's diagnostic order before settled loop rewriting.
+Nary arithmetic keeps nested left-fold exceptions/effects. Nary comparison uses
+Object temporaries and does not consume local hints. Rewritten shared nodes
+retain both kind and type. One combined metered feature query avoids doubling
+full-tree scans; no fuel budget or ABI is raised.
+
+Commands use stable Rust, two jobs/threads, MemoryMax4G, m12-hints-target and the
+shared native cache. results/m12-local-hints retains exact source/CLI identities,
+all logs and the initial wrong-typed cast-node failure. The intermediate15-row
+pass is distinct from the final expanded source. The original failing15-row
+oracle is retained unchanged as baseline-oracle.*. Numeric-core JVM probes still
+show missing max/min and unchecked-inc/dec inline handling; cross-block box reuse
+and its allocation/performance evidence also remain required. No issue closure
+or promotion follows from the focused hint matrix alone.
+
+## Primitive local hint oracle and negative control (2026-11-21)
+
+Fresh JVM Clojure1.12.6 passes15 source-string rows in
+results/m12-local-hints/oracle.clj, preserving ^long/^double metadata. The
+command cargo +stable test -p suss-cli --locked --test clojure_local_numeric_hints
+-- --test-threads=2 fails both test targets on9471688d. Runtime returns6.5 where
+JVM Clojure returns6 for (+ x 1) when ^long x holds(identity5.5); actual AOT
+reports the same first-row mismatch. Runtime fails before Macro and AOT stops
+at its first export, so the remaining Suss rows are not established. Commands,
+compiler identity, logs and hashes are in results/m12-local-hints/baseline.json.
+
+Use stable Rust, two jobs/threads, MemoryMax4G, target/probe/m12-hints-target
+and the original M11 target/suss native cache. The separate hints target is a
+btrfs reflink of the print target; Cargo rechecks source paths and executable
+environment dependencies. Nine additional fresh JVM contexts establish alias,
+use-site override and generic-vs-inline behavior, including nary comparison
+ignoring local hints and early arithmetic casts preventing later effects.
+These observations guide the remaining local-hint conversions and box reuse;
+no local-hint implementation or full workspace pass is inferred from the oracle.
+
 ## Explicit IEEE coercion fixture retarget (2026-11-21)
 
 CI44958675908 shard5 on926fde51 found one stale pipeline fixture. Its recorded

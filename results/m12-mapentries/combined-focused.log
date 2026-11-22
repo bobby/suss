@@ -1,0 +1,39 @@
+Running as unit: run-p4154093-i88021609.scope; invocation ID: 0ef1b3e006104d63bd1f88f646b11c15
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 59s
+     Running tests/clojure_nonescaping_map_entries.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/clojure_nonescaping_map_entries-0bb3d43066b3b898)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_map_entries ... ok
+test aot_preserves_nonescaping_map_entries has been running for over 60 seconds
+test aot_preserves_nonescaping_map_entries ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 103.46s
+
+     Running tests/clojure_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/clojure_nonescaping_vectors-bb22d22335216a18)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_vectors ... ok
+test aot_preserves_nonescaping_vectors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.47s
+
+     Running tests/portable_function_parameters.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/portable_function_parameters-0c461169e50345f2)
+
+running 2 tests
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.93s
+
+     Running tests/portable_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/portable_nonescaping_vectors-c2c27847bb64f114)
+
+running 3 tests
+test known_vector_projections_get_a_guarded_scalar_continuation ... ok
+test escaping_or_unknown_vector_projections_retain_materialization ... ok
+test map_entry_public_guards_and_constant_projections_get_scalar_storage ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

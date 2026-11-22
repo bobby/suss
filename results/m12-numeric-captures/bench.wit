@@ -1,0 +1,6 @@
+package test:captures;
+world api {
+  export case-raw: func(n: u32) -> f64;
+  export case-boxed: func(n: u32) -> f64;
+  export case-direct: func(n: u32) -> f64;
+}

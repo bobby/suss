@@ -1,0 +1,16 @@
+"double-raw" 0 0
+"double-raw" 1 1
+"double-raw" 7 7
+"double-raw" 33 33
+"double-boxed" 0 0
+"double-boxed" 1 1
+"double-boxed" 7 7
+"double-boxed" 33 33
+"long-raw" 0 0
+"long-raw" 1 1
+"long-raw" 7 7
+"long-raw" 33 33
+"long-boxed" 0 0
+"long-boxed" 1 1
+"long-boxed" 7 7
+"long-boxed" 33 33

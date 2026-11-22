@@ -1,0 +1,21 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "portable_numeric_captures",
+    "--",
+    "--test-threads=2"
+  ],
+  "source": {
+    "crates/suss-compile/src/portable/emit.rs": "132c04e56a49bf9ac2fa00a3db70a45d56bedaea55aec23af4617e6d67390b32",
+    "crates/suss-compile/src/portable/emit/captures.rs": "d03907e6e5227ea427af91d0dfb388ae43773050bdbb179945e644991777b505",
+    "crates/suss-compile/tests/portable_numeric_captures.rs": "730e48177804a49ca7bfb874dbb652f928dc0b261965a0190b9e9fa4abebeca7",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "4b2154212a53118c35e923ee089b19900bd960c8e3b708d6dde1be1d20604571"
+  },
+  "exit_code": 101,
+  "seconds": 180.30541586875916
+}

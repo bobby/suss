@@ -1,0 +1,215 @@
+{
+  "source_base": "0ac76af93dd82b2c95ffbf0410308e0950a9667e",
+  "compiler_sha256": "c75acc3b63047c0b47408dc34c52fbd4379660814069822d554f13ed62af5f63",
+  "component_sha256": "6ffeace7533dfa39b308582c9d873ab57f6a4634de46c99bbdfe090d12a57f09",
+  "cases": {
+    "control": {
+      "value_check": {
+        "count": 10,
+        "status": 0,
+        "stdout": "30000000090\n",
+        "stderr": ""
+      },
+      "rss": [
+        {
+          "count": 1000000,
+          "peak_bytes": 92454912,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 92454912,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 1000000,
+          "peak_bytes": 92454912,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 92454912,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        }
+      ],
+      "bytes_per_iteration_samples": [
+        0.0,
+        0.0
+      ],
+      "perf": [
+        {
+          "count": 100000,
+          "status": 0,
+          "stdout": "300009999900000\n",
+          "stderr": "272778323,,instructions:u,64956391,100.00,,\n"
+        },
+        {
+          "count": 200000,
+          "status": 0,
+          "stdout": "600039999800000\n",
+          "stderr": "275569366,,instructions:u,67959326,100.00,,\n"
+        }
+      ]
+    },
+    "vector": {
+      "value_check": {
+        "count": 10,
+        "status": 0,
+        "stdout": "30000000090\n",
+        "stderr": ""
+      },
+      "rss": [
+        {
+          "count": 1000000,
+          "peak_bytes": 217186304,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 384876544,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 1000000,
+          "peak_bytes": 216907776,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 384942080,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        }
+      ],
+      "bytes_per_iteration_samples": [
+        167.69024,
+        168.034304
+      ],
+      "perf": [
+        {
+          "count": 100000,
+          "status": 0,
+          "stdout": "300009999900000\n",
+          "stderr": "415127133,,instructions:u,83936235,100.00,,\n"
+        },
+        {
+          "count": 200000,
+          "status": 0,
+          "stdout": "600039999800000\n",
+          "stderr": "577938795,,instructions:u,110615594,100.00,,\n"
+        }
+      ]
+    },
+    "entry": {
+      "value_check": {
+        "count": 10,
+        "status": 0,
+        "stdout": "30000000090\n",
+        "stderr": ""
+      },
+      "rss": [
+        {
+          "count": 1000000,
+          "peak_bytes": 184934400,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 320716800,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 1000000,
+          "peak_bytes": 184807424,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 320995328,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        }
+      ],
+      "bytes_per_iteration_samples": [
+        135.7824,
+        136.187904
+      ],
+      "perf": [
+        {
+          "count": 100000,
+          "status": 0,
+          "stdout": "300009999900000\n",
+          "stderr": "810082655,,instructions:u,119053096,100.00,,\n"
+        },
+        {
+          "count": 200000,
+          "status": 0,
+          "stdout": "600039999800000\n",
+          "stderr": "1367940546,,instructions:u,174749569,100.00,,\n"
+        }
+      ]
+    },
+    "closure": {
+      "value_check": {
+        "count": 10,
+        "status": 0,
+        "stdout": "30000000090\n",
+        "stderr": ""
+      },
+      "rss": [
+        {
+          "count": 1000000,
+          "peak_bytes": 168972288,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 288473088,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 1000000,
+          "peak_bytes": 169005056,
+          "stdout": "3000999999000000\n",
+          "stderr": ""
+        },
+        {
+          "count": 2000000,
+          "peak_bytes": 288841728,
+          "stdout": "6003999998000000\n",
+          "stderr": ""
+        }
+      ],
+      "bytes_per_iteration_samples": [
+        119.5008,
+        119.836672
+      ],
+      "perf": [
+        {
+          "count": 100000,
+          "status": 0,
+          "stdout": "300009999900000\n",
+          "stderr": "429969980,,instructions:u,91836686,100.00,,\n"
+        },
+        {
+          "count": 200000,
+          "status": 0,
+          "stdout": "600039999800000\n",
+          "stderr": "607717168,,instructions:u,108193831,100.00,,\n"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,823 @@
+diff --git a/crates/suss-compile/src/portable/ir.rs b/crates/suss-compile/src/portable/ir.rs
+index 1569a65a..2c6389d9 100644
+--- a/crates/suss-compile/src/portable/ir.rs
++++ b/crates/suss-compile/src/portable/ir.rs
+@@ -1,5 +1,6 @@
+ //! Explicit values, blocks and edge parameters. Verification precedes emission.
+ pub mod liveness;
++mod escape;
+ pub mod r#async;
+ use super::{
+     hir::{
+@@ -1254,6 +1255,7 @@ pub fn lower_metered(
+ ) -> Result<Function, Diagnostic> {
+     verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+     let mut function = Lowerer::new(hir.span.clone(), meter)?.finish(hir)?;
++    escape::eliminate(&mut function, meter)?;
+     hoist_loop_invariant_reads(&mut function);
+     Ok(function)
+ }
+diff --git a/crates/suss-compile/tests/portable_unboxed_locals.rs b/crates/suss-compile/tests/portable_unboxed_locals.rs
+index 077ace38..04b3275d 100644
+--- a/crates/suss-compile/tests/portable_unboxed_locals.rs
++++ b/crates/suss-compile/tests/portable_unboxed_locals.rs
+@@ -360,6 +360,21 @@ mod raw_bits_and_casts {
+         run.post_return(&mut store).unwrap();
+     }
+ 
++    #[test]
++    fn local_closure_captures_and_results_execute_without_boxes_or_calls() {
++        let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
++          (if (< i 1234591)
++            (let [x (+ 3000000000 i) y (double i) f (fn [] (+ x y))]
++              (recur (inc i) (unchecked-add acc (double (f))))) acc)))";
++        let bytes = Compiler::new().compile(source,
++            "package test:local-closure; world api { export bound: func() -> f64; }").unwrap();
++        let (mut store, instance) = extrema_component(&bytes);
++        let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
++        assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), (3705297213702690_f64).to_bits());
++        run.post_return(&mut store).unwrap();
++        for operators in functions_with(&bytes, 1234591) { check(&operators); }
++    }
++
+ }
+ 
+ #[test]
+diff --git a/experiments/numeric-representation/suss-jvm/bench.py b/experiments/numeric-representation/suss-jvm/bench.py
+index faaaba18..364b1f84 100644
+--- a/experiments/numeric-representation/suss-jvm/bench.py
++++ b/experiments/numeric-representation/suss-jvm/bench.py
+@@ -242,6 +242,29 @@ for reuse_name, reuse_init, reuse_cast in BOX_REUSE:
+     LOOPS.append((f"box-reuse-{reuse_name}", f"(box-reuse-{reuse_name} f1 n)", "u32"))
+ 
+ 
++# Temporary aggregates and locally called closures (#351). Wide longs and
++# doubles force numeric boxes when scalar storage is lost. Each complete sum
++# is returned, with a direct calculation as its allocation/instruction control.
++ESCAPE = [
++    ("control", "(+ x y)"),
++    ("vector", "(let [[a b] [x y]] (+ a b))"),
++    ("entry", "(let [[a b] (MapEntry. x y nil)] (+ a b))"),
++    ("closure", "(let [f (fn [] (+ x y))] (f))"),
++]
++JVM_LOOPS = {}
++for escape_name, escape_expr in ESCAPE:
++    def escape_body(expr):
++        return ("(let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) "
++                "(let [x (+ 3000000000 i) y (double i)] "
++                f"(recur (inc i) (unchecked-add acc (double {expr})))) acc)))")
++    LOOPS.append((f"escape-{escape_name}", escape_body(escape_expr), "f64"))
++    if escape_name == "entry":
++        # The Java-free core constructor has a cache field; JVM MapEntry's
++        # factory takes only the two values. Their sequence values match.
++        JVM_LOOPS["escape-entry"] = escape_body(
++            "(let [[a b] (clojure.lang.MapEntry/create x y)] (+ a b))")
++
++
+ # JVM forms where the shared one would reflect: Util.equiv has no (long,
+ # double) overload and RT.aset none for an Object[] and a long, so Clojure code
+ # boxes the long, as Suss always does.
+@@ -406,6 +429,7 @@ def jvm_times(work):
+         reps = JVM_REPS * (JVM_CONTROL_REPS if name in controls else 1)
+         entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name}) {reps}]')
+     for name, body, _ in LOOPS:
++        body = JVM_LOOPS.get(name, body)
+         lines.append(f"(defn case-{name} [^long n] {body})")
+         entries.append(f'["{name}" {N * JVM_SCALE} (timed {N * JVM_SCALE} case-{name}) (bytes-of {N * JVM_SCALE} case-{name}) {JVM_REPS}]')
+     lines.append(f"(def cases [{' '.join(entries)}])")
+diff --git a/crates/suss-compile/src/portable/ir/escape.rs b/crates/suss-compile/src/portable/ir/escape.rs
+new file mode 100644
+index 00000000..2f277b0c
+--- /dev/null
++++ b/crates/suss-compile/src/portable/ir/escape.rs
+@@ -0,0 +1,516 @@
++//! Remove closures whose complete use set consists of known, fixed-arity calls.
++//! Run after source overload/return/recur checks. SSA substitution changes storage,
++//! never the source expression classes which selected those operations (#351).
++use super::*;
++
++fn charge(
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++    work: usize,
++    span: &Range<usize>,
++) -> Result<(), Diagnostic> {
++    lower_charge(meter, work, span)
++}
++
++/// Count work before copying a graph, including owned literal/closure data.
++/// Futures carry a separate continuation plan and are never copied by this pass.
++fn size(
++    function: &Function,
++    limit: usize,
++    copying: bool,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<Option<usize>, Diagnostic> {
++    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++        let mut total = 1usize
++            .saturating_add(function.values.len())
++            .saturating_add(function.blocks.len());
++        charge(meter, total, &function.span)?;
++        if total > limit {
++            return Ok(None);
++        }
++        for block in &function.blocks {
++            let work = block
++                .parameters
++                .len()
++                .saturating_add(match &block.terminator {
++                    Terminator::Jump { arguments, .. } => arguments.len(),
++                    _ => 1,
++                });
++            charge(meter, work, &function.span)?;
++            total = total.saturating_add(work);
++            if total > limit {
++                return Ok(None);
++            }
++            for inst in &block.instructions {
++                let work = 1usize
++                    .saturating_add(operands(&inst.operation).len())
++                    .saturating_add(match &inst.operation {
++                        Operation::Literal(Literal::String(units)) => units.len(),
++                        Operation::Call {
++                            primitive: Some(shape),
++                            ..
++                        } => shape
++                            .0
++                            .iter()
++                            .map(|method| 1 + method.signature.parameters.len())
++                            .sum(),
++                        Operation::MakeGeneralClosure { body, .. } => body
++                            .capture_types
++                            .len()
++                            .saturating_add(body.display_name.as_ref().map_or(0, Vec::len))
++                            .saturating_add(body.arity_name.as_ref().map_or(0, Vec::len)),
++                        _ => 0,
++                    });
++                charge(meter, work, &inst.span)?;
++                total = total.saturating_add(work);
++                if total > limit {
++                    return Ok(None);
++                }
++                let mut child_size = |child: &ClosureBody| -> Result<bool, Diagnostic> {
++                    let work = child
++                        .capture_types
++                        .len()
++                        .saturating_add(child.display_name.as_ref().map_or(0, Vec::len))
++                        .saturating_add(child.arity_name.as_ref().map_or(0, Vec::len))
++                        .saturating_add(child.primitive.as_ref().map_or(0, |s| s.parameters.len()));
++                    charge(meter, work, &inst.span)?;
++                    total = total.saturating_add(work);
++                    if total > limit {
++                        return Ok(false);
++                    }
++                    let Some(work) = size(&child.function, limit - total, copying, meter)? else {
++                        return Ok(false);
++                    };
++                    total += work;
++                    Ok(true)
++                };
++                match &inst.operation {
++                    Operation::MakeClosure { body, .. } => {
++                        if !child_size(body)? {
++                            return Ok(None);
++                        }
++                    }
++                    Operation::MakeGeneralClosure { body, .. } => {
++                        for method in &body.methods {
++                            if !child_size(method)? {
++                                return Ok(None);
++                            }
++                        }
++                    }
++                    Operation::MakeFuture { .. } if copying => return Ok(None),
++                    _ => {}
++                }
++            }
++        }
++        Ok(Some(total))
++    })
++}
++
++pub(super) fn eliminate(
++    function: &mut Function,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    // Copying is bounded by the original graph size. Single-use bodies move;
++    // repeated calls may copy only within this shared linear growth allowance.
++    let mut growth = size(function, usize::MAX, false, meter)?.unwrap_or(0);
++    walk(function, &mut growth, meter)
++}
++
++fn synchronous(function: &Function) -> bool {
++    !function
++        .blocks
++        .iter()
++        .flat_map(|block| &block.instructions)
++        .any(|inst| {
++            matches!(
++                inst.operation,
++                Operation::Await { .. }
++                    | Operation::RegionPush { .. }
++                    | Operation::RegionExit { .. }
++                    | Operation::RegionValue
++                    | Operation::AsyncDynamicEnter { .. }
++            )
++        })
++}
++
++struct Candidate {
++    definition: (usize, usize),
++    arity: usize,
++    escaped: bool,
++    sites: Vec<(usize, usize)>,
++    function: Option<Function>,
++    captures: Vec<ValueId>,
++}
++
++fn walk(
++    function: &mut Function,
++    growth: &mut usize,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++        if !synchronous(function) {
++            return Ok(());
++        }
++        for block in &mut function.blocks {
++            for inst in &mut block.instructions {
++                match &mut inst.operation {
++                    Operation::MakeClosure { body, .. } => walk(&mut body.function, growth, meter)?,
++                    Operation::MakeGeneralClosure { body, .. } => {
++                        for method in &mut body.methods {
++                            walk(&mut method.function, growth, meter)?;
++                        }
++                    }
++                    // Do not change normalized continuation graphs or their spill plans.
++                    _ => {}
++                }
++            }
++        }
++        let mut candidates = Vec::new();
++        let mut by_value = HashMap::new();
++        for (b, block) in function.blocks.iter().enumerate() {
++            charge(meter, 1 + block.instructions.len(), &function.span)?;
++            for (i, inst) in block.instructions.iter().enumerate() {
++                if let Operation::MakeClosure { body, .. } = &inst.operation {
++                    if body.variadic || !synchronous(&body.function) {
++                        continue;
++                    }
++                    by_value.insert(inst.result, candidates.len());
++                    candidates.push(Candidate {
++                        definition: (b, i),
++                        arity: body.arity,
++                        escaped: false,
++                        sites: Vec::new(),
++                        function: None,
++                        captures: Vec::new(),
++                    });
++                }
++            }
++        }
++        if candidates.is_empty() {
++            return Ok(());
++        }
++        for (b, block) in function.blocks.iter().enumerate() {
++            for (i, inst) in block.instructions.iter().enumerate() {
++                let inputs = operands(&inst.operation);
++                charge(meter, 1 + inputs.len(), &inst.span)?;
++                for (position, value) in inputs.iter().enumerate() {
++                    let Some(&candidate) = by_value.get(value) else {
++                        continue;
++                    };
++                    let candidate = &mut candidates[candidate];
++                    if position == 0
++                        && matches!(inst.operation, Operation::Call { .. })
++                        && inputs.len() == candidate.arity + 1
++                    {
++                        candidate.sites.push((b, i));
++                    } else {
++                        candidate.escaped = true;
++                    }
++                }
++            }
++            let inputs = match &block.terminator {
++                Terminator::Return(value) | Terminator::Throw(value) => std::slice::from_ref(value),
++                Terminator::Jump { arguments, .. } => arguments,
++                Terminator::Branch { condition, .. } => std::slice::from_ref(condition),
++            };
++            charge(meter, inputs.len(), &function.span)?;
++            for value in inputs {
++                if let Some(&candidate) = by_value.get(value) {
++                    candidates[candidate].escaped = true;
++                }
++            }
++        }
++        let mut sites = Vec::new();
++        for (index, candidate) in candidates.iter_mut().enumerate() {
++            if candidate.escaped {
++                continue;
++            }
++            let (b, i) = candidate.definition;
++            let Operation::MakeClosure { body, .. } = &function.blocks[b].instructions[i].operation
++            else {
++                unreachable!()
++            };
++            let overhead = candidate.sites.len().saturating_mul(8);
++            if overhead > *growth {
++                continue;
++            }
++            let copies = candidate.sites.len().saturating_sub(1);
++            let copying = if copies == 0 {
++                0
++            } else {
++                let Some(work) = size(&body.function, (*growth - overhead) / copies, true, meter)?
++                else {
++                    continue;
++                };
++                work * copies
++            };
++            *growth -= copying + overhead;
++            let inst = &mut function.blocks[b].instructions[i];
++            let Operation::MakeClosure { body, captures } =
++                std::mem::replace(&mut inst.operation, Operation::Literal(Literal::Nil))
++            else {
++                unreachable!()
++            };
++            function.values[inst.result.0].ty = Type::Nil;
++            let ClosureBody { function: body, .. } = *body;
++            candidate.function = Some(body);
++            candidate.captures = captures;
++            sites.extend(candidate.sites.iter().map(|&(b, i)| (b, i, index)));
++        }
++        // Splitting a block leaves earlier instruction positions unchanged.
++        sites.sort_unstable_by(|a, b| b.cmp(a));
++        let changed = !sites.is_empty();
++        for (b, i, candidate) in sites {
++            let candidate = &mut candidates[candidate];
++            candidate.sites.pop();
++            let source = if candidate.sites.is_empty() {
++                candidate.function.take().unwrap()
++            } else {
++                candidate.function.as_ref().unwrap().clone()
++            };
++            splice(function, b, i, source, &candidate.captures, meter)?;
++        }
++        if changed {
++            prune_unreachable(function, meter)?;
++        }
++        Ok(())
++    })
++}
++
++fn map_operation(operation: &mut Operation, ids: &[ValueId]) {
++    let inputs: &mut [ValueId] = match operation {
++        Operation::Arithmetic { arguments, .. }
++        | Operation::Bitwise { arguments, .. }
++        | Operation::Comparison { arguments, .. }
++        | Operation::Array { arguments, .. }
++        | Operation::Nominal { arguments, .. } => arguments,
++        Operation::Call { operands, .. }
++        | Operation::DynamicScope { operands, .. }
++        | Operation::AsyncDynamicEnter { operands, .. } => operands,
++        Operation::MakeClosure { captures, .. }
++        | Operation::MakeGeneralClosure { captures, .. }
++        | Operation::MakeFuture { captures, .. } => captures,
++        Operation::Try { regions } => regions,
++        Operation::Await { future } => std::slice::from_mut(future),
++        Operation::GlobalWrite { value, .. }
++        | Operation::NilTest(value)
++        | Operation::RegionExit { value, .. } => std::slice::from_mut(value),
++        Operation::RegionPush { dynamic, .. } => dynamic,
++        Operation::Literal(_)
++        | Operation::GlobalRead(_)
++        | Operation::GlobalCell(_)
++        | Operation::GlobalBound(_)
++        | Operation::RegionValue => return,
++    };
++    for value in inputs {
++        *value = ids[value.0];
++    }
++}
++
++fn splice(
++    parent: &mut Function,
++    block: usize,
++    index: usize,
++    mut body: Function,
++    captures: &[ValueId],
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    charge(
++        meter,
++        body.values
++            .len()
++            .saturating_add(body.blocks.len())
++            .saturating_add(captures.len()),
++        &body.span,
++    )?;
++    charge(
++        meter,
++        parent.blocks[block].instructions.len() - index - 1,
++        &body.span,
++    )?;
++    let suffix = parent.blocks[block].instructions.split_off(index + 1);
++    let call = parent.blocks[block].instructions.pop().unwrap();
++    let Operation::Call {
++        operands: arguments,
++        ..
++    } = call.operation
++    else {
++        unreachable!()
++    };
++    let mut actuals = captures.to_vec();
++    actuals.extend_from_slice(&arguments[1..]);
++    assert_eq!(actuals.len(), body.blocks[0].parameters.len());
++    // Keep declared entry types, including Value parameters captured by nested
++    // thunks. Their physical representations propagate through these CFG edges.
++    let mut ids = Vec::with_capacity(body.values.len());
++    for value in std::mem::take(&mut body.values) {
++        ids.push(ValueId(parent.values.len()));
++        parent.values.push(value);
++    }
++    let start = parent.blocks.len();
++    let join = start + body.blocks.len();
++    let terminator = std::mem::replace(
++        &mut parent.blocks[block].terminator,
++        Terminator::Jump {
++            target: start,
++            arguments: actuals,
++        },
++    );
++    for mut inner in std::mem::take(&mut body.blocks) {
++        charge(
++            meter,
++            inner.instructions.len() + inner.parameters.len(),
++            &body.span,
++        )?;
++        for value in &mut inner.parameters {
++            *value = ids[value.0];
++        }
++        for inst in &mut inner.instructions {
++            charge(meter, operands(&inst.operation).len(), &inst.span)?;
++            inst.result = ids[inst.result.0];
++            map_operation(&mut inst.operation, &ids);
++        }
++        inner.terminator = match inner.terminator {
++            Terminator::Return(value) => Terminator::Jump {
++                target: join,
++                arguments: vec![ids[value.0]],
++            },
++            Terminator::Throw(value) => Terminator::Throw(ids[value.0]),
++            Terminator::Jump { target, arguments } => Terminator::Jump {
++                target: start + target,
++                arguments: arguments.into_iter().map(|value| ids[value.0]).collect(),
++            },
++            Terminator::Branch {
++                condition,
++                consequent,
++                alternative,
++            } => Terminator::Branch {
++                condition: ids[condition.0],
++                consequent: start + consequent,
++                alternative: start + alternative,
++            },
++        };
++        parent.blocks.push(inner);
++    }
++    parent.blocks.push(Block {
++        parameters: vec![call.result],
++        instructions: suffix,
++        terminator,
++    });
++    Ok(())
++}
++
++/// A body that only throws or recurs has no return edge to the call's suffix.
++/// Remove that suffix (and any blocks it alone reached) after all sites split.
++fn prune_unreachable(
++    function: &mut Function,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    charge(
++        meter,
++        function.blocks.len().saturating_mul(3),
++        &function.span,
++    )?;
++    let mut reachable = vec![false; function.blocks.len()];
++    let mut pending = vec![0];
++    while let Some(block) = pending.pop() {
++        if reachable[block] {
++            continue;
++        }
++        reachable[block] = true;
++        match function.blocks[block].terminator {
++            Terminator::Jump { target, .. } => pending.push(target),
++            Terminator::Branch {
++                consequent,
++                alternative,
++                ..
++            } => pending.extend([consequent, alternative]),
++            _ => {}
++        }
++    }
++    if reachable.iter().all(|value| *value) {
++        return Ok(());
++    }
++    let mut ids = vec![0; reachable.len()];
++    let mut next = 0;
++    for (index, live) in reachable.iter().enumerate() {
++        if *live {
++            ids[index] = next;
++            next += 1;
++        }
++    }
++    let mut index = 0;
++    function.blocks.retain(|_| {
++        let live = reachable[index];
++        index += 1;
++        live
++    });
++    for block in &mut function.blocks {
++        match &mut block.terminator {
++            Terminator::Jump { target, .. } => *target = ids[*target],
++            Terminator::Branch {
++                consequent,
++                alternative,
++                ..
++            } => {
++                *consequent = ids[*consequent];
++                *alternative = ids[*alternative];
++            }
++            _ => {}
++        }
++    }
++    // Verification requires a definition for every SSA record, including
++    // records no longer used after an always-throwing call removes its suffix.
++    charge(
++        meter,
++        function.values.len().saturating_mul(3),
++        &function.span,
++    )?;
++    let mut defined = vec![false; function.values.len()];
++    for block in &function.blocks {
++        for value in &block.parameters {
++            defined[value.0] = true;
++        }
++        for inst in &block.instructions {
++            defined[inst.result.0] = true;
++        }
++    }
++    let mut values = vec![ValueId(usize::MAX); defined.len()];
++    let mut next = 0;
++    for (index, live) in defined.iter().enumerate() {
++        if *live {
++            values[index] = ValueId(next);
++            next += 1;
++        }
++    }
++    let mut index = 0;
++    function.values.retain(|_| {
++        let live = defined[index];
++        index += 1;
++        live
++    });
++    for block in &mut function.blocks {
++        charge(
++            meter,
++            block.parameters.len() + block.instructions.len(),
++            &function.span,
++        )?;
++        for value in &mut block.parameters {
++            *value = values[value.0];
++        }
++        for inst in &mut block.instructions {
++            charge(meter, operands(&inst.operation).len(), &inst.span)?;
++            inst.result = values[inst.result.0];
++            map_operation(&mut inst.operation, &values);
++        }
++        let inputs = match &mut block.terminator {
++            Terminator::Return(value) | Terminator::Throw(value) => std::slice::from_mut(value),
++            Terminator::Jump { arguments, .. } => arguments,
++            Terminator::Branch { condition, .. } => std::slice::from_mut(condition),
++        };
++        charge(meter, inputs.len(), &function.span)?;
++        for value in inputs {
++            *value = values[value.0];
++        }
++    }
++    Ok(())
++}
+diff --git a/crates/suss-cli/tests/clojure_nonescaping_closures.rs b/crates/suss-cli/tests/clojure_nonescaping_closures.rs
+new file mode 100644
+index 00000000..ac2aef41
+--- /dev/null
++++ b/crates/suss-cli/tests/clojure_nonescaping_closures.rs
+@@ -0,0 +1,208 @@
++//! Local closure elimination preserves source conversions, captures and effects (#351).
++use suss_cli::portable_session::Session;
++
++const CASES: &[(&str, &str)] = &[
++    (
++        "(let [x (+ 3000000000 5) y (+ 1.25 0.5) f (fn [] (+ x y))] (f))",
++        "3.00000000675E9",
++    ),
++    ("(let [f (fn [] 127.1)] (byte (f)))", "127"),
++    ("(let [f (fn [] 2147483647.9)] (int (f)))", "2147483647"),
++    (
++        "(let [f (fn [] (unchecked-float 2147483648.0))] (try (int (f)) (catch :default e :error)))",
++        ":error",
++    ),
++    (
++        "(let [f (fn [x] (if x 1.5 2.5))] [(f true) (f false)])",
++        "[1.5 2.5]",
++    ),
++    (
++        "(let [x -0.0 f (fn [] x)] [(f) (/ 1.0 (f))])",
++        "[-0.0 ##-Inf]",
++    ),
++    (
++        "(let [x ##NaN f (fn [] (+ x 0.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])",
++        "[false false false]",
++    ),
++    (
++        "(let [x 9223372036854775807 f (fn [] (inc x))] (try (f) (catch :default e (ex-message e))))",
++        "\"long overflow\"",
++    ),
++    (
++        "(let [events (atom []) f (fn [x y] (swap! events conj :body) (+ x y))] [(f (do (swap! events conj :first) 1) (do (swap! events conj :second) 2)) @events])",
++        "[3 [:first :second :body]]",
++    ),
++    (
++        "(let [events (atom []) f (fn [] (swap! events conj :body) 7)] [(f) (f) @events])",
++        "[7 7 [:body :body]]",
++    ),
++    (
++        "(let [f (fn [^long x] x)] (try (f 1.0E300) (catch :default e :error)))",
++        ":error",
++    ),
++    (
++        "(let [f (fn ^long [] (identity 1.0E300))] (f))",
++        "9223372036854775807",
++    ),
++    (
++        "(let [f (fn [n] (loop [i n acc 0] (if (zero? i) acc (recur (dec i) (+ acc i)))))] (f 5))",
++        "15",
++    ),
++    (
++        "(let [x 3000000000 f (fn [n] (if (zero? n) x (+ x n)))] [(f 0) (f 3)])",
++        "[3000000000 3000000003]",
++    ),
++    (
++        "(let [f (fn [x] x)] (try (f 1 2) (catch :default e :arity)))",
++        ":arity",
++    ),
++    (
++        "(let [x 3000000000 f (fn [] x)] ((identity f)))",
++        "3000000000",
++    ),
++    (
++        "(let [x 3000000000 f (fn [] x) out [f]] ((nth out 0)))",
++        "3000000000",
++    ),
++    (
++        "(let [x 3000000000 f (fn [] x)] (loop [i 0 acc 0] (if (< i 4) (recur (inc i) (+ acc (f))) acc)))",
++        "12000000000",
++    ),
++    (
++        "(let [f (fn [x] (try (if x (throw :bad) 1) (catch :default e 2) (finally nil)))] [(f false) (f true)])",
++        "[1 2]",
++    ),
++    (
++        "(let [events (atom []) f (fn [] (swap! events conj :body) 7)] [(try (do (f) (throw :bad)) (catch :default e (f))) @events])",
++        "[7 [:body :body]]",
++    ),
++    (
++        "(try (let [f (fn [] (throw (ex-info \"boom\" {})))] (do (f) :after)) (catch :default e (ex-message e)))",
++        "\"boom\"",
++    ),
++    (
++        "(let [f (fn [x] ((fn [] x)))] (f 3000000000))",
++        "3000000000",
++    ),
++    (
++        "(let [f (fn [x] (fn [] x)) g (f 3000000000)] (g))",
++        "3000000000",
++    ),
++    ("(let [f (fn [] 1)] [(fn? f) (f)])", "[true 1]"),
++    (
++        "(let [f (fn [x] x)] [(f 1) (try (f 1 2) (catch :default e :arity)) (f 3)])",
++        "[1 :arity 3]",
++    ),
++    (
++        "(let [x 3000000000 f (fn ([a] (+ x a)) ([a b] (+ x a b)))] [(f 1) (f 2 3)])",
++        "[3000000001 3000000005]",
++    ),
++    (
++        "(let [x 3000000000 f (fn [& xs] (+ x (count xs)))] [(f) (f 1 2)])",
++        "[3000000000 3000000002]",
++    ),
++    (
++        "(let [x 3000000000 f (fn again [n] (if (zero? n) x (+ 1 (again (dec n)))))] (f 3))",
++        "3000000003",
++    ),
++    (
++        "(let [f (fn [b] (if b 1 1.0))] [(integer? (f true)) (float? (f false)) (= (f true) (f false))])",
++        "[true true false]",
++    ),
++    (
++        "(let [f (fn [x] (+ x 1))] (try (f true) (catch :default e :error)))",
++        ":error",
++    ),
++];
++
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
++    CASES.iter()
++}
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_nonescaping_closures() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in cases() {
++            let value = session
++                .eval(&observed(source))
++                .unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session
++                .inspect(&value, |mut store, value| {
++                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                    Ok(array
++                        .elems(&mut store)?
++                        .map(|unit| unit.unwrap_i32() as u16)
++                        .collect::<Vec<_>>())
++                })
++                .unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_nonescaping_closures() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = String::from("(ns localhints)\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!(
++            "(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n",
++            observed(expression)
++        ));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args([
++        "compile",
++        "localhints.sus",
++        "-w",
++        "localhints.wit",
++        "-o",
++        "localhints.wasm",
++    ]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(
++        output.status.success(),
++        "{}",
++        String::from_utf8_lossy(&output.stderr)
++    );
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss"))
++            .current_dir(root.path())
++            .args([
++                "run",
++                "localhints.wasm",
++                "--invoke",
++                &format!("case{index}"),
++                "--",
++                "0",
++            ])
++            .output()
++            .unwrap();
++        assert!(
++            output.status.success(),
++            "{expression}: {}",
++            String::from_utf8_lossy(&output.stderr)
++        );
++        assert_eq!(
++            String::from_utf8_lossy(&output.stdout).trim(),
++            "1",
++            "{expression}"
++        );
++    }
++}

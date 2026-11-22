@@ -209,6 +209,21 @@ fn actual_pending_await_preserves_capture_and_resumes_after_gc() {
 }
 
 #[test]
+fn a_future_created_inside_letfn_keeps_its_peer_group_across_await_and_gc() {
+    let mut h = Harness::new();
+    let dependency = h.value("future-pending-new", &[]);
+    h.bind("dependency", dependency.clone());
+    let owner = h.source("(letfn* [f (fn [] (suss.async/future* (+ 1 (suss.async/await* test/dependency) (g)))) g (fn [] 9)] (f))");
+    h.run();
+    assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+    h.store.gc(None).unwrap();
+    let value = h.value("long-box", &[Val::I64(32)]);
+    assert_eq!(h.integer("future-resolve", &[dependency, value]), 1);
+    h.run();
+    assert_eq!(h.ready_number(&owner), 42);
+}
+
+#[test]
 fn nested_future_and_consecutive_awaits_execute_compiled_states() {
     let mut h = Harness::new();
     let owner = h.source("(suss.async/future* (let [first (suss.async/await* (suss.async/future* 20))] (+ first (suss.async/await* (suss.async/future* 22)))))");

@@ -1,0 +1,4 @@
+{"file":"target/probe/m12-box-reuse-before/sum.wasm","body_bytes":309,"sha256":"5e85c738c74d40383156f8caf151baf28cfe53c90b26d03fee96649d84588107"}
+{"file":"target/probe/m12-box-reuse-before/sum.wasm","body_bytes":380,"sha256":"4a05f6d66eb9ad47cca6fb74813d0190b964a5ae9a3b33b957ecfa6dec82926c"}
+{"file":"target/probe/m12-box-reuse-optimized/sum.wasm","body_bytes":309,"sha256":"5e85c738c74d40383156f8caf151baf28cfe53c90b26d03fee96649d84588107"}
+{"file":"target/probe/m12-box-reuse-optimized/sum.wasm","body_bytes":380,"sha256":"4a05f6d66eb9ad47cca6fb74813d0190b964a5ae9a3b33b957ecfa6dec82926c"}

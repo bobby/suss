@@ -1,0 +1,191 @@
+{
+  "source_base": "48f23809d2dcb6d2989b77bb4f68620314cd8ef7",
+  "source_inputs": "source-inputs.json",
+  "source_reconstruction": "Ten production/test inputs match reconstructed base plus patch byte-for-byte.",
+  "matrix": {
+    "jvm_version": "1.12.6",
+    "passing_jvm_value_cases": 30,
+    "native_values": 34,
+    "suss_only_rebinding_cases": 4,
+    "routes": [
+      "Runtime",
+      "Macro",
+      "actual AOT"
+    ],
+    "executed_codegen_loops": 3,
+    "raw_helpers_inspected": 33
+  },
+  "focused": {
+    "groups": 14,
+    "passed": 74,
+    "failed": 0,
+    "ignored": 0,
+    "compiler_sha256": "e40ce9e9fd81a3dbf3ebdff73548db0f954f633f38bf14de6c5bdfe603865a37"
+  },
+  "gates": [
+    {
+      "name": "focused",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_raw_bits_and_casts",
+        "--test",
+        "clojure_raw_numeric_core",
+        "--test",
+        "clojure_primitive_method_types",
+        "--test",
+        "clojure_numeric_extrema",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--test",
+        "clojure_division_overloads",
+        "--test",
+        "clojure_unboxed_locals",
+        "--test",
+        "clojure_numeric_box_reuse",
+        "--test",
+        "compiled_core_casts",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--test",
+        "compiled_primitive_params",
+        "--test",
+        "portable_primitive_entries",
+        "--test",
+        "portable_core_expression_dependencies",
+        "--test",
+        "portable_unboxed_locals",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 225.52353596687317
+    },
+    {
+      "name": "bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 58.146225929260254
+    },
+    {
+      "name": "binaryen",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_optimize",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 87.88989448547363
+    },
+    {
+      "name": "suite",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "clojure_test_suite_matches_reviewed_baseline",
+        "--",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "environment": {
+        "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-bits-casts-suite-capture"
+      },
+      "exit_code": 0,
+      "seconds": 225.9023630619049
+    }
+  ],
+  "additional_overload_probe": {
+    "passing": 2,
+    "failing": 6,
+    "routes": [
+      "actual frozen-before AOT",
+      "actual current AOT"
+    ],
+    "evidence": "additional-observations.json",
+    "note": "Existing gaps preserved, not relabeled as successes. These cases are outside the passing30 matrix and remain required follow-up."
+  },
+  "suite_observations_uncompressed_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "environment": {
+    "toolchain": "stable",
+    "cargo_jobs": 2,
+    "test_threads": 2,
+    "memory_scope": "4G",
+    "cargo_target": "m12-hints-target",
+    "native_cache": "outer target/suss",
+    "binaryen": "wasm-opt version 133 (version_133)"
+  },
+  "limitations": "Six existing Object/primitive-Float cast overload mismatches remain. Reviewed suite retains known failures, not full conformance. No current full-workspace/new quiet ratio or complete numeric-tower/escape acceptance.",
+  "sha256": {
+    "README.md": "59bd51567bbe6d783b4116abb791afc77084dcb4b473da1f7b916f80165b5836",
+    "additional-observations.json": "e2e4a416c0161e6d118ed5ac8251be675b3abdecf639582cc280fd4bbedf78a9",
+    "additional-overloads.clj": "39bce9d8cd85caf4c9347caee895b5a5cdd4a7e200c7d20e738b155769fe8569",
+    "additional-overloads.log": "d315b780be44a35db7017852ee3f897c2aa87b29ac678a61770cfdddec1d94ae",
+    "additional.sus": "bc5aed2c33da757b8797c7e7d94361ccbc52312f005a930c6957d0189bada3d7",
+    "additional.wit": "f65c4ae45c6468eefbd0e2a10d2c9f15ee70a361ecefb902210f55a519591ae4",
+    "after-rebind-compile.log": "61475421f8c239f35f132cc550941a35ecb62e489c0dbe951e70862e3d3dba8d",
+    "after-rebind-run.log": "45ae43c1e376cccf306aa151376b057784920274cde055b9b025e8a7fdc1aa11",
+    "before-additional-compile.log": "a99cf5c1a12e9c3b0643dedcd7c26d81aa0d7fde7be708236e54b7a8b98b46fe",
+    "before-additional-run.log": "cd42ffe3da55a59b4b8ac7b9fc7a422d6c107dc9f47fc96b48e94f12df42c7a8",
+    "before-clojure_raw_bits_and_casts.rs": "d2fa6db45ad4daff36073a5362dfcb2e83d34fa54fe621a72c7288487c588743",
+    "before-portable_unboxed_locals.rs": "c342171e6bf368a917e878e44910ffc601c4878c10c82cef2451da7e930338a8",
+    "before-rebind-compile.log": "151671e5ae893d1e915aea0473083499a9ead3e81842f184e70843888139a1a0",
+    "before-rebind-run.log": "45ae43c1e376cccf306aa151376b057784920274cde055b9b025e8a7fdc1aa11",
+    "before.json": "f56c1f60ad2a137ff6b1f7b4adee9fd19f931382de7c52f407ecfdc39f6fa095",
+    "before.log": "5df61c1597940181fd828546e7052ab7506d765edd86ae9543e92c1d69a7a2f2",
+    "binaryen.log": "063325b63617bec7f463324167fa66befbeb1e22128c35d10dd9e29f184367ef",
+    "bootstrap.log": "678673c0ffcd922cec5c46beef2f7cb8bd2b2c8156b75a1f6c1a265d677bff6d",
+    "cases.json": "fd5f0cd1cc83fb6f917d958293c3a1c43eca9871901bd2db4840ff83668190a1",
+    "codegen-before.log": "1b5c95a753690cb8b8098e41ebf539a65f6da7c989d956824da30505e0ef61b9",
+    "codegen-oracle.clj": "cc3b7d1da8035b98d827c980da472823a569d5f8104593a599b2796770619c04",
+    "codegen-oracle.log": "43af0559c1ec7a89043fc029eed29235921722c7281333112f1c0104f576b10a",
+    "commands.json": "6f2cdecb87f5e18efa71bb5648c305b20fefa01ef0e907cff921e32fbdd5f93d",
+    "current-additional-compile.log": "e6d13511e4222fe03a191ded2633339bc49ac7619f22fa621d7f0c056a66a62a",
+    "current-additional-run.log": "cd42ffe3da55a59b4b8ac7b9fc7a422d6c107dc9f47fc96b48e94f12df42c7a8",
+    "expectations.json": "6df8dcf0e11e18868cd5c2bd516f1b9d5973dfcb6b700d7bb0ba3c130ed51b50",
+    "first-source.patch": "7c9b3967569844f61ed42ae2b62a4cc273e99c5805e237bfe545f72cd5256970",
+    "first.log": "db18bfab3926896c7d3a3e52a708999ba604261c01a4e92eacf524e126747f8a",
+    "float-overloads.clj": "b443434330bdae5ef1470d7e21d78ba32c2beae81fa3b26950980187848a209c",
+    "float-overloads.log": "3923feedc65a43b40aca7425a38500080d7a482fd88e100799851f1fe90fc1b7",
+    "focused-test-private-constant-failure.json": "c7e5ce3da3c1ec4889becd2be2aa919d369985cb7fcf2164af0b86ca9736508a",
+    "focused-test-private-constant-failure.log": "dc0d44632af6d364c040ad5d292b0fe9811dfb60276f0797e11d476b81b7bf9d",
+    "focused.log": "84a77e4421fc775be22225782050751c2a5e6fa67359b8d3b6df50c00053957b",
+    "oracle-command.json": "6031e07a8635d9c6218d9c3b417416a1343e234f797e4d732e79367f959359c2",
+    "oracle.clj": "a64ee84005395e8b2b1288a197a6dfd16abd3242f697a8bc20219d0b42c15804",
+    "oracle.log": "eb93a4e01a02b41aa78aa9af56e8613871b5776b771cd94012f5867bc565107c",
+    "probe.clj": "b6ff23089ec194749ea45100297e1b93034836e6e902ba66a4988bd88c741739",
+    "probe.log": "45bf723b1541c92968d82ccf4f3bb34be557cc18a25bc94fc04889b47ba8b874",
+    "raw-helpers-compile-failure.log": "07d564f69d0a0bb4c74eb303150fe65631680907319ad73f3db88d8bac9f8e5d",
+    "rebind-cases.json": "3747e039b7fbbfffe9987030578b38bb1a5c76fe7515b1321419c06f443f0102",
+    "rebind-definitions.sus": "1370c2a2bccce53f27514b18eb8d551462613ddfbcf0d3d4d52d9a0eaceaa308",
+    "rebind-observations.json": "feb3b8869e468aed2873eb9759f12c6f3cb759677dac662484de7b35dadfe690",
+    "rebind.sus": "2aa55ed4ca6a5362523ca01b10983530349b88a2303612c7d482d2d6333efa7c",
+    "rebind.wit": "9e09c22c2aa39d5bc41606d0432536988757455a8eee9b2f87f2e4d80a0baed7",
+    "source-check.py": "6b9f1945d4432a05b7fb882677135b3c82ee4a138154eef03889a50a6b897c80",
+    "source-inputs.json": "79e2d3897148a77eeab9d677344dd41001ae2a51822bba5932a33f1dfca7857f",
+    "source-reconstruction.log": "7100cea6b6d49bbf94ae8ff3865e0a5136e8099ddde5c88b80e82ca35d964ace",
+    "source.patch": "84ccfc5b028a6faa0d9e813dd9fef3e645d7f2a43532f9918cc589fc5217d64d",
+    "suite-observations.json.gz": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "suite.log": "4d4bea0495dda2d6ba3a451c5b020876bed1488b9ea0d8d57a864dbcab6ccd54"
+  }
+}

@@ -1,0 +1,3 @@
+"[(== (double (float (identity 18014399583223809))) 1.8014398509481984E16) (== (double (unchecked-float (identity 18014399583223809))) 1.8014400656965632E16)]" "[true true]"
+"(let [x (loop [] 18014399583223809)] [(== (double (float x)) 1.8014398509481984E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])" "[true true]"
+"(let [^long x (identity 18014399583223809)] [(== (double (float x)) 1.8014400656965632E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])" "[true true]"

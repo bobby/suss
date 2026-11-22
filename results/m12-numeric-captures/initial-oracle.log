@@ -1,0 +1,16 @@
+"(let [x 1.25 f (fn [] (+ x 2.0))] ((identity f)))" "3.25"
+"(let [x 3000000000 f (fn again [n] (if (= n 0) (+ x 1) (again (- n 1))))] (f 3))" "3000000001"
+"(let [x 3000000000 f (fn ([] (+ x 1)) ([a] (+ x 2)))] [(f) (f :unused)])" "[3000000001 3000000002]"
+"(let [x 1.25 f (fn [& xs] (+ x 2.0))] [(f) (f :a :b)])" "[3.25 3.25]"
+"(let [x 1.25 f (fn ^double [] (+ x 2.0))] [(f) ((identity f))])" "[3.25 3.25]"
+"(let [x -0.0 f (fn [] (* x 2.0))] [(f) (/ 1.0 (f))])" "[-0.0 ##-Inf]"
+"(let [x ##NaN f (fn [] (+ x 1.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])" "[false false false]"
+"(let [x 9223372036854775807 f (fn [] (+ x 1))] (try (f) (catch Throwable e (ex-message e))))" "\"long overflow\""
+"(let [x 127.1 f (fn [] x)] (byte ((identity f))))" "127"
+"(let [x 2147483648.0 f (fn [] (+ x 0.0))] (try (int ((identity f))) (catch Throwable e :error)))" ":error"
+"(let [x 3000000000 f (fn [] x)] (identical? ((identity f)) ((identity f))))" "false"
+Execution error (AssertionError) at user/eval196 (oracle.clj:12).
+Assert failed: (= "true" actual)
+
+Full report at:
+/tmp/clojure-2220336853451547241.edn

@@ -7,6 +7,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LocalKind {
     Let,
+    LetFn,
     Loop,
     Argument { index: usize, rest: bool },
     FunctionName,

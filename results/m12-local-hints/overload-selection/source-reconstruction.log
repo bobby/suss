@@ -1,0 +1,7 @@
+Measured base: b6252e641ffe70d7ce73178e2b2b03b23c4bf625
+Published source: 5cee174ee0857af8025f0d687e5b1c2474b5faf0
+031e1e4e49d77f062f8bd8859b249edfe16236122ca2c498a14234c07b6c3cc5 crates/suss-compile/src/portable/hir/local_hints.rs
+7b031c5b0e0e8f1f15dbd09a87bcc56539783bd36ee53b9db87512f787449088 crates/suss-compile/src/portable/hir/division_overloads.rs
+a70f0e1e18ef683730b9e5c35cc22c5e07ef7bb12018881505b3415ad4462439 crates/suss-compile/src/portable/hir/primitive_returns.rs
+d86ae6be899eefbd5a1bb5190cbffd101f5f1731fb9695f9258a36b084834203 crates/suss-cli/tests/clojure_local_numeric_hints.rs
+All reconstructed source and test files exactly match the published revision.

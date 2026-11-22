@@ -1,0 +1,17 @@
+Running as unit: run-p2974832-i86830111.scope; invocation ID: 758d535a9cbb4397b8710409f9e5e158
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 58s
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics has been running for over 60 seconds
+test aot_rejects_invalid_local_hint_declarations has been running for over 60 seconds
+test aot_preserves_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 92.43s
+

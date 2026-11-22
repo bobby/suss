@@ -1,0 +1,13 @@
+{
+  "source_base": "0ac76af93dd82b2c95ffbf0410308e0950a9667e",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-escape-before-suss",
+    "analyze",
+    "--emit",
+    "hir",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-escape-ifn.sus"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "Error: While compiling /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-escape-ifn.sus: Unresolved Runtime name ifn? at bytes 42..46\n"
+}

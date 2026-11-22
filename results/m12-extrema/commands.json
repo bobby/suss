@@ -1,0 +1,87 @@
+[
+  {
+    "name": "final-focused",
+    "command": [
+      "cargo",
+      "+stable",
+      "test",
+      "--workspace",
+      "--locked",
+      "--test",
+      "clojure_numeric_extrema",
+      "--test",
+      "clojure_local_numeric_hints",
+      "--test",
+      "clojure_division_overloads",
+      "--test",
+      "clojure_unboxed_locals",
+      "--test",
+      "clojure_numeric_box_reuse",
+      "--test",
+      "compiled_core_casts",
+      "--test",
+      "compiled_macro_cumulative_fuel",
+      "--test",
+      "compiled_primitive_params",
+      "--test",
+      "portable_primitive_entries",
+      "--test",
+      "portable_core_expression_dependencies",
+      "--",
+      "--test-threads=2"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-focused.log"
+  },
+  {
+    "name": "final-bootstrap",
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "environment": {
+      "TMPDIR": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/tmp"
+    },
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-bootstrap.log"
+  },
+  {
+    "name": "final-binaryen",
+    "command": [
+      "cargo",
+      "+stable",
+      "test",
+      "--workspace",
+      "--locked",
+      "--test",
+      "compiled_optimize",
+      "--",
+      "--test-threads=2"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-binaryen.log"
+  },
+  {
+    "name": "final-suite",
+    "command": [
+      "cargo",
+      "+stable",
+      "test",
+      "--workspace",
+      "--locked",
+      "--test",
+      "clojure_test_suite",
+      "clojure_test_suite_matches_reviewed_baseline",
+      "--",
+      "--exact",
+      "--test-threads=2"
+    ],
+    "environment": {
+      "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-suite-capture"
+    },
+    "exit_code": 0,
+    "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-suite.log"
+  }
+]

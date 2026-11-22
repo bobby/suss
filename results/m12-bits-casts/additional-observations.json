@@ -1,0 +1,76 @@
+[
+  {
+    "name": "before",
+    "compiler_sha256": "9d9bdc0e2282262547b58b8c8ae8200bb072f6424549ab4b07a14aab362ccec6",
+    "component_sha256": "763d9f33c503a3d7def72c560997a1175bb02fbf154a7f1cd75818fad0b26c8e",
+    "case_sources": [
+      "(double (float (unchecked-float ##Inf)))",
+      "(int (unchecked-float 2147483648.0))",
+      "(try (byte (identity 127.1)) (catch Throwable e :error))",
+      "(try (short (identity 32767.1)) (catch Throwable e :error))",
+      "(try (int (identity 2147483647.9)) (catch Throwable e :error))",
+      "(try (long (identity 1.0E300)) (catch Throwable e :error))",
+      "(try (byte (identity ##NaN)) (catch Throwable e :error))",
+      "(try (int (unchecked-float ##Inf)) (catch Throwable e :error))"
+    ],
+    "expected_values": [
+      "##Inf",
+      "2147483647",
+      "127",
+      "32767",
+      "2147483647",
+      ":error",
+      "0",
+      ":error"
+    ],
+    "matching_exports": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "1",
+      "0",
+      "1"
+    ],
+    "passing": 2,
+    "failing": 6
+  },
+  {
+    "name": "current",
+    "compiler_sha256": "e40ce9e9fd81a3dbf3ebdff73548db0f954f633f38bf14de6c5bdfe603865a37",
+    "component_sha256": "d67dbe556f5371441785e724518a2bf4397dbbde733c16b38d0d287cfc23ae3d",
+    "case_sources": [
+      "(double (float (unchecked-float ##Inf)))",
+      "(int (unchecked-float 2147483648.0))",
+      "(try (byte (identity 127.1)) (catch Throwable e :error))",
+      "(try (short (identity 32767.1)) (catch Throwable e :error))",
+      "(try (int (identity 2147483647.9)) (catch Throwable e :error))",
+      "(try (long (identity 1.0E300)) (catch Throwable e :error))",
+      "(try (byte (identity ##NaN)) (catch Throwable e :error))",
+      "(try (int (unchecked-float ##Inf)) (catch Throwable e :error))"
+    ],
+    "expected_values": [
+      "##Inf",
+      "2147483647",
+      "127",
+      "32767",
+      "2147483647",
+      ":error",
+      "0",
+      ":error"
+    ],
+    "matching_exports": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "1",
+      "0",
+      "1"
+    ],
+    "passing": 2,
+    "failing": 6
+  }
+]

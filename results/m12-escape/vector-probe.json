@@ -1,0 +1,16 @@
+[
+  {
+    "source": "(with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))",
+    "expected_jvm": "3",
+    "status": 0,
+    "stdout": "3\n",
+    "stderr": ""
+  },
+  {
+    "source": "(with-redefs [vector (fn [& xs] nil)] (let [[a b] [1 2]] (+ a b)))",
+    "expected_jvm": "3",
+    "status": 0,
+    "stdout": "3\n",
+    "stderr": ""
+  }
+]

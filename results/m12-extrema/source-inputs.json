@@ -1,0 +1,27 @@
+{
+  "base": "7997770b2ee8bf1b60822574e9a679cdbf6a4417",
+  "new_files": [
+    "crates/suss-cli/tests/clojure_numeric_extrema.rs",
+    "crates/suss-compile/src/portable/hir/extrema.rs",
+    "crates/suss-compile/src/runtime_abi/extrema.rs"
+  ],
+  "sha256": {
+    "crates/suss-cli/tests/clojure_numeric_extrema.rs": "ca04eaed809045dfb087bd6d24d238e3a2261e83b0027f15f405db219ece1eab",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "22118548369fa75853c162fedbcb3119855deaaa37e0395377de7ed3360e75ac",
+    "crates/suss-compile/src/portable/hir.rs": "d22e418f16bc77ce1d0265f6627d68688b95e25ac5ed62596e2d4b051176f7cf",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "4f3d7d7a835b0a784335f92dc507d92bd3bbde5d29111034238edcdfef4e365b",
+    "crates/suss-compile/src/portable/hir/extrema.rs": "5bbb60ea62f5ef37ae87bcbe56e2560326635f7f416a97d537da29d8e87e2ad2",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "b0acef371315e9ad094c6f3f7be23928c105a4cb180c21d0a94cf264f2fca7e1",
+    "crates/suss-compile/src/runtime_abi.rs": "a4d8724b576506e5921a5ad147f760a544275d564e9fd0d0431d57d9c9137c24",
+    "crates/suss-compile/src/runtime_abi/extrema.rs": "c3721c06cc53519a86c784a9f06f08718f530707860e139e0fc3e5a8862278d1",
+    "crates/suss-compile/src/runtime_abi/numeric_operands.rs": "625456c2a85b9ea475b90929692a2cee32622f959f8e69f10c5902e72041f7fa",
+    "crates/suss-compile/tests/portable_core_expression_dependencies.rs": "12225086db6fd485ceebdcf303c13a8ec4f2db44cbca5d7481aedb1af2e18377",
+    "crates/suss-compile/tests/portable_unboxed_locals.rs": "4399dae900bd2d5a415bf81e3b5264be9023596750c53f5bf4fdbd1d191dbfd2",
+    "docs/compatibility/patches/expression-max.json": "becd0071fab309d3755424ff18d759713bb2834f24fdc344802807c9aff3938f",
+    "docs/compatibility/patches/expression-min.json": "293f72269375c86fdd43fc1146cb05921ab49cd7be2176307f52f3e17e418985",
+    "docs/compatibility/reviews.edn": "c8baa6f567b96a89f27d02bf1655a2ce4b7436a5dcd20c5424862a5f049a5f13",
+    "runtime/core-import/manifest.json": "fbc9b5c354d0ee5645434e4b2a5f6b885913a6d454e69eac45780a7f32f3d219",
+    "runtime/core-import/suss/core.sus": "f3d3a6bfc3de5c2194fda7917ef8dacbce7956aecd7169a482c6fcef3b56c99b"
+  },
+  "patch_sha256": "a1a562e852c6e0f7704327229bdbfb9e2c1fe37b9d26aaea24a1708a882815f1"
+}

@@ -1,0 +1,14 @@
+{
+  "base": "ea7af73198d72b721b9e679b6a0968767b02391b",
+  "patch_sha256": "bdc5348e325fa86bc7755241003419aaf251d38679ef4339d7eca65d5aeb4f0d",
+  "new_files": [
+    "crates/suss-cli/tests/clojure_primitive_method_types.rs"
+  ],
+  "sha256": {
+    "crates/suss-compile/src/portable/hir.rs": "3fabb4d99c1882d373133d8c1fbd92eb34329b71859ae106f4443cb7762280c6",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "39dd5b5789f00314016b5f057eb9c5bf9c44b107a87d2a97eda6705afa0a525e",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "2acb9cccab4a7f6299d208f4bdcc8382b28814cf95492db70434a9d2b6593741",
+    "crates/suss-cli/tests/compiled_primitive_params.rs": "14114508d645d982e65d1098cd78b4d6899bd7a6b43116784863f3b97a036eb1",
+    "crates/suss-cli/tests/clojure_primitive_method_types.rs": "dc3113ed7e51f728e9a6958c3482b4b57869b3a66258a1e8f1447f54593a9a44"
+  }
+}

@@ -1,0 +1,45 @@
+Running as unit: run-p3278891-i87141475.scope; invocation ID: 3905887e617e4b05b06279ceb9386119
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.68s
+     Running tests/clojure_primitive_method_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_primitive_method_types-c5ca8037cd919178)
+
+running 4 tests
+test aot_preserves_primitive_method_types ... FAILED
+test primitive_method_diagnostics_use_lexical_source_types ... FAILED
+test runtime_and_macro_preserve_primitive_method_types ... FAILED
+test aot_rejects_invalid_primitive_method_types ... FAILED
+
+failures:
+
+---- aot_preserves_primitive_method_types stdout ----
+
+thread 'aot_preserves_primitive_method_types' (3278929) panicked at crates/suss-cli/tests/clojure_primitive_method_types.rs:57:5:
+Compilation error: Semantic error: While compiling localhints.sus: Mismatched primitive return, expected: double, had: long at bytes 91..120
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- primitive_method_diagnostics_use_lexical_source_types stdout ----
+
+thread 'primitive_method_diagnostics_use_lexical_source_types' (3279050) panicked at crates/suss-cli/tests/clojure_primitive_method_types.rs:85:70:
+accepted (let [x 5.5] ((fn ^long [] x)))
+
+---- runtime_and_macro_preserve_primitive_method_types stdout ----
+
+thread 'runtime_and_macro_preserve_primitive_method_types' (3279117) panicked at crates/suss-cli/tests/clojure_primitive_method_types.rs:25:76:
+(let [^double x (identity 5)] ((fn ^double [] (bit-and x 1)))): Mismatched primitive return, expected: double, had: long at bytes 44..73
+
+---- aot_rejects_invalid_primitive_method_types stdout ----
+
+thread 'aot_rejects_invalid_primitive_method_types' (3278930) panicked at crates/suss-cli/tests/clojure_primitive_method_types.rs:103:9:
+accepted (let [x 5.5] ((fn ^long [] x)))
+
+
+failures:
+    aot_preserves_primitive_method_types
+    aot_rejects_invalid_primitive_method_types
+    primitive_method_diagnostics_use_lexical_source_types
+    runtime_and_macro_preserve_primitive_method_types
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.82s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_primitive_method_types`

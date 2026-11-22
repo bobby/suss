@@ -1,0 +1,5 @@
+(ns escapebench)
+(def case-control (fn [n] (let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) (let [x (+ 3000000000 i) y (double i)] (recur (inc i) (unchecked-add acc (double (+ x y))))) acc)))))
+(def case-vector (fn [n] (let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) (let [x (+ 3000000000 i) y (double i)] (recur (inc i) (unchecked-add acc (double (let [[a b] [x y]] (+ a b)))))) acc)))))
+(def case-entry (fn [n] (let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) (let [x (+ 3000000000 i) y (double i)] (recur (inc i) (unchecked-add acc (double (let [[a b] (MapEntry. x y nil)] (+ a b)))))) acc)))))
+(def case-closure (fn [n] (let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) (let [x (+ 3000000000 i) y (double i)] (recur (inc i) (unchecked-add acc (double (let [f (fn [] (+ x y))] (f)))))) acc)))))

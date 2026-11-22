@@ -1,0 +1,463 @@
+diff --git c/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index 3670ef0c..26092873 100644
+--- c/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -2,6 +2,7 @@
+ mod r#async;
+ mod structured;
+ mod unboxed;
++mod captures;
+ mod primitive;
+ use super::{
+     hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
+@@ -1045,14 +1046,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+             }),
+         );
+     }
+-    let layout = Layout::new(
++    let mut layout = Layout::new(
+         &bodies, &singles, &dispatchers, futures.len(), &names,
+         eval_type + 1 + u32::from(throws), globals.len() as u32 + 3 + imported_link_globals,
+     ).map_err(|message| fail(message))?;
++    captures::plan(ir, &mut layout);
+     for definition in &layout.definitions {
+         let mut fields = runtime_abi::closure_fields();
+-        fields.extend((0..definition.captures).map(|_| FieldType {
+-            element_type: StorageType::Val(VALUE),
++        fields.extend(definition.capture_reprs.iter().map(|repr| FieldType {
++            element_type: StorageType::Val(repr.val_type().unwrap_or(VALUE)),
+             mutable: false,
+         }));
+         types.ty().subtype(&SubType {
+@@ -1564,6 +1566,7 @@ struct Definition {
+     /// Captures held as fields; a general closure's self reference is its
+     /// closure parameter instead.
+     captures: usize,
++    capture_reprs: Vec<unboxed::Repr>,
+     self_capture: bool,
+     spread: u32,
+     entries: [u32; runtime_abi::MAX_FIXED as usize + 1],
+@@ -1647,7 +1650,8 @@ impl Layout {
+             }
+             layout.definitions.push(Definition {
+                 methods, rest_class, structure: first_type + definition as u32,
+-                global: first_global + definition as u32, captures, self_capture,
++                global: first_global + definition as u32, captures,
++                capture_reprs: vec![unboxed::Repr::Boxed; captures], self_capture,
+                 spread, entries, name,
+             });
+         }
+@@ -2039,7 +2043,14 @@ fn emit_function(
+     let signature = match entry {
+         Entry::Primitive(body) => bodies[body].primitive.as_ref(), _ => None,
+     };
+-    let mut entry_reprs = Vec::new();
++    let mut entry_reprs = match entry {
++        Entry::Method(body) | Entry::Primitive(body) => {
++            let definition = &layout.definitions[layout.body_definitions[body]];
++            ir.blocks[0].parameters.iter().copied().zip(definition.capture_reprs.iter().copied())
++                .filter(|(_, repr)| *repr != unboxed::Repr::Boxed).collect::<Vec<_>>()
++        }
++        _ => Vec::new(),
++    };
+     if let Entry::Primitive(body) = entry {
+         for (value, kind) in ir.blocks[0].parameters.iter().skip(bodies[body].capture_types.len())
+             .zip(&signature.expect("primitive body").parameters)
+@@ -2049,7 +2060,7 @@ fn emit_function(
+     }
+     let raw_result = signature.filter(|signature| signature.result != super::primitive::Kind::Boxed)
+         .map(|signature| primitive::repr(signature.result));
+-    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), ir, pc + 1, offset, sentinels);
++    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result, &captures::raw_uses(ir, layout)), ir, pc + 1, offset, sentinels);
+     if let Some(expected) = raw_result {
+         for block in &ir.blocks {
+             if let Terminator::Return(value) = block.terminator && locals.of(value) != expected {
+@@ -2194,7 +2205,7 @@ fn emit_function(
+             } else {
+                 function.instruction(&LocalGet(1 + (index - environment) as u32));
+             }
+-            function.instruction(&LocalSet(if index >= environment && locals.of(*value) != unboxed::Repr::Boxed {
++            function.instruction(&LocalSet(if locals.of(*value) != unboxed::Repr::Boxed {
+                 locals.raw(*value)
+             } else { value.0 as u32 + offset }));
+         }
+@@ -2440,7 +2451,17 @@ fn emit_function(
+             }
+             // A packed access boxes its raw operands itself, only where the
+             // generic path needs them (#387).
+-            if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
++            let capture_definition = match &inst.operation {
++                Operation::MakeClosure { body, .. } => Some(layout.single(body)),
++                Operation::MakeGeneralClosure { body, .. } => Some(layout.general(body)),
++                _ => None,
++            };
++            if let Some(definition) = capture_definition {
++                let operands = ir::operands(&inst.operation);
++                let boxed_captures = operands.into_iter().zip(&definition.capture_reprs)
++                    .filter_map(|(value, repr)| (*repr == unboxed::Repr::Boxed).then_some(*value)).collect::<Vec<_>>();
++                locals.materialize(&mut code, &boxed_captures, &mut boxed);
++            } else if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
+                 locals.materialize(&mut code, ir::operands(&inst.operation), &mut boxed);
+             }
+             for instruction in code.drain(..) { function.instruction(&instruction); }
+@@ -2759,7 +2780,7 @@ fn emit_function(
+                 }
+                 Operation::MakeClosure { body, captures } => {
+                     let definition = layout.single(body);
+-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
++                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
+                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                     if let Some(name) = &body.display_name {
+                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
+@@ -2770,7 +2791,7 @@ fn emit_function(
+                 }
+                 Operation::MakeGeneralClosure { body, captures } => {
+                     let definition = layout.general(body);
+-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
++                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
+                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                     if let Some(name) = &body.display_name {
+                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
+diff --git c/crates/suss-compile/src/portable/emit/unboxed.rs w/crates/suss-compile/src/portable/emit/unboxed.rs
+index 291c73d9..fdf760ef 100644
+--- c/crates/suss-compile/src/portable/emit/unboxed.rs
++++ w/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -249,7 +249,7 @@ fn bitwise_inline_inputs(operation: Bitwise, arguments: &[Repr], cast: Option<us
+ 
+ /// Each value's representation. Resumable functions, whose locals are spilled
+ /// as GC values across suspensions, keep every value boxed.
+-pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>) -> Vec<Repr> {
++pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>, raw_captures: &[ValueId]) -> Vec<Repr> {
+     let count = function.values.len();
+     let literals = long_literals(function);
+     if resumable {
+@@ -388,6 +388,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+     // A literal that only ever escapes stays a boxed constant. Its users are
+     // then not inline, so no other value's representation depends on it.
+     let mut raw_use = vec![false; count];
++    for value in raw_captures { raw_use[value.0] = true; }
+     for block in &function.blocks {
+         for instruction in &block.instructions {
+             if let Operation::Call { operands, primitive: Some(shape) } = &instruction.operation
+diff --git 1/crates/suss-compile/src/portable/emit/captures.rs 2/crates/suss-compile/src/portable/emit/captures.rs
+new file mode 100644
+index 00000000..5a44569f
+--- /dev/null
++++ 2/crates/suss-compile/src/portable/emit/captures.rs
+@@ -0,0 +1,118 @@
++//! Numeric capture storage is physical; source overload facts stay in HIR.
++//!
++//! Keep an object field whenever the original value can be observed as an
++//! object. In particular, returning a capture on two calls must preserve its
++//! shared box. Raw fields are admitted only for numeric operations whose
++//! result is a new value, with raw control-flow transfers checked transitively.
++use super::{ir, unboxed, ClosureBody, IrFunction, Layout, Operation, Terminator};
++
++pub(super) fn plan(root: &IrFunction, layout: &mut Layout) {
++    visit(root, &[], false, layout);
++}
++
++fn visit(function: &IrFunction, entries: &[(ir::ValueId, unboxed::Repr)], resumable: bool, layout: &mut Layout) {
++    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++        if !function.blocks.iter().flat_map(|block| &block.instructions).any(|inst|
++            matches!(inst.operation, Operation::MakeClosure { .. } | Operation::MakeGeneralClosure { .. } | Operation::MakeFuture { .. }))
++        { return; }
++        let potential = function.blocks.iter().flat_map(|block| &block.instructions).flat_map(|inst| match &inst.operation {
++            Operation::MakeClosure { captures, .. } | Operation::MakeGeneralClosure { captures, .. } => captures.as_slice(),
++            _ => &[],
++        }).copied().collect::<Vec<_>>();
++        let reprs = unboxed::infer(function, resumable, entries, None, &potential);
++        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
++            let (definition, captures, methods) = match &inst.operation {
++                Operation::MakeClosure { body, captures } => (layout.single_index(body), captures, vec![body.as_ref()]),
++                Operation::MakeGeneralClosure { body, captures } =>
++                    (layout.general_index(body), captures, body.methods.iter().collect()),
++                Operation::MakeFuture { body, .. } => {
++                    visit(&body.continuation.function, &[], true, layout);
++                    continue;
++                }
++                _ => continue,
++            };
++            let mut storage = captures.iter().map(|value| match reprs[value.0] {
++                repr @ (unboxed::Repr::Long | unboxed::Repr::Double) => repr,
++                _ => unboxed::Repr::Boxed,
++            }).collect::<Vec<_>>();
++            // Removing a candidate can change other expressions' inference.
++            // Iterate monotonically until all methods accept the same layout.
++            while storage.iter().any(|repr| *repr != unboxed::Repr::Boxed) {
++                let mut rejected = vec![false; storage.len()];
++                for method in &methods {
++                    let entries = seeds(method, &storage);
++                    let inferred = unboxed::infer(&method.function, false, &entries, None, &[]);
++                    let locals = unboxed::Locals::new(inferred, &method.function, 0, 0, 0);
++                    let observed = object_uses(&method.function, &locals);
++                    for (index, repr) in storage.iter().enumerate() {
++                        if *repr != unboxed::Repr::Boxed
++                            && observed[method.function.blocks[0].parameters[index].0]
++                        { rejected[index] = true; }
++                    }
++                }
++                if !rejected.iter().any(|value| *value) { break; }
++                for (repr, rejected) in storage.iter_mut().zip(rejected) {
++                    if rejected { *repr = unboxed::Repr::Boxed; }
++                }
++            }
++            layout.definitions[definition].capture_reprs = storage.clone();
++            for method in methods { visit(&method.function, &seeds(method, &storage), false, layout); }
++        }
++    });
++}
++
++fn seeds(body: &ClosureBody, storage: &[unboxed::Repr]) -> Vec<(ir::ValueId, unboxed::Repr)> {
++    body.function.blocks[0].parameters.iter().copied().zip(storage.iter().copied())
++        .filter(|(_, repr)| *repr != unboxed::Repr::Boxed).collect()
++}
++
++/// Backward demand over SSA aliases. One worklist handles all captures, so
++/// large environments do not rescan the graph once per captured value.
++fn object_uses(function: &IrFunction, locals: &unboxed::Locals) -> Vec<bool> {
++    let mut incoming = vec![Vec::new(); function.values.len()];
++    let mut pending = Vec::new();
++    for block in &function.blocks {
++        for inst in &block.instructions {
++            let numeric = match &inst.operation {
++                // Unary arithmetic can preserve the original object.
++                Operation::Arithmetic { arguments, .. } => arguments.len() >= 2,
++                Operation::Comparison { .. } | Operation::Bitwise { .. } => true,
++                _ => false,
++            };
++            if !numeric || !unboxed::inline(locals, inst) {
++                pending.extend_from_slice(ir::operands(&inst.operation));
++            }
++        }
++        match &block.terminator {
++            Terminator::Return(value) | Terminator::Throw(value) => pending.push(*value),
++            Terminator::Branch { condition, .. } => pending.push(*condition),
++            Terminator::Jump { target, arguments } => {
++                for (argument, parameter) in arguments.iter().zip(&function.blocks[*target].parameters) {
++                    incoming[parameter.0].push(*argument);
++                    if locals.of(*parameter) != locals.of(*argument) { pending.push(*argument); }
++                }
++            }
++            _ => {}
++        }
++    }
++    let mut observed = vec![false; function.values.len()];
++    while let Some(value) = pending.pop() {
++        if observed[value.0] { continue; }
++        observed[value.0] = true;
++        pending.extend_from_slice(&incoming[value.0]);
++    }
++    observed
++}
++
++/// Captures whose selected fields consume raw locals rather than GC locals.
++pub(super) fn raw_uses(function: &IrFunction, layout: &Layout) -> Vec<ir::ValueId> {
++    function.blocks.iter().flat_map(|block| &block.instructions).flat_map(|inst| {
++        let (definition, captures) = match &inst.operation {
++            Operation::MakeClosure { body, captures } => (layout.single(body), captures),
++            Operation::MakeGeneralClosure { body, captures } => (layout.general(body), captures),
++            _ => return Vec::new(),
++        };
++        captures.iter().zip(&definition.capture_reprs).filter_map(|(value, repr)|
++            (*repr != unboxed::Repr::Boxed).then_some(*value)).collect::<Vec<_>>()
++    }).collect()
++}
+diff --git 1/crates/suss-compile/tests/portable_numeric_captures.rs 2/crates/suss-compile/tests/portable_numeric_captures.rs
+new file mode 100644
+index 00000000..1ca3632d
+--- /dev/null
++++ 2/crates/suss-compile/tests/portable_numeric_captures.rs
+@@ -0,0 +1,71 @@
++//! Capture layout follows complete numeric uses, without changing source types.
++use suss_compile::portable;
++use wasmparser::{CompositeInnerType, Parser, Payload, StorageType, ValType};
++
++fn capture_fields(source: &str) -> Vec<StorageType> {
++    let mut environment = portable::resolve::Environment::default();
++    for name in ["=", "identical?"] {
++        environment.declare_cell(portable::resolve::Phase::Runtime, "suss.core", name).unwrap();
++    }
++    let bytes = portable::compile_in(source, &environment, portable::resolve::Phase::Runtime).unwrap();
++    let mut captures = Vec::new();
++    for payload in Parser::new(0).parse_all(&bytes) {
++        if let Payload::TypeSection(section) = payload.unwrap() {
++            for group in section {
++                for ty in group.unwrap().types() {
++                    if ty.supertype_idx.and_then(|index| index.as_module_index()) == Some(suss_compile::runtime_abi::CLOSURE)
++                        && let CompositeInnerType::Struct(structure) = &ty.composite_type.inner
++                        && structure.fields.len() == 4
++                    {
++                        captures.push(structure.fields[3].element_type);
++                    }
++                }
++            }
++        }
++    }
++    captures
++}
++
++#[test]
++fn numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures() {
++    for (source, expected) in [
++        ("(let [x 3000000000] (fn [] (+ x 7)))", ValType::I64),
++        ("(let [x -0.0] (fn [] (* x 2.0)))", ValType::F64),
++        ("(let [x 3000000000] (fn again [n] (if (= n 0) (+ x 1) (again (- n 1)))))", ValType::I64),
++        ("(let [x 3000000000] (fn ([] (+ x 1)) ([a] (+ x 2))))", ValType::I64),
++        ("(let [x 3000000000] (fn ^long [] (+ x 1)))", ValType::I64),
++        ("(let [x 3000000000] (fn [b] (+ (if b x x) 7)))", ValType::I64),
++    ] {
++        assert!(capture_fields(source).contains(&StorageType::Val(expected)), "{source}");
++    }
++}
++
++#[test]
++fn making_a_numeric_only_closure_does_not_allocate_a_capture_box() {
++    use wasmparser::Operator;
++    for source in [
++        "(let [x 3000000000] (fn [] (+ x 7)))",
++        "(let [x 1.5] (fn [] (* x 2.0)))",
++    ] {
++        let bytes = portable::compile(source).unwrap();
++        let maker = Parser::new(0).parse_all(&bytes).find_map(|payload| match payload.unwrap() {
++            Payload::CodeSectionEntry(body) => Some(body),
++            _ => None,
++        }).unwrap();
++        let structures = maker.get_operators_reader().unwrap().into_iter()
++            .map(Result::unwrap).filter(|op| matches!(op, Operator::StructNew { .. })).count();
++        assert_eq!(structures, 1, "only the closure allocates at its maker: {source}");
++    }
++}
++
++#[test]
++fn capture_object_uses_and_join_aliases_keep_the_shared_box() {
++    for (source, count) in [
++        ("(let [x 3000000000] (fn [] x))", 1),
++        ("(let [x 1.5] (fn [b] (if b x x)))", 1),
++        ("(let [x 3000000000] (fn [] (identical? x x)))", 1),
++        ("(let [x 3000000000] (fn [] (fn [] x)))", 2),
++    ] {
++        assert_eq!(capture_fields(source), vec![StorageType::Val(ValType::Ref(wasmparser::RefType::EQREF)); count], "{source}");
++    }
++}
+diff --git 1/crates/suss-cli/tests/clojure_numeric_captures.rs 2/crates/suss-cli/tests/clojure_numeric_captures.rs
+new file mode 100644
+index 00000000..f07bb82c
+--- /dev/null
++++ 2/crates/suss-cli/tests/clojure_numeric_captures.rs
+@@ -0,0 +1,115 @@
++//! Raw capture fields preserve numeric behavior and shared object captures (#351).
++use suss_cli::portable_session::Session;
++
++const CASES: &[(&str, &str)] = &[
++    ("(let [x 1.25 f (fn [] (+ x 2.0))] ((identity f)))", "3.25"),
++    ("(let [x 3000000000 f (fn again [n] (if (= n 0) (+ x 1) (again (- n 1))))] (f 3))", "3000000001"),
++    ("(let [x 3000000000 f (fn ([] (+ x 1)) ([a] (+ x 2)))] [(f) (f :unused)])", "[3000000001 3000000002]"),
++    ("(let [x 1.25 f (fn [& xs] (+ x 2.0))] [(f) (f :a :b)])", "[3.25 3.25]"),
++    ("(let [x 1.25 f (fn ^double [] (+ x 2.0))] [(f) ((identity f))])", "[3.25 3.25]"),
++    ("(let [x -0.0 f (fn [] (* x 2.0))] [(f) (/ 1.0 (f))])", "[-0.0 ##-Inf]"),
++    ("(let [x ##NaN f (fn [] (+ x 1.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])", "[false false false]"),
++    ("(let [x 9223372036854775807 f (fn [] (+ x 1))] (try (f) (catch :default e (ex-message e))))", "\"long overflow\""),
++    ("(let [x 127.1 f (fn [] x)] (byte ((identity f))))", "127"),
++    ("(let [x 2147483648.0 f (fn [] (+ x 0.0))] (try (int ((identity f))) (catch :default e :error)))", ":error"),
++    ("(let [x (identity 3000000000) f (fn [] x)] (identical? ((identity f)) ((identity f))))", "true"),
++    ("(let [x 1.5 f (fn [b] (if b x x))] [(f true) (f false)])", "[1.5 1.5]"),
++    ("(let [x (identity 3000000000) f (fn ([] (+ x 1)) ([a] x))] [(f) (identical? (f :a) (f :b))])", "[3000000001 true]"),
++    ("(let [x (identity 3000000000) f (fn [] (fn [] x)) g ((identity f))] [(g) (identical? (g) (g))])", "[3000000000 true]"),
++    ("(let [x 1.5 f (with-meta (fn [] (+ x 2.0)) {:tag :kept})] [(f) (:tag (meta f))])", "[3.5 :kept]"),
++    ("(let [events (atom []) x (do (swap! events conj :capture) 1.5) f (fn [] (do (swap! events conj :body) (+ x 2.0)))] [(f) (f) @events])", "[3.5 3.5 [:capture :body :body]]"),
++    ("(let [x 1.5 f (fn [] (+ x 2.0))] [(f) (try (f 1) (catch :default e :arity)) (f)])", "[3.5 :arity 3.5]"),
++    ("(let [x 1.5 f (fn [] (+ x 2.0)) out (atom f)] [(@out) (fn? @out)])", "[3.5 true]"),
++];
++
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
++    CASES.iter()
++}
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_numeric_captures() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in cases() {
++            let value = session
++                .eval(&observed(source))
++                .unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session
++                .inspect(&value, |mut store, value| {
++                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                    Ok(array
++                        .elems(&mut store)?
++                        .map(|unit| unit.unwrap_i32() as u16)
++                        .collect::<Vec<_>>())
++                })
++                .unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_numeric_captures() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = String::from("(ns localhints)\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!(
++            "(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n",
++            observed(expression)
++        ));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args([
++        "compile",
++        "localhints.sus",
++        "-w",
++        "localhints.wit",
++        "-o",
++        "localhints.wasm",
++    ]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(
++        output.status.success(),
++        "{}",
++        String::from_utf8_lossy(&output.stderr)
++    );
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss"))
++            .current_dir(root.path())
++            .args([
++                "run",
++                "localhints.wasm",
++                "--invoke",
++                &format!("case{index}"),
++                "--",
++                "0",
++            ])
++            .output()
++            .unwrap();
++        assert!(
++            output.status.success(),
++            "{expression}: {}",
++            String::from_utf8_lossy(&output.stderr)
++        );
++        assert_eq!(
++            String::from_utf8_lossy(&output.stdout).trim(),
++            "1",
++            "{expression}"
++        );
++    }
++}

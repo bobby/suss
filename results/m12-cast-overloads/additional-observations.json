@@ -1,0 +1,79 @@
+{
+  "compiler_sha256": "c75acc3b63047c0b47408dc34c52fbd4379660814069822d554f13ed62af5f63",
+  "component_sha256": "9a18191e4e6287131fc48323b62468128e3dde13cf1b71964dc7cd06a2ed846f",
+  "before_receipt": "../m12-bits-casts/additional-observations.json",
+  "extra_cases": [
+    {
+      "source": "(let [x (unchecked-float 2147483648.0)] [(int x) (try (int (identity x)) (catch :default e :error))])",
+      "suss_expected": "[2147483647 :error]",
+      "jvm_expected": "[2147483647 :error]"
+    },
+    {
+      "source": "[(double (float (unchecked-float ##Inf))) (try (float (identity (unchecked-float ##Inf))) (catch :default e :error)) (try ((identity float) (unchecked-float ##Inf)) (catch :default e :error))]",
+      "suss_expected": "[##Inf :error :error]",
+      "jvm_expected": "[##Inf ##Inf ##Inf]"
+    }
+  ],
+  "observations": [
+    {
+      "export": "case0",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case1",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case2",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case3",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case4",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case5",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case6",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case7",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case8",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    },
+    {
+      "export": "case9",
+      "exit_code": 0,
+      "stdout": "1",
+      "stderr": ""
+    }
+  ]
+}

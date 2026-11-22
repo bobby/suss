@@ -1,0 +1,37 @@
+Running as unit: run-p3932338-i87814468.scope; invocation ID: 3eadfbdf368249a1a0c7f0f8e01e372b
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 48s
+     Running tests/clojure_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/clojure_nonescaping_vectors-bb22d22335216a18)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_vectors ... FAILED
+test aot_preserves_nonescaping_vectors ... FAILED
+
+failures:
+
+---- runtime_and_macro_preserve_nonescaping_vectors stdout ----
+
+thread 'runtime_and_macro_preserve_nonescaping_vectors' (3942578) panicked at crates/suss-cli/tests/clojure_nonescaping_vectors.rs:75:13:
+assertion `left == right` failed: (let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])
+  left: "[false false false]"
+ right: "[true false true]"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_preserves_nonescaping_vectors stdout ----
+
+thread 'aot_preserves_nonescaping_vectors' (3942577) panicked at crates/suss-cli/tests/clojure_nonescaping_vectors.rs:134:9:
+assertion `left == right` failed: (let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])
+  left: "0"
+ right: "1"
+
+
+failures:
+    aot_preserves_nonescaping_vectors
+    runtime_and_macro_preserve_nonescaping_vectors
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 56.35s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_nonescaping_vectors`

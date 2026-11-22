@@ -224,6 +224,47 @@ LOOPS = [
 ]
 
 
+# Numeric boxes reused across loop iterations (#337/#351). Each worker's
+# callback is unknown in its body. The boxed controls keep one original Object;
+# arithmetic makes the other local raw. Both still consume every callback result.
+BOX_REUSE = [
+    ("double-raw", "(+ 1.25 0.5)", "double"),
+    ("double-boxed", "(identity 1.75)", "double"),
+    ("long-raw", "(+ 3000000000 5)", "long"),
+    ("long-boxed", "(identity 3000000005)", "long"),
+]
+for reuse_name, reuse_init, reuse_cast in BOX_REUSE:
+    DEFS.append(
+        f"(defn box-reuse-{reuse_name} [f n] (let [n (long n) x {reuse_init}] "
+        f"(loop [i 0 c 0] (if (< i n) (let [r (f x)] "
+        f"(recur (inc i) (if (== ({reuse_cast} r) ({reuse_cast} x)) (inc c) c))) c))))"
+    )
+    LOOPS.append((f"box-reuse-{reuse_name}", f"(box-reuse-{reuse_name} f1 n)", "u32"))
+
+
+# Temporary aggregates and locally called closures (#351). Wide longs and
+# doubles force numeric boxes when scalar storage is lost. Each complete sum
+# is returned, with a direct calculation as its allocation/instruction control.
+ESCAPE = [
+    ("control", "(+ x y)"),
+    ("vector", "(let [[a b] [x y]] (+ a b))"),
+    ("entry", "(let [[a b] (MapEntry. x y nil)] (+ a b))"),
+    ("closure", "(let [f (fn [] (+ x y))] (f))"),
+]
+JVM_LOOPS = {}
+for escape_name, escape_expr in ESCAPE:
+    def escape_body(expr):
+        return ("(let [n (long n)] (loop [i 0 acc 0.0] (if (< i n) "
+                "(let [x (+ 3000000000 i) y (double i)] "
+                f"(recur (inc i) (unchecked-add acc (double {expr})))) acc)))")
+    LOOPS.append((f"escape-{escape_name}", escape_body(escape_expr), "f64"))
+    if escape_name == "entry":
+        # The Java-free core constructor has a cache field; JVM MapEntry's
+        # factory takes only the two values. Their sequence values match.
+        JVM_LOOPS["escape-entry"] = escape_body(
+            "(let [[a b] (clojure.lang.MapEntry/create x y)] (+ a b))")
+
+
 # JVM forms where the shared one would reflect: Util.equiv has no (long,
 # double) overload and RT.aset none for an Object[] and a long, so Clojure code
 # boxes the long, as Suss always does.
@@ -388,6 +429,7 @@ def jvm_times(work):
         reps = JVM_REPS * (JVM_CONTROL_REPS if name in controls else 1)
         entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name}) {reps}]')
     for name, body, _ in LOOPS:
+        body = JVM_LOOPS.get(name, body)
         lines.append(f"(defn case-{name} [^long n] {body})")
         entries.append(f'["{name}" {N * JVM_SCALE} (timed {N * JVM_SCALE} case-{name}) (bytes-of {N * JVM_SCALE} case-{name}) {JVM_REPS}]')
     lines.append(f"(def cases [{' '.join(entries)}])")

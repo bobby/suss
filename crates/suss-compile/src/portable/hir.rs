@@ -1,5 +1,6 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod letfn;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
 mod function_parameters;
@@ -12,6 +13,8 @@ mod collections;
 mod comparisons;
 mod controls;
 mod division_overloads;
+mod extrema;
+mod local_hints;
 mod dynamic;
 mod namespaces;
 mod exceptions;
@@ -239,6 +242,9 @@ impl Comparison {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bitwise {
     Int,
+    /// Source-selected primitive overloads; all three retain source int kind.
+    IntPrimitive,
+    IntFloat,
     And,
     Or,
     Xor,
@@ -284,6 +290,14 @@ pub enum Bitwise {
     UncheckedSubtract,
     UncheckedMultiply,
     UncheckedNegate,
+    /// Source max/min distinguish primitive double/double Math operations,
+    /// primitive long/long results, and Object-returning overloads (#337).
+    Max,
+    Min,
+    LongMax,
+    LongMin,
+    DoubleMax,
+    DoubleMin,
     LongTest,
     DoubleTest,
     /// Private Java `(long)` narrowing of a number, for counts computed with
@@ -337,10 +351,37 @@ impl Bitwise {
             _ => return None,
         })
     }
+    /// A raw result from the same checked/coercing boxed operand helper.
+    pub(crate) fn raw_export(self) -> Option<&'static str> {
+        Some(match self {
+            Self::And => "primitive-bit-and-raw",
+            Self::Or => "primitive-bit-or-raw",
+            Self::Xor => "primitive-bit-xor-raw",
+            Self::AndNot => "primitive-bit-and-not-raw",
+            Self::Not => "primitive-bit-not-raw",
+            Self::Clear => "primitive-bit-clear-raw",
+            Self::Flip => "primitive-bit-flip-raw",
+            Self::Set => "primitive-bit-set-raw",
+            Self::Test => "primitive-bit-test-raw",
+            Self::Left => "primitive-bit-shift-left-raw",
+            Self::Right => "primitive-bit-shift-right-raw",
+            Self::Unsigned => "primitive-unsigned-bit-shift-right-raw",
+            Self::Int32 => "int32-int-raw",
+            Self::Int32And => "int32-bit-and-raw",
+            Self::Int32Or => "int32-bit-or-raw",
+            Self::Int32Xor => "int32-bit-xor-raw",
+            Self::Int32Left => "int32-bit-shift-left-raw",
+            Self::Int32Right => "int32-bit-shift-right-raw",
+            Self::Int32Unsigned => "int32-unsigned-bit-shift-right-raw",
+            Self::Imul => "int32-imul-raw",
+            Self::BitCount => "int32-bit-count-raw",
+            _ => return None,
+        })
+    }
     /// Shipped core's 32-bit form of an inline bit operation.
     pub(crate) fn int32(self) -> Self {
         match self {
-            Self::Int => Self::Int32,
+            Self::Int | Self::IntPrimitive | Self::IntFloat => Self::Int32,
             Self::And => Self::Int32And,
             Self::Or => Self::Int32Or,
             Self::Xor => Self::Int32Xor,
@@ -353,6 +394,8 @@ impl Bitwise {
     pub(crate) fn export(self) -> &'static str {
         match self {
             Self::Int => "primitive-int",
+            Self::IntPrimitive => "number-cast-int",
+            Self::IntFloat => "number-cast-int-float",
             Self::And => "primitive-bit-and",
             Self::Or => "primitive-bit-or",
             Self::Xor => "primitive-bit-xor",
@@ -392,6 +435,10 @@ impl Bitwise {
             Self::UncheckedSubtract => "number-unchecked-subtract",
             Self::UncheckedMultiply => "number-unchecked-multiply",
             Self::UncheckedNegate => "number-unchecked-negate",
+            Self::Max | Self::LongMax => "number-max",
+            Self::Min | Self::LongMin => "number-min",
+            Self::DoubleMax => "number-double-max",
+            Self::DoubleMin => "number-double-min",
             Self::LongTest => "number-long?",
             Self::DoubleTest => "number-double?",
             Self::ToLong => "number-to-long",
@@ -412,7 +459,7 @@ impl Bitwise {
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int
+            Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
             | Self::F64Coerce
@@ -498,6 +545,11 @@ pub enum Nominal {
     /// Element n of a PersistentVector, walked by the runtime, or undefined
     /// for the general path (#378).
     VectorNth,
+    /// Internal precondition for virtual literal-vector storage.
+    ScalarVectorGuard,
+    /// Canonical MapEntry admission/registration (#351).
+    ScalarMapEntryGuard,
+    MapEntryType,
     /// `map-get(m, k)` (#442): a map's value for a key only its reference
     /// equals, nil when absent, or undefined.
     ArrayMapGet,
@@ -705,6 +757,8 @@ impl Nominal {
             | Self::Satisfies
             | Self::NativeSatisfies
             | Self::IsLongValue
+            | Self::ScalarVectorGuard
+            | Self::ScalarMapEntryGuard
             | Self::NativeMarker(_)
             | Self::KeywordCacheEmpty(_) => Type::Bool,
             _ => Type::Value,
@@ -725,7 +779,8 @@ impl Nominal {
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
-                Self::IsObject | Self::IsDescriptor => count == 1,
+                Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard
+            | Self::ScalarMapEntryGuard | Self::MapEntryType => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
@@ -904,6 +959,7 @@ pub enum SourceNode {
     },
     Bindings {
         is_loop: bool,
+        is_letfn: bool,
         bindings: std::sync::Arc<[LocalBinding]>,
         body: std::sync::Arc<Hir>,
     },
@@ -1087,6 +1143,11 @@ pub enum Expression {
         bindings: Vec<Binding>,
         body: Box<Hir>,
     },
+    /// All names are in scope for every function initializer and the body.
+    LetFn {
+        bindings: Vec<Binding>,
+        body: Box<Hir>,
+    },
     Loop {
         target: LoopId,
         bindings: Vec<Binding>,
@@ -1175,6 +1236,7 @@ struct Analyzer<'a> {
     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
     method_recurrence: Vec<(LoopId, bool)>,
+    primitive_methods: HashMap<LoopId, primitive_returns::Method>,
 }
 impl Analyzer<'_> {
     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
@@ -1404,13 +1466,15 @@ impl Analyzer<'_> {
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
                         match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
-                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
+                            Some(ResolvedBinding::BootstrapLet(global)) => Some(if global.name() == "letfn" { "letfn*" } else { "let*" }),
                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
                         let mut expanded = if primitive == "let*" {
                             self.destructured_let(form)?
+                        } else if primitive == "letfn*" {
+                            self.letfn_expansion(form)?
                         } else {
                             form.clone()
                         };
@@ -2119,7 +2183,22 @@ impl Analyzer<'_> {
                 local
             })
             .collect::<Vec<_>>();
-        let callee = self.form(&items[0])?;
+        let mut callee = self.form(&items[0])?;
+        let mut source_callee = None;
+        // Clojure's inline nth also ignores root replacement on a native miss
+        // (lists, strings, out-of-bounds indices, ...). Use the owned core body
+        // there, preserving the public var in the source AST. Unknown/user
+        // definitions and lexical shadows never enter this path.
+        if operation == Nominal::VectorNth {
+            if let Expression::Global(global) = &*callee.kind
+                && global.namespace() == "suss.core" && global.name() == "nth"
+                && self.privileged_definition(global)
+                && let Some(link) = self.environment.existing_core_link(global)
+            {
+                source_callee = Some(callee.clone());
+                callee.kind = std::sync::Arc::new(Expression::Global(link));
+            }
+        }
         let callee = match &*callee.kind {
             Expression::Global(global) => match self.direct_link(global) {
                 Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
@@ -2129,7 +2208,7 @@ impl Analyzer<'_> {
         };
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
-                callee: std::sync::Arc::new(callee.clone()),
+                callee: std::sync::Arc::new(source_callee.unwrap_or_else(|| callee.clone())),
                 arguments: bindings[..count].iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
         let node = |kind: Expression, ty: Type| Hir {
@@ -2900,7 +2979,8 @@ impl Analyzer<'_> {
         // fns: its name in the body is the checked cast of the argument, a
         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
         let mut casts = Vec::new();
-        let mut source_primitives = HashMap::new();
+        let mut source_casts = Vec::new();
+        let mut source_parameters = vec![None; parameters.len()];
         let return_hint = primitive_tag(&args[0])?
             .or(if receiver_type.is_none() { self.pending_return_hint } else { None });
         // An exported fn's numeric WIT parameters, when its arity matches. The
@@ -2917,11 +2997,12 @@ impl Analyzer<'_> {
             let read = self.local(form, current);
             let value = self.nominal(form, cast, vec![read]);
             let binding = self.fresh_binding(form, value);
-            if let Some(declared) = declared {
-                source_primitives.insert(binding.id, if declared == Nominal::LongCast {
-                    primitive_returns::Primitive::Long
-                } else { primitive_returns::Primitive::Double });
-            }
+            let primitive = declared.map(|cast| if cast == Nominal::LongCast {
+                primitive_returns::Primitive::Long
+            } else { primitive_returns::Primitive::Double });
+            source_parameters[position] = primitive;
+            // A WIT-only conversion changes storage, not the source type.
+            source_casts.push((binding.id, primitive.unwrap_or(primitive_returns::Primitive::Boxed)));
             self.remap_local(&parameter.name, binding.id, Type::Value);
             casts.push(binding);
         }
@@ -2932,9 +3013,14 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
-        if let Some(hint) = return_hint {
-            primitive_returns::validate(&inner_body, hint, &mut source_primitives,
-                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+        if return_hint.is_some() || !source_casts.is_empty() {
+            // Validate after lexical source facts are available, including
+            // captures. Keep the genuine body before parameter conversions.
+            self.primitive_methods.insert(target, primitive_returns::Method {
+                body: inner_body.clone(), return_hint, casts: source_casts,
+                parameters: parameters.iter().zip(source_parameters).skip(usize::from(object_method))
+                    .map(|(parameter, primitive)| (parameter.name.clone(), primitive)).collect(),
+            });
         }
         if exported.is_none() {
             self.pending_param_hints = pending;
@@ -3109,6 +3195,7 @@ impl Analyzer<'_> {
             *self.source_nodes.last_mut().expect("source node fact slot") = Some(
                 std::sync::Arc::new(SourceNode::Bindings {
                     is_loop: false,
+                    is_letfn: false,
                     bindings: vec![source_binding].into(),
                     body: std::sync::Arc::new(body.as_ref().clone()),
                 }),
@@ -3336,6 +3423,7 @@ impl Analyzer<'_> {
                 "map-get" => Some(Nominal::ArrayMapGet),
                 "map-contains" => Some(Nominal::MapContains),
                 "map-get-or" => Some(Nominal::MapGetOr),
+                "map-entry-type!" => Some(Nominal::MapEntryType),
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
                 "chunk-types!" => Some(Nominal::ChunkTypes),
                 "chunk-long-sum" => Some(Nominal::ChunkLongSum),
@@ -3426,6 +3514,8 @@ impl Analyzer<'_> {
                 "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
                 "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "max" => Some(Bitwise::Max),
+                "min" => Some(Bitwise::Min),
                 "long?" => Some(Bitwise::LongTest),
                 "double?" => Some(Bitwise::DoubleTest),
                 "to-long" => Some(Bitwise::ToLong),
@@ -3580,7 +3670,7 @@ impl Analyzer<'_> {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "let*" | "loop*" | "recur" | "throw" | "try" | "set!"
+                "if" | "do" | "fn*" | "def" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
@@ -3617,7 +3707,14 @@ impl Analyzer<'_> {
         }
         // nth and first read a vector's element inline (#433); its undefined
         // answer, out of range or not a vector, is core's to give.
-        if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "nth") {
+        // Clojure's nth has :inline metadata: a vector hit ignores root
+        // rebinding in sessions too. Admit the shipped core definition, while
+        // unknown/user definitions and lexical shadows retain their live call.
+        let inline_nth = self.linked_core_call(&resolved, "nth")
+            || matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == "nth"
+                    && self.privileged_definition(global));
+        if (2..=3).contains(&args.len()) && inline_nth {
             return self.lookup_call(form, items, Nominal::VectorNth, 2, None);
         }
         if args.len() == 1 && self.linked_core_call(&resolved, "first") {
@@ -3674,6 +3771,16 @@ impl Analyzer<'_> {
             return self.protocol_site_call(form, items, &protocol);
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
+            if !self.privileged && matches!(operation, Bitwise::Clear | Bitwise::Flip | Bitwise::Set | Bitwise::Test) {
+                let callee = self.form(&items[0])?;
+                let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Invoke {
+                        callee: std::sync::Arc::new(callee.clone()), arguments: arguments.clone().into(),
+                    }));
+                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                    ty: Type::Value, kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) });
+            }
             return self.bitwise_form(form, args, *operation);
         }
         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {
@@ -3872,6 +3979,7 @@ impl Analyzer<'_> {
             return self.attach_function_metadata(form, value);
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
+            (true, "letfn*") => return self.recursive_functions(form, args, context, tail),
             (true, "do") => {
                 let mut body = self.body(args, form.span.clone(), context, tail)?;
                 let Expression::Do(children) = &*body.kind else {
@@ -4030,6 +4138,7 @@ impl Analyzer<'_> {
                 *self.source_nodes.last_mut().expect("source node fact slot") =
                     Some(std::sync::Arc::new(SourceNode::Bindings {
                         is_loop,
+                        is_letfn: false,
                         bindings: source_bindings.into(),
                         body: std::sync::Arc::new(body.as_ref().clone()),
                     }));
@@ -4248,6 +4357,12 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                 }
             }
         }
+        Expression::LetFn { bindings, body } => {
+            let mut bound = bound.clone();
+            bound.extend(bindings.iter().map(|binding| binding.id));
+            for binding in bindings { free_bindings(&binding.value, &bound, free); }
+            free_bindings(body, &bound, free);
+        }
         Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => {
             let mut bound = bound.clone();
             for binding in bindings {
@@ -4412,6 +4527,7 @@ pub(crate) fn prepare_with_origin(
         catch_aliases: Vec::new(),
         target: None,
         method_recurrence: Vec::new(),
+        primitive_methods: HashMap::new(),
     };
     // The frame's own forms take the fragment's extent, not the source's, so
     // a fragment's IR and cache key do not change with the rest of its file.
@@ -4421,7 +4537,7 @@ pub(crate) fn prepare_with_origin(
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
     let source_span = hir.span.clone();
-    division_overloads::annotate(&mut hir,
+    division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
     if let Expression::Do(items) = &*hir.kind {
         super::analysis_record::analyzed_forms(origin, items);

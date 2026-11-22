@@ -1,0 +1,35 @@
+Running as unit: run-p3366031-i87230457.scope; invocation ID: 6d6b4d29636a4773aa0346d44b20fead
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.17s
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_numeric_core-adef0af7f969bf49)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... FAILED
+test aot_preserves_known_numeric_core_results ... FAILED
+
+failures:
+
+---- runtime_and_macro_preserve_known_numeric_core_results stdout ----
+
+thread 'runtime_and_macro_preserve_known_numeric_core_results' (3366179) panicked at crates/suss-cli/tests/clojure_raw_numeric_core.rs:44:13:
+assertion `left == right` failed: (with-redefs [quot (fn [x y] :replaced)] [(quot 7 2) ((identity quot) 7 2)])
+  left: "[:replaced :replaced]"
+ right: "[3 :replaced]"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_preserves_known_numeric_core_results stdout ----
+
+thread 'aot_preserves_known_numeric_core_results' (3366178) panicked at crates/suss-cli/tests/clojure_raw_numeric_core.rs:76:9:
+assertion `left == right` failed: (with-redefs [quot (fn [x y] :replaced)] [(quot 7 2) ((identity quot) 7 2)])
+  left: "0"
+ right: "1"
+
+
+failures:
+    aot_preserves_known_numeric_core_results
+    runtime_and_macro_preserve_known_numeric_core_results
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.89s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_raw_numeric_core`

@@ -1,0 +1,16 @@
+{
+  "base": "128a673efa58889cc29c315e25c979914846b4fb",
+  "patch_sha256": "3a73e4528e3a58c4223f5247f77986be7466e25b169a0b89eede075b29fbede3",
+  "new_files": [],
+  "sha256": {
+    "crates/suss-cli/tests/clojure_raw_bits_and_casts.rs": "b3315810e04be0dc64221d2347fdc621d90a926e6893af0c3455fcccdb66b1da",
+    "crates/suss-compile/src/portable/emit.rs": "c287cb3ba4387913654db646be2e01b3e18804d795a6b5e188bf010dd4e88c85",
+    "crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs": "d1ac4f62b4282604cb4b5bb66a5d906dd2bfa1e0be89ecd2bffee1dcce48ca06",
+    "crates/suss-compile/src/portable/hir.rs": "bafae21ffe3d391bc3036bbed0600d447ad338a556183a1773db2d3451e2f8c1",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "9f82189f8fb916c146420373b954b63115d7d394c55369ed089f74349193d9f7",
+    "crates/suss-compile/src/portable/hir/local_hints.rs": "40e4f005ed4fa90fd2b66a0c96ac2ea1c404bdd0eae25a65d0b5a7f7a7003f49",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "df5ece7a8c76179c1cbc41c157e9423fd21730d66ae5b52d075115584f55d327",
+    "crates/suss-compile/src/runtime_abi/bitwise.rs": "05729bee039b1e1f42a2d4f06c15222ec07440a7b5dbe5c536a3c46aaf1f9418",
+    "crates/suss-compile/tests/portable_unboxed_locals.rs": "fe92d2f3c342ab5be3a80021129ac3e686b7f6170a45549ea467b74db97f8681"
+  }
+}

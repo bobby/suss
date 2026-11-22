@@ -1,0 +1,3 @@
+(assert (= "1.12.6" (clojure-version)))
+(let [source "(defn ^:export bound [] (loop [i 0 acc 0]\n      (if (< i 1234577)\n        (recur (inc i) (unchecked-add acc\n          (unchecked-subtract (abs (rem (unchecked-negate i) 7)) (quot i 1234577))))\n        acc)))" f (eval (read-string source)) actual (f)] (prn "known_long_core_results_stay_raw_and_execute" actual) (assert (= 3703728 actual)))
+(let [source "(defn ^:export bound [] (loop [i 0 acc 0.0]\n      (if (< i 1234579)\n        (recur (inc i) (unchecked-add acc\n          (abs (rem (unchecked-multiply -0.5 (double i)) 7.0))))\n        acc)))" f (eval (read-string source)) actual (f)] (prn "known_double_core_results_stay_raw_and_execute" actual) (assert (= 4012373.5 actual)))

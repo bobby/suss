@@ -397,6 +397,7 @@ impl Default for Environment {
 /// Core macros the bootstrap expander provides before core source loads.
 pub(crate) const BOOTSTRAP_MACROS: &[&str] = &[
     "let",
+    "letfn",
     "loop",
     "fn",
     "defonce",
@@ -677,13 +678,13 @@ impl Environment {
                     },
                 );
             }
-            for name in ["let", "loop", "fn", "defonce", "binding", "with-redefs"] {
+            for name in ["let", "letfn", "loop", "fn", "defonce", "binding", "with-redefs"] {
                 let global = Global {
                     phase,
                     namespace: "suss.core".into(),
                     name: name.into(),
                 };
-                let binding = if name == "let" {
+                let binding = if name == "let" || name == "letfn" {
                     Binding::BootstrapLet(global.clone())
                 } else if name == "loop" {
                     Binding::BootstrapLoop(global.clone())
@@ -1594,7 +1595,7 @@ impl Environment {
             _ => None,
         } {
             Binding::BootstrapArray { global, operation }
-        } else if name == "let" {
+        } else if name == "let" || name == "letfn" {
             Binding::BootstrapLet(global)
         } else if name == "loop" {
             Binding::BootstrapLoop(global.clone())

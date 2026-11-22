@@ -499,4 +499,29 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
         "construct-site-admit", &[VALUE, ValType::I32], &[VALUE],
         &[(1, VALUE), (3, ValType::I32), (2, VALUE), (2, ValType::I32)], &code,
     );
+    // A literal vector may stay virtual only when its captured constructor is
+    // the registered core vector type and construction needs no field padding
+    // or duplicate-name normalization. A miss retains ordinary construction.
+    for (name, descriptor, fields) in [
+        ("scalar-vector-guard", VECTOR_DESCRIPTOR_GLOBAL, 6),
+        ("scalar-map-entry-guard", MAP_ENTRY_DESCRIPTOR_GLOBAL, 3),
+    ] {
+    let code = vec![Block(BlockType::Empty),
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)), I32Eqz, BrIf(0),
+        LocalGet(0), Call(b.names["closure-environment"]), LocalTee(2),
+        RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz, BrIf(0),
+        LocalGet(2), GlobalGet(descriptor), RefEq, I32Eqz, BrIf(0),
+        // Schema and constructor plans are immutable. A site's last admitted
+        // constructor skips that scan; canonical registration is still checked
+        // above on EVERY call, including after core reload or var rebinding.
+        LocalGet(0), LocalGet(1), RefEq,
+        If(BlockType::Empty), I32Const(1), Return, End,
+        LocalGet(2), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
+        RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
+        LocalGet(2), I32Const(fields), Call(b.names["construct-site-admit"]),
+        RefIsNull, I32Eqz, Return, End, I32Const(0)];
+    b.function_with_locals(name, &[VALUE, VALUE], &[ValType::I32], &[(1, VALUE)], &code);
+    }
+
 }

@@ -1,0 +1,29 @@
+Running as unit: run-p3498287-i87365748.scope; invocation ID: 591aedc2431c43e58652759e1e4effc6
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 36s
+     Running tests/clojure_raw_bits_and_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_bits_and_casts-125577e13d1b01d5)
+
+running 2 tests
+test runtime_and_macro_preserve_raw_bits_and_casts ... ok
+test aot_preserves_raw_bits_and_casts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.52s
+
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 10 tests
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test a_long_sum_loop_allocates_only_its_result ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+test raw_bits_and_casts::long_bits_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::float_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::narrow_integer_casts_execute_without_normal_calls_or_boxes ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 80.67s
+

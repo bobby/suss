@@ -296,6 +296,7 @@ impl<'o> Projector<'o> {
         let kind = match (&binding.source_role, binding.source_kind()) {
             (SourceRole::CatchBinding { .. }, _) => "catch",
             (_, hir::LocalKind::Let) => "let",
+            (_, hir::LocalKind::LetFn) => "letfn",
             (_, hir::LocalKind::Loop) => "loop",
             (_, hir::LocalKind::Argument { .. }) => "arg",
             (_, hir::LocalKind::FunctionName) => "fn",
@@ -394,7 +395,7 @@ impl<'o> Projector<'o> {
                 n.child("else", self.node(alternative)?);
                 n
             }
-            SourceNode::Bindings { is_loop: false, bindings, body }
+            SourceNode::Bindings { is_loop: false, is_letfn: false, bindings, body }
                 if bindings.len() == 1
                     && bindings[0].initializer.as_ref().is_some_and(|init| {
                         init.source.is_none()
@@ -407,8 +408,8 @@ impl<'o> Projector<'o> {
                 n.child("body", self.node(body)?);
                 n
             }
-            SourceNode::Bindings { is_loop, bindings, body } => {
-                let mut n = Node::new(if *is_loop { "loop" } else { "let" });
+            SourceNode::Bindings { is_loop, is_letfn, bindings, body } => {
+                let mut n = Node::new(if *is_letfn { "letfn" } else if *is_loop { "loop" } else { "let" });
                 let bindings = bindings.iter().map(|b| self.binding(b)).collect::<Result<_, _>>()?;
                 n.child("bindings", Value::Vector(bindings));
                 if *is_loop {
@@ -601,6 +602,7 @@ fn lowering_name(kind: &Expression) -> &'static str {
         Expression::GlobalCell(_) => "global-cell",
         Expression::Definition { .. } => "definition",
         Expression::Let { .. } => "let",
+        Expression::LetFn { .. } => "letfn",
         Expression::Loop { .. } => "loop",
         Expression::Recur { .. } => "recur",
         Expression::If { .. } => "if",
@@ -635,7 +637,7 @@ fn lowered_children(kind: &Expression) -> Vec<&Hir> {
         Expression::NilTest(value) | Expression::Throw(value) => vec![value],
         Expression::Assign { value, .. } => vec![value],
         Expression::Definition { initializer, .. } => initializer.iter().map(|v| v.as_ref()).collect(),
-        Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => bindings
+        Expression::Let { bindings, body } | Expression::LetFn { bindings, body } | Expression::Loop { bindings, body, .. } => bindings
             .iter()
             .map(|b| &b.value)
             .chain(std::iter::once(body.as_ref()))

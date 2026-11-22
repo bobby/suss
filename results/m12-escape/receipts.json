@@ -1,0 +1,59 @@
+{
+  "source_inputs": "source-inputs.json",
+  "focused": {
+    "groups": 28,
+    "passed": 144,
+    "failed": 0,
+    "ignored": 0
+  },
+  "oracle_assertions": 30,
+  "official_benchmark_oracle_assertions": 12,
+  "codegen_iterations": 1234591,
+  "codegen_result": 3705297213702690.0,
+  "bootstrap": {
+    "byte_exact_phases": 2,
+    "execution_tests_passed": 4
+  },
+  "binaryen": {
+    "version": 133,
+    "passed": 2
+  },
+  "reviewed_suite": {
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0,
+    "filtered_out": 10,
+    "seconds": 156.59,
+    "assertion_observations": 2758,
+    "unchanged_sections": [
+      "assertions",
+      "namespaces",
+      "skips",
+      "test-failures"
+    ],
+    "gzip_sha256": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "observations_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52"
+  },
+  "measurement": "measurement-summary.json",
+  "limits": [
+    "temporary vector and MapEntry elimination",
+    "letfn support",
+    "ifn? support",
+    "general/variadic/CFG-carried closure scalarization",
+    "new quiet timing ratio",
+    "current unfiltered full workspace"
+  ],
+  "whitespace_check": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":(exclude)results/m12-escape/*.log",
+      ":(exclude)results/m12-escape/*.patch"
+    ],
+    "reason": "Verbatim logs preserve blank endings; generated patches preserve required blank context lines. Source/tests/docs/scripts/JSON retain default whitespace checks."
+  }
+}

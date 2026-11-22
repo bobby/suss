@@ -1,0 +1,12 @@
+{
+  "artifact": "suite-observations.json.gz",
+  "uncompressed_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "assertions": 2758,
+  "verdicts": {
+    "pass": 2407,
+    "error": 305,
+    "fail": 46
+  },
+  "schema": 1,
+  "note": "Lossless gzip of the actual capture; reviewed known failures remain failures."
+}

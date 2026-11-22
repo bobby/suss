@@ -2,6 +2,7 @@
 mod r#async;
 mod structured;
 mod unboxed;
+mod captures;
 mod primitive;
 use super::{
     hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
@@ -297,6 +298,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     },
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
+                        if let Some(raw) = operation.raw_export() { names.insert(raw); }
+                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int | super::hir::Bitwise::IntPrimitive | super::hir::Bitwise::IntFloat) {
+                            names.extend(runtime_abi::CAST_RAW_EXPORTS);
+                        }
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -325,6 +330,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
+                        Nominal::ScalarVectorGuard => { names.insert("scalar-vector-guard"); }
+                        Nominal::ScalarMapEntryGuard => { names.insert("scalar-map-entry-guard"); }
+                        Nominal::MapEntryType => { names.insert("map-entry-type-register"); }
                         Nominal::ObjectArrayCopy(backward) => {
                             names.insert(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" });
                         }
@@ -650,7 +658,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::Construct, .. } = &inst.operation {
+            if let Operation::Nominal { operation: Nominal::Construct | Nominal::ScalarVectorGuard | Nominal::ScalarMapEntryGuard, .. } = &inst.operation {
                 construct_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
             }
         }
@@ -767,6 +775,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            name if name.starts_with("number-cast-") && name.ends_with("-raw") =>
+                (vec![VALUE], vec![if runtime_abi::CAST_RAW_EXPORTS.iter().position(|export| *export == name)
+                    .is_some_and(|index| (8..=11).contains(&index)) { ValType::F64 } else { ValType::I64 }]),
+            name if name.starts_with("primitive-bit-") && name.ends_with("-raw") =>
+                (vec![VALUE; if name == "primitive-bit-not-raw" { 1 } else { 2 }],
+                    vec![if name == "primitive-bit-test-raw" { ValType::I32 } else { ValType::I64 }]),
+            name if name == "primitive-unsigned-bit-shift-right-raw" => (vec![VALUE; 2], vec![ValType::I64]),
+            name if name.starts_with("int32-") && name.ends_with("-raw") =>
+                (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
             "future-pending-new" | "dynamic-fork" | "dynamic-save" => (vec![], vec![VALUE]),
             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
@@ -863,6 +880,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "array-get-indices"
             | "array-set-indices" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
+            "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
+            "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -882,7 +901,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-int" | "number-cast-int-float" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -1027,14 +1046,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }),
         );
     }
-    let layout = Layout::new(
+    let mut layout = Layout::new(
         &bodies, &singles, &dispatchers, futures.len(), &names,
         eval_type + 1 + u32::from(throws), globals.len() as u32 + 3 + imported_link_globals,
     ).map_err(|message| fail(message))?;
+    captures::plan(ir, &mut layout);
     for definition in &layout.definitions {
         let mut fields = runtime_abi::closure_fields();
-        fields.extend((0..definition.captures).map(|_| FieldType {
-            element_type: StorageType::Val(VALUE),
+        fields.extend(definition.capture_reprs.iter().map(|repr| FieldType {
+            element_type: StorageType::Val(repr.val_type().unwrap_or(VALUE)),
             mutable: false,
         }));
         types.ty().subtype(&SubType {
@@ -1546,6 +1566,7 @@ struct Definition {
     /// Captures held as fields; a general closure's self reference is its
     /// closure parameter instead.
     captures: usize,
+    capture_reprs: Vec<unboxed::Repr>,
     self_capture: bool,
     spread: u32,
     entries: [u32; runtime_abi::MAX_FIXED as usize + 1],
@@ -1629,7 +1650,8 @@ impl Layout {
             }
             layout.definitions.push(Definition {
                 methods, rest_class, structure: first_type + definition as u32,
-                global: first_global + definition as u32, captures, self_capture,
+                global: first_global + definition as u32, captures,
+                capture_reprs: vec![unboxed::Repr::Boxed; captures], self_capture,
                 spread, entries, name,
             });
         }
@@ -2021,7 +2043,14 @@ fn emit_function(
     let signature = match entry {
         Entry::Primitive(body) => bodies[body].primitive.as_ref(), _ => None,
     };
-    let mut entry_reprs = Vec::new();
+    let mut entry_reprs = match entry {
+        Entry::Method(body) | Entry::Primitive(body) => {
+            let definition = &layout.definitions[layout.body_definitions[body]];
+            ir.blocks[0].parameters.iter().copied().zip(definition.capture_reprs.iter().copied())
+                .filter(|(_, repr)| *repr != unboxed::Repr::Boxed).collect::<Vec<_>>()
+        }
+        _ => Vec::new(),
+    };
     if let Entry::Primitive(body) = entry {
         for (value, kind) in ir.blocks[0].parameters.iter().skip(bodies[body].capture_types.len())
             .zip(&signature.expect("primitive body").parameters)
@@ -2031,7 +2060,7 @@ fn emit_function(
     }
     let raw_result = signature.filter(|signature| signature.result != super::primitive::Kind::Boxed)
         .map(|signature| primitive::repr(signature.result));
-    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), ir, pc + 1, offset, sentinels);
+    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result, &captures::raw_uses(ir, layout)), ir, pc + 1, offset, sentinels);
     if let Some(expected) = raw_result {
         for block in &ir.blocks {
             if let Terminator::Return(value) = block.terminator && locals.of(value) != expected {
@@ -2176,7 +2205,7 @@ fn emit_function(
             } else {
                 function.instruction(&LocalGet(1 + (index - environment) as u32));
             }
-            function.instruction(&LocalSet(if index >= environment && locals.of(*value) != unboxed::Repr::Boxed {
+            function.instruction(&LocalSet(if locals.of(*value) != unboxed::Repr::Boxed {
                 locals.raw(*value)
             } else { value.0 as u32 + offset }));
         }
@@ -2274,6 +2303,9 @@ fn emit_function(
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
         let mut boxed = std::collections::HashSet::new();
         let mut code = Vec::new();
+        locals.invalidate(&mut code, block.parameters.iter().copied()
+            .chain(instructions.iter().map(|instruction| instruction.result)));
+        for instruction in code.drain(..) { function.instruction(&instruction); }
         for inst in instructions {
             if continuation.is_none()
                 && let Operation::Call { operands, primitive: Some(shape) } = &inst.operation
@@ -2283,6 +2315,14 @@ fn emit_function(
                 primitive::call(&mut code, operands, shape, signature, inst.result, ir, context, &locals,
                     known.get(&(operands[0].0 as u32)).copied(), linked.get(&(operands[0].0 as u32)).copied(),
                     method_local, long_locals[0], &index);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
+            if !unboxed::inline(&locals, inst)
+                && let Some((export, arguments)) = unboxed::raw_helper(&locals, inst)
+            {
+                for argument in arguments { locals.push_boxed(&mut code, argument); }
+                code.extend([Call(index(export)), LocalSet(locals.raw(inst.result))]);
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
@@ -2298,6 +2338,7 @@ fn emit_function(
                     ),
                     Operation::Bitwise { operation, arguments } => locals.bitwise(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+                        unboxed::raw_helper(&locals, inst).map(|(export, _)| index(export)),
                     ),
                     _ => unreachable!("inline numeric instruction"),
                 }
@@ -2386,9 +2427,41 @@ fn emit_function(
                     continue;
                 }
             }
+            // Physical raw numbers/flags cannot be undefined. Guarded numeric
+            // calls retain their boxed replacement slot when the raw flag misses.
+            if let Operation::Nominal { operation: Nominal::IsUndefined, arguments } = &inst.operation
+                && locals.of(arguments[0]) != unboxed::Repr::Boxed
+            {
+                let argument = arguments[0];
+                if locals.of(argument).maybe() {
+                    code.extend([LocalGet(locals.valid(argument)), If(BlockType::Result(ValType::I32)),
+                        I32Const(0), Else, LocalGet(argument.0 as u32 + offset),
+                        runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels), RefEq, End]);
+                } else {
+                    code.push(I32Const(0));
+                }
+                if locals.of(inst.result) == unboxed::Repr::Flag {
+                    code.push(LocalSet(locals.raw(inst.result)));
+                } else {
+                    code.extend(runtime_abi::boolean_in(sentinels));
+                    code.push(LocalSet(inst.result.0 as u32 + offset));
+                }
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             // A packed access boxes its raw operands itself, only where the
             // generic path needs them (#387).
-            if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
+            let capture_definition = match &inst.operation {
+                Operation::MakeClosure { body, .. } => Some(layout.single(body)),
+                Operation::MakeGeneralClosure { body, .. } => Some(layout.general(body)),
+                _ => None,
+            };
+            if let Some(definition) = capture_definition {
+                let operands = ir::operands(&inst.operation);
+                let boxed_captures = operands.into_iter().zip(&definition.capture_reprs)
+                    .filter_map(|(value, repr)| (*repr == unboxed::Repr::Boxed).then_some(*value)).collect::<Vec<_>>();
+                locals.materialize(&mut code, &boxed_captures, &mut boxed);
+            } else if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
                 locals.materialize(&mut code, ir::operands(&inst.operation), &mut boxed);
             }
             for instruction in code.drain(..) { function.instruction(&instruction); }
@@ -2707,7 +2780,7 @@ fn emit_function(
                 }
                 Operation::MakeClosure { body, captures } => {
                     let definition = layout.single(body);
-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
+                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
@@ -2718,7 +2791,7 @@ fn emit_function(
                 }
                 Operation::MakeGeneralClosure { body, captures } => {
                     let definition = layout.general(body);
-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
+                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
@@ -2808,11 +2881,11 @@ fn emit_function(
                             .instruction(&Call(index(operation.export())))
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    if locals.of(inst.result) == unboxed::Repr::Long {
-                        // Core's int32 helper has completed the original
+                    if matches!(locals.of(inst.result), unboxed::Repr::Long | unboxed::Repr::Double | unboxed::Repr::Flag) {
+                        // A checked numeric helper has completed the original
                         // operand conversions and returned a long. Reuse its
                         // GC value while keeping subsequent numeric uses raw.
-                        locals.unbox_long(&mut code, inst.result);
+                        locals.unbox_result(&mut code, inst.result);
                         for instruction in code.drain(..) { function.instruction(&instruction); }
                         boxed.insert(inst.result.0);
                     }
@@ -3019,6 +3092,24 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::MapEntryType => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("map-entry-type-register")));
+                        }
+                        Nominal::ScalarVectorGuard | Nominal::ScalarMapEntryGuard => {
+                            // Reuse the construction-site cache allocation; a
+                            // scalar guard needs only its first slot. Store only
+                            // successful admissions. The helper rechecks current
+                            // canonical registration even when this key matches.
+                            let site = construct_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let ctor = arguments[0].0 as u32 + offset;
+                            function.instruction(&LocalGet(ctor)).instruction(&GlobalGet(site))
+                                .instruction(&Call(index(if *operation == Nominal::ScalarVectorGuard { "scalar-vector-guard" } else { "scalar-map-entry-guard" })))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(ctor)).instruction(&GlobalSet(site))
+                                .instruction(&I32Const(1)).instruction(&Else)
+                                .instruction(&I32Const(0)).instruction(&End);
+                        }
                         Nominal::IsUndefined => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))

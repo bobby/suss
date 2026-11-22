@@ -1,0 +1,842 @@
+diff --git 1/crates/suss-cli/tests/clojure_letfn.rs 2/crates/suss-cli/tests/clojure_letfn.rs
+new file mode 100644
+index 00000000..1056d4df
+--- /dev/null
++++ 2/crates/suss-cli/tests/clojure_letfn.rs
+@@ -0,0 +1,137 @@
++//! Recursive lexical function groups preserve capture and call semantics (#351).
++use suss_cli::portable_session::Session;
++
++const CASES: &[(&str, &str)] = &[
++    ("(letfn [(f [] 1) (f [] 2)] (f))", "2"),
++    ("(let [x 3000000000] (letfn [(f [n] (if (zero? n) (+ x 1) (g (dec n)))) (g [n] (if (zero? n) (+ x 2) (f (dec n))))] [(f 0) (f 1) (g 1)]))", "[3000000001 3000000002 3000000001]"),
++    ("(letfn [(f [] g) (g [] 9)] [((f)) (identical? (f) g)])", "[9 true]"),
++    ("(letfn [(factorial [n] (if (zero? n) 1 (* n (factorial (dec n)))))] (factorial 6))", "720"),
++    ("(let [f (fn [] :outer)] (letfn [(g [] (f)) (f [] :inner)] [(g) (f)]))", "[:inner :inner]"),
++    ("(let [events (atom []) x (do (swap! events conj :capture) 1.5)] (letfn [(f [] (+ x 1.0)) (g [] (+ x 2.0))] [(f) (g) @events]))", "[2.5 3.5 [:capture]]"),
++    ("(letfn [(f ([] (g 2)) ([x] (+ x 1))) (g [x] (f x))] [(f) (g 4)])", "[3 5]"),
++    ("(let [x 3000000000] (letfn [(f [& xs] (+ x (count xs))) (g [] (f :a :b))] [(f) (g)]))", "[3000000000 3000000002]"),
++    ("(letfn [(f [[x y]] (+ x y)) (g [] (f [3 4]))] (g))", "7"),
++    ("(letfn [] 7)", "7"),
++    ("(letfn [])", "nil"),
++    ("(loop [i 0 acc 0] (if (< i 5) (letfn [(f [x] (+ x 1))] (recur (inc i) (+ acc (f i)))) acc))", "15"),
++    ("(letfn* [f (fn [n] (if (zero? n) 7 (g (dec n)))) g (fn [n] (if (zero? n) 8 (f (dec n))))] [(f 1) (g 1)])", "[8 7]"),
++    ("(let [pair (letfn [(f [] g) (g [] f)] [f g]) f (nth pair 0) g (nth pair 1)] [(identical? (f) g) (identical? (g) f)])", "[true true]"),
++    ("(let [x (identity 3000000000)] (letfn [(f [] x) (g [] (identical? (f) (f)))] [(f) (g)]))", "[3000000000 true]"),
++    ("(let [x -0.0] (letfn [(f [] (* x 2.0)) (g [] (/ 1.0 (f)))] [(f) (g)]))", "[-0.0 ##-Inf]"),
++    ("(let [x ##NaN] (letfn [(f [] (+ x 1.0)) (g [] (let [a (f) b (f)] [(= a b) (== a b) (identical? a b)]))] (g)))", "[false false false]"),
++    ("(let [x 9223372036854775807] (letfn [(f [] (+ x 1)) (g [] (f))] (try (g) (catch :default e (ex-message e)))))", "\"long overflow\""),
++    ("(let [x 127.1] (letfn [(f [] x) (g [] (byte (f)))] (g)))", "127"),
++    ("(let [x 2147483648.0] (letfn [(f [] (+ x 0.0)) (g [] (int (f)))] (try (g) (catch :default e :error))))", ":error"),
++    ("(letfn [(f [x] (+ x 1)) (g [] (f 2))] [(g) (try (f) (catch :default e :arity)) (g)])", "[3 :arity 3]"),
++    ("(letfn [(f [] (throw (ex-info \"bad\" {:x 1}))) (g [] (try (f) (catch :default e (ex-message e))))] (g))", "\"bad\""),
++    ("(let [letfn (fn [x] x)] (letfn 7))", "7"),
++    ("(letfn [(f [x] (loop [n x acc 0] (if (zero? n) acc (recur (dec n) (+ acc n))))) (g [] (f 5))] (g))", "15"),
++    ("(letfn [(^long f [^long x] (+ x 1)) (g [] (f 3))] (g))", "4"),
++];
++
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
++    CASES.iter()
++}
++
++#[test]
++fn recursive_groups_and_nested_captures_survive_gc_in_both_phases() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        session.eval("(def saved-letfn (let [x 1.5] (letfn [(f [] (fn [] (+ x 1.0))) (g [] f)] [f g])))").unwrap();
++        for _ in 0..3 { session.collect().unwrap(); }
++        let value = session.eval(&observed("(let [f (nth saved-letfn 0) g (nth saved-letfn 1)] [((f)) (identical? (g) f)])")).unwrap();
++        session.collect().unwrap();
++        let units = session.inspect(&value, |mut store, value| {
++            let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++            Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++        }).unwrap();
++        assert_eq!(String::from_utf16(&units).unwrap(), "[2.5 true]");
++    }
++}
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_letfn() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in cases() {
++            let value = session
++                .eval(&observed(source))
++                .unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session
++                .inspect(&value, |mut store, value| {
++                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                    Ok(array
++                        .elems(&mut store)?
++                        .map(|unit| unit.unwrap_i32() as u16)
++                        .collect::<Vec<_>>())
++                })
++                .unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_letfn() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = String::from("(ns localhints)\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!(
++            "(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n",
++            observed(expression)
++        ));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args([
++        "compile",
++        "localhints.sus",
++        "-w",
++        "localhints.wit",
++        "-o",
++        "localhints.wasm",
++    ]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(
++        output.status.success(),
++        "{}",
++        String::from_utf8_lossy(&output.stderr)
++    );
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss"))
++            .current_dir(root.path())
++            .args([
++                "run",
++                "localhints.wasm",
++                "--invoke",
++                &format!("case{index}"),
++                "--",
++                "0",
++            ])
++            .output()
++            .unwrap();
++        assert!(
++            output.status.success(),
++            "{expression}: {}",
++            String::from_utf8_lossy(&output.stderr)
++        );
++        assert_eq!(
++            String::from_utf8_lossy(&output.stdout).trim(),
++            "1",
++            "{expression}"
++        );
++    }
++}
+diff --git 1/crates/suss-cli/tests/compiled_macro_letfn_source.rs 2/crates/suss-cli/tests/compiled_macro_letfn_source.rs
+new file mode 100644
+index 00000000..c409c8ba
+--- /dev/null
++++ 2/crates/suss-cli/tests/compiled_macro_letfn_source.rs
+@@ -0,0 +1,26 @@
++//! Genuine recursive binding snapshots stay separate from their runtime array.
++use suss_cli::portable_session::Session;
++
++fn rendered(session: &mut Session, source: &str) -> String {
++    let value = session.eval(&format!("(pr-str {source})")).unwrap();
++    session.collect().unwrap();
++    let units = session.inspect(&value, |mut store, value| {
++        let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++        Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++    }).unwrap();
++    String::from_utf16(&units).unwrap()
++}
++
++#[test]
++fn staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        session.eval("(defmacro inspect-letfn [name] (let [b (get (get &env :locals) name)] (list 'quote [(get b :local) (contains? b :init) (get (get b :init) :op)])))").unwrap();
++        assert_eq!(rendered(&mut session,
++            "(letfn [(f [] (inspect-letfn g)) (g [] 9)] [(f) (inspect-letfn f) (inspect-letfn g)])"),
++            "[[:letfn false nil] [:letfn true :fn] [:letfn true :fn]]");
++        session.eval("(defmacro inspect-group [name] (let [ast (get (get (get &env :locals) name) :init) bs (get ast :bindings)] (list 'quote [(get ast :op) (mapv (fn [b] [(get b :local) (get (get b :init) :op)]) bs) (get ast :children)])))").unwrap();
++        assert_eq!(rendered(&mut session,
++            "(let [owner (letfn [(f [] g) (g [] f)] f)] (inspect-group owner))"),
++            "[:letfn [[:letfn :fn] [:letfn :fn]] [:bindings :body]]");
++    }
++}
+diff --git c/crates/suss-compile/src/portable/analyzer_edn.rs w/crates/suss-compile/src/portable/analyzer_edn.rs
+index 3dc543a2..9479316c 100644
+--- c/crates/suss-compile/src/portable/analyzer_edn.rs
++++ w/crates/suss-compile/src/portable/analyzer_edn.rs
+@@ -296,6 +296,7 @@ impl<'o> Projector<'o> {
+         let kind = match (&binding.source_role, binding.source_kind()) {
+             (SourceRole::CatchBinding { .. }, _) => "catch",
+             (_, hir::LocalKind::Let) => "let",
++            (_, hir::LocalKind::LetFn) => "letfn",
+             (_, hir::LocalKind::Loop) => "loop",
+             (_, hir::LocalKind::Argument { .. }) => "arg",
+             (_, hir::LocalKind::FunctionName) => "fn",
+@@ -394,7 +395,7 @@ impl<'o> Projector<'o> {
+                 n.child("else", self.node(alternative)?);
+                 n
+             }
+-            SourceNode::Bindings { is_loop: false, bindings, body }
++            SourceNode::Bindings { is_loop: false, is_letfn: false, bindings, body }
+                 if bindings.len() == 1
+                     && bindings[0].initializer.as_ref().is_some_and(|init| {
+                         init.source.is_none()
+@@ -407,8 +408,8 @@ impl<'o> Projector<'o> {
+                 n.child("body", self.node(body)?);
+                 n
+             }
+-            SourceNode::Bindings { is_loop, bindings, body } => {
+-                let mut n = Node::new(if *is_loop { "loop" } else { "let" });
++            SourceNode::Bindings { is_loop, is_letfn, bindings, body } => {
++                let mut n = Node::new(if *is_letfn { "letfn" } else if *is_loop { "loop" } else { "let" });
+                 let bindings = bindings.iter().map(|b| self.binding(b)).collect::<Result<_, _>>()?;
+                 n.child("bindings", Value::Vector(bindings));
+                 if *is_loop {
+@@ -601,6 +602,7 @@ fn lowering_name(kind: &Expression) -> &'static str {
+         Expression::GlobalCell(_) => "global-cell",
+         Expression::Definition { .. } => "definition",
+         Expression::Let { .. } => "let",
++        Expression::LetFn { .. } => "letfn",
+         Expression::Loop { .. } => "loop",
+         Expression::Recur { .. } => "recur",
+         Expression::If { .. } => "if",
+@@ -635,7 +637,7 @@ fn lowered_children(kind: &Expression) -> Vec<&Hir> {
+         Expression::NilTest(value) | Expression::Throw(value) => vec![value],
+         Expression::Assign { value, .. } => vec![value],
+         Expression::Definition { initializer, .. } => initializer.iter().map(|v| v.as_ref()).collect(),
+-        Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => bindings
++        Expression::Let { bindings, body } | Expression::LetFn { bindings, body } | Expression::Loop { bindings, body, .. } => bindings
+             .iter()
+             .map(|b| &b.value)
+             .chain(std::iter::once(body.as_ref()))
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index c594d76a..0e107371 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -1,5 +1,6 @@
+ //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
+ mod arrays;
++mod letfn;
+ mod local_bindings;
+ pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
+ mod function_parameters;
+@@ -958,6 +959,7 @@ pub enum SourceNode {
+     },
+     Bindings {
+         is_loop: bool,
++        is_letfn: bool,
+         bindings: std::sync::Arc<[LocalBinding]>,
+         body: std::sync::Arc<Hir>,
+     },
+@@ -1141,6 +1143,11 @@ pub enum Expression {
+         bindings: Vec<Binding>,
+         body: Box<Hir>,
+     },
++    /// All names are in scope for every function initializer and the body.
++    LetFn {
++        bindings: Vec<Binding>,
++        body: Box<Hir>,
++    },
+     Loop {
+         target: LoopId,
+         bindings: Vec<Binding>,
+@@ -1459,13 +1466,15 @@ impl Analyzer<'_> {
+                     // recording source facts; lexical callees stay untouched.
+                     let primitive =
+                         match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+-                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
++                            Some(ResolvedBinding::BootstrapLet(global)) => Some(if global.name() == "letfn" { "letfn*" } else { "let*" }),
+                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
+                             _ => None,
+                         };
+                     if let Some(primitive) = primitive {
+                         let mut expanded = if primitive == "let*" {
+                             self.destructured_let(form)?
++                        } else if primitive == "letfn*" {
++                            self.letfn_expansion(form)?
+                         } else {
+                             form.clone()
+                         };
+@@ -3186,6 +3195,7 @@ impl Analyzer<'_> {
+             *self.source_nodes.last_mut().expect("source node fact slot") = Some(
+                 std::sync::Arc::new(SourceNode::Bindings {
+                     is_loop: false,
++                    is_letfn: false,
+                     bindings: vec![source_binding].into(),
+                     body: std::sync::Arc::new(body.as_ref().clone()),
+                 }),
+@@ -3969,6 +3979,7 @@ impl Analyzer<'_> {
+             return self.attach_function_metadata(form, value);
+         }
+         let (kind, ty) = match (bare, symbol.name.as_str()) {
++            (true, "letfn*") => return self.recursive_functions(form, args, context, tail),
+             (true, "do") => {
+                 let mut body = self.body(args, form.span.clone(), context, tail)?;
+                 let Expression::Do(children) = &*body.kind else {
+@@ -4127,6 +4138,7 @@ impl Analyzer<'_> {
+                 *self.source_nodes.last_mut().expect("source node fact slot") =
+                     Some(std::sync::Arc::new(SourceNode::Bindings {
+                         is_loop,
++                        is_letfn: false,
+                         bindings: source_bindings.into(),
+                         body: std::sync::Arc::new(body.as_ref().clone()),
+                     }));
+@@ -4345,6 +4357,12 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
+                 }
+             }
+         }
++        Expression::LetFn { bindings, body } => {
++            let mut bound = bound.clone();
++            bound.extend(bindings.iter().map(|binding| binding.id));
++            for binding in bindings { free_bindings(&binding.value, &bound, free); }
++            free_bindings(body, &bound, free);
++        }
+         Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => {
+             let mut bound = bound.clone();
+             for binding in bindings {
+diff --git c/crates/suss-compile/src/portable/hir/division_overloads.rs w/crates/suss-compile/src/portable/hir/division_overloads.rs
+index 82bde891..603897fa 100644
+--- c/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ w/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -80,7 +80,7 @@ impl Pass<'_> {
+                 }
+                 Comparison { arguments, .. } | Array { arguments, .. }
+                 | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => self.any(arguments),
+-                Let { bindings, body } | Loop { bindings, body, .. } => {
++                Let { bindings, body } | LetFn { bindings, body } | Loop { bindings, body, .. } => {
+                     let mut features = self.any(bindings.iter().map(|binding| &binding.value).chain(std::iter::once(body.as_ref())))?;
+                     for binding in bindings {
+                         features.hints |= primitive_returns::numeric_hint(&binding.metadata, &binding.span, self.meter)?.is_some();
+@@ -130,6 +130,16 @@ impl Pass<'_> {
+             let source_comparison = hir.source.is_some();
+             use Expression::*;
+             match hir.kind_mut() {
++                LetFn { bindings, body } => {
++                    let previous = bindings.iter().map(|binding|
++                        (binding.id, facts.insert(binding.id, Primitive::Boxed))).collect();
++                    let result = (|| {
++                        for binding in bindings { self.walk(&mut binding.value, facts)?; }
++                        self.walk(body, facts)
++                    })();
++                    restore(facts, previous);
++                    result?;
++                }
+                 Let { bindings, body } => {
+                     let mut previous = Vec::with_capacity(bindings.len());
+                     for binding in bindings {
+diff --git 1/crates/suss-compile/src/portable/hir/letfn.rs 2/crates/suss-compile/src/portable/hir/letfn.rs
+new file mode 100644
+index 00000000..6242c09f
+--- /dev/null
++++ 2/crates/suss-compile/src/portable/hir/letfn.rs
+@@ -0,0 +1,93 @@
++//! Original Suss lowering of Clojure letfn syntax; no upstream body is copied.
++use super::*;
++
++impl Analyzer<'_> {
++    /// Bootstrap macro expansion: preserve declarations and original method
++    /// forms; only the primitive binding vector and core fn call are introduced.
++    pub(super) fn letfn_expansion(&mut self, form: &Form) -> Result<Form, Diagnostic> {
++        let span = form.span.clone();
++        let mut meter = |work| self.expander.charge_expansion_work(work, span.clone());
++        let mut expanded = super::super::clone_form_metered(form, &mut meter)?;
++        let Kind::List(items) = &mut expanded.kind else { unreachable!() };
++        let Some(declarations) = items.get_mut(1) else {
++            return Err(fail(form.span.clone(), "letfn requires a binding vector"));
++        };
++        let Kind::Vector(entries) = &mut declarations.kind else {
++            return Err(fail(declarations.span.clone(), "letfn bindings must be a vector"));
++        };
++        let mut bindings = Vec::with_capacity(entries.len().saturating_mul(2));
++        for mut entry in std::mem::take(entries) {
++            meter(3)?;
++            let Kind::List(parts) = &mut entry.kind else {
++                return Err(fail(entry.span.clone(), "letfn declaration requires a name and signatures"));
++            };
++            let Some(name) = parts.first() else {
++                return Err(fail(entry.span.clone(), "letfn declaration requires a name"));
++            };
++            let name = super::super::clone_form_metered(name, &mut meter)?;
++            parts.insert(0, Form {
++                span: entry.span.clone(), metadata: Vec::new(),
++                kind: Kind::Symbol(suss_reader::Symbol { namespace: Some("suss.core".into()), name: "fn".into() }),
++            });
++            bindings.push(name);
++            bindings.push(entry);
++        }
++        items[1].kind = Kind::Vector(bindings);
++        Ok(expanded)
++    }
++
++    pub(super) fn recursive_functions(&mut self, form: &Form, args: &[Form],
++        context: super::super::AnalysisContext, tail: bool) -> Result<Hir, Diagnostic>
++    {
++        let Some(declarations) = args.first() else {
++            return Err(fail(form.span.clone(), "letfn* requires a binding vector"));
++        };
++        let Kind::Vector(entries) = &declarations.kind else {
++            return Err(fail(declarations.span.clone(), "letfn* bindings must be a vector"));
++        };
++        if entries.len() % 2 != 0 {
++            return Err(fail(declarations.span.clone(), "letfn* binding has no initializer"));
++        }
++        let outer = self.locals.clone();
++        let mut declarations = Vec::with_capacity(entries.len() / 2);
++        for pair in entries.chunks_exact(2) {
++            let Kind::Symbol(name) = &pair[0].kind else {
++                return Err(fail(pair[0].span.clone(), "letfn binding name must be an unqualified symbol"));
++            };
++            if name.namespace.is_some() || name.name == "&" {
++                return Err(fail(pair[0].span.clone(), "letfn binding name must be unqualified"));
++            }
++            self.expander.charge_expansion_work(2, pair[0].span.clone())?;
++            let id = BindingId(self.next);
++            self.next += 1;
++            self.insert_local(&pair[0], id, Type::Value, LocalKind::LetFn, None);
++            declarations.push(self.locals[&name.name].clone());
++        }
++        let result = (|| {
++            let mut bindings = Vec::with_capacity(declarations.len());
++            let mut source_bindings = Vec::with_capacity(declarations.len());
++            for (mut declaration, pair) in declarations.into_iter().zip(entries.chunks_exact(2)) {
++                let id = declaration.id;
++                let Kind::Symbol(name) = &pair[0].kind else { unreachable!() };
++                let value = self.form_in_named(&pair[1], super::super::AnalysisContext::Expression, false, Some(&pair[0]))?;
++                if !value.source.as_ref().is_some_and(|source| source.callable.is_some()) {
++                    return Err(fail(pair[1].span.clone(), "letfn* initializer must be a function"));
++                }
++                declaration.initializer = Some(std::sync::Arc::new(value.clone()));
++                let current = std::sync::Arc::make_mut(&mut self.locals).get_mut(&name.name).unwrap();
++                if current.id == id { current.initializer = declaration.initializer.clone(); }
++                source_bindings.push(declaration);
++                bindings.push(Binding { id, name: name.name.clone(), metadata: pair[0].metadata.clone(),
++                    span: pair[0].span.clone(), value });
++            }
++            let body = self.analyzed_body(&args[1..], form.span.clone(), context.returning(), tail)?;
++            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Bindings {
++                is_loop: false, is_letfn: true, bindings: source_bindings.into(), body: std::sync::Arc::new(body.clone()),
++            }));
++            Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: body.ty,
++                kind: std::sync::Arc::new(Expression::LetFn { bindings, body: Box::new(body) }) })
++        })();
++        self.locals = outer;
++        result
++    }
++}
+diff --git c/crates/suss-compile/src/portable/hir/local_bindings.rs w/crates/suss-compile/src/portable/hir/local_bindings.rs
+index 0bafcbf0..35bbbea6 100644
+--- c/crates/suss-compile/src/portable/hir/local_bindings.rs
++++ w/crates/suss-compile/src/portable/hir/local_bindings.rs
+@@ -7,6 +7,7 @@ use std::sync::Arc;
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub enum LocalKind {
+     Let,
++    LetFn,
+     Loop,
+     Argument { index: usize, rest: bool },
+     FunctionName,
+diff --git c/crates/suss-compile/src/portable/hir/primitive_returns.rs w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index f628c908..94a2b84b 100644
+--- c/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -104,6 +104,13 @@ fn class_in(
+                 let b = class_in(alternative, facts, meter, loops)?;
+                 Ok(if a == Never { b } else if b == Never || a == b { a } else { Boxed })
+             }
++            Expression::LetFn { bindings, body } => {
++                let previous = bindings.iter().map(|binding|
++                    (binding.id, facts.insert(binding.id, Primitive::Boxed))).collect();
++                let result = class_in(body, facts, meter, loops);
++                restore(facts, previous);
++                result
++            }
+             Expression::Let { bindings, body } => {
+                 let mut previous = Vec::new();
+                 for binding in bindings {
+@@ -285,6 +292,13 @@ fn infer(
+             Expression::Do(items) => match items.last() {
+                 Some(last) => infer(last, bindings, meter, loops)?, None => Boxed,
+             },
++            Expression::LetFn { bindings: locals, body } => {
++                let previous = locals.iter().map(|binding|
++                    (binding.id, bindings.insert(binding.id, Primitive::Boxed))).collect();
++                let result = infer(body, bindings, meter, loops);
++                restore(bindings, previous);
++                result?
++            }
+             Expression::Let { bindings: locals, body } => {
+                 let mut previous = Vec::with_capacity(locals.len());
+                 for binding in locals {
+@@ -408,7 +422,7 @@ fn array_kind_cached(
+         }
+         Ok(match &*hir.kind {
+             Expression::Do(items) => match items.last() { Some(last) => array_kind_cached(last, meter, memo)?, None => None },
+-            Expression::Let { body, .. } => array_kind_cached(body, meter, memo)?,
++            Expression::Let { body, .. } | Expression::LetFn { body, .. } => array_kind_cached(body, meter, memo)?,
+             Expression::If { consequent, alternative, .. } => {
+                 let a = array_kind_cached(consequent, meter, memo)?;
+                 let b = array_kind_cached(alternative, meter, memo)?;
+diff --git c/crates/suss-compile/src/portable/hir/source_tags.rs w/crates/suss-compile/src/portable/hir/source_tags.rs
+index 32e547a0..d9f2993f 100644
+--- c/crates/suss-compile/src/portable/hir/source_tags.rs
++++ w/crates/suss-compile/src/portable/hir/source_tags.rs
+@@ -747,6 +747,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
+                 None => return Ok(Some(named("clj-nil"))),
+             },
+             Expression::Let { body, .. }
++            | Expression::LetFn { body, .. }
+             | Expression::Loop { body, .. }
+             | Expression::DynamicScope { body, .. }
+             | Expression::AsyncDynamicScope { body, .. }
+@@ -826,6 +827,7 @@ pub(super) fn source_tags_metered(
+                 Expression::Throw(_) | Expression::Recur { .. } => Some(named("ignore")),
+                 Expression::Do(_)
+                 | Expression::Let { .. }
++                | Expression::LetFn { .. }
+                 | Expression::Loop { .. }
+                 | Expression::DynamicScope { .. }
+                 | Expression::AsyncDynamicScope { .. }
+diff --git c/crates/suss-compile/src/portable/ir.rs w/crates/suss-compile/src/portable/ir.rs
+index 8bbb3111..9638d149 100644
+--- c/crates/suss-compile/src/portable/ir.rs
++++ w/crates/suss-compile/src/portable/ir.rs
+@@ -194,6 +194,7 @@ struct Lowerer<'a> {
+     function: Function,
+     current: usize,
+     bindings: HashMap<BindingId, ValueId>,
++    recursive: HashMap<BindingId, (ValueId, usize)>,
+     callables: HashMap<ValueId, super::primitive::Shape>,
+     targets: HashMap<LoopId, (usize, usize)>,
+     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+@@ -213,6 +214,7 @@ impl<'a> Lowerer<'a> {
+             },
+             current: 0,
+             bindings: HashMap::new(),
++            recursive: HashMap::new(),
+             callables: HashMap::new(),
+             targets: HashMap::new(),
+             meter,
+@@ -357,14 +359,14 @@ impl<'a> Lowerer<'a> {
+                 let mut captured = Vec::new();
+                 let mut typed = Vec::new();
+                 for id in captures {
+-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
++                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
+                         span: hir.span.clone(), message: "Undefined HIR future capture".into(),
+                     })?;
+                     captured.push(value);
+                     typed.push((*id, self.function.values[value.0].ty));
+                 }
+                 let continuation =
+-                    r#async::lower_metered(body, &typed, &mut *self.meter)?;
++                    r#async::lower_recursive_metered(body, &typed, &self.recursive, &mut *self.meter)?;
+                 self.emit(Operation::MakeFuture {
+                     body: Box::new(FutureBody {
+                         capture_types: typed.iter().map(|(_, ty)| *ty).collect(), continuation,
+@@ -560,10 +562,16 @@ impl<'a> Lowerer<'a> {
+                     self.literal(Literal::Nil, hir.span.clone())?
+                 }
+             }
+-            Expression::Local(id) => *self.bindings.get(id).ok_or_else(|| Diagnostic {
+-                span: hir.span.clone(),
+-                message: "HIR references an undefined binding".into(),
+-            })?,
++            Expression::Local(id) => {
++                if let Some((group, slot)) = self.recursive.get(id).copied() {
++                    let index = self.literal(Literal::Long(slot as i64), hir.span.clone())?;
++                    self.emit(Operation::Array { operation: ArrayOperation::Get, arguments: vec![group, index] }, Type::Value, hir.span.clone())?
++                } else {
++                    *self.bindings.get(id).ok_or_else(|| Diagnostic {
++                        span: hir.span.clone(), message: "HIR references an undefined binding".into(),
++                    })?
++                }
++            },
+             Expression::Call { callee, arguments } => {
+                 let mut primitive = super::primitive::call_shape(hir, callee, &mut *self.meter)?;
+                 let mut operands = vec![operand!(callee)];
+@@ -586,7 +594,7 @@ impl<'a> Lowerer<'a> {
+                 let mut capture_types = Vec::new();
+                 let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
+                 for id in captures {
+-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
++                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
+                         span: hir.span.clone(),
+                         message: "Undefined HIR capture".into(),
+                     })?;
+@@ -601,6 +609,9 @@ impl<'a> Lowerer<'a> {
+                 let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
+                 for (id, ty, span) in inner_parameters {
+                     inner.parameter(id, ty, span)?;
++                    if let Some((_, slot)) = self.recursive.get(&id) {
++                        inner.recursive.insert(id, (inner.bindings[&id], *slot));
++                    }
+                 }
+                 let function = inner.finish(body)?;
+                 let display_name = self.display_name(hir)?;
+@@ -632,7 +643,7 @@ impl<'a> Lowerer<'a> {
+                 let mut captured = Vec::new();
+                 let mut capture_types = Vec::new();
+                 for id in captures {
+-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
++                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
+                         span: hir.span.clone(),
+                         message: "Undefined HIR capture".into(),
+                     })?;
+@@ -654,6 +665,9 @@ impl<'a> Lowerer<'a> {
+                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
+                     for (id, ty) in captures.iter().zip(&capture_types) {
+                         inner.parameter(*id, *ty, hir.span.clone())?;
++                        if let Some((_, slot)) = self.recursive.get(id) {
++                            inner.recursive.insert(*id, (inner.bindings[id], *slot));
++                        }
+                     }
+                     inner.charge(capture_types.len(), &method.body.span)?;
+                     let mut environment_types = capture_types.clone();
+@@ -770,6 +784,31 @@ impl<'a> Lowerer<'a> {
+                 };
+                 return Ok(None);
+             }
++            Expression::LetFn { bindings, body } => {
++                let nil = self.literal(Literal::Nil, hir.span.clone())?;
++                self.charge(bindings.len(), &hir.span)?;
++                let group = self.emit(Operation::Array { operation: ArrayOperation::Objects,
++                    arguments: vec![nil; bindings.len()] }, Type::Value, hir.span.clone())?;
++                for (slot, binding) in bindings.iter().enumerate() {
++                    self.charge(1, &binding.span)?;
++                    self.recursive.insert(binding.id, (group, slot));
++                }
++                let mut values = Vec::with_capacity(bindings.len());
++                for (slot, binding) in bindings.iter().enumerate() {
++                    let value = operand!(&binding.value);
++                    let index = self.literal(Literal::Long(slot as i64), binding.span.clone())?;
++                    self.emit(Operation::Array { operation: ArrayOperation::Set,
++                        arguments: vec![group, index, value] }, Type::Value, binding.span.clone())?;
++                    values.push(value);
++                }
++                for (binding, value) in bindings.iter().zip(values) {
++                    self.recursive.remove(&binding.id);
++                    if self.bindings.insert(binding.id, value).is_some() {
++                        return Err(Diagnostic { span: binding.span.clone(), message: "HIR binding identity is defined twice".into() });
++                    }
++                }
++                return self.expression(body);
++            }
+             Expression::Let { bindings, body } => {
+                 // Binding identities, rather than names, distinguish shadowed values.
+                 for (index, binding) in bindings.iter().enumerate() {
+@@ -1190,7 +1229,7 @@ fn verify_recurrence_inner(
+                 verify_recurrence(&method.body, &mut Vec::new(), true, meter)?;
+             }
+         }
+-        Expression::Let { bindings, body } => {
++        Expression::Let { bindings, body } | Expression::LetFn { bindings, body } => {
+             for binding in bindings {
+                 verify_recurrence(&binding.value, targets, false, meter)?;
+             }
+diff --git c/crates/suss-compile/src/portable/ir/async.rs w/crates/suss-compile/src/portable/ir/async.rs
+index 66188b01..df45fd0c 100644
+--- c/crates/suss-compile/src/portable/ir/async.rs
++++ w/crates/suss-compile/src/portable/ir/async.rs
+@@ -74,11 +74,23 @@ pub(crate) fn lower_metered(
+     body: &Hir,
+     captures: &[(BindingId, Type)],
+     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<Continuation, Diagnostic> {
++    lower_recursive_metered(body, captures, &std::collections::HashMap::new(), meter)
++}
++
++pub(super) fn lower_recursive_metered(
++    body: &Hir,
++    captures: &[(BindingId, Type)],
++    recursive: &std::collections::HashMap<BindingId, (ValueId, usize)>,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+ ) -> Result<Continuation, Diagnostic> {
+     let mut lowerer = Lowerer::new(body.span.clone(), meter)?;
+     lowerer.suspendable = true;
+     for (id, ty) in captures {
+         lowerer.parameter(*id, *ty, body.span.clone())?;
++        if let Some((_, slot)) = recursive.get(id) {
++            lowerer.recursive.insert(*id, (lowerer.bindings[id], *slot));
++        }
+     }
+     let function = lowerer.finish(body)?;
+     normalize_metered(function, meter)
+diff --git c/crates/suss-compile/src/portable/primitive.rs w/crates/suss-compile/src/portable/primitive.rs
+index a7a222b5..5b471122 100644
+--- c/crates/suss-compile/src/portable/primitive.rs
++++ w/crates/suss-compile/src/portable/primitive.rs
+@@ -58,7 +58,7 @@ fn shape<'a>(hir: &'a Hir, scope: &[&'a hir::Binding], meter: &mut dyn FnMut(u64
+             hir::Expression::Do(items) => match items.last() {
+                 Some(last) => shape(last, scope, meter)?, None => Shape(Vec::new()),
+             },
+-            hir::Expression::Let { bindings, body } => {
++            hir::Expression::Let { bindings, body } | hir::Expression::LetFn { bindings, body } => {
+                 meter(scope.len().saturating_add(bindings.len()) as u64)?;
+                 let mut inner = scope.to_vec();
+                 inner.extend(bindings);
+diff --git c/crates/suss-compile/src/portable/resolve.rs w/crates/suss-compile/src/portable/resolve.rs
+index 282101d5..db6f9d3d 100644
+--- c/crates/suss-compile/src/portable/resolve.rs
++++ w/crates/suss-compile/src/portable/resolve.rs
+@@ -397,6 +397,7 @@ impl Default for Environment {
+ /// Core macros the bootstrap expander provides before core source loads.
+ pub(crate) const BOOTSTRAP_MACROS: &[&str] = &[
+     "let",
++    "letfn",
+     "loop",
+     "fn",
+     "defonce",
+@@ -677,13 +678,13 @@ impl Environment {
+                     },
+                 );
+             }
+-            for name in ["let", "loop", "fn", "defonce", "binding", "with-redefs"] {
++            for name in ["let", "letfn", "loop", "fn", "defonce", "binding", "with-redefs"] {
+                 let global = Global {
+                     phase,
+                     namespace: "suss.core".into(),
+                     name: name.into(),
+                 };
+-                let binding = if name == "let" {
++                let binding = if name == "let" || name == "letfn" {
+                     Binding::BootstrapLet(global.clone())
+                 } else if name == "loop" {
+                     Binding::BootstrapLoop(global.clone())
+@@ -1594,7 +1595,7 @@ impl Environment {
+             _ => None,
+         } {
+             Binding::BootstrapArray { global, operation }
+-        } else if name == "let" {
++        } else if name == "let" || name == "letfn" {
+             Binding::BootstrapLet(global)
+         } else if name == "loop" {
+             Binding::BootstrapLoop(global.clone())
+diff --git c/crates/suss-compile/src/portable_macro_graph.rs w/crates/suss-compile/src/portable_macro_graph.rs
+index 5b44d0da..9b2340d2 100644
+--- c/crates/suss-compile/src/portable_macro_graph.rs
++++ w/crates/suss-compile/src/portable_macro_graph.rs
+@@ -2158,6 +2158,7 @@ impl<'a> AnalysisGraph<'a> {
+         let name = self.form(&binding.declaration, depth + 1)?;
+         let kind = self.keyword(match binding.source_kind() {
+             hir::LocalKind::Let => "let",
++            hir::LocalKind::LetFn => "letfn",
+             hir::LocalKind::Loop => "loop",
+             hir::LocalKind::Argument { .. } => "arg",
+             hir::LocalKind::FunctionName => "fn",
+@@ -2581,11 +2582,12 @@ impl<'a> AnalysisGraph<'a> {
+         if let Some(node) = &source.node
+             && let hir::SourceNode::Bindings {
+                 is_loop,
++                is_letfn,
+                 bindings,
+                 body,
+             } = node.as_ref()
+         {
+-            field_push!(self, fields; ("op", self.keyword(if *is_loop { "loop" } else { "let" })?));
++            field_push!(self, fields; ("op", self.keyword(if *is_letfn { "letfn" } else if *is_loop { "loop" } else { "let" })?));
+             let mut records = Vec::new();
+             for binding in bindings.iter() {
+                 records.push(self.local(binding, depth + 1)?);
+@@ -2782,6 +2784,7 @@ impl<'a> AnalysisGraph<'a> {
+                 field_push!(self, fields; ("local",
+                     self.keyword(match binding.source_kind() {
+                         hir::LocalKind::Let => "let",
++            hir::LocalKind::LetFn => "letfn",
+                         hir::LocalKind::Loop => "loop",
+                         hir::LocalKind::Argument { .. } => "arg",
+                         hir::LocalKind::FunctionName => "fn",
+@@ -3004,6 +3007,10 @@ impl<'a> AnalysisGraph<'a> {
+                 "definition",
+                 initializer.iter().map(|value| value.as_ref()).collect(),
+             ),
++            Expression::LetFn { bindings, body } => (
++                "letfn", bindings.iter().map(|binding| &binding.value)
++                    .chain(std::iter::once(body.as_ref())).collect(),
++            ),
+             Expression::Let { bindings, body } => (
+                 "let",
+                 bindings
+diff --git 1/crates/suss-compile/tests/portable_letfn.rs 2/crates/suss-compile/tests/portable_letfn.rs
+new file mode 100644
+index 00000000..663b4a2c
+--- /dev/null
++++ 2/crates/suss-compile/tests/portable_letfn.rs
+@@ -0,0 +1,65 @@
++//! Recursive lexical groups lower to verified, executable closure graphs.
++use suss_compile::portable::{self, hir::{Expression, LocalKind, SourceNode}, ir::{self, Operation}};
++use wasmparser::{CompositeInnerType, Parser, Payload, StorageType, ValType};
++
++#[test]
++fn forward_references_and_nested_captures_verify_and_validate() {
++    for source in [
++        "(letfn [(f [n] (if (< n 1) 7 (g (- n 1)))) (g [n] (f n))] (f 3))",
++        "(letfn* [f (fn [] g) g (fn [] f)] (f))",
++        "(letfn [(f [] g) (g [] f)] (fn [] (f)))",
++        "(fn [] (letfn [(f [] g) (g [] f)] (f)))",
++        "(letfn [] 7)",
++        "(letfn [(f [] 1) (f [] 2)] (f))",
++    ] {
++        let hir = portable::analyze(source).unwrap();
++        let graph = ir::lower(&hir).unwrap();
++        ir::verify(&graph).unwrap();
++        portable::compile_ir(&graph).unwrap();
++    }
++}
++
++#[test]
++fn recursive_group_keeps_numeric_captures_in_raw_fields() {
++    let bytes = portable::compile("(let [x 1.5] (letfn [(f [] (+ x 1.0)) (g [] (f))] g))").unwrap();
++    let mut raw = 0;
++    for payload in Parser::new(0).parse_all(&bytes) {
++        if let Payload::TypeSection(section) = payload.unwrap() {
++            for group in section {
++                for ty in group.unwrap().types() {
++                    if ty.supertype_idx.and_then(|index| index.as_module_index()) == Some(suss_compile::runtime_abi::CLOSURE)
++                        && let CompositeInnerType::Struct(structure) = &ty.composite_type.inner
++                    {
++                        raw += structure.fields.iter().skip(3).filter(|field|
++                            field.element_type == StorageType::Val(ValType::F64)).count();
++                    }
++                }
++            }
++        }
++    }
++    assert!(raw > 0, "recursive groups must not force numeric-only captures into boxes");
++}
++
++#[test]
++fn source_bindings_describe_letfn_and_real_function_initializers() {
++    let hir = portable::analyze("(letfn [(f [] g) (g [] f)] (f))").unwrap();
++    let Expression::Do(forms) = &*hir.kind else { panic!("{hir:?}") };
++    let node = forms.last().unwrap();
++    let Some(SourceNode::Bindings { is_letfn: true, bindings, .. }) = node.source.as_ref().and_then(|source| source.node.as_deref()) else { panic!("{node:?}") };
++    assert_eq!(bindings.len(), 2);
++    for binding in bindings.iter() {
++        assert_eq!(binding.kind, LocalKind::LetFn);
++        assert!(binding.initializer.as_ref().unwrap().source.as_ref().unwrap().callable.is_some());
++    }
++}
++
++#[test]
++fn malformed_groups_are_located_diagnostics() {
++    for source in ["(letfn)", "(letfn (f [] 1))", "(letfn [f] 1)",
++        "(letfn* [f] f)", "(letfn* [f 1] f)", "(letfn [(ns/f [] 1)] 0)"]
++    {
++        let error = portable::analyze(source).unwrap_err();
++        assert!(error.span.end <= source.len(), "{source}: {error}");
++        assert!(error.message.contains("letfn"), "{source}: {error}");
++    }
++}

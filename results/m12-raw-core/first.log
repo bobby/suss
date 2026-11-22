@@ -1,0 +1,26 @@
+Running as unit: run-p3374663-i87228048.scope; invocation ID: 9ccec9503a5340bc91a9a59d9d4b1c86
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 35s
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_numeric_core-adef0af7f969bf49)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... ok
+test aot_preserves_known_numeric_core_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.25s
+
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 7 tests
+test a_long_sum_loop_allocates_only_its_result ... ok
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.91s
+

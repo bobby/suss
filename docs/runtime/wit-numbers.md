@@ -25,7 +25,9 @@ what crosses nor what is rejected.
 
 ## Primitive export parameters
 
-An exported function's numeric parameters are primitive in its fn (#385), as if it were written with Clojure's hints. Integer types (`u8` to `u32`, `s8` to `s64`) are `^long`, and `f32` and `f64` are `^double`. The method of the WIT function's arity binds each such parameter to the checked cast of its argument, a raw long or double, so arithmetic and loops seeded from it stay unboxed beyond i31, with no long box per iteration. An explicit `^long` or `^double` hint on a parameter takes precedence. `u64`, whose values above `Long/MAX_VALUE` need BigInt, stays boxed.
+An exported function's numeric parameters use the same checked numeric conversion as source primitive parameters (#385). Integer types (`u8` to `u32`, `s8` to `s64`) use the long conversion, and `f32` and `f64` use the double conversion. The method of the WIT function's arity binds each such parameter to that checked cast, a raw long or double, so arithmetic and loops seeded from it stay unboxed beyond i31, with no long box per iteration. An explicit `^long` or `^double` hint on a parameter takes precedence. `u64`, whose values above `Long/MAX_VALUE` need BigInt, stays boxed.
+
+An implicit WIT conversion supplies numeric storage without adding a Clojure source hint. An otherwise unhinted parameter retains Object source type for overload selection and primitive-return/recur diagnostics, including when captured by a nested function. Explicit source hints retain their ordinary primitive rules.
 
 Calls through the WIT boundary always pass numbers of the declared kind, so they see no difference. Calls from other Suss code coerce as Clojure's primitive fns do:
 - a double passed to an integer parameter truncates, as `(long 2.5)` does, and throws when out of range;

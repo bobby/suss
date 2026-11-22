@@ -1,0 +1,6 @@
+letfnbench/case-group 10 57.5 57.5
+letfnbench/case-group 200000 2.000015E10 2.000015E10
+letfnbench/case-group 400000 8.00003E10 8.00003E10
+letfnbench/case-direct 10 57.5 57.5
+letfnbench/case-direct 200000 2.000015E10 2.000015E10
+letfnbench/case-direct 400000 8.00003E10 8.00003E10

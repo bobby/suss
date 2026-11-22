@@ -1,0 +1,111 @@
+diff --git i/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index 3670ef0c..a53ffa1e 100644
+--- i/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -2,6 +2,7 @@
+ mod r#async;
+ mod structured;
+ mod unboxed;
++mod captures;
+ mod primitive;
+ use super::{
+     hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
+@@ -1045,14 +1046,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+             }),
+         );
+     }
+-    let layout = Layout::new(
++    let mut layout = Layout::new(
+         &bodies, &singles, &dispatchers, futures.len(), &names,
+         eval_type + 1 + u32::from(throws), globals.len() as u32 + 3 + imported_link_globals,
+     ).map_err(|message| fail(message))?;
++    captures::plan(ir, &mut layout);
+     for definition in &layout.definitions {
+         let mut fields = runtime_abi::closure_fields();
+-        fields.extend((0..definition.captures).map(|_| FieldType {
+-            element_type: StorageType::Val(VALUE),
++        fields.extend(definition.capture_reprs.iter().map(|repr| FieldType {
++            element_type: StorageType::Val(repr.val_type().unwrap_or(VALUE)),
+             mutable: false,
+         }));
+         types.ty().subtype(&SubType {
+@@ -1564,6 +1566,7 @@ struct Definition {
+     /// Captures held as fields; a general closure's self reference is its
+     /// closure parameter instead.
+     captures: usize,
++    capture_reprs: Vec<unboxed::Repr>,
+     self_capture: bool,
+     spread: u32,
+     entries: [u32; runtime_abi::MAX_FIXED as usize + 1],
+@@ -1647,7 +1650,8 @@ impl Layout {
+             }
+             layout.definitions.push(Definition {
+                 methods, rest_class, structure: first_type + definition as u32,
+-                global: first_global + definition as u32, captures, self_capture,
++                global: first_global + definition as u32, captures,
++                capture_reprs: vec![unboxed::Repr::Boxed; captures], self_capture,
+                 spread, entries, name,
+             });
+         }
+@@ -2039,7 +2043,14 @@ fn emit_function(
+     let signature = match entry {
+         Entry::Primitive(body) => bodies[body].primitive.as_ref(), _ => None,
+     };
+-    let mut entry_reprs = Vec::new();
++    let mut entry_reprs = match entry {
++        Entry::Method(body) | Entry::Primitive(body) => {
++            let definition = &layout.definitions[layout.body_definitions[body]];
++            ir.blocks[0].parameters.iter().copied().zip(definition.capture_reprs.iter().copied())
++                .filter(|(_, repr)| *repr != unboxed::Repr::Boxed).collect::<Vec<_>>()
++        }
++        _ => Vec::new(),
++    };
+     if let Entry::Primitive(body) = entry {
+         for (value, kind) in ir.blocks[0].parameters.iter().skip(bodies[body].capture_types.len())
+             .zip(&signature.expect("primitive body").parameters)
+@@ -2194,7 +2205,7 @@ fn emit_function(
+             } else {
+                 function.instruction(&LocalGet(1 + (index - environment) as u32));
+             }
+-            function.instruction(&LocalSet(if index >= environment && locals.of(*value) != unboxed::Repr::Boxed {
++            function.instruction(&LocalSet(if locals.of(*value) != unboxed::Repr::Boxed {
+                 locals.raw(*value)
+             } else { value.0 as u32 + offset }));
+         }
+@@ -2440,7 +2451,17 @@ fn emit_function(
+             }
+             // A packed access boxes its raw operands itself, only where the
+             // generic path needs them (#387).
+-            if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
++            let capture_definition = match &inst.operation {
++                Operation::MakeClosure { body, .. } => Some(layout.single(body)),
++                Operation::MakeGeneralClosure { body, .. } => Some(layout.general(body)),
++                _ => None,
++            };
++            if let Some(definition) = capture_definition {
++                let operands = ir::operands(&inst.operation);
++                let boxed_captures = operands.into_iter().zip(&definition.capture_reprs)
++                    .filter_map(|(value, repr)| (*repr == unboxed::Repr::Boxed).then_some(*value)).collect::<Vec<_>>();
++                locals.materialize(&mut code, &boxed_captures, &mut boxed);
++            } else if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
+                 locals.materialize(&mut code, ir::operands(&inst.operation), &mut boxed);
+             }
+             for instruction in code.drain(..) { function.instruction(&instruction); }
+@@ -2759,7 +2780,7 @@ fn emit_function(
+                 }
+                 Operation::MakeClosure { body, captures } => {
+                     let definition = layout.single(body);
+-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
++                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
+                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                     if let Some(name) = &body.display_name {
+                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
+@@ -2770,7 +2791,7 @@ fn emit_function(
+                 }
+                 Operation::MakeGeneralClosure { body, captures } => {
+                     let definition = layout.general(body);
+-                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
++                    emit_closure(&mut function, definition, captures.iter().zip(&definition.capture_reprs).map(|(value, repr)| if *repr == unboxed::Repr::Boxed { value.0 as u32 + offset } else { locals.raw(*value) }));
+                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                     if let Some(name) = &body.display_name {
+                         emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;

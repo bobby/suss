@@ -1,0 +1,13 @@
+Running as unit: run-p3250195-i87123274.scope; invocation ID: 1aa6b179b8b944099d609b6dfb70644f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.92s
+     Running tests/clojure_numeric_extrema.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_extrema-5cef05d5f0fdf811)
+
+running 4 tests
+test aot_preserves_numeric_extrema_semantics ... ok
+test extrema_source_return_types_and_initializers_are_checked ... ok
+test runtime_and_macro_preserve_numeric_extrema_semantics ... ok
+test aot_rejects_invalid_extrema_return_types ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.98s
+

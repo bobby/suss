@@ -1,0 +1,1008 @@
+{
+  "source_inputs": "uncached-source-inputs.json",
+  "before_source_commit": "f5056ffefdbeb196768c4135d8f6a4769c05977e",
+  "benchmark_sha256": "20b614749127396ab8cf9dedaa9e498ff5747ad32cc4044f5ae153079c84da16",
+  "wit_sha256": "e10a21dabac8f17cc882fc48f63f07f01723b6c4bdf75b01f12217f2891fdd35",
+  "runs": {
+    "before": {
+      "compiler_sha256": "c099e8096babbb5b0771148cadfde65b9fad5e589189bf39abcd5d3a6dbbb390",
+      "cases": {
+        "control": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272751306,
+              "stdout": "300009999900000\n",
+              "stderr": "272751306,,instructions:u,150375345,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275542311,
+              "stdout": "600039999800000\n",
+              "stderr": "275542311,,instructions:u,149490632,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 27.91005
+        },
+        "vector": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 220188672,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 388067328,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 220192768,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 387997696,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 415059771,
+              "stdout": "300009999900000\n",
+              "stderr": "415059771,,instructions:u,206092291,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 577931394,
+              "stdout": "600039999800000\n",
+              "stderr": "577931394,,instructions:u,262631480,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            167.878656,
+            167.804928
+          ],
+          "instructions_per_iteration": 1628.71623
+        },
+        "entry": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 188084224,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 323026944,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 188157952,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 323387392,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 810061738,
+              "stdout": "300009999900000\n",
+              "stderr": "810061738,,instructions:u,303388081,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 1367932881,
+              "stdout": "600039999800000\n",
+              "stderr": "1367932881,,instructions:u,480042185,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            134.94272,
+            135.22944
+          ],
+          "instructions_per_iteration": 5578.71143
+        },
+        "closure": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92356608,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272742878,
+              "stdout": "300009999900000\n",
+              "stderr": "272742878,,instructions:u,149526569,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275538790,
+              "stdout": "600039999800000\n",
+              "stderr": "275538790,,instructions:u,150368132,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 27.95912
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/before-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "before.wasm",
+        "--export",
+        "case-control=escapebench/case-control",
+        "--export",
+        "case-vector=escapebench/case-vector",
+        "--export",
+        "case-entry=escapebench/case-entry",
+        "--export",
+        "case-closure=escapebench/case-closure"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "d29fee295e23e3f81cb6d55ad37ec75f8d664aa6dc4d776071abce8c6f210254"
+    },
+    "after": {
+      "compiler_sha256": "6fa581c72413eb31bf985de5579f30e419b4f0134188f2fcb6f97b317611f36d",
+      "cases": {
+        "control": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272477261,
+              "stdout": "300009999900000\n",
+              "stderr": "272477261,,instructions:u,139320405,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275283265,
+              "stdout": "600039999800000\n",
+              "stderr": "275283265,,instructions:u,128085129,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 28.06004
+        },
+        "vector": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 546778913,
+              "stdout": "300009999900000\n",
+              "stderr": "546778913,,instructions:u,187739366,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 823886890,
+              "stdout": "600039999800000\n",
+              "stderr": "823886890,,instructions:u,227403617,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 2771.07977
+        },
+        "entry": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 190570496,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 326373376,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 190558208,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 325844992,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 809804843,
+              "stdout": "300009999900000\n",
+              "stderr": "809804843,,instructions:u,285625329,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 1367666333,
+              "stdout": "600039999800000\n",
+              "stderr": "1367666333,,instructions:u,430239232,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            135.80288,
+            135.286784
+          ],
+          "instructions_per_iteration": 5578.6149
+        },
+        "closure": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92663808,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272487970,
+              "stdout": "300009999900000\n",
+              "stderr": "272487970,,instructions:u,120603993,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275292727,
+              "stdout": "600039999800000\n",
+              "stderr": "275292727,,instructions:u,134296434,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 28.04757
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "after.wasm",
+        "--export",
+        "case-control=escapebench/case-control",
+        "--export",
+        "case-vector=escapebench/case-vector",
+        "--export",
+        "case-entry=escapebench/case-entry",
+        "--export",
+        "case-closure=escapebench/case-closure"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "d0494ac374b4fb5fc30c6ff12f84b54fc9eeb5a4d0ed75b88aaa4d1b0fa90a7d"
+    }
+  }
+}

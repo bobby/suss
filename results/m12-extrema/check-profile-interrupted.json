@@ -1,0 +1,5 @@
+{
+  "command": "cargo +stable check --workspace --locked --tests",
+  "exit_code": 130,
+  "reason": "Explicitly interrupted the owned scope: a separate check profile was rebuilding dependencies. Proceed directly to the required focused execution tests using the already built test profile; no check success is claimed."
+}

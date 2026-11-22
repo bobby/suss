@@ -1,6 +1,8 @@
 //! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
+pub(crate) use bitwise::CAST_RAW_EXPORTS;
+
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
@@ -14,6 +16,7 @@ mod closure_calls;
 mod closure_properties;
 mod coercions;
 mod comparisons;
+mod extrema;
 mod dynamic;
 mod error_constructors;
 mod error_properties;
@@ -952,6 +955,8 @@ pub(crate) const ARITHMETIC_CODE_GLOBAL: u32 = HASH_SET_DESCRIPTOR_GLOBAL + 1;
 /// entry held in a global calls without wasmtime's out-of-line function
 /// reference read from a struct.
 pub(crate) const OBJECT_CALL_CACHE_GLOBAL: u32 = ARITHMETIC_CODE_GLOBAL + 4;
+/// Canonical MapEntry, appended after existing private registries (#351).
+pub(crate) const MAP_ENTRY_DESCRIPTOR_GLOBAL: u32 = transient_maps::GLOBAL_LIMIT;
 const OBJECT_CALL_WAYS: u32 = 4;
 const OBJECT_CALL_STRIDE: u32 = 4 * OBJECT_CALL_WAYS + 1;
 fn object_call_way(k: u32, way: u32) -> u32 {
@@ -1871,6 +1876,7 @@ fn build_module() -> Vec<u8> {
     error_constructors::canonical_test_function(&mut b);
     numeric::intrinsics(&mut b, numeric_info, coercion_types);
     let primitives = numeric_operands::intrinsics(&mut b);
+    extrema::intrinsics(&mut b);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
@@ -2651,6 +2657,11 @@ fn build_module() -> Vec<u8> {
     chunks::append_globals(&mut globals);
     transient_vectors::append_globals(&mut globals);
     transient_maps::append_globals(&mut globals);
+    assert_eq!(globals.len(), MAP_ENTRY_DESCRIPTOR_GLOBAL);
+    globals.global(
+        GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([sentinel_value(NIL)]),
+    );
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

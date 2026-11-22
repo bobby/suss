@@ -1193,3 +1193,126 @@ rooted descriptor and owner-type comparisons verify the concrete input classes.
 The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
 is an uncommitted-source execution snapshot; it does not establish a new full
 workspace baseline, committed-head review, CI, or whole-suite conformance.
+
+## Numeric local hints and box reuse evidence
+
+Source numeric classes are distinct from primitive expression kinds and physical
+storage. The expanded local-hint matrix verifies48 values and eight diagnostics
+against fresh JVM Clojure1.12.6, with Runtime/Macro and actual AOT execution. Object
+locals retain their original values for ordinary reads/calls and convert at covered
+primitive uses; aliases, captures and initial loop diagnostic order are included.
+Selected primitive equality stays raw. Mixed-family equality/bitwise calls retain
+their original Objects when no static numeric overload matches; reflective result
+classes and primitive Boolean operands preserve subsequent conversion/effect order.
+See [local hint receipts](../../results/m12-local-hints/README.md).
+
+[Extrema evidence](../../results/m12-extrema/README.md) adds26 fresh JVM value
+observations and four diagnostics, executed in both phases and actual AOT. Source
+long/double overloads, mixed result types, nary effect order, generic raw-double
+zero/NaN behavior and redefined core aliases are covered. A separate redefinition
+case preserves ADR-0004's ordinary-IFn fallback and matches the frozen before
+compiler rather than JVM interface-cast behavior. The generated numeric loop
+components are inspected and executed, with their allocation/call limits retained.
+These observations do not establish the remaining numeric tower.
+
+[Primitive method evidence](../../results/m12-primitive-methods/README.md) adds17
+fresh JVM value observations and15 diagnostic checks for captured return hints
+and primitive-function recurrence. Runtime/Macro and actual AOT cover nested
+primitive parameters, named arities, widening, reflective bitwise results and
+initial loop diagnostics. WIT-only numeric storage does not invent source
+primitive-return/recur errors; separate compiled controls execute those paths.
+
+[Raw numeric core evidence](../../results/m12-raw-core/README.md) adds22 fresh
+JVM value assertions for quot/rem/abs and unchecked arithmetic, in Runtime/Macro
+and actual AOT. Direct source calls inline while aliases preserve replacement
+calls. Four separate ADR-0004 controls preserve boxed replacement values and
+match actual frozen-before component execution; JVM interface-cast behavior is
+recorded separately. Two inspected long/double loop components execute with no
+normal-path helper calls or loop-carried boxes and match fresh JVM loop results.
+These observations cover the listed operations, not every numeric core call.
+
+[Bitwise/cast evidence](../../results/m12-bits-casts/README.md) adds30 passing
+fresh JVM value assertions plus4 separate Suss replacement controls. Three
+exact inspected loop components execute;33 raw-return helper exports have scalar
+signatures and no numeric boxes. Ordinary bit functions observe var replacements,
+and source float(long) preserves direct rounding. A separate additional probe
+retains6 cast-overload mismatches and2 matching controls in its frozen before/
+current snapshots. [Cast overload evidence](../../results/m12-cast-overloads/README.md)
+extends the JVM matrix to48 passing values, executed in Runtime/Macro and actual
+AOT, including those six corrections. Object conversions, original error values,
+primitive float identity and float-to-int bounds remain distinct from source
+double conversions. These bounded observations do not establish complete conversion
+conformance.
+
+Lazy numeric GC copies now span blocks where materializations can repeat without
+redefinition. Checked sum bodies remain byte-identical and generated allocation
+checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain
+47 focused passes, expanded value/NaN cases, frozen before/after allocation and
+instruction samples, both boxed controls and the initial broad-cache regression.
+The samples are not quiet timing acceptance. Historical mixed bitwise, equality,
+max/min and unchecked inc/dec mismatches retain their original source identities;
+the later overload/extrema receipts above record their bounded corrections. These
+observations do not establish the complete numeric tower or new inventory counts.
+
+[Local closure receipts](../../results/m12-escape/README.md) add30 fresh JVM value
+assertions in Runtime/Macro and actual AOT. Fixed-arity closures used exclusively
+by correctly sized calls can be removed after source typing; nested captures,
+primitive conversions, arity/escape controls, exceptions and source Object casts
+remain covered. The inspected loop executes1,234,591 iterations and matches JVM.
+Before/after closure allocation falls from about120 estimated bytes per iteration
+to below RSS resolution, with about1777 to28 instructions. The direct control and
+unchanged vector/MapEntry samples remain explicit. No new inventory classifications,
+complete escape coverage, `letfn`/`ifn?` support or quiet timing result is inferred.
+
+
+[Literal vector receipts](../../results/m12-vectors/README.md) add17 fresh JVM
+value assertions and separate boxed-baseline controls, with original failures
+retained. A guarded continuation preserves source Object casts while projected
+numbers stay raw. The measured loop falls from about168 estimated bytes per
+iteration to below RSS resolution, and1629 to449 instructions. Runtime/Macro
+vector `nth` rebinding now matches the recorded JVM result for the shipped core
+definition. The existing aliased-NaN equality/identity difference and MapEntry
+redefinition difference remain explicit; neither is a compatibility success.
+No new inventory classifications, complete escape coverage or quiet timing
+acceptance are inferred from these samples.
+
+
+[Inline nth fallback receipts](../../results/m12-vector-nth-oracle/README.md)
+correct two effect traces using fresh JVM Clojure1.12.6. The original39-case
+pinned corpus is unchanged; two exact source-qualified corrections retain their
+original pinned observations. All cases still execute in both phases. Native
+misses call the owned core nth body while preserving the public var in the
+source AST. The expanded21-value JVM matrix covers sequence/string/default and
+MapEntry rebinding in Runtime/Macro/AOT. MapEntry now returns JVM's3 in that
+probe; the older14 observation remains archived, not treated as conformance.
+The existing aliased-NaN difference remains a negative observation.
+
+
+[MapEntry scalar receipts](../../results/m12-mapentries/README.md) add16 fresh
+JVM assertions, executed in both phases and actual AOT. Canonical indexed reads
+and a guarded scalar continuation preserve Object conversions, field-expression
+effects and public/private constructor distinctions. The combined9-test gate
+passes, including vector and parameter controls. Measured MapEntry allocation
+falls from about136 bytes per iteration to below RSS resolution, and5579 to180
+instructions; vector/control/closure measurements remain explicit. This is
+bounded storage evidence, not complete escape support or quiet timing acceptance.
+
+
+[Numeric capture receipts](../../results/m12-numeric-captures/README.md) add18
+fresh JVM pairs executed in Runtime/Macro and actual AOT. The five-target run
+passes24 tests, including raw-field and maker-allocation checks. Private closure
+fields keep proven numeric-only captures raw while source overload facts stay
+unchanged; shared object uses retain object fields. The measured named-closure
+sample removes one numeric box (about920 to904 bytes per iteration), while
+closure/source-signature allocations remain. Instructions fall8547.45 to8463.61;
+object and direct controls remain explicit. These bounded observations do not
+establish letfn support, complete escape coverage or quiet timing acceptance.
+
+
+[Recursive lexical function receipts](../../results/m12-letfn/README.md) retain28
+fresh JVM values executed in Runtime/Macro and actual AOT. letfn/letfn* support
+forward references and mutual recursion, with explicit last-duplicate behavior.
+The focused checks also execute escaped groups after GC, a peer captured by a
+suspended future, and genuine macro binding/source snapshots. Numeric-only
+captures remain raw; recursive group/closure objects still allocate. These
+bounded observations do not establish complete escape or numeric-tower coverage.

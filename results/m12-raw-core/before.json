@@ -1,0 +1,13 @@
+{
+  "production_revision": "4e3c4acf71d8e5561f25e40f5975bc37c8621b5f",
+  "compiler_sha256": "9fd1022ca07b57dca4cea325d63eb2a36c02f08333885157d7e87cdcfb19d79b",
+  "cli_tests": {
+    "passed": 0,
+    "failed": 2
+  },
+  "codegen_tests": {
+    "passed": 0,
+    "failed": 2,
+    "filtered": 5
+  }
+}

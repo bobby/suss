@@ -1,0 +1,29 @@
+{
+  "source_commit": "8d71c326",
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_calling_convention",
+    "--test",
+    "portable_inline_predicates",
+    "--",
+    "--test-threads=2"
+  ],
+  "environment": {
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "outer/target/probe/m12-aggregate-target",
+    "SUSS_BUILD_DIR": "outer/target/suss"
+  },
+  "scope": "systemd-run --user --scope -p MemoryMax=4G",
+  "exit_code": 0,
+  "passed": 6,
+  "failed": 0,
+  "ignored": 0,
+  "note": "Dedicated target directory cloned with btrfs reflinks; the original unfiltered baseline target and checkout remain unchanged."
+}

@@ -1,0 +1,416 @@
+diff --git a/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs b/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs
+index 22982a3f..153db2b7 100644
+--- a/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs
++++ b/crates/suss-cli/tests/clojure_raw_bits_and_casts.rs
+@@ -39,6 +39,25 @@ const CASES: &[(&str, &str)] = &[
+     ("[(== (double (float (identity 18014399583223809))) 1.8014398509481984E16) (== (double (unchecked-float (identity 18014399583223809))) 1.8014400656965632E16)]", "[true true]"),
+     ("(let [x (loop [] 18014399583223809)] [(== (double (float x)) 1.8014398509481984E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
+     ("(let [^long x (identity 18014399583223809)] [(== (double (float x)) 1.8014400656965632E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
++    ("(double (float (unchecked-float ##Inf)))", "##Inf"),
++    ("(int (unchecked-float 2147483648.0))", "2147483647"),
++    ("(byte (identity 127.1))", "127"),
++    ("(short (identity 32767.1))", "32767"),
++    ("(int (identity 2147483647.9))", "2147483647"),
++    ("(try (long (identity 1.0E300)) (catch :default e :error))", ":error"),
++    ("(byte (identity ##NaN))", "0"),
++    ("(try (int (unchecked-float ##Inf)) (catch :default e :error))", ":error"),
++    ("[(byte (identity -128.9)) (short (identity -32768.9)) (int (identity -2147483648.9)) (short (identity ##NaN)) (int (identity ##NaN))]", "[-128 -32768 -2147483648 0 0]"),
++    ("[(try (byte (identity 128.9)) (catch :default e (ex-message e))) (try (short (identity -32769.9)) (catch :default e (ex-message e))) (try (int (identity 2147483648.1)) (catch :default e (ex-message e)))]", "[\"Value out of range for byte: 128.9\" \"Value out of range for short: -32769.9\" \"integer overflow\"]"),
++    ("[(try (byte 127.1) (catch :default e :error)) (try (short 32767.1) (catch :default e :error)) (try (int 2147483647.9) (catch :default e :error)) (try (byte ##NaN) (catch :default e :error))]", "[:error :error :error :error]"),
++    ("[(int (unchecked-float -2147483648.0)) (int (unchecked-float ##NaN)) (double (float (unchecked-float ##-Inf)))]", "[-2147483648 0 ##-Inf]"),
++    ("[(try (int (unchecked-float 2147483904.0)) (catch :default e :error)) (try (int (unchecked-float -2147483904.0)) (catch :default e :error))]", "[:error :error]"),
++    ("[(byte (loop [] 127.1)) (short (loop [] 32767.1)) (int (loop [] 2147483647.9))]", "[127 32767 2147483647]"),
++    ("[(try ((identity byte) 127.1) (catch :default e :error)) (try ((identity short) 32767.1) (catch :default e :error)) (try ((identity int) 2147483647.9) (catch :default e :error))]", "[127 32767 2147483647]"),
++    ("(let [^double x (identity 127.1)] [(try (byte x) (catch :default e :error)) ((identity byte) x)])", "[:error 127]"),
++    ("(let [events (atom [])] [(byte (do (swap! events conj :value) (identity 127.1))) @events])", "[127 [:value]]"),
++    ("(let [events (atom [])] [(try (byte (do (swap! events conj :value) (identity 128.9))) (catch :default e :error)) @events])", "[:error [:value]]"),
++
+ ];
+ 
+ // Suss ADR-0004 fallback controls; these are not JVM numeric value matches.
+diff --git a/crates/suss-compile/src/portable/emit.rs b/crates/suss-compile/src/portable/emit.rs
+index 34c05e81..1f47985c 100644
+--- a/crates/suss-compile/src/portable/emit.rs
++++ b/crates/suss-compile/src/portable/emit.rs
+@@ -298,7 +298,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+                     Operation::Bitwise { operation, .. } => {
+                         names.insert(operation.export());
+                         if let Some(raw) = operation.raw_export() { names.insert(raw); }
+-                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int) {
++                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int | super::hir::Bitwise::IntPrimitive | super::hir::Bitwise::IntFloat) {
+                             names.extend(runtime_abi::CAST_RAW_EXPORTS);
+                         }
+                     }
+@@ -772,7 +772,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+     for (i, name) in names.iter().enumerate() {
+         let (params, results) = match *name {
+             name if name.starts_with("number-cast-") && name.ends_with("-raw") =>
+-                (vec![VALUE], vec![if name.contains("float") || name.contains("double") { ValType::F64 } else { ValType::I64 }]),
++                (vec![VALUE], vec![if runtime_abi::CAST_RAW_EXPORTS.iter().position(|export| *export == name)
++                    .is_some_and(|index| (8..=11).contains(&index)) { ValType::F64 } else { ValType::I64 }]),
+             name if name.starts_with("primitive-bit-") && name.ends_with("-raw") =>
+                 (vec![VALUE; if name == "primitive-bit-not-raw" { 1 } else { 2 }],
+                     vec![if name == "primitive-bit-test-raw" { ValType::I32 } else { ValType::I64 }]),
+@@ -894,7 +895,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
+             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
+             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
+-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
++            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-int" | "number-cast-int-float" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
+                 (vec![VALUE], vec![VALUE])
+             }
+             "binding-set" => (vec![VALUE, VALUE], vec![]),
+diff --git a/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs b/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs
+index 1db6f44a..f2488b24 100644
+--- a/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs
++++ b/crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs
+@@ -1,12 +1,17 @@
+ //! Checked/unchecked casts on raw values; slow paths preserve original errors.
+ use super::*;
+ pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Option<i64>]) -> Option<usize> {
+-    if operation == Bitwise::Int && arguments.len() == 1 { return Some(1); }
++    if arguments.len() == 1 {
++        match operation {
++            Bitwise::Int => return Some(12), Bitwise::IntPrimitive => return Some(1),
++            Bitwise::IntFloat => return Some(15), _ => {}
++        }
++    }
+     if operation != Bitwise::Cast || arguments.len() != 2 { return None; }
+-    literals[arguments[1].0].filter(|index| (0..=11).contains(index)).map(|index| index as usize)
++    literals[arguments[1].0].filter(|index| (0..=15).contains(index)).map(|index| index as usize)
+ }
+ pub(super) fn result(index: usize) -> Repr {
+-    if index < 8 { Repr::Long } else { Repr::Double }
++    if (8..=11).contains(&index) { Repr::Double } else { Repr::Long }
+ }
+ impl Locals {
+     pub(super) fn numeric_cast_raw(&self, code: &mut Vec<Instruction<'static>>, index: usize,
+@@ -43,6 +48,27 @@ impl Locals {
+                     code.extend([End, LocalGet(raw), I64TruncSatF64S]);
+                 }
+             }
++            12..=14 => {
++                let bits = [32, 16, 8][index - 12];
++                let converted = self.raw(result);
++                code.push(LocalGet(raw));
++                if from == Repr::Double { code.push(I64TruncSatF64S); }
++                code.extend([LocalSet(converted), LocalGet(converted), I64Const(64 - bits),
++                    I64Shl, I64Const(64 - bits), I64ShrS, LocalGet(converted), I64Ne,
++                    If(BlockType::Empty)]);
++                self.slow(code, arguments, slow);
++                code.extend([End, LocalGet(converted)]);
++            }
++            15 => {
++                self.push_as(code, value, Repr::Double);
++                code.extend([F64Const((-2147483648.0).into()), F64Lt]);
++                self.push_as(code, value, Repr::Double);
++                code.extend([F64Const(2147483648.0.into()), F64Gt, I32Or, If(BlockType::Empty)]);
++                self.slow(code, arguments, slow);
++                code.push(End);
++                self.push_as(code, value, Repr::Double);
++                code.extend([I32TruncSatF64S, I64ExtendI32S]);
++            }
+             4..=7 => {
+                 let bits = [64, 32, 16, 8][index - 4];
+                 code.push(LocalGet(raw));
+diff --git a/crates/suss-compile/src/portable/hir.rs b/crates/suss-compile/src/portable/hir.rs
+index 4be43b31..1c048737 100644
+--- a/crates/suss-compile/src/portable/hir.rs
++++ b/crates/suss-compile/src/portable/hir.rs
+@@ -241,6 +241,9 @@ impl Comparison {
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub enum Bitwise {
+     Int,
++    /// Source-selected primitive overloads; all three retain source int kind.
++    IntPrimitive,
++    IntFloat,
+     And,
+     Or,
+     Xor,
+@@ -377,7 +380,7 @@ impl Bitwise {
+     /// Shipped core's 32-bit form of an inline bit operation.
+     pub(crate) fn int32(self) -> Self {
+         match self {
+-            Self::Int => Self::Int32,
++            Self::Int | Self::IntPrimitive | Self::IntFloat => Self::Int32,
+             Self::And => Self::Int32And,
+             Self::Or => Self::Int32Or,
+             Self::Xor => Self::Int32Xor,
+@@ -390,6 +393,8 @@ impl Bitwise {
+     pub(crate) fn export(self) -> &'static str {
+         match self {
+             Self::Int => "primitive-int",
++            Self::IntPrimitive => "number-cast-int",
++            Self::IntFloat => "number-cast-int-float",
+             Self::And => "primitive-bit-and",
+             Self::Or => "primitive-bit-or",
+             Self::Xor => "primitive-bit-xor",
+@@ -453,7 +458,7 @@ impl Bitwise {
+     }
+     pub(crate) fn arity(self) -> usize {
+         match self {
+-            Self::Int
++            Self::Int | Self::IntPrimitive | Self::IntFloat
+             | Self::Int32
+             | Self::Not
+             | Self::F64Coerce
+diff --git a/crates/suss-compile/src/portable/hir/division_overloads.rs b/crates/suss-compile/src/portable/hir/division_overloads.rs
+index 828c91af..82bde891 100644
+--- a/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ b/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -73,8 +73,12 @@ impl Pass<'_> {
+                     features.division |= *operator == super::Arithmetic::Divide && !*coercing;
+                     Ok(features)
+                 }
+-                Bitwise { arguments, .. }
+-                | Comparison { arguments, .. } | Array { arguments, .. }
++                Bitwise { operation, arguments } => {
++                    let mut features = self.any(arguments)?;
++                    features.numeric_core |= matches!(operation, super::Bitwise::Int | super::Bitwise::Cast);
++                    Ok(features)
++                }
++                Comparison { arguments, .. } | Array { arguments, .. }
+                 | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => self.any(arguments),
+                 Let { bindings, body } | Loop { bindings, body, .. } => {
+                     let mut features = self.any(bindings.iter().map(|binding| &binding.value).chain(std::iter::once(body.as_ref())))?;
+@@ -208,10 +212,11 @@ impl Pass<'_> {
+                     }
+                 }
+                 Bitwise { operation, arguments } => {
++                    if !self.validate_only { local_hints::cast_overload(operation, arguments, facts, self.meter)?; }
+                     let long_only = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
+                         | super::Bitwise::AndNot | super::Bitwise::Not | super::Bitwise::Left | super::Bitwise::Right
+                         | super::Bitwise::Unsigned);
+-                    let numeric = matches!(operation, super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
++                    let numeric = matches!(operation, super::Bitwise::Int | super::Bitwise::IntPrimitive | super::Bitwise::IntFloat | super::Bitwise::Cast | super::Bitwise::Quot
+                         | super::Bitwise::Rem | super::Bitwise::Abs | super::Bitwise::UncheckedAdd
+                         | super::Bitwise::UncheckedSubtract | super::Bitwise::UncheckedMultiply | super::Bitwise::UncheckedNegate);
+                     let inline = (numeric && self.hints && !self.validate_only
+diff --git a/crates/suss-compile/src/portable/hir/local_hints.rs b/crates/suss-compile/src/portable/hir/local_hints.rs
+index 4b8372c2..8aa7e772 100644
+--- a/crates/suss-compile/src/portable/hir/local_hints.rs
++++ b/crates/suss-compile/src/portable/hir/local_hints.rs
+@@ -94,9 +94,10 @@ pub(super) fn inline(
+         return Ok(());
+     }
+     if arguments.len() != 1 { return Ok(()); }
++    let class = primitive_returns::class(&arguments[0], facts, meter)?;
+     let index = match global.name() {
+-        "byte" => 3, "short" => 2, "int" => 1,
+-        "float" => if primitive_returns::class(&arguments[0], facts, meter)? == Primitive::Long { 11 } else { 8 },
++        "byte" => cast_index(3, class), "short" => cast_index(2, class), "int" => cast_index(1, class),
++        "float" => cast_index(8, class),
+         "unchecked-byte" => 7, "unchecked-short" => 6, "unchecked-int" => 5, "unchecked-float" => 9,
+         _ => return Ok(()),
+     };
+@@ -155,3 +156,39 @@ pub(super) fn operand(
+         kind: std::sync::Arc::new(Expression::Nominal { operation, arguments: vec![value] }) };
+     Ok(())
+ }
++
++/// Select from source class, before a hinted Object is converted or a raw
++/// storage representation is inferred. The added modes are idempotent.
++fn cast_index(index: i64, class: Primitive) -> i64 {
++    match (index, class) {
++        (1, Primitive::Boxed | Primitive::Boolean) => 12,
++        (2, Primitive::Boxed | Primitive::Boolean) => 13,
++        (3, Primitive::Boxed | Primitive::Boolean) => 14,
++        (1, Primitive::Float) => 15,
++        (8, Primitive::Long) => 11,
++        (8, Primitive::Float) => 9,
++        _ => index,
++    }
++}
++
++/// Private bootstrap coercions also appear in generic first-class core
++/// functions. Their Object parameters need the same source overload selection.
++pub(super) fn cast_overload(
++    operation: &mut Bitwise, arguments: &mut [Hir], facts: &mut SourceFacts,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    if !matches!(operation, Bitwise::Int | Bitwise::Cast) || arguments.is_empty() { return Ok(()); }
++    let class = primitive_returns::class(&arguments[0], facts, meter)?;
++    if *operation == Bitwise::Int {
++        *operation = match class {
++            Primitive::Boxed | Primitive::Boolean => Bitwise::Int,
++            Primitive::Float => Bitwise::IntFloat, _ => Bitwise::IntPrimitive,
++        };
++    } else if let Some(selector) = arguments.get_mut(1) {
++        if let Expression::Literal(Literal::Long(index)) = &*selector.kind {
++            let selected = cast_index(*index, class);
++            if selected != *index { selector.kind = std::sync::Arc::new(Expression::Literal(Literal::Long(selected))); }
++        }
++    }
++    Ok(())
++}
+diff --git a/crates/suss-compile/src/portable/hir/primitive_returns.rs b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index 13796feb..f628c908 100644
+--- a/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -345,7 +345,7 @@ fn infer(
+             Expression::Bitwise { operation, arguments } => match operation {
+                 Bitwise::LongMax | Bitwise::LongMin => Long,
+                 Bitwise::DoubleMax | Bitwise::DoubleMin => Double,
+-                Bitwise::Int => Int,
++                Bitwise::Int | Bitwise::IntPrimitive | Bitwise::IntFloat => Int,
+                 Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot | Bitwise::Not
+                 | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned =>
+                     bitwise_result(arguments, bindings, meter, loops)?,
+diff --git a/crates/suss-compile/src/runtime_abi/bitwise.rs b/crates/suss-compile/src/runtime_abi/bitwise.rs
+index 11993938..b2e39bf4 100644
+--- a/crates/suss-compile/src/runtime_abi/bitwise.rs
++++ b/crates/suss-compile/src/runtime_abi/bitwise.rs
+@@ -9,7 +9,7 @@
+ use super::*;
+ 
+ /// `number-cast`'s kinds, as core's coercions pass them.
+-pub(crate) const CASTS: [(&str, Cast); 12] = [
++pub(crate) const CASTS: [(&str, Cast); 16] = [
+     ("long", Cast::Checked(64)),
+     ("int", Cast::Checked(32)),
+     ("short", Cast::Checked(16)),
+@@ -22,8 +22,12 @@ pub(crate) const CASTS: [(&str, Cast); 12] = [
+     ("unchecked-float", Cast::Float(false)),
+     ("double", Cast::Double),
+     ("float-long", Cast::FloatLong),
++    ("int-object", Cast::ObjectChecked(32)),
++    ("short-object", Cast::ObjectChecked(16)),
++    ("byte-object", Cast::ObjectChecked(8)),
++    ("int-float", Cast::IntFloat),
+ ];
+-pub(crate) const CAST_RAW_EXPORTS: [&str; 12] = [
++pub(crate) const CAST_RAW_EXPORTS: [&str; 16] = [
+     "number-cast-long-raw",
+     "number-cast-int-raw",
+     "number-cast-short-raw",
+@@ -36,11 +40,20 @@ pub(crate) const CAST_RAW_EXPORTS: [&str; 12] = [
+     "number-cast-unchecked-float-raw",
+     "number-cast-double-raw",
+     "number-cast-float-long-raw",
++    "number-cast-int-object-raw",
++    "number-cast-short-object-raw",
++    "number-cast-byte-object-raw",
++    "number-cast-int-float-raw",
+ ];
+ #[derive(Clone, Copy)]
+ pub(crate) enum Cast {
+     /// A long in range, or a double truncated toward zero; out of range throws.
+     Checked(u32),
++    /// Object overloads narrow Number.longValue(), retaining the original
++    /// operand for byte/short range diagnostics.
++    ObjectChecked(u32),
++    /// float's comparison rounds Integer/MAX_VALUE to 2^31 before checking.
++    IntFloat,
+     /// The low bits of a long; a double truncated and saturated, as Java's
+     /// primitive casts.
+     Unchecked(u32),
+@@ -163,7 +176,10 @@ pub(super) fn intrinsics(b: &mut Builder) {
+ /// an f64.
+ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'static>> {
+     use Instruction::*;
+-    let name = if name == "float-long" { "float" } else { name };
++    let name = match name {
++        "float-long" => "float", "int-float" => "int",
++        other => other.strip_suffix("-object").unwrap_or(other),
++    };
+     let long = b.names["long-test"];
+     let unbox = b.names["long-unbox"];
+     let boxed = b.names["long-box"];
+@@ -240,6 +256,30 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
+             code.extend([End, LocalGet(2), I64TruncSatF64S]);
+             if !raw { code.push(Call(boxed)); }
+         }
++        Cast::ObjectChecked(bits) => {
++            code.extend([LocalGet(0), Call(long), If(BlockType::Result(ValType::I64)),
++                LocalGet(0), Call(unbox), Else, LocalGet(0), Call(double), I64TruncSatF64S,
++                End, LocalSet(1)]);
++            let shift = I64Const(i64::from(64 - bits));
++            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS,
++                LocalGet(1), I64Ne, If(BlockType::Empty)]);
++            if bits == 32 {
++                code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL));
++            } else {
++                code.extend(throw_with_value(b, &range, 0));
++            }
++            code.extend([End, LocalGet(1)]);
++            if !raw { code.push(Call(boxed)); }
++        }
++        Cast::IntFloat => {
++            code.extend([LocalGet(0), Call(double), LocalSet(2),
++                LocalGet(2), F64Const((-2147483648.0).into()), F64Lt,
++                LocalGet(2), F64Const(2147483648.0.into()), F64Gt, I32Or,
++                If(BlockType::Empty)]);
++            code.extend(throw_with_value(b, &range, 0));
++            code.extend([End, LocalGet(2), I32TruncSatF64S, I64ExtendI32S]);
++            if !raw { code.push(Call(boxed)); }
++        }
+         Cast::Unchecked(bits) => {
+             code.extend([LocalGet(0), Call(long), If(BlockType::Result(ValType::I64))]);
+             code.extend([LocalGet(0), Call(unbox)]);
+@@ -320,7 +360,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+         ));
+         let raw_body = cast(b, name, kind, true);
+         b.function_with_locals(CAST_RAW_EXPORTS[index], &[VALUE],
+-            &[if index < 8 { ValType::I64 } else { ValType::F64 }],
++            &[if (8..=11).contains(&index) { ValType::F64 } else { ValType::I64 }],
+             &[(1, ValType::I64), (1, ValType::F64)], &raw_body);
+     }
+     let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
+@@ -432,7 +472,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
+         Call(b.names["binding-get"]),
+     ]);
+     let reducer = b.function("bitwise-current-reducer", &[VALUE], &[VALUE], &reducer_body);
+-    let int_cast = b.names["number-cast-int"];
++    let int_cast = b.names["number-cast-int-object"];
+     let mut declared = Vec::new();
+     for (name, arity, variadic) in [
+         ("int", 1, false),
+diff --git a/crates/suss-compile/tests/portable_unboxed_locals.rs b/crates/suss-compile/tests/portable_unboxed_locals.rs
+index 33ac713f..077ace38 100644
+--- a/crates/suss-compile/tests/portable_unboxed_locals.rs
++++ b/crates/suss-compile/tests/portable_unboxed_locals.rs
+@@ -340,6 +340,26 @@ mod raw_bits_and_casts {
+         assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
+         run.post_return(&mut store).unwrap();
+     }
++    #[test]
++    fn object_and_float_overloads_execute_without_normal_calls_or_boxes() {
++        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
++          (if (< i 1234587) (recur (inc i) (unchecked-add acc
++            (+ (byte (loop [] (+ 127.1 (* 0.0 (double i)))))
++               (short (loop [] 32767.1)) (int (loop [] 2147483647.9))
++               (int (unchecked-float 2147483648.0))))) acc)))";
++        let bytes = Compiler::new().compile(source,
++            "package test:cast-overloads; world api { export bound: func() -> s64; }").unwrap();
++        for operators in functions_with(&bytes, 1234587) {
++            check(&operators);
++            assert!(operators.iter().any(|op| matches!(op, Operator::I64TruncSatF64S)));
++            assert!(operators.iter().any(|op| matches!(op, Operator::I32TruncSatF64S)));
++        }
++        let (mut store, instance) = extrema_component(&bytes);
++        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
++        assert_eq!(run.call(&mut store, ()).unwrap().0, 5302551397102356);
++        run.post_return(&mut store).unwrap();
++    }
++
+ }
+ 
+ #[test]
+@@ -374,11 +394,15 @@ fn raw_numeric_helpers_return_scalars_without_numeric_boxes() {
+             _ => {}
+         }
+     }
+-    assert_eq!(exports.len(), 33);
++    assert_eq!(exports.len(), 37);
+     assert_eq!(boxes.len(), 2);
+     for (index, name) in &exports {
+         let result = results[functions[*index as usize] as usize].unwrap();
+-        assert!(matches!(result, wasmparser::ValType::I64 | wasmparser::ValType::I32 | wasmparser::ValType::F64), "{name}: {result:?}");
++        let expected = if name == "primitive-bit-test-raw" { wasmparser::ValType::I32 }
++            else if matches!(name.as_str(), "number-cast-float-raw" | "number-cast-unchecked-float-raw"
++                | "number-cast-double-raw" | "number-cast-float-long-raw") { wasmparser::ValType::F64 }
++            else { wasmparser::ValType::I64 };
++        assert_eq!(result, expected, "{name}");
+     }
+     // Discover numeric box layouts from their actual exported constructors.
+     // Internal type indices are not a public artifact contract.
