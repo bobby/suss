@@ -1,0 +1,14 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "results/m12-vector-nth-oracle/oracle.clj"
+  ],
+  "exit_code": 0,
+  "adapter": "Global (set! nth value) becomes (alter-var-root (var nth) (fn [_] value)); all other forms unchanged.",
+  "source": "(let [old nth effects (atom 9)] (try (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i missing) (finally (set! nth replacement))))))) [((fn [[a b]] [a b]) [17 23]) @effects] (finally (set! nth old))))",
+  "expected": "[[17 23] 9]"
+}

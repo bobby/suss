@@ -2169,7 +2169,22 @@ impl Analyzer<'_> {
                 local
             })
             .collect::<Vec<_>>();
-        let callee = self.form(&items[0])?;
+        let mut callee = self.form(&items[0])?;
+        let mut source_callee = None;
+        // Clojure's inline nth also ignores root replacement on a native miss
+        // (lists, strings, out-of-bounds indices, ...). Use the owned core body
+        // there, preserving the public var in the source AST. Unknown/user
+        // definitions and lexical shadows never enter this path.
+        if operation == Nominal::VectorNth {
+            if let Expression::Global(global) = &*callee.kind
+                && global.namespace() == "suss.core" && global.name() == "nth"
+                && self.privileged_definition(global)
+                && let Some(link) = self.environment.existing_core_link(global)
+            {
+                source_callee = Some(callee.clone());
+                callee.kind = std::sync::Arc::new(Expression::Global(link));
+            }
+        }
         let callee = match &*callee.kind {
             Expression::Global(global) => match self.direct_link(global) {
                 Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
@@ -2179,7 +2194,7 @@ impl Analyzer<'_> {
         };
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
-                callee: std::sync::Arc::new(callee.clone()),
+                callee: std::sync::Arc::new(source_callee.unwrap_or_else(|| callee.clone())),
                 arguments: bindings[..count].iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
         let node = |kind: Expression, ty: Type| Hir {

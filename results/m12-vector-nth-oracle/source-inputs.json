@@ -1,0 +1,10 @@
+{
+  "base_commit": "5e06fede91a5a02e789af11f39c02ca950c8306a",
+  "files": {
+    "crates/suss-compile/src/portable/hir.rs": "a9f26b6e92410e6da3cbdeb0c0f5ad963f5d14033a98b0c171012dea1be65c94",
+    "crates/suss-cli/tests/portable_function_parameters.rs": "40154d49ee0c4b3b1e146f989c89023a2e3fbb54737784e1225d8da40dd864ab",
+    "crates/suss-cli/tests/clojure_nonescaping_vectors.rs": "6d69320991bb415121e74bc05901a2bdbf7a0eef445a851c75ab96c373eeca6b",
+    "tests/oracle/function-parameter-clojure-cases.json": "6f31d5316bacb90e88be35a9b33d47415bdb853ff64ba63572be4815598b91aa",
+    "tests/oracle/function-parameter-cases.json": "9088aeba4ffc1ebbb1280ce5bcded0ea2075b86004c910e4d84c6033cc0d9158"
+  }
+}

@@ -1,0 +1,5 @@
+(assert (= "3000000000" (pr-str (with-redefs [nth (fn [& xs] 7)] (nth (list 3000000000 1.5) 0)))))
+(assert (= "\"b\"" (pr-str (with-redefs [nth (fn [& xs] 7)] (str (nth "ab" 1))))))
+(assert (= ":nf" (pr-str (with-redefs [nth (fn [& xs] 7)] (nth [1 2] 4 :nf)))))
+(assert (= "3" (pr-str (with-redefs [nth (fn [& xs] 7)] (let [[a b] (clojure.lang.MapEntry/create 1 2)] (+ a b))))))
+(println "4 assertions passed")

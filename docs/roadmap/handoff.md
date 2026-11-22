@@ -1,3 +1,39 @@
+## Inline nth fallback and primary parameter traces (2026-11-22)
+
+The36-target vector gate failed on live-nth-order: Suss9 versus pinned
+ClojureScript901. Fresh JVM1.12.6, with only global set! adapted to
+alter-var-root, independently asserts[[17 23]9]. Its rest/next trace asserts
+[[17 23]12], versus pinned1233; first/next still execute, while inline nth
+bypasses both replacements. The initial partial fix returned123 on a sequence
+miss, exposing the remaining live fallback. The genuine shipped nth now calls
+its owned core link on native misses. Public source AST identity remains,
+lexical/unknown calls and aliases retain ordinary behavior. MapEntry rebinding
+also now returns JVM3; its old14 result stays archived with the original hash.
+
+results/m12-vector-nth-oracle retains JVM forms/logs, the original local and CI
+failures, a compile-placement error and exact five-input reconstruction from
+5e06fede. The unchanged original39-case corpus is explicitly checked alongside
+the two JVM corrections in function-parameter-clojure-cases.json. Both parameter
+tests and both expanded vector tests pass:4 tests, zero failed/ignored. The
+vector fixture now executes23 pairs in Runtime/Macro and actual AOT (69
+observations:21 fresh JVM values plus2 separate Suss baseline controls).
+
+Run python3 results/m12-vector-nth-oracle/source-check.py; run-gates.py reruns
+all36 focused targets on this changed compiler, then Java-free bootstrap,
+Binaryen133 and reviewed-suite comparison. It is active; the original failed
+run did not reach those follow-on stages. Use stable Rust, two jobs/threads,
+MemoryMax4G scopes, m12-aggregate-target and outer target/suss, with Binaryen133.
+No RUSTFLAGS are set. The required unfiltered workspace run remains separate
+and active on frozen f5056ffe; no current full-baseline pass is inferred.
+
+Identical-source remeasurement asserts all48 measured sums plus16 warm checks.
+Vector allocation estimates167.85/167.65 bytes per iteration before, below RSS
+resolution after; instructions1628.87 to448.79. MapEntry allocation still about
+136 bytes/5579 instructions; direct/closure controls about28 and below RSS
+resolution. These are not quiet walltimes. Aliased NaN remains a documented JVM
+difference, not a compatibility success. MapEntry storage and letfn are next;
+no complete escape/numeric-tower result is claimed.
+
 ## Guarded literal-vector probes (2026-11-22)
 
 results/m12-vectors retains17 fresh JVM value pairs and the original failed NaN

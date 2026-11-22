@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "clojure-version": "1.12.6",
+  "cases": [
+    {
+      "id": "live-nth-order",
+      "source": "(let [old nth effects (atom 9)] (try (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i missing) (finally (set! nth replacement))))))) [((fn [[a b]] [a b]) [17 23]) @effects] (finally (set! nth old))))",
+      "pinned-expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "408c280000000000"
+          }
+        ]
+      },
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "long",
+                "value": 17
+              },
+              {
+                "tag": "long",
+                "value": 23
+              }
+            ]
+          },
+          {
+            "tag": "long",
+            "value": 9
+          }
+        ]
+      },
+      "adapter": "Suss global set! becomes JVM alter-var-root; parameter patterns, functions and effect body remain unchanged.",
+      "evidence": "results/m12-vector-nth-oracle/oracle.clj"
+    },
+    {
+      "id": "live-rest-next-before-nesting",
+      "source": "(let [f first n next t nth effects (atom 0)] (try (set! first (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 1))) (f v)))) (set! next (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 2))) (n v)))) (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i missing) (finally (set! nth replacement))))))) [((fn [[[a] & [b]]] [a b]) [[17] 23]) @effects] (finally (set! first f) (set! next n) (set! nth t))))",
+      "pinned-expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "f64",
+                "bits": "4031000000000000"
+              },
+              {
+                "tag": "f64",
+                "bits": "4037000000000000"
+              }
+            ]
+          },
+          {
+            "tag": "f64",
+            "bits": "4093440000000000"
+          }
+        ]
+      },
+      "expected": {
+        "tag": "vector",
+        "items": [
+          {
+            "tag": "vector",
+            "items": [
+              {
+                "tag": "long",
+                "value": 17
+              },
+              {
+                "tag": "long",
+                "value": 23
+              }
+            ]
+          },
+          {
+            "tag": "long",
+            "value": 12
+          }
+        ]
+      },
+      "adapter": "Global set! of first/next/nth becomes JVM alter-var-root; other forms unchanged.",
+      "evidence": "results/m12-vector-nth-oracle/rest-next-oracle.clj"
+    }
+  ]
+}

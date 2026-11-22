@@ -1275,3 +1275,14 @@ definition. The existing aliased-NaN equality/identity difference and MapEntry
 redefinition difference remain explicit; neither is a compatibility success.
 No new inventory classifications, complete escape coverage or quiet timing
 acceptance are inferred from these samples.
+
+
+[Inline nth fallback receipts](../../results/m12-vector-nth-oracle/README.md)
+correct two effect traces using fresh JVM Clojure1.12.6. The original39-case
+pinned corpus is unchanged; two exact source-qualified corrections retain their
+original pinned observations. All cases still execute in both phases. Native
+misses call the owned core nth body while preserving the public var in the
+source AST. The expanded21-value JVM matrix covers sequence/string/default and
+MapEntry rebinding in Runtime/Macro/AOT. MapEntry now returns JVM's3 in that
+probe; the older14 observation remains archived, not treated as conformance.
+The existing aliased-NaN difference remains a negative observation.

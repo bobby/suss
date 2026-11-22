@@ -1,4 +1,4 @@
-//! Authored native parameter regressions: UNCOMPILED; bootstrap remains stale.
+//! Parameter patterns execute against pinned observations and explicit JVM corrections.
 use suss_cli::portable_session::Session;
 const CASE_IDS: &[&str] = &[
     "vector-missing",
@@ -111,6 +111,15 @@ fn function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_
         corpus["upstream"],
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
+    // Keep the original ClojureScript recording intact. Clojure's inline nth
+    // bypasses a rebound var; its independently observed result differs here.
+    let clojure: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/function-parameter-clojure-cases.json"
+    )).unwrap();
+    assert_eq!(clojure["schema"], 1);
+    assert_eq!(clojure["clojure-version"], "1.12.6");
+    let corrections = clojure["cases"].as_array().unwrap();
+    assert_eq!(corrections.iter().map(|case| case["id"].as_str().unwrap()).collect::<Vec<_>>(), ["live-nth-order", "live-rest-next-before-nesting"]);
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(
         cases
@@ -124,12 +133,20 @@ fn function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_
         let bridge = FormBridge::new(&mut session).unwrap();
         for case in cases {
             let source = case["source"].as_str().unwrap();
+            let expected = match corrections.iter().find(|item| item["id"] == case["id"]) {
+                Some(primary) => {
+                    assert_eq!(primary["source"], case["source"]);
+                    assert_eq!(primary["pinned-expected"], case["expected"]);
+                    &primary["expected"]
+                }
+                None => &case["expected"],
+            };
             let result = session.eval(source).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
             assert_eq!(
                 raw_parameter_tag(&decoded),
-                clojure_longs(&case["expected"]),
+                clojure_longs(expected),
                 "{}",
                 case["id"]
             );

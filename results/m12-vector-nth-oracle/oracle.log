@@ -1,0 +1,2 @@
+(let [old nth effects (atom 9)] (try (alter-var-root (var nth) (fn [_] (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) i))) (alter-var-root (var nth) (fn [_] old)) (try (old v i) (finally (alter-var-root (var nth) (fn [_] replacement)))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) i))) (alter-var-root (var nth) (fn [_] old)) (try (old v i missing) (finally (alter-var-root (var nth) (fn [_] replacement))))))))) [((fn [[a b]] [a b]) [17 23]) (clojure.core/deref effects)] (finally (alter-var-root (var nth) (fn [_] old)))))
+[[17 23] 9]

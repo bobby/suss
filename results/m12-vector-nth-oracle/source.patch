@@ -1,0 +1,230 @@
+diff --git c/crates/suss-cli/tests/clojure_nonescaping_vectors.rs w/crates/suss-cli/tests/clojure_nonescaping_vectors.rs
+index 4c79b870..7d8a848c 100644
+--- c/crates/suss-cli/tests/clojure_nonescaping_vectors.rs
++++ w/crates/suss-cli/tests/clojure_nonescaping_vectors.rs
+@@ -1,7 +1,7 @@
+ //! Temporary vector elimination preserves source conversions, identity and effects (#351).
+ use suss_cli::portable_session::Session;
+ 
+-// The 17 exact value pairs in results/m12-vectors/cases.json match fresh JVM.
++// The 21 exact value pairs in results/m12-vector-nth-oracle/cases.json match fresh JVM.
+ const CASES: &[(&str, &str)] = &[
+     ("(let [[a b] [3000000000 1.5]] (+ a b))", "3.0000000015E9"),
+     (
+@@ -50,6 +50,19 @@ const CASES: &[(&str, &str)] = &[
+         "(let [x (atom 0) [a b] [x x]] [(identical? a b) (= a b)])",
+         "[true true]",
+     ),
++    (
++        "(with-redefs [nth (fn [& xs] 7)] (nth (list 3000000000 1.5) 0))",
++        "3000000000",
++    ),
++    (
++        "(with-redefs [nth (fn [& xs] 7)] (str (nth \"ab\" 1)))",
++        "\"b\"",
++    ),
++    ("(with-redefs [nth (fn [& xs] 7)] (nth [1 2] 4 :nf))", ":nf"),
++    (
++        "(with-redefs [nth (fn [& xs] 7)] (let [[a b] (MapEntry. 1 2 nil)] (+ a b)))",
++        "3",
++    ),
+ ];
+ 
+ // This is a recorded boxed-path control, NOT a JVM-conformance assertion.
+diff --git c/crates/suss-cli/tests/portable_function_parameters.rs w/crates/suss-cli/tests/portable_function_parameters.rs
+index a0364576..0ec18f39 100644
+--- c/crates/suss-cli/tests/portable_function_parameters.rs
++++ w/crates/suss-cli/tests/portable_function_parameters.rs
+@@ -1,4 +1,4 @@
+-//! Authored native parameter regressions: UNCOMPILED; bootstrap remains stale.
++//! Parameter patterns execute against pinned observations and explicit JVM corrections.
+ use suss_cli::portable_session::Session;
+ const CASE_IDS: &[&str] = &[
+     "vector-missing",
+@@ -111,6 +111,15 @@ fn function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_
+         corpus["upstream"],
+         "c4295f303100bbf5afac449242d30bca1126f1a1"
+     );
++    // Keep the original ClojureScript recording intact. Clojure's inline nth
++    // bypasses a rebound var; its independently observed result differs here.
++    let clojure: serde_json::Value = serde_json::from_str(include_str!(
++        "../../../tests/oracle/function-parameter-clojure-cases.json"
++    )).unwrap();
++    assert_eq!(clojure["schema"], 1);
++    assert_eq!(clojure["clojure-version"], "1.12.6");
++    let corrections = clojure["cases"].as_array().unwrap();
++    assert_eq!(corrections.iter().map(|case| case["id"].as_str().unwrap()).collect::<Vec<_>>(), ["live-nth-order", "live-rest-next-before-nesting"]);
+     let cases = corpus["cases"].as_array().unwrap();
+     assert_eq!(
+         cases
+@@ -124,12 +133,20 @@ fn function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_
+         let bridge = FormBridge::new(&mut session).unwrap();
+         for case in cases {
+             let source = case["source"].as_str().unwrap();
++            let expected = match corrections.iter().find(|item| item["id"] == case["id"]) {
++                Some(primary) => {
++                    assert_eq!(primary["source"], case["source"]);
++                    assert_eq!(primary["pinned-expected"], case["expected"]);
++                    &primary["expected"]
++                }
++                None => &case["expected"],
++            };
+             let result = session.eval(source).unwrap();
+             session.collect().unwrap();
+             let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
+             assert_eq!(
+                 raw_parameter_tag(&decoded),
+-                clojure_longs(&case["expected"]),
++                clojure_longs(expected),
+                 "{}",
+                 case["id"]
+             );
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index 6e5f7b6e..c22cf67f 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -2169,7 +2169,22 @@ impl Analyzer<'_> {
+                 local
+             })
+             .collect::<Vec<_>>();
+-        let callee = self.form(&items[0])?;
++        let mut callee = self.form(&items[0])?;
++        let mut source_callee = None;
++        // Clojure's inline nth also ignores root replacement on a native miss
++        // (lists, strings, out-of-bounds indices, ...). Use the owned core body
++        // there, preserving the public var in the source AST. Unknown/user
++        // definitions and lexical shadows never enter this path.
++        if operation == Nominal::VectorNth {
++            if let Expression::Global(global) = &*callee.kind
++                && global.namespace() == "suss.core" && global.name() == "nth"
++                && self.privileged_definition(global)
++                && let Some(link) = self.environment.existing_core_link(global)
++            {
++                source_callee = Some(callee.clone());
++                callee.kind = std::sync::Arc::new(Expression::Global(link));
++            }
++        }
+         let callee = match &*callee.kind {
+             Expression::Global(global) => match self.direct_link(global) {
+                 Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
+@@ -2179,7 +2194,7 @@ impl Analyzer<'_> {
+         };
+         *self.source_nodes.last_mut().expect("source node fact slot") =
+             Some(std::sync::Arc::new(SourceNode::Invoke {
+-                callee: std::sync::Arc::new(callee.clone()),
++                callee: std::sync::Arc::new(source_callee.unwrap_or_else(|| callee.clone())),
+                 arguments: bindings[..count].iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+             }));
+         let node = |kind: Expression, ty: Type| Hir {
+diff --git 1/tests/oracle/function-parameter-clojure-cases.json 2/tests/oracle/function-parameter-clojure-cases.json
+new file mode 100644
+index 00000000..ca7a93ad
+--- /dev/null
++++ 2/tests/oracle/function-parameter-clojure-cases.json
+@@ -0,0 +1,106 @@
++{
++  "schema": 1,
++  "clojure-version": "1.12.6",
++  "cases": [
++    {
++      "id": "live-nth-order",
++      "source": "(let [old nth effects (atom 9)] (try (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) i))) (set! nth old) (try (old v i missing) (finally (set! nth replacement))))))) [((fn [[a b]] [a b]) [17 23]) @effects] (finally (set! nth old))))",
++      "pinned-expected": {
++        "tag": "vector",
++        "items": [
++          {
++            "tag": "vector",
++            "items": [
++              {
++                "tag": "f64",
++                "bits": "4031000000000000"
++              },
++              {
++                "tag": "f64",
++                "bits": "4037000000000000"
++              }
++            ]
++          },
++          {
++            "tag": "f64",
++            "bits": "408c280000000000"
++          }
++        ]
++      },
++      "expected": {
++        "tag": "vector",
++        "items": [
++          {
++            "tag": "vector",
++            "items": [
++              {
++                "tag": "long",
++                "value": 17
++              },
++              {
++                "tag": "long",
++                "value": 23
++              }
++            ]
++          },
++          {
++            "tag": "long",
++            "value": 9
++          }
++        ]
++      },
++      "adapter": "Suss global set! becomes JVM alter-var-root; parameter patterns, functions and effect body remain unchanged.",
++      "evidence": "results/m12-vector-nth-oracle/oracle.clj"
++    },
++    {
++      "id": "live-rest-next-before-nesting",
++      "source": "(let [f first n next t nth effects (atom 0)] (try (set! first (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 1))) (f v)))) (set! next (fn [v] (do (swap! effects (fn [n] (+ (* n 10) 2))) (n v)))) (set! nth (fn replacement ([v i] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i) (finally (set! nth replacement))))) ([v i missing] (do (swap! effects (fn [n] (+ (* n 10) 3))) (set! nth t) (try (t v i missing) (finally (set! nth replacement))))))) [((fn [[[a] & [b]]] [a b]) [[17] 23]) @effects] (finally (set! first f) (set! next n) (set! nth t))))",
++      "pinned-expected": {
++        "tag": "vector",
++        "items": [
++          {
++            "tag": "vector",
++            "items": [
++              {
++                "tag": "f64",
++                "bits": "4031000000000000"
++              },
++              {
++                "tag": "f64",
++                "bits": "4037000000000000"
++              }
++            ]
++          },
++          {
++            "tag": "f64",
++            "bits": "4093440000000000"
++          }
++        ]
++      },
++      "expected": {
++        "tag": "vector",
++        "items": [
++          {
++            "tag": "vector",
++            "items": [
++              {
++                "tag": "long",
++                "value": 17
++              },
++              {
++                "tag": "long",
++                "value": 23
++              }
++            ]
++          },
++          {
++            "tag": "long",
++            "value": 12
++          }
++        ]
++      },
++      "adapter": "Global set! of first/next/nth becomes JVM alter-var-root; other forms unchanged.",
++      "evidence": "results/m12-vector-nth-oracle/rest-next-oracle.clj"
++    }
++  ]
++}

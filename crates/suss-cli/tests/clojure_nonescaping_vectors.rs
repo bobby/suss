@@ -1,7 +1,7 @@
 //! Temporary vector elimination preserves source conversions, identity and effects (#351).
 use suss_cli::portable_session::Session;
 
-// The 17 exact value pairs in results/m12-vectors/cases.json match fresh JVM.
+// The 21 exact value pairs in results/m12-vector-nth-oracle/cases.json match fresh JVM.
 const CASES: &[(&str, &str)] = &[
     ("(let [[a b] [3000000000 1.5]] (+ a b))", "3.0000000015E9"),
     (
@@ -49,6 +49,19 @@ const CASES: &[(&str, &str)] = &[
     (
         "(let [x (atom 0) [a b] [x x]] [(identical? a b) (= a b)])",
         "[true true]",
+    ),
+    (
+        "(with-redefs [nth (fn [& xs] 7)] (nth (list 3000000000 1.5) 0))",
+        "3000000000",
+    ),
+    (
+        "(with-redefs [nth (fn [& xs] 7)] (str (nth \"ab\" 1)))",
+        "\"b\"",
+    ),
+    ("(with-redefs [nth (fn [& xs] 7)] (nth [1 2] 4 :nf))", ":nf"),
+    (
+        "(with-redefs [nth (fn [& xs] 7)] (let [[a b] (MapEntry. 1 2 nil)] (+ a b)))",
+        "3",
     ),
 ];
 

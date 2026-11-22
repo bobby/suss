@@ -315,3 +315,11 @@ still checked on every invocation. The bounded pass handles one eligible
 normalized async/future plans conservative. Source, failing probes, execution and
 allocation/instruction receipts are in [vector evidence](../../results/m12-vectors/README.md).
 The retained aliased-NaN difference is not a JVM compatibility success.
+
+
+For the genuine shipped `nth`, its indexed miss also uses the owned core
+function, as Clojure's inline expansion does under root rebinding. Lists,
+strings and missing/default indices therefore keep the same inline behavior as
+native hits. The source AST preserves the public var; lexical/unknown calls and
+aliases remain ordinary calls. [Inline nth evidence](../../results/m12-vector-nth-oracle/README.md)
+keeps the original pinned ClojureScript traces and explicit JVM corrections.

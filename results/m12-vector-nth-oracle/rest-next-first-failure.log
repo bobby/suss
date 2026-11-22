@@ -1,0 +1,26 @@
+Running as unit: run-p4090423-i87956014.scope; invocation ID: 3d9bf552fd7744f1820aca8e8f268108
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4.14s
+     Running tests/portable_function_parameters.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/portable_function_parameters-0c461169e50345f2)
+
+running 2 tests
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... FAILED
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+
+failures:
+
+---- function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc stdout ----
+
+thread 'function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc' (4090630) panicked at crates/suss-cli/tests/portable_function_parameters.rs:147:13:
+assertion `left == right` failed: "live-rest-next-before-nesting"
+  left: Object {"items": Array [Object {"items": Array [Object {"tag": String("long"), "value": Number(17)}, Object {"tag": String("long"), "value": Number(23)}], "tag": String("vector")}, Object {"tag": String("long"), "value": Number(123)}], "tag": String("vector")}
+ right: Object {"items": Array [Object {"items": Array [Object {"tag": String("long"), "value": Number(17)}, Object {"tag": String("long"), "value": Number(23)}], "tag": String("vector")}, Object {"tag": String("long"), "value": Number(1233)}], "tag": String("vector")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.93s
+
+error: test failed, to rerun pass `-p suss-cli --test portable_function_parameters`

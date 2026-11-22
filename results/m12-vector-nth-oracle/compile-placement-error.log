@@ -1,0 +1,16 @@
+Running as unit: run-p4099850-i87974471.scope; invocation ID: 065d02b253a0425bb962ca05f191b070
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile-generator)
+error[E0425]: cannot find value `operation` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:1927:12
+     |
+1927 |         if operation == Nominal::VectorNth {
+     |            ^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `source_callee` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:2197:45
+     |
+2197 |                 callee: std::sync::Arc::new(source_callee.unwrap_or_else(|| callee.clone())),
+     |                                             ^^^^^^^^^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `suss-compile-generator` (lib) due to 2 previous errors
