@@ -14,6 +14,8 @@ use super::super::{
 use crate::runtime_abi;
 use wasm_encoder::{BlockType, HeapType, Instruction, ValType};
 
+mod numeric_core;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Repr {
     Boxed,
@@ -169,6 +171,9 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
     })
 }
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+    if numeric_core::accepts(operation, arguments.len()) {
+        return arithmetic(Arithmetic::Add, arguments, false, false);
+    }
     if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
         if arguments.iter().any(|argument| !matches!(argument,
             Lattice::Top | Lattice::Known(Repr::Double | Repr::MaybeDouble)))
@@ -1038,6 +1043,7 @@ impl Locals {
         use Instruction::*;
         if raw_int32(operation, arguments.len()).is_some()
             || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
+            || numeric_core::accepts(operation, arguments.len())
         {
             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
             if !inputs.is_empty() {
@@ -1046,7 +1052,7 @@ impl Locals {
                     if i > 0 { code.push(I32And); }
                 }
                 code.push(If(BlockType::Empty));
-                self.bitwise_raw(code, operation, arguments, result);
+                self.bitwise_raw(code, operation, arguments, result, slow);
                 if self.of(result).maybe() { code.extend([I32Const(1), LocalSet(self.valid(result))]); }
                 code.push(Else);
                 for argument in arguments { self.push_boxed(code, *argument); }
@@ -1058,10 +1064,14 @@ impl Locals {
                 return;
             }
         }
-        self.bitwise_raw(code, operation, arguments, result);
+        self.bitwise_raw(code, operation, arguments, result, slow);
     }
-    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
         use Instruction::*;
+        if numeric_core::accepts(operation, arguments.len()) {
+            self.numeric_core_raw(code, operation, arguments, result, slow);
+            return;
+        }
         if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin
             | Bitwise::DoubleMax | Bitwise::DoubleMin)
         {

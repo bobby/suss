@@ -38,9 +38,9 @@ pub(super) fn annotate(
 }
 
 #[derive(Clone, Copy, Default)]
-struct Features { division: bool, hints: bool, extrema: bool }
+struct Features { division: bool, hints: bool, extrema: bool, numeric_core: bool }
 impl Features {
-    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; }
+    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; }
 }
 
 struct Pass<'a> {
@@ -99,6 +99,7 @@ impl Pass<'_> {
         })?;
         needed.hints |= primitive_returns::numeric_hint(&hir.metadata, &hir.span, self.meter)?.is_some();
         needed.extrema |= extrema::is_call(hir);
+        needed.numeric_core |= local_hints::numeric_call(hir);
         self.needed.insert(key, needed);
         Ok(needed)
     }
@@ -107,7 +108,7 @@ impl Pass<'_> {
         (self.meter)(1)?;
         if !self.hints && !self.validate_methods {
             let needed = self.features(hir)?;
-            if !needed.division && !needed.extrema { return Ok(()); }
+            if !needed.division && !needed.extrema && !needed.numeric_core { return Ok(()); }
         }
         let key = Arc::as_ptr(&hir.kind) as usize;
         if let Some((rewritten, ty)) = self.rewritten.get(&key) {
@@ -116,7 +117,9 @@ impl Pass<'_> {
             return Ok(());
         }
         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            if self.hints && !self.validate_only { local_hints::inline(hir, facts, self.meter)?; }
+            if !self.validate_only && (self.hints || local_hints::numeric_call(hir)) {
+                local_hints::inline(hir, facts, self.meter)?;
+            }
             if !self.validate_only { extrema::inline(hir, facts, self.meter)?; }
             // Generated nary comparison pairs are calls on Object temporaries,
             // not Clojure's binary :inline overloads.

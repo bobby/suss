@@ -201,3 +201,61 @@ fn check_sum_loop(operators: &[Operator]) {
     assert!(operators.iter().any(|op| matches!(op, Operator::I64LtS)));
     assert!(operators.iter().filter(|op| matches!(op, Operator::I64Add)).count() >= 2);
 }
+
+#[test]
+fn known_long_core_results_stay_raw_and_execute() {
+    let source = "(defn ^:export bound [] (loop [i 0 acc 0]
+      (if (< i 1234577)
+        (recur (inc i) (unchecked-add acc
+          (unchecked-subtract (abs (rem (unchecked-negate i) 7)) (quot i 1234577))))
+        acc)))";
+    let bytes = Compiler::new().compile(source,
+        "package test:raw-core; world api { export bound: func() -> s64; }").unwrap();
+    for operators in functions_with(&bytes, 1234577) {
+        assert!(operators.iter().any(|op| matches!(op, Operator::I64DivS)));
+        assert!(operators.iter().any(|op| matches!(op, Operator::I64RemS)));
+        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
+        assert!(calls.iter().all(|&i| throwing_call(&operators, i)), "only throwing paths call: {operators:?}");
+        for (index, op) in operators.iter().enumerate() {
+            if !matches!(op, Operator::StructNew { .. }) { continue; }
+            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                .map(|offset| index + offset).unwrap();
+            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
+            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
+        }
+    }
+    let (mut store, instance) = extrema_component(&bytes);
+    let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
+    let expected: i64 = (0..1234577_i64).map(|i| i % 7).sum();
+    assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
+    run.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn known_double_core_results_stay_raw_and_execute() {
+    let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
+      (if (< i 1234579)
+        (recur (inc i) (unchecked-add acc
+          (abs (rem (unchecked-multiply -0.5 (double i)) 7.0))))
+        acc)))";
+    let bytes = Compiler::new().compile(source,
+        "package test:raw-core; world api { export bound: func() -> f64; }").unwrap();
+    for operators in functions_with(&bytes, 1234579) {
+        assert!(operators.iter().any(|op| matches!(op, Operator::F64Div)));
+        assert!(operators.iter().any(|op| matches!(op, Operator::F64Abs)));
+        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
+        assert!(calls.iter().all(|&i| throwing_call(&operators, i)), "only throwing paths call: {operators:?}");
+        for (index, op) in operators.iter().enumerate() {
+            if !matches!(op, Operator::StructNew { .. }) { continue; }
+            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                .map(|offset| index + offset).unwrap();
+            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
+            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
+        }
+    }
+    let (mut store, instance) = extrema_component(&bytes);
+    let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
+    let expected: f64 = (0..1234579_i64).map(|i| (i % 14) as f64 * 0.5).sum();
+    assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
+    run.post_return(&mut store).unwrap();
+}

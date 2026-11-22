@@ -1,0 +1,167 @@
+{
+  "source_base": "4e3c4acf71d8e5561f25e40f5975bc37c8621b5f",
+  "source_inputs": "source-inputs.json",
+  "source_reconstruction": "Seven production/test inputs reconstructed from exact base plus patch; byte-for-byte equality verified.",
+  "matrix": {
+    "jvm_version": "1.12.6",
+    "jvm_values": 22,
+    "jvm_codegen_loops": 2,
+    "native_values": 26,
+    "suss_only_rebind_cases": 4,
+    "routes": [
+      "Runtime",
+      "Macro",
+      "actual AOT"
+    ],
+    "before_and_after_rebind_component_checks": 8
+  },
+  "focused": {
+    "groups": 13,
+    "passed": 68,
+    "failed": 0,
+    "ignored": 0,
+    "compiler_sha256": "9d9bdc0e2282262547b58b8c8ae8200bb072f6424549ab4b07a14aab362ccec6"
+  },
+  "gates": [
+    {
+      "name": "focused",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_raw_numeric_core",
+        "--test",
+        "clojure_primitive_method_types",
+        "--test",
+        "clojure_numeric_extrema",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--test",
+        "clojure_division_overloads",
+        "--test",
+        "clojure_unboxed_locals",
+        "--test",
+        "clojure_numeric_box_reuse",
+        "--test",
+        "compiled_core_casts",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--test",
+        "compiled_primitive_params",
+        "--test",
+        "portable_primitive_entries",
+        "--test",
+        "portable_core_expression_dependencies",
+        "--test",
+        "portable_unboxed_locals",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 222.3452649116516
+    },
+    {
+      "name": "bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 101.60862803459167
+    },
+    {
+      "name": "binaryen",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_optimize",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 83.56812119483948
+    },
+    {
+      "name": "suite",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "clojure_test_suite_matches_reviewed_baseline",
+        "--",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "environment": {
+        "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-raw-core-suite-capture"
+      },
+      "exit_code": 0,
+      "seconds": 290.75320649147034
+    }
+  ],
+  "suite_observations_uncompressed_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "environment": {
+    "toolchain": "stable",
+    "cargo_jobs": 2,
+    "test_threads": 2,
+    "memory_scope": "4G",
+    "cargo_target": "m12-hints-target",
+    "native_cache": "outer target/suss",
+    "binaryen": "wasm-opt version 133 (version_133)"
+  },
+  "limitations": "Reviewed suite retains known failures, not full conformance. No current full-workspace or new quiet timing result. These tests do not establish all raw numeric casts/bitwise/core results, complete escape elimination or the numeric tower.",
+  "sha256": {
+    "README.md": "de314098582325747dfc2573333bde6db435ec3e42bf8146db3cefe7192e4f94",
+    "before-codegen-fixture.rs": "4a448d79f26ac261755c2372314b7ccbb1ca640c6dfe923a2fef170228c0dff2",
+    "before-fixture.rs": "fb320f6e0efa4bed835378ebe45221441cda32f070ffc8e7ad116c3955aa7706",
+    "before.json": "678a9abf1402c8914ba4f3cada5c3b87be43c681c7e9af3a6fda1bea6d14342a",
+    "before.log": "ed1f3b142392a7b309764bd4b6c1eb43608c3671f5e87fbb370d34b2b5d8f48f",
+    "binaryen.log": "66c5220cbaca1426e8871399c67eeff2e6a92546f2c5f0d7eddc34bcbbae9da6",
+    "bootstrap.log": "ebfad13dfea3232d149a29145cb298fc6e5034142fe4f305f1aaa903ed5542de",
+    "cases.json": "17a3d38223352feec95d741514667a12423a7a4f33417954579ed214f9250b43",
+    "codegen-before.log": "c16e74b8ff07c24341ff9fed1417f3d8cff42b4f9d425e7b22e9b397c8a4e58f",
+    "codegen-oracle.clj": "a11784c8ca0a8c29d0635953dcdc72826c34e9040397bb1ae2dc520528550f2e",
+    "codegen-oracle.log": "d4cb27d7b375d6458af052464d3822c2b60d6869575ded87a22ca268c58b60eb",
+    "commands.json": "9cabd63cff2fd9c347fc6b2287d3b829c50f34739cd4a2798de78f953836b4ee",
+    "expectations.json": "b515f241a5267850793374fcc227fe4ec34001841da43e9204767c085ea0bb7a",
+    "first.log": "662d84a23aa401659cc0330382fb8abfb366c35170b7f8808a14422c01365655",
+    "focused.json": "b0e09aad4774d2f9763cfb01e9393c1a5d503b013ae3704b18079ad0d56a5c6d",
+    "focused.log": "34cfb12b169b0212d35eed16fb83445778db0395ab554e2aeee97b67fd692069",
+    "oracle-command.json": "720be04f37c2594ace527d45573b15d717c88c938cd67812a3bb729f3a3c0b98",
+    "oracle.clj": "85c4eda14878b25eca902712e90fd2b081e9da01e629f730b6cd11868b52335f",
+    "oracle.log": "575e7bb110831f6eaf9367f7a638d85eedd5cd59e8a63ff91bf04507dfe4d448",
+    "probe.clj": "63bc8b9c195f6adfb4d79943a62ff5452519e0a92da7e6331f168c6e3d138537",
+    "probe.log": "d863bf8a63b6a214f70ef07db40d56a5525fa7ed56844435a2ed2f059bd44479",
+    "rebind/after-compile.log": "8571292784d0fd18bddc10fa3a4458a162ba6be362b11cf2c54091922d4ca938",
+    "rebind/after-run.log": "45ae43c1e376cccf306aa151376b057784920274cde055b9b025e8a7fdc1aa11",
+    "rebind/before-compile.log": "85a04577defbdd49285a5e4be737fdb69acf5ce94fd07942eb44449741a42c53",
+    "rebind/before-run.log": "45ae43c1e376cccf306aa151376b057784920274cde055b9b025e8a7fdc1aa11",
+    "rebind/cases.json": "1ccf2cf7f9ab57f21fd8c8cb9d136195cc4a17193fc079a76aa1231153a83b01",
+    "rebind/definitions.sus": "05cd8cb3927ecb5e2c3c4c80cf557150164926e955e45711490bcf8303c85fe5",
+    "rebind/jvm-reference.clj": "5c98f50265be11fb226f2060a9b320cffae04539bbfd7b7991d81e90bc7bd58f",
+    "rebind/jvm-reference.log": "3046a095f415cf435fa7c4154d3a753690884510df2005bd78d5569c7e18bc40",
+    "rebind/observations.json": "00623bdd290e44284c6ef01783822410a85b4f692a1f568dcfb2bfbb24a49db8",
+    "rebind/rebind.sus": "f6449e5ec969f19402b9b24e91299035dfa0c91156df6818538bdb452c2ab3ac",
+    "rebind/rebind.wit": "b064b1916cb52b139885fda95429af286cdf031289697dedaa4aacd2a6027a51",
+    "source-check.py": "35456c2a8fa9476898b671f4435c1b0ac44bd4e024db6e805560fa601f4738fd",
+    "source-inputs.json": "7b4c52fe2422e1f23cdf2d07b1cfa4a0b58db75f49faa4e20d16960ed3b54d38",
+    "source-reconstruction.log": "715b6db47edda3d9e5a19cb9bbca564d302c5b0fe94755715249ed4345a8b832",
+    "source.patch": "93b301756de51938ca679b25bf1ed4afcf6e21acd1f2c9d586bdb536b7bfbe89",
+    "suite-observations.json.gz": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "suite.log": "7993646b804389b4a3f338973597f672aa031942be5096a24bbcce64c4acb358"
+  }
+}

@@ -1,0 +1,18 @@
+[
+  [
+    "(vector (run-long) (with-redefs [raw-long (fn [] (identity 3.5))] (run-long)))",
+    "[[2 0 4 5 -4] [1.0 1.5 3.5 4.5 -3.5]]"
+  ],
+  [
+    "(vector (run-double) (with-redefs [raw-double (fn [] (identity 5))] (run-double)))",
+    "[[2.0 0.0 4.0 5.0 -4.0] [2 1 5 6 -5]]"
+  ],
+  [
+    "(with-redefs [raw-long (fn [] :bad) raw-double (fn [] nil)] [(run-long) (run-double)])",
+    "[[:error :error :error :error :error] [:error :error :error :error :error]]"
+  ],
+  [
+    "(with-redefs [raw-long (fn [] (identity -0.0))] (run-long))",
+    "[0.0 -0.0 0.0 1.0 0.0]"
+  ]
+]

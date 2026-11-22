@@ -1,0 +1,17 @@
+{
+  "base": "4e3c4acf71d8e5561f25e40f5975bc37c8621b5f",
+  "patch_sha256": "93b301756de51938ca679b25bf1ed4afcf6e21acd1f2c9d586bdb536b7bfbe89",
+  "new_files": [
+    "crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs",
+    "crates/suss-cli/tests/clojure_raw_numeric_core.rs"
+  ],
+  "sha256": {
+    "crates/suss-compile/src/portable/hir/local_hints.rs": "c0081d874880580bdd9bb40d46157d95662fa34c8fac4aab7e9276422b3b0d44",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "6607646efb6bfd5c01fe38d9776bc9eca1fcb197b3eaa7905daa8dd123416fd9",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "0cef22d4aec1e8f152795fba9f24f0e3f8b2dc876a9ad62e326a2344810f08e2",
+    "crates/suss-compile/src/runtime_abi/longs.rs": "56f36ec7e47f41b8456ab9f03f638754c761dd4517fe461cf7597fbdeb30cf05",
+    "crates/suss-compile/tests/portable_unboxed_locals.rs": "4a448d79f26ac261755c2372314b7ccbb1ca640c6dfe923a2fef170228c0dff2",
+    "crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs": "52a5a219aebad47e5ccbf0465c6adaccf734f13f2e93e9ca903d5e0fbd722f33",
+    "crates/suss-cli/tests/clojure_raw_numeric_core.rs": "894dc57dfdbebd19643bab1fe288e4f519de21fe5962e4c4a92e98d0b432ab68"
+  }
+}

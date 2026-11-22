@@ -24,6 +24,17 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   Guarded primitive results keep their numeric hit raw and their original
   coercing helper on a boxed fallback. Unknown operands, unary coercions and
   core's division retain their original boxed path.
+- **Other numeric core results.** Direct `quot`, `rem`, `abs` and unchecked
+  arithmetic calls use numeric source inlining even without local hints. Known
+  long/double inputs and results stay raw. Unchecked longs wrap; long quotient
+  handles MIN/-1 without a Wasm trap. Quotient/remainder retain the boxed zero
+  and non-finite error paths, and double quotient truncates through a long only
+  within its finite range. Remainder uses the original quotient/subtraction
+  formula, including negative zero and an infinite divisor. Unknown operands
+  retain checked runtime helpers. Direct calls ignore var replacements as
+  Clojure's inline forms do; ordinary aliases still invoke the replacement.
+  Guarded primitive operands keep a raw hit and an original boxed miss, so a
+  replacement number retains its actual kind and sign.
 - **`let` and `loop`.** A `let` binding is the value it's bound to. A `loop`
   local, and an `if` result that joins branches, are raw when every value
   reaching them is the same raw kind. A local that a `recur` gives another
@@ -197,12 +208,20 @@ Some source and calling paths retain the following behavior:
   rather than a fixed argument; Wasm structural identity must distinguish them.
 - **More raw consumers of guarded results.** Most comparisons, identity tests
   and bitwise operations materialize guarded numeric results. Double extrema,
-  arithmetic, matching loop joins, primitive arguments and casts retain their
+  arithmetic, numeric core operations, matching loop joins, primitive arguments and casts retain their
   raw hit and preserve the original boxed value on a signature miss.
 - **Box reuse across blocks.** See "Where values are boxed" above (#351).
 
 ## Evidence
 
+- `crates/suss-cli/tests/clojure_raw_numeric_core.rs` matches22 fresh JVM
+  value assertions in Runtime/Macro and actual AOT, plus4 separately labeled
+  Suss redefinition controls matching the frozen before compiler. The two new
+  `portable_unboxed_locals.rs` loops execute exactly the inspected components:
+  known long/double core operations have no normal-path helper calls or
+  loop-carried allocations. Both loop results also match fresh JVM execution.
+  `results/m12-raw-core` retains source reconstruction, failed-before controls,
+  complete gate logs and explicit limits.
 - `crates/suss-cli/tests/clojure_primitive_method_types.rs` compares captured
   returns and primitive recurrence with fresh JVM Clojure1.12.6:17 values and15
   diagnostics, in Runtime/Macro and actual AOT. It includes reflective bitwise

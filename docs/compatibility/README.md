@@ -1222,6 +1222,15 @@ primitive parameters, named arities, widening, reflective bitwise results and
 initial loop diagnostics. WIT-only numeric storage does not invent source
 primitive-return/recur errors; separate compiled controls execute those paths.
 
+[Raw numeric core evidence](../../results/m12-raw-core/README.md) adds22 fresh
+JVM value assertions for quot/rem/abs and unchecked arithmetic, in Runtime/Macro
+and actual AOT. Direct source calls inline while aliases preserve replacement
+calls. Four separate ADR-0004 controls preserve boxed replacement values and
+match actual frozen-before component execution; JVM interface-cast behavior is
+recorded separately. Two inspected long/double loop components execute with no
+normal-path helper calls or loop-carried boxes and match fresh JVM loop results.
+These observations cover the listed operations, not every numeric core call.
+
 Lazy numeric GC copies now span blocks where materializations can repeat without
 redefinition. Checked sum bodies remain byte-identical and generated allocation
 checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain

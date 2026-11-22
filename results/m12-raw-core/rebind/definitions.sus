@@ -1,0 +1,4 @@
+(def ^{:redef true :arglists '(^long [])} raw-long (fn ^long [] (identity 4)))
+(def run-long (fn [] [(try (quot (raw-long) 2) (catch :default e :error)) (try (rem (raw-long) 2) (catch :default e :error)) (try (abs (raw-long)) (catch :default e :error)) (try (unchecked-add (raw-long) 1) (catch :default e :error)) (try (unchecked-negate (raw-long)) (catch :default e :error))]))
+(def ^{:redef true :arglists '(^double [])} raw-double (fn ^double [] (identity 4.0)))
+(def run-double (fn [] [(try (quot (raw-double) 2) (catch :default e :error)) (try (rem (raw-double) 2) (catch :default e :error)) (try (abs (raw-double)) (catch :default e :error)) (try (unchecked-add (raw-double) 1) (catch :default e :error)) (try (unchecked-negate (raw-double)) (catch :default e :error))]))

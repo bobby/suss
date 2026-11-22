@@ -1,3 +1,36 @@
+## Raw numeric core result probes (2026-11-21)
+
+results/m12-raw-core retains22 fresh JVM Clojure1.12.6 value assertions,26 native
+values (four separately labeled Suss-only redefinition controls), exact seven-input
+source reconstruction, the original four failing tests and actual gate logs.
+Runtime/Macro and actual AOT preserve direct source inlining versus ordinary
+aliases. Known quot/rem/abs and unchecked arithmetic results now stay in raw
+long/double locals without relying on unrelated hint metadata. Long MIN/-1 quotient
+and unchecked arithmetic wrap; zero/non-finite failures take the original helper.
+Boxed inline helpers reject nonnumbers with the original language errors.
+
+The four ADR-0004 controls execute identical source with frozen before and current
+compilers:long->double/double->long replacements, nonnumbers and signed zero retain
+their original boxed fallback. The separate JVM reference records IFn$L/IFn$D
+ClassCastException behavior, not the Suss expected numeric values. Both new loop
+components are inspected and executed from the exact same bytes:1,234,577 long
+iterations return3703728;1,234,579 double iterations return4012373.5. Fresh JVM
+execution independently asserts those same loop sources/results. No normal-path
+helper calls or loop-carried boxes appear; throwing paths/final returns may box.
+
+Run cargo +stable test --workspace --locked with the thirteen --test targets in
+results/m12-raw-core/commands.json, then -- --test-threads=2:68 passed, zero
+failed/ignored. Java-free sh scripts/verify-bootstrap.sh reproduces both phases
+byte-for-byte and passes4 execution tests. Builds use stable Rust, two Cargo
+jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss. Actual Binaryen133
+compiled_optimize passes2. The reviewed-suite comparison passes1 (286.03s),
+10 unrelated tests filtered, zero failed/ignored. Complete observations are gzip
+with compressed/uncompressed hashes; known failures remain known failures.
+These observations cover the named operations, not raw narrow numeric casts,
+other bitwise paths, complete collection/closure escape elimination or the numeric
+tower. No new quiet ratio or current full-workspace result is inferred. No Java
+implementation is copied or shipped.
+
 ## Primitive method lexical source checks (2026-11-21)
 
 results/m12-primitive-methods retains the original failing-before fixture/log,

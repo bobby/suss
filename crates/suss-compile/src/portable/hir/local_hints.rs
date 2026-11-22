@@ -5,6 +5,19 @@
 use super::*;
 use primitive_returns::{Primitive, SourceFacts};
 
+/// Source calls which need numeric inlining even without a local hint.
+/// Aliases and compiler-authored core keep their existing call boundaries.
+pub(super) fn numeric_call(hir: &Hir) -> bool {
+    let Some(source) = &hir.source else { return false };
+    if source.origin.as_ref().is_some_and(|origin| origin.is_privileged()) { return false; }
+    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { return false };
+    let Some(node) = &source.node else { return false };
+    let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
+    global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
+        ("quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
+        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec", 1))
+}
+
 /// These Clojure core functions have :inline primitive implementations. An
 /// ordinary alias or user function call still takes the original Object.
 pub(super) fn inline(
@@ -57,16 +70,11 @@ pub(super) fn inline(
         return Ok(());
     }
     if matches!(global.name(), "unchecked-inc" | "unchecked-dec") && arguments.len() == 1 {
-        let class = primitive_returns::class(&arguments[0], facts, meter)?;
-        if matches!(class, Primitive::Byte | Primitive::Short | Primitive::Int | Primitive::Long
-            | Primitive::Float | Primitive::Double)
-        {
-            let operation = if global.name() == "unchecked-inc" { Bitwise::UncheckedAdd } else { Bitwise::UncheckedSubtract };
-            let one = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
-                kind: std::sync::Arc::new(Expression::Literal(Literal::Long(1))) };
-            hir.kind = std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![arguments[0].clone(), one] });
-            hir.ty = operation.result();
-        }
+        let operation = if global.name() == "unchecked-inc" { Bitwise::UncheckedAdd } else { Bitwise::UncheckedSubtract };
+        let one = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
+            kind: std::sync::Arc::new(Expression::Literal(Literal::Long(1))) };
+        hir.kind = std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![arguments[0].clone(), one] });
+        hir.ty = operation.result();
         return Ok(());
     }
     let operation = match (global.name(), arguments.len()) {

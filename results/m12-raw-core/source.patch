@@ -1,0 +1,487 @@
+diff --git a/crates/suss-compile/src/portable/emit/unboxed.rs b/crates/suss-compile/src/portable/emit/unboxed.rs
+index c9d8e24e..9bb25cac 100644
+--- a/crates/suss-compile/src/portable/emit/unboxed.rs
++++ b/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -14,6 +14,8 @@ use super::super::{
+ use crate::runtime_abi;
+ use wasm_encoder::{BlockType, HeapType, Instruction, ValType};
+ 
++mod numeric_core;
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub(super) enum Repr {
+     Boxed,
+@@ -169,6 +171,9 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+     })
+ }
+ fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
++    if numeric_core::accepts(operation, arguments.len()) {
++        return arithmetic(Arithmetic::Add, arguments, false, false);
++    }
+     if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
+         if arguments.iter().any(|argument| !matches!(argument,
+             Lattice::Top | Lattice::Known(Repr::Double | Repr::MaybeDouble)))
+@@ -1038,6 +1043,7 @@ impl Locals {
+         use Instruction::*;
+         if raw_int32(operation, arguments.len()).is_some()
+             || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
++            || numeric_core::accepts(operation, arguments.len())
+         {
+             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+             if !inputs.is_empty() {
+@@ -1046,7 +1052,7 @@ impl Locals {
+                     if i > 0 { code.push(I32And); }
+                 }
+                 code.push(If(BlockType::Empty));
+-                self.bitwise_raw(code, operation, arguments, result);
++                self.bitwise_raw(code, operation, arguments, result, slow);
+                 if self.of(result).maybe() { code.extend([I32Const(1), LocalSet(self.valid(result))]); }
+                 code.push(Else);
+                 for argument in arguments { self.push_boxed(code, *argument); }
+@@ -1058,10 +1064,14 @@ impl Locals {
+                 return;
+             }
+         }
+-        self.bitwise_raw(code, operation, arguments, result);
++        self.bitwise_raw(code, operation, arguments, result, slow);
+     }
+-    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
++    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+         use Instruction::*;
++        if numeric_core::accepts(operation, arguments.len()) {
++            self.numeric_core_raw(code, operation, arguments, result, slow);
++            return;
++        }
+         if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin
+             | Bitwise::DoubleMax | Bitwise::DoubleMin)
+         {
+diff --git a/crates/suss-compile/src/portable/hir/division_overloads.rs b/crates/suss-compile/src/portable/hir/division_overloads.rs
+index 22e3eb44..828c91af 100644
+--- a/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ b/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -38,9 +38,9 @@ pub(super) fn annotate(
+ }
+ 
+ #[derive(Clone, Copy, Default)]
+-struct Features { division: bool, hints: bool, extrema: bool }
++struct Features { division: bool, hints: bool, extrema: bool, numeric_core: bool }
+ impl Features {
+-    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; }
++    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; }
+ }
+ 
+ struct Pass<'a> {
+@@ -99,6 +99,7 @@ impl Pass<'_> {
+         })?;
+         needed.hints |= primitive_returns::numeric_hint(&hir.metadata, &hir.span, self.meter)?.is_some();
+         needed.extrema |= extrema::is_call(hir);
++        needed.numeric_core |= local_hints::numeric_call(hir);
+         self.needed.insert(key, needed);
+         Ok(needed)
+     }
+@@ -107,7 +108,7 @@ impl Pass<'_> {
+         (self.meter)(1)?;
+         if !self.hints && !self.validate_methods {
+             let needed = self.features(hir)?;
+-            if !needed.division && !needed.extrema { return Ok(()); }
++            if !needed.division && !needed.extrema && !needed.numeric_core { return Ok(()); }
+         }
+         let key = Arc::as_ptr(&hir.kind) as usize;
+         if let Some((rewritten, ty)) = self.rewritten.get(&key) {
+@@ -116,7 +117,9 @@ impl Pass<'_> {
+             return Ok(());
+         }
+         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+-            if self.hints && !self.validate_only { local_hints::inline(hir, facts, self.meter)?; }
++            if !self.validate_only && (self.hints || local_hints::numeric_call(hir)) {
++                local_hints::inline(hir, facts, self.meter)?;
++            }
+             if !self.validate_only { extrema::inline(hir, facts, self.meter)?; }
+             // Generated nary comparison pairs are calls on Object temporaries,
+             // not Clojure's binary :inline overloads.
+diff --git a/crates/suss-compile/src/portable/hir/local_hints.rs b/crates/suss-compile/src/portable/hir/local_hints.rs
+index 79973753..d30fe744 100644
+--- a/crates/suss-compile/src/portable/hir/local_hints.rs
++++ b/crates/suss-compile/src/portable/hir/local_hints.rs
+@@ -5,6 +5,19 @@
+ use super::*;
+ use primitive_returns::{Primitive, SourceFacts};
+ 
++/// Source calls which need numeric inlining even without a local hint.
++/// Aliases and compiler-authored core keep their existing call boundaries.
++pub(super) fn numeric_call(hir: &Hir) -> bool {
++    let Some(source) = &hir.source else { return false };
++    if source.origin.as_ref().is_some_and(|origin| origin.is_privileged()) { return false; }
++    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { return false };
++    let Some(node) = &source.node else { return false };
++    let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
++    global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
++        ("quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
++        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec", 1))
++}
++
+ /// These Clojure core functions have :inline primitive implementations. An
+ /// ordinary alias or user function call still takes the original Object.
+ pub(super) fn inline(
+@@ -57,16 +70,11 @@ pub(super) fn inline(
+         return Ok(());
+     }
+     if matches!(global.name(), "unchecked-inc" | "unchecked-dec") && arguments.len() == 1 {
+-        let class = primitive_returns::class(&arguments[0], facts, meter)?;
+-        if matches!(class, Primitive::Byte | Primitive::Short | Primitive::Int | Primitive::Long
+-            | Primitive::Float | Primitive::Double)
+-        {
+-            let operation = if global.name() == "unchecked-inc" { Bitwise::UncheckedAdd } else { Bitwise::UncheckedSubtract };
+-            let one = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
+-                kind: std::sync::Arc::new(Expression::Literal(Literal::Long(1))) };
+-            hir.kind = std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![arguments[0].clone(), one] });
+-            hir.ty = operation.result();
+-        }
++        let operation = if global.name() == "unchecked-inc" { Bitwise::UncheckedAdd } else { Bitwise::UncheckedSubtract };
++        let one = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
++            kind: std::sync::Arc::new(Expression::Literal(Literal::Long(1))) };
++        hir.kind = std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![arguments[0].clone(), one] });
++        hir.ty = operation.result();
+         return Ok(());
+     }
+     let operation = match (global.name(), arguments.len()) {
+diff --git a/crates/suss-compile/src/runtime_abi/longs.rs b/crates/suss-compile/src/runtime_abi/longs.rs
+index 62f3f74e..721acb17 100644
+--- a/crates/suss-compile/src/runtime_abi/longs.rs
++++ b/crates/suss-compile/src/runtime_abi/longs.rs
+@@ -724,7 +724,8 @@ pub(super) fn append(b: &mut Builder) {
+ }
+ 
+ /// Clojure's `quot`, `rem`, `abs`, `unchecked-*` and the `long?` and
+-/// `double?` tests, on operands core has already checked are numbers.
++/// `double?` tests. Numeric operations also check their own operands so direct
++/// source inlining preserves language errors rather than trapping on a cast.
+ pub(super) fn functions(b: &mut Builder) {
+     use Instruction::*;
+     let boxed = b.names["long-box"];
+@@ -732,8 +733,10 @@ pub(super) fn functions(b: &mut Builder) {
+     let number = b.names["number-unbox"];
+     let locals = [(3, ValType::I64), (3, ValType::F64)];
+     // Longs are locals 2 and 3; doubles 5 and 6.
+-    let operands = |b: &Builder| {
+-        let mut code = both_longs(b).to_vec();
++    let operands = |b: &Builder, symbol: &str| {
++        let mut code = Vec::new();
++        super::numeric_operands::require_numbers(b, &mut code, symbol, 2);
++        code.extend(both_longs(b));
+         code.extend([
+             If(BlockType::Empty),
+             LocalGet(0),
+@@ -761,7 +764,7 @@ pub(super) fn functions(b: &mut Builder) {
+     };
+     // quot truncates. Long MIN / -1 wraps to MIN, as in Clojure, rather
+     // than trapping; a double quotient is truncated toward zero.
+-    let mut code = operands(b);
++    let mut code = operands(b, "quot");
+     zero(&mut code, vec![LocalGet(3), I64Eqz]);
+     code.extend([
+         LocalGet(3),
+@@ -807,7 +810,7 @@ pub(super) fn functions(b: &mut Builder) {
+     code.extend([LocalGet(7), StructNew(NUMBER)]);
+     b.function_with_locals("number-quot", &[VALUE, VALUE], &[VALUE], &locals, &code);
+     // rem has the dividend's sign; wasm's rem_s doesn't trap on MIN % -1.
+-    let mut code = operands(b);
++    let mut code = operands(b, "rem");
+     zero(&mut code, vec![LocalGet(3), I64Eqz]);
+     code.extend([LocalGet(2), LocalGet(3), I64RemS, Call(boxed), Return, End]);
+     code.extend(doubles);
+@@ -841,14 +844,17 @@ pub(super) fn functions(b: &mut Builder) {
+         StructNew(NUMBER),
+         End,
+     ];
+-    b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &code);
++    let mut checked = Vec::new();
++    super::numeric_operands::require_numbers(b, &mut checked, "abs", 1);
++    checked.extend(code);
++    b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &checked);
+     // unchecked-* wrap longs and are ordinary double arithmetic otherwise.
+     for (name, exact, floating) in [
+         ("add", I64Add, F64Add),
+         ("subtract", I64Sub, F64Sub),
+         ("multiply", I64Mul, F64Mul),
+     ] {
+-        let mut code = operands(b);
++        let mut code = operands(b, &format!("unchecked-{name}"));
+         code.extend([LocalGet(2), LocalGet(3), exact, Call(boxed), Return, End]);
+         code.extend([
+             LocalGet(0),
+@@ -882,7 +888,10 @@ pub(super) fn functions(b: &mut Builder) {
+         StructNew(NUMBER),
+         End,
+     ];
+-    b.function("number-unchecked-negate", &[VALUE], &[VALUE], &code);
++    let mut checked = Vec::new();
++    super::numeric_operands::require_numbers(b, &mut checked, "unchecked-negate", 1);
++    checked.extend(code);
++    b.function("number-unchecked-negate", &[VALUE], &[VALUE], &checked);
+     for (name, test) in [("long?", "long-test"), ("double?", "double-test")] {
+         let mut code = vec![LocalGet(0), Call(b.names[test])];
+         code.extend(super::boolean());
+diff --git a/crates/suss-compile/tests/portable_unboxed_locals.rs b/crates/suss-compile/tests/portable_unboxed_locals.rs
+index e288c028..cc4d0f29 100644
+--- a/crates/suss-compile/tests/portable_unboxed_locals.rs
++++ b/crates/suss-compile/tests/portable_unboxed_locals.rs
+@@ -201,3 +201,61 @@ fn check_sum_loop(operators: &[Operator]) {
+     assert!(operators.iter().any(|op| matches!(op, Operator::I64LtS)));
+     assert!(operators.iter().filter(|op| matches!(op, Operator::I64Add)).count() >= 2);
+ }
++
++#[test]
++fn known_long_core_results_stay_raw_and_execute() {
++    let source = "(defn ^:export bound [] (loop [i 0 acc 0]
++      (if (< i 1234577)
++        (recur (inc i) (unchecked-add acc
++          (unchecked-subtract (abs (rem (unchecked-negate i) 7)) (quot i 1234577))))
++        acc)))";
++    let bytes = Compiler::new().compile(source,
++        "package test:raw-core; world api { export bound: func() -> s64; }").unwrap();
++    for operators in functions_with(&bytes, 1234577) {
++        assert!(operators.iter().any(|op| matches!(op, Operator::I64DivS)));
++        assert!(operators.iter().any(|op| matches!(op, Operator::I64RemS)));
++        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
++        assert!(calls.iter().all(|&i| throwing_call(&operators, i)), "only throwing paths call: {operators:?}");
++        for (index, op) in operators.iter().enumerate() {
++            if !matches!(op, Operator::StructNew { .. }) { continue; }
++            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
++                .map(|offset| index + offset).unwrap();
++            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
++            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
++        }
++    }
++    let (mut store, instance) = extrema_component(&bytes);
++    let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
++    let expected: i64 = (0..1234577_i64).map(|i| i % 7).sum();
++    assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
++    run.post_return(&mut store).unwrap();
++}
++
++#[test]
++fn known_double_core_results_stay_raw_and_execute() {
++    let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
++      (if (< i 1234579)
++        (recur (inc i) (unchecked-add acc
++          (abs (rem (unchecked-multiply -0.5 (double i)) 7.0))))
++        acc)))";
++    let bytes = Compiler::new().compile(source,
++        "package test:raw-core; world api { export bound: func() -> f64; }").unwrap();
++    for operators in functions_with(&bytes, 1234579) {
++        assert!(operators.iter().any(|op| matches!(op, Operator::F64Div)));
++        assert!(operators.iter().any(|op| matches!(op, Operator::F64Abs)));
++        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
++        assert!(calls.iter().all(|&i| throwing_call(&operators, i)), "only throwing paths call: {operators:?}");
++        for (index, op) in operators.iter().enumerate() {
++            if !matches!(op, Operator::StructNew { .. }) { continue; }
++            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
++                .map(|offset| index + offset).unwrap();
++            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
++            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
++        }
++    }
++    let (mut store, instance) = extrema_component(&bytes);
++    let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
++    let expected: f64 = (0..1234579_i64).map(|i| (i % 14) as f64 * 0.5).sum();
++    assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
++    run.post_return(&mut store).unwrap();
++}
+diff --git a/crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs b/crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs
+new file mode 100644
+index 00000000..d198f43d
+--- /dev/null
++++ b/crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs
+@@ -0,0 +1,88 @@
++//! Raw forms of the existing numeric helpers. Errors take the original helper
++//! with the original operands; the successful numeric path allocates nothing.
++use super::*;
++
++pub(super) fn accepts(operation: Bitwise, count: usize) -> bool {
++    matches!((operation, count),
++        (Bitwise::Quot | Bitwise::Rem | Bitwise::UncheckedAdd
++            | Bitwise::UncheckedSubtract | Bitwise::UncheckedMultiply, 2)
++        | (Bitwise::Abs | Bitwise::UncheckedNegate, 1))
++}
++
++impl Locals {
++    pub(super) fn numeric_core_raw(
++        &self, code: &mut Vec<Instruction<'static>>, operation: Bitwise,
++        arguments: &[ValueId], result: ValueId, slow: u32,
++    ) {
++        use Instruction::*;
++        let kind = self.of(result).definite();
++        let left = arguments[0];
++        let target = self.raw(result);
++        match operation {
++            Bitwise::Abs if kind == Repr::Long => {
++                code.extend([I64Const(0), LocalGet(self.raw(left)), I64Sub,
++                    LocalGet(self.raw(left)), LocalGet(self.raw(left)), I64Const(0), I64LtS, Select]);
++            }
++            Bitwise::Abs => {
++                self.push_as(code, left, Repr::Double);
++                code.push(F64Abs);
++            }
++            Bitwise::UncheckedNegate => {
++                if kind == Repr::Long { code.push(I64Const(0)); }
++                self.push_as(code, left, kind);
++                code.push(if kind == Repr::Long { I64Sub } else { F64Neg });
++            }
++            Bitwise::UncheckedAdd | Bitwise::UncheckedSubtract | Bitwise::UncheckedMultiply => {
++                for argument in arguments { self.push_as(code, *argument, kind); }
++                code.push(match (operation, kind) {
++                    (Bitwise::UncheckedAdd, Repr::Long) => I64Add,
++                    (Bitwise::UncheckedSubtract, Repr::Long) => I64Sub,
++                    (Bitwise::UncheckedMultiply, Repr::Long) => I64Mul,
++                    (Bitwise::UncheckedAdd, _) => F64Add,
++                    (Bitwise::UncheckedSubtract, _) => F64Sub,
++                    _ => F64Mul,
++                });
++            }
++            Bitwise::Quot | Bitwise::Rem => {
++                let right = arguments[1];
++                self.push_as(code, right, kind);
++                if kind == Repr::Long { code.push(I64Eqz); }
++                else { code.extend([F64Const(0.0.into()), F64Eq]); }
++                code.push(If(BlockType::Empty));
++                self.slow(code, arguments, slow);
++                code.push(End);
++                if kind == Repr::Long {
++                    if operation == Bitwise::Quot {
++                        // Java wraps MIN / -1; Wasm div_s would trap.
++                        code.extend([LocalGet(self.raw(right)), I64Const(-1), I64Eq,
++                            If(BlockType::Result(ValType::I64)),
++                            I64Const(0), LocalGet(self.raw(left)), I64Sub, Else,
++                            LocalGet(self.raw(left)), LocalGet(self.raw(right)), I64DivS, End]);
++                    } else {
++                        code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right)), I64RemS]);
++                    }
++                } else {
++                    self.push_as(code, left, Repr::Double);
++                    self.push_as(code, right, Repr::Double);
++                    code.extend([F64Div, LocalSet(target), LocalGet(target), F64Abs,
++                        F64Const(f64::INFINITY.into()), F64Lt, I32Eqz, If(BlockType::Empty)]);
++                    self.slow(code, arguments, slow);
++                    code.extend([End, LocalGet(target), F64Abs,
++                        F64Const(9_223_372_036_854_775_808.0f64.into()), F64Lt,
++                        If(BlockType::Empty), LocalGet(target), I64TruncF64S,
++                        F64ConvertI64S, LocalSet(target), End]);
++                    if operation == Bitwise::Rem {
++                        // The quotient's long round trip makes -0.0 positive;
++                        // subtraction then retains the original dividend sign.
++                        self.push_as(code, left, Repr::Double);
++                        code.push(LocalGet(target));
++                        self.push_as(code, right, Repr::Double);
++                        code.extend([F64Mul, F64Sub]);
++                    } else { code.push(LocalGet(target)); }
++                }
++            }
++            _ => unreachable!("raw numeric core operation"),
++        }
++        code.push(LocalSet(target));
++    }
++}
+diff --git a/crates/suss-cli/tests/clojure_raw_numeric_core.rs b/crates/suss-cli/tests/clojure_raw_numeric_core.rs
+new file mode 100644
+index 00000000..aa781193
+--- /dev/null
++++ b/crates/suss-cli/tests/clojure_raw_numeric_core.rs
+@@ -0,0 +1,97 @@
++//! Known numeric core results preserve Clojure values and source inlining (#337).
++use suss_cli::portable_session::Session;
++
++const DEFINITIONS: &str = r#"(def ^{:redef true :arglists '(^long [])} raw-long (fn ^long [] (identity 4)))
++(def run-long (fn [] [(try (quot (raw-long) 2) (catch :default e :error)) (try (rem (raw-long) 2) (catch :default e :error)) (try (abs (raw-long)) (catch :default e :error)) (try (unchecked-add (raw-long) 1) (catch :default e :error)) (try (unchecked-negate (raw-long)) (catch :default e :error))]))
++(def ^{:redef true :arglists '(^double [])} raw-double (fn ^double [] (identity 4.0)))
++(def run-double (fn [] [(try (quot (raw-double) 2) (catch :default e :error)) (try (rem (raw-double) 2) (catch :default e :error)) (try (abs (raw-double)) (catch :default e :error)) (try (unchecked-add (raw-double) 1) (catch :default e :error)) (try (unchecked-negate (raw-double)) (catch :default e :error))]))"#;
++
++// Fresh JVM Clojure 1.12.6; results/m12-raw-core retains source and output.
++const CASES: &[(&str, &str)] = &[
++    ("[(quot 7 3) (quot -7 3) (quot 7 -3) (quot -7 -3) (rem -7 3) (rem 7 -3) (abs -7)]", "[2 -2 -2 2 -1 1 7]"),
++    ("[(quot -9223372036854775808 -1) (rem -9223372036854775808 -1) (abs -9223372036854775808)]", "[-9223372036854775808 0 -9223372036854775808]"),
++    ("[(unchecked-add 9223372036854775807 1) (unchecked-subtract -9223372036854775808 1) (unchecked-multiply 9223372036854775807 2) (unchecked-negate -9223372036854775808)]", "[-9223372036854775808 9223372036854775807 -2 -9223372036854775808]"),
++    ("[(quot -0.5 2.0) (quot -0.0 2.0) (rem -0.5 2.0) (rem -0.0 2.0) (abs -0.0) (unchecked-negate -0.0)]", "[0.0 0.0 -0.5 -0.0 0.0 0.0]"),
++    ("[(quot 9007199254740993 2) (quot 9007199254740993 2.0) (rem 9007199254740993 2) (rem 9007199254740993 2.0)]", "[4503599627370496 4.503599627370496E15 1 0.0]"),
++    ("[(quot 2.5E20 0.5) (rem 2.5E20 0.5) (quot -9.223372036854776E18 1.0) (rem -9.223372036854776E18 1.0)]", "[5.0E20 0.0 -9.223372036854776E18 0.0]"),
++    ("[(abs ##NaN) (abs ##-Inf) (unchecked-add ##Inf ##-Inf) (unchecked-negate ##Inf)]", "[##NaN ##Inf ##NaN ##-Inf]"),
++    ("[(try (quot ##NaN 1.0) (catch :default e :error)) (try (rem ##Inf 1.0) (catch :default e :error)) (try (quot 1.0 ##NaN) (catch :default e :error)) (try (rem 1.0 ##Inf) (catch :default e :error))]", "[:error :error :error ##NaN]"),
++    ("[(try (quot 1 0) (catch :default e :error)) (try (rem 1.0 -0.0) (catch :default e :error)) (try (quot ##NaN 0.0) (catch :default e :error)) (try (rem 0.0 0.0) (catch :default e :error))]", "[:error :error :error :error]"),
++    ("[(quot 1.0 ##Inf) (quot -1.0 ##Inf) (rem 1.0 ##Inf) (rem -1.0 ##Inf)]", "[0.0 0.0 ##NaN ##NaN]"),
++    ("(let [effects (atom [])] [(try (quot (do (swap! effects conj :first) :bad) (do (swap! effects conj :second) 0)) (catch :default e :error)) @effects])", "[:error [:first :second]]"),
++    ("(let [^long x (identity 1.0E30) effects (atom [])] [(try (quot x (do (swap! effects conj :second) 1)) (catch :default e :error)) @effects])", "[:error []]"),
++    ("(with-redefs [quot (fn [x y] :replaced)] [(quot 7 2) ((identity quot) 7 2)])", "[3 :replaced]"),
++    ("(with-redefs [rem (fn [x y] :replaced)] [(rem 7 2) ((identity rem) 7 2)])", "[1 :replaced]"),
++    ("(with-redefs [abs (fn [x] :replaced)] [(abs -7) ((identity abs) -7)])", "[7 :replaced]"),
++    ("(with-redefs [unchecked-add (fn [x y] :replaced)] [(unchecked-add 7 2) ((identity unchecked-add) 7 2)])", "[9 :replaced]"),
++    ("(with-redefs [unchecked-inc (fn [x] :replaced)] [(unchecked-inc 7) (unchecked-inc (identity 7)) ((identity unchecked-inc) 7)])", "[8 8 :replaced]"),
++    ("[(quot (identity 7) 2) (rem (identity 7) 2) (abs (identity -7)) (unchecked-negate (identity -7))]", "[3 1 7 7]"),
++    ("[(unchecked-add 1.0 -0.0) (unchecked-subtract -0.0 0.0) (unchecked-multiply -0.0 2) (unchecked-inc 2.5) (unchecked-dec 2.5)]", "[1.0 -0.0 -0.0 3.5 1.5]"),
++    ("(let [^double x (identity -7)] [(quot x 2) (rem x 2) (abs x) (unchecked-add x 2)])", "[-3.0 -1.0 7.0 -5.0]"),
++    ("(let [f (fn [^long x] [(quot x 2) (rem x 2) (abs x) (unchecked-add x 2)])] [(f -7) (f -9223372036854775808)])", "[[-3 -1 7 -5] [-4611686018427387904 0 -9223372036854775808 -9223372036854775806]]"),
++    ("[(try (abs nil) (catch :default e :error)) (try (unchecked-add :bad 1) (catch :default e :error)) (try (quot true 1) (catch :default e :error))]", "[:error :error :error]"),
++];
++
++// ADR-0004 preserves boxed replacements after a primitive signature is lost.
++// These are Suss-only controls, also executed with the frozen before compiler.
++const REBIND_CASES: &[(&str, &str)] = &[
++    ("(vector (run-long) (with-redefs [raw-long (fn [] (identity 3.5))] (run-long)))", "[[2 0 4 5 -4] [1.0 1.5 3.5 4.5 -3.5]]"),
++    ("(vector (run-double) (with-redefs [raw-double (fn [] (identity 5))] (run-double)))", "[[2.0 0.0 4.0 5.0 -4.0] [2 1 5 6 -5]]"),
++    ("(with-redefs [raw-long (fn [] :bad) raw-double (fn [] nil)] [(run-long) (run-double)])", "[[:error :error :error :error :error] [:error :error :error :error :error]]"),
++    ("(with-redefs [raw-long (fn [] (identity -0.0))] (run-long))", "[0.0 -0.0 0.0 1.0 0.0]"),
++];
++
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
++    CASES.iter().chain(REBIND_CASES)
++}
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_known_numeric_core_results() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        session.eval(DEFINITIONS).unwrap();
++        for (source, expected) in cases() {
++            let value = session.eval(&observed(source)).unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session.inspect(&value, |mut store, value| {
++                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++            }).unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_known_numeric_core_results() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = format!("(ns localhints)\n{DEFINITIONS}\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!("(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n", observed(expression)));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args(["compile", "localhints.sus", "-w", "localhints.wit", "-o", "localhints.wasm"]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["run", "localhints.wasm", "--invoke", &format!("case{index}"), "--", "0"])
++            .output().unwrap();
++        assert!(output.status.success(), "{expression}: {}", String::from_utf8_lossy(&output.stderr));
++        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "1", "{expression}");
++    }
++}
