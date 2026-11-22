@@ -1,0 +1,26 @@
+[
+  {
+    "source": "(let [^double x (identity 5)] (bit-and x 1))",
+    "jvm": "1",
+    "suss": ":error",
+    "matches": false
+  },
+  {
+    "source": "(let [^long x (identity 5.5)] [(= x 5) (= x 5.5) (= x (identity 5)) (= x (identity 5.5))])",
+    "jvm": "[true true true false]",
+    "suss": "[false true false true]",
+    "matches": false
+  },
+  {
+    "source": "(let [^double x (identity 5)] [(= x 5.0) (= x 5) (= x (identity 5.0)) (= x (identity 5))])",
+    "jvm": "[true true true false]",
+    "suss": "[false true false true]",
+    "matches": false
+  },
+  {
+    "source": "(let [^long x (identity 5.5) ^long y (identity 5.0)] (= x y))",
+    "jvm": "true",
+    "suss": "false",
+    "matches": false
+  }
+]

@@ -1193,3 +1193,21 @@ rooted descriptor and owner-type comparisons verify the concrete input classes.
 The [focused receipt](reduction-dispatch/evidence/focused-native-receipt.json)
 is an uncommitted-source execution snapshot; it does not establish a new full
 workspace baseline, committed-head review, CI, or whole-suite conformance.
+
+## Numeric local hints and box reuse evidence
+
+Source numeric classes are distinct from primitive expression kinds and physical
+storage. The retained local-hint matrix verifies31 values and seven diagnostics
+against fresh JVM Clojure1.12.6, with Runtime/Macro and actual AOT execution. Object
+locals retain their original values for ordinary reads/calls and convert at covered
+primitive uses; aliases, captures and initial loop diagnostic order are included.
+See [local hint receipts](../../results/m12-local-hints/README.md).
+
+Lazy numeric GC copies now span blocks where materializations can repeat without
+redefinition. Checked sum bodies remain byte-identical and generated allocation
+checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain
+47 focused passes, expanded value/NaN cases, frozen before/after allocation and
+instruction samples, both boxed controls and the initial broad-cache regression.
+The samples are not quiet timing acceptance. Mixed bitwise and = formal overloads,
+max/min and unchecked inc/dec still have retained JVM/AOT mismatches. These scoped
+observations do not establish the complete numeric tower or new inventory counts.

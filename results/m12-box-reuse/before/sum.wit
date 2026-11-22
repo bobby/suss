@@ -1,0 +1,1 @@
+package test:sum-check; world w { export fixed-sum: func() -> s64; export dynamic-sum: func(n: u32) -> s64; }

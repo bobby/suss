@@ -1,3 +1,37 @@
+## Lazy numeric box reuse measurements (2026-11-21)
+
+results/m12-box-reuse retains frozen source patches, executable/component hashes,
+full samples and commands. Warm-first median-three null-collector peak-RSS slopes
+at2M/4M iterations estimate double-raw13.496 and wide-long13.355 bytes/iteration
+before, both below resolution afterward. Boxed controls stay below resolution.
+Normal-collector perf instructions:u slopes at100k/200k change double-raw
+103.833->96.101 and long-raw100.057->91.984; boxed controls115.918->116.049 and
+112.998->113.038. Both control and raw counts are retained. The broad initial cache
+removed allocations but raised control instructions; its code and samples remain.
+Concurrent wall times are not quiet timing acceptance.
+
+Selective flags track only repeated materializations or cycle uses without
+redefinition. Numeric boxes remain lazy, and dynamic definitions including loop
+parameters invalidate their copies. Nine focused targets pass47 tests, zero
+failed/ignored, including default-budget records and numeric-loop allocation
+checks. The extended changing-value and NaN cases pass both cache tests again in
+Runtime/Macro and actual AOT. Three value cases match fresh JVM1.12.6; numeric
+identity preserves Suss's documented contract, independently checked against the
+frozen before binary. Its initial wrong JVM expectation remains a negative control.
+
+All361 Python tests pass; new bench.py cases match16 fresh JVM observations.
+An independent locked wasmparser0.258 code probe validates both full components;
+marked309-byte and380-byte checked sum bodies match byte-for-byte before/after,
+and both exports execute correctly. This preserves existing checked-loop code,
+not a newly measured quiet time ratio. Builds use stable Rust, two jobs/threads,
+MemoryMax4G, m12-hints-target and the shared native cache.
+
+Fresh JVM method signatures and actual AOT negatives also establish incomplete
+mixed bitwise and = formal overload selection, alongside max/min and unchecked
+inc/dec. Those source cases are retained under results/m12-local-hints and
+results/m12-box-reuse/optimized. No full workspace or complete numeric-tower
+acceptance is inferred from these focused checks.
+
 ## Primitive local hint conversion evidence (2026-11-21)
 
 Fresh JVM1.12.6 verifies31 value rows and seven compile-time diagnostic rows in

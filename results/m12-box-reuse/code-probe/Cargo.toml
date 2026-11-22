@@ -1,0 +1,10 @@
+[package]
+name = "m12-code-probe"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+wasmparser = "=0.258.0"
+sha2 = "=0.10.9"
+[profile.dev]
+debug = 0

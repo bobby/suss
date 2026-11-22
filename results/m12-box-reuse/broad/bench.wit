@@ -1,0 +1,1 @@
+package test:box-reuse; world w { export double-raw: func(n: u32) -> u32; export double-boxed: func(n: u32) -> u32; export long-raw: func(n: u32) -> u32; export long-boxed: func(n: u32) -> u32; }

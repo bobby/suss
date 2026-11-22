@@ -1,0 +1,1 @@
+(ns identitycheck) (def check (fn [] (let [f (fn [v] v) x (+ 1.25 0.5)] (identical? (f x) (f x)))))

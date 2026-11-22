@@ -1,0 +1,1 @@
+package test:identity; world w { export check: func() -> bool; }

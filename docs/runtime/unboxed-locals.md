@@ -82,9 +82,10 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
 - **Hinted locals.** A `^long` or `^double` let/loop local retains its
   original Object value. Its hint supplies a numeric class at primitive uses:
   `(let [^long x (identity 5.5)] [x (+ x 1)])` returns `[5.5 6]`.
-  Arithmetic, binary numeric comparisons/predicates, bitwise inline operations,
-  quot/rem/abs and numeric casts consume these hints; ordinary function calls
-  and equality retain the Object. Aliases and captures keep the same source
+  Covered arithmetic, numeric comparisons/predicates, quot/rem/abs and numeric
+  casts consume these hints at primitive uses; ordinary function calls retain
+  the Object. Some overloaded families still need the formal-argument selection
+  described below. Aliases and captures keep the same source
   class. Nary comparisons are ordinary calls and ignore local hints. A use-site
   hint overrides an Object local's declaration; a contradictory hint on a
   genuine primitive local is an error. A hinted binding with a primitive
@@ -141,11 +142,15 @@ because their locals are saved as GC values across a suspension.
 
 ## Where values are boxed
 
-A raw value is boxed at each use that needs a GC value: a call argument, a
-collection element, a closure capture, a return, a `throw`, a loop local that
-stays boxed, or any operation without a raw form. Within one block, a value is
-boxed at most once, but each block boxes it again: a raw double that escapes
-inside a loop allocates a box on every iteration, where the boxed path made one.
+A raw value needs a GC copy for a call argument, collection element, closure
+capture, return, throw, boxed loop local, or an operation without a raw form.
+A copy is created lazily. A value used at multiple materialization sites, or in
+an escapable CFG cycle without reexecuting its definition, has a dynamic cache
+flag and reuses that copy across blocks. Other values retain the simple per-block
+copy. Entering a defining block invalidates its result and parameter caches;
+values defined outside the cycle retain one copy. No allocation moves before
+its first use. Inline arithmetic's throwing paths and a single return do not
+by themselves add cache flags to the hot loop.
 Results don't change, since `identical?` compares numbers by value
 ([scalar predicates](scalar-predicates.md)). A long boxes to an i31 when it
 fits and to a `LONG` struct otherwise, and a double to a `NUMBER` struct; both
@@ -155,13 +160,16 @@ Long `+`, `-`, `*` and negation check for overflow inline. When the check
 fails, the compiler calls the boxed runtime operation on boxed copies of the
 operands, which throws "long overflow" exactly as the boxed path does.
 
-## Not yet
+## Other paths and limits
 
-These parts of #337, #448 and #351 aren't done yet:
+Some source and calling paths retain the following behavior:
 
-- **Other numeric inline functions.** `max`/`min` and `unchecked-inc`/
-  `unchecked-dec` still need their source inline local-hint treatment; fresh
-  JVM observations are retained in results/m12-local-hints/numeric-core-oracle.log.
+- **Other numeric overloads.** `max`/`min`, `unchecked-inc`/`unchecked-dec`,
+  mixed bitwise operands and some `=` signatures retain incomplete source
+  overload selection. Fresh JVM signatures/results and actual AOT negatives
+  are retained in results/m12-local-hints and results/m12-box-reuse/optimized.
+  A local's hint is not an unconditional conversion: the selected formal
+  parameter must be primitive. These cases require that additional selection.
 - **Additional typed call forms.** Variadic adapters, calls wider than the
   eight fixed entries, and async calls keep the ordinary interface. Primitive
   bodies themselves exist for all source-hinted methods. A live-var guard's

@@ -1,0 +1,3 @@
+(ns nancheck)
+(def raw (fn [] (pr-str (let [x (+ ##NaN 0.0) f (fn [v] v) same (identity identical?) a (if (identity true) (f x) nil) b (if (identity false) nil (f x))] [(= a b) (== a b) (identical? a b) (same a b) (count (hash-set a b)) (get {a 1} b :miss)]))))
+(def boxed (fn [] (pr-str (let [x (identity ##NaN) f (fn [v] v) same (identity identical?) a (if (identity true) (f x) nil) b (if (identity false) nil (f x))] [(= a b) (== a b) (identical? a b) (same a b) (count (hash-set a b)) (get {a 1} b :miss)]))))

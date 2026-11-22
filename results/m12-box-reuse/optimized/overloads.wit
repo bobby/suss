@@ -1,0 +1,1 @@
+package test:overload-check; world w { export case0: func() -> string;export case1: func() -> string;export case2: func() -> string;export case3: func() -> string; }

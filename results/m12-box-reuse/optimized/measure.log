@@ -1,0 +1,5 @@
+Running as unit: run-p2827388-i86679239.scope; invocation ID: 1a3208db3aa740bf87d7e8b48f2ee973
+{"name": "double-raw", "bytes_per_iteration": 0.0, "instructions_per_iteration": 96.1008}
+{"name": "double-boxed", "bytes_per_iteration": 0.0, "instructions_per_iteration": 116.04898}
+{"name": "long-raw", "bytes_per_iteration": 0.0, "instructions_per_iteration": 91.98389}
+{"name": "long-boxed", "bytes_per_iteration": 0.0, "instructions_per_iteration": 113.03848}

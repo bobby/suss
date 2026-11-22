@@ -1,0 +1,47 @@
+"(let [x (* -0.0 1.0) y (+ 3000000000 5) f (fn [v] v)] (loop [i 0 out []] (if (< i 4) (let [a (f x) b (if (zero? (bit-and i 1)) (f y) (identity y))] (recur (inc i) (conj out [a b]))) [x y out])))" "[-0.0 3000000005 [[-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005]]]"
+"(let [f (fn [v] v)] (loop [i 0 d 1.5 w 3000000000 out []] (if (< i 4) (let [a (f d) b (f w)] (recur (inc i) (+ d 0.5) (+ w 2) (conj out [a b]))) out)))" "[[1.5 3000000000] [2.0 3000000002] [2.5 3000000004] [3.0 3000000006]]"
+"(let [f (fn [v] v) x (+ 1.25 0.5)] [(if true (f x) :unused) (if false :unused (f x)) (f x) (identical? (f x) (f x))])" "[1.75 1.75 1.75 false]"
+{:clojure.main/message
+ "Execution error (AssertionError) at user/eval148 (m12-box-reuse-oracle.clj:4).\nAssert failed: (= actual expected)\n",
+ :clojure.main/triage
+ {:clojure.error/class java.lang.AssertionError,
+  :clojure.error/line 4,
+  :clojure.error/cause "Assert failed: (= actual expected)",
+  :clojure.error/symbol user/eval148,
+  :clojure.error/source "m12-box-reuse-oracle.clj",
+  :clojure.error/phase :execution},
+ :clojure.main/trace
+ {:via
+  [{:type clojure.lang.Compiler$CompilerException,
+    :message
+    "Syntax error macroexpanding at (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-box-reuse-oracle.clj:4:1).",
+    :data
+    {:clojure.error/phase :execution,
+     :clojure.error/line 4,
+     :clojure.error/column 1,
+     :clojure.error/source
+     "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-box-reuse-oracle.clj"},
+    :at [clojure.lang.Compiler load "Compiler.java" 8235]}
+   {:type java.lang.AssertionError,
+    :message "Assert failed: (= actual expected)",
+    :at [user$eval148 invokeStatic "m12-box-reuse-oracle.clj" 4]}],
+  :trace
+  [[user$eval148 invokeStatic "m12-box-reuse-oracle.clj" 4]
+   [user$eval148 invoke "m12-box-reuse-oracle.clj" 4]
+   [clojure.lang.Compiler eval "Compiler.java" 7757]
+   [clojure.lang.Compiler load "Compiler.java" 8223]
+   [clojure.lang.Compiler loadFile "Compiler.java" 8161]
+   [clojure.main$load_script invokeStatic "main.clj" 476]
+   [clojure.main$script_opt invokeStatic "main.clj" 536]
+   [clojure.main$script_opt invoke "main.clj" 531]
+   [clojure.main$main invokeStatic "main.clj" 665]
+   [clojure.main$main doInvoke "main.clj" 617]
+   [clojure.lang.RestFn applyTo "RestFn.java" 140]
+   [clojure.lang.Var applyTo "Var.java" 707]
+   [clojure.main main "main.java" 40]],
+  :cause "Assert failed: (= actual expected)",
+  :phase :execution}}
+
+Execution error (AssertionError) at user/eval148 (m12-box-reuse-oracle.clj:4).
+Assert failed: (= actual expected)
+

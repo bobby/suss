@@ -1,0 +1,1 @@
+package test:nan-check; world w { export raw: func() -> string; export boxed: func() -> string; }

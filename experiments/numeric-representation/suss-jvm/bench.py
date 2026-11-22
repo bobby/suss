@@ -224,6 +224,24 @@ LOOPS = [
 ]
 
 
+# Numeric boxes reused across loop iterations (#337/#351). Each worker's
+# callback is unknown in its body. The boxed controls keep one original Object;
+# arithmetic makes the other local raw. Both still consume every callback result.
+BOX_REUSE = [
+    ("double-raw", "(+ 1.25 0.5)", "double"),
+    ("double-boxed", "(identity 1.75)", "double"),
+    ("long-raw", "(+ 3000000000 5)", "long"),
+    ("long-boxed", "(identity 3000000005)", "long"),
+]
+for reuse_name, reuse_init, reuse_cast in BOX_REUSE:
+    DEFS.append(
+        f"(defn box-reuse-{reuse_name} [f n] (let [n (long n) x {reuse_init}] "
+        f"(loop [i 0 c 0] (if (< i n) (let [r (f x)] "
+        f"(recur (inc i) (if (== ({reuse_cast} r) ({reuse_cast} x)) (inc c) c))) c))))"
+    )
+    LOOPS.append((f"box-reuse-{reuse_name}", f"(box-reuse-{reuse_name} f1 n)", "u32"))
+
+
 # JVM forms where the shared one would reflect: Util.equiv has no (long,
 # double) overload and RT.aset none for an Object[] and a long, so Clojure code
 # boxes the long, as Suss always does.

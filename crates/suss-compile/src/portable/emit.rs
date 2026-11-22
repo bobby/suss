@@ -2274,6 +2274,9 @@ fn emit_function(
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
         let mut boxed = std::collections::HashSet::new();
         let mut code = Vec::new();
+        locals.invalidate(&mut code, block.parameters.iter().copied()
+            .chain(instructions.iter().map(|instruction| instruction.result)));
+        for instruction in code.drain(..) { function.instruction(&instruction); }
         for inst in instructions {
             if continuation.is_none()
                 && let Operation::Call { operands, primitive: Some(shape) } = &inst.operation

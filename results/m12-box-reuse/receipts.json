@@ -1,0 +1,106 @@
+{
+  "compiler_parent": "cda523ffebcf546e7033a3adac1c54d401c37f91",
+  "optimized_source_patch_sha256": "ae101d81c40034cc3b6bddc6d8a4b7effb77e96a5fff017563dc6214255834d9",
+  "broad_source_patch_sha256": "c4b30b5dfb572de84311d74e14fe1b15d46bdd12134d955233a6e28416f7c9c7",
+  "measurements": [
+    {
+      "version": "before",
+      "executable_sha256": "7526b349853742a9fd2e3694aaf66206e37ca0703fb4febb18655c99382cc45a",
+      "component_sha256": "339871f975d37c0c2c95428dac33db5abece9181be2c702b02cc86fa912ccac1",
+      "component_bytes": 3260181,
+      "rows": [
+        {
+          "name": "double-raw",
+          "bytes_per_iteration": 13.49632,
+          "instructions_per_iteration": 103.83293
+        },
+        {
+          "name": "double-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 115.91789
+        },
+        {
+          "name": "long-raw",
+          "bytes_per_iteration": 13.355008,
+          "instructions_per_iteration": 100.05655
+        },
+        {
+          "name": "long-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 112.99795
+        }
+      ]
+    },
+    {
+      "version": "broad",
+      "executable_sha256": "a3f306b87563e3c7d6736947560af387ded1502240112f572cbd77ff3eb9d6df",
+      "component_sha256": "795c953e0994c50bcd495dd94a4bc2fdbfa174b1e03f871e48aa95e33b6dd7ef",
+      "component_bytes": 3274317,
+      "rows": [
+        {
+          "name": "double-raw",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 94.94365
+        },
+        {
+          "name": "double-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 121.99908
+        },
+        {
+          "name": "long-raw",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 91.03008
+        },
+        {
+          "name": "long-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 119.99624
+        }
+      ]
+    },
+    {
+      "version": "optimized",
+      "executable_sha256": "de3e6e79c4f0b11703435771d35ae22a569a995a9dd4a2a4e9a46c9234424478",
+      "component_sha256": "c88cf5ed215ab7a2a0595658c0b996675cfeee92749d5154b00ea6abffd7515a",
+      "component_bytes": 3265724,
+      "rows": [
+        {
+          "name": "double-raw",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 96.1008
+        },
+        {
+          "name": "double-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 116.04898
+        },
+        {
+          "name": "long-raw",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 91.98389
+        },
+        {
+          "name": "long-boxed",
+          "bytes_per_iteration": 0.0,
+          "instructions_per_iteration": 113.03848
+        }
+      ]
+    }
+  ],
+  "method": "Warm first. Median3 at2M/4M iterations under SUSS_GC=null for peak-RSS byte slope; median3 at100k/200k under the normal collector for perf instructions:u slope. Every result equals n. RSS estimates are not exact object counts; zero means below measurement resolution. Time samples are concurrent and are not quiet timing acceptance.",
+  "verification": {
+    "focused": 47,
+    "failed": 0,
+    "ignored": 0,
+    "extended_cache_tests": 2,
+    "cache_value_cases": 4,
+    "jvm_shared_value_cases": 3,
+    "identity_case": "Suss value-identity contract independently confirmed on the frozen before executable; JVM gives false. Initial incorrect JVM expectation retained.",
+    "python": 361,
+    "bench_jvm_observations": 16,
+    "sum_bodies": "Both309-byte and380-byte checked sum bodies are identical before/after, and both exports execute with correct results.",
+    "allocation_checks": "Generated sum/coercion loops retain their passing no-allocation checks."
+  },
+  "limitations": "Focused evidence, not full workspace or full #337/#351 acceptance. Formal overload gaps, nonescaping collections and closures remain. The broad cache version is retained because it raised boxed-control instruction counts."
+}

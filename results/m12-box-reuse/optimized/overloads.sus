@@ -1,0 +1,5 @@
+(ns overloadcheck)
+(def case0 (fn [] (pr-str (try (let [^double x (identity 5)] (bit-and x 1)) (catch :default e :error)))))
+(def case1 (fn [] (pr-str (try (let [^long x (identity 5.5)] [(= x 5) (= x 5.5) (= x (identity 5)) (= x (identity 5.5))]) (catch :default e :error)))))
+(def case2 (fn [] (pr-str (try (let [^double x (identity 5)] [(= x 5.0) (= x 5) (= x (identity 5.0)) (= x (identity 5))]) (catch :default e :error)))))
+(def case3 (fn [] (pr-str (try (let [^long x (identity 5.5) ^long y (identity 5.0)] (= x y)) (catch :default e :error)))))
