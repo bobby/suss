@@ -1,0 +1,22 @@
+test u64_values_cross_as_longs_or_exact_bigints ... FAILED
+
+failures:
+
+---- u64_values_cross_as_longs_or_exact_bigints stdout ----
+
+thread 'u64_values_cross_as_longs_or_exact_bigints' (943148) panicked at crates/suss-compile/tests/portable_aot_wit_numbers.rs:187:75:
+listed: error while executing at wasm backtrace:
+    0: 0x3364fe - <unknown>!<wasm function 20>
+
+Caused by:
+    wasm trap: uncaught exception propagated out of component
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    u64_values_cross_as_longs_or_exact_bigints
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 48.61s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_aot_wit_numbers`

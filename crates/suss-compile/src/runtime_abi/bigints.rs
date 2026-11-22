@@ -129,6 +129,20 @@ pub(super) fn representation(b: &mut Builder) {
         &[(1, ValType::I32), (1, ValType::I64)],
         &code,
     );
+    // Canonical u64 bits are an unsigned magnitude, including when the high
+    // bit is set. The WIT adapter keeps smaller inputs as ordinary longs.
+    b.function(
+        "bigint-from-u64",
+        &[ValType::I64],
+        &[VALUE],
+        &[
+            LocalGet(0), I64Eqz, I32Eqz,
+            LocalGet(0), I32WrapI64,
+            LocalGet(0), I64Const(32), I64ShrU, I32WrapI64,
+            ArrayNewFixed { array_type_index: LIMBS, array_size: 2 },
+            I32Const(2), Call(b.names["bigint-new"]),
+        ],
+    );
     // Round the exact magnitude once to binary64, ties to even. Inspect all
     // discarded bits: folding limbs as doubles can round twice at a halfway.
     let mut code = get(0, 1).to_vec();
@@ -1038,6 +1052,11 @@ pub(super) fn integer_functions(b: &mut Builder) {
         &[(1, ValType::I64)],
         &code,
     );
+    let mut unsigned = get(0, 0).to_vec();
+    unsigned.extend([I32Const(0), I32GeS]);
+    unsigned.extend(get(0, 2));
+    unsigned.extend([I32Const(2), I32LeU, I32And]);
+    b.function("bigint-fits-u64", &[VALUE], &[ValType::I32], &unsigned);
     let mut code = vec![
         LocalGet(0),
         Call(b.names["bigint-fits-long"]),

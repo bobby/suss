@@ -32352,3 +32352,24 @@ expressions/setup, skips and round-trip assertions. The complete focused
 passes9 tests. This does not implement raw exact values in native tooling EDN.
 A separate full workspace retry is required; the failed invocation certifies
 no later targets.
+
+
+## Exact unsigned WIT boundary probes (2026-11-22)
+
+`results/m12-wide-wit/README.md` describes the unsigned adapter conversion and
+retains fresh primary Clojure 1.12.6 hashes/float bits. High u64 inputs become
+positive BigInts; outgoing u64 checks the exact unsigned range. Float output
+accepts BigInt and Ratio through runtime numeric conversion. Shared ABI 10
+layouts are unchanged, and u64 retains its existing boxed parameter storage.
+
+The original component regression fails on the previous adapter and passes
+after the production change, including printing, exact incrementing, scalar,
+list/option round trips and retained GC values. The expanded fixtures add
+primary hashes, full-range BigInt results, invalid magnitudes/categories and
+mixed asynchronous high-u64 calls. The first expanded run exposes an option
+fixture error; its isolated terminal failure and interrupted partial run remain
+in the receipts. Corrected fixtures use [:some value]. Run
+`python3 results/m12-wide-wit/run-gates.py` for the expanded numeric, general
+adapter, ABI, parameter-hint and Java-free bootstrap checks; those gates are
+still running at this publication. The separate full workspace retry at
+d7d2919b predates these WIT production changes and cannot certify them.

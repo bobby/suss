@@ -1,6 +1,6 @@
 # WIT numbers
 
-WIT's numeric types cross the component boundary as Suss longs and doubles
+WIT's numeric types cross the component boundary as Suss longs, BigInts and doubles
 ([ADR-0003](../adr/0003-clojure-numeric-tower.md) "WIT boundary", #336). The
 generated AOT adapter (`portable/aot.rs`, `aot/lists.rs`) converts them itself,
 so redefining core functions such as `number?` or `identical?` changes neither
@@ -9,18 +9,20 @@ what crosses nor what is rejected.
 | WIT type | Entering Suss | Leaving Suss |
 | --- | --- | --- |
 | `s8`–`s64`, `u8`–`u32` | A long | A long within the type's range |
-| `u64` | A long; above 2^63 − 1 throws, until BigInt (#338) | A long from 0 to 2^63 − 1 |
+| `u64` | A long up to 2^63 − 1; a BigInt above | A long or BigInt from 0 to 2^64 − 1 |
 | `f32`, `f64` | A double | Any number, as a double; `f32` rounds |
 
-- An integer result must be a long: a double, even `1.0`, is rejected rather
-  than truncated, as is a long outside the type's range. The error is "WIT
+- An integer result must be a long, or a BigInt for `u64`: a double, even
+  `1.0`, and a fractional Ratio are rejected rather than truncated, as is an
+  integer outside the type's range. The error is "WIT
   export *name* returned an incompatible scalar value".
-- A `u64` argument above 2^63 − 1 throws "WIT export *name* received a u64
-  above 9223372036854775807, which needs unsupported BigInt", in a list or an
-  option too.
-- A float result may be a long, converted as `double` or `float` converts
-  it, so `(defn f [] 7)` returns 7.0 as an `f64`; an `f32` from a long rounds
-  once, as `float` does, not through a double.
+- A high `u64` is an ordinary positive BigInt: exact arithmetic, printing and
+  hashing follow the same rules as a BigInt literal. Lowering checks sign and
+  magnitude before extracting the canonical bits; it never truncates an
+  out-of-range BigInt.
+- A float result accepts Long, Double, BigInt and Ratio. BigInt and Ratio use
+  the runtime double conversion; `f32` then rounds to binary32. A long sent
+  directly to `f32` retains the adapter's single integer-to-binary32 rounding.
 - Options and lists of these types follow the same rules for each element.
 
 ## Primitive export parameters

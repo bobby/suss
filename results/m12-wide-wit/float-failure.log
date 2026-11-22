@@ -1,0 +1,23 @@
+Running as unit: run-p967521-i89021323.scope; invocation ID: 862af4bef9ee48fd8b7ebf646b195ea1
+
+running 1 test
+test exact_numeric_results_convert_at_float_boundaries has been running for over 60 seconds
+
+thread 'exact_numeric_results_convert_at_float_boundaries' (967522) panicked at crates/suss-compile/tests/portable_aot_wit_numbers.rs:187:75:
+ratio-option: error while executing at wasm backtrace:
+    0: 0x329239 - <unknown>!<wasm function 35>
+    1: 0x332538 - <unknown>!<wasm function 24>
+
+Caused by:
+    wasm trap: uncaught exception propagated out of component
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test exact_numeric_results_convert_at_float_boundaries ... FAILED
+
+failures:
+
+failures:
+    exact_numeric_results_convert_at_float_boundaries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 78.25s
+
