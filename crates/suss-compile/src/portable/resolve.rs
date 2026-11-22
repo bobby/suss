@@ -227,6 +227,8 @@ pub struct DefinitionInfo {
     /// The intrinsic declaration kind, independent of user metadata overrides.
     pub type_is_record: bool,
     pub once: bool,
+    /// Compiler-private cell retaining this initialized scalar constant revision.
+    pub constant: Option<Global>,
 }
 impl DefinitionInfo {
     /// Normalized def-AST export name for target selection, distinct from the raw
@@ -262,6 +264,19 @@ impl DefinitionInfo {
             }),
             _ => Some(value),
         })
+    }
+}
+
+/// Declaration revisions at one top-level form boundary. Per-namespace maps
+/// share their immutable nodes, so nested provisional declarations cannot
+/// change what a constant read sees while the enclosing form is compiled.
+#[derive(Clone, Default)]
+pub(crate) struct DeclarationSnapshot(
+    BTreeMap<(Phase, std::sync::Arc<str>), PersistentMap<Global, std::sync::Arc<DefinitionInfo>>>,
+);
+impl DeclarationSnapshot {
+    pub(crate) fn get(&self, global: &Global) -> Option<&std::sync::Arc<DefinitionInfo>> {
+        self.0.get(&(global.phase, global.namespace.clone()))?.get(global)
     }
 }
 
@@ -798,6 +813,9 @@ impl Environment {
         self.namespaces.iter().filter_map(move |(entry_phase, namespace)|
             (*entry_phase == phase).then_some(namespace.as_str()))
     }
+    pub(crate) fn declaration_snapshot(&self) -> DeclarationSnapshot {
+        DeclarationSnapshot(self.definitions.clone())
+    }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
         self.shared_definition_info(global).map(std::sync::Arc::as_ref)
     }
@@ -1044,6 +1062,17 @@ impl Environment {
             self.source_changed();
         }
         global
+    }
+    /// A fresh, unresolvable cell for one constant declaration revision.
+    pub(crate) fn constant_cell(&mut self, phase: Phase) -> Global {
+        let cell = Global {
+            phase,
+            namespace: "suss.internal.constants".into(),
+            name: format!("constant-{}", self.source_generation).into(),
+        };
+        self.bind(cell.clone(), Binding::InternalCell(cell.clone()));
+        self.source_changed();
+        cell
     }
     /// The direct-link cell of a shipped core definition (design decision
     /// 2026-10-25): core's own references read it, so user redefinition or

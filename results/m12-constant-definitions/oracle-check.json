@@ -1,0 +1,297 @@
+{
+  "clojure": "1.12.6",
+  "cases_sha256": "9ea5a6304637f346fd8cdd12a8208ebcc2fb06d075efbd308ff24278f84f1fee",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "commands": [
+    {
+      "case": 0,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-long 9223372036854775807) (def read-frozen-long (fn [] frozen-long)) (def frozen-long 7) [(read-frozen-long) frozen-long]"
+      ],
+      "exit_code": 0,
+      "seconds": 3.2387471199035645,
+      "stdout": "#'user/frozen-long\n#'user/read-frozen-long\n#'user/frozen-long\n[9223372036854775807 7]\n",
+      "stderr": ""
+    },
+    {
+      "case": 1,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-double -0.0) (def read-frozen-double (fn [] frozen-double)) (def frozen-double 1.5) [(read-frozen-double) frozen-double]"
+      ],
+      "exit_code": 0,
+      "seconds": 3.0636987686157227,
+      "stdout": "#'user/frozen-double\n#'user/read-frozen-double\n#'user/frozen-double\n[-0.0 1.5]\n",
+      "stderr": ""
+    },
+    {
+      "case": 2,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-bigint 9223372036854775808123N) (def read-frozen-bigint (fn [] frozen-bigint)) (def frozen-bigint 0) [(read-frozen-bigint) frozen-bigint]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.6018290519714355,
+      "stdout": "#'user/frozen-bigint\n#'user/read-frozen-bigint\n#'user/frozen-bigint\n[9223372036854775808123N 0]\n",
+      "stderr": ""
+    },
+    {
+      "case": 3,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-ratio 22/7) (def read-frozen-ratio (fn [] frozen-ratio)) (def frozen-ratio 0) [(read-frozen-ratio) frozen-ratio]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.262345790863037,
+      "stdout": "#'user/frozen-ratio\n#'user/read-frozen-ratio\n#'user/frozen-ratio\n[22/7 0]\n",
+      "stderr": ""
+    },
+    {
+      "case": 4,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-text \"hello\") (def read-frozen-text (fn [] frozen-text)) (def frozen-text \"later\") [(read-frozen-text) frozen-text]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.4089226722717285,
+      "stdout": "#'user/frozen-text\n#'user/read-frozen-text\n#'user/frozen-text\n[\"hello\" \"later\"]\n",
+      "stderr": ""
+    },
+    {
+      "case": 5,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-nil nil) (def read-frozen-nil (fn [] frozen-nil)) (def frozen-nil true) [(read-frozen-nil) frozen-nil]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.3378400802612305,
+      "stdout": "#'user/frozen-nil\n#'user/read-frozen-nil\n#'user/frozen-nil\n[nil true]\n",
+      "stderr": ""
+    },
+    {
+      "case": 6,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const frozen-bool false) (def read-frozen-bool (fn [] frozen-bool)) (def frozen-bool true) [(read-frozen-bool) frozen-bool]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.3846232891082764,
+      "stdout": "#'user/frozen-bool\n#'user/read-frozen-bool\n#'user/frozen-bool\n[false true]\n",
+      "stderr": ""
+    },
+    {
+      "case": 7,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const removed-const 1) (def old-reader (fn [] removed-const)) (def removed-const 2) (def live-reader (fn [] removed-const)) (def removed-const 3) [(old-reader) (live-reader) removed-const]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.3349106311798096,
+      "stdout": "#'user/removed-const\n#'user/old-reader\n#'user/removed-const\n#'user/live-reader\n#'user/removed-const\n[1 3 3]\n",
+      "stderr": ""
+    },
+    {
+      "case": 8,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^{:const false} live-false 1) (def read-live-false (fn [] live-false)) (def live-false 2) [(read-live-false) live-false]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.2904727458953857,
+      "stdout": "#'user/live-false\n#'user/read-live-false\n#'user/live-false\n[2 2]\n",
+      "stderr": ""
+    },
+    {
+      "case": 9,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^{:const nil} live-nil 1) (def read-live-nil (fn [] live-nil)) (def live-nil 2) [(read-live-nil) live-nil]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.783261299133301,
+      "stdout": "#'user/live-nil\n#'user/read-live-nil\n#'user/live-nil\n[2 2]\n",
+      "stderr": ""
+    },
+    {
+      "case": 10,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const local-shadow 1) (let [local-shadow 42] [local-shadow ((fn [] local-shadow))])"
+      ],
+      "exit_code": 0,
+      "seconds": 2.6353914737701416,
+      "stdout": "#'user/local-shadow\n[42 42]\n",
+      "stderr": ""
+    },
+    {
+      "case": 11,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const boundary-long -9223372036854775808) (def ^:const boundary-max 1.7976931348623157e308) (def ^:const boundary-min 4.9e-324) [boundary-long boundary-max boundary-min]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.9500303268432617,
+      "stdout": "#'user/boundary-long\n#'user/boundary-max\n#'user/boundary-min\n[-9223372036854775808 1.7976931348623157E308 4.9E-324]\n",
+      "stderr": ""
+    },
+    {
+      "case": 12,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const identity-big 999999999999999999999N) (def ^:const identity-ratio 1/3) (def ^:const identity-text \"long text\") [(identical? identity-big identity-big) (identical? identity-ratio identity-ratio) (identical? identity-text identity-text)]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.0278937816619873,
+      "stdout": "#'user/identity-big\n#'user/identity-ratio\n#'user/identity-text\n[true true true]\n",
+      "stderr": ""
+    },
+    {
+      "case": 13,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const original-constant 999999999999999999N) (def ^:const aliased-constant original-constant) (def original-constant 0) [aliased-constant original-constant (identical? aliased-constant aliased-constant)]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.074279308319092,
+      "stdout": "#'user/original-constant\n#'user/aliased-constant\n#'user/original-constant\n[999999999999999999N 0 true]\n",
+      "stderr": ""
+    },
+    {
+      "case": 14,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const different-constant-a 1/3) (def ^:const different-constant-b 1/3) [(identical? different-constant-a different-constant-b) (identical? 1/3 1/3)]"
+      ],
+      "exit_code": 0,
+      "seconds": 3.0246381759643555,
+      "stdout": "#'user/different-constant-a\n#'user/different-constant-b\n[false false]\n",
+      "stderr": ""
+    },
+    {
+      "case": 15,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const object-constant (quote 1/3)) (def object-constant-reader (fn [] object-constant)) (def object-constant 0) [(object-constant-reader) object-constant]"
+      ],
+      "exit_code": 0,
+      "seconds": 3.3044793605804443,
+      "stdout": "#'user/object-constant\n#'user/object-constant-reader\n#'user/object-constant\n[1/3 0]\n",
+      "stderr": ""
+    },
+    {
+      "case": 16,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const conversion-constant 5.5) (def conversion-reader (fn [] [(int conversion-constant) (long conversion-constant) conversion-constant])) (def conversion-constant 7) (conversion-reader)"
+      ],
+      "exit_code": 0,
+      "seconds": 1.7910175323486328,
+      "stdout": "#'user/conversion-constant\n#'user/conversion-reader\n#'user/conversion-constant\n[5 5 5.5]\n",
+      "stderr": ""
+    },
+    {
+      "case": 17,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const wide-conversion-constant 1.0E30) (def wide-conversion-reader (fn [] [(try (int wide-conversion-constant) (catch Throwable e :range)) (try (long wide-conversion-constant) (catch Throwable e :range))])) (def wide-conversion-constant 1) (wide-conversion-reader)"
+      ],
+      "exit_code": 0,
+      "seconds": 1.8577344417572021,
+      "stdout": "#'user/wide-conversion-constant\n#'user/wide-conversion-reader\n#'user/wide-conversion-constant\n[:range :range]\n",
+      "stderr": ""
+    },
+    {
+      "case": 18,
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const primitive-return-long 7) (def primitive-return-ok (fn ^long [] primitive-return-long)) (primitive-return-ok)"
+      ],
+      "exit_code": 0,
+      "seconds": 1.15582275390625,
+      "stdout": "#'user/primitive-return-long\n#'user/primitive-return-ok\n7\n",
+      "stderr": ""
+    }
+  ],
+  "complete": true
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "source": "(def ^:const frozen-long 9223372036854775807) (def read-frozen-long (fn [] frozen-long)) (def frozen-long 7) [(read-frozen-long) frozen-long]",
+    "expected": "[9223372036854775807 7]",
+    "jvm_stdout": "#'user/frozen-long\n#'user/read-frozen-long\n#'user/frozen-long\n[9223372036854775807 7]\n"
+  },
+  {
+    "source": "(def ^:const frozen-double -0.0) (def read-frozen-double (fn [] frozen-double)) (def frozen-double 1.5) [(read-frozen-double) frozen-double]",
+    "expected": "[-0.0 1.5]",
+    "jvm_stdout": "#'user/frozen-double\n#'user/read-frozen-double\n#'user/frozen-double\n[-0.0 1.5]\n"
+  },
+  {
+    "source": "(def ^:const frozen-bigint 9223372036854775808123N) (def read-frozen-bigint (fn [] frozen-bigint)) (def frozen-bigint 0) [(read-frozen-bigint) frozen-bigint]",
+    "expected": "[9223372036854775808123N 0]",
+    "jvm_stdout": "#'user/frozen-bigint\n#'user/read-frozen-bigint\n#'user/frozen-bigint\n[9223372036854775808123N 0]\n"
+  },
+  {
+    "source": "(def ^:const frozen-ratio 22/7) (def read-frozen-ratio (fn [] frozen-ratio)) (def frozen-ratio 0) [(read-frozen-ratio) frozen-ratio]",
+    "expected": "[22/7 0]",
+    "jvm_stdout": "#'user/frozen-ratio\n#'user/read-frozen-ratio\n#'user/frozen-ratio\n[22/7 0]\n"
+  },
+  {
+    "source": "(def ^:const frozen-text \"hello\") (def read-frozen-text (fn [] frozen-text)) (def frozen-text \"later\") [(read-frozen-text) frozen-text]",
+    "expected": "[\"hello\" \"later\"]",
+    "jvm_stdout": "#'user/frozen-text\n#'user/read-frozen-text\n#'user/frozen-text\n[\"hello\" \"later\"]\n"
+  },
+  {
+    "source": "(def ^:const frozen-nil nil) (def read-frozen-nil (fn [] frozen-nil)) (def frozen-nil true) [(read-frozen-nil) frozen-nil]",
+    "expected": "[nil true]",
+    "jvm_stdout": "#'user/frozen-nil\n#'user/read-frozen-nil\n#'user/frozen-nil\n[nil true]\n"
+  },
+  {
+    "source": "(def ^:const frozen-bool false) (def read-frozen-bool (fn [] frozen-bool)) (def frozen-bool true) [(read-frozen-bool) frozen-bool]",
+    "expected": "[false true]",
+    "jvm_stdout": "#'user/frozen-bool\n#'user/read-frozen-bool\n#'user/frozen-bool\n[false true]\n"
+  },
+  {
+    "source": "(def ^:const removed-const 1) (def old-reader (fn [] removed-const)) (def removed-const 2) (def live-reader (fn [] removed-const)) (def removed-const 3) [(old-reader) (live-reader) removed-const]",
+    "expected": "[1 3 3]",
+    "jvm_stdout": "#'user/removed-const\n#'user/old-reader\n#'user/removed-const\n#'user/live-reader\n#'user/removed-const\n[1 3 3]\n"
+  },
+  {
+    "source": "(def ^{:const false} live-false 1) (def read-live-false (fn [] live-false)) (def live-false 2) [(read-live-false) live-false]",
+    "expected": "[2 2]",
+    "jvm_stdout": "#'user/live-false\n#'user/read-live-false\n#'user/live-false\n[2 2]\n"
+  },
+  {
+    "source": "(def ^{:const nil} live-nil 1) (def read-live-nil (fn [] live-nil)) (def live-nil 2) [(read-live-nil) live-nil]",
+    "expected": "[2 2]",
+    "jvm_stdout": "#'user/live-nil\n#'user/read-live-nil\n#'user/live-nil\n[2 2]\n"
+  },
+  {
+    "source": "(def ^:const local-shadow 1) (let [local-shadow 42] [local-shadow ((fn [] local-shadow))])",
+    "expected": "[42 42]",
+    "jvm_stdout": "#'user/local-shadow\n[42 42]\n"
+  },
+  {
+    "source": "(def ^:const boundary-long -9223372036854775808) (def ^:const boundary-max 1.7976931348623157e308) (def ^:const boundary-min 4.9e-324) [boundary-long boundary-max boundary-min]",
+    "expected": "[-9223372036854775808 1.7976931348623157E308 4.9E-324]",
+    "jvm_stdout": "#'user/boundary-long\n#'user/boundary-max\n#'user/boundary-min\n[-9223372036854775808 1.7976931348623157E308 4.9E-324]\n"
+  }
+]

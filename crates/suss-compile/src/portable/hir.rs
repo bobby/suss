@@ -1152,6 +1152,8 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// An initialized scalar constant revision, published with its live var.
+        constant: Option<Global>,
         global: Global,
         name_metadata: Vec<Form>,
         name_span: Range<usize>,
@@ -1252,6 +1254,7 @@ struct Analyzer<'a> {
     analysis_contexts: Vec<super::AnalysisContext>,
     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
+    constant_definitions: super::resolve::DeclarationSnapshot,
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
     callable_keys: BTreeMap<Global, Hir>,
@@ -1450,6 +1453,7 @@ impl Analyzer<'_> {
             // forms, not after each nested def. Keep resolution's live catalog
             // separate so recursive definitions still resolve provisionally.
             self.namespace_snapshot = Some(self.capture_source_namespace());
+            self.constant_definitions = self.environment.declaration_snapshot();
         }
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
@@ -1571,7 +1575,9 @@ impl Analyzer<'_> {
                     {
                         return SourceBinding::JavaScript { global };
                     }
-                    let declaration = self.environment.shared_definition_info(&global).cloned();
+                    let declaration = self.constant_definitions.get(&global)
+                        .filter(|info| info.constant.is_some()).cloned()
+                        .or_else(|| self.environment.shared_definition_info(&global).cloned());
                     SourceBinding::Global {
                         global,
                         declaration,
@@ -1668,6 +1674,7 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                constant: None,
                         global: fallback.clone(),
                         name_metadata: Vec::new(),
                         name_span: form.span.clone(),
@@ -1826,6 +1833,15 @@ impl Analyzer<'_> {
         if !self.privileged && super::bootstrap::is_core_private(global.name()) && self.privileged_definition(global) {
             return Err(fail(span, format!("{} is private to suss.core", global.name())));
         }
+        if let Some(info) = self.constant_definitions.get(global)
+            && let Some(constant) = &info.constant
+            && let Some(initializer) = info.initializer.as_deref()
+        {
+            // Read the initialized revision preceding this top-level form.
+            // Copying its literal would allocate distinct BigInt/Ratio objects
+            // on every use and lose the constant's observable identity.
+            return Ok((Expression::Global(constant.clone()), initializer.ty));
+        }
         match binding {
             ResolvedBinding::Cell(global) => {
                 let global = self.core_reference_link(&global).unwrap_or(global);
@@ -1845,6 +1861,13 @@ impl Analyzer<'_> {
                 "Bootstrap core function/macro values are not materialized yet",
             )),
         }
+    }
+    fn constant_metadata(name: &Form) -> Result<bool, Diagnostic> {
+        Ok(reader_metadata_pairs(name)?.chunks_exact(2).any(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "const")
+                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+        }))
     }
     fn dynamic_metadata(name: &Form) -> bool {
         name.metadata.iter().any(|metadata| match &metadata.kind {
@@ -2324,7 +2347,7 @@ impl Analyzer<'_> {
         for metadata in &args[0].metadata {
             let unsupported = |form: &Form| {
                 matches!(&form.kind, Kind::Keyword(key)
-                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "macro"))
+                if key.namespace.is_none() && key.name == "macro")
             };
             if unsupported(metadata)
                 || matches!(&metadata.kind, Kind::Map(entries)
@@ -2354,6 +2377,17 @@ impl Analyzer<'_> {
                 error.span = args[0].span.clone();
                 error
             })?;
+        let constant = Self::constant_metadata(&args[0])?;
+        let prior_constant = self.constant_definitions.get(&global)
+            .map(|info| Self::constant_metadata(&info.declaration))
+            .transpose()?.unwrap_or(false);
+        // Runtime execution of a conditional/nested def is not established by
+        // analyzing it. Until that boundary can publish initialized constant
+        // values, diagnose it instead of freezing an unexecuted initializer.
+        if self.analysis_depth != 1 && (constant || prior_constant) {
+            return Err(fail(args[0].span.clone(),
+                "Nested definitions involving :const are not implemented yet"));
+        }
         let init = if args.len() == 3 {
             if !matches!(args[1].kind, Kind::String(_)) {
                 return Err(fail(
@@ -2397,6 +2431,7 @@ impl Analyzer<'_> {
             type_fields: None,
             type_is_record: false,
             once,
+            constant: None,
         };
         // A var first defined dynamic (or ^:redef) stays live when redefined.
         let prior_dynamic = self.environment.definition_info(&global)
@@ -2439,10 +2474,27 @@ impl Analyzer<'_> {
                 .map(Box::new)
             })
             .transpose()?;
+        if constant && !initializer.as_deref().is_some_and(|value| match &*value.kind {
+            Expression::Literal(_) => true,
+            Expression::Global(global) => global.namespace() == "suss.internal.constants",
+            _ => false,
+        }) {
+            return Err(fail(args[0].span.clone(),
+                "Only scalar literal :const initializers are implemented yet"));
+        }
+        let constant_cell = constant.then(|| self.environment.constant_cell(self.phase));
+        definition.constant = constant_cell.clone();
         // A nested initializer can declare this same global. Publish the outer
         // declaration and its initializer together when its analysis completes.
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         definition.analysis_completed = true;
+        if let Some(cell) = &constant_cell {
+            // Private source typing retains the initializer's original class
+            // even after the public var receives a differently typed value.
+            let mut revision = definition.clone();
+            revision.constant = None;
+            self.environment.record_definition(cell.clone(), revision);
+        }
         if !preserve_declaration {
             self.environment
                 .record_definition(global.clone(), definition);
@@ -2485,6 +2537,7 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                constant: constant_cell,
                 global,
                 name_metadata: args[0].metadata.clone(),
                 name_span: args[0].span.clone(),
@@ -4609,6 +4662,7 @@ pub(crate) fn prepare_with_origin(
         source_namespace: None,
         fragment_links: BTreeSet::new(),
         namespace_snapshot: None,
+        constant_definitions: Default::default(),
         source_callables: Vec::new(),
         source_nodes: Vec::new(),
         callable_keys: BTreeMap::new(),

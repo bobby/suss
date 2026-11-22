@@ -1,0 +1,209 @@
+{
+  "capture_sha256": "a32af79f4487ba0af65493497c3bbc0526b8b7cc394f87ce741ef4890a1a0d54",
+  "counts": {
+    "pass": 3714,
+    "guest-judged": 54,
+    "fail": 459,
+    "not-executed": 2712,
+    "skipped": 0,
+    "namespaces-failed": 92
+  },
+  "newly_loaded": [
+    "clojure.core-test.abs",
+    "clojure.core-test.bit-and",
+    "clojure.core-test.bit-and-not",
+    "clojure.core-test.bit-or",
+    "clojure.core-test.bit-xor",
+    "clojure.core-test.boolean",
+    "clojure.core-test.dec",
+    "clojure.core-test.double-qmark",
+    "clojure.core-test.empty",
+    "clojure.core-test.false-qmark",
+    "clojure.core-test.float",
+    "clojure.core-test.float-qmark",
+    "clojure.core-test.inc",
+    "clojure.core-test.int-qmark",
+    "clojure.core-test.integer-qmark",
+    "clojure.core-test.minus",
+    "clojure.core-test.neg-qmark",
+    "clojure.core-test.number-qmark",
+    "clojure.core-test.number-range",
+    "clojure.core-test.plus",
+    "clojure.core-test.plus-squote",
+    "clojure.core-test.pos-qmark",
+    "clojure.core-test.ratio-qmark",
+    "clojure.core-test.rational-qmark",
+    "clojure.core-test.star",
+    "clojure.core-test.star-squote",
+    "clojure.core-test.string-qmark",
+    "clojure.core-test.true-qmark",
+    "clojure.core-test.zero-qmark"
+  ],
+  "per_namespace": {
+    "clojure.core-test.abs": {
+      "pass": 14,
+      "fail": 1
+    },
+    "clojure.core-test.bit-and": {
+      "pass": 11
+    },
+    "clojure.core-test.bit-and-not": {
+      "pass": 13
+    },
+    "clojure.core-test.bit-or": {
+      "pass": 11
+    },
+    "clojure.core-test.bit-xor": {
+      "pass": 10
+    },
+    "clojure.core-test.boolean": {
+      "pass": 47,
+      "fail": 3
+    },
+    "clojure.core-test.dec": {
+      "pass": 14
+    },
+    "clojure.core-test.double-qmark": {
+      "pass": 40,
+      "fail": 6
+    },
+    "clojure.core-test.empty": {
+      "fail": 19
+    },
+    "clojure.core-test.false-qmark": {
+      "pass": 47,
+      "fail": 3
+    },
+    "clojure.core-test.float": {
+      "fail": 23
+    },
+    "clojure.core-test.float-qmark": {
+      "pass": 43,
+      "fail": 3
+    },
+    "clojure.core-test.inc": {
+      "pass": 15
+    },
+    "clojure.core-test.int-qmark": {
+      "pass": 40,
+      "fail": 3
+    },
+    "clojure.core-test.integer-qmark": {
+      "pass": 40,
+      "fail": 3
+    },
+    "clojure.core-test.minus": {
+      "pass": 126,
+      "fail": 13
+    },
+    "clojure.core-test.neg-qmark": {
+      "pass": 22,
+      "fail": 3
+    },
+    "clojure.core-test.number-qmark": {
+      "pass": 37,
+      "fail": 3
+    },
+    "clojure.core-test.plus": {
+      "pass": 129
+    },
+    "clojure.core-test.plus-squote": {
+      "pass": 105,
+      "fail": 27
+    },
+    "clojure.core-test.pos-qmark": {
+      "pass": 22,
+      "fail": 3
+    },
+    "clojure.core-test.ratio-qmark": {
+      "pass": 38,
+      "fail": 3
+    },
+    "clojure.core-test.rational-qmark": {
+      "pass": 37,
+      "fail": 3
+    },
+    "clojure.core-test.star": {
+      "pass": 125
+    },
+    "clojure.core-test.star-squote": {
+      "pass": 105,
+      "fail": 61
+    },
+    "clojure.core-test.string-qmark": {
+      "pass": 41,
+      "fail": 7
+    },
+    "clojure.core-test.true-qmark": {
+      "pass": 47,
+      "fail": 3
+    },
+    "clojure.core-test.zero-qmark": {
+      "pass": 23,
+      "fail": 3
+    }
+  },
+  "changed_assertions_outside_newly_loaded_namespaces": [],
+  "changed_namespace_diagnostics": {
+    "clojure.core-test.bigint": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.bigint (Some(\"<root>/clojure/core_test/bigint.cljc\")): Unresolved Runtime name clojure.lang.BigInt at bytes 267..2781"
+      }
+    },
+    "clojure.core-test.boolean-qmark": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.boolean-qmark (Some(\"<root>/clojure/core_test/boolean_qmark.cljc\")): Unresolved Runtime name boolean? at bytes 279..941"
+      }
+    },
+    "clojure.core-test.char-qmark": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615"
+      }
+    },
+    "clojure.core-test.decimal-qmark": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.decimal-qmark (Some(\"<root>/clojure/core_test/decimal_qmark.cljc\")): Unresolved Runtime name decimal? at bytes 271..1106"
+      }
+    },
+    "clojure.core-test.neg-int-qmark": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611"
+      }
+    },
+    "clojure.core-test.pos-int-qmark": {
+      "old": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687"
+      }
+    }
+  }
+}

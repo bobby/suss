@@ -1346,3 +1346,24 @@ produce Ratio values; Decimal retains its explicit unsupported boundary.
 Combined-source numeric/ABI/map/bootstrap checks, complete numeric-suite
 acceptance, WIT integration and the production helper crossover remain separate
 gates. These bounded observations do not change inventory counts.
+
+
+## Scalar constant declarations
+
+Top-level scalar :const declarations retain their initialized value in a
+compiler-private revision cell. Ordinary redefinitions remain live; existing
+compiled readers retain the preceding constant. Source primitive classes remain
+separate from physical boxing for method-return and local-hint diagnostics.
+`results/m12-constant-definitions` retains primary JVM values/diagnostics,
+Runtime/Macro/AOT checks, original failures and source-qualified suite captures.
+Computed/collection constants and nested definitions involving constants remain
+explicit unsupported diagnostics. These probes do not change inventory counts
+or establish numeric-suite acceptance; newly executed failures remain failures.
+
+The final constant fixture executes19 primary values in Runtime/Macro and
+actual AOT, retaining primitive diagnostics in both phases. The source-qualified
+suite capture adds1202 primary matches and loads29 namespaces; all459 actual
+failures,2712 unexecuted assertions and92 failed namespaces stay explicit in
+the reviewed baseline. Existing loaded namespaces have no changed assertion
+outcomes. BigInt's namespace still lacks clojure.lang.BigInt; Decimal-dependent
+assertions and platform narrow-type/character differences remain failures.

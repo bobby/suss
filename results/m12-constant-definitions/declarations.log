@@ -1,0 +1,88 @@
+Running as unit: run-p1644498-i89715640.scope; invocation ID: 3d4b59699f914d0ab843fd75e907e05d
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 12.97s
+     Running tests/compiled_aot_direct_linking.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_aot_direct_linking-286aa8b21867aad7)
+
+running 3 tests
+test aot_keyword_equality_matches_core ... ok
+test aot_builds_direct_link_user_calls_as_jvm_clojure_does ... ok
+test the_repl_keeps_live_calls ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.19s
+
+     Running tests/compiled_macro_declaration_functions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_macro_declaration_functions-a79b3836f8ed166c)
+
+running 2 tests
+test compiled_argument_lists_preserve_quoted_data_and_actual_file_positions ... ok
+test compiled_function_declarations_match_primary_presence_and_parameter_shapes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.99s
+
+     Running tests/compiled_macro_declaration_metadata.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_macro_declaration_metadata-f46e0954a6ac830c)
+
+running 3 tests
+test compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields has been running for over 60 seconds
+test declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer has been running for over 60 seconds
+test compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields ... ok
+test raw_function_metadata_is_preserved_before_completed_callable_overlays ... ok
+test declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 224.78s
+
+     Running tests/compiled_macro_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_macro_definitions-3c28ea29cecb4ffa)
+
+running 3 tests
+test compiled_macro_definitions_dispatch_all_signatures_and_keep_prior_definition_on_failure ... ok
+test compiled_macro_definitions_expand_macro_bodies_in_the_same_phase_store ... ok
+test compiled_macro_definitions_namespace_registration_keeps_owned_roots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.46s
+
+     Running tests/compiled_macro_repeated_declarations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_macro_repeated_declarations-4f6ed90c9dd4d2b5)
+
+running 1 test
+test repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.75s
+
+     Running tests/portable_forward_declarations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_forward_declarations-11abe9d644fe0758)
+
+running 2 tests
+test declaration_errors_are_atomic_and_unknown_names_still_fail_resolution ... ok
+test forward_declarations_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.00s
+
+     Running tests/portable_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_definitions-92a93aac29b0b106)
+
+running 13 tests
+test definition_and_namespace_diagnostics_are_located_and_transactional ... FAILED
+test definition_cells_remain_separate_by_phase ... ok
+test declaration_expression_contexts_are_explicitly_unsupported ... ok
+test definitions_inside_functions_capture_lexicals_and_preserve_name_metadata ... ok
+test failed_compile_and_initializer_preserve_existing_cells_and_prior_effects ... ok
+test reviewed_declaration_preserves_source_metadata_and_phase_identity ... ok
+test namespace_declarations_replace_import_scopes_but_keep_existing_cells ... ok
+test source_definition_initializes_a_shared_cell ... ok
+test source_definitions_rebind_live_globals_without_changing_old_captures ... ok
+test source_defonce_checks_bound_state_and_skips_initializer_effects ... ok
+test source_require_reload_metadata_is_explicitly_unsupported ... ok
+test verifier_rejects_malformed_global_writes_and_bound_checks ... ok
+test source_namespaces_resolve_requires_renames_core_aliases_and_exclusions ... ok
+
+failures:
+
+---- definition_and_namespace_diagnostics_are_located_and_transactional stdout ----
+
+thread 'definition_and_namespace_diagnostics_are_located_and_transactional' (1656466) panicked at crates/suss-compile/tests/portable_definitions.rs:408:22:
+compiled unsupported (def ^:const value 1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    definition_and_namespace_diagnostics_are_located_and_transactional
+
+test result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.30s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_definitions`

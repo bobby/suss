@@ -32492,3 +32492,80 @@ and is removed, with its failed receipt retained. The historical unfiltered
 workspace retry atd7d2919b terminates101 after4190.20 seconds at that old budget
 failure; later targets are unexecuted. That invocation is not a passing baseline.
 A new integrated-source full workspace command and final-head CI remain needed.
+
+
+## Scalar constant declaration probes (2026-11-22)
+
+`results/m12-constant-definitions` retains12 fresh JVM Clojure1.12.6
+observations for top-level scalar :const declarations. The before regression
+fails both Runtime/Macro and AOT tests on the original unsupported-attribute
+diagnostic; the changed compiler passes both tests (36 primary observations
+across Runtime/Macro/actual AOT). Separate-fragment readers retain the old
+constant after redefinition, ordinary redefinitions remove the flag, false/nil
+flags stay live, lexical shadows win, and a compile failure publishes no new
+constant. Signed zero, numeric boundaries, BigInt/Ratio, strings, nil and false
+are covered. Commands and frozen-input hashes are in before-runtime.json and
+after-first.json. An initial missing user-bus setup is retained in before.json.
+
+The analyzer snapshots immutable declaration revisions at top-level form
+boundaries instead of substituting provisional nested initializers. Support is
+bounded to scalar literal initializers (and already-resolved scalar constants).
+Computed/collection constants and nested definitions involving constants remain
+explicit diagnostics. Ignoring the metadata would not preserve Clojure behavior.
+The initial do-wrapped oracle probes are retained separately; their live reads
+do not demonstrate an earlier initialized top-level constant.
+
+Run `python3 results/m12-constant-definitions/run-gate.py LABEL` for the focused
+regressions. The unchanged vendored suite and declaration/bootstrap gates must
+be executed on this production change; the earlier green4cf2c6d4 CI and its live
+unfiltered workspace command do not certify it. Numeric class aliases and
+Decimal-dependent assertions require their own observed results. No suite
+failure is changed to success by the constant tests.
+
+
+The scalar constant implementation now retains one initialized private cell per
+declaration revision, preserving repeated BigInt/Ratio reference identity while
+ordinary repeated literals remain distinct. The first literal-substitution
+implementation's identity failure is retained in identity.json; before-root.patch
+reconstructs that production source. The private-cell revision then exposed
+three primitive source-type diagnostic mismatches. Its original observations
+remain in primitive-constant-probes.json and before-source-facts.patch. Source
+records now retain the preceding constant declaration revision, and primitive
+analysis uses its initializer's source class independently of boxed storage.
+after-source-facts.json is terminal0 with18 value/identity cases in Runtime,
+Macro and actual AOT, plus the three compile diagnostics in both phases.
+
+The first implementation's unchanged vendored suite capture is terminal101
+(the expected baseline comparison changes), with3714 primary matches,54
+guest-judged,459 failures,2712 unexecuted and92 namespace failures. It loads29
+additional namespaces; audit-suite.py finds no changed assertions outside those
+newly loaded namespaces. All new +' and *' failures contain Decimal literals;
+BigInt's namespace instead stops at unresolved clojure.lang.BigInt. These are
+source-qualified observations, not a passing suite-acceptance claim or evidence
+for the later private-cell/source-type revision. The original known-failure
+baseline is still unchanged. Run the labeled final suite capture, declaration
+and Java-free bootstrap gates before publishing current acceptance evidence.
+
+
+The final scalar-constant gate is terminal0 with19 primary JVM cases executed
+in Runtime/Macro/actual AOT (57 observations), six exact compile diagnostics,
+and separate-fragment/rollback controls. oracle-check.json confirms all19 in
+fresh JVM processes. The later full suite capture reproduces3714/54/459/2712
+and92 failed namespaces, with zero changed assertions in previously loaded
+namespaces. Both original101 baseline comparisons remain in their receipts.
+The reviewed known-failure baseline now records the actual newly executed
+failures and class-load diagnostics; it does not omit them or modify the
+primary reference. The corresponding Python comparison returns0.
+
+The declaration run exposes one stale negative test expecting a scalar :const
+literal to be unsupported. Its failure remains in final-gates.json; the test
+now uses an unsupported computed initializer. The focused rerun passes13
+portable_definitions and14 portable_resolution tests. Earlier declaration
+CLI targets pass14 tests, bootstrap passes4, and the constant target passes2:
+47 scoped Rust tests in total. The suite comparator's35 Python tests pass.
+Java/Node-free double bootstrap reproduction, compiler identity verification,
+core-import and bootstrap-source manifests pass. repair-input-diff.json proves
+that only the stale test and reviewed baseline differ from the full-gate
+inputs; production source is unchanged. The separate unfiltered workspace
+command remains source-qualified to4cf2c6d4 and does not certify these changes.
+Numeric class support remains the next observed BigInt namespace blocker.

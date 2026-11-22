@@ -1,0 +1,2 @@
+Running as unit: run-p1669914-i89726050.scope; invocation ID: ef283d3328904994920af03ceb07b10c
+clojure-test-suite suite: fail=459 guest-judged=54 namespaces-failed=92 not-executed=2712 pass=3714 skipped=0

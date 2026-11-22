@@ -1,0 +1,29 @@
+{
+  "source": "(def ^:const identity-big 999999999999999999999N) (def ^:const identity-ratio 1/3) (def ^:const identity-text \"long text\") [(identical? identity-big identity-big) (identical? identity-ratio identity-ratio) (identical? identity-text identity-text)]",
+  "binary_sha256": "e85dfb5ae5bc0afd827646c4f5223e629915c05d7ed00a6ce9a3092a58f37a84",
+  "commands": [
+    {
+      "command": [
+        "java",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "-e",
+        "(def ^:const identity-big 999999999999999999999N) (def ^:const identity-ratio 1/3) (def ^:const identity-text \"long text\") [(identical? identity-big identity-big) (identical? identity-ratio identity-ratio) (identical? identity-text identity-text)]"
+      ],
+      "exit_code": 0,
+      "seconds": 1.4825127124786377
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/results/m12-constant-definitions/identity-cache",
+        "-e",
+        "(def ^:const identity-big 999999999999999999999N) (def ^:const identity-ratio 1/3) (def ^:const identity-text \"long text\") [(identical? identity-big identity-big) (identical? identity-ratio identity-ratio) (identical? identity-text identity-text)]"
+      ],
+      "exit_code": 0,
+      "seconds": 77.59475469589233
+    }
+  ]
+}

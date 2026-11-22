@@ -1,0 +1,35 @@
+Running as unit: run-p1522073-i89581401.scope; invocation ID: 84ec5720b2064049ad560c83060eaaac
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 36s
+     Running tests/clojure_constant_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_constant_definitions-08d09ab8ad9806b3)
+
+running 2 tests
+test literal_constants_freeze_readers_in_runtime_and_macro ... FAILED
+test aot_executes_literal_constants ... FAILED
+
+failures:
+
+---- literal_constants_freeze_readers_in_runtime_and_macro stdout ----
+
+thread 'literal_constants_freeze_readers_in_runtime_and_macro' (1528574) panicked at crates/suss-cli/tests/clojure_constant_definitions.rs:11:57:
+(def ^:const frozen-long 9223372036854775807) (def read-frozen-long (fn [] frozen-long)) (def frozen-long 7)  (pr-str [(read-frozen-long) frozen-long]): Definition const/macro attributes are not implemented yet at bytes 5..24
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_literal_constants stdout ----
+
+thread 'aot_executes_literal_constants' (1528573) panicked at crates/suss-cli/tests/clojure_constant_definitions.rs:55:5:
+Compilation error: Semantic error: While compiling probe.sus: Definition const/macro attributes are not implemented yet at bytes 21..40
+
+
+
+failures:
+    aot_executes_literal_constants
+    literal_constants_freeze_readers_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.25s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_constant_definitions`

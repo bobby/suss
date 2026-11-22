@@ -493,6 +493,7 @@ impl<'a> Lowerer<'a> {
                 initializer,
                 once,
                 linked,
+                constant,
                 ..
             } => {
                 if let Some(initializer) = initializer {
@@ -530,6 +531,7 @@ impl<'a> Lowerer<'a> {
                                 hir.span.clone(),
                             )?;
                             self.write_link(linked, value, &hir.span)?;
+                            self.write_link(constant, value, &hir.span)?;
                             self.function.blocks[self.current].terminator = Terminator::Jump {
                                 target: join,
                                 arguments: vec![value],
@@ -549,6 +551,7 @@ impl<'a> Lowerer<'a> {
                             hir.span.clone(),
                         )?;
                         self.write_link(linked, written, &hir.span)?;
+                        self.write_link(constant, written, &hir.span)?;
                         written
                     }
                 } else {
