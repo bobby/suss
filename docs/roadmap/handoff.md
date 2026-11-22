@@ -21,7 +21,12 @@ not rebuild or overwrite the running baseline's libraries or suss executable.
 commands.json records the commands and source/library hashes. All6 tests pass
 (4 calling-convention, 2 predicate), with zero failed or ignored. This is focused
 validation, not a Cargo full-baseline result; current-head CI and the terminal
-status of the original full run must be inspected separately. Aggregate scalar
+status of the original full run must be inspected separately. Subsequently,
+the ordinary cargo +stable test -p suss-compile --locked command with those two
+--test targets and -- --test-threads=2 also passes all6, zero failed/ignored,
+in a dedicated m12-aggregate-target directory cloned using btrfs reflinks.
+cargo-focused-command.json and cargo-focused.log retain that command/result.
+ Aggregate scalar
 replacement remains isolated exploratory source and is not part of this repair.
 
 ## Local closure scalar storage probes (2026-11-21)

@@ -1,0 +1,24 @@
+Running as unit: run-p3906881-i87785921.scope; invocation ID: 0d1c22fbd4a94a41975da6754118ede3
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2m 25s
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/portable_calling_convention-6136ee739ee6ed12)
+
+running 4 tests
+test artifacts_record_runtime_abi_7_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_inline_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-target/debug/deps/portable_inline_predicates-c342b169c9ee7dbf)
+
+running 2 tests
+test nil_and_identical_compile_inline_unless_shadowed_or_of_another_arity ... ok
+test eliminated_local_predicate_calls_preserve_shadowing ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
+
