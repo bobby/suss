@@ -42,7 +42,7 @@ impl Form {
             self.take_kind(),
         )
     }
-    /// The elements of a `#queue [...]` literal, the one built-in tag.
+    /// The elements of a `#queue [...]` literal.
     pub fn queue_items(&self) -> Option<&[Form]> {
         match &self.kind {
             Kind::Tagged { tag, form } if tag.namespace.is_none() && tag.name == "queue" => {
@@ -189,6 +189,16 @@ impl PartialEq for ExactNumber {
 /// symbol named by the literal text, which decoding restores.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
+    /// The decimal-string payload of the Suss BigInteger source/data carrier.
+    /// Parse directly in base10: leading zeros never mean octal here.
+    pub(crate) fn biginteger_text(text: &str) -> Option<Self> {
+        let digits = text.strip_prefix(['+', '-']).unwrap_or(text);
+        if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        let value = num_bigint::BigInt::parse_bytes(text.as_bytes(), 10)?;
+        Some(Self { text: value.to_string(), value: ExactValue::Integer { value, big: false } })
+    }
     /// Reconstitute a GC BigInt datum without converting through binary64.
     /// `limbs` are the significant little-endian u32 magnitude digits.
     pub fn bigint(negative: bool, limbs: Vec<u32>) -> Self { Self::integer(negative, limbs, true) }
@@ -510,11 +520,16 @@ fn metadata_target(kind: &Kind) -> bool {
 }
 
 /// The value a built-in tag reads as. `#queue` follows ClojureScript; Clojure
-/// itself has none. Other tags fail as Clojure's reader does without a reader.
+/// itself has none. The Suss BigInteger carrier preserves a compiler datum's
+/// category without evaluating a constructor call. Other tags still fail.
 fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), ParseError> {
     match (tag.namespace.as_deref(), tag.name.as_str()) {
         (None, "queue") if matches!(target.kind, Kind::Vector(_)) => Ok(()),
         (None, "queue") => Err(error(span, "Queue literal expects a vector for its elements.")),
+        (Some("suss"), "biginteger") => match &target.kind {
+            Kind::String(units) if String::from_utf16(units).ok().and_then(|s| ExactNumber::biginteger_text(&s)).is_some() => Ok(()),
+            _ => Err(error(span, "BigInteger literal expects a decimal string.")),
+        },
         _ => Err(error(span, format!("No reader function for tag {tag}"))),
     }
 }
@@ -613,7 +628,10 @@ fn select_inner(
             };
             form.span.end = target.span.end;
             check_tagged(&tag, &target, form.span.clone())?;
-            form.kind = Kind::Tagged { tag, form: Box::new(target) };
+            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
+                let Kind::String(units) = &target.kind else { unreachable!() };
+                Kind::Exact(ExactNumber::biginteger_text(&String::from_utf16(units).unwrap()).unwrap())
+            } else { Kind::Tagged { tag, form: Box::new(target) } };
             Some(form)
         }
         kind => {

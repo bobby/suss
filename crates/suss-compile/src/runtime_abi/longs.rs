@@ -898,6 +898,8 @@ pub(super) fn functions(b: &mut Builder) {
         Else,
         LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
         LocalGet(0), Call(b.names["bigint-negate"]), Return, End,
+        LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["ratio-negate"]), Return, End,
         LocalGet(0),
         Call(number),
         F64Neg,

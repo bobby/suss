@@ -349,7 +349,7 @@ impl<'de> de::Deserializer<'de> for Deserializer {
             Value::Number(x) => visitor.visit_f64(x),
             Value::Long(x) if x >= 0 => visitor.visit_u64(x as u64),
             Value::Long(x) => visitor.visit_i64(x),
-            Value::BigInt(x) => {
+            Value::BigInt(x) | Value::BigInteger(x) => {
                 use num_traits::ToPrimitive;
                 if let Some(x) = x.to_i64() { visitor.visit_i64(x) }
                 else if let Some(x) = x.to_u64() { visitor.visit_u64(x) }

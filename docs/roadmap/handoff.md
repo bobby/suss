@@ -32661,3 +32661,30 @@ baseline failures are unchanged, with no partial count-mismatch passes inferred.
 eight functions required by the exact-number issue. The isolated controls add
 only a regression target/fixtures after the final full capture; production
 source is unchanged.
+
+## Promotion-review numeric fixes (2026-11-22)
+
+`results/m12-promotion-fixes` records independent review of8a6e350c and its
+142-expression primary comparison. The review found unchecked-negate converting
+Ratio to double and small/wide BigInteger macro constants failing reconstruction.
+Before-unchecked and before-macro-biginteger preserve the actual failures.
+
+Ratio now uses exact negation. Expanded unary controls also found positive
+BigInteger abs retaining its projection rather than producing BigInt;
+integer-bigint handles that branch.33 fresh cases pass in Runtime/Macro/actual
+AOT. BigInteger has a distinct native tooling value and reserved #suss/biginteger
+decimal-string carrier, normalized to the existing datum during selection.
+Both shipped readers implement it and respect configured reader overrides.
+Runtime printing stays plain;010 is decimal10. The accepted design and original
+source hash record this narrow reader addition.
+
+`run-focused.py after-abs-category` passes16 tests with source/fixtures unchanged,
+including23 carrier controls in all three routes. `run-gates.py` passes222 tests:
+80 reader,50 CLI,88 compiler/ABI/decoder plus4 bootstrap checks. Java/Node-free
+double reproduction, identity, both manifests and workspace test-target
+compilation pass. The final suite has4247 rows and exactly3739/61/459/2680/90,
+with zero changed assertions or namespace diagnostics and no baseline/reference/
+skip/count-guard change. The emitted-aot probe executes generated source with
+small/wide BigInteger macro values and quoted numerator/denominator data; it
+returns1. Only this regression target differs after the capture; production
+source is unchanged. Independent delta review and final-head CI live on GitHub.

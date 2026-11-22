@@ -228,6 +228,7 @@ impl<'o> Projector<'o> {
                 Kind::Long(_) => Some("long"),
                 Kind::Exact(number) => match &number.value {
                     suss_reader::forms::ExactValue::Integer { big: true, .. } => Some("bigint"),
+                    suss_reader::forms::ExactValue::Integer { big: false, .. } => Some("biginteger"),
                     suss_reader::forms::ExactValue::Ratio { .. } => Some("ratio"),
                     _ => None,
                 },

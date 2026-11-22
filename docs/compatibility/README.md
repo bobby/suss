@@ -1423,3 +1423,22 @@ tests remain blocked by whole-test count guards. They match fresh vendored JVM
 assertion reports in Runtime/Macro/actual AOT. The separate Float class form
 has no Suss equivalent under ADR-0003; its primary pass and platform limit stay
 explicit. No original count-guarded row is relabeled as a suite pass.
+
+## BigInteger compiler-data carrier
+
+The reserved `#suss/biginteger "decimal"` carrier preserves native BigInteger
+macro constants through canonical EDN and emitted source, within and beyond
+Long range. Compiler selection normalizes it to the existing exact datum;
+ordinary runtime printing stays plain. Native EDN and both shipped readers
+use the same decimal-string contract and preserve configured reader precedence.
+Unknown tags and malformed carriers remain errors. The accepted reader design
+records this additional built-in tag.
+
+`results/m12-promotion-fixes` retains the independent Ratio precision and
+BigInteger reconstruction failures. Exact unchecked-negate and the BigInteger
+abs-category fix pass33 fresh JVM cases in Runtime/Macro/actual AOT. Carrier
+controls add23 cases in those routes.80 reader,50 CLI and88 compiler/ABI checks
+pass, along with bootstrap reproduction and both manifests. The unchanged
+4247-row capture has zero outcome/diagnostic changes and needs no baseline
+rewrite. Inventory counts remain unchanged; the original reader helper adds
+no copied upstream body or Java dependency.

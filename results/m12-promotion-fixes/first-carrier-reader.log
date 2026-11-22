@@ -1,0 +1,11 @@
+Running as unit: run-p1968239-i90042673.scope; invocation ID: 5dccf55c4e9c4f2997a11178e9e63c67
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 6.65s
+     Running tests/biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/biginteger_carrier-a53fab496a7b4299)
+
+running 2 tests
+test invalid_carriers_and_numeric_duplicate_keys_are_rejected ... ok
+test typed_biginteger_carrier_keeps_decimal_value_and_category ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

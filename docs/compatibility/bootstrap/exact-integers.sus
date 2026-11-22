@@ -977,6 +977,21 @@
       (reader-fail st start "Queue literal expects a vector for its elements." false))))
 (def ^:private reader-queue-tag?
   (fn [tag] (if (nil? (.-ns tag)) (= (.-name tag) "queue") false)))
+(def ^:private reader-biginteger-tag?
+  (fn [tag] (if (= (.-ns tag) "suss") (= (.-name tag) "biginteger") false)))
+;; Original typed source/data carrier. Ordinary BigInteger printing stays plain;
+;; only emitted compiler data uses this tag, whose payload is decimal text.
+(def ^:private reader-biginteger
+  (fn [st start value]
+    (if (string? value)
+      (let [n (count value)
+            first (if (< 0 n) (.charCodeAt value 0) 0)
+            from (if (if (== first 43) true (== first 45)) 1 0)]
+        (if (reader-digits? value from n)
+          (suss.bootstrap/as-biginteger
+           (numeric-bigint-digits value from n 10 (== first 45)))
+          (reader-fail st start "BigInteger literal expects a decimal string." false)))
+      (reader-fail st start "BigInteger literal expects a decimal string." false))))
 (def ^:private reader-tagged
   (fn [st s n start]
     (let [end (reader-token-end s n (inc start)) edn (aget st 3)]
@@ -995,6 +1010,7 @@
             (cond
               (some? reader) (reader value)
               (reader-queue-tag? tag) (reader-queue st start value)
+              (reader-biginteger-tag? tag) (reader-biginteger st start value)
               (some? (aget st 7)) ((aget st 7) tag value)
               :else (reader-fail st start (str "No reader function for tag " tag) false)))
           (if (if (< 0 (aget st 10)) true (keyword-identical? (aget st 4) :preserve))
@@ -1005,6 +1021,7 @@
                 (cond
                   (some? reader) (reader value)
                   (reader-queue-tag? tag) (reader-queue st start value)
+                  (reader-biginteger-tag? tag) (reader-biginteger st start value)
                   (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
                   :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
 

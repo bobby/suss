@@ -1,0 +1,6 @@
+{
+  "crates/suss-cli/tests/analyzer_edn.rs": {
+    "before": "8178eb5e3b5ab44efa3aa936173839d2c7a4fdf0123330999586f95cdaf8b6b0",
+    "after": "ba02d1b476bef02ee5618ddbefe83551300b449dacd5a39cd99ab28bbeccc0d7"
+  }
+}

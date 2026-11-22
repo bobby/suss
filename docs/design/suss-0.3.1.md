@@ -93,13 +93,19 @@ features are `:suss` and `:default`, taking the first matching branch in source
 order; Suss claims neither `:cljs` nor `:clj` (2026-11-06 decision,
 [ADR-0003](../adr/0003-clojure-numeric-tower.md), #334), whatever the file's
 extension, so a `.cljs` file is read with the same features.
-The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-in
+The reader reads tagged literals, `#tag form`, as Clojure's does. One built-in
 tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
 literal and prints queues as unreadable objects. It reads as a persistent queue
 in source, the REPL, quoted data and macro data, so printed queues read back.
 As with any tagged literal in Clojure, the queue is a constant: its elements and
 metadata are not evaluated (unlike ClojureScript), and neither are those of a
-queue a macro returns. Any other tag, and `#queue` with anything but a vector,
+queue a macro returns. The additional reserved `#suss/biginteger "decimal"`
+carrier preserves native BigInteger constants in emitted compiler source/data
+(2026-11-22 numeric integration). Its payload is a signed decimal string, read
+without evaluation or radix inference; ordinary runtime BigInteger printing
+remains plain, as in Clojure. Compiler source, native EDN and the Runtime/Macro
+readers recognize it, preserving configured runtime/EDN tag-reader precedence.
+Unknown tags, malformed BigInteger payloads and `#queue` with anything but a vector
 fails with a reader diagnostic ("No reader function for tag ..."), checked after
 conditional selection. Unselected branches are not checked, as in Clojure. A
 discarded (`#_`) tag is checked only when its target needs conditional

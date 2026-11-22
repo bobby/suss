@@ -1,0 +1,10 @@
+Running as unit: run-p2014851-i90095695.scope; invocation ID: 48270484a77b42509566d5221471ddf8
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.06s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 1 test
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 3.97s
+

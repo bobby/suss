@@ -75,6 +75,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(b.names["bigint-negate"]),
         Else,
         LocalGet(0),
+        Call(b.names["integer-bigint"]),
         End,
     ]);
     b.function("bigint-abs", &[VALUE], &[VALUE], &code);

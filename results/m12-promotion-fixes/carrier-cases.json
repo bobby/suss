@@ -1,0 +1,94 @@
+[
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"0\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"0\" \"java.math.BigInteger\" 0 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"0\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"0\" \"java.math.BigInteger\" 0 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"0\"] [(pr-str x) (pr-str (class x))])",
+    "[\"0\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"-0\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"0\" \"java.math.BigInteger\" 0 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"-0\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"0\" \"java.math.BigInteger\" 0 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"-0\"] [(pr-str x) (pr-str (class x))])",
+    "[\"0\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"+0010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"10\" \"java.math.BigInteger\" -289985220 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"+0010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"10\" \"java.math.BigInteger\" -289985220 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"+0010\"] [(pr-str x) (pr-str (class x))])",
+    "[\"10\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"10\" \"java.math.BigInteger\" -289985220 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"10\" \"java.math.BigInteger\" -289985220 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"010\"] [(pr-str x) (pr-str (class x))])",
+    "[\"10\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"-010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"-10\" \"java.math.BigInteger\" -1675778087 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"-010\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"-10\" \"java.math.BigInteger\" -1675778087 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"-010\"] [(pr-str x) (pr-str (class x))])",
+    "[\"-10\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"9223372036854775808\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"9223372036854775808\" \"java.math.BigInteger\" -2147483648 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"9223372036854775808\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"9223372036854775808\" \"java.math.BigInteger\" -2147483648 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"9223372036854775808\"] [(pr-str x) (pr-str (class x))])",
+    "[\"9223372036854775808\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(let [x (read-string \"#suss/biginteger \\\"-18446744073709551616\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"-18446744073709551616\" \"java.math.BigInteger\" -961 true]"
+  ],
+  [
+    "(let [x (edn/read-string \"#suss/biginteger \\\"-18446744073709551616\\\"\")] [(pr-str x) (pr-str (class x)) (hash x) (= x (bigint x))])",
+    "[\"-18446744073709551616\" \"java.math.BigInteger\" -961 true]"
+  ],
+  [
+    "(let [biginteger (fn [x] :shadow) x #suss/biginteger \"-18446744073709551616\"] [(pr-str x) (pr-str (class x))])",
+    "[\"-18446744073709551616\" \"java.math.BigInteger\"]"
+  ],
+  [
+    "(binding [*data-readers* {'suss/biginteger (fn [x] :custom)}] (read-string \"#suss/biginteger \\\"1\\\"\"))",
+    ":custom"
+  ],
+  [
+    "(edn/read-string {:readers {'suss/biginteger (fn [x] :custom)}} \"#suss/biginteger \\\"1\\\"\")",
+    ":custom"
+  ]
+]

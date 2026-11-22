@@ -1,0 +1,40 @@
+Running as unit: run-p1984465-i90039726.scope; invocation ID: 526062ec01a448a59f23e869b92d4e4a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 31s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 12 tests
+test cli_prints_documents_that_suss_reads ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test conformance_corpus_round_trips ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.44s
+
+     Running tests/clojure_biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_biginteger_carrier-3ecbd5bdc4fbade0)
+
+running 2 tests
+test bigint_carrier_preserves_category_in_source_runtime_macro_and_edn ... ok
+test aot_executes_typed_biginteger_carrier_without_host_reader ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.37s
+
+     Running tests/clojure_unchecked_ratios.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_unchecked_ratios-49caaee40ba254a6)
+
+running 2 tests
+test unchecked_ratios_and_integer_categories_match_jvm_in_both_phases ... ok
+test aot_executes_unchecked_ratios_and_integer_categories ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s
+
