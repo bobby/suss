@@ -1,0 +1,30 @@
+[
+  {
+    "before": "suite",
+    "after": "final-combined",
+    "changed_inputs": {
+      "crates/suss-cli/tests/clojure_exact_inline.rs": {
+        "before": null,
+        "after": "226881da87d865a20aaea1df4d2b2a584d82ad7405f8acae865d1c25a2bf7e65"
+      },
+      "tests/oracle/clojure-test-suite-known-failures.json": {
+        "before": "c9ec67afa99f96a061e1b44b5eb966ad12f7f175d9bf5e8fe2ad63bd047ba0ed",
+        "after": "262a629ebd6c4c81a708b272b86d47e5271e7c4533df64a9366dacbfbab03160"
+      }
+    }
+  },
+  {
+    "before": "focused",
+    "after": "final-combined",
+    "changed_inputs": {
+      "crates/suss-cli/tests/clojure_exact_inline.rs": {
+        "before": null,
+        "after": "226881da87d865a20aaea1df4d2b2a584d82ad7405f8acae865d1c25a2bf7e65"
+      },
+      "tests/oracle/clojure-test-suite-known-failures.json": {
+        "before": "c9ec67afa99f96a061e1b44b5eb966ad12f7f175d9bf5e8fe2ad63bd047ba0ed",
+        "after": "262a629ebd6c4c81a708b272b86d47e5271e7c4533df64a9366dacbfbab03160"
+      }
+    }
+  }
+]

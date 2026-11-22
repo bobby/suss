@@ -51,6 +51,7 @@ mod streams;
 mod string_methods;
 mod string_char_at;
 mod type_values;
+pub(crate) mod numeric_classes;
 
 pub const VERSION: u32 = 10;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
@@ -609,7 +610,11 @@ fn instance_site_test(b: &mut Builder) {
     };
     let object = || [LocalGet(2), RefCastNonNull(HeapType::Concrete(OBJECT))];
     let (constructor, descriptor, prototype) = (SITE_DESCRIPTOR, SITE_METHOD, SITE_DESCRIPTOR_2);
-    let mut code = vec![LocalGet(1)];
+    // Native classes bypass the source-object cache: its warm i31 path is
+    // always negative, whereas Long and Number contain i31 values.
+    let mut code = vec![LocalGet(1), LocalGet(2), Call(b.names["numeric-class-instance"]),
+        LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty), LocalGet(4), Return, End,
+        LocalGet(1)];
     code.extend(site(constructor));
     code.push(RefEq);
     code.extend(site(SITE_EPOCH));
@@ -1896,6 +1901,7 @@ fn build_module() -> Vec<u8> {
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
+    numeric_classes::functions(&mut b);
     // Casts come before arrays, as packed primitive arrays convert with them.
     let bitwise_functions = bitwise::functions(&mut b);
     packed_arrays::functions(&mut b);
@@ -1906,6 +1912,7 @@ fn build_module() -> Vec<u8> {
     transient_vectors::functions(&mut b);
     transient_maps::functions(&mut b);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
+    numeric_classes::instance_function(&mut b);
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
     // callee is bound through IFn's `-invoke` key for its signature arity,
     // which core registers as it declares IFn, as the call site's own
@@ -2554,6 +2561,7 @@ fn build_module() -> Vec<u8> {
     );
     r#async::append_descriptor(&mut globals);
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
+    numeric_classes::append_globals(&mut globals);
     type_values::append_globals(&mut globals);
     primitive_constructors::append_globals(&mut globals);
     range_errors::append_globals(&mut globals);

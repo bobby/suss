@@ -1,0 +1,71 @@
+Running as unit: run-p1783829-i89836101.scope; invocation ID: 303c845195c345b49f12246969beb7f3
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4.28s
+     Running tests/builtin_protocol_aliasing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/builtin_protocol_aliasing-9b283937a13ae498)
+
+running 6 tests
+test aliased_core_protocol_vars_do_not_receive_native_markers ... ok
+test native_extensions_follow_protocol_redefinition ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test user_redefinition_of_a_core_protocol_does_not_replace_core_tables ... ok
+test aliased_core_method_vars_do_not_receive_native_extensions ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.09s
+
+     Running tests/builtin_protocols_closed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/builtin_protocols_closed-3f267793148131cc)
+
+running 4 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test core_protocols_of_builtin_types_are_closed_in_both_phases ... ok
+test user_protocols_and_user_types_stay_open ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+
+     Running tests/compiled_protocol_sites.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_protocol_sites-7d305e00de7be54c)
+
+running 1 test
+test protocol_call_sites_match_the_dispatcher ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.37s
+
+     Running tests/compiled_record_protocol_projection.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_record_protocol_projection-6e71a0ebe99938d8)
+
+running 3 tests
+test actual_protocol_indexes_preserve_caller_phase_and_own_identity has been running for over 60 seconds
+test compact_membership_uses_real_bindings_and_failed_staging_restores_mode has been running for over 60 seconds
+test compact_membership_uses_real_bindings_and_failed_staging_restores_mode ... ok
+test membership_index_preserves_unicode_order_in_both_caller_phases has been running for over 60 seconds
+test membership_index_preserves_unicode_order_in_both_caller_phases ... ok
+test actual_protocol_indexes_preserve_caller_phase_and_own_identity ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 213.80s
+
+     Running tests/portable_native_protocols.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_native_protocols-c8e096c287535d91)
+
+running 11 tests
+test captured_native_dispatcher_reads_current_method_table_after_replacement ... ok
+test missing_native_method_preserves_argument_effects_and_language_recovery ... ok
+test native_protocol_extensions_remain_live_for_old_dispatchers_after_gc ... ok
+test native_extension_replaces_all_arities_and_recur_changes_receiver ... ok
+test native_protocol_redeclaration_resets_tables_but_direct_object_methods_survive ... ok
+test native_protocol_membership_uses_marker_and_replaced_protocol_value ... ok
+test native_protocols_choose_direct_then_specific_then_default_methods ... ok
+test native_protocols_dispatch_nil_undefined_and_scalar_kinds ... ok
+test native_satisfies_function_is_first_class_and_macro_fallback_observes_redefinition ... ok
+test qualified_native_extension_updates_captured_dispatcher_across_namespaces_and_gc ... ok
+test native_protocols_match_independently_encoded_primary_corpus ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/protocol_call_caches.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/protocol_call_caches-2d0e9ef45331a936)
+
+running 4 tests
+test alternating_marker_receivers_invalidate_negative_answers_together ... ok
+test alternating_protocol_receivers_keep_both_live_methods_after_gc_and_extension ... ok
+test extending_after_a_cached_dispatch_takes_effect_at_that_site ... ok
+test extending_after_a_cached_marker_test_takes_effect_at_that_site ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
+

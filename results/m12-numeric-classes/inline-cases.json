@@ -1,0 +1,194 @@
+[
+  {
+    "label": "equal-bigint",
+    "route": "raw",
+    "function": "(fn [^long x] (= x 1N))",
+    "source": "((fn [^long x] (= x 1N)) 1)",
+    "jvm_source": "((fn [^long x] (= x 1N)) 1)",
+    "expected": "true"
+  },
+  {
+    "label": "equal-bigint",
+    "route": "boxed",
+    "function": "(fn [x] (= x 1N))",
+    "source": "((fn [x] (= x 1N)) (identity 1))",
+    "jvm_source": "((fn [x] (= x 1N)) (identity 1))",
+    "expected": "true"
+  },
+  {
+    "label": "hash-bigint",
+    "route": "raw",
+    "function": "(fn [^long x] (= (hash x) (hash 1N)))",
+    "source": "((fn [^long x] (= (hash x) (hash 1N))) 1)",
+    "jvm_source": "((fn [^long x] (= (hash x) (hash 1N))) 1)",
+    "expected": "true"
+  },
+  {
+    "label": "hash-bigint",
+    "route": "boxed",
+    "function": "(fn [x] (= (hash x) (hash 1N)))",
+    "source": "((fn [x] (= (hash x) (hash 1N))) (identity 1))",
+    "jvm_source": "((fn [x] (= (hash x) (hash 1N))) (identity 1))",
+    "expected": "true"
+  },
+  {
+    "label": "less-than-ratio",
+    "route": "raw",
+    "function": "(fn [^long x] (< x 3/2))",
+    "source": "((fn [^long x] (< x 3/2)) 1)",
+    "jvm_source": "((fn [^long x] (< x 3/2)) 1)",
+    "expected": "true"
+  },
+  {
+    "label": "less-than-ratio",
+    "route": "boxed",
+    "function": "(fn [x] (< x 3/2))",
+    "source": "((fn [x] (< x 3/2)) (identity 1))",
+    "jvm_source": "((fn [x] (< x 3/2)) (identity 1))",
+    "expected": "true"
+  },
+  {
+    "label": "numeric-equal-normalized-ratio",
+    "route": "raw",
+    "function": "(fn [^long x] (== x 4/2))",
+    "source": "((fn [^long x] (== x 4/2)) 2)",
+    "jvm_source": "((fn [^long x] (== x 4/2)) 2)",
+    "expected": "true"
+  },
+  {
+    "label": "numeric-equal-normalized-ratio",
+    "route": "boxed",
+    "function": "(fn [x] (== x 4/2))",
+    "source": "((fn [x] (== x 4/2)) (identity 2))",
+    "jvm_source": "((fn [x] (== x 4/2)) (identity 2))",
+    "expected": "true"
+  },
+  {
+    "label": "promoting-overflow",
+    "route": "raw",
+    "function": "(fn [^long x] (+' x 1))",
+    "source": "((fn [^long x] (+' x 1)) 9223372036854775807)",
+    "jvm_source": "((fn [^long x] (+' x 1)) 9223372036854775807)",
+    "expected": "9223372036854775808N"
+  },
+  {
+    "label": "promoting-overflow",
+    "route": "boxed",
+    "function": "(fn [x] (+' x 1))",
+    "source": "((fn [x] (+' x 1)) (identity 9223372036854775807))",
+    "jvm_source": "((fn [x] (+' x 1)) (identity 9223372036854775807))",
+    "expected": "9223372036854775808N"
+  },
+  {
+    "label": "negative-promoting-overflow",
+    "route": "raw",
+    "function": "(fn [^long x] (-' x 1))",
+    "source": "((fn [^long x] (-' x 1)) -9223372036854775808)",
+    "jvm_source": "((fn [^long x] (-' x 1)) -9223372036854775808)",
+    "expected": "-9223372036854775809N"
+  },
+  {
+    "label": "negative-promoting-overflow",
+    "route": "boxed",
+    "function": "(fn [x] (-' x 1))",
+    "source": "((fn [x] (-' x 1)) (identity -9223372036854775808))",
+    "jvm_source": "((fn [x] (-' x 1)) (identity -9223372036854775808))",
+    "expected": "-9223372036854775809N"
+  },
+  {
+    "label": "identity-separate-numeric-categories",
+    "route": "raw",
+    "function": "(fn [^long x] (identical? x 1N))",
+    "source": "((fn [^long x] (identical? x 1N)) 1)",
+    "jvm_source": "((fn [^long x] (identical? x 1N)) 1)",
+    "expected": "false"
+  },
+  {
+    "label": "identity-separate-numeric-categories",
+    "route": "boxed",
+    "function": "(fn [x] (identical? x 1N))",
+    "source": "((fn [x] (identical? x 1N)) (identity 1))",
+    "jvm_source": "((fn [x] (identical? x 1N)) (identity 1))",
+    "expected": "false"
+  },
+  {
+    "label": "bigint-bitwise-rejection",
+    "route": "raw",
+    "function": "(fn [^long x] (try (bit-and x 1N) (catch :default e :invalid-integer)))",
+    "source": "((fn [^long x] (try (bit-and x 1N) (catch :default e :invalid-integer))) 1)",
+    "jvm_source": "((fn [^long x] (try (bit-and x 1N) (catch Throwable e :invalid-integer))) 1)",
+    "expected": ":invalid-integer"
+  },
+  {
+    "label": "bigint-bitwise-rejection",
+    "route": "boxed",
+    "function": "(fn [x] (try (bit-and x 1N) (catch :default e :invalid-integer)))",
+    "source": "((fn [x] (try (bit-and x 1N) (catch :default e :invalid-integer))) (identity 1))",
+    "jvm_source": "((fn [x] (try (bit-and x 1N) (catch Throwable e :invalid-integer))) (identity 1))",
+    "expected": ":invalid-integer"
+  },
+  {
+    "label": "ratio-bitwise-rejection",
+    "route": "raw",
+    "function": "(fn [^long x] (try (bit-or x 1/2) (catch :default e :invalid-integer)))",
+    "source": "((fn [^long x] (try (bit-or x 1/2) (catch :default e :invalid-integer))) 1)",
+    "jvm_source": "((fn [^long x] (try (bit-or x 1/2) (catch Throwable e :invalid-integer))) 1)",
+    "expected": ":invalid-integer"
+  },
+  {
+    "label": "ratio-bitwise-rejection",
+    "route": "boxed",
+    "function": "(fn [x] (try (bit-or x 1/2) (catch :default e :invalid-integer)))",
+    "source": "((fn [x] (try (bit-or x 1/2) (catch :default e :invalid-integer))) (identity 1))",
+    "jvm_source": "((fn [x] (try (bit-or x 1/2) (catch Throwable e :invalid-integer))) (identity 1))",
+    "expected": ":invalid-integer"
+  },
+  {
+    "label": "wide-exact-compare",
+    "route": "raw",
+    "function": "(fn [^long x] (> x 9007199254740992N))",
+    "source": "((fn [^long x] (> x 9007199254740992N)) 9007199254740993)",
+    "jvm_source": "((fn [^long x] (> x 9007199254740992N)) 9007199254740993)",
+    "expected": "true"
+  },
+  {
+    "label": "wide-exact-compare",
+    "route": "boxed",
+    "function": "(fn [x] (> x 9007199254740992N))",
+    "source": "((fn [x] (> x 9007199254740992N)) (identity 9007199254740993))",
+    "jvm_source": "((fn [x] (> x 9007199254740992N)) (identity 9007199254740993))",
+    "expected": "true"
+  },
+  {
+    "label": "negative-ratio-compare",
+    "route": "raw",
+    "function": "(fn [^long x] (> x -3/2))",
+    "source": "((fn [^long x] (> x -3/2)) -1)",
+    "jvm_source": "((fn [^long x] (> x -3/2)) -1)",
+    "expected": "true"
+  },
+  {
+    "label": "negative-ratio-compare",
+    "route": "boxed",
+    "function": "(fn [x] (> x -3/2))",
+    "source": "((fn [x] (> x -3/2)) (identity -1))",
+    "jvm_source": "((fn [x] (> x -3/2)) (identity -1))",
+    "expected": "true"
+  },
+  {
+    "label": "checked-overflow-control",
+    "route": "raw",
+    "function": "(fn [^long x] (try (+ x 1) (catch :default e :long-overflow)))",
+    "source": "((fn [^long x] (try (+ x 1) (catch :default e :long-overflow))) 9223372036854775807)",
+    "jvm_source": "((fn [^long x] (try (+ x 1) (catch Throwable e :long-overflow))) 9223372036854775807)",
+    "expected": ":long-overflow"
+  },
+  {
+    "label": "checked-overflow-control",
+    "route": "boxed",
+    "function": "(fn [x] (try (+ x 1) (catch :default e :long-overflow)))",
+    "source": "((fn [x] (try (+ x 1) (catch :default e :long-overflow))) (identity 9223372036854775807))",
+    "jvm_source": "((fn [x] (try (+ x 1) (catch Throwable e :long-overflow))) (identity 9223372036854775807))",
+    "expected": ":long-overflow"
+  }
+]

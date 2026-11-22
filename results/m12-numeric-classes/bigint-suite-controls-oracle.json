@@ -1,0 +1,13 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(prn [(instance? clojure.lang.BigInt (bigint 0)) (instance? clojure.lang.BigInt (bigint 0.0)) (instance? clojure.lang.BigInt (inc' 9223372036854775807)) (instance? clojure.lang.BigInt (dec' -9223372036854775808))])"
+  ],
+  "exit_code": 0,
+  "stdout": "[true true true true]\n",
+  "stderr": ""
+}

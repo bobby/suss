@@ -717,6 +717,7 @@ pub enum Nominal {
     ApplyFixed,
     IsTypeConstructor,
     ValueConstructor,
+    NumericClass(u8),
     /// Type value -> its name string, or nil (#304).
     TypeName,
     /// Future or stream -> its display text, or nil (#288).
@@ -798,6 +799,7 @@ impl Nominal {
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
+                Self::NumericClass(kind) => count == 0 && usize::from(kind) < crate::runtime_abi::numeric_classes::NAMES.len(),
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
@@ -1843,6 +1845,7 @@ impl Analyzer<'_> {
             return Ok((Expression::Global(constant.clone()), initializer.ty));
         }
         match binding {
+            ResolvedBinding::NumericClass { kind, .. } => Ok((Expression::Nominal { operation: Nominal::NumericClass(kind), arguments: vec![] }, Type::Value)),
             ResolvedBinding::Cell(global) => {
                 let global = self.core_reference_link(&global).unwrap_or(global);
                 Ok((Expression::Global(global), Type::Value))

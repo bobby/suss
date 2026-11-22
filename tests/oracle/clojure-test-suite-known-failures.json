@@ -490,10 +490,6 @@
    "diagnostic": "clojure.core-test.bigdec (Some(\"<root>/clojure/core_test/bigdec.cljc\")): Unresolved Runtime name bigdec at bytes 242..2103",
    "stage": "namespace"
   },
-  "clojure.core-test.bigint": {
-   "diagnostic": "clojure.core-test.bigint (Some(\"<root>/clojure/core_test/bigint.cljc\")): Unresolved Runtime name clojure.lang.BigInt at bytes 267..2781",
-   "stage": "namespace"
-  },
   "clojure.core-test.binding": {
    "diagnostic": "clojure.core-test.binding (Some(\"<root>/clojure/core_test/binding.cljc\")): Unresolved Runtime name future at bytes 225..2775",
    "stage": "namespace"
@@ -583,15 +579,11 @@
    "stage": "read"
   },
   "clojure.core-test.ifn-qmark": {
-   "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name ifn? at bytes 352..1464",
+   "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name var at bytes 352..1464",
    "stage": "namespace"
   },
   "clojure.core-test.intern": {
    "diagnostic": "clojure.core-test.intern (Some(\"<root>/clojure/core_test/intern.cljc\")): Unresolved Runtime name intern at bytes 230..946",
-   "stage": "namespace"
-  },
-  "clojure.core-test.juxt": {
-   "diagnostic": "clojure.core-test.juxt (Some(\"<root>/clojure/core_test/juxt.cljc\")): Unresolved Runtime name ifn? at bytes 236..1826",
    "stage": "namespace"
   },
   "clojure.core-test.lazy-seq": {

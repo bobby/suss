@@ -2150,3 +2150,13 @@
       (numeric-rationalize-text (suss.bootstrap/coerce-string x))
       (if (or (nil? x) (suss.bootstrap/number? x)) x
         (throw (suss.bootstrap/error "rationalize requires a number"))))))
+
+;; Original Suss adapter for Clojure's class primitive. Type values are native
+;; GC identities; class does not invoke or depend on a Java class loader.
+(def class
+  (fn [x]
+    (if (suss.bootstrap/nil? x) nil (suss.bootstrap/value-constructor x))))
+
+;; Original capability adapter: classes are not IFn values, while functions
+;; and values implementing the portable invocation protocol are callable.
+(def ifn? (fn [x] (or (fn? x) (satisfies? IFn x))))

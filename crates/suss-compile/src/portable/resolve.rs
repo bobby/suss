@@ -120,6 +120,7 @@ pub(crate) struct ProtocolMethod {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Binding {
+    NumericClass { global: Global, kind: u8 },
     BootstrapBitwise {
         global: Global,
         operation: Bitwise,
@@ -161,7 +162,8 @@ pub enum Binding {
 impl Binding {
     pub fn global(&self) -> &Global {
         match self {
-            Self::BootstrapBitwise { global: g, .. }
+            Self::NumericClass { global: g, .. }
+            | Self::BootstrapBitwise { global: g, .. }
             | Self::BootstrapControl { global: g, .. }
             | Self::BootstrapComparison { global: g, .. }
             | Self::BootstrapArray { global: g, .. }
@@ -1694,6 +1696,12 @@ impl Environment {
             .get(&global)
             .filter(|binding| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
             .cloned()
+            .or_else(|| {
+                if symbol.namespace.is_some() { return None; }
+                let kind = crate::runtime_abi::numeric_classes::resolve(&symbol.name)?;
+                let (namespace, name) = crate::runtime_abi::numeric_classes::NAMES[kind as usize].rsplit_once('.')?;
+                Some(Binding::NumericClass { global: Global { phase, namespace: namespace.into(), name: name.into() }, kind })
+            })
             .ok_or_else(|| Diagnostic {
                 span,
                 message: format!("Unresolved {phase:?} name {symbol}"),

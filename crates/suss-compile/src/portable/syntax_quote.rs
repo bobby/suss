@@ -252,6 +252,9 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
             .environment
             .resolve(self.phase, symbol, form.span.clone())
         {
+            if let super::resolve::Binding::NumericClass { kind, .. } = &binding {
+                return Symbol { namespace: None, name: crate::runtime_abi::numeric_classes::NAMES[*kind as usize].into() };
+            }
             let global = binding.global();
             return Symbol::namespaced(
                 if global.namespace() == "suss.core" {

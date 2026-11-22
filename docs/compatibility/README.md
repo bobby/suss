@@ -1365,5 +1365,30 @@ actual AOT, retaining primitive diagnostics in both phases. The source-qualified
 suite capture adds1202 primary matches and loads29 namespaces; all459 actual
 failures,2712 unexecuted assertions and92 failed namespaces stay explicit in
 the reviewed baseline. Existing loaded namespaces have no changed assertion
-outcomes. BigInt's namespace still lacks clojure.lang.BigInt; Decimal-dependent
-assertions and platform narrow-type/character differences remain failures.
+outcomes. That capture predates native numeric class identities below.
+Decimal-dependent assertions and platform narrow-type/character differences
+remain failures.
+
+## Numeric type identities
+
+Long, Double, BigInt, BigInteger and Ratio have canonical, non-callable native
+class values, alongside Number and Class. BigDecimal has a class value only;
+it does not supply Decimal instances in ABI10. The original class/ifn? adapters
+expose actual constructor identity and portable invocation capability. Numeric
+protocol dispatch checks the concrete class and Number inheritance before its
+existing native/default fallback, keeping different receiver classes separate
+in caches. No JVM dependency or general Java interop is introduced.
+
+`results/m12-numeric-classes` retains24 basic fresh JVM cases in Runtime/Macro/
+actual AOT, five protocol cases in those routes and eight extension/GC steps
+in both phases. Twelve required exact-operand behaviors execute on both raw
+long-parameter and boxed paths, with Wasm signature checks and actual AOT.
+The unchanged suite adds25 host matches and seven guest judgments, with zero
+changed assertions in previously loaded namespaces:3739 host/61 guest/459
+failures/2680 unexecuted/90 failed namespaces. BigInt's18 assertions execute;
+four primary opaque-Class recordings remain guest-judged, supplemented by
+independent fresh JVM boolean controls. The primary reference and skips are
+unchanged. Native tooling EDN still retains exact source forms under lossless
+tags rather than accepting raw exact numeric values. Captured protocol
+functions after extension remain a recorded JVM divergence. Inventory counts
+and full namespace/import support are not inferred from these checks.

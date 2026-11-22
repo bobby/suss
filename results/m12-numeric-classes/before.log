@@ -1,0 +1,31 @@
+Running as unit: run-p1699281-i89768089.scope; invocation ID: 575fb20885ad4401a0cca83a2b73b0b1
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.90s
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_numeric_classes-934e6d9b058bb0e3)
+
+running 2 tests
+test numeric_classes_match_in_runtime_and_macro ... FAILED
+test aot_executes_numeric_classes ... FAILED
+
+failures:
+
+---- numeric_classes_match_in_runtime_and_macro stdout ----
+
+thread 'numeric_classes_match_in_runtime_and_macro' (1699434) panicked at crates/suss-cli/tests/clojure_numeric_classes.rs:11:57:
+ (pr-str (let [x 7 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.lang.Long x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])): Unresolved Runtime name class at bytes 22..27
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_numeric_classes stdout ----
+
+thread 'aot_executes_numeric_classes' (1699433) panicked at crates/suss-cli/tests/clojure_numeric_classes.rs:48:5:
+Compilation error: Semantic error: While compiling probe.sus: Unresolved Runtime name class at bytes 57..62
+
+
+
+failures:
+    aot_executes_numeric_classes
+    numeric_classes_match_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.92s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_numeric_classes`

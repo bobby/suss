@@ -32569,3 +32569,49 @@ that only the stale test and reviewed baseline differ from the full-gate
 inputs; production source is unchanged. The separate unfiltered workspace
 command remains source-qualified to4cf2c6d4 and does not certify these changes.
 Numeric class support remains the next observed BigInt namespace blocker.
+
+
+## Native numeric class and exact-operand evidence (2026-11-22)
+
+`python3 results/m12-numeric-classes/run-combined.py LABEL` executes24 fresh
+JVM numeric-class cases, five class-protocol cases and24 raw/boxed exact-operand
+cases in Runtime/Macro and actual AOT. Six Rust tests pass in final-combined,
+with every source/fixture hash unchanged. Its raw parameter signatures are
+inspected against the shipped core environment; the initial missing-environment
+failure and actual AOT control remain. The class matrix separately checks the
+four opaque BigInt suite recordings as fresh JVM booleans. Eight current-var
+extension/GC steps pass in Runtime/Macro, including Number inheritance,
+class-specific overrides, markers and generic apply.
+
+Canonical descriptors distinguish Long, Double, BigInt, BigInteger, Ratio,
+Number and Class. They are non-callable, have stable identity/name/membership,
+and numeric protocol dispatch consults actual class and Number inheritance
+before native/default fallback. Native numeric/class receivers cannot reuse a
+shared native-kind cache entry. Existing source/packed class values dispatch
+as Class. BigDecimal has a class descriptor only in ABI10; no Decimal instance
+or arithmetic behavior is supplied. The original class/ifn? bootstrap adapters
+are included in the checked core manifest, without a shipped JVM dependency.
+
+`run-focused.py` passes45 surrounding protocol, record/identity and bootstrap
+tests. Java/Node-free double bootstrap reproduction, compiler identity and both
+manifests pass. `run-suite.py` retains the original101 old-baseline comparison
+and its4247 raw assertion observations. `audit-suite.py` finds3739 primary host
+matches,61 guest-judged,459 failures,2680 unexecuted and90 failed namespaces.
+The two newly loaded namespaces are BigInt (14 host/four guest) and juxt (11
+host/three guest). No assertion changes in previously loaded namespaces. The
+ifn? namespace now stops at unresolved var. The reviewed known-failure baseline
+retains every actual remaining failure; comparison against it returns0. Primary
+reference, skip selection and runtime budgets are unchanged. final-input-diff
+proves only the new raw/boxed test and reviewed baseline differ from the full
+capture/surrounding-gate inputs; production source is the same.
+
+`results/m12-exact-workspace/command.json.gz` and run.log retain terminal0 for
+`cargo test --workspace --locked -- --test-threads=2` at4cf2c6d4, with its source
+unchanged (10,690 seconds). This earlier unfiltered run does not certify later
+constant or class changes. Native Rust tooling EDN still lacks raw exact values,
+although its source-form tags retain them losslessly and executed Suss readers
+accept them. The fresh captured-protocol experiment shows another limit: JVM
+function values captured before extension retain old implementations, whereas
+Suss consults current tables. The passing extension matrix calls the current
+var. Full JVM interop, namespace imports, Decimal and these wider surfaces are
+not inferred from numeric class probes. GitHub holds acceptance/promotion state.

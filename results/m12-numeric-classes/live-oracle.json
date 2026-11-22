@@ -1,0 +1,19 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(defprotocol LiveNumeric (live-value [x])) (extend-type Number LiveNumeric (live-value [x] :base)) (def live-call (fn [x] (live-value x)))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Long LiveNumeric (live-value [x] :long))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Number LiveNumeric (live-value [x] :changed))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type clojure.lang.BigInt LiveNumeric (live-value [x] :bigint))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Class LiveNumeric (live-value [x] :class))\n(prn (mapv live-call [Long Double clojure.lang.BigInt java.math.BigInteger clojure.lang.Ratio Class]))\n\n(prn [(apply live-value [1N]) (apply live-value [1.0]) (live-call 1) (live-call 1N) (live-call 1.0)])\n(defprotocol NumericMarker) (extend-type Number NumericMarker) (def marker-call (fn [x] (satisfies? NumericMarker x)))\n(prn (mapv marker-call [1 1.0 1N (biginteger 1) 1/2 nil Long]))\n(extend-type Class NumericMarker)\n(prn (mapv marker-call [1 1N Long Class nil]))"
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source": "(defprotocol LiveNumeric (live-value [x])) (extend-type Number LiveNumeric (live-value [x] :base)) (def live-call (fn [x] (live-value x)))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Long LiveNumeric (live-value [x] :long))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Number LiveNumeric (live-value [x] :changed))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type clojure.lang.BigInt LiveNumeric (live-value [x] :bigint))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Class LiveNumeric (live-value [x] :class))\n(prn (mapv live-call [Long Double clojure.lang.BigInt java.math.BigInteger clojure.lang.Ratio Class]))\n\n(prn [(apply live-value [1N]) (apply live-value [1.0]) (live-call 1) (live-call 1N) (live-call 1.0)])\n(defprotocol NumericMarker) (extend-type Number NumericMarker) (def marker-call (fn [x] (satisfies? NumericMarker x)))\n(prn (mapv marker-call [1 1.0 1N (biginteger 1) 1/2 nil Long]))\n(extend-type Class NumericMarker)\n(prn (mapv marker-call [1 1N Long Class nil]))",
+  "exit_code": 0,
+  "stdout": "LiveNumeric\n#'user/live-call\n[:base :base :base :base :base]\n[:long :base :base :base :base]\n[:long :changed :changed :changed :changed]\n[:long :changed :bigint :changed :changed]\n[:class :class :class :class :class :class]\n[:bigint :changed :long :bigint :changed]\nNumericMarker\n#'user/marker-call\n[true true true true true false false]\n[true true true true false]\n",
+  "stderr": ""
+}

@@ -1,0 +1,23 @@
+Running as unit: run-p1795878-i89833402.scope; invocation ID: 66f14f32996f4e4f8b4c607b0eeae78d
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=459 guest-judged=61 namespaces-failed=90 not-executed=2680 pass=3739 skipped=0
+namespaces clojure.core-test.bigint: expected {'diagnostic': 'clojure.core-test.bigint (Some("<root>/clojure/core_test/bigint.cljc")): Unresolved Runtime name clojure.lang.BigInt at bytes 267..2781', 'stage': 'namespace'}, observed None
+namespaces clojure.core-test.ifn-qmark: expected {'diagnostic': 'clojure.core-test.ifn-qmark (Some("<root>/clojure/core_test/ifn_qmark.cljc")): Unresolved Runtime name ifn? at bytes 352..1464', 'stage': 'namespace'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.ifn-qmark (Some("<root>/clojure/core_test/ifn_qmark.cljc")): Unresolved Runtime name var at bytes 352..1464'}
+namespaces clojure.core-test.juxt: expected {'diagnostic': 'clojure.core-test.juxt (Some("<root>/clojure/core_test/juxt.cljc")): Unresolved Runtime name ifn? at bytes 236..1826', 'stage': 'namespace'}, observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (1795879) panicked at crates/suss-compile/tests/clojure_test_suite.rs:617:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 264.39s
+

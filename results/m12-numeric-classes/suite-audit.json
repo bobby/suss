@@ -1,0 +1,38 @@
+{
+  "capture_sha256": "a257e9cafdcd0dd12dacaab35f9760a6fa3dc53a9e4241aae32f209403d2f43a",
+  "counts": {
+    "pass": 3739,
+    "guest-judged": 61,
+    "fail": 459,
+    "not-executed": 2680,
+    "skipped": 0,
+    "namespaces-failed": 90
+  },
+  "newly_loaded": [
+    "clojure.core-test.bigint",
+    "clojure.core-test.juxt"
+  ],
+  "per_namespace": {
+    "clojure.core-test.bigint": {
+      "pass": 14,
+      "guest-judged": 4
+    },
+    "clojure.core-test.juxt": {
+      "guest-judged": 3,
+      "pass": 11
+    }
+  },
+  "changed_assertions_outside_newly_loaded_namespaces": [],
+  "changed_namespace_diagnostics": {
+    "clojure.core-test.ifn-qmark": {
+      "old": {
+        "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name ifn? at bytes 352..1464",
+        "stage": "namespace"
+      },
+      "new": {
+        "stage": "namespace",
+        "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name var at bytes 352..1464"
+      }
+    }
+  }
+}

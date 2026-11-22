@@ -387,6 +387,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ApplyFixed => { names.insert("apply-fixed"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
+                        Nominal::NumericClass(_) => { names.insert("numeric-class-value"); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
                         Nominal::DisplayLeaf => { names.insert("value-display-text"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
@@ -497,7 +498,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("object-descriptor");
                         }
                         Nominal::MethodGet => {
-                            names.insert("protocol-method-get");
+                            names.insert("protocol-class-method-get");
                         }
                         Nominal::NativeMethodGet => {
                             names.insert("protocol-native-kind");
@@ -849,7 +850,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-number-negative" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-marker-set" | "protocol-method-get" | "protocol-class-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "builtin-extension-guard"
             | "builtin-construct-guard"
@@ -923,6 +924,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            "numeric-class-value" => (vec![ValType::I32], vec![VALUE]),
             "instance-site-test" => (
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![ValType::I32],
@@ -3286,7 +3288,7 @@ fn emit_function(
                             let (descriptor, key) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
                             protocol_site_lookup(&mut function, cache, epoch_global,
                                 &[LocalGet(descriptor)], &[LocalGet(descriptor), LocalGet(key),
-                                    Call(index("protocol-method-get"))]);
+                                    Call(index("protocol-class-method-get"))]);
                         }
                         Nominal::NativeMethodGet => {
                             // Inline cache (#445): the same protocol fn and
@@ -4081,6 +4083,9 @@ fn emit_function(
                                 .instruction(&Call(index("source-construct-from-plan")))
                                 .instruction(&End);
                         }
+                        Nominal::NumericClass(kind) => {
+                            function.instruction(&I32Const(i32::from(*kind))).instruction(&Call(index("numeric-class-value")));
+                        }
                         Nominal::Instance => {
                             // The site's cached test (#378). An i31 is no
                             // instance, which is answered inline once the site
@@ -4459,7 +4464,7 @@ fn emit_function(
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
                                 Nominal::ObjectDescriptor => "object-descriptor",
-                                Nominal::MethodGet => "protocol-method-get",
+                                Nominal::MethodGet => "protocol-class-method-get",
                                 Nominal::NativeSatisfies => "protocol-native-satisfies",
                                 _ => "protocol-marker-satisfies",
                             })));

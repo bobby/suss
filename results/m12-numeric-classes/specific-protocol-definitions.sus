@@ -1,0 +1,6 @@
+(defprotocol NumericClassProtocol (numeric-class-kind [x]))
+(extend-type java.lang.Long NumericClassProtocol (numeric-class-kind [x] :long))
+(extend-type java.lang.Double NumericClassProtocol (numeric-class-kind [x] :double))
+(extend-type clojure.lang.BigInt NumericClassProtocol (numeric-class-kind [x] :bigint))
+(extend-type java.math.BigInteger NumericClassProtocol (numeric-class-kind [x] :biginteger))
+(extend-type clojure.lang.Ratio NumericClassProtocol (numeric-class-kind [x] :ratio))

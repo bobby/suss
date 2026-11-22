@@ -1,0 +1,14 @@
+[
+  {
+    "source": "(mapv numeric-class-kind [1 1.0 1N (biginteger 1) 1/2 2 2.0 2N (biginteger 2) 2/3])",
+    "expected": "[:long :double :bigint :biginteger :ratio :long :double :bigint :biginteger :ratio]"
+  },
+  {
+    "source": "[(satisfies? NumericClassProtocol 1) (satisfies? NumericClassProtocol 1.0) (satisfies? NumericClassProtocol 1N) (satisfies? NumericClassProtocol (biginteger 1)) (satisfies? NumericClassProtocol 1/3) (satisfies? NumericClassProtocol nil)]",
+    "expected": "[true true true true true false]"
+  },
+  {
+    "source": "(let [f (fn [x] (numeric-class-kind x))] [(f 1) (f 1.0) (f 1N) (f (biginteger 1)) (f 1/3) (f 2) (f 2.0)])",
+    "expected": "[:long :double :bigint :biginteger :ratio :long :double]"
+  }
+]
