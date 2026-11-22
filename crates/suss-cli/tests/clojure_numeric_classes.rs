@@ -6,6 +6,11 @@ fn cases() -> Vec<(String, String)> {
         "../../../results/m12-numeric-classes/cases.json"
     ))
     .unwrap();
+    let mut values = values;
+    let integration: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-class-integration/cases.json"
+    )).unwrap();
+    values.extend(integration);
     values
         .into_iter()
         .map(|row| {

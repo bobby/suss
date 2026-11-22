@@ -1,0 +1,18 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(prn (pr-str [(type 1)]))\n(prn [(identical? (type 7) (type 8)) (identical? (type 7) (type ##NaN)) (= (type 7) Long) (= (type ##NaN) Double) (ifn? (type 7)) (ifn? (type ##NaN))])\n(prn (let [effects (atom 0) c (type 7)] [(try (c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch Throwable _ true)) @effects]))\n(prn (do (defmulti ty type) (try (ty 1) (catch Throwable e (ex-message e)))))\n(prn (let [effects (atom 0) flag (atom true) c (if @flag (type 7) (fn [x] x))] [(try (c (do (swap! effects inc) 7)) false (catch Throwable _ true)) @effects]))\n(prn (let [effects (atom 0)] [(try ((do (swap! effects inc) (type 7)) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch Throwable _ true)) @effects]))\n(prn (let [c (type 7)] (try (c (throw (ex-info \"argument\" {:arg true}))) (catch Throwable e (ex-data e)))))\n(prn (let [effects (atom 0) c (type 7)] [(try (apply c [(do (swap! effects inc) 7)]) false (catch Throwable _ true)) @effects]))\n(prn (let [effects (atom 0) c (identity (fn [x y] x))] [(c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) @effects]))\n(prn (try (nth 1 0) (catch Throwable e (ex-message e))))\n(prn (try (nth 1 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth 1.0 0) (catch Throwable e (ex-message e))))\n(prn (try (nth 1.0 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth ##NaN 0) (catch Throwable e (ex-message e))))\n(prn (try (nth ##NaN 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth 1N 0) (catch Throwable e (ex-message e))))\n(prn (try (nth 1N 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth (biginteger 1) 0) (catch Throwable e (ex-message e))))\n(prn (try (nth (biginteger 1) 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth 1/3 0) (catch Throwable e (ex-message e))))\n(prn (try (nth 1/3 0 :missing) (catch Throwable e (ex-message e))))\n(prn (try (nth 18446744073709551616N 0) (catch Throwable e (ex-message e))))\n(prn (try (nth 18446744073709551616N 0 :missing) (catch Throwable e (ex-message e))))"
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "exit_code": 0,
+  "stdout": "\"[java.lang.Long]\"\n[true false true true false false]\n[true 0]\n\"No method in multimethod 'ty' for dispatch value: class java.lang.Long\"\n[true 0]\n[true 1]\nnil\n[true 1]\n[7 12]\n\"nth not supported on this type: Long\"\n\"nth not supported on this type: Long\"\n\"nth not supported on this type: Double\"\n\"nth not supported on this type: Double\"\n\"nth not supported on this type: Double\"\n\"nth not supported on this type: Double\"\n\"nth not supported on this type: BigInt\"\n\"nth not supported on this type: BigInt\"\n\"nth not supported on this type: BigInteger\"\n\"nth not supported on this type: BigInteger\"\n\"nth not supported on this type: Ratio\"\n\"nth not supported on this type: Ratio\"\n\"nth not supported on this type: BigInt\"\n\"nth not supported on this type: BigInt\"\n",
+  "stderr": ""
+}

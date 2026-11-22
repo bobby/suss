@@ -1,0 +1,29 @@
+{
+  "source_head": "12874bdd7f027766b824c28601c040df094c792c",
+  "source_directory": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source",
+  "receipt_note": "Transcribed losslessly from the independent review tool outputs before implementation changes; these commands were genuinely executed. No new execution or unobserved timestamps are asserted.",
+  "jvm": {
+    "command": [
+      "java",
+      "-cp",
+      "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+      "clojure.main",
+      "-e",
+      "(prn (let [effects (atom 0) c (type 7)] [(try (c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch Throwable _ true)) @effects]))"
+    ],
+    "exit_code": 0,
+    "stdout": "[true 0]\n",
+    "stderr": ""
+  },
+  "suss": {
+    "command": [
+      "../m12-decimal-target/debug/suss",
+      "-e",
+      "(pr-str (let [effects (atom 0) c (type 7)] [(try (c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch :default e true)) @effects]))"
+    ],
+    "executable_sha256": "b2f5b6626a137f27f3fe7d0eeca7da4cd86927a20697d256b4fd456dc73db8a7",
+    "exit_code": 0,
+    "stdout": "\"[true 12]\"\n",
+    "stderr": ""
+  }
+}

@@ -388,6 +388,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::NumericClass(_) => { names.insert("numeric-class-value"); }
+                        Nominal::CheckNumericCallee => { names.extend(["numeric-class-index", "invoke"]); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
                         Nominal::DisplayLeaf => { names.insert("value-display-text"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
@@ -866,7 +867,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "construct-site-admit" | "protocol-native-method" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-native-kind" => (vec![VALUE], vec![ValType::I32]),
+            "protocol-native-kind" | "numeric-class-index" => (vec![VALUE], vec![ValType::I32]),
             "source-construct-from-plan" => (
                 vec![VALUE, ValType::Ref(RefType {
                     nullable: false,
@@ -4082,6 +4083,23 @@ fn emit_function(
                                 .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: count })
                                 .instruction(&Call(index("source-construct-from-plan")))
                                 .instruction(&End);
+                        }
+                        Nominal::CheckNumericCallee => {
+                            let callee = arguments[0].0 as u32 + offset;
+                            // Ordinary closures and callable collections avoid the
+                            // canonical numeric descriptor lookup entirely.
+                            function.instruction(&LocalGet(callee))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR)))
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&LocalGet(callee))
+                                .instruction(&Call(index("numeric-class-index")))
+                                .instruction(&I32Const(0)).instruction(&I32GeS)
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&LocalGet(callee))
+                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 0 })
+                                .instruction(&Call(index("invoke"))).instruction(&Drop)
+                                .instruction(&End).instruction(&End)
+                                .instruction(&LocalGet(callee));
                         }
                         Nominal::NumericClass(kind) => {
                             function.instruction(&I32Const(i32::from(*kind))).instruction(&Call(index("numeric-class-value")));

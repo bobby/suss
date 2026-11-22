@@ -1442,3 +1442,12 @@ pass, along with bootstrap reproduction and both manifests. The unchanged
 4247-row capture has zero outcome/diagnostic changes and needs no baseline
 rewrite. Inventory counts remain unchanged; the original reader helper adds
 no copied upstream body or Java dependency.
+
+
+Numeric class integration controls in `results/m12-class-integration` derive
+`nth` unsupported-number messages and Class-call evaluation order from fresh
+Clojure1.12.6. Numeric Classes are rejected before call arguments; callee effects
+and explicit `apply` argument effects are retained. Constructor-property
+formatting remains a separate platform adaptation for nonnumeric values.
+The original sorted-tree CLJS corpus is preserved; its scalar set callback's
+numeric diagnostic is checked against the primary `nth` message.

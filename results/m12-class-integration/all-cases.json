@@ -1,0 +1,95 @@
+[
+  {
+    "source": "(pr-str [(type 1)])",
+    "expected": "\"[java.lang.Long]\""
+  },
+  {
+    "source": "[(identical? (type 7) (type 8)) (identical? (type 7) (type ##NaN)) (= (type 7) Long) (= (type ##NaN) Double) (ifn? (type 7)) (ifn? (type ##NaN))]",
+    "expected": "[true false true true false false]"
+  },
+  {
+    "source": "(let [effects (atom 0) c (type 7)] [(try (c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch :default _ true)) @effects])",
+    "expected": "[true 0]"
+  },
+  {
+    "source": "(do (defmulti ty type) (try (ty 1) (catch :default e (ex-message e))))",
+    "expected": "\"No method in multimethod 'ty' for dispatch value: class java.lang.Long\"",
+    "target": "core_state::defmulti_options_and_type_dispatch_follow_clojure"
+  },
+  {
+    "source": "(let [effects (atom 0) flag (atom true) c (if @flag (type 7) (fn [x] x))] [(try (c (do (swap! effects inc) 7)) false (catch :default _ true)) @effects])",
+    "expected": "[true 0]"
+  },
+  {
+    "source": "(let [effects (atom 0)] [(try ((do (swap! effects inc) (type 7)) (do (swap! effects #(+ (* % 10) 2)) 9)) false (catch :default _ true)) @effects])",
+    "expected": "[true 1]"
+  },
+  {
+    "source": "(let [c (type 7)] (try (c (throw (ex-info \"argument\" {:arg true}))) (catch :default e (ex-data e))))",
+    "expected": "nil"
+  },
+  {
+    "source": "(let [effects (atom 0) c (type 7)] [(try (apply c [(do (swap! effects inc) 7)]) false (catch :default _ true)) @effects])",
+    "expected": "[true 1]"
+  },
+  {
+    "source": "(let [effects (atom 0) c (identity (fn [x y] x))] [(c (do (swap! effects inc) 7) (do (swap! effects #(+ (* % 10) 2)) 9)) @effects])",
+    "expected": "[7 12]"
+  },
+  {
+    "source": "(try (nth 1 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Long\""
+  },
+  {
+    "source": "(try (nth 1 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Long\""
+  },
+  {
+    "source": "(try (nth 1.0 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Double\""
+  },
+  {
+    "source": "(try (nth 1.0 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Double\""
+  },
+  {
+    "source": "(try (nth ##NaN 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Double\""
+  },
+  {
+    "source": "(try (nth ##NaN 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Double\""
+  },
+  {
+    "source": "(try (nth 1N 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInt\""
+  },
+  {
+    "source": "(try (nth 1N 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInt\""
+  },
+  {
+    "source": "(try (nth (biginteger 1) 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInteger\""
+  },
+  {
+    "source": "(try (nth (biginteger 1) 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInteger\""
+  },
+  {
+    "source": "(try (nth 1/3 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Ratio\""
+  },
+  {
+    "source": "(try (nth 1/3 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: Ratio\""
+  },
+  {
+    "source": "(try (nth 18446744073709551616N 0) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInt\""
+  },
+  {
+    "source": "(try (nth 18446744073709551616N 0 :missing) (catch :default e (ex-message e)))",
+    "expected": "\"nth not supported on this type: BigInt\""
+  }
+]

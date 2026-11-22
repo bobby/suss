@@ -1230,7 +1230,9 @@
       (-nth coll n)
 
       :else
-      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+      (throw (suss.bootstrap/error (str_ (if (suss.bootstrap/number? coll)
+                            "nth not supported on this type: "
+                            "nth not supported on this type ")
                           (type->str (type coll)))))))))
   ([coll n not-found]
     (cond
@@ -1263,7 +1265,9 @@
       (-nth coll n not-found)
 
       :else
-      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+      (throw (suss.bootstrap/error (str_ (if (suss.bootstrap/number? coll)
+                            "nth not supported on this type: "
+                            "nth not supported on this type ")
                           (type->str (type coll)))))))))
 
 (def -indexOf
@@ -7964,18 +7968,26 @@ reduces them without incurring seq initialization"
 
 (def type->str
   (fn [ty]
-    (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]
-      (if __suss_if_let_type_to_str_0
-        __suss_if_let_type_to_str_0
-        (if (identical? ty (type 0))
-          "function Number() { [native code] }"
-          (if (identical? ty (type ""))
-            "function String() { [native code] }"
-            (if (identical? ty (type true))
-              "function Boolean() { [native code] }"
-              (if (identical? ty (type []))
-                "function Array() { [native code] }"
-                (str_ ty)))))))))
+    ;; Original Suss: numeric Class values have no constructor properties.
+    ;; nth names their simple class, as Clojure does, before inspecting closures.
+    (let [name (suss.bootstrap/type-name ty)]
+      (if (and name (not (js-fn? ty)))
+        (loop [i (dec (count name))]
+          (if (or (neg? i) (= "." (suss.bootstrap/string-slice name i (inc i))))
+            (suss.bootstrap/string-slice name (inc i) (count name))
+            (recur (dec i))))
+        (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]
+            (if __suss_if_let_type_to_str_0
+              __suss_if_let_type_to_str_0
+              (if (identical? ty (type 0))
+                "function Number() { [native code] }"
+                (if (identical? ty (type ""))
+                  "function String() { [native code] }"
+                  (if (identical? ty (type true))
+                    "function Boolean() { [native code] }"
+                    (if (identical? ty (type []))
+                      "function Array() { [native code] }"
+                      (str_ ty)))))))))))
 
 (deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
   Object

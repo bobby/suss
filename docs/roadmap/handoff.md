@@ -32688,3 +32688,45 @@ skip/count-guard change. The emitted-aot probe executes generated source with
 small/wide BigInteger macro values and quoted numerator/denominator data; it
 returns1. Only this regression target differs after the capture; production
 source is unchanged. Independent delta review and final-head CI live on GitHub.
+
+
+## Numeric class integration diagnostics and call order (2026-11-22)
+
+`results/m12-class-integration/before-ci.log.gz` preserves the complete failed
+CI log at8a6e350c. Four tests exposed stale opaque/callable Number expectations
+and an actual nth diagnostic failure: numeric Class values have no constructor
+properties. type->str recognizes their names first; both nth arities use the
+fresh JVM colon/simple-class diagnostic. The original132-case CLJS corpus is
+unchanged. Its scalar set forEach diagnostic alone uses the primary nth result;
+error structure/message and zero callback trace remain independently decoded.
+
+The fresh primary oracle also found Class invocation evaluating arguments too
+early. before-class-call records JVM[true0] versus the reviewed executable's
+[true12]. An internal check now rejects numeric Class callees after evaluating
+the callee and before its arguments. It retains the original callee SSA and
+omits checks for proven MakeClosure/MakeGeneralClosure values, preserving
+closure elimination. Explicit apply arguments still execute before rejection.
+The check's success path writes no var and calls no user code.
+
+`python3 results/m12-class-integration/oracle.py` records23 fresh JVM controls;
+22 execute in the existing Runtime/Macro/actual-AOT matrix. The remaining
+multimethod declaration executes through core_state's macro-aware Repl test;
+all-cases.json records this mapping. `run-focused.py after-known-closures`
+returns0 with77 tests and unchanged source/fixtures, including all four original
+failing targets, strict record fuel, compiler catalog, nonescaping closures and
+vectors, and13 unboxed codegen tests. The key closure regression still executes
+without boxes or calls. Original bootstrap/harness failures are retained;
+no unknown result is counted as passing. Gate/capture receipts identify their
+source inputs, and GitHub holds final review/CI and issue acceptance state.
+
+
+`python3 results/m12-class-integration/run-gates.py` returns0 for227 tests:
+80 reader,51 numeric/analyzer CLI,88 compiler/ABI,4 bootstrap and4 printer
+checks. The100M quoted-string fuel test, Java/Node-free double reproduction,
+compiler identity, both manifests and workspace test-target compilation pass.
+`run-suite.py` and `audit-suite.py` return0 with4247 raw rows and exactly the
+existing3739/61/459/2680/90 outcomes. No assertion or namespace diagnostic
+changes; no baseline/reference/skip/count-guard changes. independent-final
+retains fresh subprocess captures matching all23 JVM controls and11 combined
+current-CLI probes. Final-input-diff qualifies documentation-only additions
+after the source-frozen gates/capture; production, tests and fixtures match.

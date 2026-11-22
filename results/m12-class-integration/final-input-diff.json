@@ -1,0 +1,37 @@
+{
+  "after-known-closures": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/compatibility/README.md",
+        "recorded": "a9386b2e047d04663a41532a08b49b73cbc505d6c3c46a83a71f9ccd28311fd3",
+        "final": "75bd0a91943cce9f583cdb65c2c09903ca6ddb933cb7ded7d5e34159bff3869b"
+      },
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "58667a2f3939b48b3e23f4a5246663eb419b2309d85a7733685d8db8a87f96b9",
+        "final": "3e369d5f34d4609c845a5a2eff4e3e3df703967be4254338b813a3ce9997bc3c"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  },
+  "gates": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "5f967a5e079f2d5eaa43c9cd6fdad5e2df99b2bfe63ea2ed8ce77222c43fe92e",
+        "final": "3e369d5f34d4609c845a5a2eff4e3e3df703967be4254338b813a3ce9997bc3c"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  },
+  "suite-commands": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "5f967a5e079f2d5eaa43c9cd6fdad5e2df99b2bfe63ea2ed8ce77222c43fe92e",
+        "final": "3e369d5f34d4609c845a5a2eff4e3e3df703967be4254338b813a3ce9997bc3c"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  }
+}
