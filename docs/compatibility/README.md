@@ -1451,3 +1451,12 @@ and explicit `apply` argument effects are retained. Constructor-property
 formatting remains a separate platform adaptation for nonnumeric values.
 The original sorted-tree CLJS corpus is preserved; its scalar set callback's
 numeric diagnostic is checked against the primary `nth` message.
+
+
+The pre-argument Class rejection is emitted inline from a physical descriptor
+check. It reuses the canonical error descriptor and a pooled message while
+allocating a fresh error object. The unchanged calling-convention controls
+still require no argument array or runtime invoke at the call site and only
+the entry-cache lookup helper. `results/m12-class-call-inline` retains the
+original failed CI log, fresh JVM exception identity control and executed
+regressions; runtime globals/shared types/layouts are unchanged.

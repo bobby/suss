@@ -11,6 +11,10 @@ fn cases() -> Vec<(String, String)> {
         "../../../results/m12-class-integration/cases.json"
     )).unwrap();
     values.extend(integration);
+    let inline: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-class-call-inline/cases.json"
+    )).unwrap();
+    values.extend(inline);
     values
         .into_iter()
         .map(|row| {

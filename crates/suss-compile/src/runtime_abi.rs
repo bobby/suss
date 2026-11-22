@@ -210,6 +210,9 @@ pub(crate) const CELL_DYNAMIC: i32 = 2;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
+pub(crate) const LANGUAGE_ERROR: u32 = 8;
+/// Existing canonical error descriptor; readonly for inline noncallable throws.
+pub(crate) const NOT_CALLABLE_DESCRIPTOR_EXPORT: &str = "not-callable-descriptor";
 pub const SENTINEL: u32 = 10;
 pub const LONG: u32 = 11;
 /// Packed primitive array storage, one type per element type, in
@@ -2275,6 +2278,8 @@ fn build_module() -> Vec<u8> {
             ]),
         );
     }
+    // Add an export of the existing root, without adding or relocating globals.
+    b.exports.export(NOT_CALLABLE_DESCRIPTOR_EXPORT, ExportKind::Global, 2);
     globals.global(
         GlobalType {
             val_type: ValType::I32,

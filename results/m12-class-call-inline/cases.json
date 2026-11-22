@@ -1,0 +1,6 @@
+[
+  {
+    "source": "(let [c (type 7) a (try (c) (catch :default e e)) b (try (c) (catch :default e e))] [(identical? a b) (nil? (ex-data a)) (nil? (ex-data b))])",
+    "expected": "[false true true]"
+  }
+]

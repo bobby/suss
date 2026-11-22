@@ -32730,3 +32730,41 @@ changes; no baseline/reference/skip/count-guard changes. independent-final
 retains fresh subprocess captures matching all23 JVM controls and11 combined
 current-CLI probes. Final-input-diff qualifies documentation-only additions
 after the source-frozen gates/capture; production, tests and fixtures match.
+
+
+## Inline noncallable errors and calling convention (2026-11-22)
+
+The failed partition6 job at22c0a3f2 is retained byte-exact in
+`results/m12-class-call-inline/before-ci.log.gz`. Its unchanged calling-
+convention test caught an argument array, invoke import and extra helper calls
+in the Class guard's cold path. The fix preserves those assertions: a physical
+DESCRIPTOR is not a callable closure or object, so the fragment throws directly
+before arguments. It imports existing canonical error global2 read-only, pools
+the short message, and allocates a fresh error with nil data/cause and UID0.
+The runtime adds only an export, with no relocated globals, changed shared
+types or ABI version. The import is included in definition/cache/literal
+positions after any protocol epoch.
+
+`python3 results/m12-class-call-inline/oracle.py` records fresh JVM error
+identity/data [false true true]; the existing primary fixtures are unchanged.
+`run-focused.py inline-descriptor-throw` returns0 with86 tests across12 targets,
+source/fixture inputs unchanged. All four original calling-convention tests
+pass without editing their assertions, including no argument array/invoke and
+only the entry-cache helper. Exception constructors, actual AOT class controls,
+closure elimination, unboxed codegen, compiler catalog, strict record fuel and
+prior integration regressions pass. The separate direct executable receipt
+also preserves the four calling-convention results and binary hash. Surrounding
+gate/capture receipts qualify their own source; GitHub holds review/CI state.
+
+
+`python3 results/m12-class-call-inline/run-gates.py` returns0 for227 tests,
+Java/Node-free double bootstrap reproduction, compiler identity, both manifests
+and workspace test-target compilation. `run-suite.py` and `audit-suite.py`
+return0, source unchanged:4247 raw rows,3739 host matches/61 guest judgments/
+459 failures/2680 unexecuted/90 failed namespaces, zero changed assertion or
+namespace outcomes and no baseline/reference/skip/count-guard rewrite.
+independent-final preserves24 fresh JVM expectations and23 current-CLI rows,
+plus cache-disabled retention of distinct errors/messages/nil data across20,000
+escaping vector allocations with a1MiB initial heap. That is allocation-pressure
+evidence, not a claim of observed GC event counts. Final-input-diff qualifies
+only documentation additions after frozen runs; production/tests/fixtures match.

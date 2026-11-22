@@ -226,6 +226,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // Whether a variadic fn here builds a rest seq (#466).
     let mut rest_site_used = false;
     let mut throws = !futures.is_empty();
+    let mut descriptor_call_guard = false;
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
@@ -234,7 +235,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 // A hinted array access throws for a wrong hint (#389).
-                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. });
+                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_) | Nominal::CheckNumericCallee, .. });
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -388,7 +389,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::NumericClass(_) => { names.insert("numeric-class-value"); }
-                        Nominal::CheckNumericCallee => { names.extend(["numeric-class-index", "invoke"]); }
+                        Nominal::CheckNumericCallee => { descriptor_call_guard = true; }
                         Nominal::TypeName => { names.insert("class-value-name"); }
                         Nominal::DisplayLeaf => { names.insert("value-display-text"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
@@ -867,7 +868,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
             "construct-site-admit" | "protocol-native-method" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-native-kind" | "numeric-class-index" => (vec![VALUE], vec![ValType::I32]),
+            "protocol-native-kind" => (vec![VALUE], vec![ValType::I32]),
             "source-construct-from-plan" => (
                 vec![VALUE, ValType::Ref(RefType {
                     nullable: false,
@@ -1042,6 +1043,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
     let epoch_global = globals.len() as u32 + 3 + imported_link_globals;
     let imported_link_globals = imported_link_globals + u32::from(epoch_used);
+    let not_callable_global = descriptor_call_guard.then_some(globals.len() as u32 + 3 + imported_link_globals);
+    if descriptor_call_guard {
+        imports.import("suss.runtime", runtime_abi::NOT_CALLABLE_DESCRIPTOR_EXPORT,
+            EntityType::Global(GlobalType {
+                val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::DESCRIPTOR) }),
+                mutable: false, shared: false,
+            }));
+    }
+    let imported_link_globals = imported_link_globals + u32::from(descriptor_call_guard);
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -1142,6 +1152,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 Operation::Literal(Literal::String(units)) => {
                     literal_list.insert(units.clone());
                 }
+                Operation::Nominal { operation: Nominal::CheckNumericCallee, .. } => {
+                    literal_list.insert("Not callable".encode_utf16().collect());
+                }
                 Operation::MakeClosure { body, .. } => literal_list.extend(body.display_name.clone()),
                 Operation::MakeGeneralClosure { body, .. } => literal_list.extend(body.display_name.clone()),
                 _ => {}
@@ -1195,7 +1208,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global, not_callable_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1561,6 +1574,7 @@ struct Context<'a> {
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
+    not_callable_global: Option<u32>,
     primitive: &'a primitive::Types,
     primitive_sites: &'a std::collections::HashMap<(usize, u32), u32>,
 }
@@ -4086,19 +4100,20 @@ fn emit_function(
                         }
                         Nominal::CheckNumericCallee => {
                             let callee = arguments[0].0 as u32 + offset;
-                            // Ordinary closures and callable collections avoid the
-                            // canonical numeric descriptor lookup entirely.
+                            // Descriptors are never closures or callable objects.
+                            // Reject them before arguments, without changing the
+                            // call site's entry-cache-only convention (ADR-0004).
+                            let message: Vec<_> = "Not callable".encode_utf16().collect();
                             function.instruction(&LocalGet(callee))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR)))
                                 .instruction(&If(BlockType::Empty))
-                                .instruction(&LocalGet(callee))
-                                .instruction(&Call(index("numeric-class-index")))
-                                .instruction(&I32Const(0)).instruction(&I32GeS)
-                                .instruction(&If(BlockType::Empty))
-                                .instruction(&LocalGet(callee))
-                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 0 })
-                                .instruction(&Call(index("invoke"))).instruction(&Drop)
-                                .instruction(&End).instruction(&End)
+                                .instruction(&GlobalGet(context.not_callable_global.expect("collected error descriptor")))
+                                .instruction(&GlobalGet(literals[&message]))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                .instruction(&I32Const(0)).instruction(&RefI31)
+                                .instruction(&StructNew(runtime_abi::LANGUAGE_ERROR))
+                                .instruction(&Throw(0)).instruction(&End)
                                 .instruction(&LocalGet(callee));
                         }
                         Nominal::NumericClass(kind) => {

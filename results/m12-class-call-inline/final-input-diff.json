@@ -1,0 +1,37 @@
+{
+  "inline-descriptor-throw": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/compatibility/README.md",
+        "recorded": "75bd0a91943cce9f583cdb65c2c09903ca6ddb933cb7ded7d5e34159bff3869b",
+        "final": "5a0e6717d2945112b1ae9c4cfadf058cabdd21dcdf2d82608e43137df3509cb1"
+      },
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "3e369d5f34d4609c845a5a2eff4e3e3df703967be4254338b813a3ce9997bc3c",
+        "final": "d7ddc4fe21c88e7609d21b71c6bcc45a5378558579d0b21b553bec3d804248e5"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  },
+  "gates": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "8534bfa2455f09a403a3257198d0628a75952ba12461a63b7b429e263f701a86",
+        "final": "d7ddc4fe21c88e7609d21b71c6bcc45a5378558579d0b21b553bec3d804248e5"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  },
+  "suite-commands": {
+    "documentation_only_changes": [
+      {
+        "path": "docs/roadmap/handoff.md",
+        "recorded": "8534bfa2455f09a403a3257198d0628a75952ba12461a63b7b429e263f701a86",
+        "final": "d7ddc4fe21c88e7609d21b71c6bcc45a5378558579d0b21b553bec3d804248e5"
+      }
+    ],
+    "production_tests_and_fixtures_match": true
+  }
+}
