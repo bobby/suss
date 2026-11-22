@@ -1,0 +1,20 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-p",
+    "MemoryMax=3G",
+    "--",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/printing_chunks-5fd87aa351396960",
+    "long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc",
+    "--exact",
+    "--nocapture",
+    "--test-threads=2"
+  ],
+  "binary_sha256": "647ebc973d2ea5bcb0ad1417c991fc6d86ea0aa81d9d85be0fd2bb0bf6ec221b",
+  "source_head": "f9d5f91ac1bb898acd74d1256dc8e7e4c657c3f1",
+  "complete": true,
+  "exit_code": 101,
+  "seconds": 37.560279846191406
+}

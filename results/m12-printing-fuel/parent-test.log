@@ -1,0 +1,28 @@
+Running as unit: run-p1263277-i89323124.scope; invocation ID: f3be164e77e9456385c6ac981d739b79
+
+running 1 test
+
+thread 'long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc' (1263278) panicked at crates/suss-cli/tests/printing_chunks.rs:88:57:
+called `Result::unwrap()` on an `Err` value: Trap(error while executing at wasm backtrace:
+    0:  0x2a3cf - <unknown>!<wasm function 601>
+    1:  0xd60bd - <unknown>!<wasm function 271>
+    2:  0x20138 - <unknown>!<wasm function 509>
+    3: 0x190722 - <unknown>!<wasm function 1514>
+    4: 0x19631e - <unknown>!<wasm function 1541>
+    5: 0x19224e - <unknown>!<wasm function 1518>
+    6: 0x193642 - <unknown>!<wasm function 1522>
+    7: 0x193922 - <unknown>!<wasm function 1523>
+
+Caused by:
+    wasm trap: all fuel consumed by WebAssembly
+)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc ... FAILED
+
+failures:
+
+failures:
+    long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 37.39s
+

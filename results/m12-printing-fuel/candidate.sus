@@ -1,0 +1,24 @@
+(def ^:private quote-string
+  (fn [s]
+    (let [buffer (BootstrapPrinterStringBuffer. nil)
+          length (.-length s)]
+      (.append buffer "\"")
+      (loop [i 0 start 0]
+        (if (< i length)
+          (let [end (inc i)
+                unit (suss.bootstrap/string-slice s i end)
+                escaped (get char-escapes unit)]
+            (if escaped
+              (do
+                (if (< start i)
+                  (.append buffer (suss.bootstrap/string-slice s start i))
+                  nil)
+                (.append buffer escaped)
+                (recur end end))
+              (recur end start)))
+          (do
+            (if (< start length)
+              (.append buffer (suss.bootstrap/string-slice s start length))
+              nil)
+            (.append buffer "\"")
+            (.toString buffer)))))))

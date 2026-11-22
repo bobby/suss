@@ -1,0 +1,64 @@
+{
+  "base_head": "f9d5f91ac1bb898acd74d1256dc8e7e4c657c3f1",
+  "library": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-aab98850097ddcaf.rlib",
+  "library_sha256": "f4116bdbe35511f544b183e5f01e1fbaf3972e0733eac428d62ee53decd8b6e9",
+  "probe_sha256": "faccfb71aa72647faef963c7305c8f28503205b2e81cfb3ef9d2906a23c6f032",
+  "commands": [
+    {
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-aab98850097ddcaf.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe"
+      ],
+      "exit_code": 0,
+      "seconds": 1.392512321472168,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "1000000000"
+      ],
+      "exit_code": 0,
+      "seconds": 31.87577533721924,
+      "stdout": "Runtime count=0 budget=1000000000 consumed=36542\nRuntime count=1 budget=1000000000 consumed=47508\nRuntime count=16 budget=1000000000 consumed=407072\nRuntime count=512 budget=1000000000 consumed=12467312\nRuntime count=4096 budget=1000000000 consumed=99612272\nMacro count=0 budget=1000000000 consumed=36542\nMacro count=1 budget=1000000000 consumed=47508\nMacro count=16 budget=1000000000 consumed=407072\nMacro count=512 budget=1000000000 consumed=12467312\nMacro count=4096 budget=1000000000 consumed=99612272\n",
+      "stderr": "Running as unit: run-p1258897-i89326604.scope; invocation ID: 30a88b3df2b543f8b500a1b314cc96fa\n"
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "100000000"
+      ],
+      "exit_code": 0,
+      "seconds": 21.52492618560791,
+      "stdout": "Runtime count=0 budget=100000000 consumed=36542\nRuntime count=1 budget=100000000 consumed=47508\nRuntime count=16 budget=100000000 consumed=407072\nRuntime count=512 budget=100000000 consumed=12467312\nRuntime count=4096 budget=100000000 consumed=99612272\nMacro count=0 budget=100000000 consumed=36542\nMacro count=1 budget=100000000 consumed=47508\nMacro count=16 budget=100000000 consumed=407072\nMacro count=512 budget=100000000 consumed=12467312\nMacro count=4096 budget=100000000 consumed=99612272\n",
+      "stderr": "Running as unit: run-p1259879-i89326742.scope; invocation ID: 1107145de3074121bf7dffd8f7a60d19\n"
+    }
+  ],
+  "executable_sha256": "111caae58bb39c106451a03f7f9cf63ac24ff4d33f41c29e2f3b8f8754a83331",
+  "complete": true
+}

@@ -1,0 +1,73 @@
+{
+  "base_head": "dee07958b25be01e9c29669d3279721b1c5d7e89",
+  "reader": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_reader-64630748a15a5de0.rlib",
+  "reader_sha256": "675c4242ff86dfeb916998385a4a98a16cd293a881204ae22db99f32db6c124a",
+  "library": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+  "library_sha256": "b61dd716a086fd70fabf3bea7c95d0fe27034eb47b7a5b9f0557b43663a59db0",
+  "probe_sha256": "e4395f4cd40a32b11e064b3e5f786ccd4aae7d7ca23eb70789c496c3f4b42fb4",
+  "commands": [
+    {
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+        "--extern",
+        "suss_reader=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_reader-64630748a15a5de0.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe"
+      ],
+      "exit_code": 0,
+      "seconds": 0.45424556732177734,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "1000000000"
+      ],
+      "exit_code": 0,
+      "seconds": 23.09298062324524,
+      "stdout": "Runtime count=4096 budget=1000000000 consumed=83364722\nRuntime count=0 budget=1000000000 consumed=17105\nRuntime count=1 budget=1000000000 consumed=38544\nRuntime count=16 budget=1000000000 consumed=345954\nRuntime count=512 budget=1000000000 consumed=10510978\nRuntime count=4096 budget=1000000000 consumed=83961474\nMacro count=4096 budget=1000000000 consumed=83364722\nMacro count=0 budget=1000000000 consumed=17105\nMacro count=1 budget=1000000000 consumed=38544\nMacro count=16 budget=1000000000 consumed=345954\nMacro count=512 budget=1000000000 consumed=10510978\nMacro count=4096 budget=1000000000 consumed=83961474\n",
+      "stderr": "Running as unit: run-p1297392-i89360390.scope; invocation ID: 39ce8e3c8d884cba9dc8a99356bd0c41\n"
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "100000000"
+      ],
+      "exit_code": 0,
+      "seconds": 22.80471110343933,
+      "stdout": "Runtime count=4096 budget=100000000 consumed=83364722\nRuntime count=0 budget=100000000 consumed=17105\nRuntime count=1 budget=100000000 consumed=38544\nRuntime count=16 budget=100000000 consumed=345954\nRuntime count=512 budget=100000000 consumed=10510978\nRuntime count=4096 budget=100000000 consumed=83961474\nMacro count=4096 budget=100000000 consumed=83364722\nMacro count=0 budget=100000000 consumed=17105\nMacro count=1 budget=100000000 consumed=38544\nMacro count=16 budget=100000000 consumed=345954\nMacro count=512 budget=100000000 consumed=10510978\nMacro count=4096 budget=100000000 consumed=83961474\n",
+      "stderr": "Running as unit: run-p1298194-i89360515.scope; invocation ID: 5bd5a78b5f6b4b1aa4a73f034eb589a4\n"
+    }
+  ],
+  "production_inputs": {
+    "docs/compatibility/patches/printing-quote-string.json": "eb313503850a3343a40b8ae7eb088f0dcf4c78e6b7ad933b9e655b99e1a4889b",
+    "runtime/core-import/suss/core.sus": "baf38f0a43ad68eba2fa07eb2e9facd098b0e2c66584b1b711fd59480d9e4805",
+    "runtime/core-import/manifest.json": "55fdcf06b31c065292f5e2b593f3114e13420762fd21c53912391dc10bd31fd8"
+  },
+  "executable_sha256": "f92918b49dcbc5c472deb70aa1ba03b16fe291af0bf2ec1816657388be29728d",
+  "complete": true
+}

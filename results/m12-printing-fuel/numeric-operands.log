@@ -1,0 +1,12 @@
+Running as unit: run-p1297487-i89367075.scope; invocation ID: 4f1230adec294eca8da2e225f7b75e5a
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.62s
+     Running tests/numeric_operand_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/numeric_operand_types-1228fb8d0a0077e7)
+
+running 3 tests
+test core_namespace_source_keeps_its_coercing_primitives ... ok
+test non_numeric_operands_throw_naming_the_operation ... ok
+test numeric_operands_keep_clojure_results ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.37s
+

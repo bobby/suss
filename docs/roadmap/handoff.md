@@ -1,3 +1,33 @@
+## Quoted-string fuel and exact operand observations (2026-11-22)
+
+results/m12-printing-fuel retains the unchanged f9 long-string regression's
+terminal101 failure and the exact FormBridge-input measurement in both phases.
+The cold/repeated32,768-unit calls use100227864/100824706 fuel. Hoisting the
+next index alone passed the old test but left the repeated call above100M;
+that intermediate patch, passing scoped gates and extra probe failure remain.
+The selected traversal also skips substring allocation/table lookup above92,
+the highest code unit in the complete retained seven-key escape table. It keeps
+all escapes, writes and UTF-16 units. Actual shipped Runtime/Macro calls now use
+83364722/83961474 fuel cold/repeated, and all cases pass at the original100M
+allowance after GC. No production/test fuel limit changes. The original literal
+warmup discrepancy and failed private-slot injection remain explicit evidence.
+
+python3 results/m12-printing-fuel/run-gates.py passes4 chunk-printer tests,
+45 neighboring tests, Java/Node-free two-build bootstrap reproduction and its
+4 executing tests, then core-import manifest verification. All four commands
+terminate0 with tracked inputs frozen. Use isolated m12-decimal-target, stable
+Rust, two jobs/threads, MemoryMax4G. profile.py records the actual selected
+compiler/reader library and executable hashes; the README gives its override.
+
+The separately frozen f9 full workspace command terminates101 after2845.76s:
+566 tests pass in133 completed targets, then numeric_operand_types reports two
+passes and a stale Ratio/Double equality failure. The complete receipt/log is
+copied unchanged to results/m12-helper-workspace-f9. Later targets are unexecuted
+by that run. The corrected numeric_operand_types target passes all3 tests,
+zero failed/ignored; fresh JVM1.12.6 observations retain exact and first-class
+Ratio results, strict category equality, cross-category == and the Double case.
+These source-qualified scoped results do not prove a complete workspace pass.
+
 ## Exact numeric observations in pipeline tests (2026-11-22)
 
 The f9d5f91a CI shard0 failure is retained under results/m12-ratio-pipeline.

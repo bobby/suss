@@ -1,0 +1,4 @@
+{
+  "source_sha256": "2f1646e56fb5ec9eb1b7c2031dd3344849a58e6d11d8e2d91125d31adf2b44e0",
+  "note": "Development candidate only: compute the next UTF-16 index once per reached code unit."
+}

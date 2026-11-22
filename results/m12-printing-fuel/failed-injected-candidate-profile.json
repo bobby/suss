@@ -1,0 +1,24 @@
+{
+  "candidate_sha256": "5bac2195ab767b92e9ddcc66771551e8b665624769c6964048efaae23ba44ab5",
+  "executable_sha256": "de08868a75cf5ee4120197fb8174adc8cc5cedab98c69d6accd67d7e6c2b5034",
+  "commands": [
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "1000000000",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/candidate.sus"
+      ],
+      "exit_code": 101,
+      "seconds": 23.146883726119995,
+      "stdout": "",
+      "stderr": "Running as unit: run-p1265407-i89330760.scope; invocation ID: cff9dc9be46441218529aed513b9b807\n\nthread 'main' (1265407) panicked at /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe.rs:14:74:\ncalled `Result::unwrap()` on an `Err` value: Host(unknown import: `suss.slot.207::slot.207` has not been defined)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+    }
+  ],
+  "complete": false
+}

@@ -5679,16 +5679,18 @@
       (.append buffer "\"")
       (loop [i 0 start 0]
         (if (< i length)
-          (let [unit (suss.bootstrap/string-slice s i (inc i))
-                escaped (get char-escapes unit)]
+          (let [end (inc i)
+                code (.charCodeAt s i)
+                escaped (if (> code 92) nil
+                          (get char-escapes (suss.bootstrap/string-slice s i end)))]
             (if escaped
               (do
                 (if (< start i)
                   (.append buffer (suss.bootstrap/string-slice s start i))
                   nil)
                 (.append buffer escaped)
-                (recur (inc i) (inc i)))
-              (recur (inc i) start)))
+                (recur end end))
+              (recur end start)))
           (do
             (if (< start length)
               (.append buffer (suss.bootstrap/string-slice s start length))
