@@ -191,10 +191,12 @@ pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
     /// Reconstitute a GC BigInt datum without converting through binary64.
     /// `limbs` are the significant little-endian u32 magnitude digits.
-    pub fn bigint(negative: bool, limbs: Vec<u32>) -> Self {
+    pub fn bigint(negative: bool, limbs: Vec<u32>) -> Self { Self::integer(negative, limbs, true) }
+    /// Preserve a BigInteger macro datum's plain integer printing as well.
+    pub fn integer(negative: bool, limbs: Vec<u32>, big: bool) -> Self {
         let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
         let value = num_bigint::BigInt::new(sign, limbs);
-        Self { text: format!("{value}N"), value: ExactValue::Integer { value, big: true } }
+        Self { text: format!("{value}{}", if big { "N" } else { "" }), value: ExactValue::Integer { value, big } }
     }
     /// The literal a macro-data symbol stands for, if it is one.
     pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {

@@ -58,6 +58,7 @@ pub(super) fn representation(b: &mut Builder) {
         LocalGet(1),
         RefAsNonNull,
         LocalGet(2),
+        I32Const(0), // BigInt; BigInteger has the same category, with plain printing.
         StructNew(BIGINT),
     ];
     b.function(
@@ -303,7 +304,7 @@ pub(super) fn arithmetic(b: &mut Builder) {
     // A long or BigInt as a BigInt. Source type and physical raw-local facts
     // stay separate; this is only used by runtime integer dispatch.
     b.function(
-        "integer-bigint",
+        "integer-bigint-base",
         &[VALUE],
         &[VALUE],
         &[
@@ -421,7 +422,7 @@ pub(super) fn arithmetic(b: &mut Builder) {
     negate.extend([I32Const(-1), I32Mul]);
     negate.extend(get(0, 1));
     negate.extend(get(0, 2));
-    negate.push(StructNew(BIGINT));
+    negate.push(Call(b.names["bigint-new"]));
     b.function("bigint-negate", &[VALUE], &[VALUE], &negate);
     // bigint-add: locals 2/3 signs, 4/5 arrays, 6/7 lengths, 8 result,
     // 9 index, 10 capacity, 11 carry/borrow, 12 digit, 13 temporary object.
@@ -890,5 +891,448 @@ pub(super) fn string(b: &mut Builder) {
             (1, ValType::I32),
         ],
         &code,
+    );
+}
+
+/// Integer category dispatch, low-bit conversions and Clojure hasheq.
+/// The fourth field retains BigInteger's plain printing; arithmetic returns
+/// BigInt. Both use the same exact integer category and magnitude storage.
+pub(super) fn integer_functions(b: &mut Builder) {
+    let array = ValType::Ref(RefType {
+        nullable: true,
+        heap_type: HeapType::Concrete(LIMBS),
+    });
+    b.function(
+        "integer-test",
+        &[VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            Call(b.names["long-test"]),
+            LocalGet(0),
+            Call(b.names["bigint-test"]),
+            I32Or,
+        ],
+    );
+    let mut code = vec![
+        LocalGet(0),
+        Call(b.names["integer-test"]),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    code.extend(numeric::error(
+        "bigint requires an integer operand",
+        nominal::ERROR_GLOBAL,
+    ));
+    code.extend([
+        End,
+        LocalGet(0),
+        Call(b.names["integer-bigint-base"]),
+        LocalSet(0),
+    ]);
+    code.extend(get(0, 3));
+    code.extend([If(BlockType::Empty)]);
+    code.extend(get(0, 0));
+    code.extend(get(0, 1));
+    code.extend(get(0, 2));
+    code.extend([Call(b.names["bigint-new"]), Return, End, LocalGet(0)]);
+    b.function("integer-bigint", &[VALUE], &[VALUE], &code);
+    let mut code = vec![LocalGet(0), Call(b.names["integer-bigint"]), LocalSet(0)];
+    code.extend(get(0, 0));
+    code.extend(get(0, 1));
+    code.extend(get(0, 2));
+    code.extend([I32Const(1), StructNew(BIGINT)]);
+    b.function("integer-biginteger", &[VALUE], &[VALUE], &code);
+    b.function(
+        "integer-compare",
+        &[VALUE, VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            Call(b.names["integer-bigint"]),
+            LocalGet(1),
+            Call(b.names["integer-bigint"]),
+            Call(b.names["bigint-compare"]),
+        ],
+    );
+    let mut code = get(0, 1).to_vec();
+    code.push(LocalSet(1));
+    code.extend(get(0, 2));
+    code.push(LocalSet(2));
+    code.extend([
+        LocalGet(2),
+        If(BlockType::Empty),
+        LocalGet(1),
+        I32Const(0),
+        ArrayGet(LIMBS),
+        I64ExtendI32U,
+        LocalSet(3),
+        End,
+        LocalGet(2),
+        I32Const(1),
+        I32GtU,
+        If(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(1),
+        I32Const(1),
+        ArrayGet(LIMBS),
+        I64ExtendI32U,
+        I64Const(32),
+        I64Shl,
+        I64Or,
+        LocalSet(3),
+        End,
+    ]);
+    code.extend(get(0, 0));
+    code.extend([
+        I32Const(0),
+        I32LtS,
+        If(BlockType::Result(ValType::I64)),
+        I64Const(0),
+        LocalGet(3),
+        I64Sub,
+        Else,
+        LocalGet(3),
+        End,
+    ]);
+    b.function_with_locals(
+        "bigint-low-long",
+        &[VALUE],
+        &[ValType::I64],
+        &[(1, array), (1, ValType::I32), (1, ValType::I64)],
+        &code,
+    );
+    let mut code = get(0, 2).to_vec();
+    code.extend([
+        I32Const(2),
+        I32GtU,
+        If(BlockType::Empty),
+        I32Const(0),
+        Return,
+        End,
+        LocalGet(0),
+        Call(b.names["bigint-low-long"]),
+        LocalSet(1),
+    ]);
+    code.extend(get(0, 0));
+    code.extend([
+        I32Const(0),
+        I32LtS,
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(1),
+        I64Const(0),
+        I64LeS,
+        Else,
+        LocalGet(1),
+        I64Const(0),
+        I64GeS,
+        End,
+    ]);
+    b.function_with_locals(
+        "bigint-fits-long",
+        &[VALUE],
+        &[ValType::I32],
+        &[(1, ValType::I64)],
+        &code,
+    );
+    let mut code = vec![
+        LocalGet(0),
+        Call(b.names["bigint-fits-long"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["bigint-low-long"]),
+        LocalSet(3),
+    ];
+    code.extend(longs::hash_long_in(3, 4));
+    code.extend([Call(b.names["long-box-i32"]), Return, End]);
+    code.extend(get(0, 1));
+    code.push(LocalSet(1));
+    code.extend(get(0, 2));
+    code.push(LocalSet(2));
+    code.extend([
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        I32Eqz,
+        BrIf(1),
+        LocalGet(2),
+        I32Const(1),
+        I32Sub,
+        LocalSet(2),
+        LocalGet(4),
+        I32Const(31),
+        I32Mul,
+    ]);
+    code.extend(limb(1, 2));
+    code.extend([I32Add, LocalSet(4), Br(0), End, End, LocalGet(4)]);
+    code.extend(get(0, 0));
+    code.extend([I32Mul, Call(b.names["long-box-i32"])]);
+    b.function_with_locals(
+        "bigint-hash",
+        &[VALUE],
+        &[VALUE],
+        &[
+            (1, array),
+            (1, ValType::I32),
+            (1, ValType::I64),
+            (1, ValType::I32),
+        ],
+        &code,
+    );
+}
+
+/// Original binary magnitude division. Remainder scratch and quotient limbs
+/// stay private until the final normalized values are published. This GC
+/// reference kernel establishes exact semantics before the numeric-helper port.
+pub(super) fn division(b: &mut Builder) {
+    let array = ValType::Ref(RefType {
+        nullable: true,
+        heap_type: HeapType::Concrete(LIMBS),
+    });
+    // 2 a, 3 b, 4 quotient, 5 remainder; 6 la, 7 lb, 8 bit, 9 word,
+    // 10 comparison, 11 x, 12 y; 13 carry/borrow, 14 digit.
+    let mut code = Vec::new();
+    for (object, target, field) in [(0, 2, 1), (1, 3, 1), (0, 6, 2), (1, 7, 2)] {
+        code.extend(get(object, field));
+        code.push(LocalSet(target));
+    }
+    code.extend([LocalGet(7), I32Eqz, If(BlockType::Empty)]);
+    code.extend(numeric::error("Divide by zero", nominal::ERROR_GLOBAL));
+    code.extend([
+        End,
+        LocalGet(6),
+        ArrayNewDefault(LIMBS),
+        LocalSet(4),
+        LocalGet(7),
+        I32Const(1),
+        I32Add,
+        ArrayNewDefault(LIMBS),
+        LocalSet(5),
+        LocalGet(6),
+        I32Const(32),
+        I32Mul,
+        I32Const(1),
+        I32Sub,
+        LocalSet(8),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(8),
+        I32Const(0),
+        I32LtS,
+        BrIf(1),
+        // Carry starts with the next dividend bit.
+        LocalGet(2),
+        LocalGet(8),
+        I32Const(5),
+        I32ShrU,
+        ArrayGet(LIMBS),
+        LocalGet(8),
+        I32Const(31),
+        I32And,
+        I32ShrU,
+        I32Const(1),
+        I32And,
+        I64ExtendI32U,
+        LocalSet(13),
+        I32Const(0),
+        LocalSet(9),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(9),
+        LocalGet(7),
+        I32GtU,
+        BrIf(1),
+    ]);
+    code.extend(limb(5, 9));
+    code.extend([
+        I64ExtendI32U,
+        I64Const(1),
+        I64Shl,
+        LocalGet(13),
+        I64Or,
+        LocalSet(14),
+        LocalGet(5),
+        LocalGet(9),
+        LocalGet(14),
+        I32WrapI64,
+        ArraySet(LIMBS),
+        LocalGet(14),
+        I64Const(32),
+        I64ShrU,
+        LocalSet(13),
+        LocalGet(9),
+        I32Const(1),
+        I32Add,
+        LocalSet(9),
+        Br(0),
+        End,
+        End,
+        // Compare fixed-width remainder scratch with the divisor, high first.
+        I32Const(0),
+        LocalSet(10),
+        LocalGet(7),
+        I32Const(1),
+        I32Add,
+        LocalSet(9),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(9),
+        I32Eqz,
+        BrIf(1),
+        LocalGet(9),
+        I32Const(1),
+        I32Sub,
+        LocalSet(9),
+    ]);
+    code.extend(limb(5, 9));
+    code.extend([
+        LocalSet(11),
+        LocalGet(9),
+        LocalGet(7),
+        I32LtU,
+        If(BlockType::Result(ValType::I32)),
+    ]);
+    code.extend(limb(3, 9));
+    code.extend([
+        Else,
+        I32Const(0),
+        End,
+        LocalSet(12),
+        LocalGet(11),
+        LocalGet(12),
+        I32Ne,
+        If(BlockType::Empty),
+        LocalGet(11),
+        LocalGet(12),
+        I32GtU,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(1),
+        Else,
+        I32Const(-1),
+        End,
+        LocalSet(10),
+        Br(2),
+        End,
+        Br(0),
+        End,
+        End,
+        LocalGet(10),
+        I32Const(0),
+        I32GeS,
+        If(BlockType::Empty),
+        // R >= B: subtract once, then set this quotient bit.
+        I64Const(0),
+        LocalSet(13),
+        I32Const(0),
+        LocalSet(9),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(9),
+        LocalGet(7),
+        I32GtU,
+        BrIf(1),
+    ]);
+    code.extend(limb(5, 9));
+    code.extend([
+        I64ExtendI32U,
+        LocalGet(13),
+        I64Sub,
+        LocalGet(9),
+        LocalGet(7),
+        I32LtU,
+        If(BlockType::Result(ValType::I64)),
+    ]);
+    code.extend(limb(3, 9));
+    code.extend([
+        I64ExtendI32U,
+        Else,
+        I64Const(0),
+        End,
+        I64Sub,
+        LocalSet(14),
+        LocalGet(5),
+        LocalGet(9),
+        LocalGet(14),
+        I32WrapI64,
+        ArraySet(LIMBS),
+        LocalGet(14),
+        I64Const(0),
+        I64LtS,
+        I64ExtendI32U,
+        LocalSet(13),
+        LocalGet(9),
+        I32Const(1),
+        I32Add,
+        LocalSet(9),
+        Br(0),
+        End,
+        End,
+        LocalGet(8),
+        I32Const(5),
+        I32ShrU,
+        LocalSet(9),
+        LocalGet(4),
+        LocalGet(9),
+    ]);
+    code.extend(limb(4, 9));
+    code.extend([
+        I32Const(1),
+        LocalGet(8),
+        I32Const(31),
+        I32And,
+        I32Shl,
+        I32Or,
+        ArraySet(LIMBS),
+        End,
+        LocalGet(8),
+        I32Const(1),
+        I32Sub,
+        LocalSet(8),
+        Br(0),
+        End,
+        End,
+    ]);
+    code.extend(get(0, 0));
+    code.extend(get(1, 0));
+    code.extend([
+        I32Mul,
+        LocalGet(4),
+        LocalGet(6),
+        Call(b.names["bigint-new"]),
+    ]);
+    code.extend(get(0, 0));
+    code.extend([
+        LocalGet(5),
+        LocalGet(7),
+        I32Const(1),
+        I32Add,
+        Call(b.names["bigint-new"]),
+    ]);
+    let divrem = b.function_with_locals(
+        "bigint-divrem",
+        &[VALUE, VALUE],
+        &[VALUE, VALUE],
+        &[(4, array), (7, ValType::I32), (2, ValType::I64)],
+        &code,
+    );
+    b.function(
+        "bigint-quot",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[LocalGet(0), LocalGet(1), Call(divrem), Drop],
+    );
+    b.function_with_locals(
+        "bigint-rem",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &[
+            LocalGet(0),
+            LocalGet(1),
+            Call(divrem),
+            LocalSet(2),
+            Drop,
+            LocalGet(2),
+        ],
     );
 }

@@ -205,7 +205,7 @@ fn long_min_value_quotients_and_ratio_terms_need_bigints() {
     for source in ["(/ -9223372036854775808 -1)", "(/ -9223372036854775808 1)", "(/ 4 -9223372036854775808)"] {
         assert!(thrown(source).contains("(#338)"), "{source}");
     }
-    assert!(thrown("(read-string \"-9223372036854775808/2\")").contains("Unsupported numeric literal"));
+    assert_printed("(read-string \"-9223372036854775808/2\")", "-4611686018427387904N");
     // A ratio literal reduced by the reader can now produce a real BigInt.
     assert_printed("-9223372036854775808/1", "-9223372036854775808N");
     assert_printed("[(/ 6 -2) -9223372036854775807/1 (read-string \"-9223372036854775807/1\")]", "[-3 -9223372036854775807 -9223372036854775807]");

@@ -128,10 +128,10 @@ fn a_locally_called_closure_needs_no_call_entry() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_8_and_prior_abis_are_rejected() {
-    // ABI 8 adds immutable BigInt values; ABI 7 (#448) makes CODE extensible for primitive signature subtypes;
+fn artifacts_record_runtime_abi_9_and_prior_abis_are_rejected() {
+    // ABI 9 retains BigInteger printing beside BigInt; ABI 7 (#448) makes CODE extensible for primitive signature subtypes;
     // ABI 6's eqref closure parameter and call-site caches remain.
-    assert_eq!(runtime_abi::VERSION, 8);
+    assert_eq!(runtime_abi::VERSION, 9);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -146,8 +146,8 @@ fn artifacts_record_runtime_abi_8_and_prior_abis_are_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(8), &expected), Ok(()));
-    for abi in [5, 6, 7] {
+    assert_eq!(runtime_abi::verify_artifact(&module(9), &expected), Ok(()));
+    for abi in [5, 6, 7, 8] {
         let error = runtime_abi::verify_artifact(&module(abi), &expected).unwrap_err();
         assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
     }

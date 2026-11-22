@@ -1316,3 +1316,19 @@ The focused checks also execute escaped groups after GC, a peer captured by a
 suspended future, and genuine macro binding/source snapshots. Numeric-only
 captures remain raw; recursive group/closure objects still allocate. These
 bounded observations do not establish complete escape or numeric-tower coverage.
+
+
+## Exact integer dispatch evidence
+
+[Integer receipts](../../results/m12-bigint-integers/README.md) record67 fresh
+JVM Clojure1.12.6 cases executed in both phases and actual AOT, plus renamed
+core-var promotion calls. Integers retain exact equality/order/hash and
+BigInteger's plain printing. Promoting arithmetic, checked/unchecked casts,
+runtime readers and signed quotient/remainder use GC-owned magnitudes. Numeric
+map-key equality spans small arrays and larger HAMTs, including public-var
+replacements. Source inlining preserves the oracle's nary evaluation order.
+The source-frozen focused/numeric/ABI/map/bootstrap gates pass156 tests, both
+bootstrap phases reproduce without Java, and import/helper manifests pass.
+These observations cover the retained cases; full Ratio values, exact generic
+division, rationalize, WIT integration and helper crossover remain outside them.
+They do not establish full numeric-tower acceptance or change inventory counts.

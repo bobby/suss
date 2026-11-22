@@ -1,0 +1,18 @@
+Running as unit: run-p389794-i88450832.scope; invocation ID: ce15028a91e449128c2dd7634735638d
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 20s
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 4 tests
+test aot_executes_the_bigint_matrix has been running for over 60 seconds
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases has been running for over 60 seconds
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+test aot_executes_the_bigint_matrix ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 73.92s
+

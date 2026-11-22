@@ -1770,7 +1770,7 @@ impl Session {
                     &self.handles,
                 )
             }
-            Literal::BigInt { negative, limbs } => {
+            Literal::BigInt { negative, limbs, big_integer } => {
                 let length = i32::try_from(limbs.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data BigInt exceeds runtime length")))?;
                 let allocate = self.runtime.get_func(&mut scope, "bigint-limbs-new").expect("BigInt limb allocator");
                 let value = call(&mut scope, self.runtime, allocate, &[Val::I32(length)], self.identity, &self.handles)?;
@@ -1782,7 +1782,12 @@ impl Session {
                 let sign = if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 };
                 let construct = self.runtime.get_func(&mut scope, "bigint-new").expect("BigInt constructor");
                 let argument = Val::AnyRef(Some(value.object()?.to_rooted(&mut scope)));
-                call(&mut scope, self.runtime, construct, &[Val::I32(sign), argument, Val::I32(length)], self.identity, &self.handles)
+                let result = call(&mut scope, self.runtime, construct, &[Val::I32(sign), argument, Val::I32(length)], self.identity, &self.handles)?;
+                if *big_integer {
+                    let convert = self.runtime.get_func(&mut scope, "integer-biginteger").expect("BigInteger constructor");
+                    let argument = Val::AnyRef(Some(result.object()?.to_rooted(&mut scope)));
+                    call(&mut scope, self.runtime, convert, &[argument], self.identity, &self.handles)
+                } else { Ok(result) }
             }
             Literal::String(units) => {
                 let length = i32::try_from(units.len()).map_err(|_| {

@@ -1,0 +1,42 @@
+{
+  "compiler_sha256": "8c9794cd1cd04ba3cb29c63311b20bb05c4cd6e8fd79ee38bacabde28dd41ab9",
+  "records": [
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/suss",
+        "compile",
+        "before.sus",
+        "-w",
+        "before.wit",
+        "-o",
+        "before.wasm",
+        "--export",
+        "check=before/check"
+      ],
+      "exit_code": 0,
+      "seconds": 36.16318154335022,
+      "stdout": "Compiled before.sus -> before.wasm (3245702 bytes)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/suss",
+        "run",
+        "before.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "0"
+      ],
+      "exit_code": 0,
+      "seconds": 26.188036918640137,
+      "stdout": "0\n",
+      "stderr": ""
+    }
+  ],
+  "files": {
+    "before.sus": "f22d136baba4a5b5c01c825622e5e513c7c0bb893851d53dda5a32f9d79c014b",
+    "before.wit": "425e03d1a2a768eaed1555d60af071386445bfab2af5eda9482f0ed834701f2e",
+    "before.wasm": "f51fe25267f95477141f5ae7f4393b7923fd124eec96b3797e359dd941cfc501"
+  }
+}

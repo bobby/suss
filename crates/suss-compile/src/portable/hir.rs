@@ -58,7 +58,7 @@ pub enum Literal {
     /// A double.
     Number(f64),
     Long(i64),
-    BigInt { negative: bool, limbs: Vec<u32> },
+    BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
     String(Vec<u16>),
 }
 impl Literal {
@@ -291,6 +291,8 @@ pub enum Bitwise {
     UncheckedSubtract,
     UncheckedMultiply,
     UncheckedNegate,
+    PromoteAdd, PromoteSubtract, PromoteMultiply, PromoteNegate,
+    ToBigInt, ToBigInteger,
     /// Source max/min distinguish primitive double/double Math operations,
     /// primitive long/long results, and Object-returning overloads (#337).
     Max,
@@ -436,6 +438,12 @@ impl Bitwise {
             Self::UncheckedSubtract => "number-unchecked-subtract",
             Self::UncheckedMultiply => "number-unchecked-multiply",
             Self::UncheckedNegate => "number-unchecked-negate",
+            Self::PromoteAdd => "number-promote-add",
+            Self::PromoteSubtract => "number-promote-subtract",
+            Self::PromoteMultiply => "number-promote-multiply",
+            Self::PromoteNegate => "number-promote-negate",
+            Self::ToBigInt => "integer-bigint",
+            Self::ToBigInteger => "integer-biginteger",
             Self::Max | Self::LongMax => "number-max",
             Self::Min | Self::LongMin => "number-min",
             Self::DoubleMax => "number-double-max",
@@ -474,6 +482,7 @@ impl Bitwise {
             | Self::IdentityUid
             | Self::Abs
             | Self::UncheckedNegate
+            | Self::PromoteNegate | Self::ToBigInt | Self::ToBigInteger
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
@@ -529,6 +538,7 @@ pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
     IsBigInt,
+    IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
     /// `(aget a i)` of an array tagged with a packed element type, its kind
@@ -741,6 +751,7 @@ impl Nominal {
             Self::BindingDefined
             | Self::IsNumber
             | Self::IsBigInt
+            | Self::IsBigInteger
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
@@ -798,7 +809,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsBigInt | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1298,11 +1309,11 @@ impl Analyzer<'_> {
     /// literals still throw at evaluation until their runtime types arrive;
     /// unselected forms can load without silently rounding their values.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
-        if let suss_reader::forms::ExactValue::Integer { value, .. } = &number.value {
+        if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
             let (_, limbs) = value.to_u32_digits();
             return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
                 ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::BigInt {
-                    negative: num_traits::Signed::is_negative(value), limbs,
+                    negative: num_traits::Signed::is_negative(value), limbs, big_integer: !big,
                 })) });
         }
         let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
@@ -3406,6 +3417,7 @@ impl Analyzer<'_> {
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
                 "bigint?" => Some(Nominal::IsBigInt),
+                "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),
                 // Reference identity alone, as for interned keywords (#442).
                 "same-reference?" => Some(Nominal::SameReference),
@@ -3525,6 +3537,12 @@ impl Analyzer<'_> {
                 "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
                 "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "promote-add" => Some(Bitwise::PromoteAdd),
+                "promote-subtract" => Some(Bitwise::PromoteSubtract),
+                "promote-multiply" => Some(Bitwise::PromoteMultiply),
+                "promote-negate" => Some(Bitwise::PromoteNegate),
+                "as-bigint" => Some(Bitwise::ToBigInt),
+                "as-biginteger" => Some(Bitwise::ToBigInteger),
                 "max" => Some(Bitwise::Max),
                 "min" => Some(Bitwise::Min),
                 "long?" => Some(Bitwise::LongTest),
@@ -3751,6 +3769,45 @@ impl Analyzer<'_> {
                     arguments: arguments.clone().into(),
                 }));
             return Ok(self.nominal(form, Nominal::SameReference, arguments));
+        }
+        // JVM core's promoting arithmetic is inline at arity >=2, unary -',
+        // and inc'/dec'. Zero/unary +'/ *' remain ordinary function calls.
+        // Resolve the actual core cell so lexical/user shadowing stays live.
+        let inline_core = |name: &str| self.linked_core_call(&resolved, name)
+            || matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == name && self.privileged_definition(global));
+        let promoting = if inline_core("+'") && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+            else if inline_core("*'") && args.len() >= 2 { Some(Bitwise::PromoteMultiply) }
+            else if inline_core("-'") && !args.is_empty() {
+                Some(if args.len() == 1 { Bitwise::PromoteNegate } else { Bitwise::PromoteSubtract })
+            } else if inline_core("inc'") && args.len() == 1 { Some(Bitwise::PromoteAdd) }
+            else if inline_core("dec'") && args.len() == 1 { Some(Bitwise::PromoteSubtract) }
+            else { None };
+        if let Some(operation) = promoting {
+            if args.len() > 256 { return Err(fail(form.span.clone(), "Promoting arithmetic expansion limit exceeded")); }
+            let callee = self.form(&items[0])?;
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>,_>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee), arguments: arguments.clone().into(),
+            }));
+            // Clojure's nary-inline nests the operations. A failure in an
+            // earlier pair precedes evaluation of later arguments; aliases
+            // remain ordinary calls and evaluate all their operands first.
+            let mut operands = arguments;
+            if args.len() == 1 && operation != Bitwise::PromoteNegate {
+                operands.push(self.literal_form(form, Literal::Long(1)));
+            }
+            let mut values = operands.into_iter();
+            let first = values.next().expect("nonempty promoting operation");
+            let body = if operation == Bitwise::PromoteNegate {
+                Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![first] }) }
+            } else {
+                values.fold(first, |left, right| Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![left, right] }) })
+            };
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Number,
+                kind: body.kind.clone() });
         }
         // `(= x y)` and `(hash x)` on longs in i31 range (#387). Core's `=`
         // answers equiv for two numbers, and two i31 longs are equiv exactly

@@ -1,0 +1,39 @@
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 14s
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_bigint_integers-4dcb6def4fe06044)
+
+running 2 tests
+test aot_executes_integer_dispatch_promotion_and_runtime_reading has been running for over 60 seconds
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases has been running for over 60 seconds
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... FAILED
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... FAILED
+
+failures:
+
+---- integer_dispatch_promotion_and_reader_match_jvm_in_both_phases stdout ----
+
+thread 'integer_dispatch_promotion_and_reader_match_jvm_in_both_phases' (450750) panicked at crates/suss-cli/tests/clojure_bigint_integers.rs:32:13:
+assertion `left == right` failed: (pr-str (try [(get {1N :one} 1) (get {1 :one} 1N) (contains? #{9223372036854775808N} 9223372036854775808N) (= #{1N 2N} #{1 2})] (catch :default e :error)))
+  left: "[nil nil false false]"
+ right: "[:one :one true true]"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_integer_dispatch_promotion_and_runtime_reading stdout ----
+
+thread 'aot_executes_integer_dispatch_promotion_and_runtime_reading' (450749) panicked at crates/suss-cli/tests/clojure_bigint_integers.rs:89:5:
+assertion `left == right` failed
+  left: "8"
+ right: "37"
+
+
+failures:
+    aot_executes_integer_dispatch_promotion_and_runtime_reading
+    integer_dispatch_promotion_and_reader_match_jvm_in_both_phases
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 102.68s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_bigint_integers`

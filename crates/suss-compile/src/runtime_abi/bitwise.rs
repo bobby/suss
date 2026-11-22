@@ -191,6 +191,27 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
     ));
     code.push(End);
     let range = format!("Value out of range for {}: ", name.trim_start_matches("unchecked-"));
+    // BigInt/BigInteger must not round through binary64 before integer casts.
+    if let Cast::Checked(bits) | Cast::ObjectChecked(bits) | Cast::Unchecked(bits) = kind {
+        code.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty)]);
+        if !matches!(kind, Cast::Unchecked(_)) {
+            code.extend([LocalGet(0), Call(b.names["bigint-fits-long"]), I32Eqz, If(BlockType::Empty)]);
+            code.extend(throw_with_value(b, "Value out of range for long: ", 0)); code.push(End);
+        }
+        code.extend([LocalGet(0), Call(b.names["bigint-low-long"]), LocalSet(1)]);
+        if bits < 64 {
+            let shift=I64Const(i64::from(64-bits));
+            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS]);
+            if !matches!(kind, Cast::Unchecked(_)) {
+                code.extend([LocalGet(1), I64Ne, If(BlockType::Empty)]);
+                if bits == 32 { code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL)); }
+                else { code.extend(throw_with_value(b, &range, 0)); }
+                code.extend([End, LocalGet(1)]);
+            }
+        } else { code.push(LocalGet(1)); }
+        if !raw { code.push(Call(boxed)); }
+        code.extend([Return, End]);
+    }
     match kind {
         Cast::Checked(bits) => {
             code.extend([LocalGet(0), Call(long), If(BlockType::Empty)]);

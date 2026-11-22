@@ -169,6 +169,10 @@ pub(super) fn both_longs(b: &Builder) -> [Instruction<'static>; 5] {
     let test = b.names["long-test"];
     [LocalGet(0), Call(test), LocalGet(1), Call(test), I32And]
 }
+pub(super) fn both_integers(b: &Builder) -> [Instruction<'static>; 5] {
+    [Instruction::LocalGet(0), Instruction::Call(b.names["integer-test"]),
+     Instruction::LocalGet(1), Instruction::Call(b.names["integer-test"]), Instruction::I32And]
+}
 fn small(local: u32) -> [Instruction<'static>; 4] {
     use Instruction::*;
     [LocalGet(local), RefCastNonNull(i31()), I31GetS, I64ExtendI32S]
@@ -286,13 +290,19 @@ pub(super) fn relation(
         Call(unbox),
         LocalGet(1),
         Call(unbox),
-        exact,
+        exact.clone(),
         Else,
+    ]);
+    code.extend(both_integers(b));
+    code.extend([
+        If(BlockType::Result(ValType::I32)), LocalGet(0), LocalGet(1), Call(b.names["integer-compare"]),
+        I32Const(0), small_relation(&exact), Else,
         LocalGet(0),
         Call(number),
         LocalGet(1),
         Call(number),
         floating,
+        End,
         End,
         End,
     ]);
@@ -457,8 +467,13 @@ pub(super) fn arithmetic(b: &mut Builder) {
         code.extend([LocalGet(2), LocalGet(3), small_operation, LocalSet(4)]);
         code.extend(overflow);
         code.push(If(BlockType::Empty));
+        let mut promoting = code.clone();
+        promoting.extend([LocalGet(2), Call(b.names["bigint-from-long"]), LocalGet(3), Call(b.names["bigint-from-long"]),
+            Call(b.names[&format!("bigint-{name}")]), Return,
+            End, LocalGet(4), Call(boxed), Return, End]);
         code.extend(throw("long overflow"));
         code.extend([End, LocalGet(4), Call(boxed), Return, End]);
+        let tail = code.len();
         code.extend([
             LocalGet(0), Call(b.names["bigint-test"]), LocalGet(1), Call(b.names["bigint-test"]), I32Or,
             LocalGet(0), Call(b.names["double-test"]), LocalGet(1), Call(b.names["double-test"]), I32Or, I32Eqz, I32And,
@@ -467,7 +482,14 @@ pub(super) fn arithmetic(b: &mut Builder) {
             Call(b.names[&format!("bigint-{name}")]), Return, End,
         ]);
         code.extend(floating(operation));
+        promoting.extend_from_slice(&code[tail..]);
+        let mut checked_promoting = Vec::new();
+        numeric_operands::require_numbers(b, &mut checked_promoting,
+            match name { "add" => "+'", "subtract" => "-'", "multiply" => "*'", _ => unreachable!() }, 2);
+        checked_promoting.extend(promoting);
+        let promoting = checked_promoting;
         b.function_with_locals(&format!("number-{name}"), &[VALUE, VALUE], &[VALUE], &locals, &code);
+        b.function_with_locals(&format!("number-promote-{name}"), &[VALUE, VALUE], &[VALUE], &locals, &promoting);
     }
     // An exact quotient of longs is a long. Other quotients of longs are
     // ratios in Clojure; until Suss has them (#338) they are doubles.
@@ -542,7 +564,15 @@ pub(super) fn arithmetic(b: &mut Builder) {
         F64Neg,
         StructNew(NUMBER),
     ]);
+    let mut promoting = vec![LocalGet(0), Call(b.names["long-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(unbox), I64Const(i64::MIN), I64Eq, If(BlockType::Empty),
+        LocalGet(0), Call(unbox), Call(b.names["bigint-from-long"]), Call(b.names["bigint-negate"]), Return, End, End];
     b.function_with_locals("number-negate", &[VALUE], &[VALUE], &[(1, ValType::I64)], &code);
+    promoting.extend([LocalGet(0), Call(b.names["number-negate"])]);
+    let mut checked_promoting = Vec::new();
+    numeric_operands::require_numbers(b, &mut checked_promoting, "-'", 1);
+    checked_promoting.extend(promoting);
+    b.function("number-promote-negate", &[VALUE], &[VALUE], &checked_promoting);
 }
 
 /// `long-string`: a long's decimal digits as a new string.
@@ -739,6 +769,12 @@ pub(super) fn functions(b: &mut Builder) {
     let operands = |b: &Builder, symbol: &str| {
         let mut code = Vec::new();
         super::numeric_operands::require_numbers(b, &mut code, symbol, 2);
+        code.extend(both_integers(b));
+        code.extend([LocalGet(0), Call(b.names["bigint-test"]), LocalGet(1), Call(b.names["bigint-test"]), I32Or, I32And,
+            If(BlockType::Empty), LocalGet(0), Call(b.names["integer-bigint"]), LocalGet(1), Call(b.names["integer-bigint"]),
+            Call(b.names[match symbol { "quot"=>"bigint-quot", "rem"=>"bigint-rem",
+                "unchecked-add"=>"bigint-add", "unchecked-subtract"=>"bigint-subtract", "unchecked-multiply"=>"bigint-multiply",
+                _=>unreachable!("integer binary operation") }]), Return, End]);
         code.extend(both_longs(b));
         code.extend([
             If(BlockType::Empty),
@@ -1086,7 +1122,8 @@ fn hash(b: &mut Builder) {
     // Local 1 is the long or the double's bits, local 2 the hash. A long, an
     // i31 or a boxed one, is read inline, with no long-test or long-unbox
     // call (#387).
-    let mut code = vec![
+    let mut code = vec![LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["bigint-hash"]), Return, End,
         LocalGet(0),
         RefTestNonNull(i31()),
         LocalGet(0),

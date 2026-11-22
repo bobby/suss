@@ -1,4 +1,4 @@
-//! Shared GC ABI v8. Longs, doubles and BigInts have distinct representations;
+//! Shared GC ABI v9. Longs, doubles and BigInts have distinct representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
 pub(crate) use bitwise::CAST_RAW_EXPORTS;
@@ -51,7 +51,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 8;
+pub const VERSION: u32 = 9;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -848,7 +848,7 @@ pub fn prelude() -> TypeSection {
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
     ]));
-    group.push(structure(vec![field(ValType::I32, false), field(reference(PACKED_STORAGE + 2), false), field(ValType::I32, false)]));
+    group.push(structure(vec![field(ValType::I32, false), field(reference(PACKED_STORAGE + 2), false), field(ValType::I32, false), field(ValType::I32, false)]));
     debug_assert_eq!(group.len() as u32, TYPE_COUNT);
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
@@ -1519,6 +1519,8 @@ fn build_module() -> Vec<u8> {
     bigints::representation(&mut b);
     longs::intrinsics(&mut b);
     bigints::arithmetic(&mut b);
+    bigints::integer_functions(&mut b);
+    bigints::division(&mut b);
     bigints::string(&mut b);
     longs::arithmetic(&mut b);
     longs::string(&mut b);

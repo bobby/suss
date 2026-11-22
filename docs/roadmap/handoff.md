@@ -32219,3 +32219,31 @@ hashing, remaining conversions and WIT integration still need implementation.
 The GC multiplication kernel is a reference pending the measured helper bridge
 and production crossover. These observations do not establish complete numeric
 semantics or an unfiltered workspace baseline for this source.
+
+
+## Exact integer dispatch and promotion probes (2026-11-22)
+
+[Integer receipts](../../results/m12-bigint-integers/README.md) retain67 fresh
+JVM Clojure1.12.6 expectations, exercised in Runtime/Macro and actual AOT, plus
+renamed promoting-core-var calls. ABI9 appends the immutable BigInteger display
+flag to the integer value layout; old artifact versions are rejected. Exact
+integer comparison/hash, checked/unchecked casts, promotion, runtime reading and
+signed quot/rem/mod use GC-owned magnitudes. Small-map and HAMT lookups preserve
+numeric equality across long/BigInt keys, including with public vars rebound.
+Promoting core inlining preserves Clojure's arities and nested evaluation order.
+
+Run `python3 results/m12-bigint-integers/run-gates.py` with the isolated target
+layout recorded there. Its terminal receipt freezes every changed implementation
+input and passes156 tests:37 focused,31 numeric controls,65 ABI controls,19 map
+controls and4 bootstrap tests. The Java-free bootstrap reproduces both phases
+byte-for-byte, and both source/artifact manifest checks pass. Two jobs/threads
+and MemoryMax4G scopes keep the run bounded; no RUSTFLAGS override is used.
+Earlier reader/map/source-inline failures and the incorrectly packaged test
+invocation remain in the receipts. Earlier ABI8 and capture-parent workspace
+runs are qualified separately and do not certify ABI9.
+
+Full Ratio values, generic exact division, rationalize and WIT u64 integration
+remain unimplemented here. GC multiplication/division are reference kernels;
+the measured helper bridge/crossover and full numeric API acceptance remain.
+The changed reviewed-suite observations require an explicit primary-oracle
+audit before any known-failure baseline update.

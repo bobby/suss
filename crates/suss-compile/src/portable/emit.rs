@@ -250,7 +250,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("number-box");
                     }
                     Operation::Literal(Literal::String(_)) => {}
-                    Operation::Literal(Literal::BigInt { .. }) => { names.insert("bigint-new"); }
+                    Operation::Literal(Literal::BigInt { big_integer, .. }) => { names.insert("bigint-new"); if *big_integer { names.insert("integer-biginteger"); } }
                     Operation::GlobalCell(global) => {
                         globals.insert(global.clone());
                     }
@@ -319,7 +319,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsBigInt | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -901,7 +901,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
@@ -2567,13 +2567,14 @@ fn emit_function(
                     };
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
-                Operation::Literal(Literal::BigInt { negative, limbs }) => {
+                Operation::Literal(Literal::BigInt { negative, limbs, big_integer }) => {
                     function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
                     for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
                     function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
                         array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "BigInt literal exceeds Wasm array length".into() })? });
-                    function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                    if *big_integer { function.instruction(&Call(index("integer-biginteger"))); }
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
@@ -3219,6 +3220,14 @@ fn emit_function(
                         // The runtime predicates' own tests, inline: never a mutable
                         // public cell, and no closure call on core's hot paths (#286).
                         // Arguments are already evaluated once in source order.
+                        Nominal::IsBigInteger => {
+                            let value = arguments[0].0 as u32 + offset;
+                            function.instruction(&LocalGet(value)).instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(value)).instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                                .instruction(&StructGet { struct_type_index: runtime_abi::BIGINT, field_index: 3 })
+                                .instruction(&Else).instruction(&I32Const(0)).instruction(&End);
+                        }
                         Nominal::IsBigInt => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)));

@@ -1,0 +1,54 @@
+Running as unit: run-p403018-i88466562.scope; invocation ID: 50de699c17be4b7181fbcd4b8d949049
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 5.20s
+     Running tests/clojure_equality_bitwise.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_equality_bitwise-705f37351a695429)
+
+running 7 tests
+test bit_operations_are_64_bit_and_take_longs ... ok
+test equality_keeps_longs_and_doubles_apart ... ok
+test imul_and_int32_coercion_are_not_public ... ok
+test integer_predicate_keeps_boolean_escapes_branches_and_single_evaluation ... ok
+test numbers_hash_as_clojure_hasheq ... ok
+test parity_keeps_wide_longs_rejects_nonintegers_and_evaluates_once ... ok
+test casts_check_the_range_and_return_longs_and_doubles ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.83s
+
+     Running tests/clojure_longs_doubles.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_longs_doubles-b20af55549af3a5c)
+
+running 14 tests
+test contagion_and_predicates_distinguish_longs_from_doubles ... ok
+test case_matches_numbers_only_within_their_kind ... ok
+test double_contagion_reaches_every_arithmetic_function ... ok
+test counts_narrow_as_clojure_casts_to_long ... ok
+test double_quot_and_rem_truncate_through_a_long ... ok
+test doubles_print_as_java_does ... ok
+test integral_counts_are_longs ... ok
+test integer_division_follows_clojure ... ok
+test long_arithmetic_is_exact_and_checked ... ok
+test long_min_value_quotients_and_ratio_terms_need_bigints ... ok
+test ranges_reach_the_ends_of_the_long_range ... ok
+test reading_keeps_longs_exact_and_distinct_from_doubles ... ok
+test rest_arguments_count_from_long_zero ... ok
+test macro_data_preserves_longs_and_doubles ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.43s
+
+     Running tests/clojure_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_unboxed_locals-67ac12a7b57e950c)
+
+running 12 tests
+test bit_tests_keep_shift_masking_flags_and_boxed_fallbacks ... ok
+test core_int32_operations_keep_low_bits_shift_masks_and_signed_results ... ok
+test core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks ... ok
+test double_zero_division_keeps_source_overloads_separate_from_storage ... ok
+test doubles_keep_nan_and_signed_zero ... ok
+test constant_long_products_keep_both_operand_orders_and_exact_overflow ... ok
+test guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order ... ok
+test long_overflow_throws_on_both_paths ... ok
+test longs_and_doubles_mix_as_in_clojure ... ok
+test guarded_array_indices_keep_aliases_bounds_and_boxed_fallbacks ... ok
+test non_numbers_throw_as_on_the_boxed_path ... ok
+test loops_keep_counters_raw_and_box_where_values_escape ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.79s
+

@@ -1,0 +1,18 @@
+{
+  "source_commit": "e8d0ed9f5459cb154c55d3ab1755f771221562c4",
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "passed": 2307,
+  "failed": 0,
+  "ignored": 14,
+  "test_summaries": 343,
+  "log_sha256": "32edbd60ba1d6d56aabf97c4a85e01e75aeb19ca5f6d1a3c14f146622110fed7",
+  "seconds": 8125.557441711426
+}

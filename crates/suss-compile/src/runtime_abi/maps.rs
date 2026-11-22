@@ -139,7 +139,10 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(0), LocalSet(6),
         Block(BlockType::Empty), Loop(BlockType::Empty),
         LocalGet(6), I32Const(1), I32Add, LocalGet(5), ArrayLen, I32GeU, BrIf(1),
-        LocalGet(5), LocalGet(6), ArrayGet(ARGS), LocalGet(1), RefEq,
+        // An i31 can equal a BigInt; let core do the category equality scan.
+        LocalGet(5), LocalGet(6), ArrayGet(ARGS), LocalTee(10),
+        RefTestNonNull(HeapType::Concrete(BIGINT)), BrIf(3),
+        LocalGet(10), LocalGet(1), RefEq,
         If(BlockType::Empty),
         LocalGet(5), LocalGet(6), I32Const(1), I32Add, ArrayGet(ARGS), LocalSet(7),
     ]);
@@ -198,6 +201,7 @@ pub(super) fn functions(b: &mut Builder) {
         // A subnode, one level down.
         LocalGet(7), LocalSet(10), LocalGet(9), I32Const(5), I32Add, LocalSet(9), Br(2),
         End,
+        LocalGet(10), RefTestNonNull(HeapType::Concrete(BIGINT)), BrIf(2),
         LocalGet(10), LocalGet(1), RefEq,
         If(BlockType::Empty),
     ]);

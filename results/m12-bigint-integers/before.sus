@@ -1,0 +1,2 @@
+(ns before)
+(def check (fn [unused] (if (= 1 1N) 1 0)))

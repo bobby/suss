@@ -1,0 +1,90 @@
+[
+  [
+    "(pr-str (try [1/3 -1/3 2/4 6/3 9223372036854775808/2] (catch :default e :error)))",
+    "[1/3 -1/3 1/2 2 4611686018427387904N]"
+  ],
+  [
+    "(pr-str (try [(/ 1 3) (/ 6 3) (/ 6N 3) (/ -9223372036854775808 1) (/ -9223372036854775808 -9223372036854775808)] (catch :default e :error)))",
+    "[1/3 2 2N -9223372036854775808N 1N]"
+  ],
+  [
+    "(pr-str (try [(+ 1/3 2/3) (- 1/3 2/3) (* 2/3 3/4) (/ 2/3 4/5) (- 2/3)] (catch :default e :error)))",
+    "[1N -1/3 1/2 5/6 -2/3]"
+  ],
+  [
+    "(pr-str (try [(quot 5/2 1/2) (rem 5/2 1/2) (quot -7/3 2/3) (rem -7/3 2/3) (mod -7/3 2/3)] (catch :default e :error)))",
+    "[5N 0N -3N -1/3 1/3]"
+  ],
+  [
+    "(pr-str (try [(quot 5/2 2) (rem 5/2 2) (quot 5 2/3) (rem 5 2/3) (quot 5/2 2.0) (rem 5/2 2.0)] (catch :default e :error)))",
+    "[1N 1/2 7N 1/3 1.0 0.5]"
+  ],
+  [
+    "(pr-str (try [(numerator 1/3) (denominator -2/3) (str (numerator 9223372036854775808/3))] (catch :default e :error)))",
+    "[1 3 \"9223372036854775808\"]"
+  ],
+  [
+    "(pr-str (try (numerator 1) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try (denominator 1N) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try [(ratio? 1/3) (ratio? 2/2) (rational? 1/3) (rational? 1N) (rational? 1.0)] (catch :default e :error)))",
+    "[true false true true false]"
+  ],
+  [
+    "(pr-str (try [(rationalize 0.1) (rationalize -1.5) (rationalize 1e20) (rationalize 1N) (rationalize 1/3)] (catch :default e :error)))",
+    "[1/10 -3/2 100000000000000000000N 1N 1/3]"
+  ],
+  [
+    "(pr-str (try (rationalize ##NaN) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try (rationalize ##Inf) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try [(hash 1/2) (hash -1/2) (hash 1/3) (hash 9223372036854775808/3)] (catch :default e :error)))",
+    "[3 -3 2 -2147483645]"
+  ],
+  [
+    "(pr-str (try [(= 1 2/2) (= 1.0 2/2) (= 0.5 1/2) (== 0.5 1/2) (< 1 3/2) (compare 1 3/2)] (catch :default e :error)))",
+    "[true false false true true -1]"
+  ],
+  [
+    "(pr-str (try [(bigint 7/3) (bigint -7/3) (biginteger 7/3) (long 7/3) (int -7/3) (double 1/3)] (catch :default e :error)))",
+    "[2N -2N 2 2 -2 0.3333333333333333]"
+  ],
+  [
+    "(pr-str (try [(inc 1/3) (dec 1/3) (inc' 1/3) (dec' 1/3) (+' 1/3 1N) (abs -1/3)] (catch :default e :error)))",
+    "[4/3 -2/3 4/3 -2/3 4/3 1/3]"
+  ],
+  [
+    "(pr-str (try (/ 1/3 0) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try (/ 1/3 0.0) (catch :default e :error)))",
+    "##Inf"
+  ],
+  [
+    "(pr-str (try (/ ##NaN 0N) (catch :default e :error)))",
+    "##NaN"
+  ],
+  [
+    "(pr-str (try [(get {1/3 :ratio} 1/3) (get #{1/3} 1/3) (= 2/6 1/3)] (catch :default e :error)))",
+    "[:ratio 1/3 true]"
+  ],
+  [
+    "(pr-str (try [(read-string \"36893488147419103233/8\") (read-string \"-9223372036854775808/3\")] (catch :default e :error)))",
+    "[36893488147419103233/8 -9223372036854775808/3]"
+  ],
+  [
+    "(pr-str (try (let [n (/ 1N 3N)] [(str n) (pr-str n) (numerator n) (denominator n)]) (catch :default e :error)))",
+    "[\"1/3\" \"1/3\" 1 3]"
+  ]
+]

@@ -1,0 +1,56 @@
+{
+  "inputs": {
+    "crates/suss-cli/tests/clojure_longs_doubles.rs": "c22bab25d9aafedf09e6dea8b7d7d33574c88289a10343dea093a19a6d232ff3",
+    "crates/suss-cli/tests/read_string.rs": "56a0b1263d050dffeb17639b809a3ebe91cfa328277adc8af5eafd4c51ee9b06",
+    "crates/suss-compile/src/portable/emit.rs": "0c4b7c16a20cec4d59b8a7e336bbf04075ad2cc60f156276e6f756aec0429afe",
+    "crates/suss-compile/src/portable/hir.rs": "9c8fe8b41733de775df61e6736317e33915bbed499b613d271d2ea5974c78bdf",
+    "crates/suss-compile/src/portable_macro_data.rs": "f74979afdc4e5bb1307889cb2ca6ebee8beeffe002412307432f6d8f6cb7bf1c",
+    "crates/suss-compile/src/portable_macro_graph.rs": "4a6701da79870c695e6e5ca883053a6ee77ebd5a6d81719a431f18274ef6346e",
+    "crates/suss-compile/src/portable_session.rs": "9da4e638eed32dbea535dc52ec768e0c9132de5033aa7299d405e948958d4cef",
+    "crates/suss-compile/src/runtime_abi.rs": "192d7dcb1371bc45fcc6d0f0ace8bad251377173b6e20ae4a87aefaf34a37353",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "8f81e2eae3ef9a8cc033025f068b2ab8d1959d9206f805a68062726a6d611889",
+    "crates/suss-compile/src/runtime_abi/bitwise.rs": "9b2d83d7c9fdfec751ea50809850d550f1f03417120e27c7a9c417c0af706cf0",
+    "crates/suss-compile/src/runtime_abi/comparisons.rs": "8ca02dfaf01d2dff1b81c13b60722e76aa14bdcc544ce774b62602ff92e26851",
+    "crates/suss-compile/src/runtime_abi/longs.rs": "6d331a2cee20c42b09b4915ef54622c6f087575581713856ab85db434e034188",
+    "crates/suss-compile/src/runtime_abi/maps.rs": "d5d21a3ca37f6277014d7e590b1904053b0fbf4912cc04f88cc1d8ed90c1ddce",
+    "crates/suss-compile/tests/portable_calling_convention.rs": "fadfc5168c96654d4c3e776e1d8910997000f85554f2113181a6ed8cbc9f945b",
+    "crates/suss-compile/tests/portable_comparator_foundations.rs": "3d0f2ec3638d3c3a259f5fde287bd4fe444250e5327661cf70adde04d724c0af",
+    "crates/suss-reader/src/forms.rs": "da056db22cf0a0b92627249d0296c9f5ab6b57e279d2b55cf68fa2f64ea21abb",
+    "docs/compatibility/bootstrap/exact-integers.sus": "a72ecf32db3f8512e23d33a61ac250eb4bf9c38254fbd1d8af7aec5160c59bea",
+    "docs/compatibility/core-import.json": "3f0fe58ff3f999bbcf5de6ea54ae6ce725c241d1f96ba1070144495d3f67a38e",
+    "docs/compatibility/patches/array-map-array-index-of.json": "6e9d65920652b4dcdf54517c9e4720abd401bc3f133181aa10b88524ed099f20",
+    "docs/compatibility/patches/array-map-key-test.json": "584c98d6e90a215d4729e799fe754fcd9fb4922d39c68c9ee518337d1c6362bc",
+    "docs/compatibility/patches/expression-even-predicate.json": "803bd7e98cec660eca174acf1f09af3db91f9155f2d38352c22028defa55fba9",
+    "docs/compatibility/patches/expression-integer-predicate.json": "930d24039a5179e0ec2b775baa8124a84fb9a48a660f85a54073ad8e994efb00",
+    "docs/compatibility/patches/printing-pr-writer-impl.json": "3c2f93827b5004be8afcca5b83fb29a9851dd7de15285ab129ab4f3f16eacb62",
+    "runtime/core-import/manifest.json": "8c081d4b9d9759d4f9c1217579083e531f6eef243ac1a4d49e3623791c8527ef",
+    "runtime/core-import/suss/core.sus": "652ac1a92fe22028a9e23d33db2aa329598b3c92507e53c5de8361191db17ee2",
+    "crates/suss-cli/tests/clojure_bigint_integers.rs": "5ac866b7062ab000e1f4c5d37c17ad6958db981a3053a56955cdeba577ce1913",
+    "results/m12-bigint-integers/cases.json": "ece48003a710e26c0b97b43665202059cc43d4a70a3b84d1a77412005ea30585"
+  },
+  "commands": [
+    {
+      "label": "focused-final",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_bigint_integers",
+        "--test",
+        "clojure_bigints",
+        "--test",
+        "read_string",
+        "--test",
+        "clojure_longs_doubles",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 101,
+      "seconds": 4.482389211654663
+    }
+  ],
+  "complete": false
+}
