@@ -36,6 +36,8 @@ fn raw(value: Observation) -> Value {
         Observation::Bool(value) => json!({"tag":"bool", "value":value}),
         Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
+        Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
+        Observation::Ratio(numerator,denominator) => json!({"tag":"ratio", "numerator":numerator,"denominator":denominator}),
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => json!({
             "tag":"keyword",

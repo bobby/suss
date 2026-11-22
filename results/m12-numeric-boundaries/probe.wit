@@ -1,0 +1,1 @@
+package test:numeric-boundaries; world w { export check: func(index: u32) -> string; }

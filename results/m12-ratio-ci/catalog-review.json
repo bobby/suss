@@ -1,0 +1,17 @@
+{
+  "cases": 201,
+  "unchanged_expressions": 201,
+  "changed_expectations": {
+    "core/div-one-arg": {
+      "before": [
+        "(/ 2)",
+        "Number(Float(0.5))"
+      ],
+      "after": [
+        "(/ 2)",
+        "Number(Ratio(Ratio { numer: 1, denom: 2 }))"
+      ]
+    }
+  },
+  "primary_receipt": "primary-command.json"
+}

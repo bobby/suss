@@ -99,6 +99,27 @@ impl Decoder {
         }
     }
 
+    /// Minimal sessions have numeric runtime values without core constructors.
+    /// Anchor only those canonical types, keeping their independent decoder.
+    pub fn capture_numeric(session: &mut Session, remaining: usize) -> Result<Self, SessionError> {
+        let mut decoder = Self::new(remaining);
+        decoder.capture_number_types(session)?;
+        Ok(decoder)
+    }
+    fn capture_number_types(&mut self, session: &mut Session) -> Result<(), SessionError> {
+        let integer = session.eval_probe("1N")?;
+        self.integer_type = Some(session.inspect(&integer, |store, value| {
+            non_null_ref(&value)?.as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?.ty(&store)
+        })?);
+        let ratio = session.eval_probe("1/3")?;
+        self.ratio_type = Some(session.inspect(&ratio, |store, value| {
+            non_null_ref(&value)?.as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Ratio"))?.ty(&store)
+        })?);
+        Ok(())
+    }
+
     /// Capture descriptors from known core instances before user fixtures.
     /// Class closures can wrap their environment for function properties; a
     /// nominal instance carries its descriptor directly in object field0.
@@ -162,16 +183,7 @@ impl Decoder {
         ] {
             decoder.capture_class(session, source, class)?;
         }
-        let integer = session.eval_probe("1N")?;
-        decoder.integer_type = Some(session.inspect(&integer, |store, value| {
-            non_null_ref(&value)?.as_struct(&store)?
-                .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?.ty(&store)
-        })?);
-        let ratio = session.eval_probe("1/3")?;
-        decoder.ratio_type = Some(session.inspect(&ratio, |store, value| {
-            non_null_ref(&value)?.as_struct(&store)?
-                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Ratio"))?.ty(&store)
-        })?);
+        decoder.capture_number_types(session)?;
         Ok(decoder)
     }
 

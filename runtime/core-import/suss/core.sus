@@ -10513,7 +10513,7 @@ reduces them without incurring seq initialization"
                    (suss.bootstrap/concat-string
                     (suss.bootstrap/concat-string
                      "Unsupported numeric literal " (suss.bootstrap/string-slice s start end))
-                    ": BigDecimals need Clojure's numeric type (#339)")
+                    ": ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)")
                    false))))
 (def ^:private reader-digits?
   (fn [s from to]

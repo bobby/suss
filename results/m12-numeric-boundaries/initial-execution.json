@@ -1,0 +1,32 @@
+{
+  "head": "84fece33c6ec62e20329e5e803fac616792ba8e5",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/results/m12-numeric-boundaries/probe.sus"
+  ],
+  "executable_sha256": "8969d68be0ce7924baadc52ab1f00aaeb329c1b5b1bdc8b97d287b3e40cfa916",
+  "source_sha256": "ac67aad3434849c63da2c4945f29bf244ee27f4c21990da7b513e3f7aaf84c2a",
+  "exit_code": 1,
+  "seconds": 37.082555532455444,
+  "actual": [],
+  "expected": [
+    "[true true true false 9223372036854775809N]",
+    "[true true true false 9223372036854775809N]",
+    "9223372036854775808N",
+    "9223372036854775809N",
+    "1.0",
+    "0.1428571428571429",
+    "2",
+    ":error",
+    "0.1428571428571429",
+    "2",
+    "-9223372036854775808",
+    "2/3",
+    "9223372036854775809N",
+    "4/3",
+    ":yes",
+    ":yes"
+  ],
+  "complete": true,
+  "all_match": false
+}

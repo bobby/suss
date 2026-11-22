@@ -53,6 +53,7 @@ for exponent in [300, 324, 400]:
     expressions.append(f'[(double 1/{power+1}) (double -1/{power+1}) (double {power+1}/3)]')
 forms += [f'(pr-str (try {form} (catch :default e :error)))' for form in expressions]
 forms += [source for source, _ in json.loads((OUT / 'edge-cases.json').read_text())]
+forms += [source for source, _ in json.loads((ROOT / 'results/m12-numeric-boundaries/cases.json').read_text())]
 source = '(assert (= "1.12.6" (clojure-version)))\n' + '\n'.join(
     '(println (pr-str ' + form.replace('(catch :default e', '(catch Throwable e').replace('suss.edn/read-string', 'clojure.edn/read-string').replace('(.-message e)', '(.getMessage e)') + '))' for form in forms) + '\n'
 source = "(require 'clojure.edn)\n" + source

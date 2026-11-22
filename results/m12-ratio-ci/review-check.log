@@ -1,0 +1,2 @@
+{'pass': 2512, 'guest-judged': 54, 'fail': 266, 'not-executed': 4107, 'skipped': 0, 'namespaces-failed': 121}
+94 recovered failures +32 newly executed primary matches;4 Decimal failures retained; no previous passing assertion regresses.

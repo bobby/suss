@@ -1,0 +1,5 @@
+package test:ratio-before;
+world w {
+  export divide: func(unused: u32) -> string;
+  export literal: func(unused: u32) -> string;
+}

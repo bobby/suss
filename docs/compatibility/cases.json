@@ -417,7 +417,7 @@
   ],
   "core/div-one-arg": [
     "(/ 2)",
-    "Number(Float(0.5))"
+    "Number(Ratio(Ratio { numer: 1, denom: 2 }))"
   ],
   "core/div-two-args": [
     "(/ 10 2)",

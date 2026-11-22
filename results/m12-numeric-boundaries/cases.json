@@ -1,0 +1,66 @@
+[
+  [
+    "(pr-str (try (let [x (long 1)] [(= x 1N) (= (hash x) (hash 1N)) (< x 3/2) (== x 4/2) (+ x 9223372036854775808N)]) (catch :default e :error)))",
+    "[true true true false 9223372036854775809N]"
+  ],
+  [
+    "(pr-str (try (let [x (identity 1)] [(= x 1N) (= (hash x) (hash 1N)) (< x 3/2) (== x 4/2) (+ x 9223372036854775808N)]) (catch :default e :error)))",
+    "[true true true false 9223372036854775809N]"
+  ],
+  [
+    "(pr-str (try (let [x (long 9223372036854775807)] (inc' x)) (catch :default e :error)))",
+    "9223372036854775808N"
+  ],
+  [
+    "(pr-str (try (let [x (long 1)] (unchecked-add x 9223372036854775808N)) (catch :default e :error)))",
+    "9223372036854775809N"
+  ],
+  [
+    "(pr-str (try ((fn [^double x] x) 1N) (catch :default e :error)))",
+    "1.0"
+  ],
+  [
+    "(pr-str (try ((fn [^double x] x) 1/7) (catch :default e :error)))",
+    "0.1428571428571429"
+  ],
+  [
+    "(pr-str (try ((fn [^long x] x) 7/3) (catch :default e :error)))",
+    "2"
+  ],
+  [
+    "(pr-str (try ((fn [^long x] x) 9223372036854775808N) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(pr-str (try ((fn ^double [x] x) 1/7) (catch :default e :error)))",
+    "0.1428571428571429"
+  ],
+  [
+    "(pr-str (try ((fn ^long [x] x) 7/3) (catch :default e :error)))",
+    "2"
+  ],
+  [
+    "(pr-str (try ((fn ^long [x] x) 9223372036854775808N) (catch :default e :error)))",
+    "-9223372036854775808"
+  ],
+  [
+    "(pr-str (try ((fn [^long x] (/ x 3)) 2) (catch :default e :error)))",
+    "2/3"
+  ],
+  [
+    "(pr-str (try (let [x 9223372036854775808N f (fn [] (+ x 1))] (f)) (catch :default e :error)))",
+    "9223372036854775809N"
+  ],
+  [
+    "(pr-str (try (let [x 1/3 f (fn [] (+ x 1))] (f)) (catch :default e :error)))",
+    "4/3"
+  ],
+  [
+    "(pr-str (try (let [x 1/3] (with-redefs [= (fn [& xs] false)] (case x 1/3 :yes :no))) (catch :default e :error)))",
+    ":yes"
+  ],
+  [
+    "(pr-str (try (let [x 1N] (with-redefs [= (fn [& xs] false)] (case x 1N :yes :no))) (catch :default e :error)))",
+    ":yes"
+  ]
+]

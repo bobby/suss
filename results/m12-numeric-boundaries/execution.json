@@ -1,0 +1,304 @@
+{
+  "mode": "actual AOT component",
+  "head": "84fece33c6ec62e20329e5e803fac616792ba8e5",
+  "executable_sha256": "8969d68be0ce7924baadc52ab1f00aaeb329c1b5b1bdc8b97d287b3e40cfa916",
+  "source_sha256": "1ff97c3a8d8ff2a0b605ebafd7c8481cf499e3fce6682ab7af31cdc210dce9f5",
+  "build": {
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+      "compile",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/results/m12-numeric-boundaries/probe.sus",
+      "-w",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/results/m12-numeric-boundaries/probe.wit",
+      "-o",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+      "--export",
+      "check=numeric.boundaries/check"
+    ],
+    "exit_code": 0,
+    "stdout": "Compiled /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/results/m12-numeric-boundaries/probe.sus -> /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm (3327475 bytes)\n",
+    "stderr": "",
+    "seconds": 18.082172632217407
+  },
+  "calls": [
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "0"
+      ],
+      "exit_code": 0,
+      "stdout": "[true true true false 9223372036854775809N]\n",
+      "stderr": "",
+      "seconds": 24.280768156051636
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "1"
+      ],
+      "exit_code": 0,
+      "stdout": "[true true true false 9223372036854775809N]\n",
+      "stderr": "",
+      "seconds": 0.31761598587036133
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "2"
+      ],
+      "exit_code": 0,
+      "stdout": "9223372036854775808N\n",
+      "stderr": "",
+      "seconds": 0.1747877597808838
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "3"
+      ],
+      "exit_code": 0,
+      "stdout": "9223372036854775809N\n",
+      "stderr": "",
+      "seconds": 0.218428373336792
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "4"
+      ],
+      "exit_code": 0,
+      "stdout": "1.0\n",
+      "stderr": "",
+      "seconds": 0.18083572387695312
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "5"
+      ],
+      "exit_code": 0,
+      "stdout": "0.1428571428571429\n",
+      "stderr": "",
+      "seconds": 0.21425271034240723
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "6"
+      ],
+      "exit_code": 0,
+      "stdout": "2\n",
+      "stderr": "",
+      "seconds": 0.13817501068115234
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "7"
+      ],
+      "exit_code": 0,
+      "stdout": ":error\n",
+      "stderr": "",
+      "seconds": 0.2561194896697998
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "8"
+      ],
+      "exit_code": 0,
+      "stdout": "0.1428571428571429\n",
+      "stderr": "",
+      "seconds": 0.25977063179016113
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "9"
+      ],
+      "exit_code": 0,
+      "stdout": "2\n",
+      "stderr": "",
+      "seconds": 0.23408889770507812
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "10"
+      ],
+      "exit_code": 0,
+      "stdout": "-9223372036854775808\n",
+      "stderr": "",
+      "seconds": 0.3809850215911865
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "11"
+      ],
+      "exit_code": 0,
+      "stdout": "2/3\n",
+      "stderr": "",
+      "seconds": 0.229356050491333
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "12"
+      ],
+      "exit_code": 0,
+      "stdout": "9223372036854775809N\n",
+      "stderr": "",
+      "seconds": 0.25917601585388184
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "13"
+      ],
+      "exit_code": 0,
+      "stdout": "4/3\n",
+      "stderr": "",
+      "seconds": 0.19900894165039062
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "14"
+      ],
+      "exit_code": 0,
+      "stdout": ":yes\n",
+      "stderr": "",
+      "seconds": 0.24629688262939453
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/suss",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-numeric-boundaries-84/probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "15"
+      ],
+      "exit_code": 0,
+      "stdout": ":yes\n",
+      "stderr": "",
+      "seconds": 0.15011310577392578
+    }
+  ],
+  "expected": [
+    "[true true true false 9223372036854775809N]",
+    "[true true true false 9223372036854775809N]",
+    "9223372036854775808N",
+    "9223372036854775809N",
+    "1.0",
+    "0.1428571428571429",
+    "2",
+    ":error",
+    "0.1428571428571429",
+    "2",
+    "-9223372036854775808",
+    "2/3",
+    "9223372036854775809N",
+    "4/3",
+    ":yes",
+    ":yes"
+  ],
+  "complete": true,
+  "artifact_sha256": "22fd1b731d12580df056f42ed619164ce5c7777204743a5cf0393e7af450121a",
+  "actual": [
+    "[true true true false 9223372036854775809N]",
+    "[true true true false 9223372036854775809N]",
+    "9223372036854775808N",
+    "9223372036854775809N",
+    "1.0",
+    "0.1428571428571429",
+    "2",
+    ":error",
+    "0.1428571428571429",
+    "2",
+    "-9223372036854775808",
+    "2/3",
+    "9223372036854775809N",
+    "4/3",
+    ":yes",
+    ":yes"
+  ],
+  "all_match": true
+}

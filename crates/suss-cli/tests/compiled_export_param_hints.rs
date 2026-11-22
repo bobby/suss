@@ -54,7 +54,7 @@ fn wit_export_numeric_parameters_are_primitive() {
     assert_eq!(run(dir, "arities", &["4", "5"]), "9");
     // The nested fn isn't an export and takes no hint: str prints its
     // argument, (/ n 2), unconverted.
-    assert_eq!(run(dir, "nested", &["7"]), "3.5");
+    assert_eq!(run(dir, "nested", &["7"]), "7/2");
     // Internal calls coerce as Clojure's primitive fns: a double truncates
     // for an integer export (2.5 counts up once from 2), a long widens for a
     // float export, and a non-number throws.

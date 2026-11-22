@@ -1,0 +1,10 @@
+
+Testing clojure.core-test.denominator
+
+Testing clojure.core-test.numerator
+
+Testing clojure.core-test.rationalize
+
+Ran 3 tests containing 36 assertions.
+0 failures, 0 errors.
+{:test 3, :pass 36, :fail 0, :error 0, :type :summary}

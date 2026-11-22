@@ -32295,3 +32295,46 @@ comparison; it reports actual child integers without normalizing guest errors.
 Full numeric-suite acceptance, WIT u64 integration, production helper crossover
 and an unfiltered workspace baseline remain required. BigDecimal remains a
 separate runtime representation and arithmetic task.
+
+
+## Combined Ratio gates and suite review (2026-11-22)
+
+The expanded104-case primary matrix passes Runtime/Macro and actual AOT
+(312 observations). The combined source-frozen gates pass187 Rust tests and35
+Python checks, reproduce both bootstrap phases without Java/Node and verify
+import/helper manifests. `results/m12-ratio-values/commands.json` retains
+input hashes and every terminal result, including the earlier failed ABI9
+fixture under its separate original filename.
+
+`results/m12-ratio-suite/review.py` audits the complete raw capture:94 recovered
+failures plus32 newly executed primary matches;2512 pass/54 guest-judged/266
+fail/4107 not executed/121 namespace failures. Numerator, denominator and
+rationalize's36 unchanged assertions also pass on fresh JVM1.12.6. Four Decimal
+rationalize assertions remain errors. Thrown tests with unsupported Decimal
+arguments do not prove callee behavior; the review records that limitation.
+
+CI repairs replace three stale floating quotient expectations with freshly
+verified exact results, update exhaustive observation helpers and retain the
+native Rust tooling EDN diagnostic. That tooling model still cannot represent
+raw exact numbers; the executed Suss readers do. These repairs need their own
+terminal checks and final-head CI; earlier187-test evidence does not by itself
+certify later source changes. WIT u64, production helper bridging/crossover,
+complete API/inline/tooling acceptance, Decimal and the full workspace baseline
+remain required.
+
+
+## Ratio integration repair checks (2026-11-22)
+
+`results/m12-ratio-ci/commands.json` records terminal74-reader/42-CLI/16-legacy
+test results, with two existing manual-recording ignores in legacy conformance.
+Both201-case corpus targets pass. All source expressions and case identities
+are unchanged; only reciprocal2's expected value changes to1/2 after fresh
+JVM verification. Observation adapters retain exact categories. Minimal runtime
+sessions use numeric anchors without requiring core Keyword constructors.
+
+The Java-free bootstrap reproduces both phases and passes4 tests. Import/helper
+manifests, legacy overlap and the per-assertion suite audit pass. Earlier failed
+CI/fixture attempts remain. The complete unfiltered command remains
+`cargo test --workspace --locked -- --test-threads=2`; its future/live receipt
+must be checked independently before claiming success. Final-head CI and the
+remaining WIT/helper/Decimal/API acceptance still apply.
