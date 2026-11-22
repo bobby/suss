@@ -1,0 +1,41 @@
+Running as unit: run-p1050977-i89121099.scope; invocation ID: 0d9c32e85b7747f9b7dc70ad106577d9
+    Blocking waiting for file lock on build directory
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 23s
+     Running tests/clojure_equality_bitwise.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_equality_bitwise-705f37351a695429)
+
+running 7 tests
+test bit_operations_are_64_bit_and_take_longs ... ok
+test equality_keeps_longs_and_doubles_apart ... ok
+test imul_and_int32_coercion_are_not_public ... ok
+test integer_predicate_keeps_boolean_escapes_branches_and_single_evaluation ... ok
+test numbers_hash_as_clojure_hasheq ... ok
+test parity_keeps_wide_longs_rejects_nonintegers_and_evaluates_once ... ok
+test casts_check_the_range_and_return_longs_and_doubles ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.05s
+
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test eval_and_script_records_fit_default_compilation_budget ... ok
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... FAILED
+test aot_records_fit_default_budget_and_execute ... ok
+
+failures:
+
+---- repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default stdout ----
+
+thread 'repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default' (1062738) panicked at crates/suss-cli/tests/compiled_record_default_budget.rs:64:5:
+membership fuel: [992401, 1003928]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.89s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_record_default_budget`

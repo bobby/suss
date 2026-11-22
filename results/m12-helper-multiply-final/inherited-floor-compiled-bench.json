@@ -1,0 +1,3226 @@
+{
+  "binary_sha256": "831ebadf41bebc6b8840fd1bf5019c9c44f29e77ada5a8c26b64e7d451e7acd8",
+  "bench_sha256": "aabbbc718699e6f6b07ea88e5464a3bfc30dd1722ba952433f76e55ae9065cf2",
+  "commands": [
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench/build-validation",
+        "compile",
+        "validation.sus",
+        "-w",
+        "validation.wit",
+        "--export",
+        "check=bench.validation/check",
+        "-o",
+        "validation.wasm"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 14.034436464309692,
+      "stdout": "Compiled validation.sus -> validation.wasm (3328356 bytes)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "validation.wasm",
+        "--invoke",
+        "check"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 12.45357632637024,
+      "stdout": "true\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench/build",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "bench.wasm",
+        "--export",
+        "case-long-control=bench/case-long-control",
+        "--export",
+        "case-balanced-small-control=bench/case-balanced-small-control",
+        "--export",
+        "case-balanced-small=bench/case-balanced-small",
+        "--export",
+        "case-balanced-large-control=bench/case-balanced-large-control",
+        "--export",
+        "case-balanced-large=bench/case-balanced-large",
+        "--export",
+        "case-one-limb-wide-control=bench/case-one-limb-wide-control",
+        "--export",
+        "case-one-limb-wide=bench/case-one-limb-wide",
+        "--export",
+        "case-two-limb-wide-control=bench/case-two-limb-wide-control",
+        "--export",
+        "case-two-limb-wide=bench/case-two-limb-wide"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 17.423038244247437,
+      "stdout": "Compiled bench.sus -> bench.wasm (3385062 bytes)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "1"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.7419259548187256,
+      "stdout": "0\n",
+      "stderr": "6602048831,,instructions:u,956185714,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "1"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 7.988379716873169,
+      "peak_bytes_wait4": 1411289088,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08802485466003418,
+      "stdout": "0\n",
+      "stderr": "278351776,,instructions:u,69475726,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08162117004394531,
+      "stdout": "0\n",
+      "stderr": "278596021,,instructions:u,71183699,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08046984672546387,
+      "stdout": "0\n",
+      "stderr": "278595806,,instructions:u,70077109,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "40000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08208203315734863,
+      "stdout": "0\n",
+      "stderr": "279118211,,instructions:u,71620807,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "1280000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08186507225036621,
+      "stdout": "0\n",
+      "stderr": "310101081,,instructions:u,72108250,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "2560000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08667993545532227,
+      "stdout": "0\n",
+      "stderr": "342107281,,instructions:u,76222796,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "81920000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.19534730911254883,
+      "stdout": "0\n",
+      "stderr": "2326113657,,instructions:u,184923911,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "163840000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.29270219802856445,
+      "stdout": "0\n",
+      "stderr": "4374102795,,instructions:u,282593414,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "491520000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8158659934997559,
+      "stdout": "0\n",
+      "stderr": "12566103776,,instructions:u,805187991,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "983040000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.5051031112670898,
+      "stdout": "0\n",
+      "stderr": "24854096774,,instructions:u,1494550459,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "491520000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.762540340423584,
+      "stdout": "0\n",
+      "stderr": "12566116496,,instructions:u,752380249,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "983040000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.444244146347046,
+      "stdout": "0\n",
+      "stderr": "24854107493,,instructions:u,1434213408,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06570267677307129,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0675206184387207,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06875324249267578,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06731605529785156,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06953191757202148,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-long-control",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06506633758544922,
+      "peak_bytes_wait4": 95973376,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08062291145324707,
+      "stdout": "0\n",
+      "stderr": "278417027,,instructions:u,70239340,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08011150360107422,
+      "stdout": "0\n",
+      "stderr": "278735858,,instructions:u,69694693,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "640000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08008861541748047,
+      "stdout": "0\n",
+      "stderr": "298580998,,instructions:u,69643170,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "1280000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.082794189453125,
+      "stdout": "0\n",
+      "stderr": "319055356,,instructions:u,72193337,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "40960000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.1525862216949463,
+      "stdout": "0\n",
+      "stderr": "1588825914,,instructions:u,142145645,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "81920000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.2278118133544922,
+      "stdout": "0\n",
+      "stderr": "2899539258,,instructions:u,217536288,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "286720000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.6400227546691895,
+      "stdout": "0\n",
+      "stderr": "9453141587,,instructions:u,629320559,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "573440000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.2016575336456299,
+      "stdout": "0\n",
+      "stderr": "18628187218,,instructions:u,1191452347,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "286720000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.5881004333496094,
+      "stdout": "0\n",
+      "stderr": "9453140051,,instructions:u,578443792,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "573440000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.192521095275879,
+      "stdout": "0\n",
+      "stderr": "18628174887,,instructions:u,1182336468,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06734919548034668,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06952857971191406,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07003140449523926,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07048940658569336,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07070660591125488,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small-control",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.06563401222229004,
+      "peak_bytes_wait4": 95997952,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08098411560058594,
+      "stdout": "0\n",
+      "stderr": "301883263,,instructions:u,71078917,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08344531059265137,
+      "stdout": "0\n",
+      "stderr": "325732301,,instructions:u,73386029,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "640000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.22263836860656738,
+      "stdout": "0\n",
+      "stderr": "1818655066,,instructions:u,212420511,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "1280000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.3220336437225342,
+      "stdout": "0\n",
+      "stderr": "3377194357,,instructions:u,311985914,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "3840000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8019213676452637,
+      "stdout": "0\n",
+      "stderr": "9611276061,,instructions:u,791301616,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "7680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.4876725673675537,
+      "stdout": "0\n",
+      "stderr": "18944447088,,instructions:u,1477613784,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "3840000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8665518760681152,
+      "stdout": "0\n",
+      "stderr": "9611280351,,instructions:u,855587574,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "7680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.6221482753753662,
+      "stdout": "0\n",
+      "stderr": "18944457139,,instructions:u,1603722341,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07985973358154297,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07971715927124023,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.10564589500427246,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.09226870536804199,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.15439176559448242,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-small",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.11565208435058594,
+      "peak_bytes_wait4": 96006144,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.10172796249389648,
+      "stdout": "0\n",
+      "stderr": "278429623,,instructions:u,88994116,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09380674362182617,
+      "stdout": "0\n",
+      "stderr": "278732974,,instructions:u,82468764,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09318757057189941,
+      "stdout": "0\n",
+      "stderr": "278744629,,instructions:u,81270685,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "40000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.0976860523223877,
+      "stdout": "0\n",
+      "stderr": "279378225,,instructions:u,85745480,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "620000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08937382698059082,
+      "stdout": "0\n",
+      "stderr": "297932778,,instructions:u,78528327,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "1240000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09029412269592285,
+      "stdout": "0\n",
+      "stderr": "317775388,,instructions:u,79503227,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "1240000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09893035888671875,
+      "stdout": "0\n",
+      "stderr": "317772994,,instructions:u,86765337,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "2480000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.10823178291320801,
+      "stdout": "0\n",
+      "stderr": "357452204,,instructions:u,88858683,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "47120000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.19376707077026367,
+      "stdout": "0\n",
+      "stderr": "1785948202,,instructions:u,181921680,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "94240000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.32459378242492676,
+      "stdout": "0\n",
+      "stderr": "3293772405,,instructions:u,313390619,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "235600000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.5858559608459473,
+      "stdout": "0\n",
+      "stderr": "7817289997,,instructions:u,575150614,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "471200000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.9730865955352783,
+      "stdout": "0\n",
+      "stderr": "15356501279,,instructions:u,962010047,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "471200000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.0843567848205566,
+      "stdout": "0\n",
+      "stderr": "15356502409,,instructions:u,1065952875,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "942400000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.9360663890838623,
+      "stdout": "0\n",
+      "stderr": "30434901032,,instructions:u,1921318912,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "471200000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.9581191539764404,
+      "stdout": "0\n",
+      "stderr": "15356493394,,instructions:u,947561046,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "942400000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.8653383255004883,
+      "stdout": "0\n",
+      "stderr": "30434900216,,instructions:u,1849450973,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07356548309326172,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07543516159057617,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0771946907043457,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0768585205078125,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07773613929748535,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large-control",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07440590858459473,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.16371536254882812,
+      "stdout": "0\n",
+      "stderr": "1225341033,,instructions:u,153438878,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.22891616821289062,
+      "stdout": "0\n",
+      "stderr": "2172586380,,instructions:u,218386365,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "80000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.5928757190704346,
+      "stdout": "0\n",
+      "stderr": "7874022248,,instructions:u,582392251,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "160000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.1420440673828125,
+      "stdout": "0\n",
+      "stderr": "15487908857,,instructions:u,1131090524,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "80000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.6055707931518555,
+      "stdout": "0\n",
+      "stderr": "7874028424,,instructions:u,595298577,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "160000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.0676286220550537,
+      "stdout": "0\n",
+      "stderr": "15487911533,,instructions:u,1057758175,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07687115669250488,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0738527774810791,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.9173908233642578,
+      "peak_bytes_wait4": 137830400,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-balanced-large",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.48992133140563965,
+      "peak_bytes_wait4": 96030720,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08748626708984375,
+      "stdout": "0\n",
+      "stderr": "278414025,,instructions:u,68574398,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.0793907642364502,
+      "stdout": "0\n",
+      "stderr": "278728999,,instructions:u,69079625,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.07901477813720703,
+      "stdout": "0\n",
+      "stderr": "278740393,,instructions:u,69112120,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "40000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.11015105247497559,
+      "stdout": "0\n",
+      "stderr": "279382562,,instructions:u,94107984,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "320000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08743834495544434,
+      "stdout": "0\n",
+      "stderr": "288328018,,instructions:u,76575914,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "640000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.08490514755249023,
+      "stdout": "0\n",
+      "stderr": "298583093,,instructions:u,74258975,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "640000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09064579010009766,
+      "stdout": "0\n",
+      "stderr": "298564095,,instructions:u,79447151,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "1280000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09243655204772949,
+      "stdout": "0\n",
+      "stderr": "319054106,,instructions:u,81158977,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "40960000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.18697237968444824,
+      "stdout": "0\n",
+      "stderr": "1588824150,,instructions:u,174841576,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "81920000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.31069421768188477,
+      "stdout": "0\n",
+      "stderr": "2899533832,,instructions:u,295885130,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "163840000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.4379725456237793,
+      "stdout": "0\n",
+      "stderr": "5520986574,,instructions:u,426696141,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "327680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8364014625549316,
+      "stdout": "0\n",
+      "stderr": "10763861083,,instructions:u,821819408,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "327680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8795549869537354,
+      "stdout": "0\n",
+      "stderr": "10763854492,,instructions:u,855976176,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "655360000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.201613664627075,
+      "stdout": "0\n",
+      "stderr": "21249622316,,instructions:u,1903634846,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "327680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8093128204345703,
+      "stdout": "0\n",
+      "stderr": "10763851719,,instructions:u,792519586,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "655360000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.9289467334747314,
+      "stdout": "0\n",
+      "stderr": "21249620226,,instructions:u,1691794272,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07830667495727539,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07946419715881348,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07751631736755371,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08474040031433105,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.07944750785827637,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide-control",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0845944881439209,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.12803888320922852,
+      "stdout": "0\n",
+      "stderr": "629279544,,instructions:u,115745273,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.18114256858825684,
+      "stdout": "0\n",
+      "stderr": "998459318,,instructions:u,151509005,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "130000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.5202720165252686,
+      "stdout": "0\n",
+      "stderr": "4987316936,,instructions:u,501373886,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "260000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.0052549839019775,
+      "stdout": "0\n",
+      "stderr": "9696510460,,instructions:u,926525545,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "260000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.076364278793335,
+      "stdout": "0\n",
+      "stderr": "9696516485,,instructions:u,1323657705,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "520000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.7785406112670898,
+      "stdout": "0\n",
+      "stderr": "19132882290,,instructions:u,1742316226,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "520000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.1213653087615967,
+      "stdout": "0\n",
+      "stderr": "19132861448,,instructions:u,1891798263,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "1040000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 3.6639909744262695,
+      "stdout": "0\n",
+      "stderr": "38005623267,,instructions:u,3585937051,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "520000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.408503532409668,
+      "stdout": "0\n",
+      "stderr": "19132894461,,instructions:u,1975708945,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "1040000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 3.9652271270751953,
+      "stdout": "0\n",
+      "stderr": "38005630326,,instructions:u,3501517427,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.1001274585723877,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.10599136352539062,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.5648224353790283,
+      "peak_bytes_wait4": 317755392,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-one-limb-wide",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.297687292098999,
+      "peak_bytes_wait4": 184139776,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09946393966674805,
+      "stdout": "0\n",
+      "stderr": "278420504,,instructions:u,79361524,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.09896087646484375,
+      "stdout": "0\n",
+      "stderr": "278742314,,instructions:u,86613272,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "640000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.10003995895385742,
+      "stdout": "0\n",
+      "stderr": "298578267,,instructions:u,87805757,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "1280000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.14974331855773926,
+      "stdout": "0\n",
+      "stderr": "319055219,,instructions:u,113689056,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "7680000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.10454177856445312,
+      "stdout": "0\n",
+      "stderr": "523851960,,instructions:u,93040962,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "15360000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.13058114051818848,
+      "stdout": "0\n",
+      "stderr": "769621960,,instructions:u,118782231,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "168960000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.5207867622375488,
+      "stdout": "0\n",
+      "stderr": "5684816804,,instructions:u,508838189,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "337920000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.4810292720794678,
+      "stdout": "0\n",
+      "stderr": "11091534058,,instructions:u,1038356476,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "168960000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.47158098220825195,
+      "stdout": "0\n",
+      "stderr": "5684813964,,instructions:u,460154822,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "337920000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.8642895221710205,
+      "stdout": "0\n",
+      "stderr": "11091531857,,instructions:u,852210904,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08165168762207031,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0810539722442627,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.0778360366821289,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08049249649047852,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "320000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.11454248428344727,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide-control",
+        "--",
+        "160000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08102941513061523,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "10000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.33112359046936035,
+      "stdout": "0\n",
+      "stderr": "831977218,,instructions:u,197231251,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "20000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.29040956497192383,
+      "stdout": "0\n",
+      "stderr": "1403857683,,instructions:u,242549641,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "90000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.47517871856689453,
+      "stdout": "0\n",
+      "stderr": "5352851644,,instructions:u,459982301,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "180000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.899986743927002,
+      "stdout": "0\n",
+      "stderr": "10445588511,,instructions:u,886727510,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "180000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 0.9740607738494873,
+      "stdout": "0\n",
+      "stderr": "10445592962,,instructions:u,960178772,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "360000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.043661594390869,
+      "stdout": "0\n",
+      "stderr": "20631017702,,instructions:u,1756308423,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "180000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 1.1831514835357666,
+      "stdout": "0\n",
+      "stderr": "10445582098,,instructions:u,1028190523,100.00,,\n"
+    },
+    {
+      "command": [
+        "/usr/bin/perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "360000"
+      ],
+      "cwd": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-compiled-bigint-bench",
+      "collector": "auto",
+      "exit_code": 0,
+      "seconds": 2.137460947036743,
+      "stdout": "0\n",
+      "stderr": "20631009860,,instructions:u,1975539904,100.00,,\n"
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "2000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08529281616210938,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "1000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.08602571487426758,
+      "peak_bytes_wait4": 96071680,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "128000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.8056824207305908,
+      "peak_bytes_wait4": 318775296,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+        "run",
+        "bench.wasm",
+        "--invoke",
+        "case-two-limb-wide",
+        "--",
+        "64000"
+      ],
+      "collector": "null",
+      "exit_code": 0,
+      "seconds": 0.7770175933837891,
+      "peak_bytes_wait4": 184438784,
+      "stderr": ""
+    }
+  ],
+  "complete": true,
+  "scope": "Suss instruction/allocation columns only; JVM timings are not measured.",
+  "cases": [
+    [
+      "long-control",
+      "i",
+      null,
+      1
+    ],
+    [
+      "balanced-small-control",
+      "a_balanced_small",
+      null,
+      1
+    ],
+    [
+      "balanced-small",
+      "(* a_balanced_small b_balanced_small)",
+      "balanced-small-control",
+      1
+    ],
+    [
+      "balanced-large-control",
+      "a_balanced_large",
+      null,
+      1
+    ],
+    [
+      "balanced-large",
+      "(* a_balanced_large b_balanced_large)",
+      "balanced-large-control",
+      1
+    ],
+    [
+      "one-limb-wide-control",
+      "a_one_limb_wide",
+      null,
+      1
+    ],
+    [
+      "one-limb-wide",
+      "(* a_one_limb_wide b_one_limb_wide)",
+      "one-limb-wide-control",
+      1
+    ],
+    [
+      "two-limb-wide-control",
+      "a_two_limb_wide",
+      null,
+      1
+    ],
+    [
+      "two-limb-wide",
+      "(* a_two_limb_wide b_two_limb_wide)",
+      "two-limb-wide-control",
+      1
+    ]
+  ],
+  "settings": {
+    "N": 10000,
+    "REPS": 2,
+    "MIN_WORK": 0.5,
+    "MAX_COUNT": 1073741823,
+    "ALLOC_WORK": 33554432,
+    "ALLOC_RESOLUTION": 1048576,
+    "ALLOC_COUNTS": 16
+  },
+  "times": {
+    "long-control": [
+      1.389607042293998e-09,
+      2.298880048101637e-10
+    ],
+    "balanced-small-control": [
+      2.1133578830553495e-09,
+      2.1989801715400454e-10
+    ],
+    "balanced-small": [
+      1.7748021709849126e-07,
+      5.4094965889817105e-08
+    ],
+    "balanced-large-control": [
+      1.913057762737337e-09,
+      4.105128807210204e-10
+    ],
+    "balanced-large": [
+      5.74421298224479e-06,
+      1.1248815804719925e-06
+    ],
+    "one-limb-wide-control": [
+      3.4630485842512826e-09,
+      1.0320972322119815e-09
+    ],
+    "one-limb-wide": [
+      3.533519035241065e-06,
+      1.8283368768886878e-06
+    ],
+    "two-limb-wide-control": [
+      2.4494349362970697e-09,
+      4.23452556512502e-09
+    ],
+    "two-limb-wide": [
+      5.8883346539611616e-06,
+      2.339745814808541e-06
+    ]
+  },
+  "instructions": {
+    "long-control": 24.99998575439453,
+    "balanced-small-control": 31.999981989397323,
+    "balanced-small": 2430.51328828125,
+    "balanced-large-control": 32.000014477928694,
+    "balanced-large": 95173.5826125,
+    "one-limb-wide-control": 32.00002596130371,
+    "one-limb-wide": 36293.772728846154,
+    "two-limb-wide-control": 31.999987529592804,
+    "two-limb-wide": 56585.70978888889
+  },
+  "allocated": {
+    "long-control": null,
+    "balanced-small-control": null,
+    "balanced-small": null,
+    "balanced-large-control": null,
+    "balanced-large": 653.12,
+    "one-limb-wide-control": null,
+    "one-limb-wide": 2087.744,
+    "two-limb-wide-control": null,
+    "two-limb-wide": 2099.008
+  },
+  "artifacts": {
+    "target/probe/m12-compiled-bigint-bench/bench.sus": "aeff57fc26a39365a843f6f1719df4b8f9d5821f73af1dbba78b09717d68a341",
+    "target/probe/m12-compiled-bigint-bench/bench.wit": "79222b515c6398251e18499f269e3ef96e565d226d9c47f102ea3492586e76c4",
+    "target/probe/m12-compiled-bigint-bench/bench.wasm": "18afab50bac5da587758f7d0eeddf2e497ed9e0be9bfa85bc2f16f65ee5d5054"
+  }
+}

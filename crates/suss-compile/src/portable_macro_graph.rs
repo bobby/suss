@@ -23,6 +23,8 @@ mod raw_keys;
 mod initializer_plan;
 #[cfg(all(test, not(suss_generator)))]
 mod plan_scratch_tests;
+#[cfg(all(test, not(suss_generator)))]
+mod binding_sort_tests;
 #[path = "portable_macro_graph/occurrence_work.rs"]
 mod occurrence_work;
 #[path = "portable_macro_graph/materialization_index.rs"]
@@ -49,6 +51,13 @@ fn sort_binding_names<'a>(
     let mid = names.len() / 2;
     sort_binding_names(&mut names[..mid], &mut scratch[..mid], charge)?;
     sort_binding_names(&mut names[mid..], &mut scratch[mid..], charge)?;
+    // Persistent namespace indexes commonly supply ordered runs. Once both
+    // halves are sorted, an ordered boundary proves that no merge or copy is
+    // needed. Charge the comparison just as the merge comparisons below.
+    charge(names[mid - 1].len().min(names[mid].len()).saturating_add(1))?;
+    if names[mid - 1].encode_utf16().cmp(names[mid].encode_utf16()) != Ordering::Greater {
+        return Ok(());
+    }
     charge(names.len().saturating_mul(2))?;
     let (mut left, mut right) = (0, mid);
     for slot in scratch.iter_mut() {

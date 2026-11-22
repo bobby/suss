@@ -36,3 +36,11 @@ representation and preserves all range assertions.
 The separate workspace retry at d7d2919b predates the WIT production changes;
 it cannot certify them. Production arbitrary-precision helper placement,
 complete numeric API/suite coverage and BigDecimal are separate requirements.
+
+
+The expanded run at a21a715d is terminal and all seven gate commands pass with
+implementation inputs unchanged:14 WIT numeric tests,54 general adapter tests,
+63 ABI/calling-convention tests,1 parameter-hint test and4 bootstrap tests
+(136 Rust tests). Java-free byte reproduction and the core/numeric manifests
+pass. These receipts predate the production BigInt helper and later namespace
+sort changes; they certify the WIT revision, not those later implementations.

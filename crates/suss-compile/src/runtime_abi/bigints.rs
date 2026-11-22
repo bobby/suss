@@ -632,7 +632,8 @@ pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
     );
     // Original schoolbook multiplication; every digit product plus existing
     // digit and carry fits exactly in u64. Inputs stay immutable.
-    // Locals: 2/3 arrays, 4/5 lengths, 6 result, 7 i, 8 j, 9 carry, 10 product.
+    // Locals: 2/3 arrays, 4/5 lengths, 6 result, 7 i, 8 j, 9 carry,
+    // 10 product, 11 row limb, 12 result index. Cache invariant GC reads.
     let mut code = Vec::new();
     for (local, target, field) in [(0, 2, 1), (1, 3, 1), (0, 4, 2), (1, 5, 2)] {
         code.extend(get(local, field));
@@ -656,6 +657,7 @@ pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
         LocalGet(4),
         I32GeU,
         BrIf(1),
+        LocalGet(2), LocalGet(7), ArrayGet(LIMBS), I64ExtendI32U, LocalSet(11),
         I32Const(0),
         LocalSet(8),
         I64Const(0),
@@ -667,8 +669,7 @@ pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
         I32GeU,
         BrIf(1),
     ]);
-    code.extend(limb(2, 7));
-    code.push(I64ExtendI32U);
+    code.extend([LocalGet(7), LocalGet(8), I32Add, LocalSet(12), LocalGet(11)]);
     code.extend(limb(3, 8));
     code.extend([
         I64ExtendI32U,
@@ -676,17 +677,13 @@ pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
         LocalGet(9),
         I64Add,
         LocalGet(6),
-        LocalGet(7),
-        LocalGet(8),
-        I32Add,
+        LocalGet(12),
         ArrayGet(LIMBS),
         I64ExtendI32U,
         I64Add,
         LocalSet(10),
         LocalGet(6),
-        LocalGet(7),
-        LocalGet(8),
-        I32Add,
+        LocalGet(12),
         LocalGet(10),
         I32WrapI64,
         ArraySet(LIMBS),
@@ -735,7 +732,8 @@ pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
             (2, ValType::I32),
             (1, array),
             (2, ValType::I32),
-            (2, ValType::I64),
+            (3, ValType::I64),
+            (1, ValType::I32),
         ],
         &code,
     );
@@ -796,9 +794,9 @@ fn multiplication_bridge(b: &mut Builder, helper: numeric::Info) {
         &[(2, array), (8, ValType::I32), (1, array)], &code,
     );
 
-    // Initial crossover from the magnitude probe: never bridge one-limb
-    // products, and leave the small balanced products in GC. Production
-    // wrapper measurements must validate/refine this boundary.
+    // Measured full-wrapper crossover: keep one-limb products in GC. Debit
+    // one limb from each dimension for bridge copying, leaving small products
+    // in GC until the remaining product area reaches eight.
     let mut code = get(0, 2).to_vec();
     code.push(LocalSet(2));
     code.extend(get(1, 2));
@@ -806,8 +804,9 @@ fn multiplication_bridge(b: &mut Builder, helper: numeric::Info) {
         LocalSet(3),
         LocalGet(2), I32Const(2), I32GeU,
         LocalGet(3), I32Const(2), I32GeU, I32And,
-        LocalGet(2), I64ExtendI32U, LocalGet(3), I64ExtendI32U, I64Mul,
-        I64Const(16), I64GeU, I32And,
+        LocalGet(2), I64ExtendI32U, I64Const(1), I64Sub,
+        LocalGet(3), I64ExtendI32U, I64Const(1), I64Sub, I64Mul,
+        I64Const(8), I64GeU, I32And,
         If(BlockType::Result(VALUE)),
         LocalGet(0), LocalGet(1), Call(b.names["bigint-multiply-helper"]),
         Else,

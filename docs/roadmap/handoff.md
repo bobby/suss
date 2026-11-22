@@ -32397,3 +32397,42 @@ The a21a715d CI record membership failure is independently reproduced at fuel
 992401/1003928. Preserve its one-million acceptance gate and remove redundant
 numeric fallback checks rather than adjusting the threshold. These probes do
 not establish full numeric API/suite/tooling or final-head CI acceptance.
+
+
+## Terminal WIT revision checks (2026-11-22)
+
+results/m12-wide-wit/commands.json is terminal with every command0 and frozen
+implementation inputs unchanged at a21a715d. The scoped Rust targets pass136
+checks:14 numeric,54 adapter,63 ABI/calling convention,1 parameter-hint and4
+bootstrap tests. Java-free byte reproduction and both manifests pass. The
+production numeric-helper and namespace-sort changes are later source and need
+their own evidence; these receipts do not certify those revisions.
+
+
+## Measured multiply dispatch and record membership work (2026-11-22)
+
+results/m12-helper-multiply-final retains99 passing scoped Rust checks, a pinned
+byte-identical helper rebuild, Java-free double bootstrap reproduction and the
+core manifest check. The source-frozen wrapper profile verifies320 complete
+observations with512 instruction and20 allocation samples. Caching the GC row
+limb reduces the512x512 reference from23.1M to17.36M instructions; the helper
+uses5.36M. Both lengths select the copied helper when each is at least2 and
+(la-1)*(lb-1)>=8. Result storage remains GC-owned on both paths.
+
+The unchanged bench.py measurement engine executes four compiled BigInt cases
+with instruction and byte columns; complete AOT results are checked against the
+primary fixture. Approximate gross bytes are72.5,674.8,2090.2 and2098.8 for4x4,
+32x128,1x512 and2x512 respectively. Unknown control/net RSS slopes remain empty.
+The initial sampler's executable hashing raised its inherited RSS floor; its
+unselected run remains, and streaming hashing corrects that overhead. An earlier
+CLI-e validation hits its default fuel limit on the large printed products;
+the compiled path validates the same values, with production limits unchanged.
+
+The record membership regression is fixed by skipping already-ordered name
+merges while preserving complete namespace data, duplicates, UTF-16 order and
+work charging. Its original strict one-million gate now measures940200/951046,
+versus992401/1003928. The scalar shortcut experiment did not affect this span
+and is removed, with its failed receipt retained. The historical unfiltered
+workspace retry atd7d2919b terminates101 after4190.20 seconds at that old budget
+failure; later targets are unexecuted. That invocation is not a passing baseline.
+A new integrated-source full workspace command and final-head CI remain needed.

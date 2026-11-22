@@ -1,0 +1,17 @@
+Running as unit: run-p1126782-i89173062.scope; invocation ID: 1c7374ab2bc648fa815817aa7c006bce
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-final/run-compiled-bench.py", line 31, in <module>
+    assert r.returncode==0 and r.stdout.strip()=='true',r.stderr
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Error: Runtime trap: error while executing at wasm backtrace:
+    0:   0xa87f - <unknown>!<wasm function 62>
+    1: 0x18b8fc - <unknown>!<wasm function 1457>
+    2: 0x196a90 - <unknown>!<wasm function 1541>
+    3: 0x19224e - <unknown>!<wasm function 1518>
+    4: 0x193642 - <unknown>!<wasm function 1522>
+    5: 0x193922 - <unknown>!<wasm function 1523>
+    6:   0x1d5c - <unknown>!<wasm function 34>
+    7:  0x1e4eb - <unknown>!<wasm function 463>
+    8:  0x1eb72 - <unknown>!<wasm function 467>
+    9:    0xa44 - <unknown>!<wasm function 33>: wasm trap: all fuel consumed by WebAssembly
+

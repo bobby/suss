@@ -1,0 +1,15 @@
+{
+  "crates/suss-compile/examples/bigint_runtime.rs": "d32bfca1131d9d6026a3362c4df81277bcdf35ce4810bccf7f10a0a25faa1798",
+  "crates/suss-compile/src/portable_macro_graph.rs": "b77ad53fe5f2cd43e63bbc8cd1a55e51b6fd1b206e2d6c3ed925d3c2defbcc30",
+  "crates/suss-compile/src/portable_macro_graph/binding_sort_tests.rs": "56d9f1355a8fa24a12a86e42036f8ea1bf54baee16bf044b6fd09ff6d792e643",
+  "crates/suss-compile/src/runtime_abi.rs": "edcb8a2b95584a8f51ba9471300aba284c512fc80adc8e3df5553a84c389dfd2",
+  "crates/suss-compile/src/runtime_abi/bigints.rs": "b6ba66021f1b4070a60743d708cefa82f40628549de7bef7d1f070781da3f1c0",
+  "crates/suss-compile/src/runtime_abi/comparisons.rs": "c71f28517258163f0068c7f1da50040065f36fe6e605ecad8089bb10928f7e8a",
+  "crates/suss-compile/src/runtime_abi/numeric.rs": "db2872546e093e86724f258ff1e5d722de577ea7e3742f7cbf7b3f3142bb5b79",
+  "crates/suss-compile/tests/bigint_helper.rs": "948a9185583372274fbe19d13506c39ed8defcb7f32eb9825e20d6e0426a56c8",
+  "results/m12-helper-multiply/cases.json": "c2746fc29a993d01356e957797f213ee30ee58d6bbbc9f05dc4bc156753ee681",
+  "runtime/numeric/NOTICE": "558804958f9f459bfe5d461f73300f36e596cda5eb95ef6a6c875f2da125ffb4",
+  "runtime/numeric/artifact/manifest.json": "fe764ffc6140740dc9701262269cc6c0b51d355ea350bde9ac9528291f0c37f2",
+  "runtime/numeric/artifact/numeric.wasm": "96d7a4887d821a25d95dfc40c4d909c971a3906619f94300d5ccd2864a9116bc",
+  "runtime/numeric/src/lib.rs": "c25cad2c49e72a852068304bf82a2265d291f71b4e347e988e76e4a36bbead9c"
+}

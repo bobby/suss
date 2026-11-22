@@ -21,5 +21,6 @@ Source: https://github.com/rust-lang/rust/tree/88d9e12ae178fab0fb5cc050a94da8568
 
 Distribute these notices and license files with the numeric Wasm build input and
 with distributions containing the generated Suss runtime. No ClojureScript source
-was copied into the parser or bridges. The pinned ClojureScript source is a
-semantic reference and development oracle, with its original EPL notices intact.
+was copied into the parser or bridges. The pinned ClojureScript source is an
+implementation reference, with its original EPL notices intact. Clojure 1.12.6
+and the vendored jank suite are the numeric behavior oracles.

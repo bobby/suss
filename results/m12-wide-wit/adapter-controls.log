@@ -1,0 +1,97 @@
+Running as unit: run-p1007052-i89058103.scope; invocation ID: a297d0727f72439eaa5fe83a8a6414eb
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 24.49s
+     Running tests/portable_aot.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot-1d56b601a323ab99)
+
+running 13 tests
+test exported_function_external_ids_are_rejected_without_silent_loss ... ok
+test exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupported ... ok
+test exported_interfaces_keep_names_versions_shared_cells_and_source_effects ... ok
+test portable_component_initialization_preserves_first_language_throw_payload ... ok
+test portable_component_keeps_source_order_old_captures_live_cells_and_scalar_values ... ok
+test portable_component_preserves_mixed_scalar_argument_order_and_nan_values ... ok
+test portable_component_rejects_macro_phase_artifact_before_assembly ... ok
+test portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings ... ok
+test reviewed_interface_wrappers_preserve_live_cells_void_effects_and_boundary_payloads ... ok
+test small_integer_boundaries_round_trip_and_check_numeric_results ... ok
+test small_integer_parameters_keep_mixed_scalar_positions_and_once_only_calls ... ok
+test two_wit_exports_can_share_one_live_source_cell ... ok
+test portable_component_boundary_rejects_wrong_result_with_language_payload ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.51s
+
+     Running tests/portable_aot_async.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_async-4f9f1ad6837b815c)
+
+running 3 tests
+test async_exports_complete_once_and_share_live_cells_with_sync_exports_after_gc ... ok
+test async_errors_preserve_boundary_and_source_language_payloads ... ok
+test reviewed_async_aliases_preserve_integer_extrema_mixed_positions_and_live_redefinition ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.72s
+
+     Running tests/portable_aot_lists.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_lists-2d1981c9483f2a50)
+
+running 11 tests
+test eight_list_parameters_preserve_the_last_flattened_payload ... ok
+test asynchronous_lists_preserve_completion_indices_and_nested_string_cleanup ... ok
+test indirect_list_signatures_reject_before_effectful_macros ... ok
+test list_aliases_and_protocol_calls_use_the_resolved_type_and_real_source_vector ... ok
+test incoming_lists_build_real_vector_tries_and_retain_owned_values_after_gc has been running for over 60 seconds
+test incoming_lists_build_real_vector_tries_and_retain_owned_values_after_gc ... ok
+test list_results_accept_primitive_vectors_and_their_views ... ok
+test list_results_accept_persistent_vectors_and_subvector_views ... ok
+test list_schema_retains_core_nominal_identity_after_user_redefinition has been running for over 60 seconds
+test lists_preserve_checked_scalar_values_and_mixed_parameter_order has been running for over 60 seconds
+test lists_preserve_checked_scalar_values_and_mixed_parameter_order ... ok
+test malformed_list_shapes_and_elements_raise_decoded_language_errors has been running for over 60 seconds
+test list_schema_retains_core_nominal_identity_after_user_redefinition ... ok
+test string_list_payloads_are_owned_unicode_and_cleanup_nested_buffers ... ok
+test malformed_list_shapes_and_elements_raise_decoded_language_errors ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 833.71s
+
+     Running tests/portable_aot_options.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_options-269e90da61449baf)
+
+running 16 tests
+test asynchronous_option_arguments_preserve_none_and_false ... ok
+test asynchronous_option_float_results_preserve_canonical_bits ... ok
+test eight_optional_parameters_preserve_the_last_flattened_payload ... ok
+test malformed_option_results_are_language_errors_not_none has been running for over 60 seconds
+test mixed_async_option_exports_use_distinct_completion_signatures ... ok
+test mixed_scalar_and_optional_exports_use_their_actual_component_type_indices ... ok
+test option_boundary_uses_tagged_vectors_in_source ... ok
+test option_schema_ignores_user_namespace_function_shadows ... ok
+test option_schema_survives_core_function_and_constructor_redefinition has been running for over 60 seconds
+test option_schema_survives_core_function_and_constructor_redefinition ... ok
+test optional_f32_results_preserve_signed_zero_and_payload_alignment ... ok
+test optional_float_results_preserve_bits_and_release_canonical_return_state ... ok
+test malformed_option_results_are_language_errors_not_none ... ok
+test optional_integer_parameters_preserve_none_some_and_argument_order ... ok
+test optional_results_distinguish_nil_false_and_true_across_repeated_calls ... ok
+test optional_integer_results_preserve_alignment_sign_and_unsigned_ranges has been running for over 60 seconds
+test optional_small_integer_result_rejects_invalid_payload_with_language_exception has been running for over 60 seconds
+test optional_small_integer_result_rejects_invalid_payload_with_language_exception ... ok
+test unsupported_option_shapes_fail_before_effectful_source_macros ... ok
+test optional_integer_results_preserve_alignment_sign_and_unsigned_ranges ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 627.80s
+
+     Running tests/portable_aot_strings.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_strings-55a79758a0da01fe)
+
+running 11 tests
+test async_string_parameters_with_scalar_and_void_results_match_completion_encoding ... ok
+test async_tagged_string_options_release_payloads_after_completion ... ok
+test eight_string_parameters_preserve_last_payload_at_flat_signature_limit ... ok
+test asynchronous_string_completion_preserves_unicode_and_repeated_calls ... ok
+test mixed_async_string_option_and_scalar_exports_preserve_indices_and_lifetimes ... ok
+test incoming_strings_are_owned_after_transfer_and_survive_gc_and_buffer_reuse has been running for over 60 seconds
+test incoming_strings_are_owned_after_transfer_and_survive_gc_and_buffer_reuse ... ok
+test outgoing_strings_reject_lone_surrogates_and_wrong_source_types has been running for over 60 seconds
+test string_arguments_preserve_caught_payloads_and_once_only_finally ... ok
+test strings_round_trip_unicode_and_mixed_flat_arguments ... ok
+test tagged_string_options_distinguish_none_empty_and_owned_unicode_payloads ... ok
+test unsupported_indirect_string_signatures_fail_before_macro_effects ... ok
+test outgoing_strings_reject_lone_surrogates_and_wrong_source_types ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 286.93s
+

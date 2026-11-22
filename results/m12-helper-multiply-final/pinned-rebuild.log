@@ -1,0 +1,5 @@
+Running as unit: run-p1086442-i89151128.scope; invocation ID: 980cbf18a75f4ce491a0e4ff33088b0d
+   Compiling ryu-js v1.0.3
+   Compiling suss-numeric-intrinsics v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/runtime/numeric)
+    Finished `release` profile [optimized] target(s) in 0.66s
+Numeric source/artifact manifest verified
