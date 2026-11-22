@@ -250,6 +250,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("number-box");
                     }
                     Operation::Literal(Literal::String(_)) => {}
+                    Operation::Literal(Literal::BigInt { .. }) => { names.insert("bigint-new"); }
                     Operation::GlobalCell(global) => {
                         globals.insert(global.clone());
                     }
@@ -318,7 +319,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsBigInt | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -883,6 +884,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
+                nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
+            }), ValType::I32], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
@@ -2563,6 +2567,14 @@ fn emit_function(
                     };
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::BigInt { negative, limbs }) => {
+                    function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                    for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                        array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "BigInt literal exceeds Wasm array length".into() })? });
+                    function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -3207,6 +3219,10 @@ fn emit_function(
                         // The runtime predicates' own tests, inline: never a mutable
                         // public cell, and no closure call on core's hot paths (#286).
                         // Arguments are already evaluated once in source order.
+                        Nominal::IsBigInt => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)));
+                        }
                         Nominal::IsNumber => {
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);

@@ -1770,6 +1770,20 @@ impl Session {
                     &self.handles,
                 )
             }
+            Literal::BigInt { negative, limbs } => {
+                let length = i32::try_from(limbs.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data BigInt exceeds runtime length")))?;
+                let allocate = self.runtime.get_func(&mut scope, "bigint-limbs-new").expect("BigInt limb allocator");
+                let value = call(&mut scope, self.runtime, allocate, &[Val::I32(length)], self.identity, &self.handles)?;
+                let array = value.object()?.to_rooted(&mut scope).as_array(&scope)?.expect("BigInt magnitude array");
+                for (index, limb) in limbs.iter().enumerate() {
+                    Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+                    array.set(&mut scope, index as u32, Val::I32(*limb as i32))?;
+                }
+                let sign = if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 };
+                let construct = self.runtime.get_func(&mut scope, "bigint-new").expect("BigInt constructor");
+                let argument = Val::AnyRef(Some(value.object()?.to_rooted(&mut scope)));
+                call(&mut scope, self.runtime, construct, &[Val::I32(sign), argument, Val::I32(length)], self.identity, &self.handles)
+            }
             Literal::String(units) => {
                 let length = i32::try_from(units.len()).map_err(|_| {
                     SessionError::Host(wasmtime::Error::msg(

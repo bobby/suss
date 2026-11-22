@@ -5834,6 +5834,9 @@
         (or (true? obj) (false? obj))
         (-write writer (str_ obj))
 
+        (suss.bootstrap/bigint? obj)
+        (-write writer (suss.bootstrap/concat-string (str_ obj) "N"))
+
         (number? obj)
         (-write writer
           (cond

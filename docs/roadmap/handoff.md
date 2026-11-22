@@ -32195,3 +32195,27 @@ retain GC-owned magnitude arrays. The initial inherited-RSS samples and feature
 failures remain separately identified. Sign dispatch, value wrappers, division
 and GCD are excluded; this probe does not establish language BigInt/Ratio support
 or a production crossover.
+
+
+## Executable GC BigInt value probes (2026-11-22)
+
+[Value receipts](../../results/m12-bigint-values/README.md) retain35 fresh JVM
+Clojure1.12.6 results executed in Runtime/Macro and actual AOT (105 matrix
+observations), plus BigInt macro arguments/results. The three-test execution
+run passes. ABI8 appends immutable sign/magnitude/used-length storage; input
+limbs remain GC-owned and arithmetic writes new result arrays. Signed +, -
+and * preserve exact BigInt results. Printing appends N; str omits it. The
+binary64 conversion rounds once using guard/sticky bits.
+
+Run `python3 results/m12-bigint-values/run-focused.py` with the local target
+layout recorded there. It uses two build/test threads and MemoryMax4G scopes.
+The final source adds retained-magnitude GC checks; its four-test rerun and
+nearby numeric/ABI controls are still running at this checkpoint. Keep that
+source frozen and poll the existing process before starting another run. The
+original unsupported-literal, Wasm nullability and typed-import failures remain.
+
+The runtime reader, promotion, exact division/Ratio, BigInt equality/comparison/
+hashing, remaining conversions and WIT integration still need implementation.
+The GC multiplication kernel is a reference pending the measured helper bridge
+and production crossover. These observations do not establish complete numeric
+semantics or an unfiltered workspace baseline for this source.

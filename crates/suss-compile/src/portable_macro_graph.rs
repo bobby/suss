@@ -782,6 +782,10 @@ impl<'a> AnalysisGraph<'a> {
             Literal::Bool(value) => Kind::Bool(*value),
             Literal::Number(value) => Kind::Number(*value),
             Literal::Long(value) => Kind::Long(*value),
+            Literal::BigInt { negative, limbs } => {
+                self.charge(limbs.len())?;
+                Kind::Exact(suss_reader::forms::ExactNumber::bigint(*negative, limbs.clone()))
+            }
             Literal::String(value) => {
                 self.charge(value.len())?;
                 Kind::String(value.clone())

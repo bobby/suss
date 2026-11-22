@@ -133,9 +133,11 @@ doubles are distinct values with Clojure's arithmetic, overflow checks,
 contagion, `quot`, `rem` and `mod`, reading and printing (#335), and with
 Clojure's `=`, `hash`, 64-bit bit operations and range-checked casts (#336).
 Until the rest is implemented, `type` doesn't distinguish them, a quotient of longs that doesn't divide evenly is a double
-(#338), and the reader reads ratios, `N` and `M` literals and integers beyond
-the long range but evaluating them throws (#333, #338, #339); these are known
-gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
+(#338). BigInt literals and signed addition, subtraction and multiplication
+execute exactly, including integers beyond the long range. The reader reads
+ratios and `M` literals but evaluating those runtime types still throws
+(#333, #338, #339). BigInt's other numeric operations and conversions remain
+incomplete; these are known gaps in the implementation. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming

@@ -1,0 +1,126 @@
+   Compiling synstructure v0.13.2
+    Checking stable_deref_trait v1.2.1
+   Compiling zerovec-derive v0.11.2
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.1
+    Checking zerofrom v0.1.6
+   Compiling displaydoc v0.2.5
+    Checking yoke v0.8.1
+    Checking zerovec v0.11.5
+    Checking cranelift-codegen v0.138.0-rc.1
+    Checking wasmtime-environ v51.0.0-rc.1
+   Compiling wasm-encoder v0.263.0
+   Compiling wasm-metadata v0.263.0
+    Checking tinystr v0.8.2
+   Compiling wit-parser v0.263.0
+   Compiling wasmparser v0.258.0
+    Checking writeable v0.6.2
+    Checking litemap v0.8.1
+    Checking icu_locale_core v2.1.1
+    Checking wast v263.0.0
+   Compiling wit-component v0.263.0
+    Checking potential_utf v0.1.4
+    Checking zerotrie v0.2.3
+   Compiling icu_normalizer_data v2.1.1
+   Compiling thiserror v1.0.69
+   Compiling icu_properties_data v2.1.2
+    Checking icu_provider v2.1.1
+    Checking icu_collections v2.1.1
+    Checking wat v1.263.0
+   Compiling wasm-encoder v0.258.0
+   Compiling wasmtime-internal-wit-bindgen v51.0.0-rc.1
+    Checking wasmtime-internal-unwinder v51.0.0-rc.1
+    Checking directories v6.0.0
+    Checking cranelift-frontend v0.138.0-rc.1
+    Checking cranelift-native v0.138.0-rc.1
+   Compiling cobs v0.3.0
+   Compiling wasmtime v51.0.0-rc.1
+   Compiling cranelift-entity v0.138.0-rc.1
+   Compiling thiserror-impl v1.0.69
+    Checking bytes v1.12.1
+   Compiling leb128 v0.2.5
+   Compiling wast v35.0.2
+    Checking wasmtime-internal-cache v51.0.0-rc.1
+   Compiling wasmtime-internal-component-macro v51.0.0-rc.1
+   Compiling cranelift-bforest v0.138.0-rc.1
+   Compiling postcard v1.1.3
+    Checking wasmtime-internal-cranelift v51.0.0-rc.1
+   Compiling wasm-metadata v0.258.0
+    Checking wasm-compose v0.263.0
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-core)
+    Checking wasmtime-internal-jit-debug v51.0.0-rc.1
+    Checking wasmtime-internal-fiber v51.0.0-rc.1
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile-generator)
+    Checking fxprof-processed-profile v0.8.1
+   Compiling wit-parser v0.258.0
+    Checking memfd v0.6.5
+    Checking wasmtime-internal-jit-icache-coherence v51.0.0-rc.1
+   Compiling target-lexicon v0.13.5
+   Compiling object v0.40.0
+   Compiling smallvec v1.15.1
+   Compiling async-trait v0.1.89
+   Compiling getrandom v0.4.3
+   Compiling gimli v0.33.0
+    Checking rand_core v0.10.1
+   Compiling wit-component v0.258.0
+    Checking icu_properties v2.1.2
+    Checking icu_normalizer v2.1.1
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-reader)
+   Compiling witx v0.9.1
+    Checking tracing-core v0.1.36
+   Compiling tracing-attributes v0.1.31
+   Compiling cfg_aliases v0.1.1
+   Compiling wiggle-macro v51.0.0-rc.1
+   Compiling nix v0.28.0
+    Checking tracing v0.1.44
+   Compiling wiggle-generate v51.0.0-rc.1
+    Checking idna_adapter v1.2.1
+    Checking cpufeatures v0.3.1
+    Checking utf8_iter v1.0.4
+    Checking percent-encoding v2.3.2
+    Checking form_urlencoded v1.2.2
+    Checking idna v1.1.0
+    Checking chacha20 v0.10.2
+    Checking socket2 v0.6.5
+    Checking mio v1.2.3
+    Checking nibble_vec v0.1.0
+    Checking endian-type v0.1.2
+    Checking radix_trie v0.2.1
+    Checking tokio v1.53.1
+    Checking wiggle v51.0.0-rc.1
+    Checking rand v0.10.3
+    Checking url v2.5.7
+    Checking wasmtime-wasi-io v51.0.0-rc.1
+    Checking rustix-linux-procfs v0.1.1
+    Checking fd-lock v4.0.4
+    Checking utf8parse v0.2.2
+    Checking home v0.5.12
+    Checking rustyline v14.0.0
+    Checking wasmtime-wasi v51.0.0-rc.1
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+    Checking fastrand v2.3.0
+    Checking lexopt v0.3.1
+    Checking tempfile v3.27.0
+error[E0004]: non-exhaustive patterns: `&hir::Literal::BigInt { .. }` not covered
+   --> crates/suss-compile/src/portable_macro_graph.rs:780:26
+    |
+780 |         let kind = match &value {
+    |                          ^^^^^^ pattern `&hir::Literal::BigInt { .. }` not covered
+    |
+note: `hir::Literal` defined here
+   --> crates/suss-compile/src/portable/hir.rs:53:10
+    |
+ 53 | pub enum Literal {
+    |          ^^^^^^^
+...
+ 61 |     BigInt { negative: bool, limbs: Vec<u32> },
+    |     ------ not covered
+    = note: the matched value is of type `&hir::Literal`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+792 ~             },
+793 +             &hir::Literal::BigInt { .. } => todo!()
+    |
+
+For more information about this error, try `rustc --explain E0004`.
+error: could not compile `suss-compile` (lib) due to 1 previous error

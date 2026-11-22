@@ -897,6 +897,11 @@ impl FormBridge {
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
                         Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
                         Kind::Long(value) => self.scalar(session, &Literal::Long(*value))?,
+                        Kind::Exact(value) if matches!(value.value, suss_reader::forms::ExactValue::Integer { .. }) => {
+                            let suss_reader::forms::ExactValue::Integer { value, .. } = &value.value else { unreachable!() };
+                            let (_, limbs) = value.to_u32_digits();
+                            self.scalar(session, &Literal::BigInt { negative: num_traits::Signed::is_negative(value), limbs })?
+                        }
                         Kind::Exact(value) => self.identifier(
                             session,
                             Some(suss_reader::forms::EXACT_NUMBER_NAMESPACE),
@@ -1331,12 +1336,22 @@ fn decode_datum_inner<T: DatumTarget>(
         // Scalar boxes and nominal objects have fixed ABI widths. Checking
         // metadata first keeps hostile arbitrary-width structs off the copying
         // path; this logical decoder does not admit other representations.
-        if !matches!(structure.ty(&*store)?.fields().len(), 1 | 4) {
+        if !matches!(structure.ty(&*store)?.fields().len(), 1 | 3 | 4) {
             return Err(error("Unexpected structure layout"));
         }
         let values = structure.fields(&mut *store)?.collect::<Vec<_>>();
         if let [Val::F64(bits)] = values.as_slice() {
             DecodedKind::Plain(Kind::Number(f64::from_bits(*bits)))
+        } else if let [Val::I32(sign), Val::AnyRef(Some(limbs)), Val::I32(used)] = values.as_slice() {
+            if !(-1..=1).contains(sign) || *used < 0 { return Err(error("Invalid BigInt metadata")); }
+            let array = limbs.as_array(&*store)?.ok_or_else(|| error("Invalid BigInt magnitude"))?;
+            if *used as u32 > array.len(&*store)? { return Err(error("Invalid BigInt length")); }
+            let mut digits = Vec::new();
+            for index in 0..*used as u32 {
+                charge_read_work(store, 1, budget)?;
+                digits.push(array.get(&mut *store, index)?.unwrap_i32() as u32);
+            }
+            DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::bigint(*sign < 0, digits)))
         } else {
             let (class, data) = object(store, value, classes)?;
             let slot = match class {

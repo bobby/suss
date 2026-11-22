@@ -1,0 +1,39 @@
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 42s
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 3 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... FAILED
+test macro_arguments_and_results_are_real_bigints ... FAILED
+test aot_executes_the_bigint_matrix ... FAILED
+
+failures:
+
+---- bigint_literals_and_signed_arithmetic_execute_in_both_phases stdout ----
+
+thread 'bigint_literals_and_signed_arithmetic_execute_in_both_phases' (370574) panicked at crates/suss-cli/tests/clojure_bigints.rs:7:29:
+(pr-str [0N 1N -1N 9223372036854775808 -9223372036854775809]): Generated fragment failed validation: type mismatch: expected eqref, found i32 (at offset 0xb26) at bytes 0..61
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- macro_arguments_and_results_are_real_bigints stdout ----
+
+thread 'macro_arguments_and_results_are_real_bigints' (372166) panicked at crates/suss-cli/tests/clojure_bigints.rs:41:57:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..34, message: "Generated fragment failed validation: type mismatch: expected eqref, found i32 (at offset 0xa45)" })
+
+---- aot_executes_the_bigint_matrix stdout ----
+
+thread 'aot_executes_the_bigint_matrix' (370573) panicked at crates/suss-cli/tests/clojure_bigints.rs:100:5:
+Compilation error: Semantic error: While compiling bigints.sus: Generated fragment failed validation: type mismatch: expected eqref, found i32 (at offset 0x159e) at bytes 13..72243
+
+
+
+failures:
+    aot_executes_the_bigint_matrix
+    bigint_literals_and_signed_arithmetic_execute_in_both_phases
+    macro_arguments_and_results_are_real_bigints
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.19s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_bigints`

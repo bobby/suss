@@ -458,6 +458,8 @@ pub(super) fn intrinsics(
         Return,
         End,
     ];
+    to_string.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["bigint-string"]), End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),

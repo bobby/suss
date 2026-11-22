@@ -27,7 +27,7 @@ pub(super) fn fits_i31() -> [Instruction<'static>; 4] {
 
 /// `[] -> [i32]`: whether a local holds a number, inline for helpers that
 /// can't call `number-test`.
-pub(super) fn number_test(local: u32) -> [Instruction<'static>; 8] {
+pub(super) fn number_test(local: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     [
         LocalGet(local),
@@ -38,7 +38,8 @@ pub(super) fn number_test(local: u32) -> [Instruction<'static>; 8] {
         LocalGet(local),
         RefTestNonNull(double()),
         I32Or,
-    ]
+        LocalGet(local), RefTestNonNull(HeapType::Concrete(BIGINT)), I32Or,
+    ].to_vec()
 }
 
 /// Defines the representation helpers before any runtime code that uses them.
@@ -79,16 +80,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         "number-test",
         &[VALUE],
         &[ValType::I32],
-        &[
-            LocalGet(0),
-            RefTestNonNull(i31()),
-            LocalGet(0),
-            RefTestNonNull(long()),
-            I32Or,
-            LocalGet(0),
-            RefTestNonNull(double()),
-            I32Or,
-        ],
+        &number_test(0),
     );
     // Traps unless the value is a long.
     let long_unbox = b.function(
@@ -129,10 +121,12 @@ pub(super) fn intrinsics(b: &mut Builder) {
                 field_index: 0,
             },
             Else,
+            LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Result(ValType::F64)),
+            LocalGet(0), Call(b.names["bigint-double"]), Else,
             LocalGet(0),
             Call(long_unbox),
             F64ConvertI64S,
-            End,
+            End, End,
         ],
     );
     // A runtime count, index or code unit computed as an integral double.
@@ -465,6 +459,13 @@ pub(super) fn arithmetic(b: &mut Builder) {
         code.push(If(BlockType::Empty));
         code.extend(throw("long overflow"));
         code.extend([End, LocalGet(4), Call(boxed), Return, End]);
+        code.extend([
+            LocalGet(0), Call(b.names["bigint-test"]), LocalGet(1), Call(b.names["bigint-test"]), I32Or,
+            LocalGet(0), Call(b.names["double-test"]), LocalGet(1), Call(b.names["double-test"]), I32Or, I32Eqz, I32And,
+            If(BlockType::Empty),
+            LocalGet(0), Call(b.names["integer-bigint"]), LocalGet(1), Call(b.names["integer-bigint"]),
+            Call(b.names[&format!("bigint-{name}")]), Return, End,
+        ]);
         code.extend(floating(operation));
         b.function_with_locals(&format!("number-{name}"), &[VALUE, VALUE], &[VALUE], &locals, &code);
     }
@@ -534,6 +535,8 @@ pub(super) fn arithmetic(b: &mut Builder) {
         Call(boxed),
         Return,
         End,
+        LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["bigint-negate"]), Return, End,
         LocalGet(0),
         Call(number),
         F64Neg,
@@ -882,6 +885,8 @@ pub(super) fn functions(b: &mut Builder) {
         I64Sub,
         Call(boxed),
         Else,
+        LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["bigint-negate"]), Return, End,
         LocalGet(0),
         Call(number),
         F64Neg,

@@ -58,6 +58,7 @@ pub enum Literal {
     /// A double.
     Number(f64),
     Long(i64),
+    BigInt { negative: bool, limbs: Vec<u32> },
     String(Vec<u16>),
 }
 impl Literal {
@@ -66,7 +67,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) => Type::Number,
+            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -527,6 +528,7 @@ impl Bitwise {
 pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
+    IsBigInt,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
     /// `(aget a i)` of an array tagged with a packed element type, its kind
@@ -738,6 +740,7 @@ impl Nominal {
             Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
+            | Self::IsBigInt
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
@@ -795,7 +798,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsBigInt | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1291,10 +1294,17 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
-    /// An exact numeric literal binary64 can't hold evaluates to a throw
-    /// until Suss has Clojure's numeric types (#333, #335): it reads, so code
-    /// that never evaluates it loads, but it never rounds silently.
+    /// BigInt literals retain their exact magnitude. Ratio and Decimal
+    /// literals still throw at evaluation until their runtime types arrive;
+    /// unselected forms can load without silently rounding their values.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
+        if let suss_reader::forms::ExactValue::Integer { value, .. } = &number.value {
+            let (_, limbs) = value.to_u32_digits();
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::BigInt {
+                    negative: num_traits::Signed::is_negative(value), limbs,
+                })) });
+        }
         let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
         let symbol = |namespace: Option<&str>, name: &str| {
             at(Kind::Symbol(suss_reader::Symbol {
@@ -3395,6 +3405,7 @@ impl Analyzer<'_> {
                 "apply-to-seq" => Some(Nominal::ApplyToSeq),
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
+                "bigint?" => Some(Nominal::IsBigInt),
                 "keyword?" => Some(Nominal::IsKeyword),
                 // Reference identity alone, as for interned keywords (#442).
                 "same-reference?" => Some(Nominal::SameReference),

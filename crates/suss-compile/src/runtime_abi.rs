@@ -1,4 +1,4 @@
-//! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
+//! Shared GC ABI v8. Longs, doubles and BigInts have distinct representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
 pub(crate) use bitwise::CAST_RAW_EXPORTS;
@@ -24,6 +24,7 @@ mod exception_info;
 mod exceptions;
 mod identity_hash;
 mod longs;
+mod bigints;
 mod maps;
 mod chunks;
 mod transient_vectors;
@@ -50,7 +51,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 7;
+pub const VERSION: u32 = 8;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -97,7 +98,7 @@ pub fn boolean_in(first: u32) -> [Instruction<'static>; 5] {
     ]
 }
 /// `[] -> [i32]`: whether a local holds a number, a long or a double.
-pub fn number_test(local: u32) -> [Instruction<'static>; 8] {
+pub fn number_test(local: u32) -> Vec<Instruction<'static>> {
     longs::number_test(local)
 }
 /// `[] -> [f64]`: the number in `local` as a double; traps unless it is one.
@@ -233,7 +234,9 @@ pub const UNIVERSAL: u32 = SPREAD + 1;
 /// `{descriptor, slot (-1 for a method), method, epoch, second descriptor,
 /// second epoch, second method, function owner, owner epoch, owner value}`.
 pub const NAMED_SITE: u32 = UNIVERSAL + 1;
-pub const TYPE_COUNT: u32 = NAMED_SITE + 1;
+/// ABI 8: immutable sign, GC-owned u32 limbs, normalized used length.
+pub const BIGINT: u32 = NAMED_SITE + 1;
+pub const TYPE_COUNT: u32 = BIGINT + 1;
 /// `NAMED_SITE` fields.
 pub(crate) const SITE_DESCRIPTOR: u32 = 0;
 pub(crate) const SITE_SLOT: u32 = 1;
@@ -845,6 +848,7 @@ pub fn prelude() -> TypeSection {
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
     ]));
+    group.push(structure(vec![field(ValType::I32, false), field(reference(PACKED_STORAGE + 2), false), field(ValType::I32, false)]));
     debug_assert_eq!(group.len() as u32, TYPE_COUNT);
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
@@ -1512,7 +1516,10 @@ fn build_module() -> Vec<u8> {
         &[VALUE],
         &[LocalGet(0), StructNew(NUMBER)],
     );
+    bigints::representation(&mut b);
     longs::intrinsics(&mut b);
+    bigints::arithmetic(&mut b);
+    bigints::string(&mut b);
     longs::arithmetic(&mut b);
     longs::string(&mut b);
     longs::append(&mut b);

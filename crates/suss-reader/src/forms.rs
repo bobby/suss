@@ -3,8 +3,8 @@
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates. Integer literals in the long range are longs and
 //! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
-//! [`ExactNumber`]s, which evaluation rejects until Suss has those types
-//! (ADR-0003, #338, #339).
+//! [`ExactNumber`]s. BigInt evaluates as an exact GC value; Ratio and Decimal
+//! evaluation still needs their runtime types (ADR-0003, #338, #339).
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -184,11 +184,18 @@ impl PartialEq for ExactNumber {
         self.value == other.value
     }
 }
-/// Macro data has no value for an exact literal until #335, so it carries
-/// one as a symbol in this namespace named by the literal's text, and decoding
-/// that symbol gives the literal back.
+/// Exact literals without a runtime value use this macro-data placeholder
+/// namespace. BigInt has a real runtime value; Ratio and Decimal still use a
+/// symbol named by the literal text, which decoding restores.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
+    /// Reconstitute a GC BigInt datum without converting through binary64.
+    /// `limbs` are the significant little-endian u32 magnitude digits.
+    pub fn bigint(negative: bool, limbs: Vec<u32>) -> Self {
+        let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
+        let value = num_bigint::BigInt::new(sign, limbs);
+        Self { text: format!("{value}N"), value: ExactValue::Integer { value, big: true } }
+    }
     /// The literal a macro-data symbol stands for, if it is one.
     pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {
         if namespace != Some(EXACT_NUMBER_NAMESPACE) {
@@ -208,7 +215,7 @@ impl ExactNumber {
             ExactValue::Decimal { unscaled, scale } => format!("{unscaled}E{}M", -i64::from(*scale)),
         }
     }
-    /// The evaluation-time failure, until #335.
+    /// The evaluation-time failure for a runtime type not yet implemented.
     pub fn unsupported_message(&self) -> String {
         format!(
             "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
