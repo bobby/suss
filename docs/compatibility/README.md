@@ -9,6 +9,14 @@ original source and licenses. Broader EDN, workspace, CI and review acceptance
 retain their separate evidence; focused results do not establish broader numeric
 or Java Character compatibility.
 
+Runtime `read-string` syntax quote now preserves the primary's quoted UUID
+structure. Three fresh JVM structures/bit fields execute in Runtime, Macro and
+actual AOT; retained values are decoded independently after GC. Macro imports
+retain successfully initialized source identities after a later initializer
+fails, preserve those original hashes across file changes and regain cache hits
+after retry. [Review repair evidence](../../results/m12-reader-followup/README.md)
+retains the actual before-failure receipts and repaired-source checks.
+
 `clojure.edn/read-string` now exposes the same compiled data reader as
 `suss.edn/read-string`, in Runtime and Macro. The focused compatibility test
 passes; the complete EDN suite remains subject to the independently audited

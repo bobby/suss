@@ -336,3 +336,24 @@ comparison passes; the retained native101 is never relabeled as a native rerun
 or workspace pass. Larger raw files have deterministic gzip archives and byte
 hashes in the capture's archives.json; decompress those files at their recorded
 relative paths before rerunning the auditors from a fresh checkout.
+
+## Independent-review repairs and CI inventory (2026-11-23)
+
+`before-review-repairs` retains native counterexamples against immutable existing
+production artifacts:cache eligibility fails after a successful partial-import
+retry (exit101,85.012s), and runtime UUID syntax quote throws unsupported data
+(exit1,94.595s). The captured production inputs match3890 unchanged frozen source
+inputs; the two authored native test files and fresh primary fixture are explicit
+differences. These are not Cargo-regression or workspace passes.
+
+`after-review-repairs` retains the first failed build:the original generator
+source-identity guard catches stale copied project fingerprints before tests run.
+After targeted project cache cleanup, `after-review-repairs-clean-project-cache`
+passes1+2+60+17 native executions with input hashes unchanged. Three targeted
+cases repeat in the broader group, leaving77 distinct tests. The original
+13-test unboxed-locals target also passes at5269cf4f after requiring the three
+appended char helpers beside the original37. Existing scalar/no-numeric-box checks
+are byte-identical and run over all40 exports. No performance bound is relaxed.
+
+All15 foundation checks pass, including364 Python tests. Current independent
+reviews clear the repairs; full repaired-head workspace and CI are separate.

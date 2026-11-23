@@ -1,0 +1,130 @@
+[
+  {
+    "raw": "foundation-00.log",
+    "archive": "foundation-00.log.gz",
+    "raw_sha256": "7956cf9f64c832fa5116e43aa54b09a35a79bae32edf8c6e88d1d9713ed709ac",
+    "raw_bytes": 1235,
+    "archive_sha256": "7a90c3ae141c5c719933ed773773dcc057369d3c6dc150fbfdcb7416ad4336c8",
+    "archive_bytes": 325
+  },
+  {
+    "raw": "foundation-01.log",
+    "archive": "foundation-01.log.gz",
+    "raw_sha256": "69fdb2770db81046b95d2b1a8ecdd5fb52225b233dd3bff58758266fadf2236e",
+    "raw_bytes": 47,
+    "archive_sha256": "198135b0b523ab10207772576a9d30ce5e77d2c4f9e50130ca2ee902fb29a53f",
+    "archive_bytes": 67
+  },
+  {
+    "raw": "foundation-02.log",
+    "archive": "foundation-02.log.gz",
+    "raw_sha256": "aac1ed2f77085aed7ed9d98f6b2ecfc52f428070d1e4152cd9bc63eff8f3e75e",
+    "raw_bytes": 67,
+    "archive_sha256": "67c2134f45e452774dbca9c1451cbac42103df8ce08feb07de65f2517db85511",
+    "archive_bytes": 81
+  },
+  {
+    "raw": "foundation-03.log",
+    "archive": "foundation-03.log.gz",
+    "raw_sha256": "05d17b17d9fe2442b7b221d4f705ec42cc12975f21ae209b780360a70ca9bd22",
+    "raw_bytes": 31,
+    "archive_sha256": "69cb110d12ba8a78ac1e9cbd8b52cddc79c1176829b375c88b387242da058782",
+    "archive_bytes": 51
+  },
+  {
+    "raw": "foundation-04.log",
+    "archive": "foundation-04.log.gz",
+    "raw_sha256": "3fb333e1c745e400096788b97d3611b8381fb476ecbf9ee4a2ae799593b4b001",
+    "raw_bytes": 39,
+    "archive_sha256": "f27077da37c41c4a9d8d0cee0609eac96f8fc983a3ebc379ae85e41a15eaaee4",
+    "archive_bytes": 59
+  },
+  {
+    "raw": "foundation-05.log",
+    "archive": "foundation-05.log.gz",
+    "raw_sha256": "5bdb53d5b984bde01e2214e0e9b386231b60dd5cf1da82a9ae84b3ae6c66153e",
+    "raw_bytes": 74,
+    "archive_sha256": "7802733e4826bf3024198c1ad6c9783bac83fdfe465bb495e70c7df12eda9a91",
+    "archive_bytes": 85
+  },
+  {
+    "raw": "foundation-06.log",
+    "archive": "foundation-06.log.gz",
+    "raw_sha256": "93628118cf46a3ab9b11b7a0dbd7cd11dc7821a5ae866c495b023e27405573d9",
+    "raw_bytes": 51,
+    "archive_sha256": "793766ace44947ce019361430d9248239f1aae6011acbbea9c13b7649ed1cf3f",
+    "archive_bytes": 69
+  },
+  {
+    "raw": "foundation-07.log",
+    "archive": "foundation-07.log.gz",
+    "raw_sha256": "0229ff9a4a1ac5ba3bf8c07d16d187b3e0876ffa98b1eb001d7d3ba8c0c2a118",
+    "raw_bytes": 125,
+    "archive_sha256": "5a1947a3a30808cd201046411b93426e54636aadfdebc4691088dbe0821f65aa",
+    "archive_bytes": 119
+  },
+  {
+    "raw": "foundation-08.log",
+    "archive": "foundation-08.log.gz",
+    "raw_sha256": "150d9a7865662baad72b40794b2f39aa6822c6d447fca87f03fb7c2855cbcae4",
+    "raw_bytes": 108,
+    "archive_sha256": "6154f7809c77cd81a2c179c581855187cd54025b66b80e4383cc99b4043335c5",
+    "archive_bytes": 108
+  },
+  {
+    "raw": "foundation-09.log",
+    "archive": "foundation-09.log.gz",
+    "raw_sha256": "e1fbd6c01dc8516dba88a1d6a73b38b32daac9617034dc459d3eb86cfee46d5c",
+    "raw_bytes": 68,
+    "archive_sha256": "8b5fba60238e16739cd642adf0edde0f19bfee7c7be1a1d021725a670340ca55",
+    "archive_bytes": 80
+  },
+  {
+    "raw": "foundation-10.log",
+    "archive": "foundation-10.log.gz",
+    "raw_sha256": "d2e2fedccd215d0b67c40a6643444bdcfeef5d4a3ab39bd2d5e804b9655f8fc0",
+    "raw_bytes": 46,
+    "archive_sha256": "1b2147afa01906c1622be0e8e03e2bd3df0dac0616b49de27eb9246bdb705d1e",
+    "archive_bytes": 66
+  },
+  {
+    "raw": "foundation-11.log",
+    "archive": "foundation-11.log.gz",
+    "raw_sha256": "081e403746c9a4758034db7fe4c4f4178a7d5a4ebb56b42b67781814651bdda4",
+    "raw_bytes": 42,
+    "archive_sha256": "742184dc81dd3b3f5b11f5b02de85f5eef78b86ec0eadb27fd8bd3fe71764a2d",
+    "archive_bytes": 61
+  },
+  {
+    "raw": "foundation-12.log",
+    "archive": "foundation-12.log.gz",
+    "raw_sha256": "dc1d873a2c52ff25e2be2d49d4ca5f438320d98ba4ae93e112d54e6a9dc1b849",
+    "raw_bytes": 35,
+    "archive_sha256": "5904ba0dc4289000887a48525a4ce4b657bd19f4f53265266e13558885941899",
+    "archive_bytes": 55
+  },
+  {
+    "raw": "foundation-13.log",
+    "archive": "foundation-13.log.gz",
+    "raw_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3",
+    "raw_bytes": 81,
+    "archive_sha256": "5597824e4c0507e2e5f5306f428896f7db8e833e493c5f64c32dc7b1f5caeb7b",
+    "archive_bytes": 92
+  },
+  {
+    "raw": "foundation-14.log",
+    "archive": "foundation-14.log.gz",
+    "raw_sha256": "9570d69f8ba9c1b7375a20e14241a0d6a7275d7524d1476e524aed84b00aed4e",
+    "raw_bytes": 78,
+    "archive_sha256": "489ff31fe6782d7df77cc605fe41e7e940a8677c8c92e641a581602f1237c42d",
+    "archive_bytes": 88
+  },
+  {
+    "raw": "foundation.json",
+    "archive": "foundation.json.gz",
+    "raw_sha256": "378046ec01a9e845aacf1581abb533a90b9c6ecca3657bc0947d28b172a97dff",
+    "raw_bytes": 500219,
+    "archive_sha256": "05b8fc02c953334a95dd565a5e742da4c8557be8d9d2764f7391b311df12557f",
+    "archive_bytes": 183902
+  }
+]

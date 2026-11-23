@@ -1,3 +1,30 @@
+## Executed review repairs and explicit raw-helper inventory (2026-11-23)
+
+`run-review-repair-gates.py after-review-repairs-clean-project-cache` passes all
+four groups on c0d6caf5, inputs unchanged:cache recovery1, Runtime/Macro/actual-AOT
+UUID syntax quote2, broader source/cache/UUID/bootstrap60 and original record/
+artifact guards17. This is77 distinct tests across80 executions, including the
+three focused repeats. The preceding build in `after-review-repairs` returns101
+before tests:the unchanged source-identity guard rejects stale project generator
+fingerprints copied from another worktree. Targeted cargo clean of the five
+workspace packages removes those artifacts; no guard, budget or source contract
+is relaxed. Existing dependency libraries use independent Btrfs cache reflinks.
+
+Published13189154 CI partition4 fails only the raw-helper inventory assertion:
+40 actual exports versus37 expected after adding three checked char overloads.
+The byte-exact job log is retained. The inventory now preserves the original37
+and explicitly requires char Object/primitive/Float helpers; all scalar-return,
+numeric-constructor and boxer-call checks remain unchanged and cover all40.
+`run-helper-inventory.py` passes the original13-test target on5269cf4f, inputs
+unchanged,342.672s including build. The15 foundation checks also pass, including
+364 Python tests, with unchanged inputs. Combined native evidence has90 distinct
+tests across93 executions and no failed or ignored tests.
+
+All three independent source reviews clear the repaired production and guard
+changes at their qualified heads. The character producer/formatter/artifact and
+401 control fixtures retain their exact reviewed bytes. Full repaired-head
+workspace, Java/Node-free reproduction and final CI retain separate evidence.
+
 ## Independent-review recovery and UUID reader counterexamples (2026-11-23)
 
 `run-review-before-probes.py` links a small native counterexample against the
