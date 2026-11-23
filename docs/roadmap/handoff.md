@@ -1,3 +1,37 @@
+## Full Decimal arithmetic capture and conversion boundaries (2026-11-23)
+
+The complete unfiltered vendored capture at45a20341 records4585 actual assertions
+in373.89s. The original comparison terminates101 against the earlier baseline;
+the suite lock check terminates0. Auditing every changed record finds172 resolved
+assertion failures, two newly loaded namespaces (bigdec and with-precision), no
+previously passing assertion regression and one changed diagnostic in the still
+unloaded case namespace (unsupported composite constants). Counts are4322 host
+matches,63 guest judgments,212 failures,2342 unexecuted assertions and84 failed
+namespaces. The primary reference, all count/skip logic and source routing are
+unchanged; the new Decimal field comparator is independently strict.
+
+The initial compact audit overstated200 matching Decimal operand assertions by
+omitting inherited namespace-load failures. The complete audit corrects this to
+194 actual matches and six unexecuted assertions (eval and the EDN namespace's
+unsupported uuid reader tag). A source-form candidate scan additionally retains
+58 Decimal-related failed/unexecuted assertions, including casts, rationalize,
+case and predicates; it is not an acceptance pass. All original raw values and
+the initial audit mistake remain in the evidence. The faithful baseline write
+and subsequent compare terminate0 while preserving every remaining failure and
+unexecuted result. This baseline consistency check does not certify semantics.
+
+Fresh109-case conversion probes execute through the actual CLI. The original
+float text fixture compares JVM Float printing with Suss's specified widened
+Double and therefore includes two unsuitable text comparisons. A separate fresh
+JVM fixture explicitly widens each float result to double in both programs;
+75 cases match and34 differ. Remaining differences include exact unchecked
+integer narrowing, checked long range-error staging/diagnostics, Decimal
+rationalization and direct unchecked float rounding across a binary64 tie.
+The initial println harness failure and both original/widened controls remain.
+No expectation is replaced with Suss output. See run-cast-probe.py and the
+before-decimal-casts-widened receipts. These conversion fixes and all other
+acceptance gaps remain required before promotion.
+
 ## Subtraction overload and independent Decimal observations (2026-11-23)
 
 The isolated arithmetic checkout extends source numeric overload facts from

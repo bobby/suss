@@ -118,5 +118,23 @@
     "archive": "results/m12-decimal-integration/gates.json.gz",
     "bytes": 495771,
     "sha256": "badb1f5974eb3721fa4b67bb689e2b9b2e8a9e98f364b78ca67724c11b9ab4f0"
+  },
+  {
+    "path": "results/m12-decimal-integration/suite-after-arithmetic/suite-audit.json",
+    "archive": "results/m12-decimal-integration/suite-after-arithmetic/suite-audit.json.gz",
+    "bytes": 226554,
+    "sha256": "94ae81cef266c1a0edcd711f6d36f9c9ed142faf4a3736e53b7fb18e8b76a88d"
+  },
+  {
+    "path": "results/m12-decimal-integration/suite-after-arithmetic/suite-capture/suite-observations.json",
+    "archive": "results/m12-decimal-integration/suite-after-arithmetic/suite-capture/suite-observations.json.gz",
+    "bytes": 4712192,
+    "sha256": "35281545ac76356aa1440c08fee50b00a248b3c295ea4933d7fb51c0807ac5ef"
+  },
+  {
+    "path": "results/m12-decimal-integration/suite-after-arithmetic/suite-commands.json",
+    "archive": "results/m12-decimal-integration/suite-after-arithmetic/suite-commands.json.gz",
+    "bytes": 493155,
+    "sha256": "4a3845ef494aba4bccc67ef2586510ba56d318642837026615778a8bcda2b68d"
   }
 ]

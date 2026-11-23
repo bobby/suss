@@ -1,0 +1,21 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-p",
+    "MemoryMax=4G",
+    "--",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/results/m12-decimal-integration/before-decimal-casts.sus"
+  ],
+  "head": "45a20341620a5e7ac87e5ae056e1da0965885947",
+  "exe_sha256": "af4ff3e3c0bacd9a8047574ff2eca2163b97dcfd0ac3bd7ffc83be327b58e975",
+  "source_sha256": "96482a2554165e4e171435d3781bc16e3da5ce43c01168b563a66e6747f09a1b",
+  "fixture_sha256": "5b14e744216cf26132804225e568b43e5117262da769e28e40cf0a48f478b395",
+  "complete": true,
+  "exit_code": 1,
+  "seconds": 82.40663480758667,
+  "stdout_lines": 0,
+  "final_result": null
+}

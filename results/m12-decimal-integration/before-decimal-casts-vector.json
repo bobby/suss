@@ -1,0 +1,238 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-p",
+    "MemoryMax=4G",
+    "--",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/results/m12-decimal-integration/before-decimal-casts-vector.sus"
+  ],
+  "head": "45a20341620a5e7ac87e5ae056e1da0965885947",
+  "exe_sha256": "af4ff3e3c0bacd9a8047574ff2eca2163b97dcfd0ac3bd7ffc83be327b58e975",
+  "source_sha256": "65ac0b0b5e894e3c5ae5aa2419e3e8bcd11db793feaf3e7bc500f49e44d987e5",
+  "fixture_sha256": "5b14e744216cf26132804225e568b43e5117262da769e28e40cf0a48f478b395",
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 3.941310167312622,
+  "mismatches": [
+    {
+      "index": 5,
+      "source": "(pr-str (long 18446744073709551617.25M))",
+      "expected": "[:error \"Value out of range for long: 1.8446744073709552E19\"]",
+      "actual": "[:error \"Value out of range for long: 18446744073709551617.25\"]"
+    },
+    {
+      "index": 6,
+      "source": "(pr-str (long 1E+2147483648M))",
+      "expected": "[:error \"Value out of range for long: Infinity\"]",
+      "actual": "[:error \"Value out of range for long: 1E+2147483648\"]"
+    },
+    {
+      "index": 12,
+      "source": "(pr-str (unchecked-long 9223372036854775808M))",
+      "expected": "\"-9223372036854775808\"",
+      "actual": "\"9223372036854775807\""
+    },
+    {
+      "index": 13,
+      "source": "(pr-str (unchecked-long -9223372036854775809M))",
+      "expected": "\"9223372036854775807\"",
+      "actual": "\"-9223372036854775808\""
+    },
+    {
+      "index": 14,
+      "source": "(pr-str (unchecked-long 18446744073709551617.25M))",
+      "expected": "\"1\"",
+      "actual": "\"9223372036854775807\""
+    },
+    {
+      "index": 15,
+      "source": "(pr-str (unchecked-long 1E+2147483648M))",
+      "expected": "\"0\"",
+      "actual": "\"9223372036854775807\""
+    },
+    {
+      "index": 23,
+      "source": "(pr-str (int 18446744073709551617.25M))",
+      "expected": "[:error \"Value out of range for long: 1.8446744073709552E19\"]",
+      "actual": "[:error \"integer overflow\"]"
+    },
+    {
+      "index": 24,
+      "source": "(pr-str (int 1E+2147483648M))",
+      "expected": "[:error \"Value out of range for long: Infinity\"]",
+      "actual": "[:error \"integer overflow\"]"
+    },
+    {
+      "index": 29,
+      "source": "(pr-str (unchecked-int 9223372036854775807.99M))",
+      "expected": "\"-1\"",
+      "actual": "\"2147483647\""
+    },
+    {
+      "index": 30,
+      "source": "(pr-str (unchecked-int 9223372036854775808M))",
+      "expected": "\"0\"",
+      "actual": "\"2147483647\""
+    },
+    {
+      "index": 31,
+      "source": "(pr-str (unchecked-int -9223372036854775809M))",
+      "expected": "\"-1\"",
+      "actual": "\"-2147483648\""
+    },
+    {
+      "index": 32,
+      "source": "(pr-str (unchecked-int 18446744073709551617.25M))",
+      "expected": "\"1\"",
+      "actual": "\"2147483647\""
+    },
+    {
+      "index": 33,
+      "source": "(pr-str (unchecked-int 1E+2147483648M))",
+      "expected": "\"0\"",
+      "actual": "\"2147483647\""
+    },
+    {
+      "index": 41,
+      "source": "(pr-str (short 18446744073709551617.25M))",
+      "expected": "[:error \"Value out of range for long: 1.8446744073709552E19\"]",
+      "actual": "[:error \"Value out of range for short: 18446744073709551617.25\"]"
+    },
+    {
+      "index": 42,
+      "source": "(pr-str (short 1E+2147483648M))",
+      "expected": "[:error \"Value out of range for long: Infinity\"]",
+      "actual": "[:error \"Value out of range for short: 1E+2147483648\"]"
+    },
+    {
+      "index": 48,
+      "source": "(pr-str (unchecked-short 9223372036854775808M))",
+      "expected": "\"0\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 49,
+      "source": "(pr-str (unchecked-short -9223372036854775809M))",
+      "expected": "\"-1\"",
+      "actual": "\"0\""
+    },
+    {
+      "index": 50,
+      "source": "(pr-str (unchecked-short 18446744073709551617.25M))",
+      "expected": "\"1\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 51,
+      "source": "(pr-str (unchecked-short 1E+2147483648M))",
+      "expected": "\"0\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 59,
+      "source": "(pr-str (byte 18446744073709551617.25M))",
+      "expected": "[:error \"Value out of range for long: 1.8446744073709552E19\"]",
+      "actual": "[:error \"Value out of range for byte: 18446744073709551617.25\"]"
+    },
+    {
+      "index": 60,
+      "source": "(pr-str (byte 1E+2147483648M))",
+      "expected": "[:error \"Value out of range for long: Infinity\"]",
+      "actual": "[:error \"Value out of range for byte: 1E+2147483648\"]"
+    },
+    {
+      "index": 66,
+      "source": "(pr-str (unchecked-byte 9223372036854775808M))",
+      "expected": "\"0\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 67,
+      "source": "(pr-str (unchecked-byte -9223372036854775809M))",
+      "expected": "\"-1\"",
+      "actual": "\"0\""
+    },
+    {
+      "index": 68,
+      "source": "(pr-str (unchecked-byte 18446744073709551617.25M))",
+      "expected": "\"1\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 69,
+      "source": "(pr-str (unchecked-byte 1E+2147483648M))",
+      "expected": "\"0\"",
+      "actual": "\"-1\""
+    },
+    {
+      "index": 84,
+      "source": "(pr-str (rationalize 1.99M))",
+      "expected": "\"199/100\"",
+      "actual": "\"1.99M\""
+    },
+    {
+      "index": 85,
+      "source": "(pr-str (rationalize -1.99M))",
+      "expected": "\"-199/100\"",
+      "actual": "\"-1.99M\""
+    },
+    {
+      "index": 86,
+      "source": "(pr-str (rationalize 18446744073709551617.25M))",
+      "expected": "\"73786976294838206469/4\"",
+      "actual": "\"18446744073709551617.25M\""
+    },
+    {
+      "index": 87,
+      "source": "(pr-str (rationalize 1E+100M))",
+      "expected": "\"10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000N\"",
+      "actual": "\"1E+100M\""
+    },
+    {
+      "index": 88,
+      "source": "(pr-str (rationalize 1E-100M))",
+      "expected": "\"1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"",
+      "actual": "\"1E-100M\""
+    },
+    {
+      "index": 89,
+      "source": "(pr-str (rationalize 0.00M))",
+      "expected": "\"0N\"",
+      "actual": "\"0.00M\""
+    },
+    {
+      "index": 90,
+      "source": "(pr-str (float 0.1M))",
+      "expected": "\"0.1\"",
+      "actual": "\"0.10000000149011612\""
+    },
+    {
+      "index": 96,
+      "source": "(pr-str (unchecked-float 0.1M))",
+      "expected": "\"0.1\"",
+      "actual": "\"0.10000000149011612\""
+    },
+    {
+      "index": 99,
+      "source": "(pr-str (unchecked-float 1.0000000596046447753906250000000000000001M))",
+      "expected": "\"1.0000001\"",
+      "actual": "\"1.0\""
+    },
+    {
+      "index": 100,
+      "source": "(pr-str (unchecked-float -1.0000000596046447753906250000000000000001M))",
+      "expected": "\"-1.0000001\"",
+      "actual": "\"-1.0\""
+    },
+    {
+      "index": 108,
+      "source": "(with-precision 2 :rounding UNNECESSARY (pr-str [(bigint 1.234M) (biginteger 1.234M) (rationalize 1.234M) (long 1.234M)]))",
+      "expected": "\"[1N 1 617/500 1]\"",
+      "actual": "\"[1N 1 1.234M 1]\""
+    }
+  ],
+  "matched": 73
+}

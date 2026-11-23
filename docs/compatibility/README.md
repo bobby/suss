@@ -1517,3 +1517,14 @@ owner impostors are rejected. Existing numeric inference, box reuse, capture,
 primitive method and i31 regressions pass. The complete vendored capture, full
 workspace execution and Decimal cast acceptance still need fresh results. See
 `results/m12-decimal-integration/` for original failures and source-qualified runs.
+
+The complete arithmetic capture at45a20341 records4322 host matches,63 guest
+judgments,212 failures,2342 unexecuted assertions and84 failed namespaces, with
+no previously passing assertion regression. Of200 primary assertions containing
+Decimal operands,194 actually match and six remain unexecuted through namespace
+failures. A broader source-form scan retains58 unresolved Decimal candidates.
+The faithful failure baseline preserves these gaps. Explicitly widening JVM float
+results to the specified Suss Double representation leaves34 conversion mismatches
+out of109 actual CLI controls; direct rounding, narrowing, diagnostics and
+rationalization remain acceptance work. Full workspace execution and independent
+promotion review still require evidence.

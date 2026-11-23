@@ -1,0 +1,1 @@
+{"initial_claim":"All 200 Decimal observation assertions match","corrected":{"pass":194,"not-executed":6},"cause":"The first compact query examined only explicit assertion failures and missed inherited namespace-load failures. The complete audit checks actual row presence and namespace/test failures. No reference, observed value or skip is changed."}
