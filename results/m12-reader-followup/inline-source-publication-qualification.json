@@ -1,0 +1,36 @@
+{
+  "publication_source_head": "7ca8917cd0bcf3adce8ce24f28e2cd6779a916af",
+  "pre_rebase_implementation": "b0dee8e0",
+  "base": "98a7f469bcb0396ecc12e0b3225713ac8094de66",
+  "rebase_existing_differences": [
+    "docs/roadmap/handoff.md",
+    "results/m12-case-budget/README.md"
+  ],
+  "rebase_new_evidence": "results/m12-case-budget/workspace-baseline",
+  "executable_rebase_difference": false,
+  "qualification": [
+    {
+      "gate": "inline-source-origin-and-cache-work",
+      "original_head": "24da88f4fac6a75e7e80a426a8b5e0c5af4855e8",
+      "complete": true,
+      "passed": true,
+      "unchanged_inputs_at_execution": true,
+      "current_input_differences": [
+        "docs/roadmap/handoff.md"
+      ],
+      "all_executable_and_fixture_inputs_match": true
+    },
+    {
+      "gate": "inline-source-foundation",
+      "original_head": "24da88f4fac6a75e7e80a426a8b5e0c5af4855e8",
+      "complete": true,
+      "passed": true,
+      "unchanged_inputs_at_execution": true,
+      "current_input_differences": [
+        "docs/roadmap/handoff.md"
+      ],
+      "all_executable_and_fixture_inputs_match": true
+    }
+  ],
+  "limitation": "Focused67 tests and15 foundation checks only. Full EDN/suite, workspace, final-head CI and promotion review remain separate gates. The rebase preserves both handoff evidence blocks and all executable/test/fixture inputs."
+}
