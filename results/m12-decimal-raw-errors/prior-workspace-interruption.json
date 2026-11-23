@@ -1,0 +1,17 @@
+{
+  "head": "8b70a31f3ab2a4d3180ff5baf3948bd14fc701ef",
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "termination": "SIGINT requested against confirmed active dedicated systemd scope",
+  "scope": "run-p3097491-i91145602.scope",
+  "reason": "CI job137499533577 conclusively fails unchanged raw helper no-numeric-box guard at portable_unboxed_locals.rs:449; published source cannot pass the complete baseline. Stop obsolete run before repair, preserving terminal receipt and all existing output.",
+  "CI_run": 45116208050,
+  "CI_job": 137499533577,
+  "failed_test": "raw_numeric_helpers_return_scalars_without_numeric_boxes"
+}

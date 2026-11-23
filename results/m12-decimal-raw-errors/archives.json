@@ -1,0 +1,30 @@
+[
+  {
+    "raw": "gates/commands.json",
+    "archive": "gates/commands.json.gz",
+    "raw_sha256": "2776e074afb512b05adf12743ec2642c2080036405f42aa39a9f6ad1a5029821",
+    "raw_bytes": 499514,
+    "archive_sha256": "79124a062294229043bd3b39605d1bface0a479a301f8aa72d211ee59b1d38f4"
+  },
+  {
+    "raw": "suite-after-raw-strings/suite-build.log",
+    "archive": "suite-after-raw-strings/suite-build.log.gz",
+    "raw_sha256": "4cd84ac2831f77e722b140b4435b867cddcbc4daf0fc56054abde60d723dd0e2",
+    "raw_bytes": 270536,
+    "archive_sha256": "89e82b66dd6a63a4953d5b36a0248cecb943796e0849890462b8459201e3b847"
+  },
+  {
+    "raw": "suite-after-raw-strings/suite-capture/suite-observations.json",
+    "archive": "suite-after-raw-strings/suite-capture/suite-observations.json.gz",
+    "raw_sha256": "c7e194aa5bf52ff652ab1bde5e0b69dee9d9cd7727705da8439c1bd6a5a846a9",
+    "raw_bytes": 4712188,
+    "archive_sha256": "d58124ed3211018bfe2d79dee321493cda4dccd882e16a5c11897f8a1064124c"
+  },
+  {
+    "raw": "suite-after-raw-strings/suite-commands.json",
+    "archive": "suite-after-raw-strings/suite-commands.json.gz",
+    "raw_sha256": "2ff2590b2ade76538effbc4746a4e5000d6d08eb71eab4b938f7e35871468784",
+    "raw_bytes": 493829,
+    "archive_sha256": "6dd7a4c49c9a0fed6a1276404b2355af6a581785fb640085065e9c90c41e7cef"
+  }
+]

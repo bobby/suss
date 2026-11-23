@@ -202,7 +202,7 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
             code.extend([LocalGet(0), Call(double), LocalTee(2),
                 F64Const((-9_223_372_036_854_775_808.0).into()), F64Lt,
                 LocalGet(2), F64Const(9_223_372_036_854_775_808.0.into()), F64Gt, I32Or,
-                If(BlockType::Empty), LocalGet(2), StructNew(NUMBER), LocalSet(3)]);
+                If(BlockType::Empty), LocalGet(2), Call(b.names["double-string"]), LocalSet(3)]);
             code.extend(throw_with_value(b, "Value out of range for long: ", 3));
             code.extend([End, LocalGet(2), I64TruncSatF64S, LocalSet(1)]);
         }

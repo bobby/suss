@@ -1,0 +1,452 @@
+Running as unit: run-p3125089-i91148239.scope; invocation ID: e67a06a1f86c407a8be5518cc86678a3
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 10s
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-target/debug/deps/clojure_decimal_constructors-38693a500596975e)
+
+running 1 test
+test math_context_constructor_overloads_follow_primary_controls ... FAILED
+
+failures:
+
+---- math_context_constructor_overloads_follow_primary_controls stdout ----
+
+thread 'math_context_constructor_overloads_follow_primary_controls' (3131840) panicked at crates/suss-cli/tests/clojure_decimal_constructors.rs:47:5:
+Runtime case5: (pr-str (with-precision nil 42))
+expected [:error "null String"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case6: (pr-str (with-precision "3" 42))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case13: (pr-str (with-precision "precision=3 roundingMode=UP" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=UP\" 1.24M -1.24M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case14: (pr-str (with-precision "precision=3 roundingMode=DOWN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=DOWN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case15: (pr-str (with-precision "precision=3 roundingMode=CEILING" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=CEILING\" 1.24M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case16: (pr-str (with-precision "precision=3 roundingMode=FLOOR" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=FLOOR\" 1.23M -1.24M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case17: (pr-str (with-precision "precision=3 roundingMode=HALF_UP" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_UP\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case18: (pr-str (with-precision "precision=3 roundingMode=HALF_DOWN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_DOWN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case19: (pr-str (with-precision "precision=3 roundingMode=HALF_EVEN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_EVEN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case20: (pr-str (with-precision "precision=3 roundingMode=UNNECESSARY" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected [:error "Rounding necessary"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case21: (pr-str (with-precision "precision=0 roundingMode=HALF_UP" (str *math-context*)))
+expected "\"precision=0 roundingMode=HALF_UP\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case22: (pr-str (with-precision "precision=+3 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case23: (pr-str (with-precision "precision=03 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case24: (pr-str (with-precision "precision=-0 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=0 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case25: (pr-str (with-precision "precision=-1 roundingMode=DOWN" (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case26: (pr-str (with-precision "precision=2147483647 roundingMode=FLOOR" (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case27: (pr-str (with-precision "precision=2147483648 roundingMode=FLOOR" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case28: (pr-str (with-precision "precision=-2147483649 roundingMode=FLOOR" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case29: (pr-str (with-precision "precision=٣ roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case30: (pr-str (with-precision "precision=３ roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case31: (pr-str (with-precision "precision=𝟛 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case32: (pr-str (with-precision "precision=3  roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case33: (pr-str (with-precision "precision=3\troundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case34: (pr-str (with-precision " precision=3 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case35: (pr-str (with-precision "precision=3 roundingMode=DOWN " (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case36: (pr-str (with-precision "precision=3 roundingMode=down" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case37: (pr-str (with-precision "precision=3 roundingMode=UNKNOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case38: (pr-str (with-precision "precision=3" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case39: (pr-str (with-precision "3" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case40: (pr-str (with-precision "precision=+ roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case41: (pr-str (with-precision "precision=3.0 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case42: (pr-str (with-precision "precision=3 roundingMode=" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case43: (pr-str (with-precision "precision=3 roundingMode=DOWN trailing" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case44: (pr-str (with-precision "precision=000000000000000000000000000000003 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case45: (pr-str (with-precision nil :rounding FLOOR (str *math-context*)))
+expected [:error "Cannot invoke \"java.lang.Character.charValue()\" because \"x\" is null"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case46: (pr-str (with-precision "precision=3 roundingMode=FLOOR" :rounding FLOOR (str *math-context*)))
+expected [:error "class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case48: (pr-str (with-precision 3N :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case49: (pr-str (with-precision 3M :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case50: (pr-str (with-precision 3.0 :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case51: (pr-str (with-precision 3/2 :rounding FLOOR (str *math-context*)))
+expected "\"precision=1 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case52: (pr-str (with-precision -3/2 :rounding FLOOR (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case53: (pr-str (with-precision 2147483647.99M :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case54: (pr-str (with-precision 2147483648N :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case55: (pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case56: (pr-str (with-precision ##NaN :rounding FLOOR (str *math-context*)))
+expected "\"precision=0 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case57: (pr-str (with-precision ##Inf :rounding FLOOR (str *math-context*)))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case58: (pr-str (with-precision ##-Inf :rounding FLOOR (str *math-context*)))
+expected [:error "Value out of range for long: -Infinity"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case59: (pr-str (with-precision true :rounding FLOOR (str *math-context*)))
+expected [:error "class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case60: (pr-str (with-precision :x :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case61: (pr-str (with-precision [] :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case62: (pr-str (with-precision {} :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case63: (pr-str (let [a (atom 0)] [(with-precision (do (swap! a inc) "precision=3 roundingMode=DOWN") (+ 1.234M 0M)) @a]))
+expected "[1.23M 1]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case65: (pr-str (with-precision 5 :rounding CEILING [(try (with-precision nil :rounding FLOOR 42) (catch Throwable e (ex-message e))) (str *math-context*)]))
+expected "[\"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\" \"precision=5 roundingMode=CEILING\"]"
+actual Ok("\"[\\\"No matching ctor found for class java.math.MathContext\\\" \\\"precision=5 roundingMode=CEILING\\\"]\"")
+Runtime case66: (pr-str (with-precision 2147483647.5 :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case67: (pr-str (let [p 2147483647.5] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case68: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case69: (pr-str (with-precision 2147483647.5M :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case70: (pr-str (let [p 2147483647.5M] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case71: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5M))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case72: (pr-str (with-precision 2147483647N :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case73: (pr-str (let [p 2147483647N] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case74: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647N))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case75: (pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case76: (pr-str (let [p 2147483648.0] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case77: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483648.0))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case78: (pr-str (with-precision -2147483648.5 :rounding FLOOR (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case79: (pr-str (let [p -2147483648.5] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case80: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) -2147483648.5))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case81: (pr-str (with-precision 9223372036854775808.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case82: (pr-str (let [p 9223372036854775808.0] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Runtime case83: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 9223372036854775808.0))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case5: (pr-str (with-precision nil 42))
+expected [:error "null String"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case6: (pr-str (with-precision "3" 42))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case13: (pr-str (with-precision "precision=3 roundingMode=UP" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=UP\" 1.24M -1.24M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case14: (pr-str (with-precision "precision=3 roundingMode=DOWN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=DOWN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case15: (pr-str (with-precision "precision=3 roundingMode=CEILING" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=CEILING\" 1.24M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case16: (pr-str (with-precision "precision=3 roundingMode=FLOOR" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=FLOOR\" 1.23M -1.24M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case17: (pr-str (with-precision "precision=3 roundingMode=HALF_UP" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_UP\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case18: (pr-str (with-precision "precision=3 roundingMode=HALF_DOWN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_DOWN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case19: (pr-str (with-precision "precision=3 roundingMode=HALF_EVEN" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected "[\"precision=3 roundingMode=HALF_EVEN\" 1.23M -1.23M]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case20: (pr-str (with-precision "precision=3 roundingMode=UNNECESSARY" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))
+expected [:error "Rounding necessary"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case21: (pr-str (with-precision "precision=0 roundingMode=HALF_UP" (str *math-context*)))
+expected "\"precision=0 roundingMode=HALF_UP\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case22: (pr-str (with-precision "precision=+3 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case23: (pr-str (with-precision "precision=03 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case24: (pr-str (with-precision "precision=-0 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=0 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case25: (pr-str (with-precision "precision=-1 roundingMode=DOWN" (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case26: (pr-str (with-precision "precision=2147483647 roundingMode=FLOOR" (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case27: (pr-str (with-precision "precision=2147483648 roundingMode=FLOOR" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case28: (pr-str (with-precision "precision=-2147483649 roundingMode=FLOOR" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case29: (pr-str (with-precision "precision=٣ roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case30: (pr-str (with-precision "precision=３ roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case31: (pr-str (with-precision "precision=𝟛 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case32: (pr-str (with-precision "precision=3  roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case33: (pr-str (with-precision "precision=3\troundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case34: (pr-str (with-precision " precision=3 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case35: (pr-str (with-precision "precision=3 roundingMode=DOWN " (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case36: (pr-str (with-precision "precision=3 roundingMode=down" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case37: (pr-str (with-precision "precision=3 roundingMode=UNKNOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case38: (pr-str (with-precision "precision=3" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case39: (pr-str (with-precision "3" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case40: (pr-str (with-precision "precision=+ roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case41: (pr-str (with-precision "precision=3.0 roundingMode=DOWN" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case42: (pr-str (with-precision "precision=3 roundingMode=" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case43: (pr-str (with-precision "precision=3 roundingMode=DOWN trailing" (str *math-context*)))
+expected [:error "bad string format"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case44: (pr-str (with-precision "precision=000000000000000000000000000000003 roundingMode=DOWN" (str *math-context*)))
+expected "\"precision=3 roundingMode=DOWN\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case45: (pr-str (with-precision nil :rounding FLOOR (str *math-context*)))
+expected [:error "Cannot invoke \"java.lang.Character.charValue()\" because \"x\" is null"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case46: (pr-str (with-precision "precision=3 roundingMode=FLOOR" :rounding FLOOR (str *math-context*)))
+expected [:error "class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case48: (pr-str (with-precision 3N :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case49: (pr-str (with-precision 3M :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case50: (pr-str (with-precision 3.0 :rounding FLOOR (str *math-context*)))
+expected "\"precision=3 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case51: (pr-str (with-precision 3/2 :rounding FLOOR (str *math-context*)))
+expected "\"precision=1 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case52: (pr-str (with-precision -3/2 :rounding FLOOR (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case53: (pr-str (with-precision 2147483647.99M :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case54: (pr-str (with-precision 2147483648N :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case55: (pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case56: (pr-str (with-precision ##NaN :rounding FLOOR (str *math-context*)))
+expected "\"precision=0 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case57: (pr-str (with-precision ##Inf :rounding FLOOR (str *math-context*)))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case58: (pr-str (with-precision ##-Inf :rounding FLOOR (str *math-context*)))
+expected [:error "Value out of range for long: -Infinity"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case59: (pr-str (with-precision true :rounding FLOOR (str *math-context*)))
+expected [:error "class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case60: (pr-str (with-precision :x :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case61: (pr-str (with-precision [] :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case62: (pr-str (with-precision {} :rounding FLOOR (str *math-context*)))
+expected [:error "class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case63: (pr-str (let [a (atom 0)] [(with-precision (do (swap! a inc) "precision=3 roundingMode=DOWN") (+ 1.234M 0M)) @a]))
+expected "[1.23M 1]"
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case65: (pr-str (with-precision 5 :rounding CEILING [(try (with-precision nil :rounding FLOOR 42) (catch Throwable e (ex-message e))) (str *math-context*)]))
+expected "[\"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\" \"precision=5 roundingMode=CEILING\"]"
+actual Ok("\"[\\\"No matching ctor found for class java.math.MathContext\\\" \\\"precision=5 roundingMode=CEILING\\\"]\"")
+Macro case66: (pr-str (with-precision 2147483647.5 :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case67: (pr-str (let [p 2147483647.5] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case68: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case69: (pr-str (with-precision 2147483647.5M :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case70: (pr-str (let [p 2147483647.5M] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case71: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5M))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case72: (pr-str (with-precision 2147483647N :rounding FLOOR (str *math-context*)))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case73: (pr-str (let [p 2147483647N] (with-precision p :rounding FLOOR (str *math-context*))))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case74: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647N))
+expected "\"precision=2147483647 roundingMode=FLOOR\""
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case75: (pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case76: (pr-str (let [p 2147483648.0] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case77: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483648.0))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case78: (pr-str (with-precision -2147483648.5 :rounding FLOOR (str *math-context*)))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case79: (pr-str (let [p -2147483648.5] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case80: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) -2147483648.5))
+expected [:error "Digits < 0"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case81: (pr-str (with-precision 9223372036854775808.0 :rounding FLOOR (str *math-context*)))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case82: (pr-str (let [p 9223372036854775808.0] (with-precision p :rounding FLOOR (str *math-context*))))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+Macro case83: (pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 9223372036854775808.0))
+expected [:error "integer overflow"]
+actual Ok("[:error \"No matching ctor found for class java.math.MathContext\"]")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    math_context_constructor_overloads_follow_primary_controls
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 38.24s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_constructors`

@@ -523,6 +523,27 @@ pub(super) fn intrinsics(
         &convert,
     );
 
+    // Format a raw double without constructing a numeric wrapper, including
+    // on raw integer-cast diagnostic paths. Scratch is private and reused only
+    // after all bytes have been copied into the returned UTF-16 string.
+    let mut format_double = vec![
+        I64Const(32), Call(reserve), LocalSet(1),
+        I32Const(helper.stack_top), GlobalSet(helper.stack_global),
+        LocalGet(0), LocalGet(1), Call(helper.format), LocalSet(2),
+    ];
+    format_double.extend(check(&[LocalGet(2), I32Const(32), I32GtU], &allocation));
+    format_double.extend([
+        LocalGet(2), ArrayNewDefault(STRING), LocalSet(4),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), LocalGet(2), I32GeU, BrIf(1),
+        LocalGet(4), RefCastNonNull(string), LocalGet(3),
+        LocalGet(1), LocalGet(3), I32Add, I32Load8U(byte), ArraySet(STRING),
+        LocalGet(3), I32Const(1), I32Add, LocalSet(3), Br(0), End, End,
+        LocalGet(4),
+    ]);
+    let double_string = b.function_with_locals("double-string", &[ValType::F64], &[VALUE],
+        &[(3, ValType::I32), (1, VALUE)], &format_double);
+
     // A long, an i31 or a boxed one, first (#388): its digits, with no
     // long-test or long-unbox call. An i31 is never a string or a sentinel.
     let long_string = b.names["long-string"];
@@ -575,68 +596,18 @@ pub(super) fn intrinsics(
         to_string.extend([Return, End]);
     }
     to_string.extend([
-        LocalGet(0),
-        Call(b.names["long-test"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(b.names["long-unbox"]),
-        Call(b.names["long-string"]),
-        Return,
-        End,
-        LocalGet(0),
-        RefTestNonNull(number),
-        If(BlockType::Empty),
-        I64Const(32),
-        Call(reserve),
-        LocalSet(1),
-        I32Const(helper.stack_top),
-        GlobalSet(helper.stack_global),
-        LocalGet(0),
-        RefCastNonNull(number),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
-        LocalGet(1),
-        Call(helper.format),
-        LocalSet(2),
-    ]);
-    to_string.extend(check(&[LocalGet(2), I32Const(32), I32GtU], &allocation));
-    to_string.extend([
-        LocalGet(2),
-        ArrayNewDefault(STRING),
-        LocalSet(4),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
-        LocalGet(2),
-        I32GeU,
-        BrIf(1),
-        LocalGet(4),
-        RefCastNonNull(string),
-        LocalGet(3),
-        LocalGet(1),
-        LocalGet(3),
-        I32Add,
-        I32Load8U(byte),
-        ArraySet(STRING),
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
-        Br(0),
-        End,
-        End,
-        LocalGet(4),
-        Return,
-        End,
+        LocalGet(0), Call(b.names["long-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["long-unbox"]), ReturnCall(long_string), End,
+        LocalGet(0), RefTestNonNull(number), If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(number),
+        StructGet {struct_type_index:NUMBER, field_index:0}, ReturnCall(double_string), End,
     ]);
     coercions::string(&mut to_string, coercion_types);
     let to_string = b.function_with_locals(
         "coerce-string",
         &[VALUE],
         &[VALUE],
-        &[(3, ValType::I32), (1, VALUE)],
+        &[],
         &to_string,
     );
     // JS property keys: an integral double names the same property as the

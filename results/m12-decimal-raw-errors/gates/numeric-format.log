@@ -1,0 +1,13 @@
+Running as unit: run-p3183500-i91233425.scope; invocation ID: 07c0b4dc9466410d998429699149d0f3
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 4.08s
+     Running tests/runtime_abi.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/runtime_abi-5acf5bbdcbdf7187)
+
+running 4 tests
+test runtime_abi_numeric_allocation_failure_is_typed_and_not_nan_or_a_trap ... ok
+test runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps ... ok
+test runtime_abi_numeric_operations_and_sentinels_execute ... ok
+test runtime_abi_numeric_samples_match_pinned_formatting_and_parsing ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 55 filtered out; finished in 3.16s
+

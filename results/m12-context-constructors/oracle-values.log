@@ -1,0 +1,84 @@
+0 "42"
+1 [:error "No matching ctor found for class java.math.MathContext"]
+2 [:error "No matching ctor found for class java.math.MathContext"]
+3 [:error "No matching ctor found for class java.math.MathContext"]
+4 [:error "No matching ctor found for class java.math.MathContext"]
+5 [:error "null String"]
+6 [:error "bad string format"]
+7 [:error "No matching ctor found for class java.math.MathContext"]
+8 "42"
+9 [:error "integer overflow"]
+10 [:error "integer overflow"]
+11 [:error "integer overflow"]
+12 [:error "Digits < 0"]
+13 "[\"precision=3 roundingMode=UP\" 1.24M -1.24M]"
+14 "[\"precision=3 roundingMode=DOWN\" 1.23M -1.23M]"
+15 "[\"precision=3 roundingMode=CEILING\" 1.24M -1.23M]"
+16 "[\"precision=3 roundingMode=FLOOR\" 1.23M -1.24M]"
+17 "[\"precision=3 roundingMode=HALF_UP\" 1.23M -1.23M]"
+18 "[\"precision=3 roundingMode=HALF_DOWN\" 1.23M -1.23M]"
+19 "[\"precision=3 roundingMode=HALF_EVEN\" 1.23M -1.23M]"
+20 [:error "Rounding necessary"]
+21 "\"precision=0 roundingMode=HALF_UP\""
+22 "\"precision=3 roundingMode=DOWN\""
+23 "\"precision=3 roundingMode=DOWN\""
+24 "\"precision=0 roundingMode=DOWN\""
+25 [:error "Digits < 0"]
+26 "\"precision=2147483647 roundingMode=FLOOR\""
+27 [:error "bad string format"]
+28 [:error "bad string format"]
+29 "\"precision=3 roundingMode=DOWN\""
+30 "\"precision=3 roundingMode=DOWN\""
+31 [:error "bad string format"]
+32 [:error "bad string format"]
+33 [:error "bad string format"]
+34 [:error "bad string format"]
+35 [:error "bad string format"]
+36 [:error "bad string format"]
+37 [:error "bad string format"]
+38 [:error "bad string format"]
+39 [:error "bad string format"]
+40 [:error "bad string format"]
+41 [:error "bad string format"]
+42 [:error "bad string format"]
+43 [:error "bad string format"]
+44 "\"precision=3 roundingMode=DOWN\""
+45 [:error "Cannot invoke \"java.lang.Character.charValue()\" because \"x\" is null"]
+46 [:error "class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')"]
+47 "\"precision=3 roundingMode=FLOOR\""
+48 "\"precision=3 roundingMode=FLOOR\""
+49 "\"precision=3 roundingMode=FLOOR\""
+50 "\"precision=3 roundingMode=FLOOR\""
+51 "\"precision=1 roundingMode=FLOOR\""
+52 [:error "Digits < 0"]
+53 "\"precision=2147483647 roundingMode=FLOOR\""
+54 [:error "integer overflow"]
+55 [:error "integer overflow"]
+56 "\"precision=0 roundingMode=FLOOR\""
+57 [:error "Value out of range for long: Infinity"]
+58 [:error "Value out of range for long: -Infinity"]
+59 [:error "class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')"]
+60 [:error "class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+61 [:error "class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+62 [:error "class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')"]
+63 "[1.23M 1]"
+64 "[[:precision :caught] [:precision :caught] \"\"]"
+65 "[\"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\" \"precision=5 roundingMode=CEILING\"]"
+66 "\"precision=2147483647 roundingMode=FLOOR\""
+67 "\"precision=2147483647 roundingMode=FLOOR\""
+68 "\"precision=2147483647 roundingMode=FLOOR\""
+69 "\"precision=2147483647 roundingMode=FLOOR\""
+70 "\"precision=2147483647 roundingMode=FLOOR\""
+71 "\"precision=2147483647 roundingMode=FLOOR\""
+72 "\"precision=2147483647 roundingMode=FLOOR\""
+73 "\"precision=2147483647 roundingMode=FLOOR\""
+74 "\"precision=2147483647 roundingMode=FLOOR\""
+75 [:error "integer overflow"]
+76 [:error "integer overflow"]
+77 [:error "integer overflow"]
+78 [:error "Digits < 0"]
+79 [:error "Digits < 0"]
+80 [:error "Digits < 0"]
+81 [:error "integer overflow"]
+82 [:error "integer overflow"]
+83 [:error "integer overflow"]

@@ -29,61 +29,9 @@ pub(super) fn registration(b: &mut Builder) {
     code.extend([LocalGet(0), GlobalSet(GETTER_ROOT), LocalGet(0)]);
     b.function("decimal-context-getter-install", &[VALUE], &[VALUE], &code);
 }
+mod constructor;
 pub(super) fn constructor(b: &mut Builder) {
-    let mut code = vec![
-        LocalGet(0),
-        Call(b.names["long-test"]),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    code.extend(error(
-        "No matching ctor found for class java.math.MathContext",
-    ));
-    code.push(End);
-    code.extend([
-        LocalGet(0),
-        Call(b.names["number-cast-int"]),
-        Call(b.names["long-unbox"]),
-        I32WrapI64,
-        LocalSet(2),
-        LocalGet(2),
-        I32Const(0),
-        I32LtS,
-        If(BlockType::Empty),
-    ]);
-    code.extend(error("Digits < 0"));
-    code.push(End);
-    code.extend([
-        LocalGet(1),
-        Call(b.names["long-test"]),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    code.extend(error("Invalid rounding mode"));
-    code.push(End);
-    code.extend([
-        LocalGet(1),
-        Call(b.names["long-unbox"]),
-        LocalTee(3),
-        I64Const(7),
-        I64GtU,
-        If(BlockType::Empty),
-    ]);
-    code.extend(error("Invalid rounding mode"));
-    code.push(End);
-    code.extend([
-        LocalGet(2),
-        LocalGet(3),
-        I32WrapI64,
-        StructNew(MATH_CONTEXT),
-    ]);
-    b.function_with_locals(
-        "decimal-context-new",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(1, ValType::I32), (1, ValType::I64)],
-        &code,
-    );
+    constructor::function(b);
 }
 pub(super) fn reader(b: &mut Builder) {
     let mut code = vec![

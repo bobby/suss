@@ -1,0 +1,338 @@
+[
+  [
+    "(pr-str (with-precision 3 42))",
+    "\"42\""
+  ],
+  [
+    "(pr-str (with-precision 3N 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3M 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3.0 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3/2 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision nil 42))",
+    "[:error \"null String\"]"
+  ],
+  [
+    "(pr-str (with-precision \"3\" 42))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision true 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 2147483647 42))",
+    "\"42\""
+  ],
+  [
+    "(pr-str (with-precision 2147483648 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision 4294967296 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision -4294967296 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision -1 42))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=UP\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=UP\\\" 1.24M -1.24M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=DOWN\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=DOWN\\\" 1.23M -1.23M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=CEILING\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=CEILING\\\" 1.24M -1.23M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=FLOOR\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=FLOOR\\\" 1.23M -1.24M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=HALF_UP\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=HALF_UP\\\" 1.23M -1.23M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=HALF_DOWN\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=HALF_DOWN\\\" 1.23M -1.23M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=HALF_EVEN\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "\"[\\\"precision=3 roundingMode=HALF_EVEN\\\" 1.23M -1.23M]\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=UNNECESSARY\" [(str *math-context*) (+ 1.234M 0M) (- -1.234M 0M)]))",
+    "[:error \"Rounding necessary\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=0 roundingMode=HALF_UP\" (str *math-context*)))",
+    "\"\\\"precision=0 roundingMode=HALF_UP\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=+3 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=03 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=-0 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=0 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=-1 roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=2147483647 roundingMode=FLOOR\" (str *math-context*)))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=2147483648 roundingMode=FLOOR\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=-2147483649 roundingMode=FLOOR\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=\u0663 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=\uff13 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision \"precision=\ud835\udfdb roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3  roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3\\troundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \" precision=3 roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=DOWN \" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=down\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=UNKNOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"3\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=+ roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3.0 roundingMode=DOWN\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=DOWN trailing\" (str *math-context*)))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=000000000000000000000000000000003 roundingMode=DOWN\" (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=DOWN\\\"\""
+  ],
+  [
+    "(pr-str (with-precision nil :rounding FLOOR (str *math-context*)))",
+    "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]"
+  ],
+  [
+    "(pr-str (with-precision \"precision=3 roundingMode=FLOOR\" :rounding FLOOR (str *math-context*)))",
+    "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (with-precision 3 :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 3N :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 3M :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 3.0 :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=3 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 3/2 :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=1 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision -3/2 :rounding FLOOR (str *math-context*)))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str (with-precision 2147483647.99M :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 2147483648N :rounding FLOOR (str *math-context*)))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision ##NaN :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=0 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision ##Inf :rounding FLOOR (str *math-context*)))",
+    "[:error \"Value out of range for long: Infinity\"]"
+  ],
+  [
+    "(pr-str (with-precision ##-Inf :rounding FLOOR (str *math-context*)))",
+    "[:error \"Value out of range for long: -Infinity\"]"
+  ],
+  [
+    "(pr-str (with-precision true :rounding FLOOR (str *math-context*)))",
+    "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (with-precision :x :rounding FLOOR (str *math-context*)))",
+    "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (with-precision [] :rounding FLOOR (str *math-context*)))",
+    "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (with-precision {} :rounding FLOOR (str *math-context*)))",
+    "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [a (atom 0)] [(with-precision (do (swap! a inc) \"precision=3 roundingMode=DOWN\") (+ 1.234M 0M)) @a]))",
+    "\"[1.23M 1]\""
+  ],
+  [
+    "(pr-str (let [a (atom [])] [(try (with-precision (do (swap! a conj :precision) \"bad\") (swap! a conj :body)) (catch Throwable e (swap! a conj :caught))) @a (str *math-context*)]))",
+    "\"[[:precision :caught] [:precision :caught] \\\"\\\"]\""
+  ],
+  [
+    "(pr-str (with-precision 5 :rounding CEILING [(try (with-precision nil :rounding FLOOR 42) (catch Throwable e (ex-message e))) (str *math-context*)]))",
+    "\"[\\\"Cannot invoke \\\\\\\"java.lang.Character.charValue()\\\\\\\" because \\\\\\\"x\\\\\\\" is null\\\" \\\"precision=5 roundingMode=CEILING\\\"]\""
+  ],
+  [
+    "(pr-str (with-precision 2147483647.5 :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (let [p 2147483647.5] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 2147483647.5M :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (let [p 2147483647.5M] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647.5M))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 2147483647N :rounding FLOOR (str *math-context*)))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (let [p 2147483647N] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483647N))",
+    "\"\\\"precision=2147483647 roundingMode=FLOOR\\\"\""
+  ],
+  [
+    "(pr-str (with-precision 2147483648.0 :rounding FLOOR (str *math-context*)))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (let [p 2147483648.0] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 2147483648.0))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision -2147483648.5 :rounding FLOOR (str *math-context*)))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str (let [p -2147483648.5] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) -2147483648.5))",
+    "[:error \"Digits < 0\"]"
+  ],
+  [
+    "(pr-str (with-precision 9223372036854775808.0 :rounding FLOOR (str *math-context*)))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (let [p 9223372036854775808.0] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 9223372036854775808.0))",
+    "[:error \"integer overflow\"]"
+  ]
+]

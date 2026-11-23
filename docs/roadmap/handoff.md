@@ -1,3 +1,43 @@
+## MathContext overload and raw cast diagnostic probes (2026-11-23)
+
+The complete8b70a31f CI has seven passing integration partitions and one failure:
+`portable_unboxed_locals::raw_numeric_helpers_return_scalars_without_numeric_boxes`.
+The full failed job137499533577 log is retained; no original guard is changed.
+`results/m12-decimal-raw-errors/before-raw-box-guard.log` reproduces it locally;
+`after-raw-box-guard.log` passes after factoring raw f64-to-string conversion.
+A checked Decimal overflow diagnostic no longer constructs a numeric wrapper.
+Scratch reservation/reset/bounds, UTF-16 copying and typed allocation failure
+are preserved; ordinary double coercion uses the same formatter.
+
+The required unfiltered8b70a31f local run was stopped after the decisive CI
+failure, before changing source. Its terminal receipt is exit-2 after1943s,
+inputs unchanged, under `m12-decimal-conversions/workspace-baseline`; the reason
+and dedicated scope interruption are recorded in `prior-workspace-interruption.json`.
+It is interrupted evidence, never a full pass. A fresh required command is
+`python3 results/m12-decimal-raw-errors/run-workspace.py` (two test threads).
+
+The separately validated constructor checkpoint is integrated in the same
+source. `results/m12-context-constructors/run.py expanded-constructor-controls`
+passes102 fresh primary Runtime/Macro/actual-AOT controls. Default and explicit
+rounding constructors use their distinct String/checked-int overloads; the
+native UTF-16 grammar handles37 BMP decimal digit ranges and exact signed32-bit
+bounds. Every65536 code unit is checked against the actual pinned JVM mapping.
+Original71 mismatches/phase are retained.18 additional diagnostic/large-range
+controls also match in cold standalone CLI execution. Macro provenance/EPL and
+adaptation hashes remain current. These controls do not certify all BigDecimal
+or unrelated host-object behavior.
+
+`python3 results/m12-decimal-raw-errors/run-gates.py` passes90 tests:13 unboxed
+locals,4 runtime numeric-format checks,68 Decimal/constructor/ABI/decoder/local
+inference, unchanged AOT size, and4 bootstrap checks.15 foundation commands
+(364 Python tests), Java/Node-free bootstrap reproduction/execution and workspace
+test compilation pass, frozen inputs unchanged. Sizes remain3895 <=3900 bytes/
+form and96 <=128 extra split-form code bytes. `run-suite.py suite-after-raw-strings`
+and `audit-suite.py` pass:4585 observation rows are byte-identical to the preceding
+capture, with zero assertion/test/namespace changes and unchanged primary,
+count/skip/source-routing/comparator/baseline bytes. Counts are4326/63/208/2342/84;
+54 Decimal source-form candidates and six unexecuted Decimal operands remain.
+
 ## Decimal conversion, source reload and artifact size probes (2026-11-23)
 
 `results/m12-decimal-conversions` preserves original failures and fresh primary

@@ -1558,3 +1558,29 @@ still54 unresolved Decimal source-form candidates;194 of200 Decimal operand
 assertions match and six remain unexecuted through namespace failures. String/
 nil MathContext constructor behavior and complete suite acceptance still need
 work. This evidence does not certify complete BigDecimal semantics.
+
+### Constructor overload and raw diagnostic observations
+
+`results/m12-context-constructors` adds102 fresh JVM constructor controls passing
+Runtime/Macro/actual AOT. The one-argument MathContext constructor accepts its
+String grammar and has distinct overload rules from explicit-rounding checked
+int coercion. All eight modes, range errors, aliases, ordinary functions,
+evaluation order and binding recovery are covered. The native UTF-16 parser's
+370 digits match the complete65536-code-unit JVM domain; supplementary surrogate
+pairs are rejected. All18 additional diagnostic/range controls also match cold
+standalone CLI execution. Source provenance/EPL remains with the macro.
+
+`results/m12-decimal-raw-errors` records a new strict CI failure: a checked
+Decimal cast constructed a Double wrapper solely for its range diagnostic.
+The unchanged guard fails before repair and passes afterward. Raw f64 formatting
+is shared without numeric boxing, retaining scratch bounds/reset, UTF-16 copying
+and typed allocation failure. All37 scalar helper signatures and both numeric
+box-layout assertions remain.90 focused tests and364 Python foundation tests,
+bootstrap reproduction/execution and workspace test compilation pass. The
+unchanged AOT limits still measure3895/form and96 extra split-form code bytes.
+
+The fresh complete capture passes with all4585 observation rows byte-identical
+to the preceding capture:4326/63/208/2342/84. No primary, source-routing, count,
+skip, comparator or baseline change is made. Full workspace execution and
+independent final-head review/CI still require evidence; remaining suite gaps
+are retained rather than relabeled as successful.

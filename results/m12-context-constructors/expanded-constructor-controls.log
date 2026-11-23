@@ -1,0 +1,11 @@
+Running as unit: run-p3166145-i91238745.scope; invocation ID: 2af925143a214a8d86346ca5c2b401c7
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.30s
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-target/debug/deps/clojure_decimal_constructors-38693a500596975e)
+
+running 2 tests
+test aot_executes_math_context_constructor_overloads ... ok
+test math_context_constructor_overloads_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.35s
+

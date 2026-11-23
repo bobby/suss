@@ -112,6 +112,13 @@
     "archive_sha256": "4c9839779050d725bd63d278ab4b1afe42a422e48dda6765319626b04eb60a31"
   },
   {
+    "raw": "ci-137499533577.log",
+    "archive": "ci-137499533577.log.gz",
+    "raw_sha256": "e2d6012a26d30a297a2d3733163dd4f97863651d364a20317734c1997c6f8a47",
+    "raw_bytes": 169244,
+    "archive_sha256": "8d4b7b67aed223a59c204cfe1d8bc5248293d3cf62f68f3361d2b9c626b0c459"
+  },
+  {
     "raw": "ci-repair/aot-size-after/size-24.wasm",
     "archive": "ci-repair/aot-size-after/size-24.wasm.gz",
     "raw_sha256": "60517593cf09c1aac5d46fb72fb1061b2900e2a16800bf0434909027610fa3ac",
@@ -166,5 +173,12 @@
     "raw_sha256": "85d3626a663aaddd64c255349bbf331ce3d7dd2f6eef5e845e1474d72f64f40c",
     "raw_bytes": 493429,
     "archive_sha256": "15b14d695f3c52f8709aac5c8079cd418700f49b4c39f2ffaadaf20ee4a9ad8d"
+  },
+  {
+    "raw": "workspace-baseline/command.json",
+    "archive": "workspace-baseline/command.json.gz",
+    "raw_sha256": "d9ab709a438d26390859d3ec3f05c3e77f0ad08ba9bb21b6b54b5fa7ef5fdb78",
+    "raw_bytes": 492625,
+    "archive_sha256": "a23e4ad61506ab6264b2b39da2fc1a019572872b959c9dcb3424dfeea621faf5"
   }
 ]
