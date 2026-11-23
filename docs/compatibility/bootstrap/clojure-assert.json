@@ -21,7 +21,7 @@
   ],
   "files": {
     "crates/suss-compile/src/portable_core_macros.rs": "2f5d9130ec7a8e01802c39f2d0c1c9995a3209585d9e05d998a15dbcabccb01a",
-    "crates/suss-compile/src/portable_macros.rs": "4967fcbf56dc03fd295d8733db4477b0af7422e5de7ce4f9ffab5e6a9820d9e6",
+    "crates/suss-compile/src/portable_macros.rs": "a33360aba6e66e61426133ece54dd9743d7903e8cec08dc596f09f5822b979a7",
     "crates/suss-cli/tests/clojure_assert.rs": "836cdbc024b63e5a1d64745ea3b63e0353064e39d309f2e6d935ad9ccb2f2389",
     "docs/compatibility/bootstrap/exact-integers.sus": "8e854f24370e190026a73cff00e228e98bec28573c793b6f6885d4f4fca966b7",
     "docs/compatibility/core-import.json": "e40b2e8c4480e9ef012ebaae242941d4c05230a3dcc70ebe9be7319cfaef6615",

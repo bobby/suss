@@ -1067,7 +1067,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision", "case"]
+                ["->>", "assert", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision", "case"]
                     .into_iter()
                     .find_map(|core_name| {
                         context

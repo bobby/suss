@@ -1,3 +1,11 @@
+The corrected-borrow assert gate on e20f18c5 returns101 after721.661s,
+inputs unchanged. The native flag regression observes the initialized Macro
+flag, then fails compiling an unqualified assert because registration omitted
+the existing automatic core-macro lookup list. Assert is now added to that
+list through the same excluded/shadowed-name lookup rules as the other compiled
+core macros. The regression is unchanged and the actual failure is archived.
+Native execution must be repeated; source registration alone is not a pass.
+
 The first assert focused gate on51cf8942 returns101 after138.454s, inputs unchanged,
 before executing language tests: the regression moved String units from a Form
 that implements Drop (E0509). The pattern now borrows those units. The original
