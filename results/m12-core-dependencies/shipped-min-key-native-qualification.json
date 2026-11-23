@@ -1,5 +1,5 @@
 {
-  "qualification": "Native matrices ran at9d501d71. Only the two listed documentation inputs changed after those runs; recorded production, native tests and fixtures still match. New baseline-review scripts, archived evidence and the suite target selection affect follow-up orchestration, not the native candidate under test.",
+  "qualification": "Native matrices ran at9d501d71. Their recorded production/native-test/fixture inputs still match. Subsequent changes are the documented two result descriptions and the exactly scoped reviewed baseline removal supported by the complete actual capture. New evidence/orchestration does not turn the earlier native101 full capture into a native pass.",
   "runs": [
     {
       "receipt": "after-checked-comparison-capture/command.json",
@@ -10,15 +10,22 @@
         {
           "path": "docs/compatibility/README.md",
           "native_input_sha256": "cf4b1a737ce0bae43af7ba071045249163f55a21263f93173ccbb0b3e237abb3",
-          "documentation_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
+          "later_input_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
         },
         {
           "path": "docs/roadmap/handoff.md",
           "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
-          "documentation_sha256": "65a6afdeae359932e6434b733b57883b4b07cda648572d646d85e14b032ca4c5"
+          "later_input_sha256": "1b20e8be14865fe68f62b4c67ba21bc77dbb115c901e69607957c5fcab638f8c"
         }
       ],
-      "all_other_recorded_native_inputs_match": true
+      "all_other_recorded_native_inputs_match": true,
+      "later_reviewed_baseline_change": [
+        {
+          "path": "tests/oracle/clojure-test-suite-known-failures.json",
+          "native_input_sha256": "88ccd83c7614da545c1c44b1c4ed090ac2c2e85ba9ad02e5b0d7290992b73f33",
+          "later_input_sha256": "ffc011e8aee7bb7439955a551c25ed75f83f7799092eba1305f1956de27435d0"
+        }
+      ]
     },
     {
       "receipt": "complete-min-key-body/command.json",
@@ -29,15 +36,22 @@
         {
           "path": "docs/compatibility/README.md",
           "native_input_sha256": "cf4b1a737ce0bae43af7ba071045249163f55a21263f93173ccbb0b3e237abb3",
-          "documentation_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
+          "later_input_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
         },
         {
           "path": "docs/roadmap/handoff.md",
           "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
-          "documentation_sha256": "65a6afdeae359932e6434b733b57883b4b07cda648572d646d85e14b032ca4c5"
+          "later_input_sha256": "1b20e8be14865fe68f62b4c67ba21bc77dbb115c901e69607957c5fcab638f8c"
         }
       ],
-      "all_other_recorded_native_inputs_match": true
+      "all_other_recorded_native_inputs_match": true,
+      "later_reviewed_baseline_change": [
+        {
+          "path": "tests/oracle/clojure-test-suite-known-failures.json",
+          "native_input_sha256": "88ccd83c7614da545c1c44b1c4ed090ac2c2e85ba9ad02e5b0d7290992b73f33",
+          "later_input_sha256": "ffc011e8aee7bb7439955a551c25ed75f83f7799092eba1305f1956de27435d0"
+        }
+      ]
     }
   ]
 }
