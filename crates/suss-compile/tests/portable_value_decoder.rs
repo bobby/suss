@@ -964,3 +964,36 @@ fn case_hash_preserves_retained_fields_after_gc_and_public_rebinding() {
         }
     }
 }
+
+#[test]
+fn compiled_case_retains_literal_values_after_gc_and_keeps_collision_equality_live() {
+    use suss_compile::portable_macros::CompiledMacros;
+    let decimal = || Observation::Decimal { unscaled: "100".into(), scale: 2 };
+    let symbol = |s: &str| Observation::Symbol(None, s.encode_utf16().collect());
+    let cases = vec![
+        ("(let [x 1.00M] (fn [] (case :hit :hit x nil)))", decimal()),
+        ("(let [x [1.00M]] (fn [] (case x [1.00M] x nil)))", Observation::Vector(vec![decimal()])),
+        ("(let [x [1.00M]] (fn [] (case x [1.0M] x nil)))", Observation::Nil),
+        ("(let [x {:a 1.00M}] (fn [] (case x {:a 1.00M} x nil)))", Observation::Map(vec![(Observation::Keyword(None, vec![97]), decimal())])),
+        ("(let [x #{1.00M}] (fn [] (case x #{1.00M} x nil)))", Observation::Set(vec![decimal()])),
+        ("(let [x [1N]] (fn [] (case x [1] x nil)))", Observation::Vector(vec![Observation::BigInt("1".into())])),
+        ("(let [x '(a b)] (fn [] (case x [a b] x nil)))", Observation::List(vec![symbol("a"), symbol("b")])),
+        (r#"(fn [] (try (case "BB" "Aa" :aa "BB" :bb :miss) (catch :default e (ex-message e))))"#,
+            Observation::String("public equality called".encode_utf16().collect())),
+    ];
+    for phase in ["Runtime", "Macro"] {
+        let mut session = if phase == "Runtime" { Session::new_repl().unwrap() } else { Session::new_macro().unwrap() };
+        session.set_operation_fuel(100_000_000);
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 10_000).unwrap();
+        let functions = cases.iter().map(|(source, _)| session.eval_with_macros(source, &mut macros).unwrap()).collect::<Vec<_>>();
+        session.collect().unwrap();
+        session.eval_probe("(ns suss.core) (def pr-str (fn [& xs] (throw (ex-info \"guest printer called\" {})))) (def = (fn [& xs] (throw (ex-info \"public equality called\" {})))) (def hash (fn [& xs] (throw (ex-info \"public hash called\" {})))) (def keyword? (fn [x] false))").unwrap();
+        for ((source, expected), function) in cases.iter().zip(functions) {
+            let value = session.invoke(&function, &[]).unwrap();
+            session.collect().unwrap();
+            decoder.refill(10_000);
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), *expected, "{phase}: {source}");
+        }
+    }
+}

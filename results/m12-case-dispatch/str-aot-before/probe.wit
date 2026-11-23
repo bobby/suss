@@ -1,0 +1,1 @@
+package test:strprobe; world w { export check: func(unused: u32) -> string; }

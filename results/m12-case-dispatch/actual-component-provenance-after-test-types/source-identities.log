@@ -1,0 +1,25 @@
+Running as unit: run-p3846606-i91911966.scope; invocation ID: f4c28eac0d0f4db0917e342dc6638cb0
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.15s
+     Running tests/compiled_artifact_identities.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_artifact_identities-ee978ef8e56b8e53)
+
+running 3 tests
+test source_artifact_identity_keeps_external_macro_provenance_unknown ... ok
+test source_artifact_identity_records_actual_macro_versions_and_rejects_prior_graph ... ok
+test aot_component_source_index_preserves_all_input_fields_and_macro_versions ... FAILED
+
+failures:
+
+---- aot_component_source_index_preserves_all_input_fields_and_macro_versions stdout ----
+
+thread 'aot_component_source_index_preserves_all_input_fields_and_macro_versions' (3846699) panicked at crates/suss-cli/tests/compiled_artifact_identities.rs:134:83:
+called `Result::unwrap()` on an `Err` value: Diagnostic { span: 0..0, message: "Unresolved Runtime name provenance.sample/check" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    aot_component_source_index_preserves_all_input_fields_and_macro_versions
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_artifact_identities`

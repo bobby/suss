@@ -1,0 +1,23 @@
+(require '[clojure.edn :as edn] '[clojure.java.io :as io])
+(let [dir (io/file (first *command-line-args*))
+      wire (edn/read-string (slurp (io/file dir "component-inputs.edn")))
+      files (sort-by #(.getName %) (filter #(re-matches #"original-[0-9]+\.edn" (.getName %)) (.listFiles dir)))
+      original (mapv #(edn/read-string (slurp %)) files)
+      normalize (fn [m] (into {} (map (fn [[k v]] [(if (keyword? k) (name k) k) v]) m)))
+      graphs (:macro-graphs wire)
+      expanded (mapv (fn [m] (let [m (normalize m) ref (get m "macro-dependencies")]
+                    (assert (contains? m "macro-dependencies"))
+                    (assert (= 13 (count m)))
+                    (when (some? ref) (assert (and (integer? ref) (<= 0 ref) (< ref (count graphs)))))
+                    (assoc m "macro-dependencies" (when (some? ref) (nth graphs ref))))) (:inputs wire))
+      originals (mapv normalize original)
+      versions (->> originals (mapcat #(get % "macro-dependencies"))
+                    (filter #(= "macro:provenance.sample/answer" (first %))) (map second) set)]
+  (assert (= 1 (:format-version wire)))
+  (assert (= (set (keys wire)) #{:format-version :macro-graphs :inputs}))
+  (assert (= originals expanded))
+  (assert (= 2 (count versions)))
+  (assert (some (fn [[id _]] (= id "macro:suss.core/case")) (mapcat #(get % "macro-dependencies") originals)))
+  (println (pr-str {:status :pass :input-count (count originals) :fields-per-input 13
+                   :distinct-graphs (count graphs) :answer-macro-versions (count versions)
+                   :clojure-version (clojure-version)})))

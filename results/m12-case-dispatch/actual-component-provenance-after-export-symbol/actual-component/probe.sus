@@ -1,0 +1,6 @@
+(ns provenance.sample)
+(defmacro answer [] 41)
+(def first-answer (answer))
+(defmacro answer [] 42)
+(def second-answer (answer))
+(def check (fn [unused] (case [first-answer second-answer] [41 42] 1 0)))

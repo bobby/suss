@@ -13,7 +13,7 @@ inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p 
 inputs['results/m12-decimal-arithmetic/cases.json']=hashlib.sha256((ROOT/'results/m12-decimal-arithmetic/cases.json').read_bytes()).hexdigest()
 for p in OUT.glob('*cases.json'):inputs[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
 env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-case-followup-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
-record={'base':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'inputs':inputs,'command':command,'complete':False}
+record={'base':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'inputs':inputs,'harness_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'command':command,'complete':False}
 def save():(OUT/(label+'.json')).write_text(json.dumps(record,indent=2)+'\n')
 save();started=time.time()
 with (OUT/(label+'.log')).open('w') as log:r=subprocess.run(['systemd-run','--user','--scope','-p','MemoryMax=3G','--',*command],cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)

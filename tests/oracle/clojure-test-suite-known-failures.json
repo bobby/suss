@@ -30,10 +30,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Unresolved Runtime name bound-fn* at bytes 290..1947"
   },
-  "clojure.core-test.case": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428"
-  },
   "clojure.core-test.char": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.char (Some(\"<root>/clojure/core_test/char.cljc\")): Unresolved Runtime name char at bytes 240..1201"

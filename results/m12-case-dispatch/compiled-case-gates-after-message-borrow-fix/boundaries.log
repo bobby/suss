@@ -1,0 +1,14 @@
+Running as unit: run-p3720906-i91762428.scope; invocation ID: 9d4ece9f82e7410bb1fe361292be146a
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 31.32s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 5 tests
+test case_collision_callbacks_match_primary_controls ... ok
+test case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct ... ok
+test compiler_owned_case_does_not_grant_private_core_access_to_user_macros_or_results ... ok
+test macro_diagnostics_keep_native_messages_after_public_accessor_rebinding_and_recover ... ok
+test aot_case_collision_callbacks_match_primary_controls ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 12.21s
+

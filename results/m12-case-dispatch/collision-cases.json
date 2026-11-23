@@ -1,0 +1,106 @@
+[
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case nil nil :nil 0 :zero :miss))] [r @calls]))",
+    "[:nil [[nil nil]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case nil nil :nil 0 :zero :miss))",
+    ":nil"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case 0 nil :nil 0 :zero :miss))] [r @calls]))",
+    "[:zero [[nil 0] [0 0]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case 0 nil :nil 0 :zero :miss))",
+    ":nil"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case \"Aa\" \"Aa\" :aa \"BB\" :bb :miss))] [r @calls]))",
+    "[:aa [[\"Aa\" \"Aa\"]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case \"Aa\" \"Aa\" :aa \"BB\" :bb :miss))",
+    ":aa"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case \"BB\" \"Aa\" :aa \"BB\" :bb :miss))] [r @calls]))",
+    "[:bb [[\"Aa\" \"BB\"] [\"BB\" \"BB\"]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case \"BB\" \"Aa\" :aa \"BB\" :bb :miss))",
+    ":aa"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case :Aa :Aa :aa :BB :bb :miss))] [r @calls]))",
+    "[:aa [[:Aa :Aa]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case :Aa :Aa :aa :BB :bb :miss))",
+    ":aa"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case :BB :Aa :aa :BB :bb :miss))] [r @calls]))",
+    "[:bb [[:Aa :BB] [:BB :BB]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case :BB :Aa :aa :BB :bb :miss))",
+    ":aa"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case true true :yes 1231 :number :miss))] [r @calls]))",
+    "[:yes [[true true]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case true true :yes 1231 :number :miss))",
+    ":yes"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case 1231 true :yes 1231 :number :miss))] [r @calls]))",
+    "[:number [[true 1231] [1231 1231]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case 1231 true :yes 1231 :number :miss))",
+    ":yes"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case [0] [0] :vector 31 :long :miss))] [r @calls]))",
+    "[:vector [[[0] [0]]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case [0] [0] :vector 31 :long :miss))",
+    ":vector"
+  ],
+  [
+    "(let [calls (atom []) eq =] (let [r (with-redefs [= (fn [a b] (swap! calls conj [a b]) (eq a b))] (case 31 [0] :vector 31 :long :miss))] [r @calls]))",
+    "[:long [[[0] 31] [31 31]]]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] true)] (case 31 [0] :vector 31 :long :miss))",
+    ":vector"
+  ],
+  [
+    "(case 89791647576594816.0M 89791647576594816M :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 89791647576594816M 89791647576594816.0M :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case [89791647576594816.0M] [89791647576594816M] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case {:a 89791647576594816.0M} {:a 89791647576594816M} :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case #{89791647576594816.0M} #{89791647576594816M} :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(with-redefs [= (fn [a b] (throw (ex-info \"eq-called\" {})))] (case 89791647576594816.0M 89791647576594816M :hit :miss))",
+    ":hit"
+  ]
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "ordinal": 76,
+    "source": "(with-redefs [str (fn [& xs] \"replacement\")] (try (case :x) (catch Throwable e (ex-message e))))",
+    "session_expected": "\"replacement\"",
+    "aot_expected": "\"No matching clause: :x\""
+  }
+]

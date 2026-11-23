@@ -1,0 +1,58 @@
+{
+  "base": "f7c24195af18b371e476062d1ce2494ccf0055eb",
+  "capture_sha256": "864e82c894307050a4c542aec9cd07e3d4af77342f190ef62c44ce5448d9cc16",
+  "changed_record_counts": {
+    "assertions": 0,
+    "namespaces": 1,
+    "tests": 0
+  },
+  "changes": {
+    "assertions": [],
+    "namespaces": [
+      {
+        "id": "clojure.core-test.case",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428",
+          "stage": "namespace"
+        }
+      }
+    ],
+    "tests": []
+  },
+  "counts": {
+    "fail": 86,
+    "guest-judged": 75,
+    "namespaces-failed": 72,
+    "not-executed": 1936,
+    "pass": 4842,
+    "skipped": 0
+  },
+  "decimal_value_observations": {
+    "not-executed": 6,
+    "pass": 194
+  },
+  "newly_executed_failures": [],
+  "old_counts": {
+    "fail": 86,
+    "guest-judged": 75,
+    "namespaces-failed": 73,
+    "not-executed": 2008,
+    "pass": 4770,
+    "skipped": 0
+  },
+  "other_new_failures": [],
+  "previously_passing_regressions": [],
+  "primary_and_count_skip_guards_unchanged": true,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "prior_passes_preserved": 4860,
+  "raw_assertions": 5002,
+  "unresolved_candidates_by_namespace": {
+    "clojure.core-test.eq": 2,
+    "clojure.core-test.eval": 1,
+    "clojure.core-test.not-eq": 2,
+    "clojure.core-test.num": 1,
+    "clojure.edn-test.read-string": 5
+  },
+  "unresolved_decimal_source_candidates": 11
+}

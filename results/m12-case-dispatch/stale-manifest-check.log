@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/scripts/core_import.py", line 273, in <module>
+    main()
+    ~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/scripts/core_import.py", line 263, in main
+    verify_outputs(destination, outputs)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/scripts/core_import.py", line 249, in verify_outputs
+    raise ValueError(f'stale core import: {path}; run python3 scripts/core_import.py')
+ValueError: stale core import: manifest.json; run python3 scripts/core_import.py

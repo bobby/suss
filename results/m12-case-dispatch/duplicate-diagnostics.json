@@ -1,0 +1,38 @@
+[
+  {
+    "source": "(case :missing 1 :a 1N :b :miss)",
+    "compile_error": "Duplicate case test constant: 1"
+  },
+  {
+    "source": "(case :missing 1M :a 1.0M :b :miss)",
+    "compile_error": "Duplicate case test constant: 1.0"
+  },
+  {
+    "source": "(case :missing [1M] :a [1.0M] :b :miss)",
+    "compile_error": "Duplicate case test constant: [1.0M]"
+  },
+  {
+    "source": "(case :missing {:a 1M} :a {:a 1.00M} :b :miss)",
+    "compile_error": "Duplicate case test constant: {:a 1.00M}"
+  },
+  {
+    "source": "(case :missing #{1M} :a #{1.00M} :b :miss)",
+    "compile_error": "Duplicate case test constant: #{1.00M}"
+  },
+  {
+    "source": "(case :missing 0.0 :a -0.0 :b :miss)",
+    "compile_error": "Duplicate case test constant: -0.0"
+  },
+  {
+    "source": "(case :missing ##NaN :a ##NaN :b :miss)",
+    "compile_error": null
+  },
+  {
+    "source": "(case :missing [1] :a ((1N)) :b :miss)",
+    "compile_error": "Duplicate case test constant: (1N)"
+  },
+  {
+    "source": "(case :missing :a :a :a :b :miss)",
+    "compile_error": "Duplicate case test constant: :a"
+  }
+]

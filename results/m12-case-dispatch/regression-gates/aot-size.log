@@ -1,0 +1,22 @@
+Running as unit: run-p3768435-i91822463.scope; invocation ID: 600b9e1c10a34e7280b622cd14c8a717
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.14s
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 1 test
+component bytes: plain 3673778/3753490, scoped 3678046/3757758; bytes/form: 3985/3985
+code growth: split 5500, grouped 3580; extra bytes per split form: 96
+
+thread 'aot_namespace_frame_size_is_bounded_per_form' (3768542) panicked at crates/suss-cli/tests/runtime_namespaces.rs:380:5:
+AOT per-form size regressed: 3985 bytes
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test aot_namespace_frame_size_is_bounded_per_form ... FAILED
+
+failures:
+
+failures:
+    aot_namespace_frame_size_is_bounded_per_form
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 9 filtered out; finished in 6.03s
+
+error: test failed, to rerun pass `-p suss-cli --test runtime_namespaces`

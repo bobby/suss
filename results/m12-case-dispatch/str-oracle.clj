@@ -1,0 +1,7 @@
+(assert (= "1.12.6" (clojure-version)))
+(println (pr-str (pr-str (with-redefs [str (fn [& xs] "replacement")] (str "a" "b")))))
+(println (pr-str (pr-str (with-redefs [str (fn [& xs] "replacement")] (str "a" "b" "c")))))
+(println (pr-str (pr-str (with-redefs [str (fn [& xs] "replacement")] (let [f str] (f "a" "b"))))))
+(println (pr-str (pr-str (let [f str] (with-redefs [str (fn [& xs] "replacement")] (f "a" "b"))))))
+(println (pr-str (pr-str (str 123 1.00M))))
+(println (pr-str (pr-str (do (def str-effects []) (let [r (with-redefs [str (fn [& xs] "replacement")] (str (do (def str-effects (conj str-effects :a)) "a") (do (def str-effects (conj str-effects :b)) "b")))] [r str-effects])))))

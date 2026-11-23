@@ -1,0 +1,33 @@
+{
+  "binary_sha256": "4bdbb292581ca9f55a42179d44e8a95b8fa456226236ac8abcd3afda48df9006",
+  "commands": [
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+        "compile",
+        "probe.sus",
+        "-w",
+        "probe.wit",
+        "--export",
+        "check=strprobe/check",
+        "-o",
+        "probe.wasm"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+        "run",
+        "probe.wasm",
+        "--invoke",
+        "check",
+        "--",
+        "0"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "seconds": 28.299390077590942,
+  "binary_unchanged": true
+}

@@ -497,15 +497,16 @@ remain unfinished. Full baseline, independent review and final-head CI still
 gate PR readiness; no issue or milestone is complete from this work alone.
 
 
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and
-boolean/nil equality tables without fixed constant-count caps with selector-once evaluation and live qualified
-core equality. There are 40 fresh pinned/native value matches and one separately
-asserted pinned empty-group parse failure; native rejects that input with a
-located compile diagnostic. Actual fragments execute in Runtime and Macro
-phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain
-prerequisites. Full compiled macros, complete case/case*, public hash Date
-handling, collections and release gates remain unfinished. See
-[scalar case evidence](../runtime/scalar-case.md).
+The scalar `case` bootstrap remains for building core and callers without a
+source expander. Its legacy CLJS recordings are implementation references,
+with Clojure numeric qualifications retained in the tests. Production expansion
+uses the compiled Clojure macro: all72 unchanged vendored assertions compare on
+the host. Literal quotation, omitted defaults and genuine collision callbacks
+have fresh JVM Runtime/Macro/AOT controls. See
+[compiled case evidence](../runtime/compiled-case.md); the
+[scalar bootstrap evidence](../runtime/scalar-case.md) retains its original scope.
+General Java object interop and remaining eval/reader dependencies are not
+certified by these observations.
 
 
 Retained public scalar hash now preserves all pinned source branches, including

@@ -1,0 +1,101 @@
+[
+  {
+    "actual": null,
+    "form": "(eq 3.141592M 3.141592M)",
+    "id": "clojure.core-test.eq/test-eq#12",
+    "reason": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(identical? false (eq 1M 1))",
+    "id": "clojure.core-test.eq/test-eq#68",
+    "reason": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(= 1.0M (eval 1.0M))",
+    "id": "clojure.core-test.eval/test-eval#6",
+    "reason": {
+      "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+      "stage": "namespace"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(eq 3.141592M 3.141592M)",
+    "id": "clojure.core-test.not-eq/test-not-eq#12",
+    "reason": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(identical? false (eq 1M 1))",
+    "id": "clojure.core-test.not-eq/test-not-eq#68",
+    "reason": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(instance? java.math.BigDecimal (num 1.0M))",
+    "id": "clojure.core-test.num/test-num#6",
+    "reason": {
+      "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported reader dispatch at bytes 3408..3410",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(clojure.core/= 0M (clojure.edn/read-string \"0.0M\"))",
+    "id": "clojure.edn-test.read-string/test-read-string#142",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(clojure.core/= 42M (clojure.edn/read-string \"42M\"))",
+    "id": "clojure.edn-test.read-string/test-read-string#143",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(clojure.core/= -3.14M (clojure.edn/read-string \"-3.14M\"))",
+    "id": "clojure.edn-test.read-string/test-read-string#144",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"3.14M\"))",
+    "id": "clojure.edn-test.read-string/test-read-string#145",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "actual": null,
+    "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"+3.14M\"))",
+    "id": "clojure.edn-test.read-string/test-read-string#146",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  }
+]

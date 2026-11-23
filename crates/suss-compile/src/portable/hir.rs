@@ -2101,7 +2101,23 @@ impl Analyzer<'_> {
                 local
             })
             .collect::<Vec<_>>();
-        let callee = self.form(&items[0])?;
+        let source_callee = self.form(&items[0])?;
+        let mut callee = source_callee.clone();
+        // This specialization is selected only for a fixed core call. An
+        // AOT user's multi-argument str must keep that same original function
+        // for each unary conversion, rather than invoking a rebound public
+        // function once per operand. Value uses/aliases still read the var.
+        if !self.privileged && self.environment.direct_linking {
+            if let Expression::Global(global) = &*callee.kind {
+                if global.namespace() == "suss.core" && global.name() == "str"
+                    && self.privileged_definition(global)
+                {
+                    if let Some(link) = self.environment.existing_core_link(global) {
+                        callee.kind = std::sync::Arc::new(Expression::Global(link));
+                    }
+                }
+            }
+        }
         let callee = match &*callee.kind {
             Expression::Global(global) => match self.direct_link(global) {
                 Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
@@ -2111,7 +2127,7 @@ impl Analyzer<'_> {
         };
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
-                callee: std::sync::Arc::new(callee.clone()),
+                callee: std::sync::Arc::new(source_callee),
                 arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
         let node = |kind: Expression, ty: Type| Hir {
@@ -3670,6 +3686,21 @@ impl Analyzer<'_> {
             if let Some(operation) = operation {
                 return self.bitwise_form(form, args, operation);
             }
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap")
+            && matches!(symbol.name.as_str(), "case-hash<" | "case-hash=" | "case-identical")
+        {
+            if args.len() != 2 { return Err(fail(form.span.clone(), "Wrong private case comparison arity")); }
+            let operation = match symbol.name.as_str() {
+                "case-hash<" => Comparison::NumberLess,
+                "case-hash=" => Comparison::CaseEqual,
+                _ => Comparison::StrictEqual,
+            };
+            // These compiler-authored comparisons keep their selected operation;
+            // source numeric rewriting must not turn keyword identity into =.
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Bool, kind: std::sync::Arc::new(Expression::Comparison { operation, arguments }) });
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap")
             && matches!(symbol.name.as_str(), "case-hash-code" | "case-equiv")

@@ -55,6 +55,7 @@ pub fn embedded_sha256() -> &'static str {
             crate::portable_state_macros::DELAY.as_bytes(),
             crate::portable_state_macros::VSWAP.as_bytes(),
             crate::portable_state_macros::WITH_PRECISION.as_bytes(),
+            crate::portable_state_macros::CASE.as_bytes(),
         ] {
             hash.update((part.len() as u64).to_le_bytes());
             hash.update(part);

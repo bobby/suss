@@ -1,0 +1,17 @@
+{
+  "change": "Remove only clojure.core-test.case namespace failure; preserve all assertion/test failures and skip guards",
+  "old_sha256": "27a3a2122586ad65180f61af75426dffdea89bf1bdae353226a7fc7167408d10",
+  "new_sha256": "1f902838903a1ef3335db019d361fcb45505397050e129e0cffe0418131f07ae",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "counts": {
+    "pass": 4842,
+    "guest-judged": 75,
+    "fail": 86,
+    "not-executed": 1936,
+    "skipped": 0,
+    "namespaces-failed": 72
+  },
+  "host_comparison_exit_code": 0,
+  "original_capture_rust_exit_code": 101,
+  "qualification": "The original Rust drift exit is retained; this is a separate host audit and explicit baseline update, not a rerun of the original Rust test."
+}

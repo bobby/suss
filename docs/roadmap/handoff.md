@@ -1,3 +1,43 @@
+## Compiled case and component provenance evidence (2026-11-23)
+
+`results/m12-case-dispatch/run-regression-gates.py
+regression-after-shared-provenance` passes all six groups:13 CLI case tests,
+independent decoder/privacy checks, all13 original unboxed-local guards,
+call-site and AOT size limits, Java/Node-free bootstrap reproduction/execution
+and workspace all-test compilation. All recorded inputs remain unchanged.
+`run-foundation.py foundation-after-shared-provenance` passes all15 checks,
+including364 Python tests. `preserve-baseline-layout.py` then preserves the
+original JSON layout: exactly four case-namespace lines removed and no other
+byte changes from the prior baseline. The full workspace run, final-head CI
+and independent promotion review remain separate required evidence.
+
+`results/m12-case-dispatch/run-case-gates.py
+compiled-case-gates-after-message-borrow-fix` passes all72 vendored case
+assertions, independent retained-value GC checks in both phases and diagnostic/
+privacy boundaries. The13 CLI tests execute328 fresh JVM controls in both phases
+and actual AOT. AOT direct core str calls retain the original core conversion;
+separate JVM ordinary/direct-linking recordings qualify the expected messages.
+Original scalar-only, diagnostic and AOT formatting failures remain retained.
+
+`run-suite.py suite-after-manifest-refresh` captures5002 assertions with frozen
+inputs:4842 host matches /75 guest judgments /86 explicit failures /
+1936 unexecuted assertions /72 failed namespaces. `audit-suite.py` preserves
+all4860 prior individually comparable passes and unchanged primary/count/skip
+rules. `write-reviewed-case-baseline.py` deletes only the resolved case namespace
+failure. The original Rust exit101 remains visible; the separate host comparison
+passes. Eleven numeric-source candidates and six actual Decimal-operand assertions
+still depend on regex/UUID readers or real compiled eval.
+
+The original AOT size failure3985 >3900 is preserved. Verified source manifests
+are now retained losslessly in one component provenance index, sharing complete
+macro graphs while keeping standalone format2 unchanged. The unchanged guard
+passes2352 bytes/form and96 extra split-form bytes. Actual component execution
+and an independent pinned JVM EDN reader compare all13 fields of five original
+inputs, both user-macro versions and the core case identity. Commands, inputs,
+original errors, component hash and limits are under `results/m12-case-dispatch`.
+Broader regression, full workspace and final CI evidence have their own receipts;
+these focused passes do not imply any of them or complete BigDecimal acceptance.
+
 ## Private case hash probes (2026-11-23)
 
 `results/m12-case-dispatch/run.py before-case-dispatch` retains the terminal
