@@ -1,0 +1,15 @@
+{
+  "base": "ad46b2ee50b1d153a79e2fc04cdd2fca3ee5308f",
+  "inputs": {
+    "scripts/clojure_test_suite.py": "5fbb2534f7dd30233f34e82cc7215135085906e6bf20fd2652e423efd707ed23",
+    "tests/oracle/clojure-test-suite-observations.json": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+    "crates/suss-compile/tests/clojure_test_suite.rs": "b450f1805abe73285ac2cc55bfc5f0212c511ac97f569a6b52543fb1f0ec8fb1",
+    "crates/suss-compile/tests/support/portable_decode.rs": "7976de3517eccdfaf27cf57bd9e1cda502da4a7a4ce097656b43f40c0b654a1f"
+  },
+  "visibility_only_changes": [
+    {
+      "path": "crates/suss-compile/tests/support/portable_decode.rs",
+      "only_change": "integer_decimal visibility made pub in the original Decimal commits; decoding body unchanged"
+    }
+  ]
+}

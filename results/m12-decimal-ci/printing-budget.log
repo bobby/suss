@@ -1,0 +1,13 @@
+Running as unit: run-p2494408-i90555468.scope; invocation ID: e12e5d432f2d4f9083ff66639bf2e31f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.96s
+     Running tests/printing_chunks.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/printing_chunks-5fd87aa351396960)
+
+running 4 tests
+test long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc ... ok
+test wide_utf16_output_and_empty_chunks_keep_earlier_strings_after_gc ... ok
+test nested_print_method_keeps_outer_write_and_callback_order ... ok
+test writer_conversion_keeps_the_prefix_captured_before_reentrant_write ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.52s
+

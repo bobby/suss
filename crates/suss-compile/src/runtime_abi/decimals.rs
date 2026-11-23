@@ -26,6 +26,26 @@ pub(super) fn append_global(globals: &mut GlobalSection, ty: u32, function: u32)
         &ConstExpr::extended([RefFunc(function)]));
 }
 
+/// Register after the checked integer casts used by the private reader constructor.
+pub(super) fn constructor(b: &mut Builder) {
+    let mut make = Vec::new();
+    for local in [0, 1] {
+        make.extend([LocalGet(local), Call(b.names["long-test"]),
+            LocalGet(local), RefTestNonNull(HeapType::Concrete(BIGINT)), I32Or,
+            I32Eqz, If(BlockType::Empty)]);
+        make.extend(numeric::error("Decimal fields require exact integers", nominal::ERROR_GLOBAL));
+        make.push(End);
+    }
+    make.extend([LocalGet(1), Call(b.names["number-cast-long-raw"]), LocalTee(2),
+        I64Const(i64::from(i32::MIN)), I64LtS,
+        LocalGet(2), I64Const(i64::from(i32::MAX)), I64GtS, I32Or,
+        If(BlockType::Empty)]);
+    make.extend(numeric::error("Decimal scale out of range", nominal::ERROR_GLOBAL));
+    make.extend([End, LocalGet(0), Call(b.names["integer-bigint"]),
+        RefCastNonNull(HeapType::Concrete(BIGINT)), LocalGet(2), I32WrapI64, StructNew(DECIMAL)]);
+    b.function_with_locals("decimal-from-integer", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I64)], &make);
+}
+
 pub(super) fn functions(b: &mut Builder, helper: numeric::Info) -> u32 {
     let reserve = b.names["numeric-reserve"];
     let byte = MemArg { offset: 0, align: 0, memory_index: 0 };

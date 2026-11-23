@@ -323,6 +323,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, arguments } => match operation {
                         Nominal::IsNumber | Nominal::IsRatio | Nominal::IsDecimal | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
+                        Nominal::DecimalNew => { names.insert("decimal-from-integer"); }
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -889,7 +890,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
-            "ratio-new" | "ratio-literal" => (vec![VALUE, VALUE], vec![VALUE]),
+            "ratio-new" | "ratio-literal" | "decimal-from-integer" => (vec![VALUE, VALUE], vec![VALUE]),
             "decimal-literal" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
                 nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
@@ -3271,6 +3272,10 @@ fn emit_function(
                         Nominal::IsRatio => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::RATIO)));
+                        }
+                        Nominal::DecimalNew => {
+                            for value in arguments { function.instruction(&LocalGet(value.0 as u32 + offset)); }
+                            function.instruction(&Call(index("decimal-from-integer")));
                         }
                         Nominal::IsDecimal => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset));

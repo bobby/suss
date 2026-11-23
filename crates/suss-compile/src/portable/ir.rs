@@ -1427,7 +1427,7 @@ fn loop_safe(operation: &Operation) -> bool {
             use super::hir::Nominal as N;
             matches!(
                 operation,
-                N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                N::DecimalNew | N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array

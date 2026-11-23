@@ -1,0 +1,115 @@
+Running as unit: run-p2501088-i90541878.scope; invocation ID: 7a207f762b084a499b7ff67965f1f014
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 21.32s
+     Running tests/analyzer_edn_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/analyzer_edn_core-d2b03c6fa678116c)
+
+running 2 tests
+test core_document_has_no_lowered_nodes ... ok
+test core_round_trips_in_both_phases ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.90s
+
+     Running tests/portable_value_decoder.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_value_decoder-b392ec8bf8123bf2)
+
+running 25 tests
+test bigint_decoder_reads_exact_storage_after_gc_without_guest_printers ... ok
+test canonical_identifiers_reject_malformed_namespaces_names_and_excessive_nesting ... ok
+test captured_decoder_rejects_foreign_and_reset_sessions_before_descriptor_access ... ok
+test chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values ... ok
+test decoder_bounds_are_checked_before_string_traversal ... ok
+test decoder_rejects_unknown_sentinels_nulls_and_unboxed_values ... ok
+test collection_decoder_rejects_nominal_impostors_malformed_counts_and_missing_backing ... ok
+test identifier_decoder_retains_canonical_identity_through_gc_and_redefinition ... ok
+test indexed_sequences_and_map_entries_decode_actual_storage_after_gc ... ok
+test indexed_sequences_reject_invalid_offsets_and_storage ... ok
+test map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries ... ok
+test map_set_decoder_rejects_invalid_counts_flags_and_node_storage ... ok
+test persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_calls ... ok
+test scalar_decoder_preserves_bits_and_language_sentinels_after_gc ... ok
+test ratio_decoder_reads_actual_exact_children_after_gc ... ok
+test scalar_decoder_rejects_mutable_number_impostor ... ok
+test string_decoder_preserves_utf16_including_astral_and_lone_surrogates ... ok
+test string_decoder_rejects_immutable_utf16_array_impostor ... ok
+test unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors ... ok
+test set_decoder_preserves_nested_elements_and_nil_through_gc ... ok
+test vector_decoder_rejects_count_exceeding_trie_capacity ... ok
+test vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.83s
+
+     Running tests/runtime_abi.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/runtime_abi-5acf5bbdcbdf7187)
+
+running 59 tests
+test java_double_string_matches_reviewed_jvm_samples ... ok
+test runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order ... ok
+test runtime_abi2_rejects_real_abi1_layouts_and_manifests_before_initializers ... ok
+test runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_gc ... ok
+test runtime_abi_binary64_words_preserve_payloads_byte_order_and_typed_errors ... ok
+test runtime_abi_calls_foreign_closures_through_their_own_code_struct ... ok
+test runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environments ... ok
+test runtime_abi_closure_properties_keep_assigned_values_through_gc_and_reject_bad_keys ... ok
+test runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding ... ok
+test runtime_abi_default_proto_accessor_is_an_own_property ... ok
+test runtime_abi_default_object_methods_are_callable_shared_and_survive_gc ... ok
+test runtime_abi_error_constructor_can_initialize_its_protocol_cache ... ok
+test runtime_abi_descriptor_methods_observe_enumerability_and_live_tostring ... ok
+test runtime_abi_error_message_read_rejects_copied_nominal_descriptor_after_gc ... ok
+test runtime_abi_exception_info_getters_reject_malformed_named_schema_without_trapping ... ok
+test runtime_abi_identity_slots_keep_metadata_and_reject_corruption_without_traps ... ok
+test runtime_abi_generated_fragments_share_scalar_types_and_gc_roots ... ok
+test runtime_abi_int32_coercion_wraps_finite_values_and_zeroes_nonfinite ... ok
+test runtime_abi_language_error_predicate_uses_rooted_descriptor_identity_after_gc ... ok
+test runtime_abi_legacy_accessor_rejections_are_atomic_and_recover_after_gc ... ok
+test runtime_abi_manifest_gate_precedes_initializer_effects ... ok
+test runtime_abi_manifest_rejects_missing_duplicate_and_malformed_data ... ok
+test runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts ... ok
+test runtime_abi_munged_field_aliases_copy_last_constructor_value_and_use_last_named_slot ... ok
+test runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc ... ok
+test runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables ... ok
+test runtime_abi_native_name_normalization_keeps_exact_utf16_and_live_input_identity ... ok
+test runtime_abi_native_property_accessor_preserves_proto_writes_shadows_and_gc ... ok
+test runtime_abi_native_property_scalar_keys_and_malformed_values_recover ... ok
+test runtime_abi_native_prototype_chain_preserves_shadowing_and_rejects_cycles_atomically ... ok
+test runtime_abi_native_prototype_chain_rejects_forged_cycles_and_recovers ... ok
+test runtime_abi_native_prototype_long_chain_and_forged_tail_cycle_survive_gc ... ok
+test runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access ... ok
+test runtime_abi_nominal_callables_reject_arity_missing_methods_and_non_objects ... ok
+test runtime_abi_nominal_constructor_duplicate_fields_follow_live_utf16_schema ... ok
+test runtime_abi_nominal_type_identity_rejects_equal_id_descriptor_copy_after_gc ... ok
+test runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc ... ok
+test runtime_abi_numbers_keep_binary64_bits_and_rounding ... ok
+test runtime_abi_numeric_allocation_failure_is_typed_and_not_nan_or_a_trap ... ok
+test runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps ... ok
+test runtime_abi_numeric_operations_and_sentinels_execute ... ok
+test runtime_abi_numeric_samples_match_pinned_formatting_and_parsing ... ok
+test runtime_abi_object_constructor_accepts_reserved_closure_property_slots ... ok
+test runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapping ... ok
+test runtime_abi_owned_descriptors_preserve_attributes_and_invoke_accessors ... ok
+test runtime_abi_owned_dynamic_properties_preserve_keys_values_and_gc ... ok
+test runtime_abi_owned_prototype_call_refs_use_typed_globals ... ok
+test runtime_abi_owned_dynamic_properties_reject_corrupt_storage_and_null_values ... ok
+test runtime_abi_property_key_comparison_preserves_utf16_live_mutation_and_error_order ... ok
+test runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries ... ok
+test runtime_abi_reserved_schema_names_keep_all_spellings_and_near_misses ... ok
+test runtime_abi_schema_field_character_guard_checks_every_utf16_unit ... ok
+test runtime_abi_source_closure_names_survive_gc_and_reject_unset_or_invalid_owners ... ok
+test runtime_abi_strict_owned_store_rejects_readonly_data_before_mutation ... ok
+test runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners ... ok
+test runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_trap ... ok
+test runtime_abi_utf16_units_survive_gc_and_reject_truncation ... ok
+test runtime_abi_utf16_char_code_bounds_and_errors_never_trap ... ok
+test runtime_abi_variadic_bitwise_callback_rejects_bad_cells_without_trapping ... ok
+
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 49.70s
+
+     Running tests/session_observation_hook.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/session_observation_hook-5c75efac1d1ad990)
+
+running 2 tests
+test hook_observes_values_synchronously_with_fixed_arity_and_expires_on_reset ... ok
+test hook_rejects_non_runtime_phase_and_filesystem_namespace_override ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.85s
+

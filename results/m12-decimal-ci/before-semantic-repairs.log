@@ -1,0 +1,140 @@
+Running as unit: run-p2405254-i90455341.scope; invocation ID: 1090da49f2b54e2993a94705d2456828
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 25.45s
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test decimal_values_and_classes_execute_in_runtime_and_macro ... FAILED
+test aot_executes_decimal_values_readers_and_classes ... FAILED
+
+failures:
+
+---- decimal_values_and_classes_execute_in_runtime_and_macro stdout ----
+
+thread 'decimal_values_and_classes_execute_in_runtime_and_macro' (2406668) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:15:36:
+(let [x (read-string "1.50M")] [(pr-str x) (decimal? x) (rational? x) (number? x) (= (class x) BigDecimal)]): Uncaught language exception
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_decimal_values_readers_and_classes stdout ----
+
+thread 'aot_executes_decimal_values_readers_and_classes' (2406667) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:41:5:
+Compilation error: Semantic error: While compiling probe.sus: Unresolved Runtime name extend-protocol at bytes 1267..1282
+
+
+
+failures:
+    aot_executes_decimal_values_readers_and_classes
+    decimal_values_and_classes_execute_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.45s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_values`
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... ok
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... ok
+test errors_are_catchable_and_carry_their_position ... ok
+test exact_numeric_literals_execute_or_preserve_unsupported_boundaries ... FAILED
+test exact_numeric_literals_pass_through_macros ... FAILED
+test components_read_without_a_compiler_or_host_reader ... ok
+test macros_can_read_at_expansion_time ... ok
+test nesting_depth_is_bounded_and_catchable ... ok
+test malformed_input_fails_with_the_compilers_message_and_position ... ok
+test printed_data_reads_back_equal ... ok
+test read_string_follows_clojure ... ok
+test reading_is_charged_to_the_callers_fuel ... ok
+test reader_conditionals_need_opts_as_in_clojure ... ok
+test suss_edn_follows_clojure_edn ... ok
+test tags_and_record_literals_follow_clojure ... ok
+test the_repl_and_script_files_read ... ok
+
+failures:
+
+---- exact_numeric_literals_execute_or_preserve_unsupported_boundaries stdout ----
+
+thread 'exact_numeric_literals_execute_or_preserve_unsupported_boundaries' (2408231) panicked at crates/suss-cli/tests/read_string.rs:25:13:
+assertion `left == right` failed: (= "Unsupported numeric literal 1M: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)" (try 1M :evaluated (catch :default e (ex-message e)))) is not true
+  left: Some(2)
+ right: Some(4)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- exact_numeric_literals_pass_through_macros stdout ----
+
+thread 'exact_numeric_literals_pass_through_macros' (2408549) panicked at crates/suss-cli/tests/read_string.rs:719:9:
+assertion `left == right` failed: (= "Unsupported numeric literal 1.50M: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)" (try (quoted 1.50M) :evaluated (catch :default e (ex-message e))))
+  left: "false"
+ right: "true"
+
+
+failures:
+    exact_numeric_literals_execute_or_preserve_unsupported_boundaries
+    exact_numeric_literals_pass_through_macros
+
+test result: FAILED. 14 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.43s
+
+error: test failed, to rerun pass `-p suss-cli --test read_string`
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.69s
+
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_10_and_prior_abis_are_rejected ... FAILED
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+failures:
+
+---- artifacts_record_runtime_abi_10_and_prior_abis_are_rejected stdout ----
+
+thread 'artifacts_record_runtime_abi_10_and_prior_abis_are_rejected' (2409955) panicked at crates/suss-compile/tests/portable_calling_convention.rs:135:5:
+assertion `left == right` failed
+  left: 11
+ right: 10
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    artifacts_record_runtime_abi_10_and_prior_abis_are_rejected
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_calling_convention`
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... FAILED
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+
+failures:
+
+---- constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout stdout ----
+
+thread 'constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout' (2409959) panicked at crates/suss-compile/tests/portable_comparator_foundations.rs:30:5:
+assertion `left == right` failed
+  left: 11
+ right: 10
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_comparator_foundations`
+error: 4 targets failed:
+    `-p suss-cli --test clojure_decimal_values`
+    `-p suss-cli --test read_string`
+    `-p suss-compile --test portable_calling_convention`
+    `-p suss-compile --test portable_comparator_foundations`

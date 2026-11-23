@@ -1912,6 +1912,7 @@ fn build_module() -> Vec<u8> {
     numeric_classes::functions(&mut b);
     // Casts come before arrays, as packed primitive arrays convert with them.
     let bitwise_functions = bitwise::functions(&mut b);
+    decimals::constructor(&mut b);
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(arrays::functions(&mut b));

@@ -546,6 +546,7 @@ pub enum Nominal {
     IsBigInt,
     IsRatio,
     IsDecimal,
+    DecimalNew,
     IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
@@ -800,6 +801,7 @@ impl Nominal {
                 Self::ApplySequenceOps => count == 10,
                 Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
+                Self::DecimalNew => count == 2,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
@@ -3484,6 +3486,7 @@ impl Analyzer<'_> {
                 "number?" => Some(Nominal::IsNumber),
                 "ratio?" => Some(Nominal::IsRatio),
                 "decimal?" => Some(Nominal::IsDecimal),
+                "decimal-from-integer" => Some(Nominal::DecimalNew),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),

@@ -1342,7 +1342,8 @@ and retained-child GC checks. The preliminary five-target command passes41
 tests, including both existing BigInt matrices and runtime reader controls.
 Exact fraction dispatch preserves normalization, numeric categories, BigInteger
 projections and DECIMAL64 rounding on conversion to double. Runtime readers now
-produce Ratio values; Decimal retains its explicit unsupported boundary.
+produce Ratio values. The ABI11 Decimal reader evidence below supersedes the
+Decimal boundary recorded by this earlier capture.
 Combined-source numeric/ABI/map/bootstrap checks, complete numeric-suite
 acceptance, WIT integration and the production helper crossover remain separate
 gates. These bounded observations do not change inventory counts.
@@ -1372,8 +1373,9 @@ remain failures.
 ## Numeric type identities
 
 Long, Double, BigInt, BigInteger and Ratio have canonical, non-callable native
-class values, alongside Number and Class. BigDecimal has a class value only;
-it does not supply Decimal instances in ABI10. The original class/ifn? adapters
+class values, alongside Number and Class. ABI11 adds immutable Decimal instances
+with the canonical BigDecimal class; ABI10 supplied that class value only.
+The original class/ifn? adapters
 expose actual constructor identity and portable invocation capability. Numeric
 protocol dispatch checks the concrete class and Number inheritance before its
 existing native/default fallback, keeping different receiver classes separate
@@ -1460,3 +1462,26 @@ still require no argument array or runtime invoke at the call site and only
 the entry-cache lookup helper. `results/m12-class-call-inline` retains the
 original failed CI log, fresh JVM exception identity control and executed
 regressions; runtime globals/shared types/layouts are unchanged.
+
+
+## Decimal values and runtime readers
+
+ABI11 appends immutable arbitrary-precision unscaled-integer and signed32-bit
+scale fields. Compiler literals and macro transport retain those fields. Both
+shipped readers construct Decimal values without a floating coefficient; a
+nine-digit fold bounds the number of BigInt operations. Numeric class dispatch
+recognizes BigDecimal instances, including Number protocol inheritance.
+
+`results/m12-decimal-values` retains159 fresh JVM text/Double-bit controls and
+actual field/scale observations after GC. `results/m12-decimal-ci` adds169 fresh
+JVM literal/read-string/format/class/constant/protocol controls in Runtime,
+Macro and actual AOT. The focused five-target command passes28 tests, zero
+failed/ignored. The new large-coefficient session matrix uses100M fuel, matching
+the printer stress tests; its original10M exhaustion remains explicit. All
+existing test and production allowances stay unchanged.
+
+These observations cover values, formatting, conversion and the retained reader
+and class cases. Arithmetic, MathContext/with-precision, equality/hash/order,
+casts, bigdec and scale-sensitive case behavior remain gaps. Existing numeric
+fallbacks can still narrow Decimal to Double. This evidence does not establish
+complete Decimal semantics or alter the inventory's declaration counts.

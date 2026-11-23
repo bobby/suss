@@ -1,0 +1,89 @@
+Running as unit: run-p2467030-i90538379.scope; invocation ID: 68db9d1c25b14179a79bf17c1b0a0e93
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 30s
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test decimal_values_and_classes_execute_in_runtime_and_macro ... FAILED
+test aot_executes_decimal_values_readers_and_classes ... ok
+
+failures:
+
+---- decimal_values_and_classes_execute_in_runtime_and_macro stdout ----
+
+thread 'decimal_values_and_classes_execute_in_runtime_and_macro' (2470595) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:18:37:
+(let [x (read-string "7244088418692618723149931114449618483317147871947106152967059750666063917812400169225287468938812319364706621656958625706484614894697104929371889071040347322989972490260261187523976965145283025487945199625063133011816723950082820723728302056213329936030444765688080788280343590985823054824365691513535018022855318314933108061015059906277938542101644696165207838705110007234337303098197760734214605576315645605266852892476136378259335411126795684292083788342880044707559201806009011834919124243890616440853788068432120356073648208457108132127564148084389610934850285076226939280226194065693017325591813883869220076388009197020313440520641614305902107331136363596486319893678348116142079367941726726591803026314452285186448805109537270485188721793647029082958246656039759176246080722205667544571292988593771830845214516887254788191278849440329904683639561652244139272115307661969297862936085485716462319089808958312404988869586299339635528284784573132749472231604199668668163864385132736589521420631767288799577199614349877149E-1023M")] [(str x) (pr-str x) (decimal? x) (= (class x) BigDecimal)]): Runtime trap: error while executing at wasm backtrace:
+    0:   0xb09f - <unknown>!<wasm function 66>
+    1:   0xb54d - <unknown>!<wasm function 86>
+    2: 0x1a10ee - <unknown>!<wasm function 1458>
+    3: 0x1adf92 - <unknown>!<wasm function 1542>
+    4: 0x1a8b11 - <unknown>!<wasm function 1519>
+    5: 0x1aa1e5 - <unknown>!<wasm function 1523>
+    6: 0x1aa565 - <unknown>!<wasm function 1524>
+    7:    0xef1 - <unknown>!<wasm function 36>
+    8:  0x1f2b9 - <unknown>!<wasm function 477>
+    9:  0x1f944 - <unknown>!<wasm function 481>
+   10:    0xc92 - <unknown>!<wasm function 35>: wasm trap: all fuel consumed by WebAssembly
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_values_and_classes_execute_in_runtime_and_macro
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.51s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_values`
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... ok
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... ok
+test components_read_without_a_compiler_or_host_reader ... ok
+test errors_are_catchable_and_carry_their_position ... ok
+test exact_numeric_literals_pass_through_macros ... ok
+test macros_can_read_at_expansion_time ... ok
+test malformed_input_fails_with_the_compilers_message_and_position ... ok
+test exact_numeric_literals_execute_and_preserve_reader_categories ... ok
+test printed_data_reads_back_equal ... ok
+test nesting_depth_is_bounded_and_catchable ... ok
+test reader_conditionals_need_opts_as_in_clojure ... ok
+test reading_is_charged_to_the_callers_fuel ... ok
+test read_string_follows_clojure ... ok
+test suss_edn_follows_clojure_edn ... ok
+test tags_and_record_literals_follow_clojure ... ok
+test the_repl_and_script_files_read ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.31s
+
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_11_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: 1 target failed:
+    `-p suss-cli --test clojure_decimal_values`

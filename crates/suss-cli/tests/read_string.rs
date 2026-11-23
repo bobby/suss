@@ -180,17 +180,16 @@ fn malformed_input_fails_with_the_compilers_message_and_position() {
     }
 }
 
-/// Exact integer/Ratio literals execute in code and runtime readers; Decimal
-/// values retain located failures and unselected-branch behavior.
+/// Exact numeric literals retain their categories in code and both readers,
+/// including unselected/discarded Decimal forms.
 #[test]
-fn exact_numeric_literals_execute_or_preserve_unsupported_boundaries() {
+fn exact_numeric_literals_execute_and_preserve_reader_categories() {
     let (values, sources): (Vec<_>, Vec<_>) = corpus("exact").into_iter().partition(|source| {
         matches!(&suss_reader::forms::read_forms(source).unwrap()[0].kind,
             Kind::Exact(number) if !matches!(number.value, suss_reader::forms::ExactValue::Decimal { .. }))
     });
     for (mut session, mut macros) in sessions() {
-        // Exact integers and Ratios are values in code and both readers.
-        // Decimal failures remain explicit, located boundaries.
+        // Exact numeric literals are values in code and both shipped readers.
         for source in &values {
             for reader in ["read-string", "edn/read-string"] {
                 truthy(
@@ -223,42 +222,15 @@ fn exact_numeric_literals_execute_or_preserve_unsupported_boundaries() {
                 ),
             );
         }
-        let expected = sources
-            .iter()
-            .map(|source| {
-                let forms = suss_reader::forms::read_forms(source)
-                    .unwrap_or_else(|error| panic!("{source}: {error:?}"));
-                let [form] = forms.as_slice() else {
-                    panic!("{source}: one form")
-                };
-                let Kind::Exact(number) = &form.kind else {
-                    panic!("{source}: {:?}", form.kind)
-                };
-                number.unsupported_message()
-            })
-            .collect::<Vec<_>>();
-        for reader in ["read-string", "edn/read-string"] {
-            let found = runtime_errors(&mut session, &mut macros, reader, &sources);
-            for ((source, found), message) in sources.iter().zip(found).zip(&expected) {
-                let expected = Value::Vector(vec![Value::String(message.clone()), Value::Long(0)]);
-                assert_eq!(found, expected, "{reader} {source:?}");
+        for source in &sources {
+            for reader in ["read-string", "edn/read-string"] {
+                truthy(&mut session, &mut macros, &format!(
+                    "(let [x ({reader} {})] (and (decimal? x) (= (class x) BigDecimal) (= (pr-str {source}) (pr-str x))))", literal(source)));
+                truthy(&mut session, &mut macros, &format!(
+                    "(let [x ({reader} {})] (and (decimal? (first x)) (= (pr-str [{source}]) (pr-str x))))", literal(&format!("[{source}]"))));
             }
-        }
-        for (source, message) in sources.iter().zip(&expected) {
-            for evaluated in [
-                source.clone(),
-                format!("(quote [{source}])"),
-                format!("[1 {source}]"),
-            ] {
-                truthy(
-                    &mut session,
-                    &mut macros,
-                    &format!(
-                        "(= {} (try {evaluated} :evaluated (catch :default e (ex-message e))))",
-                        literal(message)
-                    ),
-                );
-            }
+            truthy(&mut session, &mut macros, &format!(
+                "(= (pr-str (quote [{source}])) (pr-str [{source}]))"));
             let unselected = format!("#?(:clj {source} :default 2)");
             truthy(&mut session, &mut macros, &format!("(= 2 {unselected})"));
             truthy(
@@ -685,8 +657,7 @@ fn unquoted(text: &str) -> String {
     }
 }
 
-/// Exact macro data preserves integer/Ratio values and the remaining Decimal
-/// evaluation-time boundary (#339).
+/// Exact macro data preserves integer, Ratio and Decimal values.
 #[test]
 fn exact_numeric_literals_pass_through_macros() {
     // Expansion runs in the Macro phase; the REPL defines the macros.
@@ -704,21 +675,10 @@ fn exact_numeric_literals_pass_through_macros() {
     ] {
         evaluate(source);
     }
-    let message = |source: &str| {
-        let forms = suss_reader::forms::read_forms(source).unwrap();
-        let Kind::Exact(number) = &forms[0].kind else {
-            panic!("{source}")
-        };
-        literal(&number.unsupported_message())
-    };
-    for (expression, literal_text) in [("(quoted 1.50M)", "1.50M")] {
-        let source = format!(
-            "(= {} (try {expression} :evaluated (catch :default e (ex-message e))))",
-            message(literal_text)
-        );
-        assert_eq!(evaluate(&source), "true", "{source}");
-    }
     for source in [
+        "(= \"1.50M\" (pr-str (quoted 1.50M)))",
+        "(= \"1.50M\" (pr-str (same-form 1.50M)))",
+        "(let [x (in-vector 1.50M)] (and (= \"[1 1.50M]\" (pr-str x)) (decimal? (nth x 1)) (= BigDecimal (class (nth x 1)))))",
         "(= 1/3 (same-form 1/3))",
         "(= [1 1/3] (in-vector 1/3))",
         "(= [1 9223372036854775808N] (in-vector 9223372036854775808))",
