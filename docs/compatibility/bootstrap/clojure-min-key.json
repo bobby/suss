@@ -9,9 +9,9 @@
   "adaptation": {
     "name": "min-key",
     "source_sha256": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
-    "adapted_sha256": "1c5750d36d8f83a9f11881b79d02e79d13a5c7b9c51b7b31d27da2d6cb3799c6",
-    "patch_sha256": "ce2e470cf13e33da5dabc9ab79e8b1df3180678ffe111f3c56e285fdb4e7309e",
-    "rationale": "Replace defn expansion with def/fn for bootstrap importing; preserve complete arities, documentation and attribute metadata. All arity bodies and nested named functions are byte-preserved."
+    "adapted_sha256": "096cd7f311566bc922e2a2da42ff60ee62f157312cfc797189c166bc30b5d7b9",
+    "patch_sha256": "7f05fadf098f0079d2e29bca5e3173c74e77d0206a5f51910928e2120c4ef3d0",
+    "rationale": "Expand defn to def/fn and capture the existing checked numeric comparison function values in lexical < and <= bindings. This avoids shipped core legacy coercing comparison macro lowering. All original arity bodies, key evaluation order, metadata and documentation are retained byte-for-byte. Historical local-definition adaptation and its prototype receipts remain unchanged."
   },
   "license": {
     "id": "EPL-1.0",
@@ -24,15 +24,16 @@
     "qualification": "Only pure map-indexed candidate-map constructors are materialized; fresh JVM execution checks all396 combined probe values against untouched primary controls. No min-key/key-function body changes."
   },
   "files": {
-    "docs/compatibility/bootstrap/exact-integers.sus": "9414a5b9e8f0789db5601eef6bf3b0899ca605b8928feb5659a8da1df2d5bb1f",
-    "docs/compatibility/core-import.json": "2d4b2e7b7ef8b9790eebcc8520c40ae141fc3037d55a6cd5144b1753ec90003e",
-    "runtime/core-import/manifest.json": "caba4aab2395e15b98617e0f3b29a819820071fca755c0b1b506c6ef21963b6d",
-    "runtime/core-import/suss/core.sus": "d308253fbf39cdc6712d1f36af49e6bb52cff8e92828d50df73af9bca1508e45",
+    "docs/compatibility/bootstrap/exact-integers.sus": "55c4b0974e90a6e9afd11fc229268db5e754dc8046e7e59d8dae96e0b9eb1644",
+    "docs/compatibility/core-import.json": "0c4eae7214a2de3884f9c2dc42d42f37d813951c85000a3ea438535aa1e754f8",
+    "runtime/core-import/manifest.json": "ede8163df9db16c0960abbe6d6f6fcc05d943f563fd7e31148414f6521f00c7f",
+    "runtime/core-import/suss/core.sus": "9a0a0129a93acb210eccc99c68e00d2ab10a16791e302b7524de08498c32911d",
     "crates/suss-cli/tests/clojure_min_key.rs": "94d5062874a9d8a05ca9abd561ee1292eb4083c2bde779f0923f0bb078718029",
     "crates/suss-compile/tests/support/pinned_min_key_body.rs": "45d603fcb9c750f4480ce9a7d0a5a5a9934d0dc0f73e98d1722e8bdde5df5b49",
     "results/m12-core-dependencies/upstream-min-key.clj": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
-    "results/m12-core-dependencies/min-key-adapted.sus": "1c5750d36d8f83a9f11881b79d02e79d13a5c7b9c51b7b31d27da2d6cb3799c6",
-    "results/m12-core-dependencies/min-key.patch": "ce2e470cf13e33da5dabc9ab79e8b1df3180678ffe111f3c56e285fdb4e7309e",
+    "results/m12-core-dependencies/min-key-shipped.sus": "096cd7f311566bc922e2a2da42ff60ee62f157312cfc797189c166bc30b5d7b9",
+    "results/m12-core-dependencies/min-key-shipped.patch": "7f05fadf098f0079d2e29bca5e3173c74e77d0206a5f51910928e2120c4ef3d0",
+    "results/m12-core-dependencies/min-key-shipped-adaptation.json": "d8016d88c51db260f953955743286d2175c29ac97d45a7fc4300781d00ae621a",
     "results/m12-core-dependencies/NOTICE": "ba733882d29b8d6d4401c575c871111acd7d9eb2b3d1a0ba3632c479e72ff6d3",
     "results/m12-core-dependencies/cases.json": "c21a78287a08f38f051b4d610fdfe0c62aa49c9d277566d98ef0cd94461edfeb",
     "results/m12-core-dependencies/probe-cases.json": "4cb2f71bf0b09848499c54f17d06488897414d8e4fb9a5e491572826d7f23d28",

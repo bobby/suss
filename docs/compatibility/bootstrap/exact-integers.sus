@@ -2435,6 +2435,7 @@
 
   If there are multiple such xs, the last one is returned." :added "1.0"
    :static true} min-key
+  (let [< < <= <=]
   (fn
 ([k x] x)
 ([k x y] (if (< (k x) (k y)) x y))
@@ -2448,5 +2449,5 @@
            (if (<= kw kv)
              (recur w kw (next more))
              (recur v kv (next more))))
-         v))))))
+         v)))))))
 ;; END Clojure min-key
