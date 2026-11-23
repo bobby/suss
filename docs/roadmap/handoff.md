@@ -1,3 +1,32 @@
+## Analyzer import setup and phase-local observation services (2026-11-23)
+
+The required unfiltered workspace baseline on3797c2b8 terminates101 after777.907s,
+all recorded inputs unchanged. It completes49 tests and finds two analyzer round-
+trip regressions before later targets execute: macro BigInteger source and the
+user-form corpus gain an extra Runtime namespace node on each emission cycle.
+The native suite comparator's separate3797c2b8 rerun passes, inputs/executable
+unchanged, with a byte-identical full capture. Neither result is a complete
+workspace pass; both original receipts/logs are retained.
+
+Macro import setup reuses the original namespace declaration internally. The
+analyzer now suppresses recording only during that setup, preserving the outer
+recorder/pending HIR across nested setup and errors. Real namespace/macro nodes,
+source origins and phase environments remain recorded. `run-test.py
+ after-internal-import-recording --test analyzer_edn` passes all16 tests with
+unchanged inputs, including both original failures and a new two-namespace
+regression requiring exactly six source nodes, retained Macro aliases and a
+complete emitted-source round trip.
+
+CompiledMacros can explicitly install its own native observation service. It
+shares the existing phase-scoped installation machinery but inherits no Runtime
+callback, cell or value; the public Session hook keeps its Runtime-only guard.
+The3 focused observation tests pass on the recorded patch, including failed
+Macro imports without opt-in, recovery with a separate callback, and independently
+observed Macro41/Runtime52 payloads returning17/900. Duplicate installation,
+fixed arity, namespace override and Runtime reset guards remain covered. This
+capability alone does not change the suite harness or establish EDN execution.
+Current CI/full-workspace and EDN acceptance remain separate evidence on GitHub.
+
 ## Audited UUID diagnostic changes (2026-11-23)
 
 `run-suite.py full-suite-after-inline-source-macros` completes on5ee039cf,

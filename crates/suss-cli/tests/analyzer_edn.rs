@@ -310,6 +310,35 @@ fn user_forms_round_trip() {
     assert!(emitted.contains("(suss.core/defmacro unless \"Like when-not.\" ([test] nil) ([test & body]"), "{emitted}");
 }
 
+#[test]
+fn local_macro_import_setup_keeps_one_node_per_source_declaration() {
+    use suss_reader::edn::Value;
+    let source = r#"(ns first (:require [clojure.edn :as edn]))
+(defmacro data [text] (list 'quote (edn/read-string text)))
+(def value (data "17"))
+(ns second (:require [clojure.edn :as other]))
+(defmacro data [text] (list 'quote (other/read-string text)))
+(def value (data "[29]"))"#;
+    let path = root().join("target/local-macro-analysis.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    assert_eq!(asts(&document).len(), 6, "one node per original source form");
+    let declarations: Vec<_> = asts(&document).iter()
+        .filter(|node| get(node, "op") == &Value::keyword("suss/ns")).collect();
+    assert_eq!(declarations.len(), 2);
+    for declaration in declarations {
+        assert_eq!(get(get(declaration, "env"), "phase"), &Value::keyword("runtime"));
+    }
+    let Value::Map(namespaces) = get(get(&document, "global-env"), "macro-namespaces") else { panic!("macro namespaces") };
+    for (namespace, alias) in [("first", "edn"), ("second", "other")] {
+        let scope = namespaces.get(&Value::Symbol(suss_reader::Symbol::new(namespace))).unwrap();
+        let Value::Map(aliases) = get(scope, "aliases") else { panic!("macro aliases") };
+        assert_eq!(aliases.get(&Value::Symbol(suss_reader::Symbol::new(alias))),
+            Some(&Value::Symbol(suss_reader::Symbol::new("clojure.edn"))));
+    }
+    assert_round_trip(source, &path, &[]);
+}
+
 /// A recur targets the innermost loop or fn method, also inside an
 /// intrinsic.
 #[test]

@@ -315,7 +315,7 @@ impl CompiledMacros {
                     // keep their existing once-only loading contract even when
                     // the caller's later declaration preparation fails.
                     let transactions = std::mem::take(&mut self.declaration_transactions);
-                    let imported = (|| {
+                    let imported = crate::portable::analysis_record::internal_setup(|| {
                         let span = declaration.span.clone();
                         let prepared = self.session.compilation_snapshot().prepare_with_origin(
                             vec![declaration], span, self, Some(&module.origin),
@@ -341,7 +341,7 @@ impl CompiledMacros {
                             self.loaded_sources.insert(name, identity);
                         }
                         Ok::<_, SessionError>(())
-                    })();
+                    });
                     debug_assert!(self.declaration_transactions.is_empty());
                     self.declaration_transactions = transactions;
                     imported?;

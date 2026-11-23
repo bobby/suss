@@ -1,7 +1,7 @@
 """Required unfiltered baseline; freeze every tracked input, including fixtures."""
 from pathlib import Path
-import hashlib,json,os,subprocess,time
-ROOT=Path(__file__).resolve().parents[2];OUT=Path(__file__).resolve().parent/'workspace-baseline';OUT.mkdir(exist_ok=True);assert not (OUT/'command.json').exists()
+import hashlib,json,os,subprocess,time,sys
+ROOT=Path(__file__).resolve().parents[2];OUT=Path(__file__).resolve().parent/(sys.argv[1] if len(sys.argv)>1 else 'workspace-baseline');OUT.mkdir(exist_ok=True);assert not (OUT/'command.json').exists()
 subprocess.run(['git','diff','--quiet'],cwd=ROOT,check=True);subprocess.run(['git','diff','--cached','--quiet'],cwd=ROOT,check=True)
 paths=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0');inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and (ROOT/p).is_file()}
 core='clojurescript/src/main/cljs/cljs/core.cljs';inputs[core]=hashlib.sha256((ROOT/core).read_bytes()).hexdigest()

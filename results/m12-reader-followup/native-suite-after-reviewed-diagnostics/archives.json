@@ -1,0 +1,20 @@
+[
+  {
+    "path": "command.json",
+    "bytes": 910163,
+    "sha256": "e5d08b31a30961588048bc601ae9a1a1ec620bd019edc0c3159c95e5b78b72ff",
+    "archive_sha256": "e5e71af6f7278b82903f0fb0199beb801a19cff9b39a19de09dff00828e83a4e"
+  },
+  {
+    "path": "run.log",
+    "bytes": 463,
+    "sha256": "af96680cd72b2e3b796ba936152b2363b0dd75b61c23ede8ff6992d4e2396e59",
+    "archive_sha256": "4d98f37be2e3d455d92c3a391b18dbe688d9eaa0450bd226e74003a7fc0ef576"
+  },
+  {
+    "path": "suite-capture/suite-observations.json",
+    "bytes": 4965678,
+    "sha256": "d98ab8264fa2b1fe1e15db90f95ac145e26f49c12ae1a88087943a1ed4ab92c7",
+    "archive_sha256": "b0cd7492b549109a8e03fc1103163cb72f1925ff5338a71bdf6a9df71fb23072"
+  }
+]
