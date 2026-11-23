@@ -26,5 +26,19 @@
     "raw_sha256": "2ff2590b2ade76538effbc4746a4e5000d6d08eb71eab4b938f7e35871468784",
     "raw_bytes": 493829,
     "archive_sha256": "6dd7a4c49c9a0fed6a1276404b2355af6a581785fb640085065e9c90c41e7cef"
+  },
+  {
+    "raw": "workspace-baseline/command.json",
+    "archive": "workspace-baseline/command.json.gz",
+    "raw_sha256": "a3e8c79916bee67704a0ae75daa2c4db8dfd07ef31f6c8d4dda366f9e9a6891f",
+    "raw_bytes": 493025,
+    "archive_sha256": "8c9ef9e9d48393009fcbd92a3762ce63a1c1a3045e57a4a092d133996ab0bc1d"
+  },
+  {
+    "raw": "workspace-baseline/run.log",
+    "archive": "workspace-baseline/run.log.gz",
+    "raw_sha256": "dc7e7f7b221666919117b4b6d8b32227be926047ab3629c7b8c5a33d6f58526d",
+    "raw_bytes": 309569,
+    "archive_sha256": "31dd2f7e02c095562aa5fa29aff899721850bd7304a8236c12556d1dcf5b2eee"
   }
 ]

@@ -47,3 +47,13 @@ failed namespaces. Primary values, capture routing, count and skip guards,
 and the reviewed failure baseline are unchanged. The remaining54 Decimal
 source-form candidates and six unexecuted Decimal-operand assertions remain;
 these repairs do not establish complete BigDecimal suite acceptance.
+
+The fresh required full baseline subsequently completes on a12b2796: the exact
+`cargo test --workspace --locked -- --test-threads=2` command exits0 after9056s,
+with2395 passed, zero failed and14 existing ignored tests. All3852 inputs remain
+unchanged. `workspace-baseline/command.json.gz` and `run.log.gz` preserve terminal
+receipts/output; their raw SHA256 values are indexed in `archives.json`.
+`workspace-baseline/qualification.json` lists all changes to0436ab30, whose
+production source is identical and whose added suite profile/regression has
+separate passing CI45125078838. This is not a local workspace run of0436ab30.
+Remaining known Decimal failures/unexecuted assertions are not treated as passing.

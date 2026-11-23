@@ -1,3 +1,18 @@
+## Unfiltered Decimal workspace validation (2026-11-23)
+
+`python3 results/m12-decimal-raw-errors/run-workspace.py` completes the exact
+`cargo test --workspace --locked -- --test-threads=2` command on a12b2796:
+exit0 after9056s,2395 passed, zero failed and14 existing ignored tests, with
+all3852 input hashes unchanged. The terminal command receipt and byte-preserved
+log are archived under `results/m12-decimal-raw-errors/workspace-baseline`.
+`qualification.json` records every difference to0436ab30: compiler/runtime
+production source is identical; its added suite profile/regression has separate
+passing CI (foundation, all eight integration partitions and aggregate test,
+run45125078838). This qualifies a full local run of a12b2796, not0436ab30.
+No original test is filtered or newly ignored. Remaining Decimal suite gaps
+retain their explicit failed/unexecuted observations; this command does not
+establish complete BigDecimal acceptance.
+
 ## Narrow scalar suite profile probes (2026-11-23)
 
 `results/m12-suite-platform/run-focused.py before-platform-branches
