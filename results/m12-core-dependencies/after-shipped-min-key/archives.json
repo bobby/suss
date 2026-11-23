@@ -1,0 +1,18 @@
+[
+  {
+    "raw": "command.json",
+    "archive": "command.json.gz",
+    "raw_sha256": "92526b180c8fbb7be2852aff0f827360472ba02105ef6b49025337e9ab8748fc",
+    "raw_bytes": 499047,
+    "archive_sha256": "ea827a022c567404ccd590f2bfbb5bf2c70465a0813d1b9a27022b64768868e2",
+    "archive_bytes": 184040
+  },
+  {
+    "raw": "run.log",
+    "archive": "run.log.gz",
+    "raw_sha256": "115569b6caab6bc4d9c35ebdfcea3ea21f627706edb1cf88920d71f5378ff5d1",
+    "raw_bytes": 3324,
+    "archive_sha256": "e2f3ed3f174eda7010730ec50c72650f9ab6744f8833864cdd033b9fabaa6bf7",
+    "archive_bytes": 1009
+  }
+]

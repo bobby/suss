@@ -1,3 +1,25 @@
+## Shipped min-key primary execution (2026-11-23)
+
+`python3 results/m12-core-dependencies/test_min_key_baseline.py` passes five
+adversarial checks for the follow-up baseline guard: actual independently
+captured rows are used only as test fixtures, never as a full-suite result.
+The guard rejects a missing min-key row, changed operand, primary rewrite or
+unrelated failure removal. It requires a fresh source-frozen full capture before
+its optional write can remove only the min-key namespace-load failure.
+
+`run-min-key.py after-checked-comparison-capture` returns0 at9d501d71 after688.215s,
+inputs unchanged: all32 primary controls match in Runtime, isolated Macro and
+actual CLI AOT, plus both adversarial decoder tests. The original default AOT
+compile budget and eight-control components remain unchanged. The complete
+vendored body executes through `run-min-key-body.py`: all49 ordered assertions
+match the unchanged primary on the host, zero guest judgments/failures/skips,
+65.349s including build, inputs unchanged. Historical missing-function and
+coercing-comparison failures remain byte-exact gzip archives, alongside both
+passing receipts and the actual49-row capture. Full-suite capture/audit, its
+strictly scoped baseline change and broader gates require separate execution.
+`run-suite.py` accepts SUSS_SUITE_TARGET so the next source can use its own PT
+build directory without touching another frozen run's target.
+
 ## Checked min-key comparison capture (2026-11-23)
 
 `run-min-key.py after-shipped-min-key` returns101 after524.158s with unchanged

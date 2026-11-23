@@ -1,0 +1,43 @@
+{
+  "qualification": "Native matrices ran at9d501d71. Only the two listed documentation inputs changed after those runs; recorded production, native tests and fixtures still match. New baseline-review scripts, archived evidence and the suite target selection affect follow-up orchestration, not the native candidate under test.",
+  "runs": [
+    {
+      "receipt": "after-checked-comparison-capture/command.json",
+      "native_head": "9d501d71028841854afcc8b1835767cc48d4c449",
+      "exit_code": 0,
+      "inputs_unchanged_at_completion": true,
+      "later_documentation_changes": [
+        {
+          "path": "docs/compatibility/README.md",
+          "native_input_sha256": "cf4b1a737ce0bae43af7ba071045249163f55a21263f93173ccbb0b3e237abb3",
+          "documentation_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
+        },
+        {
+          "path": "docs/roadmap/handoff.md",
+          "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
+          "documentation_sha256": "65a6afdeae359932e6434b733b57883b4b07cda648572d646d85e14b032ca4c5"
+        }
+      ],
+      "all_other_recorded_native_inputs_match": true
+    },
+    {
+      "receipt": "complete-min-key-body/command.json",
+      "native_head": "9d501d71028841854afcc8b1835767cc48d4c449",
+      "exit_code": 0,
+      "inputs_unchanged_at_completion": true,
+      "later_documentation_changes": [
+        {
+          "path": "docs/compatibility/README.md",
+          "native_input_sha256": "cf4b1a737ce0bae43af7ba071045249163f55a21263f93173ccbb0b3e237abb3",
+          "documentation_sha256": "c5a66c6ba5ad514b6f201059a1412f4a284a513ac6371b1a655ff177719aa56c"
+        },
+        {
+          "path": "docs/roadmap/handoff.md",
+          "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
+          "documentation_sha256": "65a6afdeae359932e6434b733b57883b4b07cda648572d646d85e14b032ca4c5"
+        }
+      ],
+      "all_other_recorded_native_inputs_match": true
+    }
+  ]
+}
