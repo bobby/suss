@@ -649,6 +649,16 @@ impl CompiledMacros {
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.session.set_operation_fuel(fuel);
     }
+    /// Explicitly provide the harness observer in this isolated Macro Store.
+    /// Runtime observers are never inherited. The callback is synchronous and
+    /// must not re-enter the Store; replacement/reset drops this capability.
+    pub fn install_observation_hook(
+        &mut self,
+        callback: impl for<'a> Fn(wasmtime::StoreContextMut<'a, ()>, wasmtime::Val) -> wasmtime::Result<u32>
+            + Send + Sync + 'static,
+    ) -> Result<(), SessionError> {
+        self.session.install_phase_observation_hook(callback)
+    }
     /// Interrupts a running macro expansion in this compiled macro session.
     pub fn interrupt_handle(&self) -> crate::portable_session::InterruptHandle {
         self.session.interrupt_handle()
