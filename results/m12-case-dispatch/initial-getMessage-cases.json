@@ -1,0 +1,374 @@
+[
+  [
+    "(case 1 1 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1 1N :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1 1.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1 1M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1 1.00M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1N 1 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1N 1N :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1N 1.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1N 1M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1N 1.00M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case (biginteger 1) 1 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case (biginteger 1) 1N :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case (biginteger 1) 1.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case (biginteger 1) 1M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case (biginteger 1) 1.00M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.0 1 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.0 1N :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.0 1.0 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1.0 1M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.0 1.00M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1M 1 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1M 1N :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1M 1.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1M 1M :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 1M 1.00M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.00M 1 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.00M 1N :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.00M 1.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.00M 1M :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1.00M 1.00M :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 0 0 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 0 0.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 0 -0.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 0.0 0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 0.0 0.0 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 0.0 -0.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case -0.0 0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case -0.0 0.0 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case -0.0 -0.0 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 'name name :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 'app/name app/name :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 'quote 'foo :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 'foo 'foo :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case '(a b) ((a b)) :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case '(a b) [a b] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case ['a 'b] ((a b)) :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case [1N] [1] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case {:a 1N :b 2} {:b 2 :a 1} :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case #{1N 2} #{2 1} :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case [1.00M] [1.0M] :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case {:a 1.00M} {:a 1.0M} :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case #{1.00M} #{1.0M} :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case ^:m [1M] [1M] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case [1M] ^:m [1M] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case [{:a #{1M}}] [{:a #{1M}}] :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case ##NaN ##NaN :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case (/ 0.0 0.0) ##NaN :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case 9223372036854775807N 9223372036854775807 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case (biginteger 1000000000000N) 1000000000000 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case (biginteger -1) -1 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case (biginteger -1) -1 :hit nil :nil :miss)",
+    ":miss"
+  ],
+  [
+    "(case 1/2 1/2 :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case 0.5M 1/2 :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case :a (:b :a :c) :hit :miss)",
+    ":hit"
+  ],
+  [
+    "(case :missing (:b :a :c) :hit :miss)",
+    ":miss"
+  ],
+  [
+    "(case true false :no true :yes :default)",
+    ":yes"
+  ],
+  [
+    "(case nil false :no nil :yes :default)",
+    ":yes"
+  ],
+  [
+    "(case [1] [1] :hit)",
+    ":hit"
+  ],
+  [
+    "(case :a :a :hit)",
+    ":hit"
+  ],
+  [
+    "(case :missing :default)",
+    ":default"
+  ],
+  [
+    "(with-redefs [= (fn [a b] (throw (ex-info \"eq-called\" {})))] (case true false :no true :yes :default))",
+    ":yes"
+  ],
+  [
+    "(with-redefs [keyword? (fn [x] false)] (case :hit :hit :yes :default))",
+    ":yes"
+  ],
+  [
+    "(with-redefs [= (fn [a b] (throw (ex-info \"eq-called\" {})))] (case 0 nil :nil 0 :zero :default))",
+    "[:error \"eq-called\"]"
+  ],
+  [
+    "(with-redefs [= (fn [a b] (throw (ex-info \"eq-called\" {})))] (case [1] [1] :hit :miss))",
+    ":hit"
+  ],
+  [
+    "(with-redefs [= (fn [a b] (throw (ex-info \"eq-called\" {})))] (case {:a [1M]} {:a [1M]} :hit :miss))",
+    ":hit"
+  ],
+  [
+    "(with-redefs [hash (fn [a] (throw (ex-info \"hash-called\" {})))] (case [1M] [1M] :hit :miss))",
+    ":hit"
+  ],
+  [
+    "(with-redefs [str (fn [& xs] \"replacement\")] (try (case :x) (catch Throwable e (.getMessage e))))",
+    "\"replacement\""
+  ],
+  [
+    "(do (def case-effects []) (let [r (case (do (def case-effects (conj case-effects :selector)) [1N]) [1] (do (def case-effects (conj case-effects :chosen)) :hit) (do (def case-effects (conj case-effects :default)) :miss))] [r case-effects]))",
+    "[:hit [:selector :chosen]]"
+  ],
+  [
+    "(let [f (fn [x] (case x [1M] :hit :miss))] (f [1M]))",
+    ":hit"
+  ],
+  [
+    "(loop [i 0] (case i 0 (recur 1) 1 :hit :miss))",
+    ":hit"
+  ],
+  [
+    "(let [v :captured f (fn [x] (case x [1M] (fn [] v) (fn [] :miss)))] ((f [1M])))",
+    ":captured"
+  ],
+  [
+    "(case nil)",
+    "[:error \"No matching clause: \"]"
+  ],
+  [
+    "(case false)",
+    "[:error \"No matching clause: false\"]"
+  ],
+  [
+    "(case true)",
+    "[:error \"No matching clause: true\"]"
+  ],
+  [
+    "(case 1)",
+    "[:error \"No matching clause: 1\"]"
+  ],
+  [
+    "(case 1.50M)",
+    "[:error \"No matching clause: 1.50\"]"
+  ],
+  [
+    "(case 1/3)",
+    "[:error \"No matching clause: 1/3\"]"
+  ],
+  [
+    "(case [1 2])",
+    "[:error \"No matching clause: [1 2]\"]"
+  ],
+  [
+    "(case {:a 1})",
+    "[:error \"No matching clause: {:a 1}\"]"
+  ],
+  [
+    "(case #{1 2})",
+    "[:error \"No matching clause: #{1 2}\"]"
+  ],
+  [
+    "(case \"x\")",
+    "[:error \"No matching clause: x\"]"
+  ],
+  [
+    "(case 'name)",
+    "[:error \"No matching clause: name\"]"
+  ],
+  [
+    "(case ##NaN)",
+    "[:error \"No matching clause: NaN\"]"
+  ]
+]

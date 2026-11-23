@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+    "analyze",
+    "--emit",
+    "forms",
+    "/tmp/suss-case-hash-code.sus"
+  ],
+  "exit_code": 0,
+  "seconds": 0.0036923885345458984,
+  "source_sha256": "1df8205a09ff541750ac1b62b27dcd5e0e4516e05f82b70026cbb564e8e09667"
+}

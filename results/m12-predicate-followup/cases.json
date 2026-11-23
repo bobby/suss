@@ -1,0 +1,1094 @@
+[
+  [
+    "(pos-int? nil)",
+    "false"
+  ],
+  [
+    "(pos-int? false)",
+    "false"
+  ],
+  [
+    "(pos-int? true)",
+    "false"
+  ],
+  [
+    "(pos-int? 0)",
+    "false"
+  ],
+  [
+    "(pos-int? 1)",
+    "true"
+  ],
+  [
+    "(pos-int? -1)",
+    "false"
+  ],
+  [
+    "(pos-int? 9223372036854775807)",
+    "true"
+  ],
+  [
+    "(pos-int? -9223372036854775808)",
+    "false"
+  ],
+  [
+    "(pos-int? 0N)",
+    "false"
+  ],
+  [
+    "(pos-int? 1N)",
+    "false"
+  ],
+  [
+    "(pos-int? -1N)",
+    "false"
+  ],
+  [
+    "(pos-int? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(pos-int? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(pos-int? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(pos-int? 0.0)",
+    "false"
+  ],
+  [
+    "(pos-int? 1.0)",
+    "false"
+  ],
+  [
+    "(pos-int? -1.0)",
+    "false"
+  ],
+  [
+    "(pos-int? 0M)",
+    "false"
+  ],
+  [
+    "(pos-int? 1.0M)",
+    "false"
+  ],
+  [
+    "(pos-int? -1.0M)",
+    "false"
+  ],
+  [
+    "(pos-int? 1/3)",
+    "false"
+  ],
+  [
+    "(pos-int? -1/3)",
+    "false"
+  ],
+  [
+    "(pos-int? ##NaN)",
+    "false"
+  ],
+  [
+    "(pos-int? ##Inf)",
+    "false"
+  ],
+  [
+    "(pos-int? ##-Inf)",
+    "false"
+  ],
+  [
+    "(pos-int? :x)",
+    "false"
+  ],
+  [
+    "(pos-int? 'x)",
+    "false"
+  ],
+  [
+    "(pos-int? [])",
+    "false"
+  ],
+  [
+    "(pos-int? [1])",
+    "false"
+  ],
+  [
+    "(pos-int? {})",
+    "false"
+  ],
+  [
+    "(pos-int? {:a 1})",
+    "false"
+  ],
+  [
+    "(pos-int? '())",
+    "false"
+  ],
+  [
+    "(pos-int? '(1))",
+    "false"
+  ],
+  [
+    "(pos-int? #{})",
+    "false"
+  ],
+  [
+    "(pos-int? #{1})",
+    "false"
+  ],
+  [
+    "(pos-int? (seq [1]))",
+    "false"
+  ],
+  [
+    "(pos-int? (range 2))",
+    "false"
+  ],
+  [
+    "(pos-int? (sorted-map :a 1))",
+    "false"
+  ],
+  [
+    "(pos-int? (sorted-set 1))",
+    "false"
+  ],
+  [
+    "(pos-int? (first {:a 1}))",
+    "false"
+  ],
+  [
+    "(pos-int? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(neg-int? nil)",
+    "false"
+  ],
+  [
+    "(neg-int? false)",
+    "false"
+  ],
+  [
+    "(neg-int? true)",
+    "false"
+  ],
+  [
+    "(neg-int? 0)",
+    "false"
+  ],
+  [
+    "(neg-int? 1)",
+    "false"
+  ],
+  [
+    "(neg-int? -1)",
+    "true"
+  ],
+  [
+    "(neg-int? 9223372036854775807)",
+    "false"
+  ],
+  [
+    "(neg-int? -9223372036854775808)",
+    "true"
+  ],
+  [
+    "(neg-int? 0N)",
+    "false"
+  ],
+  [
+    "(neg-int? 1N)",
+    "false"
+  ],
+  [
+    "(neg-int? -1N)",
+    "false"
+  ],
+  [
+    "(neg-int? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(neg-int? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(neg-int? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(neg-int? 0.0)",
+    "false"
+  ],
+  [
+    "(neg-int? 1.0)",
+    "false"
+  ],
+  [
+    "(neg-int? -1.0)",
+    "false"
+  ],
+  [
+    "(neg-int? 0M)",
+    "false"
+  ],
+  [
+    "(neg-int? 1.0M)",
+    "false"
+  ],
+  [
+    "(neg-int? -1.0M)",
+    "false"
+  ],
+  [
+    "(neg-int? 1/3)",
+    "false"
+  ],
+  [
+    "(neg-int? -1/3)",
+    "false"
+  ],
+  [
+    "(neg-int? ##NaN)",
+    "false"
+  ],
+  [
+    "(neg-int? ##Inf)",
+    "false"
+  ],
+  [
+    "(neg-int? ##-Inf)",
+    "false"
+  ],
+  [
+    "(neg-int? :x)",
+    "false"
+  ],
+  [
+    "(neg-int? 'x)",
+    "false"
+  ],
+  [
+    "(neg-int? [])",
+    "false"
+  ],
+  [
+    "(neg-int? [1])",
+    "false"
+  ],
+  [
+    "(neg-int? {})",
+    "false"
+  ],
+  [
+    "(neg-int? {:a 1})",
+    "false"
+  ],
+  [
+    "(neg-int? '())",
+    "false"
+  ],
+  [
+    "(neg-int? '(1))",
+    "false"
+  ],
+  [
+    "(neg-int? #{})",
+    "false"
+  ],
+  [
+    "(neg-int? #{1})",
+    "false"
+  ],
+  [
+    "(neg-int? (seq [1]))",
+    "false"
+  ],
+  [
+    "(neg-int? (range 2))",
+    "false"
+  ],
+  [
+    "(neg-int? (sorted-map :a 1))",
+    "false"
+  ],
+  [
+    "(neg-int? (sorted-set 1))",
+    "false"
+  ],
+  [
+    "(neg-int? (first {:a 1}))",
+    "false"
+  ],
+  [
+    "(neg-int? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(nat-int? nil)",
+    "false"
+  ],
+  [
+    "(nat-int? false)",
+    "false"
+  ],
+  [
+    "(nat-int? true)",
+    "false"
+  ],
+  [
+    "(nat-int? 0)",
+    "true"
+  ],
+  [
+    "(nat-int? 1)",
+    "true"
+  ],
+  [
+    "(nat-int? -1)",
+    "false"
+  ],
+  [
+    "(nat-int? 9223372036854775807)",
+    "true"
+  ],
+  [
+    "(nat-int? -9223372036854775808)",
+    "false"
+  ],
+  [
+    "(nat-int? 0N)",
+    "false"
+  ],
+  [
+    "(nat-int? 1N)",
+    "false"
+  ],
+  [
+    "(nat-int? -1N)",
+    "false"
+  ],
+  [
+    "(nat-int? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(nat-int? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(nat-int? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(nat-int? 0.0)",
+    "false"
+  ],
+  [
+    "(nat-int? 1.0)",
+    "false"
+  ],
+  [
+    "(nat-int? -1.0)",
+    "false"
+  ],
+  [
+    "(nat-int? 0M)",
+    "false"
+  ],
+  [
+    "(nat-int? 1.0M)",
+    "false"
+  ],
+  [
+    "(nat-int? -1.0M)",
+    "false"
+  ],
+  [
+    "(nat-int? 1/3)",
+    "false"
+  ],
+  [
+    "(nat-int? -1/3)",
+    "false"
+  ],
+  [
+    "(nat-int? ##NaN)",
+    "false"
+  ],
+  [
+    "(nat-int? ##Inf)",
+    "false"
+  ],
+  [
+    "(nat-int? ##-Inf)",
+    "false"
+  ],
+  [
+    "(nat-int? :x)",
+    "false"
+  ],
+  [
+    "(nat-int? 'x)",
+    "false"
+  ],
+  [
+    "(nat-int? [])",
+    "false"
+  ],
+  [
+    "(nat-int? [1])",
+    "false"
+  ],
+  [
+    "(nat-int? {})",
+    "false"
+  ],
+  [
+    "(nat-int? {:a 1})",
+    "false"
+  ],
+  [
+    "(nat-int? '())",
+    "false"
+  ],
+  [
+    "(nat-int? '(1))",
+    "false"
+  ],
+  [
+    "(nat-int? #{})",
+    "false"
+  ],
+  [
+    "(nat-int? #{1})",
+    "false"
+  ],
+  [
+    "(nat-int? (seq [1]))",
+    "false"
+  ],
+  [
+    "(nat-int? (range 2))",
+    "false"
+  ],
+  [
+    "(nat-int? (sorted-map :a 1))",
+    "false"
+  ],
+  [
+    "(nat-int? (sorted-set 1))",
+    "false"
+  ],
+  [
+    "(nat-int? (first {:a 1}))",
+    "false"
+  ],
+  [
+    "(nat-int? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(coll? nil)",
+    "false"
+  ],
+  [
+    "(coll? false)",
+    "false"
+  ],
+  [
+    "(coll? true)",
+    "false"
+  ],
+  [
+    "(coll? 0)",
+    "false"
+  ],
+  [
+    "(coll? 1)",
+    "false"
+  ],
+  [
+    "(coll? -1)",
+    "false"
+  ],
+  [
+    "(coll? 9223372036854775807)",
+    "false"
+  ],
+  [
+    "(coll? -9223372036854775808)",
+    "false"
+  ],
+  [
+    "(coll? 0N)",
+    "false"
+  ],
+  [
+    "(coll? 1N)",
+    "false"
+  ],
+  [
+    "(coll? -1N)",
+    "false"
+  ],
+  [
+    "(coll? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(coll? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(coll? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(coll? 0.0)",
+    "false"
+  ],
+  [
+    "(coll? 1.0)",
+    "false"
+  ],
+  [
+    "(coll? -1.0)",
+    "false"
+  ],
+  [
+    "(coll? 0M)",
+    "false"
+  ],
+  [
+    "(coll? 1.0M)",
+    "false"
+  ],
+  [
+    "(coll? -1.0M)",
+    "false"
+  ],
+  [
+    "(coll? 1/3)",
+    "false"
+  ],
+  [
+    "(coll? -1/3)",
+    "false"
+  ],
+  [
+    "(coll? ##NaN)",
+    "false"
+  ],
+  [
+    "(coll? ##Inf)",
+    "false"
+  ],
+  [
+    "(coll? ##-Inf)",
+    "false"
+  ],
+  [
+    "(coll? :x)",
+    "false"
+  ],
+  [
+    "(coll? 'x)",
+    "false"
+  ],
+  [
+    "(coll? [])",
+    "true"
+  ],
+  [
+    "(coll? [1])",
+    "true"
+  ],
+  [
+    "(coll? {})",
+    "true"
+  ],
+  [
+    "(coll? {:a 1})",
+    "true"
+  ],
+  [
+    "(coll? '())",
+    "true"
+  ],
+  [
+    "(coll? '(1))",
+    "true"
+  ],
+  [
+    "(coll? #{})",
+    "true"
+  ],
+  [
+    "(coll? #{1})",
+    "true"
+  ],
+  [
+    "(coll? (seq [1]))",
+    "true"
+  ],
+  [
+    "(coll? (range 2))",
+    "true"
+  ],
+  [
+    "(coll? (sorted-map :a 1))",
+    "true"
+  ],
+  [
+    "(coll? (sorted-set 1))",
+    "true"
+  ],
+  [
+    "(coll? (first {:a 1}))",
+    "true"
+  ],
+  [
+    "(coll? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(sorted? nil)",
+    "false"
+  ],
+  [
+    "(sorted? false)",
+    "false"
+  ],
+  [
+    "(sorted? true)",
+    "false"
+  ],
+  [
+    "(sorted? 0)",
+    "false"
+  ],
+  [
+    "(sorted? 1)",
+    "false"
+  ],
+  [
+    "(sorted? -1)",
+    "false"
+  ],
+  [
+    "(sorted? 9223372036854775807)",
+    "false"
+  ],
+  [
+    "(sorted? -9223372036854775808)",
+    "false"
+  ],
+  [
+    "(sorted? 0N)",
+    "false"
+  ],
+  [
+    "(sorted? 1N)",
+    "false"
+  ],
+  [
+    "(sorted? -1N)",
+    "false"
+  ],
+  [
+    "(sorted? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(sorted? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(sorted? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(sorted? 0.0)",
+    "false"
+  ],
+  [
+    "(sorted? 1.0)",
+    "false"
+  ],
+  [
+    "(sorted? -1.0)",
+    "false"
+  ],
+  [
+    "(sorted? 0M)",
+    "false"
+  ],
+  [
+    "(sorted? 1.0M)",
+    "false"
+  ],
+  [
+    "(sorted? -1.0M)",
+    "false"
+  ],
+  [
+    "(sorted? 1/3)",
+    "false"
+  ],
+  [
+    "(sorted? -1/3)",
+    "false"
+  ],
+  [
+    "(sorted? ##NaN)",
+    "false"
+  ],
+  [
+    "(sorted? ##Inf)",
+    "false"
+  ],
+  [
+    "(sorted? ##-Inf)",
+    "false"
+  ],
+  [
+    "(sorted? :x)",
+    "false"
+  ],
+  [
+    "(sorted? 'x)",
+    "false"
+  ],
+  [
+    "(sorted? [])",
+    "false"
+  ],
+  [
+    "(sorted? [1])",
+    "false"
+  ],
+  [
+    "(sorted? {})",
+    "false"
+  ],
+  [
+    "(sorted? {:a 1})",
+    "false"
+  ],
+  [
+    "(sorted? '())",
+    "false"
+  ],
+  [
+    "(sorted? '(1))",
+    "false"
+  ],
+  [
+    "(sorted? #{})",
+    "false"
+  ],
+  [
+    "(sorted? #{1})",
+    "false"
+  ],
+  [
+    "(sorted? (seq [1]))",
+    "false"
+  ],
+  [
+    "(sorted? (range 2))",
+    "false"
+  ],
+  [
+    "(sorted? (sorted-map :a 1))",
+    "true"
+  ],
+  [
+    "(sorted? (sorted-set 1))",
+    "true"
+  ],
+  [
+    "(sorted? (first {:a 1}))",
+    "false"
+  ],
+  [
+    "(sorted? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(char? nil)",
+    "false"
+  ],
+  [
+    "(char? false)",
+    "false"
+  ],
+  [
+    "(char? true)",
+    "false"
+  ],
+  [
+    "(char? 0)",
+    "false"
+  ],
+  [
+    "(char? 1)",
+    "false"
+  ],
+  [
+    "(char? -1)",
+    "false"
+  ],
+  [
+    "(char? 9223372036854775807)",
+    "false"
+  ],
+  [
+    "(char? -9223372036854775808)",
+    "false"
+  ],
+  [
+    "(char? 0N)",
+    "false"
+  ],
+  [
+    "(char? 1N)",
+    "false"
+  ],
+  [
+    "(char? -1N)",
+    "false"
+  ],
+  [
+    "(char? (biginteger 1))",
+    "false"
+  ],
+  [
+    "(char? (biginteger -1))",
+    "false"
+  ],
+  [
+    "(char? 1267650600228229401496703205376N)",
+    "false"
+  ],
+  [
+    "(char? 0.0)",
+    "false"
+  ],
+  [
+    "(char? 1.0)",
+    "false"
+  ],
+  [
+    "(char? -1.0)",
+    "false"
+  ],
+  [
+    "(char? 0M)",
+    "false"
+  ],
+  [
+    "(char? 1.0M)",
+    "false"
+  ],
+  [
+    "(char? -1.0M)",
+    "false"
+  ],
+  [
+    "(char? 1/3)",
+    "false"
+  ],
+  [
+    "(char? -1/3)",
+    "false"
+  ],
+  [
+    "(char? ##NaN)",
+    "false"
+  ],
+  [
+    "(char? ##Inf)",
+    "false"
+  ],
+  [
+    "(char? ##-Inf)",
+    "false"
+  ],
+  [
+    "(char? :x)",
+    "false"
+  ],
+  [
+    "(char? 'x)",
+    "false"
+  ],
+  [
+    "(char? [])",
+    "false"
+  ],
+  [
+    "(char? [1])",
+    "false"
+  ],
+  [
+    "(char? {})",
+    "false"
+  ],
+  [
+    "(char? {:a 1})",
+    "false"
+  ],
+  [
+    "(char? '())",
+    "false"
+  ],
+  [
+    "(char? '(1))",
+    "false"
+  ],
+  [
+    "(char? #{})",
+    "false"
+  ],
+  [
+    "(char? #{1})",
+    "false"
+  ],
+  [
+    "(char? (seq [1]))",
+    "false"
+  ],
+  [
+    "(char? (range 2))",
+    "false"
+  ],
+  [
+    "(char? (sorted-map :a 1))",
+    "false"
+  ],
+  [
+    "(char? (sorted-set 1))",
+    "false"
+  ],
+  [
+    "(char? (first {:a 1}))",
+    "false"
+  ],
+  [
+    "(char? (fn [x] x))",
+    "false"
+  ],
+  [
+    "(char? \\a)",
+    "true"
+  ],
+  [
+    "(char? \\space)",
+    "true"
+  ],
+  [
+    "(char? \\newline)",
+    "true"
+  ],
+  [
+    "(char? \\u0000)",
+    "true"
+  ],
+  [
+    "(char? (first \"\\uD800\"))",
+    "true"
+  ],
+  [
+    "(char? \\uFFFF)",
+    "true"
+  ],
+  [
+    "(char? \"\")",
+    "false"
+  ],
+  [
+    "(char? \"ab\")",
+    "false"
+  ],
+  [
+    "(char? \"\ud83d\ude00\")",
+    "false"
+  ],
+  [
+    "(let [f pos-int?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply pos-int? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (pos-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ],
+  [
+    "(let [f neg-int?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply neg-int? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (neg-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ],
+  [
+    "(let [f nat-int?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply nat-int? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (nat-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ],
+  [
+    "(let [f coll?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply coll? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (coll? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ],
+  [
+    "(let [f sorted?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply sorted? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (sorted? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ],
+  [
+    "(let [f char?] (f 1M))",
+    "false"
+  ],
+  [
+    "(apply char? [1M])",
+    "false"
+  ],
+  [
+    "(do (def predicate-effects []) (let [r (char? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))",
+    "[false [:arg]]"
+  ]
+]

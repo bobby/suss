@@ -1,0 +1,134 @@
+[
+  [
+    "(sort nil)",
+    "()"
+  ],
+  [
+    "(sort [])",
+    "()"
+  ],
+  [
+    "(sort [3 1 2])",
+    "(1 2 3)"
+  ],
+  [
+    "(sort > [3 1 2])",
+    "(3 2 1)"
+  ],
+  [
+    "(sort < [3 1 2 1])",
+    "(1 1 2 3)"
+  ],
+  [
+    "(sort [3M 1.0M 2M 1.00M])",
+    "(1.0M 1.00M 2M 3M)"
+  ],
+  [
+    "(sort [3 1N 2/3 0.5 1.0M])",
+    "(0.5 2/3 1N 1.0M 3)"
+  ],
+  [
+    "(sort [nil 2 nil 1])",
+    "(nil nil 1 2)"
+  ],
+  [
+    "(sort [\"z\" \"a\" \"b\"])",
+    "(\"a\" \"b\" \"z\")"
+  ],
+  [
+    "(sort [false true false])",
+    "(false false true)"
+  ],
+  [
+    "(sort [:b :a])",
+    "(:a :b)"
+  ],
+  [
+    "(sort ['b 'a])",
+    "(a b)"
+  ],
+  [
+    "(sort (with-meta [2 1] {:a 1}))",
+    "(1 2)"
+  ],
+  [
+    "(meta (sort (with-meta [2 1] {:a 1})))",
+    "{:a 1}"
+  ],
+  [
+    "(meta (sort (with-meta [] {:a 1})))",
+    "nil"
+  ],
+  [
+    "(sort (fn [a b] (compare (first a) (first b))) [[1 :a] [0 :b] [1 :c] [0 :d]])",
+    "([0 :b] [0 :d] [1 :a] [1 :c])"
+  ],
+  [
+    "(sort (fn [a b] (< (first a) (first b))) [[1 :a] [0 :b] [1 :c] [0 :d]])",
+    "([0 :b] [0 :d] [1 :a] [1 :c])"
+  ],
+  [
+    "(sort (fn [a b] 0) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] 0.5) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] -0.5) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] 0.5M) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] -0.5M) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] 1/3) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] -1/3) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] 0N) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] 4294967296N) [3 1 2])",
+    "(3 1 2)"
+  ],
+  [
+    "(sort (fn [a b] nil) [3 1 2])",
+    "[:error \"Cannot invoke \\\"java.lang.Number.intValue()\\\" because \\\"n\\\" is null\"]"
+  ],
+  [
+    "(sort (fn [a b] \"x\") [3 1 2])",
+    "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(sort (fn [a b] :x) [3 1 2])",
+    "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(sort (fn [a b] []) [3 1 2])",
+    "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(do (def sort-effects []) (let [r (sort (do (def sort-effects (conj sort-effects :comparator)) <) (do (def sort-effects (conj sort-effects :collection)) [3 1 2]))] [(vec r) sort-effects]))",
+    "[[1 2 3] [:comparator :collection]]"
+  ],
+  [
+    "(let [f sort] (f [3 1 2]))",
+    "(1 2 3)"
+  ],
+  [
+    "(apply sort [< [3 1 2]])",
+    "(1 2 3)"
+  ]
+]

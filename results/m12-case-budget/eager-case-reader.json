@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+    "analyze",
+    "--emit",
+    "forms",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/docs/compatibility/bootstrap/case.sus"
+  ],
+  "exit_code": 0,
+  "seconds": 0.0343174934387207,
+  "source_sha256": "9d913b6597ce81a5e93f2eec9a2e8eb37afb5ba9c1fe4f8478dd6ede38f13c11",
+  "executable_sha256": "969bbcd27acb249c24c2d52ed43be6727c7f1e3685a508883fca39fdd3effff3",
+  "stdout_sha256": "48c70e68b5dbdd285aa066c63fa4112d35c8861bc129bb1a06595a384b92f357"
+}

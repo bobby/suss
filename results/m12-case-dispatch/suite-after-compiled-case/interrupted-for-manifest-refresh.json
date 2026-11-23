@@ -1,0 +1,14 @@
+{
+  "scope": "run-p3742981-i91798927.scope",
+  "status_before": "active",
+  "reason": "Import check definitively fails: the case compatibility review changed reviews-sha256 but manifest.json was not regenerated. Interrupt before changing that input; preserve the complete interrupted capture/receipt. This is not a workspace/capture pass or a restart after observation timeout.",
+  "manifest_sha256_before": "fe69518664af03275fb0c3e3b23336ae543100537d1986a436ccaa3edf9572e7",
+  "interruption_command": [
+    "systemctl",
+    "--user",
+    "kill",
+    "--kill-whom=all",
+    "--signal=SIGINT",
+    "run-p3742981-i91798927.scope"
+  ]
+}

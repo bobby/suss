@@ -1,0 +1,48 @@
+(def sort
+  "Returns a sorted sequence of the items in coll. Comp can be
+   boolean-valued comparison function, or a -/0/+ valued comparator.
+   Comp defaults to compare."
+  (fn
+    ([coll] (sort compare coll))
+    ([comp coll]
+     (if (seq coll)
+       (let [a (if (suss.bootstrap/object-array? coll) coll (to-array coll))
+             n (alength a)
+             scratch (suss.bootstrap/packed-array 6 n)
+             cmp (fn [x y]
+                   (let [r (comp x y)]
+                     (if (suss.bootstrap/boolean? r)
+                       (if r -1 (if (comp y x) 1 0))
+                       (suss.bootstrap/int-value r))))]
+         ;; Original bottom-up stable merge sort over fixed WasmGC arrays.
+         ;; Choose the left element on equality; user collections are not
+         ;; traversed again after to-array. Object-array identity is retained.
+         (loop [width 1]
+           (if (cljs.core/< width n)
+             (do
+               (loop [lo 0]
+                 (if (cljs.core/< lo n)
+                   (let [mid0 (cljs.core/+ lo width)
+                         hi0 (cljs.core/+ mid0 width)
+                         mid (if (cljs.core/< n mid0) n mid0)
+                         hi (if (cljs.core/< n hi0) n hi0)]
+                     (loop [i lo j mid k lo]
+                       (if (cljs.core/< k hi)
+                         (if (or (cljs.core/>= j hi)
+                                 (and (cljs.core/< i mid)
+                                      (cljs.core/<= (cmp (aget a i) (aget a j)) 0)))
+                           (do (aset scratch k (aget a i))
+                               (recur (cljs.core/inc i) j (cljs.core/inc k)))
+                           (do (aset scratch k (aget a j))
+                               (recur i (cljs.core/inc j) (cljs.core/inc k))))
+                         nil))
+                     (recur hi))
+                   nil))
+               (loop [i 0]
+                 (if (cljs.core/< i n)
+                   (do (aset a i (aget scratch i)) (recur (cljs.core/inc i)))
+                   nil))
+               (recur (cljs.core/* width 2)))
+             nil))
+         (with-meta (seq a) (meta coll)))
+       ()))))

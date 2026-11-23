@@ -272,6 +272,8 @@ pub enum Bitwise {
     Imul,
     /// Private Clojure numeric casts: the operand and a `CASTS` index (#336).
     Cast,
+    /// Private Java Number.intValue conversion for Clojure comparators.
+    IntValue,
     /// Private scalar binary64 storage adapters; never public bitwise macros.
     F64Coerce,
     F64Word0,
@@ -315,6 +317,8 @@ pub enum Bitwise {
     ParseLong,
     /// Private Clojure `hasheq` of a number, for core's `hash` (#336).
     HashNumber,
+    /// Private Java hashCode for case dispatch; deliberately distinct from hasheq.
+    CaseNumberHash,
     /// Private Clojure `=` of scalars: numbers equal only within a category
     /// (#336).
     Equiv,
@@ -423,6 +427,7 @@ impl Bitwise {
             Self::Int32Unsigned => "int32-unsigned-bit-shift-right",
             Self::Imul => "int32-imul",
             Self::Cast => "number-cast",
+            Self::IntValue => "number-int-value",
             Self::F64Coerce => "primitive-f64-coerce",
             Self::F64Word0 => "primitive-f64-word0",
             Self::F64Word4 => "primitive-f64-word4",
@@ -463,6 +468,7 @@ impl Bitwise {
             Self::RangeCount => "number-range-count",
             Self::ParseLong => "number-parse-long",
             Self::HashNumber => "number-hash",
+            Self::CaseNumberHash => "case-number-hash",
             Self::Equiv => "number-equiv",
             Self::PackedNew => "packed-array-new",
             Self::PackedStore => "packed-array-store",
@@ -495,7 +501,9 @@ impl Bitwise {
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
+            | Self::IntValue
             | Self::HashNumber
+            | Self::CaseNumberHash
             | Self::PackedTest
             | Self::ObjectsTest
             | Self::VectorType
@@ -2093,7 +2101,23 @@ impl Analyzer<'_> {
                 local
             })
             .collect::<Vec<_>>();
-        let callee = self.form(&items[0])?;
+        let source_callee = self.form(&items[0])?;
+        let mut callee = source_callee.clone();
+        // This specialization is selected only for a fixed core call. An
+        // AOT user's multi-argument str must keep that same original function
+        // for each unary conversion, rather than invoking a rebound public
+        // function once per operand. Value uses/aliases still read the var.
+        if !self.privileged && self.environment.direct_linking {
+            if let Expression::Global(global) = &*callee.kind {
+                if global.namespace() == "suss.core" && global.name() == "str"
+                    && self.privileged_definition(global)
+                {
+                    if let Some(link) = self.environment.existing_core_link(global) {
+                        callee.kind = std::sync::Arc::new(Expression::Global(link));
+                    }
+                }
+            }
+        }
         let callee = match &*callee.kind {
             Expression::Global(global) => match self.direct_link(global) {
                 Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
@@ -2103,7 +2127,7 @@ impl Analyzer<'_> {
         };
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
-                callee: std::sync::Arc::new(callee.clone()),
+                callee: std::sync::Arc::new(source_callee),
                 arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
         let node = |kind: Expression, ty: Type| Hir {
@@ -3124,6 +3148,9 @@ impl Analyzer<'_> {
         if exported.is_none() {
             self.pending_param_hints = pending;
         }
+        // Tooling and macro source facts describe the caller's body, not the
+        // storage-only parameter conversions inserted around executable HIR.
+        let source_body = std::sync::Arc::new(inner_body.clone());
         let inner_body = if casts.is_empty() {
             inner_body
         } else {
@@ -3151,7 +3178,7 @@ impl Analyzer<'_> {
             parameters: parameters.clone(),
             variadic: rest_parameter.is_some(),
             recurs: recurred.then_some(true),
-            body: std::sync::Arc::new(inner_body.clone()),
+            body: source_body,
         };
         self.target = outer_target;
         let body = Box::new(Hir {
@@ -3644,8 +3671,10 @@ impl Analyzer<'_> {
                 "range-count" => Some(Bitwise::RangeCount),
                 "parse-long" => Some(Bitwise::ParseLong),
                 "hash-number" => Some(Bitwise::HashNumber),
+                "case-number-hash" => Some(Bitwise::CaseNumberHash),
                 "equiv" => Some(Bitwise::Equiv),
                 "cast" => Some(Bitwise::Cast),
+                "int-value" => Some(Bitwise::IntValue),
                 "packed-array" => Some(Bitwise::PackedNew),
                 "packed-store" => Some(Bitwise::PackedStore),
                 "packed-array?" => Some(Bitwise::PackedTest),
@@ -3660,6 +3689,40 @@ impl Analyzer<'_> {
             if let Some(operation) = operation {
                 return self.bitwise_form(form, args, operation);
             }
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap")
+            && matches!(symbol.name.as_str(), "case-hash<" | "case-hash=" | "case-identical")
+        {
+            if args.len() != 2 { return Err(fail(form.span.clone(), "Wrong private case comparison arity")); }
+            let operation = match symbol.name.as_str() {
+                "case-hash<" => Comparison::NumberLess,
+                "case-hash=" => Comparison::CaseEqual,
+                _ => Comparison::StrictEqual,
+            };
+            // These compiler-authored comparisons keep their selected operation;
+            // source numeric rewriting must not turn keyword identity into =.
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Bool, kind: std::sync::Arc::new(Expression::Comparison { operation, arguments }) });
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap")
+            && matches!(symbol.name.as_str(), "case-hash-code" | "case-equiv")
+        {
+            let (name, arity) = if symbol.name == "case-equiv" { ("=", 2) } else { ("case-hash-code", 1) };
+            if args.len() != arity {
+                return Err(fail(form.span.clone(), "Wrong private case helper arity"));
+            }
+            // A compiler-authored call to shipped core's fixed definition,
+            // never a user-resolvable cell or the live public equality var.
+            let binding = self.environment.resolve(self.phase,
+                &suss_reader::Symbol::namespaced("suss.core", name), form.span.clone())?;
+            let global = self.environment.existing_core_link(binding.global())
+                .ok_or_else(|| fail(form.span.clone(), "Private case helper requires shipped core"))?;
+            let callee = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Global(global)) };
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Value, kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) });
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "nil?" {
             if args.len() != 1 {

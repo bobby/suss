@@ -9,3 +9,7 @@ pub(crate) const VSWAP: &str = include_str!("../../../docs/compatibility/state/v
 // Clojure 1.12.6 with-precision adaptation; EPL-1.0 notice and exact source
 // hashes are retained in bootstrap/with-precision.sus and its provenance record.
 pub(crate) const WITH_PRECISION: &str = include_str!("../../../docs/compatibility/bootstrap/with-precision.sus");
+
+// Clojure 1.12.6 case; EPL provenance and primary form hashes are retained
+// alongside the original portable hash dispatch adaptation.
+pub(crate) const CASE: &str = include_str!("../../../docs/compatibility/bootstrap/case.sus");

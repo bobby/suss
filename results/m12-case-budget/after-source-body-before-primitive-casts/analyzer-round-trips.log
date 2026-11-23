@@ -1,0 +1,32 @@
+Running as unit: run-p3996720-i92071118.scope; invocation ID: 81d32dff45f04118b2e17d39ac57f884
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.59s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 14 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints ... ok
+test cli_prints_documents_that_suss_reads ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test swapped_branches_compare_unequal ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test user_forms_round_trip ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.36s
+
+     Running tests/analyzer_edn_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/analyzer_edn_core-8d4d42231c6fcd44)
+
+running 2 tests
+test core_document_has_no_lowered_nodes ... ok
+test core_round_trips_in_both_phases ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.03s
+

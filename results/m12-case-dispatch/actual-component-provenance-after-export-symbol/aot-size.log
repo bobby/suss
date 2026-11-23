@@ -1,0 +1,11 @@
+Running as unit: run-p3848071-i91912176.scope; invocation ID: d44cb3b7d5824d429ae0ab0dc146fac6
+    Finished `test` profile [optimized] target(s) in 0.18s
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 1 test
+component bytes: plain 3667406/3714458, scoped 3671674/3718726; bytes/form: 2352/2352
+code growth: split 5500, grouped 3580; extra bytes per split form: 96
+test aot_namespace_frame_size_is_bounded_per_form ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 6.57s
+

@@ -1,0 +1,43 @@
+Running as unit: run-p3492701-i91551972.scope; invocation ID: 919e3f686d634237b9125eb130ea173d
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=86 guest-judged=75 namespaces-failed=73 not-executed=2008 pass=4770 skipped=0
+namespaces clojure.core-test.assoc: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.assoc (Some("<root>/clojure/core_test/assoc.cljc")): Unresolved Runtime name sorted? at bytes 235..4147'}, observed None
+namespaces clojure.core-test.char-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.char-qmark (Some("<root>/clojure/core_test/char_qmark.cljc")): Unresolved Runtime name char? at bytes 268..1615'}, observed None
+namespaces clojure.core-test.coll-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.coll-qmark (Some("<root>/clojure/core_test/coll_qmark.cljc")): Unresolved Runtime name coll? at bytes 229..965'}, observed None
+namespaces clojure.core-test.disj: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.disj (Some("<root>/clojure/core_test/disj.cljc")): Unresolved Runtime name sorted? at bytes 234..1560'}, observed None
+namespaces clojure.core-test.dissoc: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.dissoc (Some("<root>/clojure/core_test/dissoc.cljc")): Unresolved Runtime name sorted? at bytes 304..2018'}, observed None
+namespaces clojure.core-test.neg-int-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.neg-int-qmark (Some("<root>/clojure/core_test/neg_int_qmark.cljc")): Unresolved Runtime name neg-int? at bytes 271..1611'}, observed None
+namespaces clojure.core-test.pos-int-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.pos-int-qmark (Some("<root>/clojure/core_test/pos_int_qmark.cljc")): Unresolved Runtime name pos-int? at bytes 271..1687'}, observed None
+namespaces clojure.core-test.some: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.some (Some("<root>/clojure/core_test/some.cljc")): Unresolved Runtime name char? at bytes 234..2444'}, observed None
+namespaces clojure.core-test.sort: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.sort (Some("<root>/clojure/core_test/sort.cljc")): Unresolved Runtime name sort at bytes 240..1081'}, observed None
+namespaces clojure.core-test.sort-by: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.sort-by (Some("<root>/clojure/core_test/sort_by.cljc")): Unresolved Runtime name sort at bytes 243..5303'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.sort-by (Some("<root>/clojure/core_test/sort_by.cljc")): Unresolved Runtime name sort-by at bytes 243..5303'}
+namespaces clojure.core-test.sorted-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.sorted-qmark (Some("<root>/clojure/core_test/sorted_qmark.cljc")): Unresolved Runtime name sorted? at bytes 242..1286'}, observed None
+assertions clojure.core-test.assoc/test-assoc#31: expected None, observed 'verdict:fail'
+assertions clojure.core-test.assoc/test-assoc#32: expected None, observed 'verdict:fail'
+assertions clojure.core-test.assoc/test-assoc#34: expected None, observed 'verdict:fail'
+assertions clojure.core-test.assoc/test-assoc#35: expected None, observed 'verdict:fail'
+assertions clojure.core-test.atom/test-atom#6: expected 'observation:undecodable', observed None
+assertions clojure.core-test.char-qmark/test-char?#33: expected None, observed 'verdict:fail'
+assertions clojure.core-test.char-qmark/test-char?#34: expected None, observed 'verdict:fail'
+assertions clojure.core-test.counted-qmark/test-counted?#6: expected 'observation:undecodable', observed None
+assertions clojure.core-test.counted-qmark/test-counted?#7: expected 'observation:undecodable', observed None
+assertions clojure.core-test.dissoc/test-dissoc#17: expected None, observed 'observation:undecodable'
+assertions clojure.core-test.interpose/test-interpose#4: expected 'observation:undecodable', observed None
+assertions clojure.core-test.seq/test-seq#11: expected 'observation:undecodable', observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (3492702) panicked at crates/suss-compile/tests/clojure_test_suite.rs:618:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 596.68s
+

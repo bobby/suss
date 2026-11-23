@@ -1,0 +1,13 @@
+Running as unit: run-p3999768-i92047626.scope; invocation ID: 798a8fee081c45079cdfd2d5bd4c15e3
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.55s
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test aot_records_fit_default_budget_and_execute ... ok
+test eval_and_script_records_fit_default_compilation_budget ... ok
+record membership fuel: [963185, 975395]
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.56s
+

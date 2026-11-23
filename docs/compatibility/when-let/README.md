@@ -97,3 +97,17 @@ ABI v3's longs (#335) adapt both native fixtures the same way:
 `compiled_let_destructuring-captured.rs`) change only how the host decodes
 integral results, now longs as in Clojure; guest sources and the observed values
 are unchanged.
+
+
+## Native macro message extraction (2026-11-23)
+
+The compiler now preserves actual macro-body exception messages through its
+located expansion diagnostic. The five invalid-binding checks compare those
+messages and exact spans, then verify recovery, instead of requiring the older
+opaque `Uncaught language exception` wrapper. Fresh JVM Clojure1.12.6 recordings
+retain ordinary macroexpand's spec-precheck message separately from direct
+invocation of the original macro function. The existing native source adaptation
+uses compiler spans rather than the JVM body's namespace suffix. Commands, full
+primary messages, original failed CI/test source and the passing five-test
+execution are under `results/m12-case-budget`; historical captured fixtures stay
+unchanged. This does not add a shipped JVM spec dependency.

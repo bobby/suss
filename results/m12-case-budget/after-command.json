@@ -1,0 +1,16 @@
+{
+  "source_head": "2254f70cb62c04741f84dce6ce7724866c3f77a8",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+    "repl",
+    "--compile-fuel",
+    "4000000"
+  ],
+  "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+  "executable_sha256": "015e40e6210acd7ce85925fbad44b220a59cc0d76ffc4d7787322fd17ee5cf59",
+  "executable_unchanged": true,
+  "exit_code": 0,
+  "seconds": 34.72782635688782,
+  "has_error": false,
+  "expected_final_value_present": true
+}

@@ -1,5 +1,6 @@
 //! Scalar and keyword bootstrap for pinned core.cljc case (2405–2474).
-//! Full compiled macros, composite constants and no-default printing remain pending.
+//! Used before the compiled Clojure case macro is loaded; ordinary source
+//! compilation with CompiledMacros uses its literal hash dispatch instead.
 use super::*;
 use std::collections::BTreeSet;
 

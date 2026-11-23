@@ -1,0 +1,5 @@
+"[\"Call to clojure.core/when-let did not conform to spec.\" \"when-let requires a vector for its binding in user:\"]"
+"[\"Call to clojure.core/when-let did not conform to spec.\" \"when-let requires exactly 2 forms in binding vector in user:\"]"
+"[\"Call to clojure.core/when-let did not conform to spec.\" \"when-let requires exactly 2 forms in binding vector in user:\"]"
+"[\"Call to clojure.core/when-let did not conform to spec.\" \"when-let requires exactly 2 forms in binding vector in user:\"]"
+"[\"Call to clojure.core/when-let did not conform to spec.\" \"when-let requires a vector for its binding in user:\"]"

@@ -1,0 +1,16 @@
+{
+  "case_count": 273,
+  "fixture_sha256": "c1b7e79ae18da92d312eee1a2ebfb9a4036222f1cea8dc95af368bf767d32556",
+  "mismatches": {
+    "Runtime": 273,
+    "Macro": 273
+  },
+  "missing_runtime_names": [
+    "char?",
+    "coll?",
+    "nat-int?",
+    "neg-int?",
+    "pos-int?",
+    "sorted?"
+  ]
+}

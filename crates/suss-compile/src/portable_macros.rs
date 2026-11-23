@@ -34,6 +34,9 @@ pub struct CompiledMacros {
     // interned so far, and the namespace last set (#309).
     namespace_interner: SessionValue,
     namespace_setter: SessionValue,
+    // Retain the native accessor; diagnostic extraction must not call a public
+    // ex-message replacement or guest printer after a macro throws.
+    exception_message: SessionValue,
     namespace_objects: BTreeMap<String, SessionValue>,
     macro_namespace: Option<String>,
 }
@@ -276,6 +279,7 @@ impl CompiledMacros {
         let bridge = FormBridge::new(&mut session)?;
         let namespace_interner = session.eval("suss.core/intern-namespace")?;
         let namespace_setter = session.eval("suss.core/enter-macro-namespace!")?;
+        let exception_message = session.eval("suss.core/ex-message")?;
         // Intern the namespaces most expansions run in before any request
         // budget applies, so a macro's budget covers the macro's own work.
         let mut namespace_objects = BTreeMap::new();
@@ -301,6 +305,7 @@ impl CompiledMacros {
             artifact_cache: Default::default(),
             namespace_interner,
             namespace_setter,
+            exception_message,
             namespace_objects,
             macro_namespace: None,
         };
@@ -311,6 +316,7 @@ impl CompiledMacros {
         macros.define(crate::portable_state_macros::DELAY)?;
         macros.define(crate::portable_state_macros::VSWAP)?;
         macros.define(crate::portable_state_macros::WITH_PRECISION)?;
+        macros.define_compiler_macro(crate::portable_state_macros::CASE)?;
         macros.define(crate::portable_core_macros::DOSEQ)?;
         macros.define(crate::portable_core_macros::THREAD_LAST)?;
         macros.define(crate::portable_core_macros::DEFMULTI)?;
@@ -389,6 +395,14 @@ impl CompiledMacros {
         self.session.enter_namespace(namespace)
     }
     pub fn define(&mut self, source: &str) -> Result<(), SessionError> {
+        self.define_source(source, false)
+    }
+    // Only compiler-owned source may read shipped core's private link cells.
+    // The public define API always uses an unprivileged origin.
+    fn define_compiler_macro(&mut self, source: &str) -> Result<(), SessionError> {
+        self.define_source(source, true)
+    }
+    fn define_source(&mut self, source: &str, privileged: bool) -> Result<(), SessionError> {
         let _budget = self.session.operation_budget_scope()?;
         self.session.charge_host_work(source.len() as u64)?;
         let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
@@ -407,10 +421,12 @@ impl CompiledMacros {
                 message: "Expected exactly one source defmacro".into(),
             }));
         }
+        let origin = if privileged { crate::portable::SourceOrigin::privileged(source) }
+            else { crate::portable::SourceOrigin::new(source, None) };
         self.define_form_with_origin(
             forms.into_iter().next().unwrap(),
             0..source.len(),
-            Some(&crate::portable::SourceOrigin::new(source, None)),
+            Some(&origin),
         )
         .map(|_| ())
     }
@@ -878,7 +894,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision"]
+                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision", "case"]
                     .into_iter()
                     .find_map(|core_name| {
                         context
@@ -980,7 +996,27 @@ impl ExpansionHost for CompiledMacros {
                 self.macro_namespace = Some(namespace.to_owned());
             }
             stage = "compiled macro invocation".into();
-            let result = session.invoke(&function, &arguments)?;
+            let result = match session.invoke(&function, &arguments) {
+                Ok(value) => value,
+                Err(error) => {
+                    if let SessionError::Language(payload) = &error {
+                        // The native accessor reads canonical exception storage;
+                        // arbitrary thrown values return nil. Keep the original
+                        // failure if extraction cannot produce a String.
+                        if let Ok(message) = session.invoke(&self.exception_message, &[payload]) {
+                            if let Ok(Form { kind: Kind::String(ref units), .. }) =
+                                self.bridge.read(session, &message, form.span.clone())
+                            {
+                                return Err(SessionError::Compile(Diagnostic {
+                                    span: form.span.clone(),
+                                    message: String::from_utf16_lossy(units),
+                                }));
+                            }
+                        }
+                    }
+                    return Err(error);
+                }
+            };
             trace_fuel(session, &target, "invoked")?;
             stage = "expanded result transport".into();
             let expanded = self.bridge.read(session, &result, form.span.clone())?;

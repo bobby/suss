@@ -1,0 +1,2 @@
+(ns strprobe)
+(def check (fn [unused] (with-redefs [str (fn [& xs] "replacement")] (try (case :x) (catch :default e (ex-message e))))))

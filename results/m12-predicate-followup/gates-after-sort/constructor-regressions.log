@@ -1,0 +1,40 @@
+Running as unit: run-p3468328-i91534065.scope; invocation ID: dc4b1a04c17e40cbb7a689321cf01262
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 6.98s
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_decimal_constructors-38693a500596975e)
+
+running 2 tests
+test aot_executes_math_context_constructor_overloads ... ok
+test math_context_constructor_overloads_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.65s
+
+     Running tests/math_context_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/math_context_constructors-85e3c333804ebc34)
+
+running 1 test
+test context_text_digit_mapping_matches_every_primary_utf16_code_unit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.57s
+
+     Running tests/portable_sequence_observations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/portable_sequence_observations-6680788c71b869eb)
+
+running 4 tests
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test sequence_decoding_preserves_pending_effects_and_reports_bounds ... ok
+test stored_map_sequences_and_sorted_views_decode_without_guest_projection ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.26s
+
+     Running tests/portable_sequence_projection.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/portable_sequence_projection-ff543bf9335aec28)
+
+running 5 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test projected_spines_remain_iterative_and_reverse_views_reject_bad_declared_bounds ... ok
+test keys_do_not_decode_unused_infinite_values_in_array_hash_and_sorted_maps ... ok
+test reverse_and_value_sequences_decode_canonical_storage_after_gc ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.36s
+

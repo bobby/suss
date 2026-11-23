@@ -1,0 +1,26 @@
+[
+  [
+    "(with-redefs [str (fn [& xs] \"replacement\")] (str \"a\" \"b\"))",
+    "\"ab\""
+  ],
+  [
+    "(with-redefs [str (fn [& xs] \"replacement\")] (str \"a\" \"b\" \"c\"))",
+    "\"abc\""
+  ],
+  [
+    "(with-redefs [str (fn [& xs] \"replacement\")] (let [f str] (f \"a\" \"b\")))",
+    "\"replacement\""
+  ],
+  [
+    "(let [f str] (with-redefs [str (fn [& xs] \"replacement\")] (f \"a\" \"b\")))",
+    "\"ab\""
+  ],
+  [
+    "(str 123 1.00M)",
+    "\"1231.00\""
+  ],
+  [
+    "(do (def str-effects []) (let [r (with-redefs [str (fn [& xs] \"replacement\")] (str (do (def str-effects (conj str-effects :a)) \"a\") (do (def str-effects (conj str-effects :b)) \"b\")))] [r str-effects]))",
+    "[\"ab\" [:a :b]]"
+  ]
+]

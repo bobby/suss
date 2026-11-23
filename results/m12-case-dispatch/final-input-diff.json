@@ -1,0 +1,9 @@
+{
+  "against": "bootstrap-gates/commands.json",
+  "changed_inputs": [
+    "docs/compatibility/README.md",
+    "docs/roadmap/handoff.md"
+  ],
+  "only_documentation_changed": true,
+  "production_tests_and_fixtures_unchanged": true
+}

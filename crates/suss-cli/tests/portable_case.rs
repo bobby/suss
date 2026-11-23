@@ -292,22 +292,20 @@ fn generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guar
     use suss_cli::{portable_macros::CompiledMacros, portable_macro_data::FormBridge,
                    portable_session::SessionError};
     use suss_reader::forms::{Kind, read_forms};
-    let expected = read_forms("[false nil 0 1 2 :hit \"seven\" true :late :other 3 \"tail\"]")
-        .unwrap().remove(0);
-    let Kind::Vector(expected) = &expected.kind else { unreachable!() };
+    // The old bootstrap test assumed sequential public equality for every
+    // literal. Actual JVM case invokes it only in a matching collision bucket.
+    let primary: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../results/m12-case-budget/legacy-case-primary.json")).unwrap();
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let caller_fuel = caller.options().fuel_per_operation;
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         caller.eval("(def large-case-original-eq suss.core/=) (def large-case-order []) (def large-case-selector 0) (def large-case-arms 0)").unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        for (selector, result, comparisons, arm) in [
-            ("false", 17.0_f64, 1, 1.0), ("nil", 17.0, 2, 1.0),
-            ("2", 17.0, 5, 1.0), ("\"seven\"", 17.0, 7, 1.0),
-            ("true", 17.0, 8, 1.0), (":late", 17.0, 9, 1.0),
-            (":other", 19.0, 10, 2.0), ("\"tail\"", 21.0, 12, 3.0),
-            (":missing", 23.0, 12, 4.0),
-        ] {
+        for row in primary["mixed"].as_array().unwrap() {
+            let selector = row["selector"].as_str().unwrap();
+            let expected = read_forms(row["expected"].as_str().unwrap()).unwrap().remove(0);
+            let Kind::Vector(expected) = &expected.kind else { panic!("primary snapshot") };
             caller.eval("(set! large-case-order []) (set! large-case-selector 0) (set! large-case-arms 0)").unwrap();
             let source = format!(r#"
               (with-redefs [suss.core/=
@@ -324,35 +322,43 @@ fn generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guar
                   (do (set! large-case-arms (+ (* large-case-arms 10) 4)) 23)))
             "#);
             let value = caller.eval_with_macros(&source, &mut macros).unwrap();
-            assert_eq!(number(&mut caller, &value), num(result));
+            assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, expected[0].kind);
             caller.collect().unwrap();
             let snapshot = caller.eval("[large-case-selector large-case-arms large-case-order]").unwrap();
             let snapshot = bridge.read(&mut caller, &snapshot, 0..1).unwrap();
             let Kind::Vector(fields) = &snapshot.kind else { panic!("actual observations") };
-            assert_eq!(fields[0].kind, Kind::Long(1));
-            assert_eq!(fields[1].kind, Kind::Long(arm as i64));
+            assert_eq!(fields[0].kind, expected[1].kind, "selector once");
+            assert_eq!(fields[1].kind, expected[2].kind, "only selected arm");
             let Kind::Vector(order) = &fields[2].kind else { panic!("actual order") };
-            assert_eq!(order.len(), comparisons);
-            let selected = read_forms(selector).unwrap().remove(0);
-            for (pair, expected) in order.iter().zip(expected.iter()) {
+            let Kind::Vector(expected_order) = &expected[3].kind else { panic!("primary order") };
+            assert_eq!(order.len(), expected_order.len());
+            for (pair, expected_pair) in order.iter().zip(expected_order) {
                 let Kind::Vector(pair) = &pair.kind else { panic!("comparison pair") };
+                let Kind::Vector(expected_pair) = &expected_pair.kind else { panic!("primary pair") };
                 assert_eq!(pair.len(), 2);
-                assert_eq!(pair[0].kind, expected.kind, "constant must be first, source order");
-                assert_eq!(pair[1].kind, selected.kind, "selector must be second");
+                for (actual, expected) in pair.iter().zip(expected_pair) {
+                    assert_eq!(actual.kind, expected.kind, "actual JVM collision callback order");
+                }
             }
         }
-        for duplicate in [
+        for (index, duplicate) in [
             "(case :late (false nil 0 1 2 :hit \"seven\" true :late) 17 :late 19 23)",
             "(case :missing (false nil 0 1 2 :hit \"seven\" true :late) 17 nil 19 23)",
             // Clojure: long 0 and double -0.0 are distinct constants, so repeat 0.
             "(case 0 (false nil 0 1 2 :hit \"seven\" true 0) 17 23)",
-        ] {
+        ].into_iter().enumerate() {
             let source = format!("(def large-case-ghost 99) {duplicate}");
             let before = caller.stats();
             let SessionError::Compile(error) = caller.eval_with_macros(&source, &mut macros).unwrap_err()
                 else { panic!("located duplicate error") };
-            assert_eq!(error.message, "Duplicate case test constant");
-            assert!(error.span.start < error.span.end && error.span.end <= source.len());
+            let message: String = serde_json::from_str(primary["duplicate_messages"][index].as_str().unwrap()).unwrap();
+            let span = source.find("(case").unwrap()..source.len();
+            assert_eq!(error.span, span);
+            // The primary fixture records the JVM root cause; the native
+            // compiler retains its stage and exact source location around it.
+            assert_eq!(error.message, format!(
+                "Compiled macro expansion failed during compiled macro invocation: {message} at bytes {}..{}",
+                span.start, span.end));
             assert_eq!(caller.stats(), before);
             assert!(caller.eval("large-case-ghost").unwrap_err().to_string().contains("Unresolved"));
         }
@@ -361,7 +367,7 @@ fn generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guar
 }
 
 #[test]
-fn generic_case_late_equality_throw_retains_prefix_and_restores_live_binding() {
+fn genuine_collision_equality_throw_retains_prefix_and_restores_live_binding() {
     use suss_cli::{portable_macros::CompiledMacros, portable_macro_data::FormBridge,
                    portable_session::SessionError};
     use suss_reader::forms::{Kind, read_forms};
@@ -374,9 +380,9 @@ fn generic_case_late_equality_throw_retains_prefix_and_restores_live_binding() {
           (with-redefs [suss.core/=
             (fn [left right]
               (do (set! late-case-order (conj late-case-order left))
-                  (if (late-case-original-eq left :late) (throw 91)
+                  (if (late-case-original-eq left 0) (throw (ex-info "late equality" {:value 91}))
                       (late-case-original-eq left right))))]
-            (case (do (set! late-case-selector (inc late-case-selector)) :missing)
+            (case (do (set! late-case-selector (inc late-case-selector)) 0)
               (false nil 0 1 2 :hit "seven" true :late)
                 (do (set! late-case-arms 1) 17)
               :other (do (set! late-case-arms 2) 19)
@@ -386,17 +392,31 @@ fn generic_case_late_equality_throw_retains_prefix_and_restores_live_binding() {
             else { panic!("actual late equality callback must throw") };
         caller.collect().unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        assert_eq!(bridge.read(&mut caller, &payload, 0..1).unwrap().kind, Kind::Long(91));
+        let primary: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../results/m12-case-budget/legacy-case-primary.json")).unwrap();
+        let expected = read_forms(primary["collision"].as_str().unwrap()).unwrap().remove(0);
+        let Kind::Vector(expected) = &expected.kind else { panic!("primary collision snapshot") };
+        let Kind::Vector(thrown) = &expected[0].kind else { panic!("primary exception") };
+        let accessor = caller.eval("suss.core/ex-message").unwrap();
+        let message = caller.invoke(&accessor, &[&payload]).unwrap();
+        assert_eq!(bridge.read(&mut caller, &message, 0..1).unwrap().kind, thrown[1].kind);
+        let accessor = caller.eval("suss.core/ex-data").unwrap();
+        let data = caller.invoke(&accessor, &[&payload]).unwrap();
+        let data = bridge.read(&mut caller, &data, 0..1).unwrap();
+        let Kind::Map(actual) = &data.kind else { panic!("retained exception data") };
+        let Kind::Map(expected_data) = &thrown[2].kind else { panic!("primary exception data") };
+        assert_eq!(actual.len(), expected_data.len());
+        for (actual, expected) in actual.iter().zip(expected_data) { assert_eq!(actual.kind, expected.kind); }
         let snapshot = caller.eval("[late-case-selector late-case-arms late-case-order (identical? late-case-original-eq suss.core/=)]").unwrap();
         let snapshot = bridge.read(&mut caller, &snapshot, 0..1).unwrap();
         let Kind::Vector(fields) = &snapshot.kind else { panic!("actual observations") };
-        assert_eq!(fields[0].kind, Kind::Long(1));
-        assert_eq!(fields[1].kind, Kind::Long(0));
-        assert_eq!(fields[3].kind, Kind::Bool(true));
-        let expected = read_forms("[false nil 0 1 2 :hit \"seven\" true :late]").unwrap().remove(0);
+        assert_eq!(fields[0].kind, expected[1].kind);
+        assert_eq!(fields[1].kind, expected[2].kind);
+        assert_eq!(fields[3].kind, expected[4].kind);
+
         // Span/reader metadata are not part of comparison effects; retain all values/order.
         let Kind::Vector(order) = &fields[2].kind else { panic!("actual prefix") };
-        let Kind::Vector(expected) = &expected.kind else { unreachable!() };
+        let Kind::Vector(expected) = &expected[3].kind else { panic!("primary callback prefix") };
         assert_eq!(order.len(), expected.len());
         for (actual, expected) in order.iter().zip(expected.iter()) { assert_eq!(actual.kind, expected.kind); }
         let value = caller.eval_with_macros("(case :late (false nil 0 1 2 :hit \"seven\" true :late) 42 0)", &mut macros).unwrap();

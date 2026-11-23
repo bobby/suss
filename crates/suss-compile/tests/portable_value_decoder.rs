@@ -813,3 +813,187 @@ fn decimal_decoder_rejects_mutable_owners_and_malformed_exact_coefficients() {
         Ok(())
     }).unwrap();
 }
+
+#[test]
+fn sorted_collection_decoder_preserves_exact_fields_after_gc_without_guest_comparison() {
+    let dec = |unscaled: &str, scale| Observation::Decimal {
+        unscaled: unscaled.into(),
+        scale,
+    };
+    let mut cases = vec![
+        ("(sorted-map)".to_owned(), Observation::Map(vec![])),
+        (
+            "(sorted-map 2 2.00M 1 1.0M)".to_owned(),
+            Observation::Map(vec![
+                (Observation::Long(1), dec("10", 1)),
+                (Observation::Long(2), dec("200", 2)),
+            ]),
+        ),
+        (
+            "(sorted-map-by > 2 2.00M 1 1.0M)".to_owned(),
+            Observation::Map(vec![
+                (Observation::Long(2), dec("200", 2)),
+                (Observation::Long(1), dec("10", 1)),
+            ]),
+        ),
+        ("(sorted-set)".to_owned(), Observation::Set(vec![])),
+        (
+            "(sorted-set 2M 1.00M)".to_owned(),
+            Observation::Set(vec![dec("100", 2), dec("2", 0)]),
+        ),
+    ];
+    cases.push((
+        "(into (sorted-map) (map (fn [x] [x (bigdec x)]) (range 48)))".into(),
+        Observation::Map(
+            (0..48)
+                .map(|x| (Observation::Long(x), dec(&x.to_string(), 0)))
+                .collect(),
+        ),
+    ));
+    let mut failures = Vec::new();
+    for phase in ["Runtime", "Macro"] {
+        let mut session = if phase == "Runtime" {
+            Session::new_repl().unwrap()
+        } else {
+            Session::new_macro().unwrap()
+        };
+        let mut decoder = Decoder::capture(&mut session, 10_000).unwrap();
+        let values = cases
+            .iter()
+            .map(|(source, _)| session.eval_probe(source).unwrap())
+            .collect::<Vec<_>>();
+        session.collect().unwrap();
+        // Decoding reads only retained canonical storage. Neither printer nor
+        // guest equality can turn malformed/unknown storage into a host match.
+        session.eval_probe("(ns suss.core) (def pr-str (fn [& xs] (throw (ex-info \"guest printer called\" {})))) (def = (fn [& xs] (throw (ex-info \"guest comparison called\" {}))))").unwrap();
+        for ((source, expected), value) in cases.iter().zip(&values) {
+            decoder.refill(10_000);
+            let observed = decoder.decode_session(&mut session, value);
+            match observed {
+                Ok(actual) if actual == *expected => (),
+                actual => failures.push(format!(
+                    "{phase} {source}: {actual:?}; expected {expected:?}"
+                )),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn sorted_collection_decoder_rejects_count_layout_and_budget_errors() {
+    let mut session = Session::new_repl().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 10_000).unwrap();
+    for (source, expected) in [
+        (
+            "(new suss.core/PersistentTreeMap compare nil 1 nil nil)",
+            "count disagrees",
+        ),
+        (
+            "(new suss.core/PersistentTreeMap compare (new suss.core/BlackNode 1 2 nil nil nil) 0 nil nil)",
+            "count disagrees",
+        ),
+        (
+            "(new suss.core/PersistentTreeMap compare [1] 1 nil nil)",
+            "canonical tree node",
+        ),
+        (
+            "(new suss.core/PersistentTreeSet nil (hash-map) nil)",
+            "canonical backing tree map",
+        ),
+        (
+            "(deftype DecoderTreeMapLookalike [comp tree cnt meta cached]) (new DecoderTreeMapLookalike compare nil 0 nil nil)",
+            "Unsupported ABI2 value layout",
+        ),
+    ] {
+        let value = session.eval_probe(source).unwrap();
+        session.collect().unwrap();
+        decoder.refill(10_000);
+        let error = decoder.decode_session(&mut session, &value).unwrap_err();
+        assert!(error.to_string().contains(expected), "{source}: {error}");
+    }
+    let value = session.eval_probe("(sorted-map 1 1M 2 2M)").unwrap();
+    decoder.refill(2);
+    let error = decoder.decode_session(&mut session, &value).unwrap_err();
+    assert!(error.to_string().contains("traversal limit"), "{error}");
+}
+
+#[test]
+fn case_hash_preserves_retained_fields_after_gc_and_public_rebinding() {
+    let decimal = || Observation::Decimal { unscaled: "100".into(), scale: 2 };
+    let key = || Observation::Keyword(None, "a".encode_utf16().collect());
+    let cases = vec![
+        ("1.00M", decimal()),
+        ("-1", Observation::Long(-1)),
+        ("(biginteger -1)", Observation::BigInt("-1".into())),
+        ("2/3", Observation::Ratio("2".into(), "3".into())),
+        ("-0.0", Observation::Number((-0.0_f64).to_bits())),
+        ("[1.00M]", Observation::Vector(vec![decimal()])),
+        ("{:a 1.00M}", Observation::Map(vec![(key(), decimal())])),
+        ("#{1.00M}", Observation::Set(vec![decimal()])),
+        ("'app/name", Observation::Symbol(Some("app".encode_utf16().collect()), "name".encode_utf16().collect())),
+        (":Aa", Observation::Keyword(None, "Aa".encode_utf16().collect())),
+        ("\"Aa\"", Observation::String("Aa".encode_utf16().collect())),
+    ];
+    let primary = [
+        include_str!("../../../results/m12-case-dispatch/numeric-hash-cases.json"),
+        include_str!("../../../results/m12-case-dispatch/composite-hash-cases.json"),
+    ].iter().flat_map(|s| serde_json::from_str::<Vec<(String, String)>>(s).unwrap())
+        .collect::<std::collections::BTreeMap<_, _>>();
+    for phase in ["Runtime", "Macro"] {
+        let mut session = if phase == "Runtime" { Session::new_repl().unwrap() } else { Session::new_macro().unwrap() };
+        let mut decoder = Decoder::capture(&mut session, 10_000).unwrap();
+        let functions = cases.iter().map(|(source, _)| session.eval_probe(&format!(
+            "(let [x {source}] (fn [] [(suss.bootstrap/case-hash-code x) x (suss.bootstrap/case-equiv x {source})]))"
+        )).unwrap()).collect::<Vec<_>>();
+        session.collect().unwrap();
+        session.eval_probe("(ns suss.core) (def pr-str (fn [& xs] (throw (ex-info \"guest printer called\" {})))) (def = (fn [& xs] (throw (ex-info \"public equality called\" {})))) (def hash (fn [& xs] (throw (ex-info \"public hash called\" {})))) (def symbol? (fn [x] false)) (def keyword? (fn [x] false)) (def number? (fn [x] false)) (def sequential? (fn [x] false)) (def map? (fn [x] false)) (def set? (fn [x] false))").unwrap();
+        for ((source, expected), function) in cases.iter().zip(functions) {
+            let hash = primary.get(&format!("(suss.bootstrap/case-hash-code {source})"))
+                .or_else(|| primary.get(&format!("(suss.bootstrap/case-number-hash {source})")))
+                .unwrap().parse::<i64>().unwrap();
+            let value = session.invoke(&function, &[]).unwrap();
+            session.collect().unwrap();
+            decoder.refill(10_000);
+            let observed = decoder.decode_session(&mut session, &value).unwrap();
+            let Observation::Vector(fields) = observed else { panic!("{phase}: {source}: {observed:?}"); };
+            assert_eq!(fields.len(), 3, "{phase}: {source}");
+            assert_eq!(fields[0], Observation::Long(hash), "{phase}: {source}: hash");
+            assert_eq!(fields[1], *expected, "{phase}: {source}: retained fields");
+            assert_eq!(fields[2], Observation::Bool(true), "{phase}: {source}: fixed core equality");
+        }
+    }
+}
+
+#[test]
+fn compiled_case_retains_literal_values_after_gc_and_keeps_collision_equality_live() {
+    use suss_compile::portable_macros::CompiledMacros;
+    let decimal = || Observation::Decimal { unscaled: "100".into(), scale: 2 };
+    let symbol = |s: &str| Observation::Symbol(None, s.encode_utf16().collect());
+    let cases = vec![
+        ("(let [x 1.00M] (fn [] (case :hit :hit x nil)))", decimal()),
+        ("(let [x [1.00M]] (fn [] (case x [1.00M] x nil)))", Observation::Vector(vec![decimal()])),
+        ("(let [x [1.00M]] (fn [] (case x [1.0M] x nil)))", Observation::Nil),
+        ("(let [x {:a 1.00M}] (fn [] (case x {:a 1.00M} x nil)))", Observation::Map(vec![(Observation::Keyword(None, vec![97]), decimal())])),
+        ("(let [x #{1.00M}] (fn [] (case x #{1.00M} x nil)))", Observation::Set(vec![decimal()])),
+        ("(let [x [1N]] (fn [] (case x [1] x nil)))", Observation::Vector(vec![Observation::BigInt("1".into())])),
+        ("(let [x '(a b)] (fn [] (case x [a b] x nil)))", Observation::List(vec![symbol("a"), symbol("b")])),
+        (r#"(fn [] (try (case "BB" "Aa" :aa "BB" :bb :miss) (catch :default e (ex-message e))))"#,
+            Observation::String("public equality called".encode_utf16().collect())),
+    ];
+    for phase in ["Runtime", "Macro"] {
+        let mut session = if phase == "Runtime" { Session::new_repl().unwrap() } else { Session::new_macro().unwrap() };
+        session.set_operation_fuel(100_000_000);
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 10_000).unwrap();
+        let functions = cases.iter().map(|(source, _)| session.eval_with_macros(source, &mut macros).unwrap()).collect::<Vec<_>>();
+        session.collect().unwrap();
+        session.eval_probe("(ns suss.core) (def pr-str (fn [& xs] (throw (ex-info \"guest printer called\" {})))) (def = (fn [& xs] (throw (ex-info \"public equality called\" {})))) (def hash (fn [& xs] (throw (ex-info \"public hash called\" {})))) (def keyword? (fn [x] false))").unwrap();
+        for ((source, expected), function) in cases.iter().zip(functions) {
+            let value = session.invoke(&function, &[]).unwrap();
+            session.collect().unwrap();
+            decoder.refill(10_000);
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), *expected, "{phase}: {source}");
+        }
+    }
+}

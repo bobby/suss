@@ -1,0 +1,17 @@
+{
+  "source_head": "2254f70cb62c04741f84dce6ce7724866c3f77a8",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+    "--build-dir",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+    "repl",
+    "--compile-fuel",
+    "4000000"
+  ],
+  "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+  "executable_sha256": "969bbcd27acb249c24c2d52ed43be6727c7f1e3685a508883fca39fdd3effff3",
+  "exit_code": 0,
+  "seconds": 5.630558013916016,
+  "compile_fuel_exhaustion": true,
+  "expected_final_value_present": false
+}

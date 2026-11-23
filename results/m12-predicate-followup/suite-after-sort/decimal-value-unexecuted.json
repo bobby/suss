@@ -1,0 +1,44 @@
+[
+  {
+    "id": "clojure.core-test.eval/test-eval#6",
+    "reason": {
+      "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+      "stage": "namespace"
+    }
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#142",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#143",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#144",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#145",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#146",
+    "reason": {
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+      "stage": "read"
+    }
+  }
+]

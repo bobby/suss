@@ -448,6 +448,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &[if (8..=11).contains(&index) { ValType::F64 } else { ValType::I64 }],
             &[(1, ValType::I64), (1, ValType::F64), (1, VALUE)], &raw_body);
     }
+    // AFunction.compare uses Number.intValue, rather than a sign test or
+    // checked RT.intCast. Keep canonical class/null diagnostics before the
+    // existing exact unchecked numeric conversion; it does not consult context.
+    let mut int_value = Vec::new();
+    numeric_cast_errors::nonnumber_errors(&mut int_value,
+        "Cannot invoke \"java.lang.Number.intValue()\" because \"n\" is null");
+    int_value.extend([LocalGet(0), Call(b.names["number-cast-unchecked-int-raw"]),
+        Call(b.names["long-box"])]);
+    b.function("number-int-value", &[VALUE], &[VALUE], &int_value);
     let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
     dispatch.extend(numeric::error("Invalid numeric cast", nominal::ERROR_GLOBAL));
     dispatch.extend([End, LocalGet(1), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(2)]);

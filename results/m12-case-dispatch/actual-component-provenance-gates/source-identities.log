@@ -1,0 +1,35 @@
+Running as unit: run-p3839128-i91914449.scope; invocation ID: 239aeae1766041318107797da6f3ef6b
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+error[E0277]: the trait bound `suss_reader::Symbol: From<&str>` is not satisfied
+   --> crates/suss-cli/tests/compiled_artifact_identities.rs:134:54
+    |
+134 |         &[("check".into(), "provenance.sample/check".into())]).unwrap();
+    |                                                      ^^^^ the trait `From<&str>` is not implemented for `suss_reader::Symbol`
+    |
+    = note: required for `&str` to implement `Into<suss_reader::Symbol>`
+
+error[E0277]: the type `[u8]` cannot be indexed by `std::ops::Range<u64>`
+   --> crates/suss-cli/tests/compiled_artifact_identities.rs:143:31
+    |
+143 |         let body = &component[modules[2 + index].clone()];
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^ slice indices are of type `usize` or ranges of `usize`
+    |
+    = help: the trait `SliceIndex<[u8]>` is not implemented for `std::ops::Range<u64>`
+help: `std::ops::Range<usize>` implements trait `SliceIndex<T>`
+   --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/bstr/traits.rs:230:8
+    |
+    = note: `SliceIndex<ByteStr>`
+   ::: /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/bstr/traits.rs:263:0
+    |
+    = note: in this macro invocation
+   --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs:331:0
+    |
+    = note: `SliceIndex<[T]>`
+   --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/str/traits.rs:187:0
+    |
+    = note: `SliceIndex<str>`
+    = note: required for `Vec<u8>` to implement `Index<std::ops::Range<u64>>`
+    = note: this error originates in the macro `impl_slice_index` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `suss-cli` (test "compiled_artifact_identities") due to 2 previous errors

@@ -2,6 +2,67 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:sort:2557"
+  {:source-sha256 "aaf20b5cf4cc0a8dc3007cd36d1636e52351226373009a2b6d2744c4f0379660"
+   :visibility :public :arities {:fixed [1 2] :variadic-min nil}
+   :dependencies ["runtime:compare" "runtime:seq:1282" "runtime:to-array:3819" "runtime:with-meta" "runtime:meta" "suss.bootstrap/object-array?" "suss.bootstrap/packed-array" "suss.bootstrap/int-value"]
+   :classification :adapted :rationale "Retain the complete pinned sort docstring, both arities, default live compare/sort reads, eager to-array staging, sequence result and metadata handling. Replace Closure stableSort with an original adaptive stable merge sort with natural runs, stable binary insertion and balanced run-stack merging over fixed WasmGC object arrays. Preserve the JVM's object-array mutation and primitive-array copy distinction. Comparator calls follow actual Clojure1.12.6 AFunction.compare: Boolean result branches/reverse truthiness, otherwise Number.intValue with exact unchecked low-bit/truncation conversion and canonical class/null errors. No Java code is shipped. Runtime/Macro/actual AOT regression controls come from the pinned JVM, not JavaScript recordings."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-stable-sort.json" :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_stable_sort.rs"]}
+  "runtime:char?:312"
+  {:source-sha256 "ffd3e98e51d12e5ff812b87a18d85f1d9434eb1abfc224080b0d3a1d7f702a4a"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:string?" "runtime:=="]
+   :classification :adapted
+   :rationale "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline. The accepted design represents character literals as one-unit UTF-16 strings; preserve its one-unit string test, including lone surrogates. JVM Character identity and the distinction between a one-unit String and Character are not fabricated; the two vendored String judgments remain explicit platform differences."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-char-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
+  "runtime:coll?:2224"
+  {:source-sha256 "ae9060b545bf339a8785633f8400f35220e8bbb6dc8934ecd496cee814a8dc07"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["macro:nil?" "runtime:ICollection:630" "macro:satisfies?"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-coll-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
+  "runtime:sorted?:2250"
+  {:source-sha256 "3158ea760bece141900073897d0e0bb0c843ed31f8c57e874b3e43aa526c2159"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:ISorted" "macro:satisfies?"]
+   :classification :adapted
+   :rationale "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-sorted-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
+  "runtime:pos-int?:2390"
+  {:source-sha256 "8b6b7c294fe89381406ff57b62ca4142e2f9f0c8fdeb4d78902a0b985302ad9c"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["suss.bootstrap/long?" "runtime:pos?:3077"]
+   :classification :adapted
+   :rationale "Original Clojure numeric-category adaptation under ADR-0003. Preserve the public docstring, one-argument function and sign predicate. Fixed-width integers are canonical Long values; BigInt/BigInteger, Ratio, Decimal and Double return false even when integral. Replace the JavaScript integer?/goog.math wrapper representation dispatch with the immutable private Long representation test, retaining short-circuit sign evaluation. Fresh JVM Clojure1.12.6 controls are the behavior oracle; no Java dependency is shipped."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-pos-int-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
+  "runtime:neg-int?:2406"
+  {:source-sha256 "9c45e7c73ff03baa17285883086ed57e51f96b2767ac01c4e568aa57cc0dcaaf"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["suss.bootstrap/long?" "runtime:neg?:3086"]
+   :classification :adapted
+   :rationale "Original Clojure numeric-category adaptation under ADR-0003. Preserve the public docstring, one-argument function and sign predicate. Fixed-width integers are canonical Long values; BigInt/BigInteger, Ratio, Decimal and Double return false even when integral. Replace the JavaScript integer?/goog.math wrapper representation dispatch with the immutable private Long representation test, retaining short-circuit sign evaluation. Fresh JVM Clojure1.12.6 controls are the behavior oracle; no Java dependency is shipped."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-neg-int-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
+  "runtime:nat-int?:2420"
+  {:source-sha256 "51c06283738756c7b5b4da6593f5d68dcc7db59ed28d90c8d9cb567c6295318c"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["suss.bootstrap/long?" "runtime:neg?:3086" "runtime:not:263"]
+   :classification :adapted
+   :rationale "Original Clojure numeric-category adaptation under ADR-0003. Preserve the public docstring, one-argument function and sign predicate. Fixed-width integers are canonical Long values; BigInt/BigInteger, Ratio, Decimal and Double return false even when integral. Replace the JavaScript integer?/goog.math wrapper representation dispatch with the immutable private Long representation test, retaining short-circuit sign evaluation. Fresh JVM Clojure1.12.6 controls are the behavior oracle; no Java dependency is shipped."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-nat-int-predicate.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_core_predicates.rs"]}
   "macro:when-let:412"
   {:source-sha256 "ed3244f72d2b38c08223867744d186a83e8332de188ff445429b84cc452f0c28"
    :visibility :public :arities {:fixed [] :variadic-min 1}
@@ -1202,13 +1263,13 @@
   "macro:case:2405"
   {:source-sha256 "5c1ab75133484dc097983f8e30dd306f2d7ae2b4c0d8308b5273d3686798f8d1" :visibility :public
    :arities {:fixed [] :variadic-min 1}
-   :dependencies ["macro:assoc-test:2383" "macro:let:772" "runtime:=:1342" "private primitive identity comparison" "source constant order and fresh HIR binding"]
+   :dependencies ["macro:let:772" "runtime:=:1342" "compiled Clojure case adaptation" "private immutable Java hashCode adapters" "fixed core equivalence and keyword identity" "live collision equality"]
    :classification :adapted
-   :rationale "Original bounded scalar bootstrap follows pinned selector-once and grouped clauses. Number/string-only tables use primitive comparison; boolean/nil/mixed tables use live qualified core = with constant first, limited to eight constants before collection-backed macro expansion. Fresh33 primary/native observations and one separately tracked exact reference empty-group parse failure execute; empty groups produce located native diagnostics. Explicit default, scalar constants and bounded expansion are prerequisites, not complete compiled case/case* macro acceptance. No upstream macro source copied; original upstream macro is EPL1.0."
+   :rationale "Compiled Clojure1.12.6 case replaces the scalar bootstrap for production source expansion. Literal data/grouping, duplicate equality, Java hashCode dispatch, integer aliases, keyword identity, live collision equality and omitted defaults execute in the compiled Macro/Runtime pipeline. Balanced signed32-bit branches replace JVM sparse switch emission. The scalar bootstrap remains for core generation and callers without a source expander; CLJS recordings are implementation references. Fresh JVM controls distinguish ordinary and AOT direct-linking modes. Full workspace/CI, unrelated numeric dependencies and general Java object interop retain separate gates and limitations."
    :status :in-progress
-   :adaptation-path "docs/runtime/scalar-case.md"
+   :adaptation-path "docs/runtime/compiled-case.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_case.rs" "crates/suss-compile/tests/portable_case.rs" "tests/oracle/case-cases.json" "tests/oracle/case-reference-boundaries.json"]}
+   :tests ["crates/suss-cli/tests/clojure_case_dispatch.rs" "crates/suss-compile/tests/clojure_test_suite.rs" "crates/suss-compile/tests/portable_value_decoder.rs" "results/m12-case-dispatch/README.md"]}
   "macro:assoc-test:2383"
   {:source-sha256 "5a05fb8cc0525a9bd2162afc395f35f0831fac349fc8b4680e39ae44bd7685d0" :visibility :private
    :arities {:fixed [4] :variadic-min nil}

@@ -1,0 +1,3571 @@
+{
+  "assertions": [
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": false
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "fail"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": false
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "fail"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 41,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 42,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 43,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 44,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 45,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 46,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 47,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 48,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.char-qmark/test-char?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.coll-qmark/test-coll?",
+      "verdict": "pass"
+    },
+    {
+      "head": "sorted?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "sorted?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "sorted?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "sorted?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.sorted-qmark/test-sorted?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.pos-int-qmark/test-pos-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.neg-int-qmark/test-neg-int?",
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.char-qmark",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.coll-qmark",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.sorted-qmark",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.pos-int-qmark",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.neg-int-qmark",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

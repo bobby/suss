@@ -1,0 +1,1 @@
+{:status :pass, :input-count 5, :fields-per-input 13, :distinct-graphs 4, :answer-macro-versions 2, :clojure-version "1.12.6"}

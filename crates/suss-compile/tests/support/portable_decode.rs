@@ -58,6 +58,8 @@ enum Class {
     ArrayMap,
     HashMap,
     HashSet,
+    TreeMap,
+    TreeSet,
     BitmapNode,
     ArrayNode,
     CollisionNode,
@@ -241,6 +243,22 @@ impl Decoder {
                 Class::HashSet,
             ),
             (
+                "(new suss.core/PersistentTreeMap nil nil 0 nil nil)",
+                Class::TreeMap,
+            ),
+            (
+                "(new suss.core/PersistentTreeSet nil (new suss.core/PersistentTreeMap nil nil 0 nil nil) nil)",
+                Class::TreeSet,
+            ),
+            (
+                "(new suss.core/BlackNode nil nil nil nil nil)",
+                Class::BlackNode,
+            ),
+            (
+                "(new suss.core/RedNode nil nil nil nil nil)",
+                Class::RedNode,
+            ),
+            (
                 "(new suss.core/BitmapIndexedNode nil 0 (suss.core/array))",
                 Class::BitmapNode,
             ),
@@ -301,14 +319,6 @@ impl Decoder {
             (
                 "(new suss.core/PersistentTreeMapSeq nil nil true 0 nil)",
                 Class::TreeSeq,
-            ),
-            (
-                "(new suss.core/BlackNode nil nil nil nil nil)",
-                Class::BlackNode,
-            ),
-            (
-                "(new suss.core/RedNode nil nil nil nil nil)",
-                Class::RedNode,
             ),
         ] {
             self.capture_class(session, source, class)?;
@@ -572,24 +582,27 @@ impl Decoder {
                             Observation::Symbol(namespace, name)
                         });
                     }
-                    Class::ArrayMap | Class::HashMap => {
+                    Class::ArrayMap | Class::HashMap | Class::TreeMap => {
                         return self.map(store, class, &args, depth);
                     }
-                    Class::HashSet => {
+                    Class::HashSet | Class::TreeSet => {
                         let (map_class, map_data) = self.object(store, &args[1])?;
-                        if !matches!(map_class, Class::ArrayMap | Class::HashMap) {
-                            return Err(wasmtime::Error::msg(
-                                "Hash set needs canonical backing map",
-                            ));
+                        let valid = if class == Class::TreeSet {
+                            map_class == Class::TreeMap
+                        } else {
+                            matches!(map_class, Class::ArrayMap | Class::HashMap)
+                        };
+                        if !valid {
+                            return Err(wasmtime::Error::msg(if class == Class::TreeSet {
+                                "Sorted set needs canonical backing tree map"
+                            } else {
+                                "Hash set needs canonical backing map"
+                            }));
                         }
-                        let Observation::Map(pairs) =
-                            self.map(store, map_class, &map_data, depth)?
-                        else {
+                        let Observation::Map(pairs) = self.map(store, map_class, &map_data, depth)? else {
                             unreachable!()
                         };
-                        return Ok(Observation::Set(
-                            pairs.into_iter().map(|(key, _)| key).collect(),
-                        ));
+                        return Ok(Observation::Set(pairs.into_iter().map(|(key, _)| key).collect()));
                     }
                     Class::Vector => return self.vector(store, &args, depth),
                     Class::Subvec => {
@@ -682,13 +695,15 @@ impl Decoder {
                     | Class::TreeSeq
                     | Class::BlackNode
                     | Class::RedNode
-                    | Class::Subvec => 5,
+                    | Class::Subvec
+                    | Class::TreeMap => 5,
                     Class::Vector | Class::HashMap | Class::ChunkedSeq | Class::IntegerRange => 6,
                     Class::Range => 7,
                     Class::Node | Class::KeySeq | Class::ValSeq => 2,
                     Class::IndexedSeq
                     | Class::MapEntry
                     | Class::HashSet
+                    | Class::TreeSet
                     | Class::BitmapNode
                     | Class::ArrayNode
                     | Class::ExceptionInfo
@@ -1058,6 +1073,9 @@ impl Decoder {
         data: &[Val],
         depth: usize,
     ) -> wasmtime::Result<Observation> {
+        if class == Class::TreeMap {
+            return self.tree_map(store, data, depth);
+        }
         let declared = count_field(store, &data[1])?;
         if declared > self.remaining / 2 {
             return Err(wasmtime::Error::msg("ABI2 decoder traversal limit"));
@@ -1090,6 +1108,50 @@ impl Decoder {
                     "Hash map count disagrees with storage",
                 ));
             }
+        }
+        Ok(Observation::Map(pairs))
+    }
+
+    /// Read the actual canonical node graph in its stored order. No guest
+    /// comparator, sequence, printer, equality or collection count is invoked.
+    fn tree_map(
+        &mut self,
+        store: &mut StoreContextMut<'_, ()>,
+        data: &[Val],
+        depth: usize,
+    ) -> wasmtime::Result<Observation> {
+        let declared = count_field(store, &data[2])?;
+        if declared > self.remaining / 2 {
+            return Err(wasmtime::Error::msg("ABI2 decoder traversal limit"));
+        }
+        let mut pairs = Vec::with_capacity(declared);
+        let mut stack = Vec::new();
+        let mut current = data[1].clone();
+        loop {
+            while sentinel(store, &current)? != Some(0) {
+                self.spend(1)?;
+                if stack.len() >= 128 {
+                    return Err(wasmtime::Error::msg("ABI2 decoder tree path limit"));
+                }
+                let (class, fields) = self.object(store, &current)?;
+                if !matches!(class, Class::BlackNode | Class::RedNode) {
+                    return Err(wasmtime::Error::msg("Sorted map needs canonical tree node"));
+                }
+                current = fields[2].clone();
+                stack.push(fields);
+            }
+            let Some(fields) = stack.pop() else { break };
+            if pairs.len() >= declared {
+                return Err(wasmtime::Error::msg("Tree map count disagrees with storage"));
+            }
+            pairs.push((
+                self.value(store, &fields[0], depth + 1)?,
+                self.value(store, &fields[1], depth + 1)?,
+            ));
+            current = fields[3].clone();
+        }
+        if pairs.len() != declared {
+            return Err(wasmtime::Error::msg("Tree map count disagrees with storage"));
         }
         Ok(Observation::Map(pairs))
     }

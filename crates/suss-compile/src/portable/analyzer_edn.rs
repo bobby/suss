@@ -841,7 +841,7 @@ fn emit_inner(node: &Value) -> Result<Form, String> {
             head("do", forms)
         }
         (None, "if") => head("if", vec![emitted("test")?, emitted("then")?, emitted("else")?]),
-        (None, "let") | (None, "loop") => {
+        (None, "let") | (None, "loop") | (None, "letfn") => {
             let mut bindings = Vec::new();
             for binding in items(node, "bindings")? {
                 bindings.push(binding_name(binding)?);
@@ -849,7 +849,7 @@ fn emit_inner(node: &Value) -> Result<Form, String> {
             }
             let mut forms = vec![collection(Kind::Vector, bindings)];
             forms.extend(body_forms(field(node, "body")?)?);
-            head(if op.name == "let" { "let*" } else { "loop*" }, forms)
+            head(match op.name.as_str() { "let" => "let*", "letfn" => "letfn*", _ => "loop*" }, forms)
         }
         (None, "recur") => head("recur", all("exprs")?),
         (None, "fn") => {

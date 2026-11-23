@@ -1,0 +1,26 @@
+Running as unit: run-p3703043-i91771959.scope; invocation ID: 06ba4e2f9e574decbede7aebee4c9baa
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.01s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 4 tests
+test aot_case_collision_callbacks_match_primary_controls ... ok
+test case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct ... FAILED
+test case_collision_callbacks_match_primary_controls ... ok
+test compiler_owned_case_does_not_grant_private_core_access_to_user_macros_or_results ... ok
+
+failures:
+
+---- case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct stdout ----
+
+thread 'case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct' (3703228) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:182:25:
+Runtime: (case :missing 1 :a 1N :b :miss): Diagnostic { span: 0..32, message: "Compiled macro expansion failed during compiled macro invocation: Uncaught language exception" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 6.71s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_case_dispatch`

@@ -1,0 +1,14 @@
+[
+  {
+    "raw": "command.json",
+    "archive": "command.json.gz",
+    "sha256": "0210385b59278a2986bb18d8a17efdb6c6636f5dcbd6dfb39387f6e8217cd310",
+    "bytes": 862645
+  },
+  {
+    "raw": "run.log",
+    "archive": "run.log.gz",
+    "sha256": "6762132af016547d94fa1ad3be2e8aaf895ae07712a40f7ad1e96d2bf05ccbf3",
+    "bytes": 312450
+  }
+]

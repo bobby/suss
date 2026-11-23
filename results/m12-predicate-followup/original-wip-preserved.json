@@ -1,0 +1,11 @@
+{
+  "original_worktree": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source",
+  "command": [
+    "git",
+    "diff",
+    "--binary"
+  ],
+  "sha256": "c08b4d651743ff8dca36632421ab5d870495d0696f3cf7cb1df083850c0e1644",
+  "expected_sha256": "c08b4d651743ff8dca36632421ab5d870495d0696f3cf7cb1df083850c0e1644",
+  "unchanged": true
+}

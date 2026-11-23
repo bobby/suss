@@ -1,0 +1,63 @@
+Running as unit: run-p3654941-i91734188.scope; invocation ID: 424b0d6be58d4aca8ff540c14997fa9a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 05s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 6 tests
+test aot_executes_composite_case_hash_controls ... FAILED
+test aot_executes_case_dispatch_controls ... FAILED
+test aot_executes_numeric_case_hash_controls ... FAILED
+test composite_case_hash_follows_primary_hash_code ... FAILED
+test case_dispatch_follows_primary_controls ... FAILED
+test numeric_case_hash_follows_primary_hash_code ... FAILED
+
+failures:
+
+---- aot_executes_composite_case_hash_controls stdout ----
+
+thread 'aot_executes_composite_case_hash_controls' (3658974) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:96:5:
+Compilation error: Semantic error: case-hash-code is private to suss.core at bytes 1745..1759
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_case_dispatch_controls stdout ----
+
+thread 'aot_executes_case_dispatch_controls' (3658973) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:96:5:
+Compilation error: Semantic error: case-hash-code is private to suss.core at bytes 1745..1759
+
+
+---- aot_executes_numeric_case_hash_controls stdout ----
+
+thread 'aot_executes_numeric_case_hash_controls' (3659485) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:96:5:
+Compilation error: Semantic error: case-hash-code is private to suss.core at bytes 1745..1759
+
+
+---- composite_case_hash_follows_primary_hash_code stdout ----
+
+thread 'composite_case_hash_follows_primary_hash_code' (3659563) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:40:48:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1745..1759, message: "case-hash-code is private to suss.core" })
+
+---- case_dispatch_follows_primary_controls stdout ----
+
+thread 'case_dispatch_follows_primary_controls' (3659516) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:40:48:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1745..1759, message: "case-hash-code is private to suss.core" })
+
+---- numeric_case_hash_follows_primary_hash_code stdout ----
+
+thread 'numeric_case_hash_follows_primary_hash_code' (3659802) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:40:48:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1745..1759, message: "case-hash-code is private to suss.core" })
+
+
+failures:
+    aot_executes_case_dispatch_controls
+    aot_executes_composite_case_hash_controls
+    aot_executes_numeric_case_hash_controls
+    case_dispatch_follows_primary_controls
+    composite_case_hash_follows_primary_hash_code
+    numeric_case_hash_follows_primary_hash_code
+
+test result: FAILED. 0 passed; 6 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.91s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_case_dispatch`

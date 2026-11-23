@@ -1,0 +1,110 @@
+;   Copyright (c) Rich Hickey. All rights reserved.
+;   The use and distribution terms for this software are covered by the
+;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;   which can be found in the file epl-v10.html at the root of this distribution.
+;   By using this software in any fashion, you are agreeing to be bound by
+;   the terms of this license.
+;   You must not remove this notice, or any other, from this software.
+
+
+;; Clojure 1.12.6 clojure.core/case adaptation. Copyright (c) Rich Hickey.
+;; All rights reserved. Eclipse Public License 1.0; retain this notice.
+;; See runtime/core-import/LICENSE and clojure-case-primary-source.json.
+;; Original portable hash dispatch replaces JVM case* and Util.hash interop.
+;; A balanced decision tree over signed32-bit literal hashes follows the JVM's
+;; sparse lookup path. Only genuine collision buckets call live public equality.
+(defmacro case
+  "Takes an expression, and a set of clauses.
+
+  Each clause can take the form of either:
+
+  test-constant result-expr
+
+  (test-constant1 ... test-constantN)  result-expr
+
+  The test-constants are not evaluated. They must be compile-time
+  literals, and need not be quoted.  If the expression is equal to a
+  test-constant, the corresponding result-expr is returned. A single
+  default expression can follow the clauses, and its value will be
+  returned if no clause matches. If no default expression is provided
+  and no clause matches, an IllegalArgumentException is thrown.
+
+  Unlike cond and condp, case does a constant-time dispatch, the
+  clauses are not considered sequentially.  All manner of constant
+  expressions are acceptable in case, including numbers, strings,
+  symbols, keywords, and (Clojure) composites thereof. Note that since
+  lists are used to group multiple constants that map to the same
+  expression, a vector can be used to match a list if needed. The
+  test-constants need not be all of the same type."
+  {:added "1.2"}
+  [e & clauses]
+  (let [ge (gensym "case_value__")
+        gh (gensym "case_hash__")
+        default (if (odd? (count clauses))
+                  (last clauses)
+                  `(throw (suss.bootstrap/error
+                            (suss.core/str "No matching clause: " ~ge))))]
+    (if (< (count clauses) 2)
+      `(let [~ge ~e] ~default)
+      (let [assoc-test (fn [m test expr]
+                         (if (contains? m test)
+                           (throw (ex-info (str "Duplicate case test constant: " test) {}))
+                           (assoc m test expr)))
+            pairs (reduce
+                    (fn [m pair]
+                      (let [test (first pair) expr (second pair)]
+                        (if (seq? test)
+                          (reduce (fn [m test] (assoc-test m test expr)) m test)
+                          (assoc-test m test expr))))
+                    {} (partition 2 clauses))
+            tests (keys pairs)
+            ints? (every? (fn [x] (and (integer? x) (<= -2147483648 x 2147483647))) tests)
+            keywords? (every? keyword? tests)
+            buckets (reduce
+                      (fn [m entry]
+                        (let [test (key entry)
+                              h (if ints? (suss.bootstrap/int-value test) (case-hash-code test))]
+                          (assoc m h (conj (get m h []) [test (val entry)]))))
+                      {} pairs)
+            ordered (vec (sort (fn [a b] (< (key a) (key b))) (seq buckets)))]
+        (if (empty? tests)
+          (throw (ex-info "Wrong number of args (0) passed to: clojure.core/max" {}))
+          nil)
+        ;; Build the finite dispatch tree eagerly. Syntax-quoted intermediate
+        ;; trees otherwise retain many lazy concatenations which the native
+        ;; macro bridge must force individually, consuming caller fuel even for
+        ;; the two-keyword cases emitted by defrecord. Quoted constants and
+        ;; caller result expressions remain the same data, never evaluated.
+        (letfn [(collision [entries]
+                  (let [pred (gensym "case_pred__")
+                        body (reduce
+                               (fn [body entry]
+                                 (list 'if (list pred (list 'quote (first entry)) ge)
+                                   (second entry) body))
+                               default (reverse entries))]
+                    (list 'let (vector pred 'suss.core/=) body)))
+                (checked [entries]
+                  (if (= (count entries) 1)
+                    (let [entry (first entries) test (list 'quote (first entry))]
+                      (list 'if
+                        (list (if keywords? 'suss.bootstrap/case-identical 'suss.bootstrap/case-equiv)
+                          ge test)
+                        (second entry) default))
+                    (collision entries)))
+                (tree [lo hi]
+                  (if (= (inc lo) hi)
+                    (let [entry (nth ordered lo)]
+                      (list 'if (list 'suss.bootstrap/case-hash= gh (key entry))
+                        (checked (val entry)) default))
+                    (let [mid (quot (+ lo hi) 2)
+                          pivot (key (nth ordered mid))]
+                      (list 'if (list 'suss.bootstrap/case-hash< gh pivot)
+                        (tree lo mid) (tree mid hi)))))]
+          (list 'let (vector ge e)
+            (if ints?
+              (list 'if (list 'suss.bootstrap/number? ge)
+                (list 'let (vector gh (list 'suss.bootstrap/int-value ge))
+                  (tree 0 (count ordered)))
+                default)
+              (list 'let (vector gh (list 'suss.bootstrap/case-hash-code ge))
+                (tree 0 (count ordered))))))))))

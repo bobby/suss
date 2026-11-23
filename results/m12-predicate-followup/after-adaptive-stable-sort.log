@@ -1,0 +1,13 @@
+Running as unit: run-p3433806-i91494594.scope; invocation ID: e0f0a6e77c27474da109d4d269e02f43
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 28s
+     Running tests/clojure_stable_sort.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_stable_sort-91c5407931d98242)
+
+running 2 tests
+test aot_executes_stable_sort_controls ... ok
+test stable_sort_follows_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 59.56s
+

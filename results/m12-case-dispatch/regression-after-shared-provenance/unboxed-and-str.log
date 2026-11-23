@@ -1,0 +1,29 @@
+Running as unit: run-p3862233-i91901601.scope; invocation ID: 288bb4d85ad2438886774c86d8e4f55b
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 4.44s
+     Running tests/portable_call_site_size.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_call_site_size-bd1e9c0ef39fc455)
+
+running 1 test
+test global_call_sites_stay_small_with_real_ifn_dispatch ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.11s
+
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 13 tests
+test a_long_sum_loop_allocates_only_its_result ... ok
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+test raw_bits_and_casts::float_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls ... ok
+test raw_bits_and_casts::long_bits_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::narrow_integer_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_numeric_helpers_return_scalars_without_numeric_boxes ... ok
+test raw_bits_and_casts::object_and_float_overloads_execute_without_normal_calls_or_boxes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 122.74s
+

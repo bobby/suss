@@ -1,5 +1,30 @@
 # ClojureScript compatibility evidence
 
+The compiler-owned [case source macro](bootstrap/clojure-case.json) executes all72
+vendored case assertions against the unchanged JVM primary, with private hashCode
+adapters and bounded literal-hash dispatch. The [integration repairs](../../results/m12-case-budget/README.md)
+retain fresh collision/diagnostic controls, unchanged record and AOT limits,
+complete source tooling round trips and Java/Node-free bootstrap evidence.
+Focused results do not establish a full workspace/final-head CI pass or complete
+BigDecimal acceptance; those gates retain their separate receipts.
+
+Private case hashing now has203 fresh JVM Util.hash controls executing in both
+phases and actual AOT, plus independent retained-field checks after GC. This
+keeps Java hashCode distinct from ordinary Clojure hasheq, including Decimal
+scale, BigInteger carrier hashes and signed zero. See
+[case-hash provenance](bootstrap/clojure-case-hash.json) and
+[recorded commands and limits](../../results/m12-case-dispatch/README.md).
+These helpers do not establish full case dispatch or complete BigDecimal acceptance.
+
+[Numeric dependency probes](../../results/m12-predicate-followup/README.md) retain
+six reviewed core predicate ports, an original adaptive stable sort over fixed
+WasmGC arrays,65 JVM sort controls in both phases/actual AOT, and independent
+canonical tree-map/set field decoding. The unchanged complete predicate-body
+regression executes173 assertions:171 host matches plus two explicit String/char
+platform differences under the accepted UTF-16 representation. All28 decoder
+tests and the unchanged numeric allocation/AOT bounds pass. These observations
+do not establish complete BigDecimal acceptance or all Java Comparator interop.
+
 For current original M3 acceptance and lifecycle evidence, see the
 [M3 acceptance record](../roadmap/acceptance-m3.md). The dated prerequisite
 notes below describe their inspected snapshots; older absence/pending statements
@@ -480,15 +505,16 @@ remain unfinished. Full baseline, independent review and final-head CI still
 gate PR readiness; no issue or milestone is complete from this work alone.
 
 
-Scalar `case` bootstrap now supports grouped binary64/UTF-16 literals and
-boolean/nil equality tables without fixed constant-count caps with selector-once evaluation and live qualified
-core equality. There are 40 fresh pinned/native value matches and one separately
-asserted pinned empty-group parse failure; native rejects that input with a
-located compile diagnostic. Actual fragments execute in Runtime and Macro
-phases. Selection97/artifacts101 and192 partial/873 unassessed reviews remain
-prerequisites. Full compiled macros, complete case/case*, public hash Date
-handling, collections and release gates remain unfinished. See
-[scalar case evidence](../runtime/scalar-case.md).
+The scalar `case` bootstrap remains for building core and callers without a
+source expander. Its legacy CLJS recordings are implementation references,
+with Clojure numeric qualifications retained in the tests. Production expansion
+uses the compiled Clojure macro: all72 unchanged vendored assertions compare on
+the host. Literal quotation, omitted defaults and genuine collision callbacks
+have fresh JVM Runtime/Macro/AOT controls. See
+[compiled case evidence](../runtime/compiled-case.md); the
+[scalar bootstrap evidence](../runtime/scalar-case.md) retains its original scope.
+General Java object interop and remaining eval/reader dependencies are not
+certified by these observations.
 
 
 Retained public scalar hash now preserves all pinned source branches, including

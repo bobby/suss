@@ -1,0 +1,18 @@
+{
+  "upstream": "org.clojure/clojure 1.12.6",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "source": "clojure/core.clj",
+  "source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "form": "sort",
+  "form_sha256": "c5a51a1e833a370a6a054356230b3504ec234bd14b18ba14d19606b55bd6ec57",
+  "upstream_form": "(defn sort\n  \"Returns a sorted sequence of the items in coll. If no comparator is\n  supplied, uses compare.  comparator must implement\n  java.util.Comparator.  Guaranteed to be stable: equal elements will\n  not be reordered.  If coll is a Java array, it will be modified.  To\n  avoid this, sort a copy of the array.\"\n  {:added \"1.0\"\n   :static true}\n  ([coll]\n   (sort compare coll))\n  ([^java.util.Comparator comp coll]\n   (if (seq coll)\n     (let [a (to-array coll)]\n       (. java.util.Arrays (sort a comp))\n       (with-meta (seq a) (meta coll)))\n     ())))",
+  "license": "EPL-1.0",
+  "license_path": "runtime/core-import/LICENSE",
+  "reference_bytecode": "AFunction-bytecode.log",
+  "reference_bytecode_sha256": "921d85975051a2e06fc7350dcec63ba1583bb674b419f5c86b2e65107da69a45",
+  "implementation_reference_id": "runtime:sort:2557",
+  "implementation_source_sha256": "aaf20b5cf4cc0a8dc3007cd36d1636e52351226373009a2b6d2744c4f0379660",
+  "adaptation": "docs/compatibility/patches/core-stable-sort.json",
+  "algorithm": "Original adaptive stable merge sort: natural runs, stable binary insertion, minimum-run extension and balanced adjacent-run merging. No host/JVM sorter is used in shipped code; Java galloping and every invalid-Comparator trace are not certified.",
+  "adapted_source_sha256": "533f63d87698bd153d1b8126a9b5378c63d76476e52690c42fc8f50de75590f3"
+}

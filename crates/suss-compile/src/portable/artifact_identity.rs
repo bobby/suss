@@ -114,6 +114,13 @@ fn split(bytes: &[u8]) -> Result<(Vec<u8>, Option<Manifest>), String> {
     }
     Ok((body, manifest))
 }
+/// Remove only the source identity after its caller has verified it. The AOT
+/// assembler retains the complete manifest in its shared input-provenance index.
+pub(crate) fn without_identity(bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let (body, identity) = split(bytes)?;
+    identity.ok_or("Missing source artifact identity")?;
+    Ok(body)
+}
 /// The identity section's canonical EDN.
 fn encode(manifest: &Manifest) -> Result<Vec<u8>, String> {
     suss_reader::edn::to_string(manifest)

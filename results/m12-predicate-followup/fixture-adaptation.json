@@ -1,0 +1,19 @@
+{
+  "original_sha256": "c1b7e79ae18da92d312eee1a2ebfb9a4036222f1cea8dc95af368bf767d32556",
+  "final_sha256": "fcdd1853f1d25b130aebc4dd9836174f773cfd036b78292ffee0c7966bd6e74a",
+  "unchanged_cases": 272,
+  "changes": [
+    {
+      "i": 250,
+      "before": [
+        "(char? (char 55296))",
+        "true"
+      ],
+      "after": [
+        "(char? (first \"\\uD800\"))",
+        "true"
+      ]
+    }
+  ],
+  "reason": "Public char coercion is separately unimplemented. first on the same one-unit UTF-16 string supplies an actual character in JVM Clojure and the accepted one-unit string representation in Suss. Both fresh JVM observations are true. Before evidence for the final control uses the immutable pre-port CLI, with executable SHA and complete stdout/stderr preserved."
+}

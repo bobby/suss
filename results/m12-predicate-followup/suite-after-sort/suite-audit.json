@@ -1,0 +1,1578 @@
+{
+  "base": "0436ab300980d8f883398585095aa2a9758151f0",
+  "capture_sha256": "a322884248188b121cf055997ca277d14858b8157b2b992cbe1c70af4d52e566",
+  "changed_record_counts": {
+    "assertions": 12,
+    "namespaces": 11,
+    "tests": 0
+  },
+  "changes": {
+    "assertions": [
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 31,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#31",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c]))",
+          "id": "clojure.core-test.assoc/test-assoc#31",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 31,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 32,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#32",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c 3 :d]))",
+          "id": "clojure.core-test.assoc/test-assoc#32",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 32,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 34,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#34",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc [1] [0 1 1]))",
+          "id": "clojure.core-test.assoc/test-assoc#34",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 34,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 35,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#35",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc [1] [0 1 1 2 2]))",
+          "id": "clojure.core-test.assoc/test-assoc#35",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 35,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 6,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.atom/test-atom",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.atom/test-atom#6",
+        "new": null,
+        "old": "observation:undecodable",
+        "primary": {
+          "column": 13,
+          "contexts": [
+            "metadata"
+          ],
+          "deterministic": true,
+          "form": "(= {:a \"a\"} (meta (atom nil :meta (sorted-map :a \"a\"))))",
+          "id": "clojure.core-test.atom/test-atom#6",
+          "kind": "predicate",
+          "line": 25,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "string",
+                    "units": [
+                      97
+                    ]
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 6,
+          "test": "clojure.core-test.atom/test-atom",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": true
+            }
+          ],
+          "ordinal": 33,
+          "result": {
+            "tag": "bool",
+            "value": false
+          },
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.char-qmark/test-char?#33",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 23,
+          "contexts": [],
+          "deterministic": true,
+          "form": "(= false (char? \"0\"))",
+          "id": "clojure.core-test.char-qmark/test-char?#33",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": false
+            }
+          ],
+          "ordinal": 33,
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": true
+            }
+          ],
+          "ordinal": 34,
+          "result": {
+            "tag": "bool",
+            "value": false
+          },
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.char-qmark/test-char?#34",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 23,
+          "contexts": [],
+          "deterministic": true,
+          "form": "(= false (char? \"1\"))",
+          "id": "clojure.core-test.char-qmark/test-char?#34",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": false
+            }
+          ],
+          "ordinal": 34,
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "counted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 6,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.counted-qmark/test-counted?",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.counted-qmark/test-counted?#6",
+        "new": null,
+        "old": "observation:undecodable",
+        "primary": {
+          "column": 16,
+          "contexts": [
+            "positive tests"
+          ],
+          "deterministic": true,
+          "form": "(counted? (sorted-map :a 1 :b 2 :c 3))",
+          "id": "clojure.core-test.counted-qmark/test-counted?#6",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 6,
+          "test": "clojure.core-test.counted-qmark/test-counted?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "counted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "1"
+                },
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                }
+              ],
+              "tag": "set"
+            }
+          ],
+          "ordinal": 7,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.counted-qmark/test-counted?",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.counted-qmark/test-counted?#7",
+        "new": null,
+        "old": "observation:undecodable",
+        "primary": {
+          "column": 16,
+          "contexts": [
+            "positive tests"
+          ],
+          "deterministic": true,
+          "form": "(counted? (sorted-set 1 2 3))",
+          "id": "clojure.core-test.counted-qmark/test-counted?#7",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "1"
+                },
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                }
+              ],
+              "tag": "set"
+            }
+          ],
+          "ordinal": 7,
+          "test": "clojure.core-test.counted-qmark/test-counted?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            },
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 17,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.dissoc/test-dissoc#17",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 32,
+          "contexts": [
+            "records"
+          ],
+          "deterministic": true,
+          "form": "(= r (apply dissoc r [:d]))",
+          "id": "clojure.core-test.dissoc/test-dissoc#17",
+          "kind": "predicate",
+          "line": 42,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 17,
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "items": [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                }
+              ],
+              "tag": "seq"
+            },
+            {
+              "items": [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "ordinal": 4,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.interpose/test-interpose",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.interpose/test-interpose#4",
+        "new": null,
+        "old": "observation:undecodable",
+        "primary": {
+          "column": 19,
+          "contexts": [
+            "common cases"
+          ],
+          "deterministic": true,
+          "form": "(= (apply interpose [(sorted-set 1 2 3) (sorted-set \"a\" \"b\" \"c\")]) [\"a\" (sorted-set 1 2 3) \"b\" (sorted-set 1 2 3) \"c\"])",
+          "id": "clojure.core-test.interpose/test-interpose#4",
+          "kind": "predicate",
+          "line": 9,
+          "operands": [
+            {
+              "items": [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                }
+              ],
+              "tag": "seq"
+            },
+            {
+              "items": [
+                {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "1"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "2"
+                    },
+                    {
+                      "tag": "long",
+                      "value": "3"
+                    }
+                  ],
+                  "tag": "set"
+                },
+                {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "ordinal": 4,
+          "test": "clojure.core-test.interpose/test-interpose",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "tag": "nil"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "40"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              98
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "tag": "string",
+                          "units": [
+                            52
+                          ]
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "800"
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "tag": "nil"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "40"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              98
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "tag": "string",
+                          "units": [
+                            52
+                          ]
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "800"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 11,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.seq/test-seq",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.seq/test-seq#11",
+        "new": null,
+        "old": "observation:undecodable",
+        "primary": {
+          "column": 33,
+          "contexts": [
+            "sets and maps"
+          ],
+          "deterministic": true,
+          "form": "(= input-sorted-map (into (sorted-map) (seq input-sorted-map)))",
+          "id": "clojure.core-test.seq/test-seq#11",
+          "kind": "predicate",
+          "line": 32,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              98
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "tag": "string",
+                          "units": [
+                            52
+                          ]
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "800"
+                  }
+                ],
+                [
+                  {
+                    "tag": "nil"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "40"
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              98
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "tag": "string",
+                          "units": [
+                            52
+                          ]
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "800"
+                  }
+                ],
+                [
+                  {
+                    "tag": "nil"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "40"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 11,
+          "test": "clojure.core-test.seq/test-seq",
+          "verdict": "pass"
+        }
+      }
+    ],
+    "namespaces": [
+      {
+        "id": "clojure.core-test.assoc",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.assoc (Some(\"<root>/clojure/core_test/assoc.cljc\")): Unresolved Runtime name sorted? at bytes 235..4147",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.char-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.coll-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Unresolved Runtime name coll? at bytes 229..965",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.disj",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.disj (Some(\"<root>/clojure/core_test/disj.cljc\")): Unresolved Runtime name sorted? at bytes 234..1560",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.dissoc",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.dissoc (Some(\"<root>/clojure/core_test/dissoc.cljc\")): Unresolved Runtime name sorted? at bytes 304..2018",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.neg-int-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.pos-int-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.some",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.some (Some(\"<root>/clojure/core_test/some.cljc\")): Unresolved Runtime name char? at bytes 234..2444",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.sort",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.sort (Some(\"<root>/clojure/core_test/sort.cljc\")): Unresolved Runtime name sort at bytes 240..1081",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.sort-by",
+        "new": {
+          "diagnostic": "clojure.core-test.sort-by (Some(\"<root>/clojure/core_test/sort_by.cljc\")): Unresolved Runtime name sort-by at bytes 243..5303",
+          "stage": "namespace"
+        },
+        "old": {
+          "diagnostic": "clojure.core-test.sort-by (Some(\"<root>/clojure/core_test/sort_by.cljc\")): Unresolved Runtime name sort at bytes 243..5303",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.sorted-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sorted? at bytes 242..1286",
+          "stage": "namespace"
+        }
+      }
+    ],
+    "tests": []
+  },
+  "counts": {
+    "fail": 86,
+    "guest-judged": 75,
+    "namespaces-failed": 73,
+    "not-executed": 2008,
+    "pass": 4770,
+    "skipped": 0
+  },
+  "decimal_value_observations": {
+    "not-executed": 6,
+    "pass": 194
+  },
+  "newly_executed_failures": [
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 32,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c 3 :d]))",
+      "id": "clojure.core-test.assoc/test-assoc#32",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 34,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc [1] [0 1 1]))",
+      "id": "clojure.core-test.assoc/test-assoc#34",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 34,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.char-qmark/test-char?",
+        "verdict": "fail"
+      },
+      "form": "(= false (char? \"1\"))",
+      "id": "clojure.core-test.char-qmark/test-char?#34",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 35,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc [1] [0 1 1 2 2]))",
+      "id": "clojure.core-test.assoc/test-assoc#35",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          },
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 17,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.dissoc/test-dissoc",
+        "verdict": "pass"
+      },
+      "form": "(= r (apply dissoc r [:d]))",
+      "id": "clojure.core-test.dissoc/test-dissoc#17",
+      "reason": "observation:undecodable"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 33,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.char-qmark/test-char?",
+        "verdict": "fail"
+      },
+      "form": "(= false (char? \"0\"))",
+      "id": "clojure.core-test.char-qmark/test-char?#33",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 31,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c]))",
+      "id": "clojure.core-test.assoc/test-assoc#31",
+      "reason": "verdict:fail"
+    }
+  ],
+  "old_counts": {
+    "fail": 84,
+    "guest-judged": 75,
+    "namespaces-failed": 83,
+    "not-executed": 2314,
+    "pass": 4466,
+    "skipped": 0
+  },
+  "other_new_failures": [],
+  "previously_passing_regressions": [],
+  "primary_and_count_skip_guards_unchanged": true,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "prior_passes_preserved": 4556,
+  "raw_assertions": 4930,
+  "unresolved_candidates_by_namespace": {
+    "clojure.core-test.case": 4,
+    "clojure.core-test.eq": 2,
+    "clojure.core-test.eval": 1,
+    "clojure.core-test.not-eq": 2,
+    "clojure.core-test.num": 1,
+    "clojure.edn-test.read-string": 5
+  },
+  "unresolved_decimal_source_candidates": 15
+}

@@ -96,14 +96,27 @@ fn when_let_respects_core_aliases_exclusion_and_lexical_runtime_and_macro_shadow
 fn when_let_invalid_bindings_reject_in_compiled_expansion_and_allow_subsequent_work() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        for source in ["(when-let 17 1)", "(when-let [] 1)", "(when-let [x] 1)",
-                       "(when-let [x 1 y 2] x)", "(when-let (x 1) 1)"] {
+        let primary: Vec<String> = serde_json::from_str(include_str!(
+            "../../../results/m12-case-budget/when-let-primary.json")).unwrap();
+        assert_eq!(primary.len(), 5);
+        for (source, reference) in ["(when-let 17 1)", "(when-let [] 1)", "(when-let [x] 1)",
+                       "(when-let [x 1 y 2] x)", "(when-let (x 1) 1)"].into_iter().zip(&primary) {
             let error = session.eval_with_macros(source, &mut macros).unwrap_err();
-            // Public transport currently wraps the language exception. Exact
-            // message/ex-data require separate macro-store/oracle observations;
-            // an unresolved name or read error cannot satisfy this assertion.
-            assert!(error.to_string().contains("Compiled macro expansion failed during compiled macro invocation: Uncaught language exception"),
-                    "{source}: {error}");
+            let suss_cli::portable_session::SessionError::Compile(error) = error
+                else { panic!("{source}: expected located expansion diagnostic") };
+            let expected = suss_reader::forms::read_forms(reference).unwrap().remove(0);
+            let suss_reader::forms::Kind::Vector(messages) = &expected.kind else { panic!("primary messages") };
+            let suss_reader::forms::Kind::String(units) = &messages[1].kind else { panic!("actual JVM macro-body message") };
+            let message = String::from_utf16(units).unwrap();
+            // Ordinary JVM macroexpand reports its spec precheck. The direct
+            // core macro invocation records the body diagnostic separately.
+            // The existing portable adaptation uses compiler spans rather than
+            // appending the JVM namespace suffix to this body message.
+            let message = message.strip_suffix(" in user:").expect("recorded JVM namespace context");
+            assert_eq!(error.span, 0..source.len());
+            assert_eq!(error.message, format!(
+                "Compiled macro expansion failed during compiled macro invocation: {message} at bytes 0..{}",
+                source.len()));
             assert_eq!(observe(&mut session, &mut macros, "(+ 20 22)"), number(42.0));
             assert_eq!(observe(&mut session, &mut macros, "(when-let [x 17] x)"), number(17.0));
         }

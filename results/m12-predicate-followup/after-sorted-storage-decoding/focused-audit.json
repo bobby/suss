@@ -1,0 +1,23 @@
+{
+  "raw_sha256": "2866673970c5c1e646311a1434dec5cafa0cc1b6dc0cc812275ef661f2aa6257",
+  "counts": {
+    "pass": 171,
+    "guest-judged": 0,
+    "fail": 2,
+    "not-executed": 0,
+    "skipped": 0,
+    "namespaces-failed": 0
+  },
+  "failures": {
+    "schema": 1,
+    "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+    "namespaces": {},
+    "tests": {},
+    "assertions": {
+      "clojure.core-test.char-qmark/test-char?#33": "verdict:fail",
+      "clojure.core-test.char-qmark/test-char?#34": "verdict:fail"
+    },
+    "skip-mismatches": []
+  },
+  "raw_assertions": 173
+}

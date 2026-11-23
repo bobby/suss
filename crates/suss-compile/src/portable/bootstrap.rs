@@ -55,6 +55,7 @@ pub fn embedded_sha256() -> &'static str {
             crate::portable_state_macros::DELAY.as_bytes(),
             crate::portable_state_macros::VSWAP.as_bytes(),
             crate::portable_state_macros::WITH_PRECISION.as_bytes(),
+            crate::portable_state_macros::CASE.as_bytes(),
         ] {
             hash.update((part.len() as u64).to_le_bytes());
             hash.update(part);
@@ -93,6 +94,7 @@ fn error(message: impl Into<String>) -> Diagnostic {
 /// core macro expansions refer to them from user code, as in ClojureScript;
 /// direct linking already keeps their internal arguments out of user hands.
 const CORE_PRIVATE: &[&str] = &[
+    "case-hash-code", "case-string-hash-code", "case-symbol-hash-code",
     "array-for", "unchecked-array-for", "unchecked-editable-array-for", "first-array-for-longvec",
     "pv-fresh-node", "pv-aget", "pv-aset", "pv-clone-node", "new-path", "push-tail", "pop-tail", "do-assoc",
     "tv-ensure-editable", "tv-editable-root", "tv-editable-tail", "tv-push-tail", "tv-pop-tail",

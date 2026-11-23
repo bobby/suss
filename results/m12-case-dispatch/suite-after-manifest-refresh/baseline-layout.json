@@ -1,0 +1,6 @@
+{
+  "previous_serialization_sha256": "1f902838903a1ef3335db019d361fcb45505397050e129e0cffe0418131f07ae",
+  "final_baseline_sha256": "9c39a63520e28595bdf483e28d294ff4b417b41a02470b501be760acff97a4da",
+  "semantic_change_from_previous_write": false,
+  "delta_from_original": "Remove exactly four lines for the resolved case namespace; all other bytes preserved"
+}

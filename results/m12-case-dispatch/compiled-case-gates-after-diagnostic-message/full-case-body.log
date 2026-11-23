@@ -1,0 +1,18 @@
+Running as unit: run-p3712836-i91761796.scope; invocation ID: 30176e14af784b659ed6833d6a62660a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+error[E0509]: cannot move out of type `suss_reader::forms::Form`, which implements the `Drop` trait
+    --> crates/suss-compile/src/portable_macros.rs:1008:33
+     |
+1007 | ...                   if let Ok(Form { kind: Kind::String(units), .. }) =
+     |                                                           ----- data moved here because `units` has type `Vec<u16>`, which does not implement the `Copy` trait
+1008 | ...                       self.bridge.read(session, &message, form.span.clone())
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot move out of here
+     |
+help: consider borrowing the pattern binding
+     |
+1007 |                             if let Ok(Form { kind: Kind::String(ref units), .. }) =
+     |                                                                 +++
+
+For more information about this error, try `rustc --explain E0509`.
+error: could not compile `suss-compile` (lib) due to 1 previous error

@@ -1,0 +1,21 @@
+Running as unit: run-p3752388-i91820495.scope; invocation ID: e24f1bc80ea94471bf4153d87b062b84
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=86 guest-judged=75 namespaces-failed=72 not-executed=1936 pass=4842 skipped=0
+namespaces clojure.core-test.case: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.case (Some("<root>/clojure/core_test/case.cljc")): case bootstrap requires scalar literal constants at bytes 240..6428'}, observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (3752389) panicked at crates/suss-compile/tests/clojure_test_suite.rs:618:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 485.83s
+

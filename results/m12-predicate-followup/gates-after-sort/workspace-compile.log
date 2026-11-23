@@ -1,0 +1,7 @@
+Running as unit: run-p3481822-i91533238.scope; invocation ID: e28c958fedbf4703a1f3e4b971d0cd8c
+    Checking suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-core)
+    Checking suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+    Checking suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `dev` profile [unoptimized] target(s) in 1m 30s

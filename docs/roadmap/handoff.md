@@ -1,3 +1,247 @@
+## Case baseline terminal evidence (2026-11-23)
+
+`cargo test --workspace --locked -- --test-threads=2` terminates0 on
+a783ad60540b4bc22820e8811a568132a0b14210 after10236.655s:2423 passed,
+zero failed and14 existing ignored tests across366 completed test groups.
+All6745 tracked/pinned inputs remain unchanged. The complete byte-preserved
+log and terminal receipt are retained in
+`results/m12-case-budget/workspace-baseline` as deterministic gzip archives;
+local raw originals remain in the isolated baseline worktree. The earlier
+2254f70c interrupted run remains separately recorded and is not a pass.
+This publication changes documentation/evidence only; source qualification
+lists the exact two changed existing input files. Final-head CI and independent
+promotion review remain GitHub gates; no merge is performed.
+
+## Case integration CI regressions (2026-11-23)
+
+CI45158952814 on2254f70c exposes four failing integration groups; their complete
+job logs are retained in `results/m12-case-budget`. The original record-budget
+failure also reproduces with a copied, hash-pinned native CLI. Its unrepaired
+full workspace run is explicitly interrupted after1271.7s with3877 recorded
+inputs unchanged, terminal exit-2; it is never counted as a pass.
+
+The compiled case macro now constructs its finite dispatch tree eagerly,
+avoiding lazy syntax concatenations forced by the macro bridge. The unchanged
+four-million record budget passes, with namespace-membership costs963185 and
+975395 below the original one-million limit. Literal hashing, collision callbacks,
+duplicate guards, effects, lexical capture and tail recurrence remain required.
+
+Fresh pinned JVM traces replace the old sequential-public-equality assumptions
+in the mixed-case tests. Unique buckets make no public equality calls; the nil/0
+bucket retains its exact callbacks and a real ExceptionInfo throw, GC-rooted
+message/data, binding restoration and recovery. Duplicate diagnostics retain exact
+source spans and compiler context around the actual JVM root messages. An old
+when-let test now checks the extracted body messages instead of requiring an
+opaque uncaught exception. Both JVM spec-precheck and direct macro-body messages
+are recorded separately; the native source adaptation uses compiler spans in
+place of the JVM namespace suffix. Original tests and all failures remain retained.
+
+Tooling emits letfn nodes as letfn* with complete binding initializers. A new
+mutual-recursion/arity/capture/typed-parameter regression also exposes physical
+parameter conversions leaking into source methods; source facts now retain the
+original body while executable HIR keeps its casts. Core round trips pass in both
+phases, with no lowered nodes. Macro-source and primitive-hint execution checks
+pass too.
+
+`run-gates.py after-source-body-before-primitive-casts` passes ten groups with106
+reported Rust test executions; the separate compiled_when_let command passes five
+more after its test-only update. These include all72 vendored case assertions,
+328 Runtime/Macro/actual-AOT controls, independent GC/privacy, complete component
+provenance, unchanged AOT limits2352 <=3900 and96 <=128, and Java/Node-free
+bootstrap reproduction/execution. All recorded gate inputs remain unchanged.
+`run-foundation.py foundation` passes all15 checks including364 Python tests.
+Primary data, failure baseline and original budget/size tests stay byte-identical.
+The repaired unfiltered workspace run, final-head CI and independent promotion
+review remain separate required evidence. Commands and scope qualifications are in
+`results/m12-case-budget`; no full BigDecimal acceptance follows from these fixes.
+
+## Compiled case and component provenance evidence (2026-11-23)
+
+`results/m12-case-dispatch/run-regression-gates.py
+regression-after-shared-provenance` passes all six groups:13 CLI case tests,
+independent decoder/privacy checks, all13 original unboxed-local guards,
+call-site and AOT size limits, Java/Node-free bootstrap reproduction/execution
+and workspace all-test compilation. All recorded inputs remain unchanged.
+`run-foundation.py foundation-after-shared-provenance` passes all15 checks,
+including364 Python tests. `preserve-baseline-layout.py` then preserves the
+original JSON layout: exactly four case-namespace lines removed and no other
+byte changes from the prior baseline. The full workspace run, final-head CI
+and independent promotion review remain separate required evidence.
+
+`results/m12-case-dispatch/run-case-gates.py
+compiled-case-gates-after-message-borrow-fix` passes all72 vendored case
+assertions, independent retained-value GC checks in both phases and diagnostic/
+privacy boundaries. The13 CLI tests execute328 fresh JVM controls in both phases
+and actual AOT. AOT direct core str calls retain the original core conversion;
+separate JVM ordinary/direct-linking recordings qualify the expected messages.
+Original scalar-only, diagnostic and AOT formatting failures remain retained.
+
+`run-suite.py suite-after-manifest-refresh` captures5002 assertions with frozen
+inputs:4842 host matches /75 guest judgments /86 explicit failures /
+1936 unexecuted assertions /72 failed namespaces. `audit-suite.py` preserves
+all4860 prior individually comparable passes and unchanged primary/count/skip
+rules. `write-reviewed-case-baseline.py` deletes only the resolved case namespace
+failure. The original Rust exit101 remains visible; the separate host comparison
+passes. Eleven numeric-source candidates and six actual Decimal-operand assertions
+still depend on regex/UUID readers or real compiled eval.
+
+The original AOT size failure3985 >3900 is preserved. Verified source manifests
+are now retained losslessly in one component provenance index, sharing complete
+macro graphs while keeping standalone format2 unchanged. The unchanged guard
+passes2352 bytes/form and96 extra split-form bytes. Actual component execution
+and an independent pinned JVM EDN reader compare all13 fields of five original
+inputs, both user-macro versions and the core case identity. Commands, inputs,
+original errors, component hash and limits are under `results/m12-case-dispatch`.
+Broader regression, full workspace and final CI evidence have their own receipts;
+these focused passes do not imply any of them or complete BigDecimal acceptance.
+
+## Private case hash probes (2026-11-23)
+
+`results/m12-case-dispatch/run.py before-case-dispatch` retains the terminal
+93-control failure:41 mismatches in each phase, plus failed actual AOT compilation,
+with unchanged inputs. The compiler still has the original scalar-only case
+bootstrap. No case assertion is relabeled as passing by the hash work below.
+
+`oracle-numeric-hash.py` records114 fresh pinned JVM Util.hash controls;
+`before-numeric-case-hash` retains their unresolved-helper failures.
+`after-numeric-case-hash` passes both phases. An original native adapter keeps
+Java hashCode distinct from Clojure hasheq: Long and BigInt long-part hashes,
+BigInteger magnitude-word hashes, Ratio xor, Decimal coefficient/scale and
+canonical-NaN Double bits with signed zero preserved. It reads no MathContext.
+`oracle-composite-hash.py` adds89 primary identifier/collection controls.
+Original compiled Suss helpers handle UTF-16 strings, symbols, keywords,
+sequences, maps and sets without a mutable hash cache or public hash call.
+Provenance is in `docs/compatibility/bootstrap/clojure-case-hash.json`.
+
+`run.py after-composite-case-hash hash_` passes all203 controls in Runtime,
+Macro and actual CLI AOT, source/fixtures unchanged. A separate frozen executable
+records the missing collection helper before its installation; this one probe
+is not presented as a complete89-control before run. The29 additional fresh
+collision/duplicate boundaries retain actual JVM callback traces and distinguish
+Decimal duplicate equality from matching, signed-zero duplicates and accepted
+repeated NaN constants. These reference probes are not Suss dispatch passes.
+
+`run-hash-gates.py hash-gates-after-test-type-fix` passes32 tests and the import
+manifest check, with unchanged inputs. Eleven retained-value controls independently
+decode canonical storage after GC in both phases, including Decimal scale and
+Double signed-zero bits, while public predicates/hash/equality/printer are
+redefined to fail. Original13 unboxed guards and17 import tests pass unchanged.
+The AOT limits remain3895 <=3900 bytes/form and96 <=128 extra split-form bytes.
+The initial independent-test compile error is retained separately; only the
+new test's attempted Clone use was fixed, with decoder semantics unchanged.
+`run-bootstrap.py bootstrap-gates` passes the unchanged Java/Node-free double
+reproduction/identity script and all four compiled bootstrap execution tests.
+
+This is private hash/equivalence infrastructure. Literal dispatch, quotation,
+duplicate diagnostics, omitted defaults and complete72-assertion case execution
+still require integration. The identity fallback is not certification of arbitrary
+Java-object hashCode interop. No full workspace run or final-head CI is claimed
+for these new helpers; earlier Decimal full-run evidence retains its own head.
+
+## Complete predicate/sort capture (2026-11-23)
+
+`results/m12-predicate-followup/run-suite.py suite-after-sort` captures4930 raw
+observations with frozen inputs unchanged. The original Rust test exits101
+because the reviewed baseline differs; its exact log is retained. The independent
+`audit-sort-suite.py` and `write-reviewed-sort-baseline.py` then prove and record
+4770 host matches /75 guest judgments /86 failures /2008 unexecuted assertions /
+73 failed namespaces. Comparison against the reviewed update passes.
+
+Ten namespaces newly load. Five earlier unknown sorted operands now decode;
+seven previously blocked failures remain explicit: four odd-arity assoc errors,
+two accepted String/char differences and one unknown record observation. Sort-by
+advances from missing sort to missing sort-by. Every original primary value,
+count/skip/comparison/source-routing decision and individually passing observation
+is preserved. No unknown value is changed to success. The strict complete
+predicate regression retains all173 IDs (171 host matches, two explicit platform
+failures);273 predicate and65 sort JVM controls pass both phases/actual CLI AOT.
+
+Decimal-related source candidates decrease26 ->15. The200 actual Decimal-operand
+subset remains194 matches and six unexecuted eval/EDN assertions. The next
+unblocked source work includes composite case constants, regex/UUID reader
+support and actual compiled eval. This is not full BigDecimal acceptance.
+Case-boundary JVM probes additionally preserve hash-collision/public-equality
+behavior, nested scale-sensitive matching and scale-insensitive duplicate
+rejection; their expected values are not inferred from the CLJS implementation.
+
+## Predicate dependency compatibility gates (2026-11-23)
+
+`results/m12-predicate-followup/run-focused.py after-sorted-storage-decoding
+pinned_core_predicate_bodies_match_primary_numeric_and_collection_values`
+passes the unchanged complete-body regression: all173 ordered assertion IDs
+execute,171 host matches and two explicit String/char platform failures, with
+zero skipped/unexecuted assertions and zero failed namespaces. Actual tree
+operands now decode independently; no guest verdict is substituted for unknown
+storage. Original failed harness and semantic probes remain retained.
+
+`run-sort-gates.py` passes six groups with53 Rust tests, including102 constructor
+controls, sequence observations/projections,13 unboxed-local checks,17 core
+imports, unchanged AOT size and four Java/Node-free bootstrap checks. Workspace
+all-test compilation also passes. Sizes remain3895 <=3900 bytes/form and96 <=128
+extra split-form bytes. The15 final foundation commands (364 Python tests) pass;
+all frozen inputs remain unchanged.65 stable-sort JVM controls and all28 host
+value-decoder tests have their separate passing receipts. The full suite capture
+and faithful baseline audit retain their own command/source qualification.
+No unfiltered workspace pass for these separate dependency ports is inferred.
+
+## Adaptive sort and independent tree observations (2026-11-23)
+
+`results/m12-predicate-followup/run-sort.py before-stable-sort` records44
+unresolved-sort controls in both phases and actual AOT. The initial bottom-up
+port retains two mismatches/phase: it compares a Ratio/Decimal pair that JVM
+short-input sorting avoids, and visits a mixed Boolean/numeric callback in a
+different order. Seven fresh primary staging controls confirm direct compare
+must still throw on the nonterminating Ratio; changing numeric comparison would
+be incorrect. The original failures, sources and callback traces are retained.
+
+`after-adaptive-stable-sort` passes65 JVM controls in Runtime, Macro and actual
+CLI AOT:44 API/category/metadata/object-versus-primitive-array controls, seven
+staging/traces and14 stable-order matrices around31/32/33 and larger run sizes.
+The original adaptive implementation uses natural runs, stable binary insertion
+and balanced adjacent-run merging. Its private Number.intValue helper shares
+canonical class diagnostics with MathContext, retaining distinct null messages.
+Clojure's source/JAR and AFunction bytecode provenance remain explicit; no Java
+sorter or runtime is shipped. These controls do not certify all Comparator
+object interop, arbitrary invalid comparator behavior or Java's galloping
+optimization/callback trace for every large input.
+
+`run-decoder.py before-tree-collection-decoder sorted_collection_decoder`
+reproduces unsupported sorted storage in both phases. The first probe incorrectly
+used raw decode and was rejected by the unchanged ownership guard; that initial
+failure is retained separately. The corrected tests use decode_session.
+`after-tree-collection-decoder` passes all28 existing/new decoder tests. Canonical
+TreeMap/TreeSet owners and black/red nodes are inspected directly, preserving
+Decimal coefficients/scales and stored comparator order after GC with guest
+printer/equality disabled. Malformed counts/backing classes/lookalikes and
+insufficient budgets remain errors. The complete predicate body and wider
+compatibility gates have separate receipts; no full Decimal acceptance follows.
+
+## Core predicate source probes (2026-11-23)
+
+`results/m12-predicate-followup/oracle.py` records273 fresh JVM Clojure1.12.6
+controls for numeric/collection categories, UTF-16 characters, aliases, apply
+and argument effects. `run.py before-core-predicates` records273 unresolved-name
+failures in each phase. Six reviewed core ports retain EPL/source/patch provenance;
+integer sign predicates use canonical Long categories, not JavaScript integer
+classification. `after-portable-character-controls` passes every control in
+Runtime, Macro and actual CLI AOT, frozen source/fixture inputs unchanged.
+
+The original surrogate control required separately missing public char coercion.
+Exactly one fixture expression changes to first on a one-unit UTF-16 string,
+with a fresh JVM result and separately executed pre-port CLI failure. All272
+other controls remain byte-identical; original failed oracle/test attempts and
+the complete fixture adaptation audit are retained.
+
+`run-focused.py after-complete-predicate-bodies
+pinned_core_predicate_bodies_match_primary_numeric_and_collection_values`
+executes150 of173 vendored assertions:148 host matches and two explicit JVM
+String/character platform mismatches. The remaining23 sorted? assertions are
+still unexecuted because the namespace also requires missing sort. This historical strict
+regression is red; no complete-body or Decimal acceptance is claimed.
+The15 foundation commands and364 Python tests pass, inputs unchanged.
+A complete capture has its own source-qualified receipt. These separate ports
+do not change PR500's frozen validation head or qualify its full workspace run.
+
 ## Unfiltered Decimal workspace validation (2026-11-23)
 
 `python3 results/m12-decimal-raw-errors/run-workspace.py` completes the exact

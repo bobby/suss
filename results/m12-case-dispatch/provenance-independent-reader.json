@@ -1,0 +1,29 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/results/m12-case-dispatch/provenance-independent-reader.clj",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/results/m12-case-dispatch/actual-component-provenance-after-export-symbol/actual-component"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8241112232208252,
+  "source_sha256": "d4e7a81dc1e3aa475eafe20dddd2ca085bd15013db0f219f6da133db899ea18f",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "actual_capture_hashes": {
+    "probe.sus": "4b97f1a9eb8c1c409622d761ae9e32831375cf129844aecca85d1df29a9aa708",
+    "component.wasm": "1e9f25ac7ca3868e9ee1d722000efc5f35dc138b91396f603035dc5f1a2354f3",
+    "original-000.edn": "d9b028f89e306cc2c99fbd3f52a1f5ba8aa7ad5ec0fdef1101f85db920dc6a09",
+    "original-001.edn": "45bf4b5a554e0988326e140946ce5b4009e24b488750df26166aca3a6e418150",
+    "original-002.edn": "9a297c37b0b6d9d4e65e4ddb2e26a49a86304aeadab77474e101c41e0424b11d",
+    "original-003.edn": "b177ee09db056de5e2cb1f7cb498491821f557e38322e9745f011f700dcbc9bc",
+    "original-004.edn": "68cebdaa72dbdcaf7d9f53038d4d8024588f7cdadbed7d1b0ed6698294e731ba",
+    "component-inputs.edn": "ae6101018ed4315a4258134230b7e428a0dfd2d030b4b05093abac8655fa7581",
+    "component.sha256": "a969fb45b4311299d4fe2965a4636111ab78d6ec424f93f0f064acbfb46d19ac"
+  }
+}

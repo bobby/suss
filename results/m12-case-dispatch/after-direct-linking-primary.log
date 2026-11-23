@@ -1,0 +1,32 @@
+Running as unit: run-p3670525-i91717066.scope; invocation ID: c47cf3a5bb1242b49479abb326f10fe2
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 21s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 6 tests
+test aot_executes_composite_case_hash_controls ... ok
+test aot_executes_case_dispatch_controls ... FAILED
+test aot_executes_numeric_case_hash_controls ... ok
+test composite_case_hash_follows_primary_hash_code ... ok
+test case_dispatch_follows_primary_controls ... ok
+test numeric_case_hash_follows_primary_hash_code ... ok
+
+failures:
+
+---- aot_executes_case_dispatch_controls stdout ----
+
+thread 'aot_executes_case_dispatch_controls' (3675239) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:115:5:
+assertion `left == right` failed: AOT failed primary control: Some(("(with-redefs [str (fn [& xs] \"replacement\")] (try (case :x) (catch Throwable e (ex-message e))))", "\"No matching clause: :x\""))
+  left: 77
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    aot_executes_case_dispatch_controls
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 70.06s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_case_dispatch`

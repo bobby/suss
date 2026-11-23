@@ -47,3 +47,13 @@ of the old value17, and subsequent loader recovery23. Required final-head full
 baseline and CI are still pending. Complete published user dependency-loader policy, component/AOT
 migration, temporary evaluator retirement and scheduler/lifecycle acceptance
 remain original M3 work. A manifest check alone is not their acceptance proof.
+
+
+AOT assembly verifies the standalone identities, then retains their complete
+manifests in the component-level `suss.input-source-artifacts` format1 index.
+Identical macro graphs share a dictionary entry; unknown and known empty graphs
+stay distinct. Standalone format2 is unchanged. This index records verified
+inputs, including each definition version, rather than authenticating optimized
+output. The [case/provenance evidence](compiled-case.md#component-input-provenance)
+records the schema,32/64MiB limits, actual component execution and independent
+JVM EDN comparison of every original field.

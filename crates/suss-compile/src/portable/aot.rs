@@ -12,6 +12,13 @@ mod lists;
 #[cfg(suss_host)]
 mod optimize;
 mod strings;
+mod provenance;
+
+/// Recover complete verified-input manifests retained by the assembler. These
+/// describe source inputs, not a signature of an optimizer's rewritten output.
+pub fn input_source_manifests(component: &[u8]) -> Result<Vec<artifact_identity::Manifest>, String> {
+    provenance::read(component)
+}
 
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 const NUMBER_UNBOX: u32 = 6;
@@ -688,18 +695,20 @@ pub fn component_with(
         )?);
     }
     // Reject every artifact before assembling any initialization start function.
-    for fragment in &fragments {
+    let mut source_manifests = Vec::with_capacity(fragments.len());
+    for fragment in &mut fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
             .map_err(error)?;
-        artifact_identity::verify(
+        source_manifests.push(artifact_identity::verify(
             &fragment.wasm,
             artifact_identity::Expected {
                 phase: Some(Phase::Runtime),
                 ..Default::default()
             },
-        )
-        .map_err(error)?;
+        ).map_err(error)?);
+        fragment.wasm = artifact_identity::without_identity(&fragment.wasm).map_err(error)?;
     }
+    let source_provenance = provenance::encode(&source_manifests).map_err(error)?;
     let cells = fragments
         .iter()
         .flat_map(|fragment| fragment.cells.iter().cloned())
@@ -1040,6 +1049,10 @@ pub fn component_with(
         .section(&canonical)
         .section(&exported_instances)
         .section(&public);
+    component.section(&CustomSection {
+        name: std::borrow::Cow::Borrowed(provenance::SECTION),
+        data: std::borrow::Cow::Owned(source_provenance),
+    });
     let bytes = component.finish();
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
         .validate_all(&bytes)

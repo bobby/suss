@@ -1,0 +1,8 @@
+{
+  "ci_job": "https://github.com/bobby/suss/actions/runs/45158952814/job/137639049502",
+  "ci_log_sha256": "25480a1c46375c9d4b06452b76c80606b8476af9a03bdf11828910625a38adb9",
+  "original_workspace_run_log_sha256": "87fb5403f789c0cbb0b0e4bfc4fe3b5d996a114365a8c0734da697786c2a9d83",
+  "original_workspace_terminal_exit": -2,
+  "scope": "run-p3880212-i91944234.scope",
+  "qualification": "Byte-preserved actual failed-head evidence. The old workspace run was deliberately interrupted after independently verified failure, never reported as a passing baseline."
+}

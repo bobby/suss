@@ -1,0 +1,33 @@
+{
+  "changed_manifest_keys": [
+    "reviews-sha256"
+  ],
+  "core_source_unchanged": true,
+  "before_sha256": "fe69518664af03275fb0c3e3b23336ae543100537d1986a436ccaa3edf9572e7",
+  "after_sha256": "bf159a4419065317dde0c8cb032b24f02280703633d142f43f7f1afa32c31b67",
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 1
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

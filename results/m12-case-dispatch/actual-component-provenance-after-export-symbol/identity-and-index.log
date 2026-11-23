@@ -1,0 +1,36 @@
+Running as unit: run-p3847556-i91919733.scope; invocation ID: 6b9a531a4ac1438cb187dd6a0e8c5520
+    Finished `test` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_cli-da7923a4a246c80e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_compile-9442daf0cd61c997)
+
+running 2 tests
+test portable::aot::provenance::tests::malformed_references_and_incomplete_records_fail_closed ... ok
+test portable::aot::provenance::tests::sharing_preserves_every_manifest_field_unknown_and_known_empty_graphs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 215 filtered out; finished in 0.00s
+
+     Running unittests ../suss-compile/src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_compile_generator-ff3ffdbefbe689b1)
+
+running 2 tests
+test portable::aot::provenance::tests::malformed_references_and_incomplete_records_fail_closed ... ok
+test portable::aot::provenance::tests::sharing_preserves_every_manifest_field_unknown_and_known_empty_graphs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_core-3023f6e05d313652)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_reader-3ff94c2542984d2c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 0.00s
+

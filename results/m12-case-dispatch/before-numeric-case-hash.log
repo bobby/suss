@@ -1,0 +1,706 @@
+Running as unit: run-p3596442-i91656136.scope; invocation ID: fe62b6aeb94749a28cfad7a673715d2e
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.31s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 1 test
+test numeric_case_hash_follows_primary_hash_code ... FAILED
+
+failures:
+
+---- numeric_case_hash_follows_primary_hash_code stdout ----
+
+thread 'numeric_case_hash_follows_primary_hash_code' (3596588) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:50:5:
+Runtime case0: (suss.bootstrap/case-number-hash -9223372036854775808)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case1: (suss.bootstrap/case-number-hash -9223372036854775808N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case2: (suss.bootstrap/case-number-hash (biginteger -9223372036854775808))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case3: (suss.bootstrap/case-number-hash -4294967297)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case4: (suss.bootstrap/case-number-hash -4294967297N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case5: (suss.bootstrap/case-number-hash (biginteger -4294967297))
+expected -32
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case6: (suss.bootstrap/case-number-hash -4294967296)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case7: (suss.bootstrap/case-number-hash -4294967296N)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case8: (suss.bootstrap/case-number-hash (biginteger -4294967296))
+expected -31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case9: (suss.bootstrap/case-number-hash -2147483649)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case10: (suss.bootstrap/case-number-hash -2147483649N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case11: (suss.bootstrap/case-number-hash (biginteger -2147483649))
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case12: (suss.bootstrap/case-number-hash -2147483648)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case13: (suss.bootstrap/case-number-hash -2147483648N)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case14: (suss.bootstrap/case-number-hash (biginteger -2147483648))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case15: (suss.bootstrap/case-number-hash -1073741825)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case16: (suss.bootstrap/case-number-hash -1073741825N)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case17: (suss.bootstrap/case-number-hash (biginteger -1073741825))
+expected -1073741825
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case18: (suss.bootstrap/case-number-hash -1)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case19: (suss.bootstrap/case-number-hash -1N)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case20: (suss.bootstrap/case-number-hash (biginteger -1))
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case21: (suss.bootstrap/case-number-hash 0)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case22: (suss.bootstrap/case-number-hash 0N)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case23: (suss.bootstrap/case-number-hash (biginteger 0))
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case24: (suss.bootstrap/case-number-hash 1)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case25: (suss.bootstrap/case-number-hash 1N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case26: (suss.bootstrap/case-number-hash (biginteger 1))
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case27: (suss.bootstrap/case-number-hash 1073741823)
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case28: (suss.bootstrap/case-number-hash 1073741823N)
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case29: (suss.bootstrap/case-number-hash (biginteger 1073741823))
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case30: (suss.bootstrap/case-number-hash 1073741824)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case31: (suss.bootstrap/case-number-hash 1073741824N)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case32: (suss.bootstrap/case-number-hash (biginteger 1073741824))
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case33: (suss.bootstrap/case-number-hash 2147483647)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case34: (suss.bootstrap/case-number-hash 2147483647N)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case35: (suss.bootstrap/case-number-hash (biginteger 2147483647))
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case36: (suss.bootstrap/case-number-hash 2147483648)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case37: (suss.bootstrap/case-number-hash 2147483648N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case38: (suss.bootstrap/case-number-hash (biginteger 2147483648))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case39: (suss.bootstrap/case-number-hash 4294967295)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case40: (suss.bootstrap/case-number-hash 4294967295N)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case41: (suss.bootstrap/case-number-hash (biginteger 4294967295))
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case42: (suss.bootstrap/case-number-hash 4294967296)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case43: (suss.bootstrap/case-number-hash 4294967296N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case44: (suss.bootstrap/case-number-hash (biginteger 4294967296))
+expected 31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case45: (suss.bootstrap/case-number-hash 9223372036854775807)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case46: (suss.bootstrap/case-number-hash 9223372036854775807N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case47: (suss.bootstrap/case-number-hash (biginteger 9223372036854775807))
+expected 2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case48: (suss.bootstrap/case-number-hash -12554203470773361527671578846415332832241604377075488129025N)
+expected -1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case49: (suss.bootstrap/case-number-hash (biginteger -12554203470773361527671578846415332832241604377075488129025N))
+expected -1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case50: (suss.bootstrap/case-number-hash -79228162514264337593543950335N)
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case51: (suss.bootstrap/case-number-hash (biginteger -79228162514264337593543950335N))
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case52: (suss.bootstrap/case-number-hash -18446744073709551616N)
+expected -961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case53: (suss.bootstrap/case-number-hash (biginteger -18446744073709551616N))
+expected -961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case54: (suss.bootstrap/case-number-hash 9223372036854775808N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case55: (suss.bootstrap/case-number-hash (biginteger 9223372036854775808N))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case56: (suss.bootstrap/case-number-hash 18446744073709551616N)
+expected 961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case57: (suss.bootstrap/case-number-hash (biginteger 18446744073709551616N))
+expected 961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case58: (suss.bootstrap/case-number-hash 18446744078004518913N)
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case59: (suss.bootstrap/case-number-hash (biginteger 18446744078004518913N))
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case60: (suss.bootstrap/case-number-hash 170141183460469231731687303715884105727N)
+expected 2147452864
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case61: (suss.bootstrap/case-number-hash (biginteger 170141183460469231731687303715884105727N))
+expected 2147452864
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case62: (suss.bootstrap/case-number-hash 12554203470773361527671578846415332832241604377075488129025N)
+expected 1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case63: (suss.bootstrap/case-number-hash (biginteger 12554203470773361527671578846415332832241604377075488129025N))
+expected 1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case64: (suss.bootstrap/case-number-hash 0.0)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case65: (suss.bootstrap/case-number-hash -0.0)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case66: (suss.bootstrap/case-number-hash 1.0)
+expected 1072693248
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case67: (suss.bootstrap/case-number-hash -1.0)
+expected -1074790400
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case68: (suss.bootstrap/case-number-hash 0.5)
+expected 1071644672
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case69: (suss.bootstrap/case-number-hash -0.5)
+expected -1075838976
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case70: (suss.bootstrap/case-number-hash 1.25)
+expected 1072955392
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case71: (suss.bootstrap/case-number-hash 3.141592653589793)
+expected 340593891
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case72: (suss.bootstrap/case-number-hash 4.9E-324)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case73: (suss.bootstrap/case-number-hash -4.9E-324)
+expected -2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case74: (suss.bootstrap/case-number-hash 1.7976931348623157E308)
+expected -2146435072
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case75: (suss.bootstrap/case-number-hash ##NaN)
+expected 2146959360
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case76: (suss.bootstrap/case-number-hash (/ 0.0 0.0))
+expected 2146959360
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case77: (suss.bootstrap/case-number-hash ##Inf)
+expected 2146435072
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case78: (suss.bootstrap/case-number-hash ##-Inf)
+expected -1048576
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case79: (suss.bootstrap/case-number-hash 0M)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case80: (suss.bootstrap/case-number-hash 0.0M)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case81: (suss.bootstrap/case-number-hash 0.00M)
+expected 2
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case82: (suss.bootstrap/case-number-hash 0E+7M)
+expected -7
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case83: (suss.bootstrap/case-number-hash 0E-8M)
+expected 8
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case84: (suss.bootstrap/case-number-hash 1M)
+expected 31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case85: (suss.bootstrap/case-number-hash 1.0M)
+expected 311
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case86: (suss.bootstrap/case-number-hash 1.00M)
+expected 3102
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case87: (suss.bootstrap/case-number-hash 1E+7M)
+expected 24
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case88: (suss.bootstrap/case-number-hash 1E-8M)
+expected 39
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case89: (suss.bootstrap/case-number-hash -1M)
+expected -31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case90: (suss.bootstrap/case-number-hash -1.0M)
+expected -309
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case91: (suss.bootstrap/case-number-hash -1.00M)
+expected -3098
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case92: (suss.bootstrap/case-number-hash -1E+7M)
+expected -38
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case93: (suss.bootstrap/case-number-hash -1E-8M)
+expected -23
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case94: (suss.bootstrap/case-number-hash 123456789012345678901234567890M)
+expected -748148569
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case95: (suss.bootstrap/case-number-hash 123456789012345678901234567890.0M)
+expected 1113277928
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case96: (suss.bootstrap/case-number-hash 123456789012345678901234567890.00M)
+expected -1747326265
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case97: (suss.bootstrap/case-number-hash 123456789012345678901234567890E+7M)
+expected -748148576
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case98: (suss.bootstrap/case-number-hash 123456789012345678901234567890E-8M)
+expected -748148561
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case99: (suss.bootstrap/case-number-hash -123456789012345678901234567890M)
+expected 748148569
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case100: (suss.bootstrap/case-number-hash -123456789012345678901234567890.0M)
+expected -1113277926
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case101: (suss.bootstrap/case-number-hash -123456789012345678901234567890.00M)
+expected 1747326269
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case102: (suss.bootstrap/case-number-hash -123456789012345678901234567890E+7M)
+expected 748148562
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case103: (suss.bootstrap/case-number-hash -123456789012345678901234567890E-8M)
+expected 748148577
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case104: (suss.bootstrap/case-number-hash 0E+2147483647M)
+expected -2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case105: (suss.bootstrap/case-number-hash 1E+2147483647M)
+expected -2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case106: (suss.bootstrap/case-number-hash 1E-2147483647M)
+expected -2147483618
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case107: (suss.bootstrap/case-number-hash -1E-2147483647M)
+expected 2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case108: (suss.bootstrap/case-number-hash 1/2)
+expected 3
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case109: (suss.bootstrap/case-number-hash -1/2)
+expected -3
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case110: (suss.bootstrap/case-number-hash 2/3)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case111: (suss.bootstrap/case-number-hash 123456789012345678901234567890/7)
+expected 273642573
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case112: (suss.bootstrap/case-number-hash -123456789012345678901234567890/7)
+expected -273642573
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Runtime case113: (suss.bootstrap/case-number-hash 1/123456789012345678901234567891)
+expected 1915528827
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Runtime name suss.bootstrap/case-number-hash\" })")
+Macro case0: (suss.bootstrap/case-number-hash -9223372036854775808)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case1: (suss.bootstrap/case-number-hash -9223372036854775808N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case2: (suss.bootstrap/case-number-hash (biginteger -9223372036854775808))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case3: (suss.bootstrap/case-number-hash -4294967297)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case4: (suss.bootstrap/case-number-hash -4294967297N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case5: (suss.bootstrap/case-number-hash (biginteger -4294967297))
+expected -32
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case6: (suss.bootstrap/case-number-hash -4294967296)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case7: (suss.bootstrap/case-number-hash -4294967296N)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case8: (suss.bootstrap/case-number-hash (biginteger -4294967296))
+expected -31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case9: (suss.bootstrap/case-number-hash -2147483649)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case10: (suss.bootstrap/case-number-hash -2147483649N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case11: (suss.bootstrap/case-number-hash (biginteger -2147483649))
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case12: (suss.bootstrap/case-number-hash -2147483648)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case13: (suss.bootstrap/case-number-hash -2147483648N)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case14: (suss.bootstrap/case-number-hash (biginteger -2147483648))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case15: (suss.bootstrap/case-number-hash -1073741825)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case16: (suss.bootstrap/case-number-hash -1073741825N)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case17: (suss.bootstrap/case-number-hash (biginteger -1073741825))
+expected -1073741825
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case18: (suss.bootstrap/case-number-hash -1)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case19: (suss.bootstrap/case-number-hash -1N)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case20: (suss.bootstrap/case-number-hash (biginteger -1))
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case21: (suss.bootstrap/case-number-hash 0)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case22: (suss.bootstrap/case-number-hash 0N)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case23: (suss.bootstrap/case-number-hash (biginteger 0))
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case24: (suss.bootstrap/case-number-hash 1)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case25: (suss.bootstrap/case-number-hash 1N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case26: (suss.bootstrap/case-number-hash (biginteger 1))
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case27: (suss.bootstrap/case-number-hash 1073741823)
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case28: (suss.bootstrap/case-number-hash 1073741823N)
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case29: (suss.bootstrap/case-number-hash (biginteger 1073741823))
+expected 1073741823
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case30: (suss.bootstrap/case-number-hash 1073741824)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case31: (suss.bootstrap/case-number-hash 1073741824N)
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case32: (suss.bootstrap/case-number-hash (biginteger 1073741824))
+expected 1073741824
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case33: (suss.bootstrap/case-number-hash 2147483647)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case34: (suss.bootstrap/case-number-hash 2147483647N)
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case35: (suss.bootstrap/case-number-hash (biginteger 2147483647))
+expected 2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case36: (suss.bootstrap/case-number-hash 2147483648)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case37: (suss.bootstrap/case-number-hash 2147483648N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case38: (suss.bootstrap/case-number-hash (biginteger 2147483648))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case39: (suss.bootstrap/case-number-hash 4294967295)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case40: (suss.bootstrap/case-number-hash 4294967295N)
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case41: (suss.bootstrap/case-number-hash (biginteger 4294967295))
+expected -1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case42: (suss.bootstrap/case-number-hash 4294967296)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case43: (suss.bootstrap/case-number-hash 4294967296N)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case44: (suss.bootstrap/case-number-hash (biginteger 4294967296))
+expected 31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case45: (suss.bootstrap/case-number-hash 9223372036854775807)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case46: (suss.bootstrap/case-number-hash 9223372036854775807N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case47: (suss.bootstrap/case-number-hash (biginteger 9223372036854775807))
+expected 2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case48: (suss.bootstrap/case-number-hash -12554203470773361527671578846415332832241604377075488129025N)
+expected -1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case49: (suss.bootstrap/case-number-hash (biginteger -12554203470773361527671578846415332832241604377075488129025N))
+expected -1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case50: (suss.bootstrap/case-number-hash -79228162514264337593543950335N)
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case51: (suss.bootstrap/case-number-hash (biginteger -79228162514264337593543950335N))
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case52: (suss.bootstrap/case-number-hash -18446744073709551616N)
+expected -961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case53: (suss.bootstrap/case-number-hash (biginteger -18446744073709551616N))
+expected -961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case54: (suss.bootstrap/case-number-hash 9223372036854775808N)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case55: (suss.bootstrap/case-number-hash (biginteger 9223372036854775808N))
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case56: (suss.bootstrap/case-number-hash 18446744073709551616N)
+expected 961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case57: (suss.bootstrap/case-number-hash (biginteger 18446744073709551616N))
+expected 961
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case58: (suss.bootstrap/case-number-hash 18446744078004518913N)
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case59: (suss.bootstrap/case-number-hash (biginteger 18446744078004518913N))
+expected 993
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case60: (suss.bootstrap/case-number-hash 170141183460469231731687303715884105727N)
+expected 2147452864
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case61: (suss.bootstrap/case-number-hash (biginteger 170141183460469231731687303715884105727N))
+expected 2147452864
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case62: (suss.bootstrap/case-number-hash 12554203470773361527671578846415332832241604377075488129025N)
+expected 1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case63: (suss.bootstrap/case-number-hash (biginteger 12554203470773361527671578846415332832241604377075488129025N))
+expected 1775009285
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case64: (suss.bootstrap/case-number-hash 0.0)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case65: (suss.bootstrap/case-number-hash -0.0)
+expected -2147483648
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case66: (suss.bootstrap/case-number-hash 1.0)
+expected 1072693248
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case67: (suss.bootstrap/case-number-hash -1.0)
+expected -1074790400
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case68: (suss.bootstrap/case-number-hash 0.5)
+expected 1071644672
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case69: (suss.bootstrap/case-number-hash -0.5)
+expected -1075838976
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case70: (suss.bootstrap/case-number-hash 1.25)
+expected 1072955392
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case71: (suss.bootstrap/case-number-hash 3.141592653589793)
+expected 340593891
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case72: (suss.bootstrap/case-number-hash 4.9E-324)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case73: (suss.bootstrap/case-number-hash -4.9E-324)
+expected -2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case74: (suss.bootstrap/case-number-hash 1.7976931348623157E308)
+expected -2146435072
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case75: (suss.bootstrap/case-number-hash ##NaN)
+expected 2146959360
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case76: (suss.bootstrap/case-number-hash (/ 0.0 0.0))
+expected 2146959360
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case77: (suss.bootstrap/case-number-hash ##Inf)
+expected 2146435072
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case78: (suss.bootstrap/case-number-hash ##-Inf)
+expected -1048576
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case79: (suss.bootstrap/case-number-hash 0M)
+expected 0
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case80: (suss.bootstrap/case-number-hash 0.0M)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case81: (suss.bootstrap/case-number-hash 0.00M)
+expected 2
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case82: (suss.bootstrap/case-number-hash 0E+7M)
+expected -7
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case83: (suss.bootstrap/case-number-hash 0E-8M)
+expected 8
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case84: (suss.bootstrap/case-number-hash 1M)
+expected 31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case85: (suss.bootstrap/case-number-hash 1.0M)
+expected 311
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case86: (suss.bootstrap/case-number-hash 1.00M)
+expected 3102
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case87: (suss.bootstrap/case-number-hash 1E+7M)
+expected 24
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case88: (suss.bootstrap/case-number-hash 1E-8M)
+expected 39
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case89: (suss.bootstrap/case-number-hash -1M)
+expected -31
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case90: (suss.bootstrap/case-number-hash -1.0M)
+expected -309
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case91: (suss.bootstrap/case-number-hash -1.00M)
+expected -3098
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case92: (suss.bootstrap/case-number-hash -1E+7M)
+expected -38
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case93: (suss.bootstrap/case-number-hash -1E-8M)
+expected -23
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case94: (suss.bootstrap/case-number-hash 123456789012345678901234567890M)
+expected -748148569
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case95: (suss.bootstrap/case-number-hash 123456789012345678901234567890.0M)
+expected 1113277928
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case96: (suss.bootstrap/case-number-hash 123456789012345678901234567890.00M)
+expected -1747326265
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case97: (suss.bootstrap/case-number-hash 123456789012345678901234567890E+7M)
+expected -748148576
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case98: (suss.bootstrap/case-number-hash 123456789012345678901234567890E-8M)
+expected -748148561
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case99: (suss.bootstrap/case-number-hash -123456789012345678901234567890M)
+expected 748148569
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case100: (suss.bootstrap/case-number-hash -123456789012345678901234567890.0M)
+expected -1113277926
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case101: (suss.bootstrap/case-number-hash -123456789012345678901234567890.00M)
+expected 1747326269
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case102: (suss.bootstrap/case-number-hash -123456789012345678901234567890E+7M)
+expected 748148562
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case103: (suss.bootstrap/case-number-hash -123456789012345678901234567890E-8M)
+expected 748148577
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case104: (suss.bootstrap/case-number-hash 0E+2147483647M)
+expected -2147483647
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case105: (suss.bootstrap/case-number-hash 1E+2147483647M)
+expected -2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case106: (suss.bootstrap/case-number-hash 1E-2147483647M)
+expected -2147483618
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case107: (suss.bootstrap/case-number-hash -1E-2147483647M)
+expected 2147483616
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case108: (suss.bootstrap/case-number-hash 1/2)
+expected 3
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case109: (suss.bootstrap/case-number-hash -1/2)
+expected -3
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case110: (suss.bootstrap/case-number-hash 2/3)
+expected 1
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case111: (suss.bootstrap/case-number-hash 123456789012345678901234567890/7)
+expected 273642573
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case112: (suss.bootstrap/case-number-hash -123456789012345678901234567890/7)
+expected -273642573
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+Macro case113: (suss.bootstrap/case-number-hash 1/123456789012345678901234567891)
+expected 1915528827
+actual Err("Compile(Diagnostic { span: 14..45, message: \"Unresolved Macro name suss.bootstrap/case-number-hash\" })")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    numeric_case_hash_follows_primary_hash_code
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 2.63s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_case_dispatch`

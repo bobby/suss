@@ -1,0 +1,10 @@
+Running as unit: run-p3720660-i91792334.scope; invocation ID: e9afa6fb822b4c09920b0daded5da718
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3.66s
+     Running tests/portable_value_decoder.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_value_decoder-bdff15d92878dc0e)
+
+running 1 test
+test compiled_case_retains_literal_values_after_gc_and_keeps_collision_equality_live ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 3.06s
+
