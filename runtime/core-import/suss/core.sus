@@ -10199,9 +10199,9 @@ reduces them without incurring seq initialization"
 (def ^{:doc "Return true if x is a UUID." :added "1.9"} uuid?
   (fn [x] (instance? UUID x)))
 (def ^:private uuid-read
-  (let [starts [48 1632 1776 1984 2406 2534 2662 2790 2918 3046 3174 3302 3430
+  (let [starts (array 48 1632 1776 1984 2406 2534 2662 2790 2918 3046 3174 3302 3430
                 3558 3664 3792 3872 4160 4240 6112 6160 6470 6608 6784 6800 6992
-                7088 7232 7248 42528 43216 43264 43472 43504 43600 44016 65296]]
+                7088 7232 7248 42528 43216 43264 43472 43504 43600 44016 65296)]
     (letfn [(digit [u]
               (cond
                 (and (<= 48 u) (<= u 57)) (- u 48)
@@ -10211,7 +10211,7 @@ reduces them without incurring seq initialization"
                 (and (<= 65345 u) (<= u 65350)) (- u 65335)
                 :else (loop [i 0]
                         (if (< i 37)
-                          (let [n (- u (nth starts i))]
+                          (let [n (- u (aget starts i))]
                             (if (and (<= 0 n) (< n 10)) n (recur (inc i))))
                           -1))))
             (bad-at [s from to index]

@@ -1,0 +1,97 @@
+diff --git i/crates/suss-compile/src/portable_macro_graph.rs w/crates/suss-compile/src/portable_macro_graph.rs
+index c9e7fd61..69155a96 100644
+--- i/crates/suss-compile/src/portable_macro_graph.rs
++++ w/crates/suss-compile/src/portable_macro_graph.rs
+@@ -487,6 +487,7 @@ pub struct AnalysisGraph<'a> {
+     forms: Vec<Option<Value>>,
+     maps: BTreeMap<Vec<(Value, Value)>, Value>,
+     vectors: BTreeMap<Vec<Value>, Value>,
++    name_indices: BTreeMap<(Vec<u16>, Vec<usize>), Value>,
+     declarations: BTreeMap<
+         (portable::resolve::Global, usize),
+         (Option<Arc<portable::resolve::DefinitionInfo>>, Value),
+@@ -526,6 +527,7 @@ impl<'a> AnalysisGraph<'a> {
+             forms: Vec::new(),
+             maps: BTreeMap::new(),
+             vectors: BTreeMap::new(),
++            name_indices: BTreeMap::new(),
+             declarations: BTreeMap::new(),
+             locals: BTreeMap::new(),
+             fields: BTreeMap::new(),
+@@ -1503,20 +1505,29 @@ impl<'a> AnalysisGraph<'a> {
+         self.charge(names.len())?;
+         let mut scratch = names.to_vec();
+         sort_binding_names(names, &mut scratch, &mut |work| self.charge(work))?;
+-        // One owned string avoids a guest allocation for every name. Explicit
+-        // UTF-16 boundaries preserve empty names and every delimiter verbatim.
++        // Intern immutable contents, including every UTF-16 name boundary.
++        // Snapshot and live catalogs often contain identical membership. Share
++        // their recipes instead of constructing offset vectors again in Wasm.
+         let mut text = Vec::new();
+         let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
+         for name in names.iter().copied() {
+             self.charge(name.len().saturating_add(1))?;
+-            offsets.push(self.number(text.len())?);
++            offsets.push(text.len());
+             text.extend(name.encode_utf16());
+         }
+-        offsets.push(self.number(text.len())?);
+-        let text = self.scalar(Literal::String(text))?;
++        offsets.push(text.len());
++        let key = (text, offsets);
++        let depth = (usize::BITS - self.name_indices.len().saturating_add(1).leading_zeros()) as usize;
++        // Charge worst-case key comparisons and native payload copy on a miss.
++        self.charge(key.0.len().saturating_add(key.1.len()).saturating_add(1)
++            .saturating_mul(depth.saturating_add(2)))?;
++        if let Some(value) = self.name_indices.get(&key) { return Ok(*value); }
++        let text = self.scalar(Literal::String(key.0.clone()))?;
++        let offsets = key.1.iter().map(|offset| self.number(*offset)).collect::<Result<Vec<_>>>()?;
+         let offsets = self.vector(&offsets)?;
+-        self.vector(&[text, offsets])
+-
++        let value = self.vector(&[text, offsets])?;
++        self.name_indices.insert(key, value);
++        Ok(value)
+     }
+     fn namespace_membership(&mut self, namespace: &SourceNamespace) -> Result<Value> {
+         let name = self.symbol(&namespace.namespace)?;
+@@ -3146,6 +3157,26 @@ impl<'a> AnalysisGraph<'a> {
+ mod sharing_tests {
+     use super::*;
+     #[test]
++    fn packed_membership_indices_share_contents_without_losing_name_boundaries() {
++        let mut session = Session::new_macro().unwrap();
++        let bridge = FormBridge::new(&mut session).unwrap();
++        let mut graph = AnalysisGraph::new(&bridge, &mut session);
++        let first = graph.name_index(&mut ["b", "a"]).unwrap();
++        assert_eq!(first, graph.name_index(&mut ["a", "b"]).unwrap());
++        let joined = graph.name_index(&mut ["ab"]).unwrap();
++        let empty = graph.name_index(&mut ["", "ab"]).unwrap();
++        assert_ne!(first, joined);
++        assert_ne!(joined, empty);
++        let value = graph.materialize(first).unwrap();
++        let form = bridge.read(graph.session, &value, 0..0).unwrap();
++        let Kind::Vector(fields) = &form.kind else { panic!("packed index"); };
++        assert_eq!(fields[0].kind, Kind::String("ab".encode_utf16().collect()));
++        let Kind::Vector(offsets) = &fields[1].kind else { panic!("offsets"); };
++        assert_eq!(offsets.iter().map(|form| match form.kind {
++            Kind::Long(value) => value, _ => panic!("integral offset"),
++        }).collect::<Vec<_>>(), vec![0, 1, 2]);
++    }
++    #[test]
+     fn binding_index_transport_preserves_delimiters_empty_names_and_utf16_offsets() {
+         let mut session = Session::new_macro().unwrap();
+         let bridge = FormBridge::new(&mut session).unwrap();
+diff --git i/results/m12-reader-followup/run-source.py w/results/m12-reader-followup/run-source.py
+index f118ebfb..fdac1e43 100644
+--- i/results/m12-reader-followup/run-source.py
++++ w/results/m12-reader-followup/run-source.py
+@@ -6,7 +6,7 @@ paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude
+ inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and not p.startswith('results/') and (ROOT/p).is_file()}
+ for name in ['reader-cases.json','uuid-parser-cases.edn','uuid-hex-digit-jvm.bin','uuid-runtime-cases.json','uuid-boundary-cases.json']:
+  p=BASE/name;inputs[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
+-commands=[('reader',['cargo','test','-p','suss-reader','--locked','--','--test-threads=2']),('compiled-uuid',['cargo','test','-p','suss-cli','--locked','--test','clojure_uuid','--','--test-threads=2']),('record-budget',['cargo','test','--workspace','--locked','--test','compiled_record_default_budget','--','--nocapture','--test-threads=2']),('aot-size',['cargo','test','--workspace','--locked','--test','runtime_namespaces','aot_namespace_frame_size_is_bounded_per_form','--','--exact','--nocapture','--test-threads=2']),('decoder-source-tooling',['cargo','test','--workspace','--locked','--test','portable_value_decoder','--test','builtin_internals_sealed','--test','analyzer_edn','--test','analyzer_edn_core','--','--test-threads=2'])]
++commands=[('membership-sharing',['cargo','test','-p','suss-compile','--locked','--lib','portable_macro_graph::sharing_tests','--','--test-threads=2']),('record-budget',['cargo','test','--workspace','--locked','--test','compiled_record_default_budget','--','--nocapture','--test-threads=2']),('compiled-uuid',['cargo','test','-p','suss-cli','--locked','--test','clojure_uuid','--','--test-threads=2']),('aot-size',['cargo','test','--workspace','--locked','--test','runtime_namespaces','aot_namespace_frame_size_is_bounded_per_form','--','--exact','--nocapture','--test-threads=2']),('decoder-source-tooling',['cargo','test','--workspace','--locked','--test','portable_value_decoder','--test','builtin_internals_sealed','--test','analyzer_edn','--test','analyzer_edn_core','--','--test-threads=2'])]
+ env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-suite-platform-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
+ record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'inputs':inputs,'commands':[],'complete':False}
+ def save():(OUT/'commands.json').write_text(json.dumps(record,indent=2)+'\n')

@@ -23,7 +23,7 @@
     "notice": "docs/compatibility/uuid/NOTICE"
   },
   "adaptation": "Canonical nominal category and two immutable signed Long halves replace CLJS string storage and mutable cached hashing. Original UTF-16 parser, canonical formatter, Java-compatible bit hash and signed comparison follow executed JVM controls, not CLJS identity or caching. The type retains the Object, equality, hashing, comparison and printing protocol structure. No Java implementation or Java runtime dependency is shipped.",
-  "block_sha256": "1db6c3dfd6c79ef5d74dc12b393daacadc1078a72666ead27f696a11e9651dc1",
+  "block_sha256": "9dd844d5286ec8a02e440705c7efeae717659b595793f416e90575779c27c279",
   "adapted_class_sha256": "2da88826e441299876cde1a544c5ec0aab720adf55f37170c22d2c7d288bf9bb",
   "files": {
     "docs/compatibility/uuid/upstream-UUID.cljs": "522e0088c73bc0c9c063c814894e27e6b980634909f9baf7b9076838b087173f",

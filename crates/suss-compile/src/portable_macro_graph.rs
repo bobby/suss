@@ -459,6 +459,8 @@ enum Recipe {
     },
     Map(Vec<(Value, Value)>),
     Vector(Vec<Value>),
+    /// Compiler-owned structural offsets; these have no reader occurrences.
+    LongVector(Vec<i64>),
     Set(Vec<Value>),
     Alias(Value),
 }
@@ -567,7 +569,9 @@ impl<'a> AnalysisGraph<'a> {
         Ok(())
     }
     fn materialize(&mut self, root: Value) -> Result<SessionValue> {
-        self.materialize_using(root, self.bridge)
+        let result = self.materialize_using(root, self.bridge);
+        self.raw_keys.trace_final();
+        result
     }
     fn materialize_using(&mut self, root: Value, bridge: &FormBridge) -> Result<SessionValue> {
         self.session.charge_host_work(1)?;
@@ -753,6 +757,12 @@ impl<'a> AnalysisGraph<'a> {
                 }
                 Recipe::Alias(_) => inputs[0].clone(),
                 Recipe::List(_) => bridge.list_values(self.session, &inputs)?,
+                Recipe::LongVector(values) => {
+                    self.session.charge_host_work(values.len() as u64)?;
+                    let values = values.iter().map(|value| bridge.scalar(self.session, &Literal::Long(*value)))
+                        .collect::<Result<Vec<_>>>()?;
+                    bridge.vector_values(self.session, &values)?
+                }
                 Recipe::Vector(_) | Recipe::ReaderVector(_) => {
                     bridge.vector_values(self.session, &inputs)?
                 }
@@ -1509,12 +1519,17 @@ impl<'a> AnalysisGraph<'a> {
         let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
         for name in names.iter().copied() {
             self.charge(name.len().saturating_add(1))?;
-            offsets.push(self.number(text.len())?);
+            offsets.push(i64::try_from(text.len()).map_err(|_| SessionError::Host(
+                wasmtime::Error::msg("Binding index offset exceeds a signed long")))?);
             text.extend(name.encode_utf16());
         }
-        offsets.push(self.number(text.len())?);
+        offsets.push(i64::try_from(text.len()).map_err(|_| SessionError::Host(
+            wasmtime::Error::msg("Binding index offset exceeds a signed long")))?);
         let text = self.scalar(Literal::String(text))?;
-        let offsets = self.vector(&offsets)?;
+        // Offsets are generated transport data, not source forms. Building one
+        // typed vector avoids raw-key planning and interning each numeric offset.
+        // Its scalar construction and canonical vector storage remain metered.
+        let offsets = self.recipe(Recipe::LongVector(offsets))?;
         self.vector(&[text, offsets])
 
     }
@@ -3145,6 +3160,25 @@ impl<'a> AnalysisGraph<'a> {
 #[cfg(all(test, not(suss_generator)))]
 mod sharing_tests {
     use super::*;
+    #[test]
+    fn structural_long_vectors_preserve_wide_signed_values_after_gc() {
+        let values = vec![i64::MIN, -9007199254740993, -1073741825, 0, 1073741824,
+            9007199254740993, i64::MAX];
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let value = {
+                let mut graph = AnalysisGraph::new(&bridge, &mut session);
+                let root = graph.recipe(Recipe::LongVector(values.clone())).unwrap();
+                graph.materialize(root).unwrap()
+            };
+            session.collect().unwrap();
+            let form = bridge.read(&mut session, &value, 0..0).unwrap();
+            let Kind::Vector(fields) = &form.kind else { panic!("long vector"); };
+            assert_eq!(fields.iter().map(|form| match form.kind {
+                Kind::Long(value) => value, _ => panic!("exact signed long"),
+            }).collect::<Vec<_>>(), values);
+        }
+    }
     #[test]
     fn binding_index_transport_preserves_delimiters_empty_names_and_utf16_offsets() {
         let mut session = Session::new_macro().unwrap();

@@ -207,3 +207,29 @@ fn actual_aot_executes_uuid_values_readers_and_signed_boundaries() {
         include_str!("../../../results/m12-reader-followup/uuid-boundary-cases.json"),
     ]);
 }
+
+#[test]
+fn ordinary_source_core_loads_uuid_readers_in_both_phases() {
+    use suss_cli::portable_session::{SessionError, SessionOptions};
+    use suss_compile::portable::resolve::Phase;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        let accessor = session.eval("suss.core/ex-message").unwrap();
+        if let Err(error) = session.eval(include_str!("../../../runtime/core-import/suss/core.sus")) {
+            let text = if let SessionError::Language(payload) = &error {
+                session.invoke(&accessor, &[payload]).and_then(|value| session.inspect(&value, |mut store, value| {
+                    let Some(reference) = value.unwrap_anyref() else { return Ok("nil diagnostic".into()); };
+                    let Some(array) = reference.as_array(&store)? else { return Ok("non-string diagnostic".into()); };
+                    let units = array.elems(&mut store)?.map(|v| v.unwrap_i32() as u16).collect::<Vec<_>>();
+                    Ok(String::from_utf16_lossy(&units))
+                })).unwrap_or_else(|e| e.to_string())
+            } else { error.to_string() };
+            panic!("{phase:?} source core load: {text}");
+        }
+        session.enter_namespace("user").unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        assert_eq!(observed(&mut session, &mut macros,
+            "(let [x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")] [(uuid? x) (str x) (hash x)])").unwrap(),
+            "[true \"00000001-0002-0003-0004-000000000005\" 393223]");
+    }
+}

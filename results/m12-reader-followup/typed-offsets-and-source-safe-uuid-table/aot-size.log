@@ -1,0 +1,12 @@
+Running as unit: run-p44603-i92293561.scope; invocation ID: 698a1fb006304dbcb6cd7e468ea83f99
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.54s
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 1 test
+component bytes: plain 3698014/3745066, scoped 3702282/3749334; bytes/form: 2352/2352
+code growth: split 5500, grouped 3580; extra bytes per split form: 96
+test aot_namespace_frame_size_is_bounded_per_form ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 10.64s
+

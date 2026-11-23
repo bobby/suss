@@ -472,3 +472,36 @@ fn letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hint
         assert_round_trip(source, &path, &[]);
     }
 }
+
+#[test]
+fn uuid_ast_values_survive_edn_emission_and_executed_source_round_trips() {
+    use suss_reader::edn::{self, Options, Value};
+    use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
+    let source = r##"#uuid "1-2-3-4-5"
+#uuid "80000000-0000-0001-ffff-fffffffffffe"
+#uuid "7fffffff-ffff-fffe-8000-000000000001""##;
+    let path = root().join("target/uuid-data.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    let nodes = asts(&document);
+    assert_eq!(nodes.len(), 3);
+    for (node, original) in nodes.iter().zip(source.lines()) {
+        assert_eq!(get(node, "op"), &Value::keyword("const"));
+        assert_eq!(get(node, "type"), &Value::keyword("uuid"));
+        assert_eq!(get(node, "val"), &edn::read_one(original, &Options::default()).unwrap());
+    }
+    let wire = print(&document).unwrap();
+    let restored = edn::read_one(&wire, &Options::default()).unwrap();
+    assert_eq!(restored, document);
+    let emitted = emitted_source(&restored).unwrap();
+    assert_round_trip(&emitted, &path, &[]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let value = session.eval_with_macros(&emitted, &mut macros).unwrap();
+        session.collect().unwrap();
+        let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
+        let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+        let expected = edn::read_one(source.lines().last().unwrap(), &Options::default()).unwrap();
+        assert_eq!(edn::source::form_to_value(&actual).unwrap(), expected);
+    }
+}

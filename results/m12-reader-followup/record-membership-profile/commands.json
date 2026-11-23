@@ -1,0 +1,24 @@
+[
+  {
+    "label": "case-parent",
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-case-parent",
+      "repl",
+      "--compile-fuel",
+      "4000000"
+    ],
+    "exit_code": 0,
+    "seconds": 2.9349215030670166
+  },
+  {
+    "label": "uuid",
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-uuid",
+      "repl",
+      "--compile-fuel",
+      "4000000"
+    ],
+    "exit_code": 0,
+    "seconds": 2.7344932556152344
+  }
+]

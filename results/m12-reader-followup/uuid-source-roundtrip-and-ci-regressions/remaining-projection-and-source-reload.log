@@ -1,0 +1,59 @@
+Running as unit: run-p59239-i92298476.scope; invocation ID: 4f78bca4a43b4f75bdc4246fdab136ff
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 15.31s
+     Running tests/compiled_macro_declaration_functions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/compiled_macro_declaration_functions-a79b3836f8ed166c)
+
+running 2 tests
+test compiled_argument_lists_preserve_quoted_data_and_actual_file_positions ... ok
+test compiled_function_declarations_match_primary_presence_and_parameter_shapes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.29s
+
+     Running tests/compiled_macro_form_source_metadata.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/compiled_macro_form_source_metadata-e64dd6ca873599d8)
+
+running 10 tests
+test compiled_source_macro_conditional_and_chained_metadata_match_actual_reader_data ... ok
+test compiled_source_macro_file_metadata_uses_the_loaded_source_path ... ok
+test compiled_source_macro_form_preserves_explicit_location_overrides ... ok
+test compiled_source_macro_form_retains_reader_positions_on_nested_syntax ... ok
+test compiled_source_macro_generated_syntax_does_not_invent_reader_locations ... ok
+test compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax ... ok
+test compiled_source_macro_tag_values_retain_their_own_reader_metadata ... ok
+test source_metadata_snapshot_rejects_invalid_source_instead_of_erasing_failure ... ok
+test source_metadata_snapshot_rejects_non_unicode_paths_instead_of_replacement_characters ... ok
+test large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.59s
+
+     Running tests/core_sorted_interfaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/core_sorted_interfaces-bcf633986b5a5f01)
+
+running 2 tests
+test sorted_protocol_shared_nominal_observations_match_both_phases_after_gc ... ok
+test sorted_protocol_aliases_retained_values_reload_and_method_arities ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 51.95s
+
+     Running tests/portable_reduce_kv_fallback.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_reduce_kv_fallback-b618d57cb9672a42)
+
+running 3 tests
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test public_reduce_kv_fallback_matches_five_pinned_cases_in_both_phases_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.11s
+
+     Running tests/syntax_quote_live_binding.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/syntax_quote_live_binding-3868f7cc27295d3a)
+
+running 9 tests
+test bootstrapped_public_sequence_survives_reader_failures_defonce_and_reset ... ok
+test failed_reader_compile_does_not_publish_the_support_cell ... ok
+test reader_callee_is_selected_before_unquote_redefines_its_live_binding ... ok
+test first_public_defonce_replaces_private_reader_fallback_once ... ok
+test reader_fallback_preserves_declared_and_failed_defonce_initialization ... ok
+test reader_fallback_stays_private_and_does_not_replay_after_definition ... ok
+test syntax_quote_constructor_observes_core_sequence_redefinition ... ok
+test syntax_quote_old_closure_observes_later_core_sequence_definition ... ok
+test reader_support_recovers_from_failed_initializer_and_reset ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 43.03s
+

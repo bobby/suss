@@ -1,0 +1,30 @@
+[
+  {
+    "label": "case-parent",
+    "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+    "copied_binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-case-parent",
+    "sha256": "b70c81a0145381d97dd72c8576a85c723740a1f004683c3f12fa8d7b51b7eca6",
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-case-parent",
+      "repl",
+      "--compile-fuel",
+      "4000000"
+    ],
+    "exit_code": 0,
+    "seconds": 30.62754201889038
+  },
+  {
+    "label": "uuid",
+    "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/suss",
+    "copied_binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-uuid",
+    "sha256": "c1a21de8f68acb0e7618742cbe8ba364e3fe645c6190eba9d17f7f0262e67ed8",
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-record-uuid",
+      "repl",
+      "--compile-fuel",
+      "4000000"
+    ],
+    "exit_code": 0,
+    "seconds": 28.9294912815094
+  }
+]

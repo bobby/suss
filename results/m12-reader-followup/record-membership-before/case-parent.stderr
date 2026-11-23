@@ -1,0 +1,436 @@
+macro-fuel suss.core/defrecord start: 3999923
+macro-fuel suss.core/defrecord provenance: 3996351
+macro-fuel suss.core/defrecord caller-form: 3996350
+macro-fuel suss.core/defrecord caller-environment: 3033165
+macro-fuel suss.core/defrecord arguments: 3002897
+macro-fuel suss.core/defrecord invoked: 1416643
+macro-lazy-invoke call=1 stage=before fuel=Some(1414822)
+macro-lazy-invoke call=1 stage=after fuel=Some(1406563) delta=Some(8259) success=true
+macro-lazy-invoke call=2 stage=before fuel=Some(1405273)
+macro-lazy-invoke call=2 stage=after fuel=Some(1403959) delta=Some(1314) success=true
+macro-lazy-invoke call=3 stage=before fuel=Some(1403949)
+macro-lazy-invoke call=3 stage=after fuel=Some(1400493) delta=Some(3456) success=true
+macro-lazy-invoke call=4 stage=before fuel=Some(1400460)
+macro-lazy-invoke call=4 stage=after fuel=Some(1398287) delta=Some(2173) success=true
+macro-lazy-invoke call=5 stage=before fuel=Some(1396720)
+macro-lazy-invoke call=5 stage=after fuel=Some(1393174) delta=Some(3546) success=true
+macro-lazy-invoke call=6 stage=before fuel=Some(1392978)
+macro-lazy-invoke call=6 stage=after fuel=Some(1391637) delta=Some(1341) success=true
+macro-lazy-invoke call=7 stage=before fuel=Some(1391623)
+macro-lazy-invoke call=7 stage=after fuel=Some(1390393) delta=Some(1230) success=true
+macro-lazy-invoke call=8 stage=before fuel=Some(1390378)
+macro-lazy-invoke call=8 stage=after fuel=Some(1388049) delta=Some(2329) success=true
+macro-lazy-invoke call=9 stage=before fuel=Some(1388005)
+macro-lazy-invoke call=9 stage=after fuel=Some(1386101) delta=Some(1904) success=true
+macro-lazy-invoke call=10 stage=before fuel=Some(1386050)
+macro-lazy-invoke call=10 stage=after fuel=Some(1384470) delta=Some(1580) success=true
+macro-lazy-invoke call=11 stage=before fuel=Some(1382750)
+macro-lazy-invoke call=11 stage=after fuel=Some(1377110) delta=Some(5640) success=true
+macro-lazy-invoke call=12 stage=before fuel=Some(1376845)
+macro-lazy-invoke call=12 stage=after fuel=Some(1375587) delta=Some(1258) success=true
+macro-lazy-invoke call=13 stage=before fuel=Some(1375577)
+macro-lazy-invoke call=13 stage=after fuel=Some(1373210) delta=Some(2367) success=true
+macro-lazy-invoke call=14 stage=before fuel=Some(1373176)
+macro-lazy-invoke call=14 stage=after fuel=Some(1371244) delta=Some(1932) success=true
+macro-lazy-invoke call=15 stage=before fuel=Some(1371206)
+macro-lazy-invoke call=15 stage=after fuel=Some(1369598) delta=Some(1608) success=true
+macro-lazy-invoke call=16 stage=before fuel=Some(1369551)
+macro-lazy-invoke call=16 stage=after fuel=Some(1367943) delta=Some(1608) success=true
+macro-lazy-invoke call=17 stage=before fuel=Some(1367890)
+macro-lazy-invoke call=17 stage=after fuel=Some(1366321) delta=Some(1569) success=true
+macro-lazy-invoke call=18 stage=before fuel=Some(1366207)
+macro-lazy-invoke call=18 stage=after fuel=Some(1364848) delta=Some(1359) success=true
+macro-lazy-invoke call=19 stage=before fuel=Some(1364821)
+macro-lazy-invoke call=19 stage=after fuel=Some(1363175) delta=Some(1646) success=true
+macro-lazy-invoke call=20 stage=before fuel=Some(1363121)
+macro-lazy-invoke call=20 stage=after fuel=Some(1361495) delta=Some(1626) success=true
+macro-lazy-invoke call=21 stage=before fuel=Some(1359286)
+macro-lazy-invoke call=21 stage=after fuel=Some(1357660) delta=Some(1626) success=true
+macro-lazy-invoke call=22 stage=before fuel=Some(1357597)
+macro-lazy-invoke call=22 stage=after fuel=Some(1355971) delta=Some(1626) success=true
+macro-lazy-invoke call=23 stage=before fuel=Some(1354223)
+macro-lazy-invoke call=23 stage=after fuel=Some(1350458) delta=Some(3765) success=true
+macro-lazy-invoke call=24 stage=before fuel=Some(1350356)
+macro-lazy-invoke call=24 stage=after fuel=Some(1348181) delta=Some(2175) success=true
+macro-lazy-invoke call=25 stage=before fuel=Some(1348171)
+macro-lazy-invoke call=25 stage=after fuel=Some(1346841) delta=Some(1330) success=true
+macro-lazy-invoke call=26 stage=before fuel=Some(1346689)
+macro-lazy-invoke call=26 stage=after fuel=Some(1345385) delta=Some(1304) success=true
+macro-lazy-invoke call=27 stage=before fuel=Some(1345372)
+macro-lazy-invoke call=27 stage=after fuel=Some(1325668) delta=Some(19704) success=true
+macro-lazy-invoke call=28 stage=before fuel=Some(1325043)
+macro-lazy-invoke call=28 stage=after fuel=Some(1310826) delta=Some(14217) success=true
+macro-lazy-invoke call=29 stage=before fuel=Some(1310197)
+macro-lazy-invoke call=29 stage=after fuel=Some(1306874) delta=Some(3323) success=true
+macro-lazy-invoke call=30 stage=before fuel=Some(1306856)
+macro-lazy-invoke call=30 stage=after fuel=Some(1303201) delta=Some(3655) success=true
+macro-lazy-invoke call=31 stage=before fuel=Some(1302542)
+macro-lazy-invoke call=31 stage=after fuel=Some(1302026) delta=Some(516) success=true
+macro-lazy-invoke call=32 stage=before fuel=Some(1301991)
+macro-lazy-invoke call=32 stage=after fuel=Some(1300029) delta=Some(1962) success=true
+macro-lazy-invoke call=33 stage=before fuel=Some(1299959)
+macro-lazy-invoke call=33 stage=after fuel=Some(1298351) delta=Some(1608) success=true
+macro-lazy-invoke call=34 stage=before fuel=Some(1296614)
+macro-lazy-invoke call=34 stage=after fuel=Some(1295006) delta=Some(1608) success=true
+macro-lazy-invoke call=35 stage=before fuel=Some(1294924)
+macro-lazy-invoke call=35 stage=after fuel=Some(1293316) delta=Some(1608) success=true
+macro-lazy-invoke call=36 stage=before fuel=Some(1291556)
+macro-lazy-invoke call=36 stage=after fuel=Some(1286270) delta=Some(5286) success=true
+macro-lazy-invoke call=37 stage=before fuel=Some(1286005)
+macro-lazy-invoke call=37 stage=after fuel=Some(1284747) delta=Some(1258) success=true
+macro-lazy-invoke call=38 stage=before fuel=Some(1284737)
+macro-lazy-invoke call=38 stage=after fuel=Some(1282370) delta=Some(2367) success=true
+macro-lazy-invoke call=39 stage=before fuel=Some(1282336)
+macro-lazy-invoke call=39 stage=after fuel=Some(1280404) delta=Some(1932) success=true
+macro-lazy-invoke call=40 stage=before fuel=Some(1280366)
+macro-lazy-invoke call=40 stage=after fuel=Some(1278758) delta=Some(1608) success=true
+macro-lazy-invoke call=41 stage=before fuel=Some(1278713)
+macro-lazy-invoke call=41 stage=after fuel=Some(1277105) delta=Some(1608) success=true
+macro-lazy-invoke call=42 stage=before fuel=Some(1277052)
+macro-lazy-invoke call=42 stage=after fuel=Some(1275483) delta=Some(1569) success=true
+macro-lazy-invoke call=43 stage=before fuel=Some(1275369)
+macro-lazy-invoke call=43 stage=after fuel=Some(1274010) delta=Some(1359) success=true
+macro-lazy-invoke call=44 stage=before fuel=Some(1273967)
+macro-lazy-invoke call=44 stage=after fuel=Some(1272321) delta=Some(1646) success=true
+macro-lazy-invoke call=45 stage=before fuel=Some(1272233)
+macro-lazy-invoke call=45 stage=after fuel=Some(1270607) delta=Some(1626) success=true
+macro-lazy-invoke call=46 stage=before fuel=Some(1268539)
+macro-lazy-invoke call=46 stage=after fuel=Some(1264774) delta=Some(3765) success=true
+macro-lazy-invoke call=47 stage=before fuel=Some(1264745)
+macro-lazy-invoke call=47 stage=after fuel=Some(1262570) delta=Some(2175) success=true
+macro-lazy-invoke call=48 stage=before fuel=Some(1262560)
+macro-lazy-invoke call=48 stage=after fuel=Some(1255058) delta=Some(7502) success=true
+macro-lazy-invoke call=49 stage=before fuel=Some(1255024)
+macro-lazy-invoke call=49 stage=after fuel=Some(1248472) delta=Some(6552) success=true
+macro-lazy-invoke call=50 stage=before fuel=Some(1248434)
+macro-lazy-invoke call=50 stage=after fuel=Some(1243040) delta=Some(5394) success=true
+macro-lazy-invoke call=51 stage=before fuel=Some(1242998)
+macro-lazy-invoke call=51 stage=after fuel=Some(1241151) delta=Some(1847) success=true
+macro-lazy-invoke call=52 stage=before fuel=Some(1241105)
+macro-lazy-invoke call=52 stage=after fuel=Some(1239042) delta=Some(2063) success=true
+macro-lazy-invoke call=53 stage=before fuel=Some(1239023)
+macro-lazy-invoke call=53 stage=after fuel=Some(1235368) delta=Some(3655) success=true
+macro-lazy-invoke call=54 stage=before fuel=Some(1235181)
+macro-lazy-invoke call=54 stage=after fuel=Some(1234665) delta=Some(516) success=true
+macro-lazy-invoke call=55 stage=before fuel=Some(1234617)
+macro-lazy-invoke call=55 stage=after fuel=Some(1232655) delta=Some(1962) success=true
+macro-lazy-invoke call=56 stage=before fuel=Some(1232558)
+macro-lazy-invoke call=56 stage=after fuel=Some(1230950) delta=Some(1608) success=true
+macro-lazy-invoke call=57 stage=before fuel=Some(1229038)
+macro-lazy-invoke call=57 stage=after fuel=Some(1227430) delta=Some(1608) success=true
+macro-lazy-invoke call=58 stage=before fuel=Some(1227322)
+macro-lazy-invoke call=58 stage=after fuel=Some(1225714) delta=Some(1608) success=true
+macro-lazy-invoke call=59 stage=before fuel=Some(1223223)
+macro-lazy-invoke call=59 stage=after fuel=Some(1221615) delta=Some(1608) success=true
+macro-lazy-invoke call=60 stage=before fuel=Some(1221498)
+macro-lazy-invoke call=60 stage=after fuel=Some(1219890) delta=Some(1608) success=true
+macro-lazy-invoke call=61 stage=before fuel=Some(1218031)
+macro-lazy-invoke call=61 stage=after fuel=Some(1215726) delta=Some(2305) success=true
+macro-lazy-invoke call=62 stage=before fuel=Some(1215696)
+macro-lazy-invoke call=62 stage=after fuel=Some(1214355) delta=Some(1341) success=true
+macro-lazy-invoke call=63 stage=before fuel=Some(1214147)
+macro-lazy-invoke call=63 stage=after fuel=Some(1212511) delta=Some(1636) success=true
+macro-lazy-invoke call=64 stage=before fuel=Some(1209165)
+macro-lazy-invoke call=64 stage=after fuel=Some(1201832) delta=Some(7333) success=true
+macro-lazy-invoke call=65 stage=before fuel=Some(1201798)
+macro-lazy-invoke call=65 stage=after fuel=Some(1196449) delta=Some(5349) success=true
+macro-lazy-invoke call=66 stage=before fuel=Some(1196110)
+macro-lazy-invoke call=66 stage=after fuel=Some(1181373) delta=Some(14737) success=true
+macro-lazy-invoke call=67 stage=before fuel=Some(1181333)
+macro-lazy-invoke call=67 stage=after fuel=Some(1174862) delta=Some(6471) success=true
+macro-lazy-invoke call=68 stage=before fuel=Some(1174818)
+macro-lazy-invoke call=68 stage=after fuel=Some(1168287) delta=Some(6531) success=true
+macro-lazy-invoke call=69 stage=before fuel=Some(1168234)
+macro-lazy-invoke call=69 stage=after fuel=Some(1159206) delta=Some(9028) success=true
+macro-lazy-invoke call=70 stage=before fuel=Some(1159189)
+macro-lazy-invoke call=70 stage=after fuel=Some(1155559) delta=Some(3630) success=true
+macro-lazy-invoke call=71 stage=before fuel=Some(1155346)
+macro-lazy-invoke call=71 stage=after fuel=Some(1154054) delta=Some(1292) success=true
+macro-lazy-invoke call=72 stage=before fuel=Some(1154017)
+macro-lazy-invoke call=72 stage=after fuel=Some(1153501) delta=Some(516) success=true
+macro-lazy-invoke call=73 stage=before fuel=Some(1153436)
+macro-lazy-invoke call=73 stage=after fuel=Some(1151474) delta=Some(1962) success=true
+macro-lazy-invoke call=74 stage=before fuel=Some(1151353)
+macro-lazy-invoke call=74 stage=after fuel=Some(1149745) delta=Some(1608) success=true
+macro-lazy-invoke call=75 stage=before fuel=Some(1147422)
+macro-lazy-invoke call=75 stage=after fuel=Some(1142136) delta=Some(5286) success=true
+macro-lazy-invoke call=76 stage=before fuel=Some(1141847)
+macro-lazy-invoke call=76 stage=after fuel=Some(1140515) delta=Some(1332) success=true
+macro-lazy-invoke call=77 stage=before fuel=Some(1140505)
+macro-lazy-invoke call=77 stage=after fuel=Some(1128306) delta=Some(12199) success=true
+macro-lazy-invoke call=78 stage=before fuel=Some(1128270)
+macro-lazy-invoke call=78 stage=after fuel=Some(1120250) delta=Some(8020) success=true
+macro-lazy-invoke call=79 stage=before fuel=Some(1120210)
+macro-lazy-invoke call=79 stage=after fuel=Some(1113679) delta=Some(6531) success=true
+macro-lazy-invoke call=80 stage=before fuel=Some(1113630)
+macro-lazy-invoke call=80 stage=after fuel=Some(1104538) delta=Some(9092) success=true
+macro-lazy-invoke call=81 stage=before fuel=Some(1104521)
+macro-lazy-invoke call=81 stage=after fuel=Some(1100866) delta=Some(3655) success=true
+macro-lazy-invoke call=82 stage=before fuel=Some(1100621)
+macro-lazy-invoke call=82 stage=after fuel=Some(1099373) delta=Some(1248) success=true
+macro-lazy-invoke call=83 stage=before fuel=Some(1099353)
+macro-lazy-invoke call=83 stage=after fuel=Some(1098041) delta=Some(1312) success=true
+macro-lazy-invoke call=84 stage=before fuel=Some(1098002)
+macro-lazy-invoke call=84 stage=after fuel=Some(1097486) delta=Some(516) success=true
+macro-lazy-invoke call=85 stage=before fuel=Some(1097416)
+macro-lazy-invoke call=85 stage=after fuel=Some(1095454) delta=Some(1962) success=true
+macro-lazy-invoke call=86 stage=before fuel=Some(1095321)
+macro-lazy-invoke call=86 stage=after fuel=Some(1093713) delta=Some(1608) success=true
+macro-lazy-invoke call=87 stage=before fuel=Some(1091473)
+macro-lazy-invoke call=87 stage=after fuel=Some(1089865) delta=Some(1608) success=true
+macro-lazy-invoke call=88 stage=before fuel=Some(1089723)
+macro-lazy-invoke call=88 stage=after fuel=Some(1088115) delta=Some(1608) success=true
+macro-lazy-invoke call=89 stage=before fuel=Some(1085857)
+macro-lazy-invoke call=89 stage=after fuel=Some(1084249) delta=Some(1608) success=true
+macro-lazy-invoke call=90 stage=before fuel=Some(1084092)
+macro-lazy-invoke call=90 stage=after fuel=Some(1082484) delta=Some(1608) success=true
+macro-lazy-invoke call=91 stage=before fuel=Some(1080444)
+macro-lazy-invoke call=91 stage=after fuel=Some(1078836) delta=Some(1608) success=true
+macro-lazy-invoke call=92 stage=before fuel=Some(1078678)
+macro-lazy-invoke call=92 stage=after fuel=Some(1077109) delta=Some(1569) success=true
+macro-lazy-invoke call=93 stage=before fuel=Some(1074660)
+macro-lazy-invoke call=93 stage=after fuel=Some(1073301) delta=Some(1359) success=true
+macro-decode host-fuel=47425 lazy-calls=93 success=true
+macro-fuel suss.core/defrecord decoded: 1069783
+macro-fuel suss.core/case start: 1057586
+macro-fuel suss.core/case provenance: 1057501
+macro-fuel suss.core/case caller-form: 1057500
+macro-fuel suss.core/case caller-environment: 1057499
+macro-fuel suss.core/case arguments: 1045504
+macro-fuel suss.core/case invoked: 854045
+macro-decode host-fuel=1511 lazy-calls=0 success=true
+macro-fuel suss.core/case decoded: 852534
+macro-fuel suss.core/case start: 851208
+macro-fuel suss.core/case provenance: 851137
+macro-fuel suss.core/case caller-form: 851136
+macro-fuel suss.core/case caller-environment: 851135
+macro-fuel suss.core/case arguments: 841018
+macro-fuel suss.core/case invoked: 695741
+macro-decode host-fuel=1401 lazy-calls=0 success=true
+macro-fuel suss.core/case decoded: 694340
+macro-fuel suss.core/defn start: 664464
+macro-fuel suss.core/defn provenance: 664037
+macro-fuel suss.core/defn caller-form: 664036
+macro-fuel suss.core/defn caller-environment: 664035
+macro-fuel suss.core/defn arguments: 609124
+macro-fuel suss.core/defn invoked: 556703
+macro-decode host-fuel=1379 lazy-calls=0 success=true
+macro-fuel suss.core/defn decoded: 555324
+macro-fuel suss.core/defn start: 550756
+macro-fuel suss.core/defn provenance: 550207
+macro-fuel suss.core/defn caller-form: 550206
+macro-fuel suss.core/defn caller-environment: 550205
+macro-fuel suss.core/defn arguments: 484397
+macro-fuel suss.core/defn invoked: 451565
+macro-decode host-fuel=1315 lazy-calls=0 success=true
+macro-fuel suss.core/defn decoded: 450250
+macro-fuel suss.core/defrecord start: 3999932
+macro-fuel suss.core/defrecord provenance: 3996425
+macro-fuel suss.core/defrecord caller-form: 3996424
+macro-fuel suss.core/defrecord caller-environment: 3021029
+macro-fuel suss.core/defrecord arguments: 2997556
+macro-fuel suss.core/defrecord invoked: 2119558
+macro-lazy-invoke call=1 stage=before fuel=Some(2117872)
+macro-lazy-invoke call=1 stage=after fuel=Some(2109838) delta=Some(8034) success=true
+macro-lazy-invoke call=2 stage=before fuel=Some(2108548)
+macro-lazy-invoke call=2 stage=after fuel=Some(2107234) delta=Some(1314) success=true
+macro-lazy-invoke call=3 stage=before fuel=Some(2107224)
+macro-lazy-invoke call=3 stage=after fuel=Some(2103768) delta=Some(3456) success=true
+macro-lazy-invoke call=4 stage=before fuel=Some(2103735)
+macro-lazy-invoke call=4 stage=after fuel=Some(2101562) delta=Some(2173) success=true
+macro-lazy-invoke call=5 stage=before fuel=Some(2099995)
+macro-lazy-invoke call=5 stage=after fuel=Some(2096479) delta=Some(3516) success=true
+macro-lazy-invoke call=6 stage=before fuel=Some(2096281)
+macro-lazy-invoke call=6 stage=after fuel=Some(2094940) delta=Some(1341) success=true
+macro-lazy-invoke call=7 stage=before fuel=Some(2094926)
+macro-lazy-invoke call=7 stage=after fuel=Some(2093696) delta=Some(1230) success=true
+macro-lazy-invoke call=8 stage=before fuel=Some(2093681)
+macro-lazy-invoke call=8 stage=after fuel=Some(2091352) delta=Some(2329) success=true
+macro-lazy-invoke call=9 stage=before fuel=Some(2091308)
+macro-lazy-invoke call=9 stage=after fuel=Some(2089404) delta=Some(1904) success=true
+macro-lazy-invoke call=10 stage=before fuel=Some(2089353)
+macro-lazy-invoke call=10 stage=after fuel=Some(2087773) delta=Some(1580) success=true
+macro-lazy-invoke call=11 stage=before fuel=Some(2086053)
+macro-lazy-invoke call=11 stage=after fuel=Some(2080413) delta=Some(5640) success=true
+macro-lazy-invoke call=12 stage=before fuel=Some(2080148)
+macro-lazy-invoke call=12 stage=after fuel=Some(2078890) delta=Some(1258) success=true
+macro-lazy-invoke call=13 stage=before fuel=Some(2078880)
+macro-lazy-invoke call=13 stage=after fuel=Some(2076513) delta=Some(2367) success=true
+macro-lazy-invoke call=14 stage=before fuel=Some(2076479)
+macro-lazy-invoke call=14 stage=after fuel=Some(2074547) delta=Some(1932) success=true
+macro-lazy-invoke call=15 stage=before fuel=Some(2074504)
+macro-lazy-invoke call=15 stage=after fuel=Some(2072896) delta=Some(1608) success=true
+macro-lazy-invoke call=16 stage=before fuel=Some(2072847)
+macro-lazy-invoke call=16 stage=after fuel=Some(2071278) delta=Some(1569) success=true
+macro-lazy-invoke call=17 stage=before fuel=Some(2071168)
+macro-lazy-invoke call=17 stage=after fuel=Some(2069809) delta=Some(1359) success=true
+macro-lazy-invoke call=18 stage=before fuel=Some(2069782)
+macro-lazy-invoke call=18 stage=after fuel=Some(2068136) delta=Some(1646) success=true
+macro-lazy-invoke call=19 stage=before fuel=Some(2068082)
+macro-lazy-invoke call=19 stage=after fuel=Some(2066456) delta=Some(1626) success=true
+macro-lazy-invoke call=20 stage=before fuel=Some(2064247)
+macro-lazy-invoke call=20 stage=after fuel=Some(2062621) delta=Some(1626) success=true
+macro-lazy-invoke call=21 stage=before fuel=Some(2062558)
+macro-lazy-invoke call=21 stage=after fuel=Some(2060932) delta=Some(1626) success=true
+macro-lazy-invoke call=22 stage=before fuel=Some(2059182)
+macro-lazy-invoke call=22 stage=after fuel=Some(2055417) delta=Some(3765) success=true
+macro-lazy-invoke call=23 stage=before fuel=Some(2055314)
+macro-lazy-invoke call=23 stage=after fuel=Some(2053139) delta=Some(2175) success=true
+macro-lazy-invoke call=24 stage=before fuel=Some(2053129)
+macro-lazy-invoke call=24 stage=after fuel=Some(2051799) delta=Some(1330) success=true
+macro-lazy-invoke call=25 stage=before fuel=Some(2051645)
+macro-lazy-invoke call=25 stage=after fuel=Some(2050341) delta=Some(1304) success=true
+macro-lazy-invoke call=26 stage=before fuel=Some(2050328)
+macro-lazy-invoke call=26 stage=after fuel=Some(2032361) delta=Some(17967) success=true
+macro-lazy-invoke call=27 stage=before fuel=Some(2031734)
+macro-lazy-invoke call=27 stage=after fuel=Some(2027989) delta=Some(3745) success=true
+macro-lazy-invoke call=28 stage=before fuel=Some(2027973)
+macro-lazy-invoke call=28 stage=after fuel=Some(2025322) delta=Some(2651) success=true
+macro-lazy-invoke call=29 stage=before fuel=Some(2024665)
+macro-lazy-invoke call=29 stage=after fuel=Some(2024149) delta=Some(516) success=true
+macro-lazy-invoke call=30 stage=before fuel=Some(2024114)
+macro-lazy-invoke call=30 stage=after fuel=Some(2021053) delta=Some(3061) success=true
+macro-lazy-invoke call=31 stage=before fuel=Some(2020983)
+macro-lazy-invoke call=31 stage=after fuel=Some(2019403) delta=Some(1580) success=true
+macro-lazy-invoke call=32 stage=before fuel=Some(2017666)
+macro-lazy-invoke call=32 stage=after fuel=Some(2016086) delta=Some(1580) success=true
+macro-lazy-invoke call=33 stage=before fuel=Some(2016004)
+macro-lazy-invoke call=33 stage=after fuel=Some(2014424) delta=Some(1580) success=true
+macro-lazy-invoke call=34 stage=before fuel=Some(2012663)
+macro-lazy-invoke call=34 stage=after fuel=Some(2006345) delta=Some(6318) success=true
+macro-lazy-invoke call=35 stage=before fuel=Some(2006080)
+macro-lazy-invoke call=35 stage=after fuel=Some(2004822) delta=Some(1258) success=true
+macro-lazy-invoke call=36 stage=before fuel=Some(2004812)
+macro-lazy-invoke call=36 stage=after fuel=Some(2002445) delta=Some(2367) success=true
+macro-lazy-invoke call=37 stage=before fuel=Some(2002411)
+macro-lazy-invoke call=37 stage=after fuel=Some(2000479) delta=Some(1932) success=true
+macro-lazy-invoke call=38 stage=before fuel=Some(2000437)
+macro-lazy-invoke call=38 stage=after fuel=Some(1998829) delta=Some(1608) success=true
+macro-lazy-invoke call=39 stage=before fuel=Some(1998780)
+macro-lazy-invoke call=39 stage=after fuel=Some(1997211) delta=Some(1569) success=true
+macro-lazy-invoke call=40 stage=before fuel=Some(1997101)
+macro-lazy-invoke call=40 stage=after fuel=Some(1995742) delta=Some(1359) success=true
+macro-lazy-invoke call=41 stage=before fuel=Some(1995699)
+macro-lazy-invoke call=41 stage=after fuel=Some(1994053) delta=Some(1646) success=true
+macro-lazy-invoke call=42 stage=before fuel=Some(1993965)
+macro-lazy-invoke call=42 stage=after fuel=Some(1992339) delta=Some(1626) success=true
+macro-lazy-invoke call=43 stage=before fuel=Some(1990270)
+macro-lazy-invoke call=43 stage=after fuel=Some(1986505) delta=Some(3765) success=true
+macro-lazy-invoke call=44 stage=before fuel=Some(1986475)
+macro-lazy-invoke call=44 stage=after fuel=Some(1984300) delta=Some(2175) success=true
+macro-lazy-invoke call=45 stage=before fuel=Some(1984290)
+macro-lazy-invoke call=45 stage=after fuel=Some(1979909) delta=Some(4381) success=true
+macro-lazy-invoke call=46 stage=before fuel=Some(1979875)
+macro-lazy-invoke call=46 stage=after fuel=Some(1977982) delta=Some(1893) success=true
+macro-lazy-invoke call=47 stage=before fuel=Some(1977944)
+macro-lazy-invoke call=47 stage=after fuel=Some(1975863) delta=Some(2081) success=true
+macro-lazy-invoke call=48 stage=before fuel=Some(1975848)
+macro-lazy-invoke call=48 stage=after fuel=Some(1973635) delta=Some(2213) success=true
+macro-lazy-invoke call=49 stage=before fuel=Some(1973455)
+macro-lazy-invoke call=49 stage=after fuel=Some(1972939) delta=Some(516) success=true
+macro-lazy-invoke call=50 stage=before fuel=Some(1972891)
+macro-lazy-invoke call=50 stage=after fuel=Some(1970929) delta=Some(1962) success=true
+macro-lazy-invoke call=51 stage=before fuel=Some(1970832)
+macro-lazy-invoke call=51 stage=after fuel=Some(1969224) delta=Some(1608) success=true
+macro-lazy-invoke call=52 stage=before fuel=Some(1967312)
+macro-lazy-invoke call=52 stage=after fuel=Some(1965704) delta=Some(1608) success=true
+macro-lazy-invoke call=53 stage=before fuel=Some(1965596)
+macro-lazy-invoke call=53 stage=after fuel=Some(1963988) delta=Some(1608) success=true
+macro-lazy-invoke call=54 stage=before fuel=Some(1961497)
+macro-lazy-invoke call=54 stage=after fuel=Some(1959889) delta=Some(1608) success=true
+macro-lazy-invoke call=55 stage=before fuel=Some(1959772)
+macro-lazy-invoke call=55 stage=after fuel=Some(1958164) delta=Some(1608) success=true
+macro-lazy-invoke call=56 stage=before fuel=Some(1956303)
+macro-lazy-invoke call=56 stage=after fuel=Some(1954962) delta=Some(1341) success=true
+macro-lazy-invoke call=57 stage=before fuel=Some(1954753)
+macro-lazy-invoke call=57 stage=after fuel=Some(1953117) delta=Some(1636) success=true
+macro-lazy-invoke call=58 stage=before fuel=Some(1950484)
+macro-lazy-invoke call=58 stage=after fuel=Some(1943151) delta=Some(7333) success=true
+macro-lazy-invoke call=59 stage=before fuel=Some(1943119)
+macro-lazy-invoke call=59 stage=after fuel=Some(1937770) delta=Some(5349) success=true
+macro-lazy-invoke call=60 stage=before fuel=Some(1937455)
+macro-lazy-invoke call=60 stage=after fuel=Some(1925966) delta=Some(11489) success=true
+macro-lazy-invoke call=61 stage=before fuel=Some(1925928)
+macro-lazy-invoke call=61 stage=after fuel=Some(1919397) delta=Some(6531) success=true
+macro-lazy-invoke call=62 stage=before fuel=Some(1919350)
+macro-lazy-invoke call=62 stage=after fuel=Some(1910322) delta=Some(9028) success=true
+macro-lazy-invoke call=63 stage=before fuel=Some(1910307)
+macro-lazy-invoke call=63 stage=after fuel=Some(1906677) delta=Some(3630) success=true
+macro-lazy-invoke call=64 stage=before fuel=Some(1906478)
+macro-lazy-invoke call=64 stage=after fuel=Some(1905186) delta=Some(1292) success=true
+macro-lazy-invoke call=65 stage=before fuel=Some(1905153)
+macro-lazy-invoke call=65 stage=after fuel=Some(1904637) delta=Some(516) success=true
+macro-lazy-invoke call=66 stage=before fuel=Some(1904572)
+macro-lazy-invoke call=66 stage=after fuel=Some(1902610) delta=Some(1962) success=true
+macro-lazy-invoke call=67 stage=before fuel=Some(1902489)
+macro-lazy-invoke call=67 stage=after fuel=Some(1900881) delta=Some(1608) success=true
+macro-lazy-invoke call=68 stage=before fuel=Some(1898576)
+macro-lazy-invoke call=68 stage=after fuel=Some(1893290) delta=Some(5286) success=true
+macro-lazy-invoke call=69 stage=before fuel=Some(1893001)
+macro-lazy-invoke call=69 stage=after fuel=Some(1891669) delta=Some(1332) success=true
+macro-lazy-invoke call=70 stage=before fuel=Some(1891659)
+macro-lazy-invoke call=70 stage=after fuel=Some(1882708) delta=Some(8951) success=true
+macro-lazy-invoke call=71 stage=before fuel=Some(1882672)
+macro-lazy-invoke call=71 stage=after fuel=Some(1874592) delta=Some(8080) success=true
+macro-lazy-invoke call=72 stage=before fuel=Some(1874547)
+macro-lazy-invoke call=72 stage=after fuel=Some(1865455) delta=Some(9092) success=true
+macro-lazy-invoke call=73 stage=before fuel=Some(1865440)
+macro-lazy-invoke call=73 stage=after fuel=Some(1861785) delta=Some(3655) success=true
+macro-lazy-invoke call=74 stage=before fuel=Some(1861543)
+macro-lazy-invoke call=74 stage=after fuel=Some(1860295) delta=Some(1248) success=true
+macro-lazy-invoke call=75 stage=before fuel=Some(1860277)
+macro-lazy-invoke call=75 stage=after fuel=Some(1858965) delta=Some(1312) success=true
+macro-lazy-invoke call=76 stage=before fuel=Some(1858930)
+macro-lazy-invoke call=76 stage=after fuel=Some(1858414) delta=Some(516) success=true
+macro-lazy-invoke call=77 stage=before fuel=Some(1858344)
+macro-lazy-invoke call=77 stage=after fuel=Some(1856382) delta=Some(1962) success=true
+macro-lazy-invoke call=78 stage=before fuel=Some(1856249)
+macro-lazy-invoke call=78 stage=after fuel=Some(1854641) delta=Some(1608) success=true
+macro-lazy-invoke call=79 stage=before fuel=Some(1852529)
+macro-lazy-invoke call=79 stage=after fuel=Some(1850921) delta=Some(1608) success=true
+macro-lazy-invoke call=80 stage=before fuel=Some(1850779)
+macro-lazy-invoke call=80 stage=after fuel=Some(1849171) delta=Some(1608) success=true
+macro-lazy-invoke call=81 stage=before fuel=Some(1846929)
+macro-lazy-invoke call=81 stage=after fuel=Some(1845321) delta=Some(1608) success=true
+macro-lazy-invoke call=82 stage=before fuel=Some(1845164)
+macro-lazy-invoke call=82 stage=after fuel=Some(1843556) delta=Some(1608) success=true
+macro-lazy-invoke call=83 stage=before fuel=Some(1841516)
+macro-lazy-invoke call=83 stage=after fuel=Some(1839908) delta=Some(1608) success=true
+macro-lazy-invoke call=84 stage=before fuel=Some(1839750)
+macro-lazy-invoke call=84 stage=after fuel=Some(1838181) delta=Some(1569) success=true
+macro-lazy-invoke call=85 stage=before fuel=Some(1835732)
+macro-lazy-invoke call=85 stage=after fuel=Some(1834373) delta=Some(1359) success=true
+macro-decode host-fuel=44996 lazy-calls=85 success=true
+macro-fuel suss.core/defrecord decoded: 1831315
+macro-fuel suss.core/case start: 1820353
+macro-fuel suss.core/case provenance: 1820272
+macro-fuel suss.core/case caller-form: 1820271
+macro-fuel suss.core/case caller-environment: 1820270
+macro-fuel suss.core/case arguments: 1810047
+macro-fuel suss.core/case invoked: 1696520
+macro-decode host-fuel=752 lazy-calls=0 success=true
+macro-fuel suss.core/case decoded: 1695768
+macro-fuel suss.core/case start: 1694960
+macro-fuel suss.core/case provenance: 1694890
+macro-fuel suss.core/case caller-form: 1694889
+macro-fuel suss.core/case caller-environment: 1694888
+macro-fuel suss.core/case arguments: 1686542
+macro-fuel suss.core/case invoked: 1562721
+macro-decode host-fuel=701 lazy-calls=0 success=true
+macro-fuel suss.core/case decoded: 1562020
+macro-fuel suss.core/defn start: 1537839
+macro-fuel suss.core/defn provenance: 1537510
+macro-fuel suss.core/defn caller-form: 1537509
+macro-fuel suss.core/defn caller-environment: 1537508
+macro-fuel suss.core/defn arguments: 1498459
+macro-fuel suss.core/defn invoked: 1457533
+macro-decode host-fuel=937 lazy-calls=0 success=true
+macro-fuel suss.core/defn decoded: 1456596
+macro-fuel suss.core/defn start: 1452412
+macro-fuel suss.core/defn provenance: 1451878
+macro-fuel suss.core/defn caller-form: 1451877
+macro-fuel suss.core/defn caller-environment: 1451876
+macro-fuel suss.core/defn arguments: 1392400
+macro-fuel suss.core/defn invoked: 1359568
+macro-decode host-fuel=1229 lazy-calls=0 success=true
+macro-fuel suss.core/defn decoded: 1358339

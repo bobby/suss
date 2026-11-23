@@ -56,7 +56,7 @@
   "patch_sha256": "b0648abff634d85b8f2883c64faf1dd16ae2cffababd2a5c9d767e2f822a8bc5",
   "files": {
     "crates/suss-compile/src/portable_when_let.rs": "0de7d8f16339b7327b7e133279d6be7e4a7ecb8d554379e196d0a0f1a7a39e09",
-    "crates/suss-compile/src/portable/hir/destructuring.rs": "31b19c0135b15c10c5d046d1ff6e615d19d76f6096abb4461ef1a6c96611c983",
+    "crates/suss-compile/src/portable/hir/destructuring.rs": "08c5a88fc311837ff49dced30e9d42e9837fd6a0e3bc0eb96b23fb0336ef9c0c",
     "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
     "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
     "crates/suss-cli/tests/compiled_when_let.rs": "1df467f62d35324d6ec8b5289dd09e16ca7bef83a9aae7dd4e2362e94b4e6369",
@@ -66,7 +66,8 @@
     "Register defmacro locally; core/let spelling uses established bootstrap binding resolution.",
     "Lower ordered assert-args checks to ordinary compiled if/throw/ex-info with identical messages and phase data.",
     "Keep vector invocation, complete docstring, syntax-quote and hygienic temporary shape unchanged.",
-    "Bootstrap let calls the existing EPL-derived destructuring binder for ordered vector/map binding pairs; no function wrapper, runtime extraction or loop rewrite."
+    "Bootstrap let calls the existing EPL-derived destructuring binder for ordered vector/map binding pairs; no function wrapper, runtime extraction or loop rewrite.",
+    "UUID literals retain their nominal signed-half hash when used as destructuring binding-map keys; prior native destructuring regressions and captured upstream forms remain unchanged."
   ],
   "dependencies": {
     "macro": [

@@ -240,8 +240,9 @@ mod tests {
             "#{#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"}",
             "{#uuid \"1-2-3-4-5\" 1 #uuid \"00000001-0002-0003-0004-000000000005\" 2}",
         ] {
-            assert!(
-                edn::read_one(source, &Options::default()).is_err(),
+            assert_eq!(
+                edn::read_one(source, &Options::default()).unwrap_err().message,
+                "Duplicate key: 00000001-0002-0003-0004-000000000005",
                 "canonical duplicate: {source}"
             );
         }

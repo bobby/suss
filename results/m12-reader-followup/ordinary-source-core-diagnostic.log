@@ -1,0 +1,19 @@
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.83s
+     Running tests/clojure_uuid.rs (../m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 1 test
+
+thread 'ordinary_source_core_loads_uuid_readers_in_both_phases' (11278) panicked at crates/suss-cli/tests/clojure_uuid.rs:227:13:
+Runtime source core load: Mutable fields are private to their type
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test ordinary_source_core_loads_uuid_readers_in_both_phases ... FAILED
+
+failures:
+
+failures:
+    ordinary_source_core_loads_uuid_readers_in_both_phases
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 15.71s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_uuid`

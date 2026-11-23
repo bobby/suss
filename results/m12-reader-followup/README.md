@@ -1,3 +1,41 @@
+## UUID source loading and compiler membership observations (2026-11-23)
+
+`run-source.py typed-offsets-and-source-safe-uuid-table` passes144 focused tests
+with all recorded inputs unchanged:30 UUID/record/source-core integration tests,
+60 graph/storage/reader-budget tests, the unchanged artifact-size gate, and53
+independent decoder/privacy/source-tooling tests. Membership work is361130 and
+368956, below the original one-million limit; the four-million record limit also
+passes. Artifact growth remains2352 bytes/form and96 extra split-form bytes,
+within the unchanged3900/128 limits.
+
+Compiler-generated membership offsets now use a typed long-vector recipe. This
+preserves the exact vector/schema and UTF-16 boundaries while avoiding separate
+reader-key planning for each structural offset. Wide signed values survive GC
+in both phases. Final native key/storage tracing retains the earlier1026-entry
+growth boundary. The first attempted index-sharing cache increased costs to
+1020485/1167745 and was removed; its exact source patch and failed receipts remain
+under `interned-membership-indices`.
+
+Ordinary source-core loading previously threw `Mutable fields are private to
+their type` while constructing the UUID parser's37-element vector. A private
+primitive array now stores that immutable parser table. Source-core loading and
+UUID reading pass in both phases without changing field-access policy. Existing
+hash, reduction, vector, source-macro metadata and reader-binding regressions pass.
+
+`run-roundtrip.py uuid-source-roundtrip-and-ci-regressions` passes27 additional
+tests. The UUID AST records real `:const`/`:uuid` values; native EDN and emitted
+source round-trip losslessly, and the emitted source executes in both phases.
+The remaining visitor/projection arms preserve typed UUID bits. The retained
+when-let provenance hash is aligned with UUID binding-key hashing; the checker
+and its captured upstream/native evidence remain intact.
+
+The original CI45175714660 failures and all exploratory failures remain retained.
+Full-suite/affected EDN capture, complete workspace execution, final-head CI and
+independent promotion review still need their own results. The prior foundation
+run passes15 checks, including364 Python tests, on its recorded snapshot; further
+source changes require their final check. No complete BigDecimal or milestone
+acceptance follows from these focused gates.
+
 ## Compiled UUID integration controls (2026-11-23)
 
 `run-source.py after-uuid-duplicate-format-and-macro-registration` passes all85
