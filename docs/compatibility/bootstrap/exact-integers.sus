@@ -1409,6 +1409,7 @@
             (not (identical? (reader-unquoted form true) reader-nothing))
             (reader-fail st start "Unquote splicing requires a collection element" false)
             (symbol? form) (list reader-quote-symbol (reader-quote-name form gensyms))
+            (instance? UUID form) (list reader-quote-symbol form)
             (instance? PersistentQueue form)
             (list reader-into-symbol (list reader-quote-symbol (.-EMPTY PersistentQueue))
                   (reader-quote-items st start form gensyms))

@@ -1458,6 +1458,9 @@ impl Session {
             self.provided.remove(identity);
         }
     }
+    pub(crate) fn has_initialized_source_module(&self, identity: &ModuleIdentity) -> bool {
+        self.provided.contains(identity)
+    }
     /// Called only after every form of this phase module has initialized.
     pub(crate) fn initialized_source_namespace(
         &mut self,

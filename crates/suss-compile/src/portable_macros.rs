@@ -332,14 +332,20 @@ impl CompiledMacros {
                             let identity = crate::portable::bootstrap::sha256(
                                 format!("{:?}:{:?}:{}", unit.source_path, unit.dependencies, unit.source).as_bytes(),
                             );
-                            sources.push((unit.identity.namespace().to_owned(), identity));
+                            sources.push((unit.identity.clone(), identity));
                         }
-                        self.incomplete_sources.extend(sources.iter().map(|(name, _)| name.clone()));
-                        self.session.eval_prepared(prepared)?;
-                        for (name, identity) in sources {
-                            self.incomplete_sources.remove(&name);
-                            self.loaded_sources.insert(name, identity);
+                        self.incomplete_sources.extend(sources.iter().map(|(unit, _)| unit.namespace().to_owned()));
+                        let initialized = self.session.eval_prepared(prepared);
+                        // Successful dependencies remain provided even if a later
+                        // initializer fails. Retain their captured source identities
+                        // now: discovery will omit these units on the next attempt.
+                        for (unit, identity) in sources {
+                            if self.session.has_initialized_source_module(&unit) {
+                                self.incomplete_sources.remove(unit.namespace());
+                                self.loaded_sources.insert(unit.namespace().to_owned(), identity);
+                            }
                         }
+                        initialized?;
                         Ok::<_, SessionError>(())
                     });
                     debug_assert!(self.declaration_transactions.is_empty());

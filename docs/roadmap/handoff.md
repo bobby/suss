@@ -1,3 +1,31 @@
+## Independent-review recovery and UUID reader counterexamples (2026-11-23)
+
+`run-review-before-probes.py` links a small native counterexample against the
+existing frozen pre-repair library, without another Cargo graph. Build passes;
+execution returns101 after85.012s at the assertion requiring source-cache
+eligibility after a successful retry. Earlier Macro dependencies initialize,
+the later dependency throws, retry succeeds without replaying the changed first
+source, but the earlier source identities remain incomplete. A copied immutable
+pre-repair CLI separately returns1 after94.595s for runtime UUID syntax quote:
+`Unsupported unresolved syntax quote data`. Inputs remain unchanged. These are
+counterexample receipts, not Cargo-regression or workspace passes.
+
+Three fresh JVM1.12.6 controls retain atomic syntax-quote structures and exact
+signed UUID fields. New native regressions cover Runtime/Macro retained storage
+after GC with public printing/equality disabled and actual AOT data returned to
+the host. The cache regression independently captures the original source
+identity, changes that file before retry, checks once-only effects, all retained
+dependency identities and resumed emission hits.
+
+The repair reconciles each full ModuleIdentity against the Macro session's actual
+initialized set even on error, publishes only successful units' already-captured
+source hashes and propagates the original result. Failed units stay incomplete;
+discovery already skips provided units. Runtime syntax quote now explicitly
+quotes immutable UUID values before the collection/scalar branches. Core import
+outputs and conservative character provenance hashes are refreshed. Original
+budgets, ABI layouts, primary values and comparison/count/skip guards are retained.
+Native repaired-source gates and exact-head promotion evidence are separate.
+
 ## Audited char and EDN execution (2026-11-23)
 
 `run-suite.py full-suite-after-reserved-core-head-transport` completes onbc2694b9,
