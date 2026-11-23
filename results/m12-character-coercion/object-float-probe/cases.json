@@ -1,0 +1,18 @@
+[
+  {
+    "name": "object-float-platform-0",
+    "expression": "((identity char) (float -70000.1))",
+    "message": "Value out of range for char: -70000.1",
+    "platform": "adr0003-float-as-double"
+  },
+  {
+    "name": "object-float-platform-1",
+    "expression": "((identity char) -70000.1015625)",
+    "message": "Value out of range for char: -70000.1015625"
+  },
+  {
+    "name": "object-float-platform-2",
+    "expression": "(char (float -70000.1))",
+    "message": "Value out of range for char: -70000.1"
+  }
+]

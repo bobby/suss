@@ -168,6 +168,8 @@ fn cast_index(index: i64, class: Primitive) -> i64 {
         (1, Primitive::Float) => 15,
         (8, Primitive::Long) => 11,
         (8, Primitive::Float) => 9,
+        (16, Primitive::Double) => 17,
+        (16, Primitive::Float) => 18,
         _ => index,
     }
 }

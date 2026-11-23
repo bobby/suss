@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "results/m12-character-coercion/audit-char-body.py",
+    "full-suite-after-phase-local-observer"
+  ],
+  "actual_exit_code": 1,
+  "expected_exit": "nonzero",
+  "control": "Real pre-repair capture with zero char observations must be rejected, not counted passing. This is auditor validation, not executed char compatibility evidence.",
+  "stderr": "Traceback (most recent call last):\n  File \"/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-character-coercion/audit-char-body.py\", line 15, in <module>\n    assert len(state)==1 and state[0]['status']=='loaded',state\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: [{'diagnostic': 'clojure.core-test.char (Some(\"<root>/clojure/core_test/char.cljc\")): Unresolved Runtime name char at bytes 240..1201', 'namespace': 'clojure.core-test.char', 'stage': 'namespace', 'status': 'failure'}]\n",
+  "script_sha256": "ddbfbbe4f524e6c5e11907e876c26e54d2b82be56080fea4173685c9fddef5fd"
+}

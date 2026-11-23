@@ -15,12 +15,12 @@
       "BSL-1.0"
     ]
   },
-  "wasm_sha256": "33801847c47711e6920cca3a2b92a4044c0ca332eb067b85caca5978a79614ed",
+  "wasm_sha256": "3b73ca99259700f5ab1231b474ec0675090879ec25957f4f5ed7ea0a2c080b9f",
   "inputs": {
     "Cargo.toml": "5d16e9d0de6c2b287c858cfe7ad97cdd8b1bb583a7be14e508d0cf1950919a27",
     "Cargo.lock": "286e5afd967ce416482baa691424bbdfef0eae2a2135cdf8cac0bf80e17fdb8e",
     "rust-toolchain.toml": "1cb7c7277a8ab958399e3e18605e77ad27a78e47b8913468c335cb9cc87ee7d2",
-    "src/lib.rs": "438d5a2408e7ee71a4a088ff7bff47bb8a00c92ee47e240b7fef4bff561fadb6",
+    "src/lib.rs": "33cdfa128995f1d40e7bcbd295607fd80286c1dcdc8352b8ae83bf42988dcfce",
     "licenses/ryu-js-APACHE.txt": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
     "licenses/ryu-js-BOOST.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
     "licenses/Rust-1.98.0-COPYRIGHT-library.html": "68129500b616d5838629e68f55ff3aed5e096dacf60ce9eb41bbe599a563afa6",

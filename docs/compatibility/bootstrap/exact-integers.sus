@@ -1882,6 +1882,13 @@
 (def double "Coerce to double" (fn [x] (suss.bootstrap/cast x 10)))
 (def unchecked-double "Coerce to double. Subject to rounding." (fn [x] (suss.bootstrap/cast x 10)))
 
+;; Clojure 1.12.6 char (EPL-1.0); full source and primary controls are retained
+;; in results/m12-character-coercion. Numeric mode16 is Number.longValue plus
+;; the UTF-16 range check; source double/float calls select mode17/18 before
+;; storage inference. A Character is the accepted one-unit string representation.
+(def char "Coerce to char"
+  (fn [x] (suss.bootstrap/string-from-unit (suss.bootstrap/cast x 16))))
+
 ;; Packed primitive arrays (ADR-0003, #336). Each constructor passes its
 ;; element kind: 0 byte, 1 short, 2 int, 3 float, 4 long, 5 double. Elements
 ;; from a sequence or a fill value are stored with the unchecked cast, as

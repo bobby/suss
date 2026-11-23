@@ -4439,6 +4439,15 @@ impl Analyzer<'_> {
                     Some("unchecked-long") => Some(Nominal::UncheckedLongCast),
                     _ => None,
                 };
+                if core_var.as_deref() == Some("char") {
+                    let argument = self.form(&args[0])?;
+                    let selector = self.literal_form(form, Literal::Long(16));
+                    let unit = Hir { source: None, span: form.span.clone(), metadata: Vec::new(),
+                        ty: Bitwise::Cast.result(), kind: std::sync::Arc::new(Expression::Bitwise {
+                            operation: Bitwise::Cast, arguments: vec![argument, selector],
+                        }) };
+                    return Ok(self.nominal(form, Nominal::StringFromUnit, vec![unit]));
+                }
                 if let Some(cast) = cast {
                     let argument = self.form(&args[0])?;
                     return Ok(self.nominal(form, cast, vec![argument]));

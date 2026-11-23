@@ -1,0 +1,13 @@
+{
+  "tested_head": "c2c6001f0ab1ba205a212cf966a9793511954b39",
+  "tested_snapshot": "character-float-format-and-legacy-guards",
+  "tests_passed": 103,
+  "tests_failed": 0,
+  "all_commands_inputs_unchanged": true,
+  "changes_since_snapshot": [
+    "crates/suss-cli/tests/clojure_char.rs",
+    "docs/compatibility/README.md",
+    "docs/roadmap/handoff.md"
+  ],
+  "qualification": "Producer code, original regression files and all tested fixtures remain byte-identical. Only the owned character test file adds extra32 controls/factors already executed helpers; compatibility/handoff documentation changes and new provenance/evidence are explicit. Final full-workspace execution must cover the final test file."
+}

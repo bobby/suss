@@ -33,6 +33,7 @@ pub(super) struct Helper {
     pub parse: u32,
     pub parse_float: u32,
     pub format: u32,
+    pub format_float: u32,
     pub multiply: u32,
     pub decimal_format: u32,
     pub stack_global: u32,
@@ -47,6 +48,7 @@ pub(super) struct Info {
     pub parse: u32,
     pub parse_float: u32,
     format: u32,
+    format_float: u32,
     pub multiply: u32,
     pub decimal_format: u32,
     pub stack_global: u32,
@@ -59,6 +61,7 @@ impl Helper {
             parse: self.parse,
             parse_float: self.parse_float,
             format: self.format,
+            format_float: self.format_float,
             multiply: self.multiply,
             decimal_format: self.decimal_format,
             stack_global: self.stack_global,
@@ -81,6 +84,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
         parse: u32::MAX,
         parse_float: u32::MAX,
         format: u32::MAX,
+        format_float: u32::MAX,
         multiply: u32::MAX,
         decimal_format: u32::MAX,
         stack_global: u32::MAX,
@@ -155,7 +159,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
                 for export in reader {
                     let export = export.unwrap();
                     match export.name {
-                        "suss_parse_number" | "suss_parse_decimal_f32" | "suss_format_number" | "suss_bigint_multiply" | "suss_format_decimal" => {
+                        "suss_parse_number" | "suss_parse_decimal_f32" | "suss_format_number" | "suss_format_float" | "suss_bigint_multiply" | "suss_format_decimal" => {
                             assert_eq!(export.kind, wasmparser::ExternalKind::Func);
                             if export.name == "suss_parse_number" {
                                 result.parse = export.index;
@@ -163,6 +167,8 @@ fn helper_from(bytes: &[u8]) -> Helper {
                                 result.parse_float = export.index;
                             } else if export.name == "suss_format_number" {
                                 result.format = export.index;
+                            } else if export.name == "suss_format_float" {
+                                result.format_float = export.index;
                             } else if export.name == "suss_bigint_multiply" {
                                 result.multiply = export.index;
                             } else {
@@ -217,6 +223,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
     assert_ne!(result.parse, u32::MAX);
     assert_ne!(result.parse_float, u32::MAX);
     assert_ne!(result.format, u32::MAX);
+    assert_ne!(result.format_float, u32::MAX);
     assert_ne!(result.multiply, u32::MAX);
     assert_ne!(result.decimal_format, u32::MAX);
     assert_ne!(result.stack_global, u32::MAX);
@@ -232,6 +239,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
             vec![wasmparser::ValType::F64, wasmparser::ValType::I32],
             vec![wasmparser::ValType::I32],
         ),
+        (result.format_float, vec![wasmparser::ValType::F64, wasmparser::ValType::I32], vec![wasmparser::ValType::I32]),
         (result.parse_float, vec![wasmparser::ValType::I32; 2], vec![wasmparser::ValType::F64]),
         (result.multiply, vec![wasmparser::ValType::I32; 5], vec![wasmparser::ValType::I32]),
         (result.decimal_format, vec![wasmparser::ValType::I32; 4], vec![wasmparser::ValType::I32]),
@@ -543,6 +551,12 @@ pub(super) fn intrinsics(
     ]);
     let double_string = b.function_with_locals("double-string", &[ValType::F64], &[VALUE],
         &[(3, ValType::I32), (1, VALUE)], &format_double);
+    let format_float = format_double.iter().cloned().map(|instruction| match instruction {
+        Call(function) if function == helper.format => Call(helper.format_float),
+        other => other,
+    }).collect::<Vec<_>>();
+    b.function_with_locals("float-string", &[ValType::F64], &[VALUE],
+        &[(3, ValType::I32), (1, VALUE)], &format_float);
 
     // A long, an i31 or a boxed one, first (#388): its digits, with no
     // long-test or long-unbox call. An i31 is never a string or a sentinel.

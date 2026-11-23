@@ -1,3 +1,13 @@
+Checked `char` coercion now follows Clojure source overloads in the compiled
+pipeline. [Character evidence](../../results/m12-character-coercion/README.md)
+retains369 Runtime/Macro/actual-AOT controls (365 primary matches/four explicit
+accepted platform differences), effect-order and GC checks, and103 passing
+focused/regression tests. [Provenance](bootstrap/clojure-char.json) and the
+[representation/overload contract](../runtime/character-coercion.md) preserve
+original source and licenses. Full char/EDN, workspace, CI and review acceptance
+retain their separate evidence; focused results do not establish broader numeric
+or Java Character compatibility.
+
 `clojure.edn/read-string` now exposes the same compiled data reader as
 `suss.edn/read-string`, in Runtime and Macro. The focused compatibility test
 passes; the complete EDN suite remains subject to the independently audited

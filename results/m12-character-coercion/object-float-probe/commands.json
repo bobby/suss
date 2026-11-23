@@ -1,0 +1,15 @@
+{
+  "primary_expressions": [
+    "((identity char) (float -70000.1))",
+    "((identity char) -70000.1015625)",
+    "(char (float -70000.1))"
+  ],
+  "primary_exit_code": 0,
+  "actual_command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(pr-str [(try ((identity char) (float -70000.1)) (catch :default e (ex-message e))) (try ((identity char) -70000.1015625) (catch :default e (ex-message e))) (try (char (float -70000.1)) (catch :default e (ex-message e)))])"
+  ],
+  "actual_exit_code": 0
+}

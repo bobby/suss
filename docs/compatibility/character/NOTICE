@@ -1,0 +1,5 @@
+Character coercion follows Clojure1.12.6 core char and RT.charCast semantics.
+Clojure is Copyright (c) Rich Hickey and contributors, licensed under EPL-1.0.
+The complete core form, pinned JAR/source hashes and executed primary controls
+are retained in results/m12-character-coercion. See runtime/core-import/epl-v10.html.
+The Wasm implementation is original code; Java is a development oracle only.

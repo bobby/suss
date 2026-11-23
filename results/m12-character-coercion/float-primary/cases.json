@@ -1,0 +1,1906 @@
+[
+  {
+    "name": "float-bits-00000000",
+    "source_bits": "00000000",
+    "expression": "(char (unchecked-float 0.0))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "float-bits-80000000",
+    "source_bits": "80000000",
+    "expression": "(char (unchecked-float -0.0))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "float-bits-00000001",
+    "source_bits": "00000001",
+    "expression": "(char (unchecked-float 1.401298464324817E-45))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "float-bits-80000001",
+    "source_bits": "80000001",
+    "expression": "(char (unchecked-float -1.401298464324817E-45))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.4E-45\"]",
+    "message": "Value out of range for char: -1.4E-45"
+  },
+  {
+    "name": "float-bits-00800000",
+    "source_bits": "00800000",
+    "expression": "(char (unchecked-float 1.1754943508222875E-38))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "float-bits-80800000",
+    "source_bits": "80800000",
+    "expression": "(char (unchecked-float -1.1754943508222875E-38))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.1754944E-38\"]",
+    "message": "Value out of range for char: -1.1754944E-38"
+  },
+  {
+    "name": "float-bits-7f7fffff",
+    "source_bits": "7f7fffff",
+    "expression": "(char (unchecked-float 3.4028234663852886E38))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.4028235E38\"]",
+    "message": "Value out of range for char: 3.4028235E38"
+  },
+  {
+    "name": "float-bits-ff7fffff",
+    "source_bits": "ff7fffff",
+    "expression": "(char (unchecked-float -3.4028234663852886E38))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.4028235E38\"]",
+    "message": "Value out of range for char: -3.4028235E38"
+  },
+  {
+    "name": "float-bits-7f800000",
+    "source_bits": "7f800000",
+    "expression": "(char (unchecked-float ##Inf))",
+    "primary_edn": "[:throws \"Value out of range for char: Infinity\"]",
+    "message": "Value out of range for char: Infinity"
+  },
+  {
+    "name": "float-bits-ff800000",
+    "source_bits": "ff800000",
+    "expression": "(char (unchecked-float ##-Inf))",
+    "primary_edn": "[:throws \"Value out of range for char: -Infinity\"]",
+    "message": "Value out of range for char: -Infinity"
+  },
+  {
+    "name": "float-bits-7fc00000",
+    "source_bits": "7fc00000",
+    "expression": "(char (unchecked-float ##NaN))",
+    "primary_edn": "[:throws \"Value out of range for char: NaN\"]",
+    "message": "Value out of range for char: NaN"
+  },
+  {
+    "name": "float-bits-ffc00000",
+    "source_bits": "ffc00000",
+    "expression": "(char (unchecked-float ##NaN))",
+    "primary_edn": "[:throws \"Value out of range for char: NaN\"]",
+    "message": "Value out of range for char: NaN"
+  },
+  {
+    "name": "float-bits-477fff00",
+    "source_bits": "477fff00",
+    "expression": "(char (unchecked-float 65535.0))",
+    "primary_edn": "[:ok 65535]",
+    "unit": 65535
+  },
+  {
+    "name": "float-bits-477fff80",
+    "source_bits": "477fff80",
+    "expression": "(char (unchecked-float 65535.5))",
+    "primary_edn": "[:throws \"Value out of range for char: 65535.5\"]",
+    "message": "Value out of range for char: 65535.5"
+  },
+  {
+    "name": "float-bits-47800000",
+    "source_bits": "47800000",
+    "expression": "(char (unchecked-float 65536.0))",
+    "primary_edn": "[:throws \"Value out of range for char: 65536.0\"]",
+    "message": "Value out of range for char: 65536.0"
+  },
+  {
+    "name": "float-bits-47800001",
+    "source_bits": "47800001",
+    "expression": "(char (unchecked-float 65536.0078125))",
+    "primary_edn": "[:throws \"Value out of range for char: 65536.01\"]",
+    "message": "Value out of range for char: 65536.01"
+  },
+  {
+    "name": "float-bits-4cc32779",
+    "source_bits": "4cc32779",
+    "expression": "(char (unchecked-float 1.02317E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.02317E8\"]",
+    "message": "Value out of range for char: 1.02317E8"
+  },
+  {
+    "name": "float-bits-cd305e6a",
+    "source_bits": "cd305e6a",
+    "expression": "(char (unchecked-float -1.84936096E8))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.849361E8\"]",
+    "message": "Value out of range for char: -1.849361E8"
+  },
+  {
+    "name": "float-bits-6d5bfac1",
+    "source_bits": "6d5bfac1",
+    "expression": "(char (unchecked-float 4.255022501406839E27))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.2550225E27\"]",
+    "message": "Value out of range for char: 4.2550225E27"
+  },
+  {
+    "name": "float-bits-cb5c952c",
+    "source_bits": "cb5c952c",
+    "expression": "(char (unchecked-float -1.4456108E7))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.4456108E7\"]",
+    "message": "Value out of range for char: -1.4456108E7"
+  },
+  {
+    "name": "float-bits-5c5e0e9d",
+    "source_bits": "5c5e0e9d",
+    "expression": "(char (unchecked-float 2.5001404920967987E17))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.5001405E17\"]",
+    "message": "Value out of range for char: 2.5001405E17"
+  },
+  {
+    "name": "float-bits-e2aa733e",
+    "source_bits": "e2aa733e",
+    "expression": "(char (unchecked-float -1.5721252836467708E21))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.5721253E21\"]",
+    "message": "Value out of range for char: -1.5721253E21"
+  },
+  {
+    "name": "float-bits-518f8189",
+    "source_bits": "518f8189",
+    "expression": "(char (unchecked-float 7.7044195328E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.7044195E10\"]",
+    "message": "Value out of range for char: 7.7044195E10"
+  },
+  {
+    "name": "float-bits-f2d08520",
+    "source_bits": "f2d08520",
+    "expression": "(char (unchecked-float -8.260328997449724E30))",
+    "primary_edn": "[:throws \"Value out of range for char: -8.260329E30\"]",
+    "message": "Value out of range for char: -8.260329E30"
+  },
+  {
+    "name": "float-bits-7db07601",
+    "source_bits": "7db07601",
+    "expression": "(char (unchecked-float 2.931960482123274E37))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.9319605E37\"]",
+    "message": "Value out of range for char: 2.9319605E37"
+  },
+  {
+    "name": "float-bits-81cf8b52",
+    "source_bits": "81cf8b52",
+    "expression": "(char (unchecked-float -7.623970566293116E-38))",
+    "primary_edn": "[:throws \"Value out of range for char: -7.6239706E-38\"]",
+    "message": "Value out of range for char: -7.6239706E-38"
+  },
+  {
+    "name": "float-bits-67fdb289",
+    "source_bits": "67fdb289",
+    "expression": "(char (unchecked-float 2.3961042250030475E24))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.3961042E24\"]",
+    "message": "Value out of range for char: 2.3961042E24"
+  },
+  {
+    "name": "float-bits-e7549a54",
+    "source_bits": "e7549a54",
+    "expression": "(char (unchecked-float -1.0039885457936152E24))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.00398855E24\"]",
+    "message": "Value out of range for char: -1.00398855E24"
+  },
+  {
+    "name": "float-bits-52ec41a4",
+    "source_bits": "52ec41a4",
+    "expression": "(char (unchecked-float 5.073567744E11))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.0735677E11\"]",
+    "message": "Value out of range for char: 5.0735677E11"
+  },
+  {
+    "name": "float-bits-b4003aa6",
+    "source_bits": "b4003aa6",
+    "expression": "(char (unchecked-float -1.194226513234753E-7))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.1942265E-7\"]",
+    "message": "Value out of range for char: -1.1942265E-7"
+  },
+  {
+    "name": "float-bits-518611d0",
+    "source_bits": "518611d0",
+    "expression": "(char (unchecked-float 7.1978057728E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.197806E10\"]",
+    "message": "Value out of range for char: 7.197806E10"
+  },
+  {
+    "name": "float-bits-eeda88c8",
+    "source_bits": "eeda88c8",
+    "expression": "(char (unchecked-float -3.3816545262908694E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.3816545E28\"]",
+    "message": "Value out of range for char: -3.3816545E28"
+  },
+  {
+    "name": "float-bits-5b0f9588",
+    "source_bits": "5b0f9588",
+    "expression": "(char (unchecked-float 4.041533301771469E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.0415333E16\"]",
+    "message": "Value out of range for char: 4.0415333E16"
+  },
+  {
+    "name": "float-bits-e27c553a",
+    "source_bits": "e27c553a",
+    "expression": "(char (unchecked-float -1.16368018190417E21))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.1636802E21\"]",
+    "message": "Value out of range for char: -1.1636802E21"
+  },
+  {
+    "name": "float-bits-70de6353",
+    "source_bits": "70de6353",
+    "expression": "(char (unchecked-float 5.5060598234318825E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.50606E29\"]",
+    "message": "Value out of range for char: 5.50606E29"
+  },
+  {
+    "name": "float-bits-d4b5447c",
+    "source_bits": "d4b5447c",
+    "expression": "(char (unchecked-float -6.228304461824E12))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.2283045E12\"]",
+    "message": "Value out of range for char: -6.2283045E12"
+  },
+  {
+    "name": "float-bits-4a88d5ad",
+    "source_bits": "4a88d5ad",
+    "expression": "(char (unchecked-float 4483798.5))",
+    "primary_edn": "[:throws \"Value out of range for char: 4483798.5\"]",
+    "message": "Value out of range for char: 4483798.5"
+  },
+  {
+    "name": "float-bits-f6b6ef0e",
+    "source_bits": "f6b6ef0e",
+    "expression": "(char (unchecked-float -1.8551692057478253E33))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.8551692E33\"]",
+    "message": "Value out of range for char: -1.8551692E33"
+  },
+  {
+    "name": "float-bits-56d6ab17",
+    "source_bits": "56d6ab17",
+    "expression": "(char (unchecked-float 1.18015156813824E14))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1801516E14\"]",
+    "message": "Value out of range for char: 1.1801516E14"
+  },
+  {
+    "name": "float-bits-f10d0170",
+    "source_bits": "f10d0170",
+    "expression": "(char (unchecked-float -6.982259874508056E29))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.98226E29\"]",
+    "message": "Value out of range for char: -6.98226E29"
+  },
+  {
+    "name": "float-bits-6c1aa612",
+    "source_bits": "6c1aa612",
+    "expression": "(char (unchecked-float 7.478352843928103E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.478353E26\"]",
+    "message": "Value out of range for char: 7.478353E26"
+  },
+  {
+    "name": "float-bits-f5ea5c22",
+    "source_bits": "f5ea5c22",
+    "expression": "(char (unchecked-float -5.9417292008701714E32))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.9417292E32\"]",
+    "message": "Value out of range for char: -5.9417292E32"
+  },
+  {
+    "name": "float-bits-70dd2d1b",
+    "source_bits": "70dd2d1b",
+    "expression": "(char (unchecked-float 5.4760573069035965E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.4760573E29\"]",
+    "message": "Value out of range for char: 5.4760573E29"
+  },
+  {
+    "name": "float-bits-8d9333a4",
+    "source_bits": "8d9333a4",
+    "expression": "(char (unchecked-float -9.072006486651854E-31))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.0720065E-31\"]",
+    "message": "Value out of range for char: -9.0720065E-31"
+  },
+  {
+    "name": "float-bits-65ffeab3",
+    "source_bits": "65ffeab3",
+    "expression": "(char (unchecked-float 1.5106661119429254E23))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.5106661E23\"]",
+    "message": "Value out of range for char: 1.5106661E23"
+  },
+  {
+    "name": "float-bits-abec3076",
+    "source_bits": "abec3076",
+    "expression": "(char (unchecked-float -1.678225917609022E-12))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.6782259E-12\"]",
+    "message": "Value out of range for char: -1.6782259E-12"
+  },
+  {
+    "name": "float-bits-6dc26d60",
+    "source_bits": "6dc26d60",
+    "expression": "(char (unchecked-float 7.521539770857662E27))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.52154E27\"]",
+    "message": "Value out of range for char: 7.52154E27"
+  },
+  {
+    "name": "float-bits-db768f18",
+    "source_bits": "db768f18",
+    "expression": "(char (unchecked-float -6.940017751280845E16))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.9400178E16\"]",
+    "message": "Value out of range for char: -6.9400178E16"
+  },
+  {
+    "name": "float-bits-6f4fc799",
+    "source_bits": "6f4fc799",
+    "expression": "(char (unchecked-float 6.430469579319362E28))",
+    "primary_edn": "[:throws \"Value out of range for char: 6.4304696E28\"]",
+    "message": "Value out of range for char: 6.4304696E28"
+  },
+  {
+    "name": "float-bits-b941400a",
+    "source_bits": "b941400a",
+    "expression": "(char (unchecked-float -1.842977071646601E-4))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.842977E-4\"]",
+    "message": "Value out of range for char: -1.842977E-4"
+  },
+  {
+    "name": "float-bits-74bd2fe2",
+    "source_bits": "74bd2fe2",
+    "expression": "(char (unchecked-float 1.1991153382314237E32))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1991153E32\"]",
+    "message": "Value out of range for char: 1.1991153E32"
+  },
+  {
+    "name": "float-bits-ee9707cc",
+    "source_bits": "ee9707cc",
+    "expression": "(char (unchecked-float -2.3370831163261457E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.337083E28\"]",
+    "message": "Value out of range for char: -2.337083E28"
+  },
+  {
+    "name": "float-bits-69a1a0be",
+    "source_bits": "69a1a0be",
+    "expression": "(char (unchecked-float 2.4424517559573556E25))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.4424518E25\"]",
+    "message": "Value out of range for char: 2.4424518E25"
+  },
+  {
+    "name": "float-bits-98719ede",
+    "source_bits": "98719ede",
+    "expression": "(char (unchecked-float -3.1228727373988295E-24))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.1228727E-24\"]",
+    "message": "Value out of range for char: -3.1228727E-24"
+  },
+  {
+    "name": "float-bits-62ae78a8",
+    "source_bits": "62ae78a8",
+    "expression": "(char (unchecked-float 1.6092138339530504E21))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.6092138E21\"]",
+    "message": "Value out of range for char: 1.6092138E21"
+  },
+  {
+    "name": "float-bits-f1f9d1c0",
+    "source_bits": "f1f9d1c0",
+    "expression": "(char (unchecked-float -2.474090868357731E30))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.4740909E30\"]",
+    "message": "Value out of range for char: -2.4740909E30"
+  },
+  {
+    "name": "float-bits-52f11a1f",
+    "source_bits": "52f11a1f",
+    "expression": "(char (unchecked-float 5.17762678784E11))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.1776268E11\"]",
+    "message": "Value out of range for char: 5.1776268E11"
+  },
+  {
+    "name": "float-bits-ee9ca0f2",
+    "source_bits": "ee9ca0f2",
+    "expression": "(char (unchecked-float -2.4237116237978513E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.4237116E28\"]",
+    "message": "Value out of range for char: -2.4237116E28"
+  },
+  {
+    "name": "float-bits-61a58bad",
+    "source_bits": "61a58bad",
+    "expression": "(char (unchecked-float 3.817221841130399E20))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.817222E20\"]",
+    "message": "Value out of range for char: 3.817222E20"
+  },
+  {
+    "name": "float-bits-897d60f4",
+    "source_bits": "897d60f4",
+    "expression": "(char (unchecked-float -3.0499354385915994E-33))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.0499354E-33\"]",
+    "message": "Value out of range for char: -3.0499354E-33"
+  },
+  {
+    "name": "float-bits-7bc217c5",
+    "source_bits": "7bc217c5",
+    "expression": "(char (unchecked-float 2.0155753878493117E36))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.0155754E36\"]",
+    "message": "Value out of range for char: 2.0155754E36"
+  },
+  {
+    "name": "float-bits-bb4cda46",
+    "source_bits": "bb4cda46",
+    "expression": "(char (unchecked-float -0.003125803079456091))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.003125803\"]",
+    "message": "Value out of range for char: -0.003125803"
+  },
+  {
+    "name": "float-bits-76a3eced",
+    "source_bits": "76a3eced",
+    "expression": "(char (unchecked-float 1.6624019798479582E33))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.662402E33\"]",
+    "message": "Value out of range for char: 1.662402E33"
+  },
+  {
+    "name": "float-bits-94cd6968",
+    "source_bits": "94cd6968",
+    "expression": "(char (unchecked-float -2.0741285587894826E-26))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.0741286E-26\"]",
+    "message": "Value out of range for char: -2.0741286E-26"
+  },
+  {
+    "name": "float-bits-7d84bda8",
+    "source_bits": "7d84bda8",
+    "expression": "(char (unchecked-float 2.2055355874335674E37))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.2055356E37\"]",
+    "message": "Value out of range for char: 2.2055356E37"
+  },
+  {
+    "name": "float-bits-bb8c1eda",
+    "source_bits": "bb8c1eda",
+    "expression": "(char (unchecked-float -0.0042761387303471565))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.0042761387\"]",
+    "message": "Value out of range for char: -0.0042761387"
+  },
+  {
+    "name": "float-bits-61a16071",
+    "source_bits": "61a16071",
+    "expression": "(char (unchecked-float 3.721093914459059E20))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.721094E20\"]",
+    "message": "Value out of range for char: 3.721094E20"
+  },
+  {
+    "name": "float-bits-c796df1c",
+    "source_bits": "c796df1c",
+    "expression": "(char (unchecked-float -77246.21875))",
+    "primary_edn": "[:throws \"Value out of range for char: -77246.22\"]",
+    "message": "Value out of range for char: -77246.22"
+  },
+  {
+    "name": "float-bits-65396fce",
+    "source_bits": "65396fce",
+    "expression": "(char (unchecked-float 5.473126448671487E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.4731264E22\"]",
+    "message": "Value out of range for char: 5.4731264E22"
+  },
+  {
+    "name": "float-bits-943782ae",
+    "source_bits": "943782ae",
+    "expression": "(char (unchecked-float -9.264910946092303E-27))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.264911E-27\"]",
+    "message": "Value out of range for char: -9.264911E-27"
+  },
+  {
+    "name": "float-bits-6bcfea35",
+    "source_bits": "6bcfea35",
+    "expression": "(char (unchecked-float 5.027073121893113E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.027073E26\"]",
+    "message": "Value out of range for char: 5.027073E26"
+  },
+  {
+    "name": "float-bits-cafbf610",
+    "source_bits": "cafbf610",
+    "expression": "(char (unchecked-float -8256264.0))",
+    "primary_edn": "[:throws \"Value out of range for char: -8256264.0\"]",
+    "message": "Value out of range for char: -8256264.0"
+  },
+  {
+    "name": "float-bits-5e54d233",
+    "source_bits": "5e54d233",
+    "expression": "(char (unchecked-float 3.833843939060744E18))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.833844E18\"]",
+    "message": "Value out of range for char: 3.833844E18"
+  },
+  {
+    "name": "float-bits-979359c2",
+    "source_bits": "979359c2",
+    "expression": "(char (unchecked-float -9.522310404638888E-25))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.52231E-25\"]",
+    "message": "Value out of range for char: -9.52231E-25"
+  },
+  {
+    "name": "float-bits-501fce3d",
+    "source_bits": "501fce3d",
+    "expression": "(char (unchecked-float 1.0724373504E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0724374E10\"]",
+    "message": "Value out of range for char: 1.0724374E10"
+  },
+  {
+    "name": "float-bits-dc482244",
+    "source_bits": "dc482244",
+    "expression": "(char (unchecked-float -2.2533068318100685E17))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.2533068E17\"]",
+    "message": "Value out of range for char: -2.2533068E17"
+  },
+  {
+    "name": "float-bits-59e3c8d5",
+    "source_bits": "59e3c8d5",
+    "expression": "(char (unchecked-float 8.01445460836352E15))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.0144546E15\"]",
+    "message": "Value out of range for char: 8.0144546E15"
+  },
+  {
+    "name": "float-bits-ba1f3816",
+    "source_bits": "ba1f3816",
+    "expression": "(char (unchecked-float -6.073726108297706E-4))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.073726E-4\"]",
+    "message": "Value out of range for char: -6.073726E-4"
+  },
+  {
+    "name": "float-bits-6203907d",
+    "source_bits": "6203907d",
+    "expression": "(char (unchecked-float 6.067337378923754E20))",
+    "primary_edn": "[:throws \"Value out of range for char: 6.0673374E20\"]",
+    "message": "Value out of range for char: 6.0673374E20"
+  },
+  {
+    "name": "float-bits-9ce417b8",
+    "source_bits": "9ce417b8",
+    "expression": "(char (unchecked-float -1.5093905526140347E-21))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.5093906E-21\"]",
+    "message": "Value out of range for char: -1.5093906E-21"
+  },
+  {
+    "name": "float-bits-4def77bb",
+    "source_bits": "4def77bb",
+    "expression": "(char (unchecked-float 5.0220016E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.0220016E8\"]",
+    "message": "Value out of range for char: 5.0220016E8"
+  },
+  {
+    "name": "float-bits-8aa9f1aa",
+    "source_bits": "8aa9f1aa",
+    "expression": "(char (unchecked-float -1.6365011946957108E-32))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.6365012E-32\"]",
+    "message": "Value out of range for char: -1.6365012E-32"
+  },
+  {
+    "name": "float-bits-5e73f501",
+    "source_bits": "5e73f501",
+    "expression": "(char (unchecked-float 4.3947394550055567E18))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.3947395E18\"]",
+    "message": "Value out of range for char: 4.3947395E18"
+  },
+  {
+    "name": "float-bits-8789ca6c",
+    "source_bits": "8789ca6c",
+    "expression": "(char (unchecked-float -2.073244182129231E-34))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.0732442E-34\"]",
+    "message": "Value out of range for char: -2.0732442E-34"
+  },
+  {
+    "name": "float-bits-692142de",
+    "source_bits": "692142de",
+    "expression": "(char (unchecked-float 1.2184551770188066E25))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.2184552E25\"]",
+    "message": "Value out of range for char: 1.2184552E25"
+  },
+  {
+    "name": "float-bits-c1a59a7e",
+    "source_bits": "c1a59a7e",
+    "expression": "(char (unchecked-float -20.700435638427734))",
+    "primary_edn": "[:throws \"Value out of range for char: -20.700436\"]",
+    "message": "Value out of range for char: -20.700436"
+  },
+  {
+    "name": "float-bits-7b33ffc7",
+    "source_bits": "7b33ffc7",
+    "expression": "(char (unchecked-float 9.346089185310057E35))",
+    "primary_edn": "[:throws \"Value out of range for char: 9.346089E35\"]",
+    "message": "Value out of range for char: 9.346089E35"
+  },
+  {
+    "name": "float-bits-beb86e60",
+    "source_bits": "beb86e60",
+    "expression": "(char (unchecked-float -0.3602170944213867))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.3602171\"]",
+    "message": "Value out of range for char: -0.3602171"
+  },
+  {
+    "name": "float-bits-4ea6ce42",
+    "source_bits": "4ea6ce42",
+    "expression": "(char (unchecked-float 1.399267584E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.3992676E9\"]",
+    "message": "Value out of range for char: 1.3992676E9"
+  },
+  {
+    "name": "float-bits-bbbb8692",
+    "source_bits": "bbbb8692",
+    "expression": "(char (unchecked-float -0.005722829140722752))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.005722829\"]",
+    "message": "Value out of range for char: -0.005722829"
+  },
+  {
+    "name": "float-bits-7854f4cb",
+    "source_bits": "7854f4cb",
+    "expression": "(char (unchecked-float 1.7277061332338513E34))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.7277061E34\"]",
+    "message": "Value out of range for char: 1.7277061E34"
+  },
+  {
+    "name": "float-bits-a8687794",
+    "source_bits": "a8687794",
+    "expression": "(char (unchecked-float -1.2904516458233165E-14))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.29045165E-14\"]",
+    "message": "Value out of range for char: -1.29045165E-14"
+  },
+  {
+    "name": "float-bits-6e55fde5",
+    "source_bits": "6e55fde5",
+    "expression": "(char (unchecked-float 1.6556811686558394E28))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.6556812E28\"]",
+    "message": "Value out of range for char: 1.6556812E28"
+  },
+  {
+    "name": "float-bits-f3a049e6",
+    "source_bits": "f3a049e6",
+    "expression": "(char (unchecked-float -2.5398752921875527E31))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.5398753E31\"]",
+    "message": "Value out of range for char: -2.5398753E31"
+  },
+  {
+    "name": "float-bits-4ffa5810",
+    "source_bits": "4ffa5810",
+    "expression": "(char (unchecked-float 8.400150528E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.4001505E9\"]",
+    "message": "Value out of range for char: 8.4001505E9"
+  },
+  {
+    "name": "float-bits-8aff9a08",
+    "source_bits": "8aff9a08",
+    "expression": "(char (unchecked-float -2.4613546907489288E-32))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.4613547E-32\"]",
+    "message": "Value out of range for char: -2.4613547E-32"
+  },
+  {
+    "name": "float-bits-7510f5c7",
+    "source_bits": "7510f5c7",
+    "expression": "(char (unchecked-float 1.8375871689117436E32))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.8375872E32\"]",
+    "message": "Value out of range for char: 1.8375872E32"
+  },
+  {
+    "name": "float-bits-cf27b87a",
+    "source_bits": "cf27b87a",
+    "expression": "(char (unchecked-float -2.813884928E9))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.813885E9\"]",
+    "message": "Value out of range for char: -2.813885E9"
+  },
+  {
+    "name": "float-bits-605ded91",
+    "source_bits": "605ded91",
+    "expression": "(char (unchecked-float 6.396638912419411E19))",
+    "primary_edn": "[:throws \"Value out of range for char: 6.396639E19\"]",
+    "message": "Value out of range for char: 6.396639E19"
+  },
+  {
+    "name": "float-bits-9f84c9bc",
+    "source_bits": "9f84c9bc",
+    "expression": "(char (unchecked-float -5.623791604655483E-20))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.6237916E-20\"]",
+    "message": "Value out of range for char: -5.6237916E-20"
+  },
+  {
+    "name": "float-bits-496a19ed",
+    "source_bits": "496a19ed",
+    "expression": "(char (unchecked-float 958878.8125))",
+    "primary_edn": "[:throws \"Value out of range for char: 958878.8\"]",
+    "message": "Value out of range for char: 958878.8"
+  },
+  {
+    "name": "float-bits-d398e64e",
+    "source_bits": "d398e64e",
+    "expression": "(char (unchecked-float -1.31339780096E12))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.3133978E12\"]",
+    "message": "Value out of range for char: -1.3133978E12"
+  },
+  {
+    "name": "float-bits-7413b956",
+    "source_bits": "7413b956",
+    "expression": "(char (unchecked-float 4.681559433613717E31))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.6815594E31\"]",
+    "message": "Value out of range for char: 4.6815594E31"
+  },
+  {
+    "name": "float-bits-cd143ab0",
+    "source_bits": "cd143ab0",
+    "expression": "(char (unchecked-float -1.55429632E8))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.5542963E8\"]",
+    "message": "Value out of range for char: -1.5542963E8"
+  },
+  {
+    "name": "float-bits-58880e53",
+    "source_bits": "58880e53",
+    "expression": "(char (unchecked-float 1.196760827428864E15))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1967608E15\"]",
+    "message": "Value out of range for char: 1.1967608E15"
+  },
+  {
+    "name": "float-bits-95422762",
+    "source_bits": "95422762",
+    "expression": "(char (unchecked-float -3.920905555801523E-26))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.9209056E-26\"]",
+    "message": "Value out of range for char: -3.9209056E-26"
+  },
+  {
+    "name": "float-bits-5c8dff5b",
+    "source_bits": "5c8dff5b",
+    "expression": "(char (unchecked-float 3.197499041864745E17))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.197499E17\"]",
+    "message": "Value out of range for char: 3.197499E17"
+  },
+  {
+    "name": "float-bits-819360e4",
+    "source_bits": "819360e4",
+    "expression": "(char (unchecked-float -5.413830296933528E-38))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.4138303E-38\"]",
+    "message": "Value out of range for char: -5.4138303E-38"
+  },
+  {
+    "name": "float-bits-6749b6f7",
+    "source_bits": "6749b6f7",
+    "expression": "(char (unchecked-float 9.525707687039412E23))",
+    "primary_edn": "[:throws \"Value out of range for char: 9.525708E23\"]",
+    "message": "Value out of range for char: 9.525708E23"
+  },
+  {
+    "name": "float-bits-f64d0fb6",
+    "source_bits": "f64d0fb6",
+    "expression": "(char (unchecked-float -1.0397846793645235E33))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.0397847E33\"]",
+    "message": "Value out of range for char: -1.0397847E33"
+  },
+  {
+    "name": "float-bits-52e1439f",
+    "source_bits": "52e1439f",
+    "expression": "(char (unchecked-float 4.83751067648E11))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.8375107E11\"]",
+    "message": "Value out of range for char: 4.8375107E11"
+  },
+  {
+    "name": "float-bits-dba4f058",
+    "source_bits": "dba4f058",
+    "expression": "(char (unchecked-float -9.285231385667174E16))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.285231E16\"]",
+    "message": "Value out of range for char: -9.285231E16"
+  },
+  {
+    "name": "float-bits-6baa37d9",
+    "source_bits": "6baa37d9",
+    "expression": "(char (unchecked-float 4.115622448690176E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.1156224E26\"]",
+    "message": "Value out of range for char: 4.1156224E26"
+  },
+  {
+    "name": "float-bits-88d2734a",
+    "source_bits": "88d2734a",
+    "expression": "(char (unchecked-float -1.2666019588377305E-33))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.266602E-33\"]",
+    "message": "Value out of range for char: -1.266602E-33"
+  },
+  {
+    "name": "float-bits-6ac84a24",
+    "source_bits": "6ac84a24",
+    "expression": "(char (unchecked-float 1.2106764156272242E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.2106764E26\"]",
+    "message": "Value out of range for char: 1.2106764E26"
+  },
+  {
+    "name": "float-bits-99dcdd0c",
+    "source_bits": "99dcdd0c",
+    "expression": "(char (unchecked-float -2.2836746967017554E-23))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.2836747E-23\"]",
+    "message": "Value out of range for char: -2.2836747E-23"
+  },
+  {
+    "name": "float-bits-7a64f4fd",
+    "source_bits": "7a64f4fd",
+    "expression": "(char (unchecked-float 2.9720315910358695E35))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.9720316E35\"]",
+    "message": "Value out of range for char: 2.9720316E35"
+  },
+  {
+    "name": "float-bits-a82e661e",
+    "source_bits": "a82e661e",
+    "expression": "(char (unchecked-float -9.681083449545984E-15))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.6810834E-15\"]",
+    "message": "Value out of range for char: -9.6810834E-15"
+  },
+  {
+    "name": "float-bits-4be816e6",
+    "source_bits": "4be816e6",
+    "expression": "(char (unchecked-float 3.0420428E7))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.0420428E7\"]",
+    "message": "Value out of range for char: 3.0420428E7"
+  },
+  {
+    "name": "float-bits-83345b00",
+    "source_bits": "83345b00",
+    "expression": "(char (unchecked-float -5.300170866388265E-37))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.300171E-37\"]",
+    "message": "Value out of range for char: -5.300171E-37"
+  },
+  {
+    "name": "float-bits-6cd9925f",
+    "source_bits": "6cd9925f",
+    "expression": "(char (unchecked-float 2.104224966428484E27))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.104225E27\"]",
+    "message": "Value out of range for char: 2.104225E27"
+  },
+  {
+    "name": "float-bits-9d943c32",
+    "source_bits": "9d943c32",
+    "expression": "(char (unchecked-float -3.9237514304844604E-21))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.9237514E-21\"]",
+    "message": "Value out of range for char: -3.9237514E-21"
+  },
+  {
+    "name": "float-bits-4d53edec",
+    "source_bits": "4d53edec",
+    "expression": "(char (unchecked-float 2.22224064E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.2222406E8\"]",
+    "message": "Value out of range for char: 2.2222406E8"
+  },
+  {
+    "name": "float-bits-bcbdde34",
+    "source_bits": "bcbdde34",
+    "expression": "(char (unchecked-float -0.023177243769168854))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.023177244\"]",
+    "message": "Value out of range for char: -0.023177244"
+  },
+  {
+    "name": "float-bits-732ff403",
+    "source_bits": "732ff403",
+    "expression": "(char (unchecked-float 1.3940446409170126E31))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.3940446E31\"]",
+    "message": "Value out of range for char: 1.3940446E31"
+  },
+  {
+    "name": "float-bits-e3e28986",
+    "source_bits": "e3e28986",
+    "expression": "(char (unchecked-float -8.357747537376868E21))",
+    "primary_edn": "[:throws \"Value out of range for char: -8.3577475E21\"]",
+    "message": "Value out of range for char: -8.3577475E21"
+  },
+  {
+    "name": "float-bits-67515331",
+    "source_bits": "67515331",
+    "expression": "(char (unchecked-float 9.885092054999816E23))",
+    "primary_edn": "[:throws \"Value out of range for char: 9.885092E23\"]",
+    "message": "Value out of range for char: 9.885092E23"
+  },
+  {
+    "name": "float-bits-c0991aa8",
+    "source_bits": "c0991aa8",
+    "expression": "(char (unchecked-float -4.784503936767578))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.784504\"]",
+    "message": "Value out of range for char: -4.784504"
+  },
+  {
+    "name": "float-bits-76bc3de9",
+    "source_bits": "76bc3de9",
+    "expression": "(char (unchecked-float 1.9089990167035863E33))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.908999E33\"]",
+    "message": "Value out of range for char: 1.908999E33"
+  },
+  {
+    "name": "float-bits-deb7221a",
+    "source_bits": "deb7221a",
+    "expression": "(char (unchecked-float -6.598069222725648E18))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.598069E18\"]",
+    "message": "Value out of range for char: -6.598069E18"
+  },
+  {
+    "name": "float-bits-675c0ab2",
+    "source_bits": "675c0ab2",
+    "expression": "(char (unchecked-float 1.0391179199237978E24))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0391179E24\"]",
+    "message": "Value out of range for char: 1.0391179E24"
+  },
+  {
+    "name": "float-bits-ea27045c",
+    "source_bits": "ea27045c",
+    "expression": "(char (unchecked-float -5.047779961050733E25))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.04778E25\"]",
+    "message": "Value out of range for char: -5.04778E25"
+  },
+  {
+    "name": "float-bits-70a2d40d",
+    "source_bits": "70a2d40d",
+    "expression": "(char (unchecked-float 4.0314340204464384E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.031434E29\"]",
+    "message": "Value out of range for char: 4.031434E29"
+  },
+  {
+    "name": "float-bits-98c319ee",
+    "source_bits": "98c319ee",
+    "expression": "(char (unchecked-float -5.043250087089441E-24))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.04325E-24\"]",
+    "message": "Value out of range for char: -5.04325E-24"
+  },
+  {
+    "name": "float-bits-526a1876",
+    "source_bits": "526a1876",
+    "expression": "(char (unchecked-float 2.51358183424E11))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.5135818E11\"]",
+    "message": "Value out of range for char: 2.5135818E11"
+  },
+  {
+    "name": "float-bits-cb7dcf50",
+    "source_bits": "cb7dcf50",
+    "expression": "(char (unchecked-float -1.663368E7))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.663368E7\"]",
+    "message": "Value out of range for char: -1.663368E7"
+  },
+  {
+    "name": "float-bits-48bc5a71",
+    "source_bits": "48bc5a71",
+    "expression": "(char (unchecked-float 385747.53125))",
+    "primary_edn": "[:throws \"Value out of range for char: 385747.53\"]",
+    "message": "Value out of range for char: 385747.53"
+  },
+  {
+    "name": "float-bits-dd5ec502",
+    "source_bits": "dd5ec502",
+    "expression": "(char (unchecked-float -1.0032649153659535E18))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.0032649E18\"]",
+    "message": "Value out of range for char: -1.0032649E18"
+  },
+  {
+    "name": "float-bits-516fc07b",
+    "source_bits": "516fc07b",
+    "expression": "(char (unchecked-float 6.4357904384E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 6.4357904E10\"]",
+    "message": "Value out of range for char: 6.4357904E10"
+  },
+  {
+    "name": "float-bits-c01cef84",
+    "source_bits": "c01cef84",
+    "expression": "(char (unchecked-float -2.4521188735961914))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.4521189\"]",
+    "message": "Value out of range for char: -2.4521189"
+  },
+  {
+    "name": "float-bits-50b9b517",
+    "source_bits": "50b9b517",
+    "expression": "(char (unchecked-float 2.4925222912E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.4925223E10\"]",
+    "message": "Value out of range for char: 2.4925223E10"
+  },
+  {
+    "name": "float-bits-c15db756",
+    "source_bits": "c15db756",
+    "expression": "(char (unchecked-float -13.857259750366211))",
+    "primary_edn": "[:throws \"Value out of range for char: -13.85726\"]",
+    "message": "Value out of range for char: -13.85726"
+  },
+  {
+    "name": "float-bits-5c2386be",
+    "source_bits": "5c2386be",
+    "expression": "(char (unchecked-float 1.841142872229806E17))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.8411429E17\"]",
+    "message": "Value out of range for char: 1.8411429E17"
+  },
+  {
+    "name": "float-bits-f0e118f8",
+    "source_bits": "f0e118f8",
+    "expression": "(char (unchecked-float -5.5731450061088915E29))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.573145E29\"]",
+    "message": "Value out of range for char: -5.573145E29"
+  },
+  {
+    "name": "float-bits-5f8807f7",
+    "source_bits": "5f8807f7",
+    "expression": "(char (unchecked-float 1.960414938673447E19))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.960415E19\"]",
+    "message": "Value out of range for char: 1.960415E19"
+  },
+  {
+    "name": "float-bits-ef22c4ea",
+    "source_bits": "ef22c4ea",
+    "expression": "(char (unchecked-float -5.037462608545936E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.0374626E28\"]",
+    "message": "Value out of range for char: -5.0374626E28"
+  },
+  {
+    "name": "float-bits-5e022f45",
+    "source_bits": "5e022f45",
+    "expression": "(char (unchecked-float 2.3451981037845873E18))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.345198E18\"]",
+    "message": "Value out of range for char: 2.345198E18"
+  },
+  {
+    "name": "float-bits-bd383fac",
+    "source_bits": "bd383fac",
+    "expression": "(char (unchecked-float -0.04498259723186493))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.044982597\"]",
+    "message": "Value out of range for char: -0.044982597"
+  },
+  {
+    "name": "float-bits-60f4b71f",
+    "source_bits": "60f4b71f",
+    "expression": "(char (unchecked-float 1.4106877560682342E20))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.4106878E20\"]",
+    "message": "Value out of range for char: 1.4106878E20"
+  },
+  {
+    "name": "float-bits-c9f401be",
+    "source_bits": "c9f401be",
+    "expression": "(char (unchecked-float -1998903.75))",
+    "primary_edn": "[:throws \"Value out of range for char: -1998903.8\"]",
+    "message": "Value out of range for char: -1998903.8"
+  },
+  {
+    "name": "float-bits-7192be06",
+    "source_bits": "7192be06",
+    "expression": "(char (unchecked-float 1.4532651415629458E30))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.4532651E30\"]",
+    "message": "Value out of range for char: 1.4532651E30"
+  },
+  {
+    "name": "float-bits-bd9597a0",
+    "source_bits": "bd9597a0",
+    "expression": "(char (unchecked-float -0.0730431079864502))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.07304311\"]",
+    "message": "Value out of range for char: -0.07304311"
+  },
+  {
+    "name": "float-bits-65916682",
+    "source_bits": "65916682",
+    "expression": "(char (unchecked-float 8.582925942485523E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.582926E22\"]",
+    "message": "Value out of range for char: 8.582926E22"
+  },
+  {
+    "name": "float-bits-bc8ec1d2",
+    "source_bits": "bc8ec1d2",
+    "expression": "(char (unchecked-float -0.01742640510201454))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.017426405\"]",
+    "message": "Value out of range for char: -0.017426405"
+  },
+  {
+    "name": "float-bits-65ea7709",
+    "source_bits": "65ea7709",
+    "expression": "(char (unchecked-float 1.3840369600682684E23))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.384037E23\"]",
+    "message": "Value out of range for char: 1.384037E23"
+  },
+  {
+    "name": "float-bits-d32594d4",
+    "source_bits": "d32594d4",
+    "expression": "(char (unchecked-float -7.1116652544E11))",
+    "primary_edn": "[:throws \"Value out of range for char: -7.111665E11\"]",
+    "message": "Value out of range for char: -7.111665E11"
+  },
+  {
+    "name": "float-bits-4ed7fa25",
+    "source_bits": "4ed7fa25",
+    "expression": "(char (unchecked-float 1.811747456E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.8117475E9\"]",
+    "message": "Value out of range for char: 1.8117475E9"
+  },
+  {
+    "name": "float-bits-c6fb9926",
+    "source_bits": "c6fb9926",
+    "expression": "(char (unchecked-float -32204.57421875))",
+    "primary_edn": "[:throws \"Value out of range for char: -32204.574\"]",
+    "message": "Value out of range for char: -32204.574"
+  },
+  {
+    "name": "float-bits-6270de4f",
+    "source_bits": "6270de4f",
+    "expression": "(char (unchecked-float 1.1108094000224681E21))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1108094E21\"]",
+    "message": "Value out of range for char: 1.1108094E21"
+  },
+  {
+    "name": "float-bits-f8c1eb48",
+    "source_bits": "f8c1eb48",
+    "expression": "(char (unchecked-float -3.1465167636930653E34))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.1465168E34\"]",
+    "message": "Value out of range for char: -3.1465168E34"
+  },
+  {
+    "name": "float-bits-638e9607",
+    "source_bits": "638e9607",
+    "expression": "(char (unchecked-float 5.260496535794565E21))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.2604965E21\"]",
+    "message": "Value out of range for char: 5.2604965E21"
+  },
+  {
+    "name": "float-bits-9fa25bba",
+    "source_bits": "9fa25bba",
+    "expression": "(char (unchecked-float -6.87614175959106E-20))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.876142E-20\"]",
+    "message": "Value out of range for char: -6.876142E-20"
+  },
+  {
+    "name": "float-bits-54e3b7d3",
+    "source_bits": "54e3b7d3",
+    "expression": "(char (unchecked-float 7.824333078528E12))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.824333E12\"]",
+    "message": "Value out of range for char: 7.824333E12"
+  },
+  {
+    "name": "float-bits-c9258efc",
+    "source_bits": "c9258efc",
+    "expression": "(char (unchecked-float -678127.75))",
+    "primary_edn": "[:throws \"Value out of range for char: -678127.75\"]",
+    "message": "Value out of range for char: -678127.75"
+  },
+  {
+    "name": "float-bits-486b9e2f",
+    "source_bits": "486b9e2f",
+    "expression": "(char (unchecked-float 241272.734375))",
+    "primary_edn": "[:throws \"Value out of range for char: 241272.73\"]",
+    "message": "Value out of range for char: 241272.73"
+  },
+  {
+    "name": "float-bits-fb9e1d8e",
+    "source_bits": "fb9e1d8e",
+    "expression": "(char (unchecked-float -1.6419646878521714E36))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.6419647E36\"]",
+    "message": "Value out of range for char: -1.6419647E36"
+  },
+  {
+    "name": "float-bits-4d9b0799",
+    "source_bits": "4d9b0799",
+    "expression": "(char (unchecked-float 3.251208E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.251208E8\"]",
+    "message": "Value out of range for char: 3.251208E8"
+  },
+  {
+    "name": "float-bits-ee60b3f0",
+    "source_bits": "ee60b3f0",
+    "expression": "(char (unchecked-float -1.738554332241205E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.7385543E28\"]",
+    "message": "Value out of range for char: -1.7385543E28"
+  },
+  {
+    "name": "float-bits-58f9b693",
+    "source_bits": "58f9b693",
+    "expression": "(char (unchecked-float 2.196500364918784E15))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.1965004E15\"]",
+    "message": "Value out of range for char: 2.1965004E15"
+  },
+  {
+    "name": "float-bits-d25132a2",
+    "source_bits": "d25132a2",
+    "expression": "(char (unchecked-float -2.24624410624E11))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.2462441E11\"]",
+    "message": "Value out of range for char: -2.2462441E11"
+  },
+  {
+    "name": "float-bits-7e0d1199",
+    "source_bits": "7e0d1199",
+    "expression": "(char (unchecked-float 4.68781299152344E37))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.687813E37\"]",
+    "message": "Value out of range for char: 4.687813E37"
+  },
+  {
+    "name": "float-bits-ee8cce24",
+    "source_bits": "ee8cce24",
+    "expression": "(char (unchecked-float -2.1788555049511153E28))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.1788555E28\"]",
+    "message": "Value out of range for char: -2.1788555E28"
+  },
+  {
+    "name": "float-bits-6cbbc335",
+    "source_bits": "6cbbc335",
+    "expression": "(char (unchecked-float 1.8159277392762491E27))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.8159277E27\"]",
+    "message": "Value out of range for char: 1.8159277E27"
+  },
+  {
+    "name": "float-bits-b0392ef6",
+    "source_bits": "b0392ef6",
+    "expression": "(char (unchecked-float -6.736934343720691E-10))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.7369343E-10\"]",
+    "message": "Value out of range for char: -6.7369343E-10"
+  },
+  {
+    "name": "float-bits-659259df",
+    "source_bits": "659259df",
+    "expression": "(char (unchecked-float 8.639041694562485E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.639042E22\"]",
+    "message": "Value out of range for char: 8.639042E22"
+  },
+  {
+    "name": "float-bits-89c09198",
+    "source_bits": "89c09198",
+    "expression": "(char (unchecked-float -4.6359234369805686E-33))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.6359234E-33\"]",
+    "message": "Value out of range for char: -4.6359234E-33"
+  },
+  {
+    "name": "float-bits-7490e817",
+    "source_bits": "7490e817",
+    "expression": "(char (unchecked-float 9.184546983701174E31))",
+    "primary_edn": "[:throws \"Value out of range for char: 9.184547E31\"]",
+    "message": "Value out of range for char: 9.184547E31"
+  },
+  {
+    "name": "float-bits-ed02e68a",
+    "source_bits": "ed02e68a",
+    "expression": "(char (unchecked-float -2.531984743866304E27))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.5319847E27\"]",
+    "message": "Value out of range for char: -2.5319847E27"
+  },
+  {
+    "name": "float-bits-5869a465",
+    "source_bits": "5869a465",
+    "expression": "(char (unchecked-float 1.027569113628672E15))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0275691E15\"]",
+    "message": "Value out of range for char: 1.0275691E15"
+  },
+  {
+    "name": "float-bits-9d43f24c",
+    "source_bits": "9d43f24c",
+    "expression": "(char (unchecked-float -2.593329966008083E-21))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.59333E-21\"]",
+    "message": "Value out of range for char: -2.59333E-21"
+  },
+  {
+    "name": "float-bits-5c58893f",
+    "source_bits": "5c58893f",
+    "expression": "(char (unchecked-float 2.4379799458178662E17))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.43798E17\"]",
+    "message": "Value out of range for char: 2.43798E17"
+  },
+  {
+    "name": "float-bits-d8de6d5e",
+    "source_bits": "d8de6d5e",
+    "expression": "(char (unchecked-float -1.95649047887872E15))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.9564905E15\"]",
+    "message": "Value out of range for char: -1.9564905E15"
+  },
+  {
+    "name": "float-bits-54fbf525",
+    "source_bits": "54fbf525",
+    "expression": "(char (unchecked-float 8.657197072384E12))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.657197E12\"]",
+    "message": "Value out of range for char: 8.657197E12"
+  },
+  {
+    "name": "float-bits-c0042440",
+    "source_bits": "c0042440",
+    "expression": "(char (unchecked-float -2.0647125244140625))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.0647125\"]",
+    "message": "Value out of range for char: -2.0647125"
+  },
+  {
+    "name": "float-bits-4cd64aa2",
+    "source_bits": "4cd64aa2",
+    "expression": "(char (unchecked-float 1.1235048E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1235048E8\"]",
+    "message": "Value out of range for char: 1.1235048E8"
+  },
+  {
+    "name": "float-bits-b5131772",
+    "source_bits": "b5131772",
+    "expression": "(char (unchecked-float -5.479588480739039E-7))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.4795885E-7\"]",
+    "message": "Value out of range for char: -5.4795885E-7"
+  },
+  {
+    "name": "float-bits-6360902a",
+    "source_bits": "6360902a",
+    "expression": "(char (unchecked-float 4.142458788001423E21))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.1424588E21\"]",
+    "message": "Value out of range for char: 4.1424588E21"
+  },
+  {
+    "name": "float-bits-8c479b74",
+    "source_bits": "8c479b74",
+    "expression": "(char (unchecked-float -1.5377182330507721E-31))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.5377182E-31\"]",
+    "message": "Value out of range for char: -1.5377182E-31"
+  },
+  {
+    "name": "float-bits-69d61045",
+    "source_bits": "69d61045",
+    "expression": "(char (unchecked-float 3.2348369510824705E25))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.234837E25\"]",
+    "message": "Value out of range for char: 3.234837E25"
+  },
+  {
+    "name": "float-bits-8bd378c6",
+    "source_bits": "8bd378c6",
+    "expression": "(char (unchecked-float -8.145596332483497E-32))",
+    "primary_edn": "[:throws \"Value out of range for char: -8.1455963E-32\"]",
+    "message": "Value out of range for char: -8.1455963E-32"
+  },
+  {
+    "name": "float-bits-7320f96e",
+    "source_bits": "7320f96e",
+    "expression": "(char (unchecked-float 1.2753700751567967E31))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.2753701E31\"]",
+    "message": "Value out of range for char: 1.2753701E31"
+  },
+  {
+    "name": "float-bits-caa20be8",
+    "source_bits": "caa20be8",
+    "expression": "(char (unchecked-float -5309940.0))",
+    "primary_edn": "[:throws \"Value out of range for char: -5309940.0\"]",
+    "message": "Value out of range for char: -5309940.0"
+  },
+  {
+    "name": "float-bits-508ffe28",
+    "source_bits": "508ffe28",
+    "expression": "(char (unchecked-float 1.9326386176E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.9326386E10\"]",
+    "message": "Value out of range for char: 1.9326386E10"
+  },
+  {
+    "name": "float-bits-bb51655a",
+    "source_bits": "bb51655a",
+    "expression": "(char (unchecked-float -0.0031951279379427433))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.003195128\"]",
+    "message": "Value out of range for char: -0.003195128"
+  },
+  {
+    "name": "float-bits-5b3cf4f1",
+    "source_bits": "5b3cf4f1",
+    "expression": "(char (unchecked-float 5.318661154589901E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.318661E16\"]",
+    "message": "Value out of range for char: 5.318661E16"
+  },
+  {
+    "name": "float-bits-f228699c",
+    "source_bits": "f228699c",
+    "expression": "(char (unchecked-float -3.3357539552138775E30))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.335754E30\"]",
+    "message": "Value out of range for char: -3.335754E30"
+  },
+  {
+    "name": "float-bits-4a4c784d",
+    "source_bits": "4a4c784d",
+    "expression": "(char (unchecked-float 3350035.25))",
+    "primary_edn": "[:throws \"Value out of range for char: 3350035.2\"]",
+    "message": "Value out of range for char: 3350035.2"
+  },
+  {
+    "name": "float-bits-c811f12e",
+    "source_bits": "c811f12e",
+    "expression": "(char (unchecked-float -149444.71875))",
+    "primary_edn": "[:throws \"Value out of range for char: -149444.72\"]",
+    "message": "Value out of range for char: -149444.72"
+  },
+  {
+    "name": "float-bits-706e86b7",
+    "source_bits": "706e86b7",
+    "expression": "(char (unchecked-float 2.952811703614994E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.9528117E29\"]",
+    "message": "Value out of range for char: 2.9528117E29"
+  },
+  {
+    "name": "float-bits-b1e4e890",
+    "source_bits": "b1e4e890",
+    "expression": "(char (unchecked-float -6.662112639332918E-9))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.6621126E-9\"]",
+    "message": "Value out of range for char: -6.6621126E-9"
+  },
+  {
+    "name": "float-bits-4f4822b2",
+    "source_bits": "4f4822b2",
+    "expression": "(char (unchecked-float 3.357716992E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.357717E9\"]",
+    "message": "Value out of range for char: 3.357717E9"
+  },
+  {
+    "name": "float-bits-ca817042",
+    "source_bits": "ca817042",
+    "expression": "(char (unchecked-float -4241441.0))",
+    "primary_edn": "[:throws \"Value out of range for char: -4241441.0\"]",
+    "message": "Value out of range for char: -4241441.0"
+  },
+  {
+    "name": "float-bits-65adf2bb",
+    "source_bits": "65adf2bb",
+    "expression": "(char (unchecked-float 1.0268087354654643E23))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0268087E23\"]",
+    "message": "Value out of range for char: 1.0268087E23"
+  },
+  {
+    "name": "float-bits-f78afcc4",
+    "source_bits": "f78afcc4",
+    "expression": "(char (unchecked-float -5.6379973626389E33))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.6379974E33\"]",
+    "message": "Value out of range for char: -5.6379974E33"
+  },
+  {
+    "name": "float-bits-6dd7e154",
+    "source_bits": "6dd7e154",
+    "expression": "(char (unchecked-float 8.35146026247338E27))",
+    "primary_edn": "[:throws \"Value out of range for char: 8.35146E27\"]",
+    "message": "Value out of range for char: 8.35146E27"
+  },
+  {
+    "name": "float-bits-8bc77696",
+    "source_bits": "8bc77696",
+    "expression": "(char (unchecked-float -7.68304400741233E-32))",
+    "primary_edn": "[:throws \"Value out of range for char: -7.683044E-32\"]",
+    "message": "Value out of range for char: -7.683044E-32"
+  },
+  {
+    "name": "float-bits-4af5bd01",
+    "source_bits": "4af5bd01",
+    "expression": "(char (unchecked-float 8052352.5))",
+    "primary_edn": "[:throws \"Value out of range for char: 8052352.5\"]",
+    "message": "Value out of range for char: 8052352.5"
+  },
+  {
+    "name": "float-bits-a76b5a38",
+    "source_bits": "a76b5a38",
+    "expression": "(char (unchecked-float -3.2661709030738437E-15))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.266171E-15\"]",
+    "message": "Value out of range for char: -3.266171E-15"
+  },
+  {
+    "name": "float-bits-71ccd83a",
+    "source_bits": "71ccd83a",
+    "expression": "(char (unchecked-float 2.028683004091109E30))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.028683E30\"]",
+    "message": "Value out of range for char: 2.028683E30"
+  },
+  {
+    "name": "float-bits-a5dad82a",
+    "source_bits": "a5dad82a",
+    "expression": "(char (unchecked-float -3.7963450242654265E-16))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.796345E-16\"]",
+    "message": "Value out of range for char: -3.796345E-16"
+  },
+  {
+    "name": "float-bits-5e46a985",
+    "source_bits": "5e46a985",
+    "expression": "(char (unchecked-float 3.5787797814050816E18))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.5787798E18\"]",
+    "message": "Value out of range for char: 3.5787798E18"
+  },
+  {
+    "name": "float-bits-f9a7f4ec",
+    "source_bits": "f9a7f4ec",
+    "expression": "(char (unchecked-float -1.0901014764562007E35))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.0901015E35\"]",
+    "message": "Value out of range for char: -1.0901015E35"
+  },
+  {
+    "name": "float-bits-50186b5c",
+    "source_bits": "50186b5c",
+    "expression": "(char (unchecked-float 1.0228690944E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0228691E10\"]",
+    "message": "Value out of range for char: 1.0228691E10"
+  },
+  {
+    "name": "float-bits-bad5a8fe",
+    "source_bits": "bad5a8fe",
+    "expression": "(char (unchecked-float -0.0016300973948091269))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.0016300974\"]",
+    "message": "Value out of range for char: -0.0016300974"
+  },
+  {
+    "name": "float-bits-6aebbc46",
+    "source_bits": "6aebbc46",
+    "expression": "(char (unchecked-float 1.4249333189015125E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.4249333E26\"]",
+    "message": "Value out of range for char: 1.4249333E26"
+  },
+  {
+    "name": "float-bits-b0a800e0",
+    "source_bits": "b0a800e0",
+    "expression": "(char (unchecked-float -1.2223857481785672E-9))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.2223857E-9\"]",
+    "message": "Value out of range for char: -1.2223857E-9"
+  },
+  {
+    "name": "float-bits-5ab03ec2",
+    "source_bits": "5ab03ec2",
+    "expression": "(char (unchecked-float 2.4804299422826496E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.48043E16\"]",
+    "message": "Value out of range for char: 2.48043E16"
+  },
+  {
+    "name": "float-bits-97893d12",
+    "source_bits": "97893d12",
+    "expression": "(char (unchecked-float -8.868833807971906E-25))",
+    "primary_edn": "[:throws \"Value out of range for char: -8.868834E-25\"]",
+    "message": "Value out of range for char: -8.868834E-25"
+  },
+  {
+    "name": "float-bits-5afe3949",
+    "source_bits": "5afe3949",
+    "expression": "(char (unchecked-float 3.577881488995123E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.5778815E16\"]",
+    "message": "Value out of range for char: 3.5778815E16"
+  },
+  {
+    "name": "float-bits-9ccbf214",
+    "source_bits": "9ccbf214",
+    "expression": "(char (unchecked-float -1.3495988876524666E-21))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.3495989E-21\"]",
+    "message": "Value out of range for char: -1.3495989E-21"
+  },
+  {
+    "name": "float-bits-70b23665",
+    "source_bits": "70b23665",
+    "expression": "(char (unchecked-float 4.4123272561178706E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 4.4123273E29\"]",
+    "message": "Value out of range for char: 4.4123273E29"
+  },
+  {
+    "name": "float-bits-d5522866",
+    "source_bits": "d5522866",
+    "expression": "(char (unchecked-float -1.4441934487552E13))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.4441934E13\"]",
+    "message": "Value out of range for char: -1.4441934E13"
+  },
+  {
+    "name": "float-bits-4f29a48e",
+    "source_bits": "4f29a48e",
+    "expression": "(char (unchecked-float 2.84613376E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.8461338E9\"]",
+    "message": "Value out of range for char: 2.8461338E9"
+  },
+  {
+    "name": "float-bits-a1617c88",
+    "source_bits": "a1617c88",
+    "expression": "(char (unchecked-float -7.639778098993822E-19))",
+    "primary_edn": "[:throws \"Value out of range for char: -7.639778E-19\"]",
+    "message": "Value out of range for char: -7.639778E-19"
+  },
+  {
+    "name": "float-bits-56c8764b",
+    "source_bits": "56c8764b",
+    "expression": "(char (unchecked-float 1.10205194993664E14))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.10205195E14\"]",
+    "message": "Value out of range for char: 1.10205195E14"
+  },
+  {
+    "name": "float-bits-cf2c3efa",
+    "source_bits": "cf2c3efa",
+    "expression": "(char (unchecked-float -2.889808384E9))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.8898084E9\"]",
+    "message": "Value out of range for char: -2.8898084E9"
+  },
+  {
+    "name": "float-bits-60afc213",
+    "source_bits": "60afc213",
+    "expression": "(char (unchecked-float 1.0131764794272147E20))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0131765E20\"]",
+    "message": "Value out of range for char: 1.0131765E20"
+  },
+  {
+    "name": "float-bits-aed7943c",
+    "source_bits": "aed7943c",
+    "expression": "(char (unchecked-float -9.803399758645526E-11))",
+    "primary_edn": "[:throws \"Value out of range for char: -9.8034E-11\"]",
+    "message": "Value out of range for char: -9.8034E-11"
+  },
+  {
+    "name": "float-bits-63cd626f",
+    "source_bits": "63cd626f",
+    "expression": "(char (unchecked-float 7.57735084609718E21))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.577351E21\"]",
+    "message": "Value out of range for char: 7.577351E21"
+  },
+  {
+    "name": "float-bits-fe0694ce",
+    "source_bits": "fe0694ce",
+    "expression": "(char (unchecked-float -4.472229738665506E37))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.4722297E37\"]",
+    "message": "Value out of range for char: -4.4722297E37"
+  },
+  {
+    "name": "float-bits-69ac95d8",
+    "source_bits": "69ac95d8",
+    "expression": "(char (unchecked-float 2.6080357259547965E25))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.6080357E25\"]",
+    "message": "Value out of range for char: 2.6080357E25"
+  },
+  {
+    "name": "float-bits-e6326d30",
+    "source_bits": "e6326d30",
+    "expression": "(char (unchecked-float -2.1064884695483625E23))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.1064885E23\"]",
+    "message": "Value out of range for char: -2.1064885E23"
+  },
+  {
+    "name": "float-bits-4daf9ed2",
+    "source_bits": "4daf9ed2",
+    "expression": "(char (unchecked-float 3.68302656E8))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.6830266E8\"]",
+    "message": "Value out of range for char: 3.6830266E8"
+  },
+  {
+    "name": "float-bits-90577de2",
+    "source_bits": "90577de2",
+    "expression": "(char (unchecked-float -4.249825024686036E-29))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.249825E-29\"]",
+    "message": "Value out of range for char: -4.249825E-29"
+  },
+  {
+    "name": "float-bits-579a63dc",
+    "source_bits": "579a63dc",
+    "expression": "(char (unchecked-float 3.39507366854656E14))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.3950737E14\"]",
+    "message": "Value out of range for char: 3.3950737E14"
+  },
+  {
+    "name": "float-bits-d9bf7b64",
+    "source_bits": "d9bf7b64",
+    "expression": "(char (unchecked-float -6.737173747335168E15))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.737174E15\"]",
+    "message": "Value out of range for char: -6.737174E15"
+  },
+  {
+    "name": "float-bits-7a960f75",
+    "source_bits": "7a960f75",
+    "expression": "(char (unchecked-float 3.8957901730964654E35))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.89579E35\"]",
+    "message": "Value out of range for char: 3.89579E35"
+  },
+  {
+    "name": "float-bits-d0f08e36",
+    "source_bits": "d0f08e36",
+    "expression": "(char (unchecked-float -3.2286814208E10))",
+    "primary_edn": "[:throws \"Value out of range for char: -3.2286814E10\"]",
+    "message": "Value out of range for char: -3.2286814E10"
+  },
+  {
+    "name": "float-bits-6c15b01f",
+    "source_bits": "6c15b01f",
+    "expression": "(char (unchecked-float 7.238466218905244E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.238466E26\"]",
+    "message": "Value out of range for char: 7.238466E26"
+  },
+  {
+    "name": "float-bits-9f0972d8",
+    "source_bits": "9f0972d8",
+    "expression": "(char (unchecked-float -2.9105874966932673E-20))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.9105875E-20\"]",
+    "message": "Value out of range for char: -2.9105875E-20"
+  },
+  {
+    "name": "float-bits-5a43d858",
+    "source_bits": "5a43d858",
+    "expression": "(char (unchecked-float 1.3781373231824896E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.3781373E16\"]",
+    "message": "Value out of range for char: 1.3781373E16"
+  },
+  {
+    "name": "float-bits-b11299ca",
+    "source_bits": "b11299ca",
+    "expression": "(char (unchecked-float -2.133321519437459E-9))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.1333215E-9\"]",
+    "message": "Value out of range for char: -2.1333215E-9"
+  },
+  {
+    "name": "float-bits-6fe13ea1",
+    "source_bits": "6fe13ea1",
+    "expression": "(char (unchecked-float 1.3941968182324498E29))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.3941968E29\"]",
+    "message": "Value out of range for char: 1.3941968E29"
+  },
+  {
+    "name": "float-bits-a60c478c",
+    "source_bits": "a60c478c",
+    "expression": "(char (unchecked-float -4.866922142398753E-16))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.866922E-16\"]",
+    "message": "Value out of range for char: -4.866922E-16"
+  },
+  {
+    "name": "float-bits-53bc5d7b",
+    "source_bits": "53bc5d7b",
+    "expression": "(char (unchecked-float 1.618044387328E12))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.6180444E12\"]",
+    "message": "Value out of range for char: 1.6180444E12"
+  },
+  {
+    "name": "float-bits-89c1b49e",
+    "source_bits": "89c1b49e",
+    "expression": "(char (unchecked-float -4.663291149519619E-33))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.663291E-33\"]",
+    "message": "Value out of range for char: -4.663291E-33"
+  },
+  {
+    "name": "float-bits-642a1367",
+    "source_bits": "642a1367",
+    "expression": "(char (unchecked-float 1.2549378314959782E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.2549378E22\"]",
+    "message": "Value out of range for char: 1.2549378E22"
+  },
+  {
+    "name": "float-bits-89a92d80",
+    "source_bits": "89a92d80",
+    "expression": "(char (unchecked-float -4.072805806955029E-33))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.0728058E-33\"]",
+    "message": "Value out of range for char: -4.0728058E-33"
+  },
+  {
+    "name": "float-bits-6b2742e1",
+    "source_bits": "6b2742e1",
+    "expression": "(char (unchecked-float 2.0220643858092905E26))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.0220644E26\"]",
+    "message": "Value out of range for char: 2.0220644E26"
+  },
+  {
+    "name": "float-bits-e85932b2",
+    "source_bits": "e85932b2",
+    "expression": "(char (unchecked-float -4.102754760952549E24))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.1027548E24\"]",
+    "message": "Value out of range for char: -4.1027548E24"
+  },
+  {
+    "name": "float-bits-5e0b726b",
+    "source_bits": "5e0b726b",
+    "expression": "(char (unchecked-float 2.5120528415902925E18))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.5120528E18\"]",
+    "message": "Value out of range for char: 2.5120528E18"
+  },
+  {
+    "name": "float-bits-cd5a98b4",
+    "source_bits": "cd5a98b4",
+    "expression": "(char (unchecked-float -2.2921504E8))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.2921504E8\"]",
+    "message": "Value out of range for char: -2.2921504E8"
+  },
+  {
+    "name": "float-bits-4bf46c86",
+    "source_bits": "4bf46c86",
+    "expression": "(char (unchecked-float 3.2037132E7))",
+    "primary_edn": "[:throws \"Value out of range for char: 3.2037132E7\"]",
+    "message": "Value out of range for char: 3.2037132E7"
+  },
+  {
+    "name": "float-bits-fa5fa806",
+    "source_bits": "fa5fa806",
+    "expression": "(char (unchecked-float -2.903225299089138E35))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.9032253E35\"]",
+    "message": "Value out of range for char: -2.9032253E35"
+  },
+  {
+    "name": "float-bits-5052dfaf",
+    "source_bits": "5052dfaf",
+    "expression": "(char (unchecked-float 1.4151498752E10))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.4151499E10\"]",
+    "message": "Value out of range for char: 1.4151499E10"
+  },
+  {
+    "name": "float-bits-bc283d28",
+    "source_bits": "bc283d28",
+    "expression": "(char (unchecked-float -0.01026848703622818))",
+    "primary_edn": "[:throws \"Value out of range for char: -0.010268487\"]",
+    "message": "Value out of range for char: -0.010268487"
+  },
+  {
+    "name": "float-bits-5b3ffe68",
+    "source_bits": "5b3ffe68",
+    "expression": "(char (unchecked-float 5.404144318178918E16))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.4041443E16\"]",
+    "message": "Value out of range for char: 5.4041443E16"
+  },
+  {
+    "name": "float-bits-ec9ae89a",
+    "source_bits": "ec9ae89a",
+    "expression": "(char (unchecked-float -1.498184048346128E27))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.498184E27\"]",
+    "message": "Value out of range for char: -1.498184E27"
+  },
+  {
+    "name": "float-bits-77841f31",
+    "source_bits": "77841f31",
+    "expression": "(char (unchecked-float 5.359498610970888E33))",
+    "primary_edn": "[:throws \"Value out of range for char: 5.3594986E33\"]",
+    "message": "Value out of range for char: 5.3594986E33"
+  },
+  {
+    "name": "float-bits-dcdb0edc",
+    "source_bits": "dcdb0edc",
+    "expression": "(char (unchecked-float -4.932748636418212E17))",
+    "primary_edn": "[:throws \"Value out of range for char: -4.9327486E17\"]",
+    "message": "Value out of range for char: -4.9327486E17"
+  },
+  {
+    "name": "float-bits-4e765c8e",
+    "source_bits": "4e765c8e",
+    "expression": "(char (unchecked-float 1.0333152E9))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.0333152E9\"]",
+    "message": "Value out of range for char: 1.0333152E9"
+  },
+  {
+    "name": "float-bits-d164086e",
+    "source_bits": "d164086e",
+    "expression": "(char (unchecked-float -6.1212123136E10))",
+    "primary_edn": "[:throws \"Value out of range for char: -6.1212123E10\"]",
+    "message": "Value out of range for char: -6.1212123E10"
+  },
+  {
+    "name": "float-bits-541d34f5",
+    "source_bits": "541d34f5",
+    "expression": "(char (unchecked-float 2.700793348096E12))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.7007933E12\"]",
+    "message": "Value out of range for char: 2.7007933E12"
+  },
+  {
+    "name": "float-bits-af7141d0",
+    "source_bits": "af7141d0",
+    "expression": "(char (unchecked-float -2.1942203609626176E-10))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.1942204E-10\"]",
+    "message": "Value out of range for char: -2.1942204E-10"
+  },
+  {
+    "name": "float-bits-52382af2",
+    "source_bits": "52382af2",
+    "expression": "(char (unchecked-float 1.97748621312E11))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.9774862E11\"]",
+    "message": "Value out of range for char: 1.9774862E11"
+  },
+  {
+    "name": "float-bits-e23b5b82",
+    "source_bits": "e23b5b82",
+    "expression": "(char (unchecked-float -8.640337436470275E20))",
+    "primary_edn": "[:throws \"Value out of range for char: -8.6403374E20\"]",
+    "message": "Value out of range for char: -8.6403374E20"
+  },
+  {
+    "name": "float-bits-5f1a64fa",
+    "source_bits": "5f1a64fa",
+    "expression": "(char (unchecked-float 1.1125291857418912E19))",
+    "primary_edn": "[:throws \"Value out of range for char: 1.1125292E19\"]",
+    "message": "Value out of range for char: 1.1125292E19"
+  },
+  {
+    "name": "float-bits-a7d24a04",
+    "source_bits": "a7d24a04",
+    "expression": "(char (unchecked-float -5.836695669424359E-15))",
+    "primary_edn": "[:throws \"Value out of range for char: -5.8366957E-15\"]",
+    "message": "Value out of range for char: -5.8366957E-15"
+  },
+  {
+    "name": "float-bits-657e4d96",
+    "source_bits": "657e4d96",
+    "expression": "(char (unchecked-float 7.505701841135445E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 7.505702E22\"]",
+    "message": "Value out of range for char: 7.505702E22"
+  },
+  {
+    "name": "float-bits-b09c75d6",
+    "source_bits": "b09c75d6",
+    "expression": "(char (unchecked-float -1.1383984865886987E-9))",
+    "primary_edn": "[:throws \"Value out of range for char: -1.1383985E-9\"]",
+    "message": "Value out of range for char: -1.1383985E-9"
+  },
+  {
+    "name": "float-bits-64ba333f",
+    "source_bits": "64ba333f",
+    "expression": "(char (unchecked-float 2.747829654343555E22))",
+    "primary_edn": "[:throws \"Value out of range for char: 2.7478297E22\"]",
+    "message": "Value out of range for char: 2.7478297E22"
+  },
+  {
+    "name": "float-bits-99c2db78",
+    "source_bits": "99c2db78",
+    "expression": "(char (unchecked-float -2.0147772576608796E-23))",
+    "primary_edn": "[:throws \"Value out of range for char: -2.0147773E-23\"]",
+    "message": "Value out of range for char: -2.0147773E-23"
+  }
+]

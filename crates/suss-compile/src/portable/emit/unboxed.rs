@@ -237,7 +237,11 @@ fn long_literals(function: &Function) -> Vec<Option<i64>> {
     values
 }
 fn bitwise_inline_inputs(operation: Bitwise, arguments: &[Repr], cast: Option<usize>) -> bool {
-    if cast.is_some() { return arguments[0].definite().numeric(); }
+    if let Some(index) = cast {
+        // Character range checks retain source-selected floating versus Object
+        // semantics even if storage inference later unboxes the same value.
+        return index < 16 && arguments[0].definite().numeric();
+    }
     if raw_int32(operation, arguments.len()).is_some() || long_bitwise::accepts(operation, arguments.len()) {
         return arguments.iter().all(|kind| kind.definite() == Repr::Long);
     }
