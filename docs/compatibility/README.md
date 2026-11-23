@@ -1,3 +1,8 @@
+`clojure.edn/read-string` now exposes the same compiled data reader as
+`suss.edn/read-string`, in Runtime and Macro. The focused compatibility test
+passes; the complete EDN suite remains subject to the independently audited
+full capture in [reader evidence](../../results/m12-reader-followup/README.md).
+
 UUID values now have [compiled integration evidence](../../results/m12-reader-followup/README.md)
 for canonical128-bit storage, readers, macro/source transport, signed comparison,
 hashing, GC and actual AOT. [Source provenance](bootstrap/clojure-uuid.json) retains

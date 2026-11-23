@@ -59,6 +59,27 @@ fn uuid_values_and_readers_follow_primary_in_both_phases() {
 }
 
 #[test]
+fn clojure_edn_namespace_exposes_the_same_data_reader_in_both_phases() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(
+            "(ns edn-compatibility (:require [clojure.edn :as edn] [suss.edn :as suss-edn]))",
+            &mut macros,
+        ).unwrap();
+        assert_eq!(observed(&mut session, &mut macros, r##"[
+          (identical? edn/read-string suss-edn/read-string)
+          (str (edn/read-string "#uuid \"1-2-3-4-5\""))
+          (edn/read-string "1.25M")
+          (edn/read-string {:eof :done} " ")
+          (edn/read-string {:readers {'uuid (fn [x] [:override x])}}
+                           "#uuid \"short\"")
+          (edn/read-string {:default (fn [tag x] [tag x])} "#custom [1 2]")
+          (try (edn/read-string "#=(+ 1 2)") :evaluated (catch :default e :rejected))]"##).unwrap(),
+          "[true \"00000001-0002-0003-0004-000000000005\" 1.25M :done [:override \"short\"] [custom [1 2]] :rejected]");
+    }
+}
+
+#[test]
 fn all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary() {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-reader-followup/uuid-runtime-cases.json")).unwrap();

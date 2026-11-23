@@ -15,6 +15,10 @@ pub(super) fn source(namespace: &str, phase: Phase) -> Option<(&'static str, &'s
             "<suss-stdlib>/suss/edn.sus",
             include_str!("stdlib/edn.sus"),
         )),
+        ("clojure.edn", Phase::Runtime | Phase::Macro) => Some((
+            "<suss-stdlib>/clojure/edn.sus",
+            include_str!("stdlib/clojure-edn.sus"),
+        )),
         _ => None,
     }
 }

@@ -1,3 +1,40 @@
+## UUID full-suite capture and EDN namespace dependency (2026-11-23)
+
+`python3 results/m12-reader-followup/run-suite.py full-suite-after-uuid-and-offset-repair`
+completes on d64d424f with all recorded inputs unchanged. Build and suite-lock
+return0; the native full suite returns101 after580.924s because four namespace
+diagnostics advance beyond unsupported UUID. The complete5002-row capture and
+logs are retained; this is a failing baseline comparison, not a passing full suite.
+
+`audit-suite.py full-suite-after-uuid-and-offset-repair` independently compares
+that capture with the unchanged pinned primary, count/skip rules and a783ad60
+parent. It preserves all4917 strict prior passes and separately all4932
+individually comparable prior rows. Counts remain4842 host matches,75 guest
+judgments,86 failures,1936 unexecuted, zero skips and72 failed namespaces.
+The297 EDN assertions remain unexecuted: after UUID constants read successfully,
+namespace loading reaches the missing `clojure.edn` source. Identity similarly
+reaches unsupported `#inst`; parse-uuid and uuid? suite namespaces reach missing
+`parse-uuid`. No baseline is written by this audit.
+
+The auditor's parent-capture control reproduces the original outcomes. Its
+negative control removes one actual Decimal-operand observation and requires
+rejection, preserving the distinction between missing observations and passes.
+These two controls are synthetic audit tests, not Suss execution evidence.
+Actual Decimal operands remain194/200 passing with6 unexecuted; actual BigInt/
+Ratio operands remain214/229 passing with15 unexecuted. Missing min-key, some-fn,
+real eval and the EDN namespace remain explicit dependencies. A closed issue
+label alone does not establish its suite acceptance criteria.
+
+A shipped `clojure.edn` compatibility namespace now requires `suss.edn` and
+exports its exact compiled `read-string` function in both phases. It introduces
+no test-harness rewrite. `run-test.py clojure-edn-compatibility --test clojure_uuid
+clojure_edn_namespace_exposes_the_same_data_reader_in_both_phases` returns0:
+one test exercises Runtime and Macro, function identity, UUID/Decimal values,
+EOF options, configured/default reader precedence and rejection of reader eval.
+The311.143s command records unchanged inputs. This focused result does not
+certify execution or passing of the complete EDN suite body; a fresh full-suite
+capture follows. Earlier failures remain in their original captures.
+
 ## UUID source loading and compiler membership observations (2026-11-23)
 
 `run-source.py typed-offsets-and-source-safe-uuid-table` passes144 focused tests
