@@ -1,3 +1,18 @@
+## Validation recorder recovery (2026-11-23)
+
+A workspace/tool transition detached the outside-scope Python recorders.
+The original complete-body logs, incomplete JSON receipts and exact input hashes
+remain intact. The ec646d91 flag test log records one native pass, but its Cargo
+exit status was not captured; a separate qualification records that distinction
+and verifies the current inputs still match. It is not relabeled as a complete
+gate. H/K full Cargo processes remain live in their original bounded scopes.
+
+run-durable-focused.py puts the recorder itself inside the bounded systemd scope
+and ignores client-disconnect SIGHUP. Cargo and result/hash recording therefore
+share that protected scope. It preserves the managed environment, original
+commands, resource cap and source/test/fixture expectations. Fresh execution
+is required before claiming the detached gate passed as a whole.
+
 The corrected-borrow assert gate on e20f18c5 returns101 after721.661s,
 inputs unchanged. The native flag regression observes the initialized Macro
 flag, then fails compiling an unqualified assert because registration omitted
