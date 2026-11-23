@@ -123,6 +123,51 @@ fn namespace_local_macros_preserve_successfully_loaded_macro_dependencies() {
 }
 
 #[test]
+fn partial_macro_import_failure_recovers_source_identities_and_emission_reuse() {
+    use suss_compile::portable::ExpansionHost;
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("ledger.sus"),
+        "(ns ledger) (def effects (atom []))").unwrap();
+    let first = root.path().join("a.sus");
+    std::fs::write(&first,
+        "(ns a (:require [ledger])) (swap! ledger/effects conj :a) (def value (fn [] (count @ledger/effects)))").unwrap();
+    let later = root.path().join("b.sus");
+    std::fs::write(&later,
+        "(ns b (:require [a])) (throw (suss.bootstrap/error \"later initializer failed\")) (def value (fn [] (a/value)))").unwrap();
+    std::fs::write(root.path().join("app.sus"),
+        "(ns app (:require [b])) (defmacro result [] (b/value)) (def value (result))").unwrap();
+    let mut session = Session::new_repl_with_options(SessionOptions {
+        source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
+    }).unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    // Runtime initializes A first. Preparing app then initializes A in the
+    // isolated Macro Store before B throws; neither phase may replay A.
+    session.load_namespace_with_macros("a", &mut macros).unwrap();
+    assert!(session.load_namespace_with_macros("app", &mut macros).is_err());
+    assert!(macros.artifact_dependencies().is_none(), "B is still incomplete");
+    assert_eq!(session.current_namespace(), "user");
+    std::fs::write(&first,
+        "(ns a) (throw (suss.bootstrap/error \"successful dependency was replayed\"))").unwrap();
+    std::fs::write(&later,
+        "(ns b (:require [a])) (def value (fn [] (a/value)))").unwrap();
+    session.load_namespace_with_macros("app", &mut macros).unwrap();
+    assert_eq!(value(&mut session, &mut macros,
+        "[app/value (app/result) (count @ledger/effects)]"), "[1 1 1]");
+    let dependencies = macros.artifact_dependencies()
+        .expect("all successfully initialized source identities must recover after retry");
+    for name in ["module:ledger", "module:a", "module:b"] {
+        assert!(dependencies.iter().any(|(actual, identity)| actual == name && identity.len() == 64),
+            "missing initialized dependency {name}: {dependencies:?}");
+    }
+    assert_eq!(value(&mut session, &mut macros, "(app/result)"), "1");
+    let before = macros.artifact_cache_stats();
+    assert_eq!(value(&mut session, &mut macros, "(app/result)"), "1");
+    let after = macros.artifact_cache_stats();
+    assert!(after.hits > before.hits, "eligible emission must regain cache hits");
+    assert_eq!(after.bypasses, before.bypasses);
+}
+
+#[test]
 fn source_namespace_local_macros_execute_in_actual_aot_with_original_positions() {
     use std::process::Command;
     let root = tempfile::tempdir().unwrap();

@@ -104,6 +104,65 @@ fn all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary() {
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
+fn runtime_syntax_quote_cases() -> Vec<serde_json::Value> {
+    serde_json::from_str(include_str!(
+        "../../../results/m12-reader-followup/uuid-runtime-syntax-quote-primary/cases.json"
+    )).unwrap()
+}
+
+#[test]
+fn runtime_uuid_syntax_quote_retains_primary_structure_in_both_phases_after_gc() {
+    use portable_decode::{Decoder, Observation};
+    let cases = runtime_syntax_quote_cases();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut retained = Vec::new();
+        for row in &cases {
+            retained.push(session.eval_with_macros(row["source"].as_str().unwrap(), &mut macros)
+                .unwrap_or_else(|error| panic!("{}: {error}", row["name"])));
+        }
+        session.eval("(def uuid? (fn [x] false)) (def = (fn [& xs] (throw :equality))) (def hash (fn [& xs] (throw :hash))) (def pr-str (fn [& xs] (throw :print))) (def str (fn [& xs] (throw :str)))").unwrap();
+        session.collect().unwrap();
+        for (value, row) in retained.iter().zip(&cases) {
+            assert_eq!(decoder.decode_session(&mut session, value).unwrap(),
+                Observation::List(vec![
+                    Observation::Symbol(None, row["head"].as_str().unwrap().encode_utf16().collect()),
+                    Observation::Uuid {
+                        most: row["most"].as_str().unwrap().parse().unwrap(),
+                        least: row["least"].as_str().unwrap().parse().unwrap(),
+                    },
+                ]), "{}", row["name"]);
+        }
+    }
+}
+
+#[test]
+fn actual_aot_reports_primary_uuid_runtime_syntax_quote_data() {
+    use std::process::Command;
+    let cases = runtime_syntax_quote_cases();
+    let root = tempfile::tempdir().unwrap();
+    let expressions = cases.iter().map(|row| row["source"].as_str().unwrap())
+        .collect::<Vec<_>>().join(" ");
+    std::fs::write(root.path().join("app.sus"), format!(
+        "(ns uuid-reader-quote) (def report (fn [] (pr-str [{expressions}])))"
+    )).unwrap();
+    std::fs::write(root.path().join("app.wit"),
+        "package test:uuid-reader-quote; world w { export report: func() -> string; }").unwrap();
+    let compiled = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
+        .args(["--no-cache", "compile", "app.sus", "-w", "app.wit", "--export",
+            "report=uuid-reader-quote/report", "-o", "app.wasm"])
+        .output().unwrap();
+    assert!(compiled.status.success(), "{}", String::from_utf8_lossy(&compiled.stderr));
+    let executed = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
+        .args(["--no-cache", "run", "app.wasm", "--invoke", "report"])
+        .output().unwrap();
+    assert!(executed.status.success(), "{}", String::from_utf8_lossy(&executed.stderr));
+    let expected = cases.iter().map(|row| row["printed"].as_str().unwrap())
+        .collect::<Vec<_>>().join(" ");
+    assert_eq!(String::from_utf8(executed.stdout).unwrap().trim_end(), format!("[{expected}]"));
+}
+
 #[test]
 fn retained_uuid_storage_is_nominal_exact_and_independent_after_gc() {
     use portable_decode::{Decoder, Observation};
