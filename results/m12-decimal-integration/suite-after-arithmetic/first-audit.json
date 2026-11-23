@@ -1,0 +1,13 @@
+{
+  "counts": {
+    "pass": 4322,
+    "guest-judged": 63,
+    "fail": 212,
+    "not-executed": 2342,
+    "skipped": 0,
+    "namespaces-failed": 84
+  },
+  "newly_failing_previously_matching": [],
+  "decimal_primary_failures": 0,
+  "decimal_primary_total": 200
+}

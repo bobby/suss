@@ -87,8 +87,8 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 
 /// The representation of an arithmetic result from its operands', optimistic
 /// about operands not yet known.
-fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, division_primitive: bool) -> Lattice {
-    if operator == Arithmetic::Divide && !coercing && !division_primitive {
+fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, primitive_overload: bool) -> Lattice {
+    if operator == Arithmetic::Divide && !coercing && !primitive_overload {
         // A physical double cannot turn a source Object overload into IEEE
         // division. Its generic runtime path retains NaN/zero semantics.
         return Lattice::Known(Repr::Boxed);
@@ -104,7 +104,7 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, divis
         let definite = arguments.iter().map(|argument| match argument {
             Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
         }).collect::<Vec<_>>();
-        return match arithmetic(operator, &definite, coercing, division_primitive) {
+        return match arithmetic(operator, &definite, coercing, primitive_overload) {
             Lattice::Known(Repr::Long) => Lattice::Known(Repr::MaybeLong),
             Lattice::Known(Repr::Double) => Lattice::Known(Repr::MaybeDouble),
             other => other,
@@ -344,8 +344,8 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                     let next = match &instruction.operation {
                         Operation::Literal(Literal::Long(_)) => Lattice::Known(Repr::Long),
                         Operation::Literal(_) => Lattice::Known(Repr::Double),
-                        Operation::Arithmetic { operator, arguments, coercing, division_primitive } => {
-                            arithmetic(*operator, &operands(arguments), *coercing, *division_primitive)
+                        Operation::Arithmetic { operator, arguments, coercing, primitive_overload } => {
+                            arithmetic(*operator, &operands(arguments), *coercing, *primitive_overload)
                         }
                         Operation::Comparison { operation, arguments } => {
                             comparison(*operation, &operands(arguments))
@@ -704,6 +704,21 @@ impl Locals {
             }
         }
     }
+    /// Numbers.minus(Object,Object) negates in the original right category.
+    /// In particular a zero Long stays +0 and an unchecked MIN stays MIN.
+    fn boxed_double_subtraction(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], target: u32) {
+        use Instruction::*;
+        self.push_as(code, arguments[0], Repr::Double);
+        let right = arguments[1];
+        if self.of(right).definite() == Repr::Long {
+            code.extend([I64Const(0), LocalGet(self.raw(right)), I64Sub, F64ConvertI64S]);
+        } else {
+            self.push_as(code, right, Repr::Double);
+            code.push(F64Neg);
+        }
+        code.extend([F64Add, LocalSet(target)]);
+    }
+
     /// Stores GC copies lazily; the dynamic cache also spans other blocks.
     pub(super) fn materialize(
         &self,
@@ -734,6 +749,7 @@ impl Locals {
         operator: Arithmetic,
         arguments: &[ValueId],
         result: ValueId,
+        primitive_overload: bool,
         slow: u32,
     ) {
         use Instruction::*;
@@ -745,21 +761,33 @@ impl Locals {
                 if i > 0 { code.push(I32And); }
             }
             code.push(If(BlockType::Empty));
-            self.arithmetic_raw(code, operator, arguments, result, slow);
+            self.arithmetic_raw(code, operator, arguments, result, primitive_overload, slow);
             code.extend([I32Const(1), LocalSet(self.valid(result)), Else]);
             for argument in arguments { self.push_boxed(code, *argument); }
             code.extend([Call(slow), LocalSet(self.boxed(result)), I32Const(0), LocalSet(self.valid(result)), End]);
             return;
         }
-        self.arithmetic_raw(code, operator, arguments, result, slow);
+        self.arithmetic_raw(code, operator, arguments, result, primitive_overload, slow);
     }
-    fn arithmetic_raw(&self, code: &mut Vec<Instruction<'static>>, operator: Arithmetic, arguments: &[ValueId], result: ValueId, slow: u32) {
+    fn arithmetic_raw(&self, code: &mut Vec<Instruction<'static>>, operator: Arithmetic, arguments: &[ValueId], result: ValueId, primitive_overload: bool, slow: u32) {
         use Instruction::*;
         let kind = self.of(result).definite();
         let target = self.raw(result);
         if arguments.len() == 1 && operator != Arithmetic::Negate {
             code.extend([LocalGet(self.raw(arguments[0])), LocalSet(target)]);
             return;
+        }
+        if operator == Arithmetic::Subtract && !primitive_overload {
+            let right = arguments[1];
+            if self.of(right).definite() == Repr::Long {
+                code.extend([LocalGet(self.raw(right)), I64Const(i64::MIN), I64Eq, If(BlockType::Empty)]);
+                self.slow(code, arguments, slow);
+                code.push(End);
+            }
+            if kind == Repr::Double {
+                self.boxed_double_subtraction(code, arguments, target);
+                return;
+            }
         }
         if kind == Repr::Double {
             if arguments.len() == 1 {

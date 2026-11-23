@@ -1,0 +1,19 @@
+Running as unit: run-p1295509-i89370833.scope; invocation ID: 0a1c3a99e9df408ea725b9be24a72e2a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+error[E0277]: the trait bound `&num_bigint::bigint::BigInt: num_traits::Signed` is not satisfied
+    --> crates/suss-compile/src/portable_macro_data.rs:1368:49
+     |
+1368 |                 num_traits::Signed::is_negative(&value), value.to_u32_digits().1, *scale)))
+     |                 ------------------------------- ^^^^^^ the trait `num_traits::Signed` is not implemented for `&num_bigint::bigint::BigInt`
+     |                 |
+     |                 required by a bound introduced by this call
+     |
+help: consider removing the leading `&`-reference
+     |
+1368 -                 num_traits::Signed::is_negative(&value), value.to_u32_digits().1, *scale)))
+1368 +                 num_traits::Signed::is_negative(value), value.to_u32_digits().1, *scale)))
+     |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `suss-compile` (lib) due to 1 previous error

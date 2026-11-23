@@ -1,0 +1,250 @@
+Running as unit: run-p2848393-i90919181.scope; invocation ID: 4c753f509fa24ccdbbcb703967577ce5
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.02s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... FAILED
+
+failures:
+
+---- subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch stdout ----
+
+thread 'subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch' (2848433) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case5: (pr-str (- 0M -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Runtime case6: (pr-str (let [f -] (f -9223372036854775808 -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Runtime case7: (pr-str (let [f -] (f 1.0 -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Runtime case8: (pr-str (let [f -] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case9: (pr-str (let [f -] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case11: (pr-str (let [f -] (f 0M -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Runtime case12: (pr-str ((fn [x y] (- x y)) -9223372036854775808 -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Runtime case13: (pr-str ((fn [x y] (- x y)) 1.0 -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Runtime case14: (pr-str ((fn [x y] (- x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case15: (pr-str ((fn [x y] (- x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case17: (pr-str ((fn [x y] (- x y)) 0M -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Runtime case18: (pr-str (apply - [-9223372036854775808 -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Runtime case19: (pr-str (apply - [1.0 -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Runtime case20: (pr-str (apply - [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case21: (pr-str (apply - [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case23: (pr-str (apply - [0M -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Runtime case30: (pr-str (let [f -'] (f -9223372036854775808 -9223372036854775808)))
+expected "0N"
+actual Ok("\"0\"")
+Runtime case32: (pr-str (let [f -'] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case33: (pr-str (let [f -'] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case36: (pr-str ((fn [x y] (-' x y)) -9223372036854775808 -9223372036854775808))
+expected "0N"
+actual Ok("\"0\"")
+Runtime case38: (pr-str ((fn [x y] (-' x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case39: (pr-str ((fn [x y] (-' x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case42: (pr-str (apply -' [-9223372036854775808 -9223372036854775808]))
+expected "0N"
+actual Ok("\"0\"")
+Runtime case44: (pr-str (apply -' [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case45: (pr-str (apply -' [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case53: (pr-str (unchecked-subtract 0M -9223372036854775808))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Runtime case55: (pr-str (let [f unchecked-subtract] (f 1.0 -9223372036854775808)))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Runtime case56: (pr-str (let [f unchecked-subtract] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case57: (pr-str (let [f unchecked-subtract] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case59: (pr-str (let [f unchecked-subtract] (f 0M -9223372036854775808)))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Runtime case61: (pr-str ((fn [x y] (unchecked-subtract x y)) 1.0 -9223372036854775808))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Runtime case62: (pr-str ((fn [x y] (unchecked-subtract x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case63: (pr-str ((fn [x y] (unchecked-subtract x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case65: (pr-str ((fn [x y] (unchecked-subtract x y)) 0M -9223372036854775808))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Runtime case67: (pr-str (apply unchecked-subtract [1.0 -9223372036854775808]))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Runtime case68: (pr-str (apply unchecked-subtract [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case69: (pr-str (apply unchecked-subtract [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Runtime case71: (pr-str (apply unchecked-subtract [0M -9223372036854775808]))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Macro case5: (pr-str (- 0M -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Macro case6: (pr-str (let [f -] (f -9223372036854775808 -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Macro case7: (pr-str (let [f -] (f 1.0 -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Macro case8: (pr-str (let [f -] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case9: (pr-str (let [f -] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case11: (pr-str (let [f -] (f 0M -9223372036854775808)))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Macro case12: (pr-str ((fn [x y] (- x y)) -9223372036854775808 -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Macro case13: (pr-str ((fn [x y] (- x y)) 1.0 -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Macro case14: (pr-str ((fn [x y] (- x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case15: (pr-str ((fn [x y] (- x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case17: (pr-str ((fn [x y] (- x y)) 0M -9223372036854775808))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Macro case18: (pr-str (apply - [-9223372036854775808 -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"0\"")
+Macro case19: (pr-str (apply - [1.0 -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"9.223372036854776E18\"")
+Macro case20: (pr-str (apply - [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case21: (pr-str (apply - [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case23: (pr-str (apply - [0M -9223372036854775808]))
+expected [:error "long overflow"]
+actual Ok("\"9223372036854775808M\"")
+Macro case30: (pr-str (let [f -'] (f -9223372036854775808 -9223372036854775808)))
+expected "0N"
+actual Ok("\"0\"")
+Macro case32: (pr-str (let [f -'] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case33: (pr-str (let [f -'] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case36: (pr-str ((fn [x y] (-' x y)) -9223372036854775808 -9223372036854775808))
+expected "0N"
+actual Ok("\"0\"")
+Macro case38: (pr-str ((fn [x y] (-' x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case39: (pr-str ((fn [x y] (-' x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case42: (pr-str (apply -' [-9223372036854775808 -9223372036854775808]))
+expected "0N"
+actual Ok("\"0\"")
+Macro case44: (pr-str (apply -' [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case45: (pr-str (apply -' [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case53: (pr-str (unchecked-subtract 0M -9223372036854775808))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Macro case55: (pr-str (let [f unchecked-subtract] (f 1.0 -9223372036854775808)))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Macro case56: (pr-str (let [f unchecked-subtract] (f -0.0 0)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case57: (pr-str (let [f unchecked-subtract] (f -0.0 0N)))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case59: (pr-str (let [f unchecked-subtract] (f 0M -9223372036854775808)))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Macro case61: (pr-str ((fn [x y] (unchecked-subtract x y)) 1.0 -9223372036854775808))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Macro case62: (pr-str ((fn [x y] (unchecked-subtract x y)) -0.0 0))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case63: (pr-str ((fn [x y] (unchecked-subtract x y)) -0.0 0N))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case65: (pr-str ((fn [x y] (unchecked-subtract x y)) 0M -9223372036854775808))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+Macro case67: (pr-str (apply unchecked-subtract [1.0 -9223372036854775808]))
+expected "-9.223372036854776E18"
+actual Ok("\"9.223372036854776E18\"")
+Macro case68: (pr-str (apply unchecked-subtract [-0.0 0]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case69: (pr-str (apply unchecked-subtract [-0.0 0N]))
+expected "0.0"
+actual Ok("\"-0.0\"")
+Macro case71: (pr-str (apply unchecked-subtract [0M -9223372036854775808]))
+expected "-9223372036854775808M"
+actual Ok("\"9223372036854775808M\"")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 5.14s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

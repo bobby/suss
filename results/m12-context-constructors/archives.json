@@ -1,0 +1,30 @@
+[
+  {
+    "raw": "after-constructor-overloads.json",
+    "archive": "after-constructor-overloads.json.gz",
+    "raw_sha256": "f62692675d0756f3dd42cba3be0041e3a2dea3418ad592f50a0e74440dc6af6e",
+    "raw_bytes": 493179,
+    "archive_sha256": "0eff3a12b067a99a31ab5607d3eadd70d9111bcf733437e5283dcfad7875e05b"
+  },
+  {
+    "raw": "before-constructor-overloads.json",
+    "archive": "before-constructor-overloads.json.gz",
+    "raw_sha256": "154cd80d49e9eca430a49754f9ce6dd43b1312a104ec9b2d3dd9129e08d3e0b3",
+    "raw_bytes": 493038,
+    "archive_sha256": "c6382cf1a13e97d8165c8fcb6632655a01886d6218e9088b49d57fc9c1c69030"
+  },
+  {
+    "raw": "expanded-constructor-controls.json",
+    "archive": "expanded-constructor-controls.json.gz",
+    "raw_sha256": "2796d2954a1835c190fc8d4ae8100657528d3d8becf4c756450305553ae45d3a",
+    "raw_bytes": 493383,
+    "archive_sha256": "a9f33c7bf8377b5842295f51d8c16358f67b8f84ad165bbe76f2c7730bb99300"
+  },
+  {
+    "raw": "gates/commands.json",
+    "archive": "gates/commands.json.gz",
+    "raw_sha256": "b393648154de9bb931ea88a9eca70f61944b87aed2141e7418d59a2b8f734675",
+    "raw_bytes": 496178,
+    "archive_sha256": "02dbbe78fd61147087e6a8b4eb3fb5374e4ef66c96b6fe0ffb344fd361888c16"
+  }
+]

@@ -1,0 +1,91 @@
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# If a copy of the MPL was not distributed with this file, You can obtain one at
+# https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for Suss:
+# ADR-0003 represents checked byte/short/int results as Long and float results
+# as widened Double. Assert those actual classes; do not invent narrow classes.
+# Keep the JVM branches unchanged and add its four strict short-range assertions
+# for :suss. Numeric values, primary observations and assertion-count guards stay
+# unchanged. The JVM oracle continues to run the unpatched vendored tree.
+--- a/test/clojure/core_test/byte.cljc
++++ b/test/clojure/core_test/byte.cljc
+@@ -11,6 +11,7 @@
+     ;; test whether it's a fixed-length integer of some sort.
+     (is (int? (byte 0)))
+     #?(:cljr (is (instance? System.Byte (byte 0)))
++       :suss (is (instance? java.lang.Long (byte 0)))
+        :clj  (is (instance? java.lang.Byte (byte 0))))
+ 
+     ;; Check conversions and rounding from other numeric types
+--- a/test/clojure/core_test/short.cljc
++++ b/test/clojure/core_test/short.cljc
+@@ -13,7 +13,7 @@
+         :phel []
+         :cljs []
+         :default
+-        [(is (instance? #?(:cljr System.Int16 :clj java.lang.Short) (short 0)))])
++        [(is (instance? #?(:cljr System.Int16 :suss java.lang.Long :clj java.lang.Short) (short 0)))])
+ 
+     ;; Check conversions and rounding from other numeric types
+     (are [expected x] (= expected (short x))
+@@ -74,6 +74,11 @@
+         :default
+         [;; `short` throws outside the range of 32767 ... -32768.
+          #?@(:bb []
++             :suss
++             [(is (p/thrown? (short -32768.000001)))
++              (is (p/thrown? (short -32769)))
++              (is (p/thrown? (short 32768)))
++              (is (p/thrown? (short 32767.000001)))]
+              :clj
+              [(is (p/thrown? (short -32768.000001)))
+               (is (p/thrown? (short -32769)))
+--- a/test/clojure/core_test/int.cljc
++++ b/test/clojure/core_test/int.cljc
+@@ -12,6 +12,7 @@
+     ;; integer of some sort.
+     (is (int? (int 0)))
+     #?(:cljr (is (instance? System.Int32 (int 0)))
++       :suss (is (instance? java.lang.Long (int 0)))
+        :clj  (is (instance? java.lang.Integer (int 0))))
+ 
+     ;; Check conversions and rounding from other numeric types
+--- a/test/clojure/core_test/long.cljc
++++ b/test/clojure/core_test/long.cljc
+@@ -10,6 +10,7 @@
+     ;; a fixed-length integer of some sort.
+     (is (int? (int 0)))
+     #?(:cljr (is (instance? System.Int64 (long 0)))
++       :suss (is (instance? java.lang.Long (long 0)))
+        :clj (is (instance? java.lang.Long (long 0))))
+ 
+     ;; Check conversions and rounding from other numeric types
+--- a/test/clojure/core_test/float.cljc
++++ b/test/clojure/core_test/float.cljc
+@@ -72,6 +72,12 @@
+          (is (instance? System.Single (float 0N)))
+          (is (instance? System.Single (float 0.0M)))]
+ 
++        :suss
++        [(is (instance? java.lang.Double (float 0)))
++         (is (instance? java.lang.Double (float 0.0)))
++         (is (instance? java.lang.Double (float 0N)))
++         (is (instance? java.lang.Double (float 0.0M)))]
++
+         :clj
+         [(is (instance? java.lang.Float (float 0)))
+          (is (instance? java.lang.Float (float 0.0)))
+--- a/test/clojure/core_test/double.cljc
++++ b/test/clojure/core_test/double.cljc
+@@ -42,6 +42,12 @@
+         (is (instance? System.Double (double 0N)))
+         (is (instance? System.Double (double 0.0M)))]
+ 
++       :suss
++       [(is (instance? java.lang.Double (double 0)))
++        (is (instance? java.lang.Double (double 0.0)))
++        (is (instance? java.lang.Double (double 0N)))
++        (is (instance? java.lang.Double (double 0.0M)))]
++
+        :clj
+        [(is (instance? java.lang.Double (double 0)))
+         (is (instance? java.lang.Double (double 0.0)))

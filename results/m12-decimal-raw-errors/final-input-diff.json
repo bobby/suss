@@ -1,0 +1,22 @@
+{
+  "gates/commands.json": {
+    "docs/compatibility/README.md": {
+      "before": "735a374e346dc519be313c5b76f0b8bb5c20aa75125096cd7e46950edf98d875",
+      "after": "1614478cde3502ce3de6d4a3b895726159f630fcf65835aaf20e7ef3942e97cb"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "728da729ac8e93ac4399cc3007df42aa9364b404ef4e395402b941bc262dddd5",
+      "after": "f519e35e67533e9979b069339f41b266c7e95ab14cb098669a4f88414ec81843"
+    }
+  },
+  "suite-after-raw-strings/suite-commands.json": {
+    "docs/compatibility/README.md": {
+      "before": "735a374e346dc519be313c5b76f0b8bb5c20aa75125096cd7e46950edf98d875",
+      "after": "1614478cde3502ce3de6d4a3b895726159f630fcf65835aaf20e7ef3942e97cb"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "728da729ac8e93ac4399cc3007df42aa9364b404ef4e395402b941bc262dddd5",
+      "after": "f519e35e67533e9979b069339f41b266c7e95ab14cb098669a4f88414ec81843"
+    }
+  }
+}

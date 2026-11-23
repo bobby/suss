@@ -1,0 +1,26 @@
+Running as unit: run-p1308798-i89361938.scope; invocation ID: f61fdb54603e4ed7a24a5b6f2310129e
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.07s
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-target/debug/deps/decimal_values-b2f1d4a8fd56099e)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... FAILED
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+
+failures:
+
+---- compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc stdout ----
+
+thread 'compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc' (1308950) panicked at crates/suss-compile/tests/decimal_values.rs:55:46:
+called `Result::unwrap()` on an `Err` value: Diagnostic { span: 0..13, message: "Generated fragment failed validation: type mismatch: expected eqref, found i32 (at offset 0x270)" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.57s
+
+error: test failed, to rerun pass `-p suss-compile --test decimal_values`

@@ -52,7 +52,8 @@ SUITES = {
 SUSS_PATCHES = ('0003-clojure-numeric-operand-suss-branches.patch',
                 '0004-atom-clojure-references-suss-branches.patch',
                 '0005-hierarchy-type-tags-suss-branches.patch',
-                '0006-clojure-jvm-rules-suss-branches.patch')
+                '0006-clojure-jvm-rules-suss-branches.patch',
+                '0007-narrow-cast-suss-representations.patch')
 PORTABILITY = 'clojure.core-test.portability'
 # The oracle runs the suite this many times; assertions whose observations
 # differ between runs are nondeterministic and keep only their kind and verdict.
@@ -410,9 +411,9 @@ def decide(expected, actual):
 
 def suite_matches(oracle, suss):
     """oracle_compare.matches, with the JVM oracle's numbers. Since #335 a
-    long matches only a Suss long with the same value; nothing matches a
-    BigDecimal yet (#339). BigInt and Ratio observations retain their exact
-    canonical decimal integers decoded independently from immutable GC storage."""
+    long matches only a Suss long with the same value. BigInt, Ratio and
+    Decimal observations retain their exact fields decoded independently from
+    immutable GC storage. Decimal scale is compared without normalization."""
     tag = oracle['tag']
     if tag == 'long':
         return suss['tag'] == 'long' and int(suss['value']) == int(oracle['value'])
@@ -421,7 +422,7 @@ def suite_matches(oracle, suss):
     if tag == 'ratio':
         return suss['tag'] == 'ratio' and all(suss[k] == oracle[k] for k in ('numerator', 'denominator'))
     if tag == 'decimal':
-        return False
+        return suss['tag'] == 'decimal' and all(suss[k] == oracle[k] for k in ('unscaled', 'scale'))
     if tag != suss['tag']:
         return False
     if tag == 'exception-info':

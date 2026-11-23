@@ -1,0 +1,37 @@
+{
+  "capture_sha256": "9f5a4502777834a583077efed20862e9b6ef76bdd3622f35da6596a8001f6733",
+  "counts": {
+    "pass": 4082,
+    "guest-judged": 63,
+    "fail": 384,
+    "not-executed": 2410,
+    "skipped": 0,
+    "namespaces-failed": 86
+  },
+  "skip_mismatches_unchanged": true,
+  "newly_loaded_namespace_results": {
+    "clojure.core-test.decimal-qmark": {
+      "pass": 40
+    },
+    "clojure.core-test.mod": {
+      "pass": 72,
+      "fail": 12
+    },
+    "clojure.core-test.quot": {
+      "pass": 57,
+      "fail": 12
+    },
+    "clojure.core-test.rem": {
+      "pass": 56,
+      "fail": 12
+    }
+  },
+  "regressed_previously_passing_assertions": [],
+  "reference_unchanged": true,
+  "comparison_and_count_guards_unchanged": true,
+  "changed_record_counts": {
+    "assertions": 243,
+    "tests": 1,
+    "namespaces": 4
+  }
+}

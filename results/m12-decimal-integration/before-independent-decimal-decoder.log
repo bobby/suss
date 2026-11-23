@@ -1,0 +1,23 @@
+Running as unit: run-p2862405-i90920404.scope; invocation ID: 18a74dac7d0848889cee8f0d8f068774
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.88s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test decimal_fields_are_independently_decoded_after_gc ... FAILED
+
+failures:
+
+---- decimal_fields_are_independently_decoded_after_gc stdout ----
+
+thread 'decimal_fields_are_independently_decoded_after_gc' (2862513) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:110:13:
+Runtime: 0M: Err(Host(Unsupported ABI2 value layout))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_fields_are_independently_decoded_after_gc
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 1.85s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

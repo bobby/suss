@@ -1,0 +1,184 @@
+{
+  "complete": true,
+  "executable_sha256": "1f111e5eb903978b8c23e1cb85a9a5cd8ab6f13ae438ee72a19b589f9de498b6",
+  "seconds": 643.0101568698883,
+  "rows": [
+    {
+      "source": "(pr-str (let [p nil] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]",
+      "actual": "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Cannot invoke \\\\\\\"java.lang.Character.charValue()\\\\\\\" because \\\\\\\"x\\\\\\\" is null\\\"]\"\n",
+      "stderr": "Running as unit: run-p3150272-i91204947.scope; invocation ID: 1a764d2854d94b3eaeb8b316c9285ec3\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) nil))",
+      "expected": "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]",
+      "actual": "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Cannot invoke \\\\\\\"java.lang.Character.charValue()\\\\\\\" because \\\\\\\"x\\\\\\\" is null\\\"]\"\n",
+      "stderr": "Running as unit: run-p3151530-i91214863.scope; invocation ID: ca53eea3cfd942e5bb9da1c77c8ed2ff\n"
+    },
+    {
+      "source": "(pr-str (let [p \"x\"] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3152822-i91197349.scope; invocation ID: 184683bec9de4a3f83ffc255eff36be3\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) \"x\"))",
+      "expected": "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3154269-i91205547.scope; invocation ID: 63afaf9316b04e49874da26ceb5bcb62\n"
+    },
+    {
+      "source": "(pr-str (let [p true] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3155639-i91215375.scope; invocation ID: af4039e6c3cc4572989a1d9db727f85b\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) true))",
+      "expected": "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3157095-i91230635.scope; invocation ID: a9ae4bed59fd464aae034d8853fcc020\n"
+    },
+    {
+      "source": "(pr-str (let [p :x] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3158266-i91226930.scope; invocation ID: 94c898db835649029b4a9da8408b438b\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) :x))",
+      "expected": "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3159289-i91227127.scope; invocation ID: 8b5e13bc1a5f4b8fad833f06719c36dd\n"
+    },
+    {
+      "source": "(pr-str (let [p []] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3160273-i91213187.scope; invocation ID: 463aa4ec890e42208e780e15e7ab3881\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) []))",
+      "expected": "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3161314-i91216046.scope; invocation ID: 3d40ebdaeb6b4a48b52c4bcaf4d02955\n"
+    },
+    {
+      "source": "(pr-str (let [p {}] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3162544-i91223478.scope; invocation ID: 63b3ba7d501e4cdc974340ae825fb866\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) {}))",
+      "expected": "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "actual": "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\\\"]\"\n",
+      "stderr": "Running as unit: run-p3163801-i91219481.scope; invocation ID: 902679c251bd4e29b2457e9a9c2bcff3\n"
+    },
+    {
+      "source": "(pr-str (let [p 1267650600228229401496703205376N] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "actual": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 1267650600228229401496703205376\\\"]\"\n",
+      "stderr": "Running as unit: run-p3164785-i91219575.scope; invocation ID: 29a923d29ff54e5da3dcdd4121266cfa\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 1267650600228229401496703205376N))",
+      "expected": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "actual": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 1267650600228229401496703205376\\\"]\"\n",
+      "stderr": "Running as unit: run-p3165595-i91235655.scope; invocation ID: 458f11d9e21144998357a1c1256bedbe\n"
+    },
+    {
+      "source": "(pr-str (let [p (biginteger 1267650600228229401496703205376N)] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "actual": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 1267650600228229401496703205376\\\"]\"\n",
+      "stderr": "Running as unit: run-p3166713-i91224089.scope; invocation ID: 9b517fe62904424b939ecf482b8796aa\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) (biginteger 1267650600228229401496703205376N)))",
+      "expected": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "actual": "[:error \"Value out of range for long: 1267650600228229401496703205376\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 1267650600228229401496703205376\\\"]\"\n",
+      "stderr": "Running as unit: run-p3167769-i91238943.scope; invocation ID: 9ad56d343c2e468dad380ab1762b4ab9\n"
+    },
+    {
+      "source": "(pr-str (let [p 1267650600228229401496703205376/3] (with-precision p :rounding FLOOR (str *math-context*))))",
+      "expected": "[:error \"Value out of range for long: 422550200076076467165567735125\"]",
+      "actual": "[:error \"Value out of range for long: 422550200076076467165567735125\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 422550200076076467165567735125\\\"]\"\n",
+      "stderr": "Running as unit: run-p3168857-i91216919.scope; invocation ID: 5352665bfc324d87b2318bdc259a611a\n"
+    },
+    {
+      "source": "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 1267650600228229401496703205376/3))",
+      "expected": "[:error \"Value out of range for long: 422550200076076467165567735125\"]",
+      "actual": "[:error \"Value out of range for long: 422550200076076467165567735125\"]",
+      "matches": true,
+      "exit_code": 0,
+      "stdout": "\"[:error \\\"Value out of range for long: 422550200076076467165567735125\\\"]\"\n",
+      "stderr": "Running as unit: run-p3169651-i91239213.scope; invocation ID: c95e75d1a9754c14b7bbbaef732de128\n"
+    }
+  ],
+  "argv_recipe": [
+    "<executable with recorded SHA256>",
+    "--no-cache",
+    "-e",
+    "(pr-str (try <source with catch Throwable replaced by catch :default> (catch :default e [:error (ex-message e)])))"
+  ],
+  "scope_recipe": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-p",
+    "MemoryMax=2G",
+    "--"
+  ],
+  "note": "Recipes annotate the actual recorded invocation; original sources, stdout/stderr, statuses and executable hash are retained."
+}

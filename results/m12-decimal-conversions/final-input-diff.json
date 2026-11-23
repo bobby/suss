@@ -1,0 +1,30 @@
+{
+  "after-ci-repair/gates.json": {
+    "docs/compatibility/README.md": {
+      "before": "456ae85e30c824f24ffca190a491458b9a831364cf4d23bb7deae9a6d087901f",
+      "after": "735a374e346dc519be313c5b76f0b8bb5c20aa75125096cd7e46950edf98d875"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "35db0fa145ba5103d5264a7ba9c32e256d0863129b31ab7c0e34d09176a60f2d",
+      "after": "728da729ac8e93ac4399cc3007df42aa9364b404ef4e395402b941bc262dddd5"
+    },
+    "tests/oracle/clojure-test-suite-known-failures.json": {
+      "before": "30c12e35962668251ee6f1594f12aa5f95cef11956ca0eba638e9f4cbbd99484",
+      "after": "7d805e6652ccd82993bc102720102cc8805759fb11a25a8a48b05106702ac7ff"
+    }
+  },
+  "suite-after-conversions/suite-commands.json": {
+    "docs/compatibility/README.md": {
+      "before": "456ae85e30c824f24ffca190a491458b9a831364cf4d23bb7deae9a6d087901f",
+      "after": "735a374e346dc519be313c5b76f0b8bb5c20aa75125096cd7e46950edf98d875"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "35db0fa145ba5103d5264a7ba9c32e256d0863129b31ab7c0e34d09176a60f2d",
+      "after": "728da729ac8e93ac4399cc3007df42aa9364b404ef4e395402b941bc262dddd5"
+    },
+    "tests/oracle/clojure-test-suite-known-failures.json": {
+      "before": "30c12e35962668251ee6f1594f12aa5f95cef11956ca0eba638e9f4cbbd99484",
+      "after": "7d805e6652ccd82993bc102720102cc8805759fb11a25a8a48b05106702ac7ff"
+    }
+  }
+}

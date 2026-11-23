@@ -108,6 +108,7 @@ fn observed_tagged(value: &Observation) -> Value {
         Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
+        Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator, denominator) => json!({"tag":"ratio", "numerator":numerator, "denominator":denominator}),
         Observation::String(value) => units(value),
         Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {

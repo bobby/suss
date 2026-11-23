@@ -599,7 +599,7 @@ mod tests {
                             operator: crate::portable::hir::Arithmetic::Add,
                             arguments: vec![ValueId(2), ValueId(0)],
                             coercing: false,
-                            division_primitive: false,
+                            primitive_overload: false,
                         },
                         span: 0..1,
                     }],

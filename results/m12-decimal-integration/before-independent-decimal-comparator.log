@@ -1,0 +1,14 @@
+...............................F....
+======================================================================
+FAIL: test_decimal_observations_preserve_coefficient_and_preferred_scale (test_clojure_test_suite.SuiteMatches.test_decimal_observations_preserve_coefficient_and_preferred_scale)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/scripts/test_clojure_test_suite.py", line 78, in test_decimal_observations_preserve_coefficient_and_preferred_scale
+    self.assertTrue(suite.suite_matches(expected, dict(expected)))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 36 tests in 0.131s
+
+FAILED (failures=1)

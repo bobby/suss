@@ -1,0 +1,25 @@
+{
+  "head": "f9d5f91ac1bb898acd74d1256dc8e7e4c657c3f1",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "suss-compile",
+    "--test",
+    "decimal_values",
+    "--",
+    "--test-threads=2"
+  ],
+  "inputs": {
+    "crates/suss-compile/tests/decimal_values.rs": "62fc724e6fc7738de8f6610004777d3e8fa30799aff82121cd6b4cd183baaa26",
+    "crates/suss-compile/tests/support/portable_decode.rs": "0b43d6ea56903212be7db6ed9056e76b7d6590b212a9e918c661d5b7e804f5f8",
+    "results/m12-decimal-values/format-cases.json": "a05442783923909985c7d78db93571e41fe91d542b102bcd07b826d36f74c265",
+    "runtime/numeric/artifact/numeric.wasm": "96d7a4887d821a25d95dfc40c4d909c971a3906619f94300d5ccd2864a9116bc"
+  },
+  "test_only_adaptation": "Expose unchanged independent integer-decimal decoder for the copied new regression target. No production input changes.",
+  "complete": true,
+  "exit_code": 101,
+  "seconds": 8.517743825912476,
+  "inputs_unchanged": true
+}

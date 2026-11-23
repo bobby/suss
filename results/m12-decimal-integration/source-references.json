@@ -1,0 +1,13 @@
+{
+  "references": [
+    {
+      "url": "https://raw.githubusercontent.com/clojure/clojure/clojure-1.12.6/src/jvm/clojure/lang/Numbers.java",
+      "sha256": "1600afb689b31a990f84ef3f310faaba68352fd26b5e8e0bd1ce6d2520a0cc64"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openjdk/jdk21u/jdk-21.0.13%2B9/src/java.base/share/classes/java/math/BigDecimal.java",
+      "sha256": "80369962c6cabc3d5225f0244b3f6de28ec73d494a8aeaed1f56b4eca99d68e2"
+    }
+  ],
+  "implementation": "Original Suss arithmetic, bounded signed-sticky addition, comparison, hashing and primitive/boxed subtraction dispatch; source files are behavior references. No Java source body or dependency is shipped."
+}

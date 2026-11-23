@@ -1,0 +1,310 @@
+Running as unit: run-p2439504-i90498777.scope; invocation ID: 6db04cff82354dff9a6e4eb5ca30b4a9
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 05s
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test decimal_values_and_classes_execute_in_runtime_and_macro ... FAILED
+test aot_executes_decimal_values_readers_and_classes ... FAILED
+
+failures:
+
+---- decimal_values_and_classes_execute_in_runtime_and_macro stdout ----
+
+thread 'decimal_values_and_classes_execute_in_runtime_and_macro' (2446454) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:8:45:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_decimal_values_readers_and_classes stdout ----
+
+thread 'aot_executes_decimal_values_readers_and_classes' (2446453) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:41:5:
+Compilation error: Semantic error: Host error: failed to compile: wasm[0]::function[321]
+
+
+
+failures:
+    aot_executes_decimal_values_readers_and_classes
+    decimal_values_and_classes_execute_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.91s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_values`
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... FAILED
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... FAILED
+test components_read_without_a_compiler_or_host_reader ... FAILED
+test errors_are_catchable_and_carry_their_position ... FAILED
+test exact_numeric_literals_execute_and_preserve_reader_categories ... FAILED
+test exact_numeric_literals_pass_through_macros ... FAILED
+test macros_can_read_at_expansion_time ... FAILED
+test malformed_input_fails_with_the_compilers_message_and_position ... FAILED
+test nesting_depth_is_bounded_and_catchable ... FAILED
+test printed_data_reads_back_equal ... FAILED
+test read_string_follows_clojure ... FAILED
+test reader_conditionals_need_opts_as_in_clojure ... FAILED
+test reading_is_charged_to_the_callers_fuel ... FAILED
+test suss_edn_follows_clojure_edn ... FAILED
+test tags_and_record_literals_follow_clojure ... FAILED
+test the_repl_and_script_files_read ... FAILED
+
+failures:
+
+---- both_readers_agree_with_the_compilers_reader_on_the_shared_corpus stdout ----
+
+thread 'both_readers_agree_with_the_compilers_reader_on_the_shared_corpus' (2446678) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them stdout ----
+
+thread 'anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them' (2446677) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- components_read_without_a_compiler_or_host_reader stdout ----
+
+thread 'components_read_without_a_compiler_or_host_reader' (2446774) panicked at crates/suss-cli/tests/read_string.rs:630:5:
+Compilation error: Semantic error: Host error: failed to compile: wasm[0]::function[321]
+
+
+---- errors_are_catchable_and_carry_their_position stdout ----
+
+thread 'errors_are_catchable_and_carry_their_position' (2446840) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- exact_numeric_literals_execute_and_preserve_reader_categories stdout ----
+
+thread 'exact_numeric_literals_execute_and_preserve_reader_categories' (2446951) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- exact_numeric_literals_pass_through_macros stdout ----
+
+thread 'exact_numeric_literals_pass_through_macros' (2446952) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- macros_can_read_at_expansion_time stdout ----
+
+thread 'macros_can_read_at_expansion_time' (2447023) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- malformed_input_fails_with_the_compilers_message_and_position stdout ----
+
+thread 'malformed_input_fails_with_the_compilers_message_and_position' (2447113) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- nesting_depth_is_bounded_and_catchable stdout ----
+
+thread 'nesting_depth_is_bounded_and_catchable' (2447175) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- printed_data_reads_back_equal stdout ----
+
+thread 'printed_data_reads_back_equal' (2447179) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- read_string_follows_clojure stdout ----
+
+thread 'read_string_follows_clojure' (2447300) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- reader_conditionals_need_opts_as_in_clojure stdout ----
+
+thread 'reader_conditionals_need_opts_as_in_clojure' (2447302) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- reading_is_charged_to_the_callers_fuel stdout ----
+
+thread 'reading_is_charged_to_the_callers_fuel' (2447373) panicked at crates/suss-cli/tests/read_string.rs:496:6:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- suss_edn_follows_clojure_edn stdout ----
+
+thread 'suss_edn_follows_clojure_edn' (2447374) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- tags_and_record_literals_follow_clojure stdout ----
+
+thread 'tags_and_record_literals_follow_clojure' (2447431) panicked at crates/suss-cli/tests/read_string.rs:73:39:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- the_repl_and_script_files_read stdout ----
+
+thread 'the_repl_and_script_files_read' (2447489) panicked at crates/suss-cli/tests/read_string.rs:586:5:
+assertion `left == right` failed: 
+Error: Host error: failed to compile: wasm[0]::function[321]
+
+  left: []
+ right: ["[1 :a :user/b]", "nil", "{:a #{1}}"]
+
+
+failures:
+    anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them
+    both_readers_agree_with_the_compilers_reader_on_the_shared_corpus
+    components_read_without_a_compiler_or_host_reader
+    errors_are_catchable_and_carry_their_position
+    exact_numeric_literals_execute_and_preserve_reader_categories
+    exact_numeric_literals_pass_through_macros
+    macros_can_read_at_expansion_time
+    malformed_input_fails_with_the_compilers_message_and_position
+    nesting_depth_is_bounded_and_catchable
+    printed_data_reads_back_equal
+    read_string_follows_clojure
+    reader_conditionals_need_opts_as_in_clojure
+    reading_is_charged_to_the_callers_fuel
+    suss_edn_follows_clojure_edn
+    tags_and_record_literals_follow_clojure
+    the_repl_and_script_files_read
+
+test result: FAILED. 0 passed; 16 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.96s
+
+error: test failed, to rerun pass `-p suss-cli --test read_string`
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... FAILED
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... FAILED
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... FAILED
+
+failures:
+
+---- compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc stdout ----
+
+thread 'compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc' (2447567) panicked at crates/suss-compile/tests/decimal_values.rs:46:86:
+called `Result::unwrap()` on an `Err` value: failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout stdout ----
+
+thread 'portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout' (2447577) panicked at crates/suss-compile/tests/support/portable_decode.rs:1737:47:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+---- portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing stdout ----
+
+thread 'portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing' (2447579) panicked at crates/suss-compile/tests/support/portable_decode.rs:1711:47:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[321]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 91357: type mismatch: expected i64, found eqref
+)
+
+
+failures:
+    compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc
+    portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout
+    portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.45s
+
+error: test failed, to rerun pass `-p suss-compile --test decimal_values`
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_11_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: 3 targets failed:
+    `-p suss-cli --test clojure_decimal_values`
+    `-p suss-cli --test read_string`
+    `-p suss-compile --test decimal_values`

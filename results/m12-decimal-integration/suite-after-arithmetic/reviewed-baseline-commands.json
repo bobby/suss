@@ -1,0 +1,27 @@
+{
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "compare",
+        "--observations",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/results/m12-decimal-integration/suite-after-arithmetic/suite-capture/suite-observations.json",
+        "--write"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "compare",
+        "--observations",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/results/m12-decimal-integration/suite-after-arithmetic/suite-capture/suite-observations.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "old_sha256": "b62c84c183be70604dfdac2e3a0300829e2af3c257a9eeeda2f2dd579fb31541",
+  "new_sha256": "30c12e35962668251ee6f1594f12aa5f95cef11956ca0eba638e9f4cbbd99484"
+}

@@ -1,0 +1,61 @@
+Running as unit: run-p2474713-i90546738.scope; invocation ID: fab935892db54d4b87d049e7ea4222a2
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.34s
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test aot_executes_decimal_values_readers_and_classes ... ok
+test decimal_values_and_classes_execute_in_runtime_and_macro ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.19s
+
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... ok
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... ok
+test errors_are_catchable_and_carry_their_position ... ok
+test components_read_without_a_compiler_or_host_reader ... ok
+test exact_numeric_literals_pass_through_macros ... ok
+test macros_can_read_at_expansion_time ... ok
+test exact_numeric_literals_execute_and_preserve_reader_categories ... ok
+test nesting_depth_is_bounded_and_catchable ... ok
+test malformed_input_fails_with_the_compilers_message_and_position ... ok
+test printed_data_reads_back_equal ... ok
+test read_string_follows_clojure ... ok
+test reading_is_charged_to_the_callers_fuel ... ok
+test reader_conditionals_need_opts_as_in_clojure ... ok
+test suss_edn_follows_clojure_edn ... ok
+test tags_and_record_literals_follow_clojure ... ok
+test the_repl_and_script_files_read ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.84s
+
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_11_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

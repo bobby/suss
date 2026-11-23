@@ -1,0 +1,14 @@
+{
+  "upstream": "org.clojure/clojure 1.12.6",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "source": "clojure/core.clj",
+  "source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "form": "with-precision",
+  "form_sha256": "a8d76f780329a26254aabfb83698868db9e015c2ee8f627c557f9b947b3b759c",
+  "upstream_form": "(defmacro with-precision\n  \"Sets the precision and rounding mode to be used for BigDecimal operations.\n\n  Usage: (with-precision 10 (/ 1M 3))\n  or:    (with-precision 10 :rounding HALF_DOWN (/ 1M 3))\n\n  The rounding mode is one of CEILING, FLOOR, HALF_UP, HALF_DOWN,\n  HALF_EVEN, UP, DOWN and UNNECESSARY; it defaults to HALF_UP.\"\n  {:added \"1.0\"}\n  [precision & exprs]\n    (let [[body rm] (if (= (first exprs) :rounding)\n                      [(next (next exprs))\n                       `((. java.math.RoundingMode ~(second exprs)))]\n                      [exprs nil])]\n      `(binding [*math-context* (java.math.MathContext. ~precision ~@rm)]\n         ~@body)))",
+  "license": "EPL-1.0",
+  "license_path": "runtime/core-import/LICENSE",
+  "adaptation": "Java MathContext and RoundingMode become immutable GC precision/mode fields; ordinary dynamic binding and body evaluation remain. All eight modes retained. Nil marks the one-argument constructor; explicit rounding uses checked numeric int coercion, preserving constructor overload behavior.",
+  "adapted_macro": "docs/compatibility/bootstrap/with-precision.sus",
+  "adapted_macro_sha256": "266eb1c52a89b35c2974199489daa99a51cd203a27056d0ac0d6dfbc310ff32b"
+}

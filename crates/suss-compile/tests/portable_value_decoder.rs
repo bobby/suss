@@ -770,3 +770,46 @@ fn ratio_decoder_reads_actual_exact_children_after_gc() {
         assert_eq!(decoder.decode_session(&mut session,&value).unwrap(), Observation::Ratio(numerator.into(),denominator.into()), "{source}");
     }
 }
+
+#[test]
+fn decimal_decoder_rejects_mutable_owners_and_malformed_exact_coefficients() {
+    let mut session = Session::new_repl().unwrap();
+    let value = session.eval_probe("1.50M").unwrap();
+    let mut decoder = Decoder::capture_numeric(&mut session, 1000).unwrap();
+    session.collect().unwrap();
+    session.inspect(&value, |mut store, value| {
+        let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+        let canonical = owner.ty(&store)?;
+        let fields = owner.fields(&mut store)?.collect::<Vec<_>>();
+        assert_eq!(decoder.decode(&mut store, &value)?,
+            Observation::Decimal { unscaled: "150".into(), scale: 2 });
+        for mutable in 0..2 {
+            let types = canonical.fields().enumerate().map(|(index, field)|
+                wasmtime::FieldType::new(if index == mutable { wasmtime::Mutability::Var }
+                    else { field.mutability() }, field.element_type().clone()));
+            let ty = wasmtime::StructType::new(store.engine(), types)?;
+            assert!(!wasmtime::StructType::eq(&canonical, &ty));
+            let pre = wasmtime::StructRefPre::new(&mut store, ty);
+            let forged = wasmtime::StructRef::new(&mut store, &pre, &fields)?;
+            decoder.refill(1000);
+            assert!(decoder.decode(&mut store, &Val::AnyRef(Some(forged.to_anyref()))).is_err());
+        }
+        let coefficient = fields[0].unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+        let original = coefficient.fields(&mut store)?.collect::<Vec<_>>();
+        let integer_ty = coefficient.ty(&store)?;
+        let integer_pre = wasmtime::StructRefPre::new(&mut store, integer_ty);
+        let decimal_pre = wasmtime::StructRefPre::new(&mut store, canonical);
+        for (index, invalid) in [(0, 0), (2, i32::MAX), (3, 2)] {
+            let mut broken = original.clone();
+            broken[index] = Val::I32(invalid);
+            let integer = wasmtime::StructRef::new(&mut store, &integer_pre, &broken)?;
+            let forged = wasmtime::StructRef::new(&mut store, &decimal_pre,
+                &[Val::AnyRef(Some(integer.to_anyref())), Val::I32(2)])?;
+            decoder.refill(1000);
+            assert!(decoder.decode(&mut store, &Val::AnyRef(Some(forged.to_anyref()))).is_err());
+        }
+        decoder.refill(1);
+        assert!(decoder.decode(&mut store, &value).is_err());
+        Ok(())
+    }).unwrap();
+}

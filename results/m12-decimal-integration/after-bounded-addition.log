@@ -1,0 +1,66 @@
+Running as unit: run-p2811741-i90852569.scope; invocation ID: e42a07fcf8a547c6b76de8d985b46d2c
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 59s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test decimal_additional_precision_and_dynamic_context_match_clojure ... FAILED
+
+failures:
+
+---- decimal_additional_precision_and_dynamic_context_match_clojure stdout ----
+
+thread 'decimal_additional_precision_and_dynamic_context_match_clojure' (2816329) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case0: (with-precision 2 (pr-str [(- 1M 1.234M) (- 1.0 1.234M) (- 1.234M 1M)]))
+expected "[-0.2M -0.23399999999999999 0.23M]"
+actual Ok("\"[-0.23M -0.23399999999999999 0.23M]\"")
+Runtime case1: (with-precision 2 (pr-str [(-' 1M 1.234M) (unchecked-subtract 1M 1.234M)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Runtime case2: (with-precision 2 (pr-str [(unchecked-negate 1.234M) (unchecked-inc 1.234M) (unchecked-dec 1.234M)]))
+expected "[-1.2M 2.2M 0.23M]"
+actual Ok("\"[-1.234 2.2M 0.23M]\"")
+Runtime case4: (with-precision 2 (pr-str [(apply - [1M 1.234M]) ((fn [f] (f 1M 1.234M)) -)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Runtime case8: (with-precision 2 (let [events (atom [])] [(pr-str (- (do (swap! events conj :left) 1M) (do (swap! events conj :right) 1.234M))) @events]))
+expected ["-0.2M" [:left :right]]
+actual Ok("[\"-0.23M\" [:left :right]]")
+Runtime case14: (with-precision 3 (pr-str (- 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x8087 - <unknown>!<wasm function 4>\n    1:   0xaf4d - <unknown>!<wasm function 54>\n    2:   0xafda - <unknown>!<wasm function 55>\n    3:   0xbd48 - <unknown>!<wasm function 92>\n    4:   0xc526 - <unknown>!<wasm function 101>\n    5:   0xcdb3 - <unknown>!<wasm function 117>\n    6:   0x1024 - <unknown>!<wasm function 41>\n    7:  0x20c8e - <unknown>!<wasm function 506>\n    8:  0x21319 - <unknown>!<wasm function 510>\n    9:    0xeca - <unknown>!<wasm function 40>\n   10:  0x20c8e - <unknown>!<wasm function 506>\n   11:    0xe27 - <unknown>!<wasm function 39>\n   12:  0x20c8e - <unknown>!<wasm function 506>\n   13:  0x21319 - <unknown>!<wasm function 510>\n   14:    0xd8d - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case15: (with-precision 3 :rounding FLOOR (pr-str (- 1E+1000000M 1M)))
+expected "9.99E+999999M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x8087 - <unknown>!<wasm function 4>\n    1:   0xaf4d - <unknown>!<wasm function 54>\n    2:   0xafda - <unknown>!<wasm function 55>\n    3:   0xbd48 - <unknown>!<wasm function 92>\n    4:   0xc526 - <unknown>!<wasm function 101>\n    5:   0xcdb3 - <unknown>!<wasm function 117>\n    6:   0x1024 - <unknown>!<wasm function 41>\n    7:  0x20c8e - <unknown>!<wasm function 506>\n    8:  0x21319 - <unknown>!<wasm function 510>\n    9:    0xeca - <unknown>!<wasm function 40>\n   10:  0x20c8e - <unknown>!<wasm function 506>\n   11:    0xe27 - <unknown>!<wasm function 39>\n   12:  0x20c8e - <unknown>!<wasm function 506>\n   13:  0x21319 - <unknown>!<wasm function 510>\n   14:    0xd8d - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case0: (with-precision 2 (pr-str [(- 1M 1.234M) (- 1.0 1.234M) (- 1.234M 1M)]))
+expected "[-0.2M -0.23399999999999999 0.23M]"
+actual Ok("\"[-0.23M -0.23399999999999999 0.23M]\"")
+Macro case1: (with-precision 2 (pr-str [(-' 1M 1.234M) (unchecked-subtract 1M 1.234M)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Macro case2: (with-precision 2 (pr-str [(unchecked-negate 1.234M) (unchecked-inc 1.234M) (unchecked-dec 1.234M)]))
+expected "[-1.2M 2.2M 0.23M]"
+actual Ok("\"[-1.234 2.2M 0.23M]\"")
+Macro case4: (with-precision 2 (pr-str [(apply - [1M 1.234M]) ((fn [f] (f 1M 1.234M)) -)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Macro case8: (with-precision 2 (let [events (atom [])] [(pr-str (- (do (swap! events conj :left) 1M) (do (swap! events conj :right) 1.234M))) @events]))
+expected ["-0.2M" [:left :right]]
+actual Ok("[\"-0.23M\" [:left :right]]")
+Macro case14: (with-precision 3 (pr-str (- 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x8087 - <unknown>!<wasm function 4>\n    1:   0xaf4d - <unknown>!<wasm function 54>\n    2:   0xafda - <unknown>!<wasm function 55>\n    3:   0xbd48 - <unknown>!<wasm function 92>\n    4:   0xc526 - <unknown>!<wasm function 101>\n    5:   0xcdb3 - <unknown>!<wasm function 117>\n    6:   0x1010 - <unknown>!<wasm function 41>\n    7:  0x20c8e - <unknown>!<wasm function 506>\n    8:  0x21319 - <unknown>!<wasm function 510>\n    9:    0xeb6 - <unknown>!<wasm function 40>\n   10:  0x20c8e - <unknown>!<wasm function 506>\n   11:    0xe13 - <unknown>!<wasm function 39>\n   12:  0x20c8e - <unknown>!<wasm function 506>\n   13:  0x21319 - <unknown>!<wasm function 510>\n   14:    0xd79 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case15: (with-precision 3 :rounding FLOOR (pr-str (- 1E+1000000M 1M)))
+expected "9.99E+999999M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x8087 - <unknown>!<wasm function 4>\n    1:   0xaf4d - <unknown>!<wasm function 54>\n    2:   0xafda - <unknown>!<wasm function 55>\n    3:   0xbd48 - <unknown>!<wasm function 92>\n    4:   0xc526 - <unknown>!<wasm function 101>\n    5:   0xcdb3 - <unknown>!<wasm function 117>\n    6:   0x1010 - <unknown>!<wasm function 41>\n    7:  0x20c8e - <unknown>!<wasm function 506>\n    8:  0x21319 - <unknown>!<wasm function 510>\n    9:    0xeb6 - <unknown>!<wasm function 40>\n   10:  0x20c8e - <unknown>!<wasm function 506>\n   11:    0xe13 - <unknown>!<wasm function 39>\n   12:  0x20c8e - <unknown>!<wasm function 506>\n   13:  0x21319 - <unknown>!<wasm function 510>\n   14:    0xd79 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_additional_precision_and_dynamic_context_match_clojure
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 24.49s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

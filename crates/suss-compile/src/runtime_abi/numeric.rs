@@ -31,8 +31,10 @@ pub(super) struct Helper {
     pub memory: MemorySection,
     pub data: DataSection,
     pub parse: u32,
+    pub parse_float: u32,
     pub format: u32,
     pub multiply: u32,
+    pub decimal_format: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     pub scratch_base: i32,
@@ -42,9 +44,11 @@ pub(super) struct Helper {
 
 #[derive(Clone, Copy)]
 pub(super) struct Info {
-    parse: u32,
+    pub parse: u32,
+    pub parse_float: u32,
     format: u32,
     pub multiply: u32,
+    pub decimal_format: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     scratch_base: i32,
@@ -53,8 +57,10 @@ impl Helper {
     pub fn info(&self) -> Info {
         Info {
             parse: self.parse,
+            parse_float: self.parse_float,
             format: self.format,
             multiply: self.multiply,
+            decimal_format: self.decimal_format,
             stack_global: self.stack_global,
             stack_top: self.stack_top,
             scratch_base: self.scratch_base,
@@ -73,8 +79,10 @@ fn helper_from(bytes: &[u8]) -> Helper {
         memory: MemorySection::new(),
         data: DataSection::new(),
         parse: u32::MAX,
+        parse_float: u32::MAX,
         format: u32::MAX,
         multiply: u32::MAX,
+        decimal_format: u32::MAX,
         stack_global: u32::MAX,
         stack_top: 0,
         scratch_base: 0,
@@ -147,14 +155,18 @@ fn helper_from(bytes: &[u8]) -> Helper {
                 for export in reader {
                     let export = export.unwrap();
                     match export.name {
-                        "suss_parse_number" | "suss_format_number" | "suss_bigint_multiply" => {
+                        "suss_parse_number" | "suss_parse_decimal_f32" | "suss_format_number" | "suss_bigint_multiply" | "suss_format_decimal" => {
                             assert_eq!(export.kind, wasmparser::ExternalKind::Func);
                             if export.name == "suss_parse_number" {
                                 result.parse = export.index;
+                            } else if export.name == "suss_parse_decimal_f32" {
+                                result.parse_float = export.index;
                             } else if export.name == "suss_format_number" {
                                 result.format = export.index;
-                            } else {
+                            } else if export.name == "suss_bigint_multiply" {
                                 result.multiply = export.index;
+                            } else {
+                                result.decimal_format = export.index;
                             }
                         }
                         "memory" => {
@@ -203,8 +215,10 @@ fn helper_from(bytes: &[u8]) -> Helper {
         }
     }
     assert_ne!(result.parse, u32::MAX);
+    assert_ne!(result.parse_float, u32::MAX);
     assert_ne!(result.format, u32::MAX);
     assert_ne!(result.multiply, u32::MAX);
+    assert_ne!(result.decimal_format, u32::MAX);
     assert_ne!(result.stack_global, u32::MAX);
     assert!(result.stack_top > 0 && result.stack_top < result.scratch_base);
     for (function, params, results) in [
@@ -218,7 +232,9 @@ fn helper_from(bytes: &[u8]) -> Helper {
             vec![wasmparser::ValType::F64, wasmparser::ValType::I32],
             vec![wasmparser::ValType::I32],
         ),
+        (result.parse_float, vec![wasmparser::ValType::I32; 2], vec![wasmparser::ValType::F64]),
         (result.multiply, vec![wasmparser::ValType::I32; 5], vec![wasmparser::ValType::I32]),
+        (result.decimal_format, vec![wasmparser::ValType::I32; 4], vec![wasmparser::ValType::I32]),
     ] {
         let ty = &types[functions[function as usize] as usize];
         assert_eq!(ty.params(), params);
@@ -507,6 +523,27 @@ pub(super) fn intrinsics(
         &convert,
     );
 
+    // Format a raw double without constructing a numeric wrapper, including
+    // on raw integer-cast diagnostic paths. Scratch is private and reused only
+    // after all bytes have been copied into the returned UTF-16 string.
+    let mut format_double = vec![
+        I64Const(32), Call(reserve), LocalSet(1),
+        I32Const(helper.stack_top), GlobalSet(helper.stack_global),
+        LocalGet(0), LocalGet(1), Call(helper.format), LocalSet(2),
+    ];
+    format_double.extend(check(&[LocalGet(2), I32Const(32), I32GtU], &allocation));
+    format_double.extend([
+        LocalGet(2), ArrayNewDefault(STRING), LocalSet(4),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), LocalGet(2), I32GeU, BrIf(1),
+        LocalGet(4), RefCastNonNull(string), LocalGet(3),
+        LocalGet(1), LocalGet(3), I32Add, I32Load8U(byte), ArraySet(STRING),
+        LocalGet(3), I32Const(1), I32Add, LocalSet(3), Br(0), End, End,
+        LocalGet(4),
+    ]);
+    let double_string = b.function_with_locals("double-string", &[ValType::F64], &[VALUE],
+        &[(3, ValType::I32), (1, VALUE)], &format_double);
+
     // A long, an i31 or a boxed one, first (#388): its digits, with no
     // long-test or long-unbox call. An i31 is never a string or a sentinel.
     let long_string = b.names["long-string"];
@@ -539,6 +576,10 @@ pub(super) fn intrinsics(
         LocalGet(0), ReturnCall(b.names["bigint-string"]), End]);
     to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
         LocalGet(0), ReturnCall(b.names["ratio-string"]), End]);
+    to_string.extend([LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["decimal-string"]), End]);
+    to_string.extend([LocalGet(0),RefTestNonNull(HeapType::Concrete(MATH_CONTEXT)),If(BlockType::Empty),
+        LocalGet(0),ReturnCall(b.names["decimal-context-string"]),End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),
@@ -555,68 +596,18 @@ pub(super) fn intrinsics(
         to_string.extend([Return, End]);
     }
     to_string.extend([
-        LocalGet(0),
-        Call(b.names["long-test"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(b.names["long-unbox"]),
-        Call(b.names["long-string"]),
-        Return,
-        End,
-        LocalGet(0),
-        RefTestNonNull(number),
-        If(BlockType::Empty),
-        I64Const(32),
-        Call(reserve),
-        LocalSet(1),
-        I32Const(helper.stack_top),
-        GlobalSet(helper.stack_global),
-        LocalGet(0),
-        RefCastNonNull(number),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
-        LocalGet(1),
-        Call(helper.format),
-        LocalSet(2),
-    ]);
-    to_string.extend(check(&[LocalGet(2), I32Const(32), I32GtU], &allocation));
-    to_string.extend([
-        LocalGet(2),
-        ArrayNewDefault(STRING),
-        LocalSet(4),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
-        LocalGet(2),
-        I32GeU,
-        BrIf(1),
-        LocalGet(4),
-        RefCastNonNull(string),
-        LocalGet(3),
-        LocalGet(1),
-        LocalGet(3),
-        I32Add,
-        I32Load8U(byte),
-        ArraySet(STRING),
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
-        Br(0),
-        End,
-        End,
-        LocalGet(4),
-        Return,
-        End,
+        LocalGet(0), Call(b.names["long-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["long-unbox"]), ReturnCall(long_string), End,
+        LocalGet(0), RefTestNonNull(number), If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(number),
+        StructGet {struct_type_index:NUMBER, field_index:0}, ReturnCall(double_string), End,
     ]);
     coercions::string(&mut to_string, coercion_types);
     let to_string = b.function_with_locals(
         "coerce-string",
         &[VALUE],
         &[VALUE],
-        &[(3, ValType::I32), (1, VALUE)],
+        &[],
         &to_string,
     );
     // JS property keys: an integral double names the same property as the

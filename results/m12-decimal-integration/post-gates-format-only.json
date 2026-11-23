@@ -1,0 +1,6 @@
+{
+  "path": "crates/suss-compile/tests/support/probe_eval.rs",
+  "before_sha256": "a4634bb512634cc744c620cb858c78c08b4cf53daafe3a328cb74beee0ed7001",
+  "after_sha256": "470427fa0d1ed8ce0ff8442ce391931620ee8dae451fe0a19cb0fee96593cf24",
+  "reason": "Remove unrelated rustfmt line wrapping introduced while formatting the new CLI test; only whitespace and line breaks change."
+}

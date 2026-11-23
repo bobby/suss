@@ -1,0 +1,145 @@
+Running as unit: run-p3256987-i91319037.scope; invocation ID: 5c8b91e2f03b4aa2821f265d26d1eaa9
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=84 guest-judged=75 namespaces-failed=83 not-executed=2314 pass=4466 skipped=0
+namespaces clojure.core-test.short: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.short (Some("<root>/clojure/core_test/short.cljc")): instance? requires exactly two operands at bytes 233..2859'}, observed None
+assertions clojure.core-test.byte/test-byte#1: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#10: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#11: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#12: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#13: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#14: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#15: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#16: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#17: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#18: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#19: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#2: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#20: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#21: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#22: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#23: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#24: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#25: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#26: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#27: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#28: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#3: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#4: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#5: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#6: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#7: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#8: expected 'count:27/28', observed None
+assertions clojure.core-test.byte/test-byte#9: expected 'count:27/28', observed None
+assertions clojure.core-test.double/test-double#1: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#10: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#11: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#12: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#13: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#14: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#15: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#16: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#17: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#18: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#19: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#2: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#3: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#4: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#5: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#6: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#7: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#8: expected 'count:15/19', observed None
+assertions clojure.core-test.double/test-double#9: expected 'count:15/19', observed None
+assertions clojure.core-test.float/test-float#1: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#10: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#11: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#12: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#13: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#14: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#15: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#16: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#17: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#18: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#19: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#2: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#20: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#21: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#22: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#23: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#3: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#4: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#5: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#6: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#7: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#8: expected 'count:19/23', observed None
+assertions clojure.core-test.float/test-float#9: expected 'count:19/23', observed None
+assertions clojure.core-test.int/test-int#1: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#10: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#11: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#12: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#13: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#14: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#15: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#16: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#17: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#18: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#19: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#2: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#20: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#21: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#22: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#23: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#24: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#25: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#26: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#27: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#28: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#3: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#4: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#5: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#6: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#7: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#8: expected 'count:27/28', observed None
+assertions clojure.core-test.int/test-int#9: expected 'count:27/28', observed None
+assertions clojure.core-test.long/test-long#1: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#10: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#11: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#12: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#13: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#14: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#15: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#16: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#17: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#18: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#19: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#2: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#20: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#21: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#22: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#23: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#24: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#25: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#26: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#3: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#4: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#5: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#6: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#7: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#8: expected 'count:25/26', observed None
+assertions clojure.core-test.long/test-long#9: expected 'count:25/26', observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (3256989) panicked at crates/suss-compile/tests/clojure_test_suite.rs:618:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 393.62s
+

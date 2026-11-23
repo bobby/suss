@@ -1,0 +1,302 @@
+Running as unit: run-p2959019-i91026004.scope; invocation ID: 154ac3c8a448478581286b1cec69e797
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 06s
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 1 test
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... FAILED
+
+failures:
+
+---- decimal_conversions_match_checked_and_unchecked_clojure_paths stdout ----
+
+thread 'decimal_conversions_match_checked_and_unchecked_clojure_paths' (2963662) panicked at crates/suss-cli/tests/clojure_decimal_conversions.rs:48:5:
+Runtime case5: (pr-str (long 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for long: 18446744073709551617.25\"]")
+Runtime case6: (pr-str (long 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for long: 1E+2147483648\"]")
+Runtime case12: (pr-str (unchecked-long 9223372036854775808M))
+expected "-9223372036854775808"
+actual Ok("\"9223372036854775807\"")
+Runtime case13: (pr-str (unchecked-long -9223372036854775809M))
+expected "9223372036854775807"
+actual Ok("\"-9223372036854775808\"")
+Runtime case14: (pr-str (unchecked-long 18446744073709551617.25M))
+expected "1"
+actual Ok("\"9223372036854775807\"")
+Runtime case15: (pr-str (unchecked-long 1E+2147483648M))
+expected "0"
+actual Ok("\"9223372036854775807\"")
+Runtime case23: (pr-str (int 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"integer overflow\"]")
+Runtime case24: (pr-str (int 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"integer overflow\"]")
+Runtime case29: (pr-str (unchecked-int 9223372036854775807.99M))
+expected "-1"
+actual Ok("\"2147483647\"")
+Runtime case30: (pr-str (unchecked-int 9223372036854775808M))
+expected "0"
+actual Ok("\"2147483647\"")
+Runtime case31: (pr-str (unchecked-int -9223372036854775809M))
+expected "-1"
+actual Ok("\"-2147483648\"")
+Runtime case32: (pr-str (unchecked-int 18446744073709551617.25M))
+expected "1"
+actual Ok("\"2147483647\"")
+Runtime case33: (pr-str (unchecked-int 1E+2147483648M))
+expected "0"
+actual Ok("\"2147483647\"")
+Runtime case41: (pr-str (short 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for short: 18446744073709551617.25\"]")
+Runtime case42: (pr-str (short 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for short: 1E+2147483648\"]")
+Runtime case48: (pr-str (unchecked-short 9223372036854775808M))
+expected "0"
+actual Ok("\"-1\"")
+Runtime case49: (pr-str (unchecked-short -9223372036854775809M))
+expected "-1"
+actual Ok("\"0\"")
+Runtime case50: (pr-str (unchecked-short 18446744073709551617.25M))
+expected "1"
+actual Ok("\"-1\"")
+Runtime case51: (pr-str (unchecked-short 1E+2147483648M))
+expected "0"
+actual Ok("\"-1\"")
+Runtime case59: (pr-str (byte 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for byte: 18446744073709551617.25\"]")
+Runtime case60: (pr-str (byte 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for byte: 1E+2147483648\"]")
+Runtime case66: (pr-str (unchecked-byte 9223372036854775808M))
+expected "0"
+actual Ok("\"-1\"")
+Runtime case67: (pr-str (unchecked-byte -9223372036854775809M))
+expected "-1"
+actual Ok("\"0\"")
+Runtime case68: (pr-str (unchecked-byte 18446744073709551617.25M))
+expected "1"
+actual Ok("\"-1\"")
+Runtime case69: (pr-str (unchecked-byte 1E+2147483648M))
+expected "0"
+actual Ok("\"-1\"")
+Runtime case84: (pr-str (rationalize 1.99M))
+expected "199/100"
+actual Ok("\"1.99M\"")
+Runtime case85: (pr-str (rationalize -1.99M))
+expected "-199/100"
+actual Ok("\"-1.99M\"")
+Runtime case86: (pr-str (rationalize 18446744073709551617.25M))
+expected "73786976294838206469/4"
+actual Ok("\"18446744073709551617.25M\"")
+Runtime case87: (pr-str (rationalize 1E+100M))
+expected "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000N"
+actual Ok("\"1E+100M\"")
+Runtime case88: (pr-str (rationalize 1E-100M))
+expected "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+actual Ok("\"1E-100M\"")
+Runtime case89: (pr-str (rationalize 0.00M))
+expected "0N"
+actual Ok("\"0.00M\"")
+Runtime case99: (pr-str (double (unchecked-float 1.0000000596046447753906250000000000000001M)))
+expected "1.0000001192092896"
+actual Ok("\"1.0\"")
+Runtime case100: (pr-str (double (unchecked-float -1.0000000596046447753906250000000000000001M)))
+expected "-1.0000001192092896"
+actual Ok("\"-1.0\"")
+Runtime case108: (with-precision 2 :rounding UNNECESSARY (pr-str [(bigint 1.234M) (biginteger 1.234M) (rationalize 1.234M) (long 1.234M)]))
+expected "[1N 1 617/500 1]"
+actual Ok("\"[1N 1 1.234M 1]\"")
+Runtime case115: (pr-str (double (unchecked-float 1208925891672223212634113N)))
+expected "1.2089259637298173E24"
+actual Ok("\"1.2089258196146292E24\"")
+Runtime case116: (pr-str (double (unchecked-float -1208925891672223212634113N)))
+expected "-1.2089259637298173E24"
+actual Ok("\"-1.2089258196146292E24\"")
+Runtime case117: (pr-str (double (unchecked-float (biginteger 1208925891672223212634113N))))
+expected "1.2089259637298173E24"
+actual Ok("\"1.2089258196146292E24\"")
+Runtime case118: (pr-str (double (unchecked-float (biginteger -1208925891672223212634113N))))
+expected "-1.2089259637298173E24"
+actual Ok("\"-1.2089258196146292E24\"")
+Runtime case121: (pr-str (let [f long] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for long: 18446744073709551617.25\"]")
+Runtime case123: (pr-str (let [f int] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"integer overflow\"]")
+Runtime case125: (pr-str (let [f short] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for short: 18446744073709551617.25\"]")
+Runtime case127: (pr-str (let [f byte] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for byte: 18446744073709551617.25\"]")
+Runtime case129: (pr-str (let [f unchecked-long] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"9223372036854775807\"")
+Runtime case131: (pr-str (let [f unchecked-int] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"2147483647\"")
+Runtime case133: (pr-str (let [f unchecked-short] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"-1\"")
+Runtime case135: (pr-str (let [f unchecked-byte] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"-1\"")
+Macro case5: (pr-str (long 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for long: 18446744073709551617.25\"]")
+Macro case6: (pr-str (long 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for long: 1E+2147483648\"]")
+Macro case12: (pr-str (unchecked-long 9223372036854775808M))
+expected "-9223372036854775808"
+actual Ok("\"9223372036854775807\"")
+Macro case13: (pr-str (unchecked-long -9223372036854775809M))
+expected "9223372036854775807"
+actual Ok("\"-9223372036854775808\"")
+Macro case14: (pr-str (unchecked-long 18446744073709551617.25M))
+expected "1"
+actual Ok("\"9223372036854775807\"")
+Macro case15: (pr-str (unchecked-long 1E+2147483648M))
+expected "0"
+actual Ok("\"9223372036854775807\"")
+Macro case23: (pr-str (int 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"integer overflow\"]")
+Macro case24: (pr-str (int 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"integer overflow\"]")
+Macro case29: (pr-str (unchecked-int 9223372036854775807.99M))
+expected "-1"
+actual Ok("\"2147483647\"")
+Macro case30: (pr-str (unchecked-int 9223372036854775808M))
+expected "0"
+actual Ok("\"2147483647\"")
+Macro case31: (pr-str (unchecked-int -9223372036854775809M))
+expected "-1"
+actual Ok("\"-2147483648\"")
+Macro case32: (pr-str (unchecked-int 18446744073709551617.25M))
+expected "1"
+actual Ok("\"2147483647\"")
+Macro case33: (pr-str (unchecked-int 1E+2147483648M))
+expected "0"
+actual Ok("\"2147483647\"")
+Macro case41: (pr-str (short 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for short: 18446744073709551617.25\"]")
+Macro case42: (pr-str (short 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for short: 1E+2147483648\"]")
+Macro case48: (pr-str (unchecked-short 9223372036854775808M))
+expected "0"
+actual Ok("\"-1\"")
+Macro case49: (pr-str (unchecked-short -9223372036854775809M))
+expected "-1"
+actual Ok("\"0\"")
+Macro case50: (pr-str (unchecked-short 18446744073709551617.25M))
+expected "1"
+actual Ok("\"-1\"")
+Macro case51: (pr-str (unchecked-short 1E+2147483648M))
+expected "0"
+actual Ok("\"-1\"")
+Macro case59: (pr-str (byte 18446744073709551617.25M))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for byte: 18446744073709551617.25\"]")
+Macro case60: (pr-str (byte 1E+2147483648M))
+expected [:error "Value out of range for long: Infinity"]
+actual Ok("[:error \"Value out of range for byte: 1E+2147483648\"]")
+Macro case66: (pr-str (unchecked-byte 9223372036854775808M))
+expected "0"
+actual Ok("\"-1\"")
+Macro case67: (pr-str (unchecked-byte -9223372036854775809M))
+expected "-1"
+actual Ok("\"0\"")
+Macro case68: (pr-str (unchecked-byte 18446744073709551617.25M))
+expected "1"
+actual Ok("\"-1\"")
+Macro case69: (pr-str (unchecked-byte 1E+2147483648M))
+expected "0"
+actual Ok("\"-1\"")
+Macro case84: (pr-str (rationalize 1.99M))
+expected "199/100"
+actual Ok("\"1.99M\"")
+Macro case85: (pr-str (rationalize -1.99M))
+expected "-199/100"
+actual Ok("\"-1.99M\"")
+Macro case86: (pr-str (rationalize 18446744073709551617.25M))
+expected "73786976294838206469/4"
+actual Ok("\"18446744073709551617.25M\"")
+Macro case87: (pr-str (rationalize 1E+100M))
+expected "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000N"
+actual Ok("\"1E+100M\"")
+Macro case88: (pr-str (rationalize 1E-100M))
+expected "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+actual Ok("\"1E-100M\"")
+Macro case89: (pr-str (rationalize 0.00M))
+expected "0N"
+actual Ok("\"0.00M\"")
+Macro case99: (pr-str (double (unchecked-float 1.0000000596046447753906250000000000000001M)))
+expected "1.0000001192092896"
+actual Ok("\"1.0\"")
+Macro case100: (pr-str (double (unchecked-float -1.0000000596046447753906250000000000000001M)))
+expected "-1.0000001192092896"
+actual Ok("\"-1.0\"")
+Macro case108: (with-precision 2 :rounding UNNECESSARY (pr-str [(bigint 1.234M) (biginteger 1.234M) (rationalize 1.234M) (long 1.234M)]))
+expected "[1N 1 617/500 1]"
+actual Ok("\"[1N 1 1.234M 1]\"")
+Macro case115: (pr-str (double (unchecked-float 1208925891672223212634113N)))
+expected "1.2089259637298173E24"
+actual Ok("\"1.2089258196146292E24\"")
+Macro case116: (pr-str (double (unchecked-float -1208925891672223212634113N)))
+expected "-1.2089259637298173E24"
+actual Ok("\"-1.2089258196146292E24\"")
+Macro case117: (pr-str (double (unchecked-float (biginteger 1208925891672223212634113N))))
+expected "1.2089259637298173E24"
+actual Ok("\"1.2089258196146292E24\"")
+Macro case118: (pr-str (double (unchecked-float (biginteger -1208925891672223212634113N))))
+expected "-1.2089259637298173E24"
+actual Ok("\"-1.2089258196146292E24\"")
+Macro case121: (pr-str (let [f long] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for long: 18446744073709551617.25\"]")
+Macro case123: (pr-str (let [f int] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"integer overflow\"]")
+Macro case125: (pr-str (let [f short] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for short: 18446744073709551617.25\"]")
+Macro case127: (pr-str (let [f byte] (f 18446744073709551617.25M)))
+expected [:error "Value out of range for long: 1.8446744073709552E19"]
+actual Ok("[:error \"Value out of range for byte: 18446744073709551617.25\"]")
+Macro case129: (pr-str (let [f unchecked-long] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"9223372036854775807\"")
+Macro case131: (pr-str (let [f unchecked-int] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"2147483647\"")
+Macro case133: (pr-str (let [f unchecked-short] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"-1\"")
+Macro case135: (pr-str (let [f unchecked-byte] (f 18446744073709551617.25M)))
+expected "1"
+actual Ok("\"-1\"")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_conversions_match_checked_and_unchecked_clojure_paths
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 37.20s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_conversions`

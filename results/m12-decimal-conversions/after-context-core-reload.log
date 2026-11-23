@@ -1,0 +1,25 @@
+Running as unit: run-p3055468-i91107272.scope; invocation ID: 23d68daaae084d1282008b296ab1fced
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 22s
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 1 test
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions ... FAILED
+
+failures:
+
+---- reloaded_core_context_getter_reads_live_bindings_for_retained_functions stdout ----
+
+thread 'reloaded_core_context_getter_reads_live_bindings_for_retained_functions' (3058357) panicked at crates/suss-cli/tests/clojure_decimal_conversions.rs:168:39:
+called `Result::unwrap()` on an `Err` value: Host(unknown import: `suss.slot.1::slot.1` has not been defined)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    reloaded_core_context_getter_reads_live_bindings_for_retained_functions
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 6 filtered out; finished in 32.09s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_conversions`

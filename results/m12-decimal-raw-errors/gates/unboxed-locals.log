@@ -1,0 +1,21 @@
+Running as unit: run-p3180231-i91240131.scope; invocation ID: b107f6c0636446139e5a5d3e9bb9ffbe
+    Finished `test` profile [optimized] target(s) in 0.08s
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/portable_unboxed_locals-6c74e2ba22f4b192)
+
+running 13 tests
+test a_long_sum_loop_allocates_only_its_result ... ok
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test raw_bits_and_casts::float_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls ... ok
+test raw_bits_and_casts::narrow_integer_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::long_bits_execute_without_normal_calls_or_boxes ... ok
+test raw_numeric_helpers_return_scalars_without_numeric_boxes ... ok
+test raw_bits_and_casts::object_and_float_overloads_execute_without_normal_calls_or_boxes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 110.02s
+

@@ -1,0 +1,16 @@
+Running as unit: run-p3192691-i91267139.scope; invocation ID: a1123ae4a72b4845b7d3b0a964ced3e2
+{'command': ['python3', '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py'], 'exit_code': 0, 'seconds': 19.461063861846924}
+{'command': ['python3', 'scripts/cljs_inventory.py', '--check'], 'exit_code': 0, 'seconds': 0.3329024314880371}
+{'command': ['python3', 'scripts/cljs_reviews.py'], 'exit_code': 0, 'seconds': 0.40552210807800293}
+{'command': ['python3', 'scripts/core_import.py', '--check'], 'exit_code': 0, 'seconds': 1.2596831321716309}
+{'command': ['python3', 'scripts/reader_core_catalog.py', '--check'], 'exit_code': 0, 'seconds': 0.5148162841796875}
+{'command': ['python3', 'scripts/apply_bootstrap.py', '--check'], 'exit_code': 0, 'seconds': 0.3116874694824219}
+{'command': ['python3', 'scripts/sequence_provenance.py'], 'exit_code': 0, 'seconds': 0.25473809242248535}
+{'command': ['python3', 'scripts/check_transducer_provenance.py'], 'exit_code': 0, 'seconds': 0.33481311798095703}
+{'command': ['python3', 'scripts/check_when_let_provenance.py'], 'exit_code': 0, 'seconds': 0.04695296287536621}
+{'command': ['python3', 'scripts/bitwise_provenance.py'], 'exit_code': 0, 'seconds': 0.04122304916381836}
+{'command': ['python3', 'scripts/wasi_lock.py'], 'exit_code': 0, 'seconds': 0.048539161682128906}
+{'command': ['python3', 'scripts/numeric_runtime.py', '--check'], 'exit_code': 0, 'seconds': 0.04672646522521973}
+{'command': ['python3', 'scripts/jvm_array_oracle.py', '--check'], 'exit_code': 0, 'seconds': 0.029158353805541992}
+{'command': ['python3', 'scripts/clojure_test_suite.py'], 'exit_code': 0, 'seconds': 0.06467151641845703}
+{'command': ['python3', 'scripts/clojure_test_suite.py', 'overlap'], 'exit_code': 0, 'seconds': 0.0646522045135498}

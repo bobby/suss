@@ -1,0 +1,157 @@
+Running as unit: run-p3073995-i91119032.scope; invocation ID: d667c988ebc64eb19c236bbd662c24bb
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 6.70s
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_bigint_integers-4dcb6def4fe06044)
+
+running 3 tests
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+test renamed_promoting_core_vars_keep_their_inline_operations ... ok
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.10s
+
+     Running tests/clojure_biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_biginteger_carrier-3ecbd5bdc4fbade0)
+
+running 2 tests
+test aot_executes_typed_biginteger_carrier_without_host_reader ... ok
+test bigint_carrier_preserves_category_in_source_runtime_macro_and_edn ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.46s
+
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 4 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test aot_executes_the_bigint_matrix ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.04s
+
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 11 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test subtraction_source_facts_survive_captures_loops_methods_and_macro_transport ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.81s
+
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 7 tests
+test aot_executes_exact_decimal_conversion_paths ... ok
+test direct_float_rounding_matches_primary_bits_and_preserves_decimal_storage_after_gc ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test pure_decimal_coercions_and_comparisons_ignore_unused_math_context ... ok
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... ok
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.49s
+
+     Running tests/clojure_equality_bitwise.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_equality_bitwise-705f37351a695429)
+
+running 7 tests
+test bit_operations_are_64_bit_and_take_longs ... ok
+test equality_keeps_longs_and_doubles_apart ... ok
+test imul_and_int32_coercion_are_not_public ... ok
+test integer_predicate_keeps_boolean_escapes_branches_and_single_evaluation ... ok
+test numbers_hash_as_clojure_hasheq ... ok
+test parity_keeps_wide_longs_rejects_nonintegers_and_evaluates_once ... ok
+test casts_check_the_range_and_return_longs_and_doubles ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.23s
+
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_numeric_classes-934e6d9b058bb0e3)
+
+running 5 tests
+test count_guarded_suite_forms_have_independent_exact_numeric_controls ... ok
+test aot_executes_numeric_classes ... ok
+test numeric_class_extensions_update_sites_after_gc ... ok
+test numeric_class_protocols_follow_receiver_classes ... ok
+test numeric_classes_match_in_runtime_and_macro ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.16s
+
+     Running tests/clojure_packed_arrays.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_packed_arrays-b78fbe09447fb401)
+
+running 4 tests
+test constructors_store_elements_with_the_unchecked_casts ... ok
+test aget_returns_longs_and_doubles_and_aset_checks_the_element_type ... ok
+test packed_arrays_print_and_convert_as_java_arrays ... ok
+test core_reads_packed_arrays_as_arrays ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.61s
+
+     Running tests/clojure_ratios.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_ratios-636cb7c2021547ed)
+
+running 4 tests
+test macro_arguments_and_results_retain_exact_ratio_values ... ok
+test aot_executes_exact_ratios ... ok
+test retained_ratio_children_survive_gc_without_mutation ... ok
+test ratios_match_jvm_in_both_phases ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.90s
+
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_raw_numeric_core-adef0af7f969bf49)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... ok
+test aot_preserves_known_numeric_core_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.11s
+
+     Running tests/clojure_unchecked_ratios.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_unchecked_ratios-49caaee40ba254a6)
+
+running 2 tests
+test unchecked_ratios_and_integer_categories_match_jvm_in_both_phases ... ok
+test aot_executes_unchecked_ratios_and_integer_categories ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.83s
+
+     Running tests/compiled_packed_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/compiled_packed_hints-0e940f4005316501)
+
+running 1 test
+test packed_array_hints_match_the_repl ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.33s
+
+     Running tests/numeric_operand_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/numeric_operand_types-1228fb8d0a0077e7)
+
+running 3 tests
+test core_namespace_source_keeps_its_coercing_primitives ... ok
+test non_numeric_operands_throw_naming_the_operation ... ok
+test numeric_operands_keep_clojure_results ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.34s
+
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 5 tests
+test canonical_binary32_parser_executes_primary_bits_with_bounded_scratch ... ok
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+
+     Running tests/portable_bitwise.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/portable_bitwise-4e4328792936f30b)
+
+running 3 tests
+test private_binary64_storage_hir_and_ir_check_unary_result_contract ... ok
+test numeric_hash_boundary_hir_ir_preserve_boolean_and_number_contracts ... ok
+test public_bitwise_hir_and_ir_reject_bad_arity_and_result_before_emission ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

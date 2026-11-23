@@ -1,0 +1,74 @@
+[
+  [
+    "(pr-str (let [p nil] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) nil))",
+    "[:error \"Cannot invoke \\\"java.lang.Character.charValue()\\\" because \\\"x\\\" is null\"]"
+  ],
+  [
+    "(pr-str (let [p \"x\"] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) \"x\"))",
+    "[:error \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [p true] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) true))",
+    "[:error \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [p :x] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) :x))",
+    "[:error \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [p []] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) []))",
+    "[:error \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [p {}] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) {}))",
+    "[:error \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+  ],
+  [
+    "(pr-str (let [p 1267650600228229401496703205376N] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"Value out of range for long: 1267650600228229401496703205376\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 1267650600228229401496703205376N))",
+    "[:error \"Value out of range for long: 1267650600228229401496703205376\"]"
+  ],
+  [
+    "(pr-str (let [p (biginteger 1267650600228229401496703205376N)] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"Value out of range for long: 1267650600228229401496703205376\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) (biginteger 1267650600228229401496703205376N)))",
+    "[:error \"Value out of range for long: 1267650600228229401496703205376\"]"
+  ],
+  [
+    "(pr-str (let [p 1267650600228229401496703205376/3] (with-precision p :rounding FLOOR (str *math-context*))))",
+    "[:error \"Value out of range for long: 422550200076076467165567735125\"]"
+  ],
+  [
+    "(pr-str ((fn [p] (with-precision p :rounding FLOOR (str *math-context*))) 1267650600228229401496703205376/3))",
+    "[:error \"Value out of range for long: 422550200076076467165567735125\"]"
+  ]
+]

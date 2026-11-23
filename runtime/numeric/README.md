@@ -41,3 +41,10 @@ The 210-case source corpus and 1,024-sample formatting/round-trip matrix execute
 against fresh pinned ClojureScript observations and independently decoded GC
 results. These bounded tests do not certify all binary64 inputs or public core
 compatibility. Objects/closures requiring primitive conversion remain unsupported.
+
+Canonical Decimal and BigInteger text also has a direct binary32 parser for
+Clojure's unchecked Number.floatValue path. It rounds to f32 before widening to
+the specified Suss Double representation; routing through binary64 first can
+lose which side of a binary32 midpoint the exact input occupies. Checked
+float(Object) deliberately retains Clojure's separate doubleValue/range-check
+path. These numeric behaviors use JVM Clojure1.12.6 as their reference.

@@ -1,0 +1,31 @@
+Running as unit: run-p2730343-i90779226.scope; invocation ID: e634dfa942134fe0b11b978630260d5c
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 13s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test decimal_equality_hash_order_case_and_signs_match_clojure has been running for over 60 seconds
+test decimal_equality_hash_order_case_and_signs_match_clojure ... FAILED
+
+failures:
+
+---- decimal_equality_hash_order_case_and_signs_match_clojure stdout ----
+
+thread 'decimal_equality_hash_order_case_and_signs_match_clojure' (2735480) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:78:5:
+Runtime case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("(pr-str (try (hash (bigdec \"10E+2147483648\")) (catch :default e [:error (ex-message e)]))): Compile(Diagnostic { span: 20..26, message: \"Unresolved Runtime name bigdec\" })")
+Macro case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("(pr-str (try (hash (bigdec \"10E+2147483648\")) (catch :default e [:error (ex-message e)]))): Compile(Diagnostic { span: 20..26, message: \"Unresolved Macro name bigdec\" })")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_equality_hash_order_case_and_signs_match_clojure
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 78.08s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

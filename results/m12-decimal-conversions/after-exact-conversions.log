@@ -1,0 +1,13 @@
+Running as unit: run-p2974281-i91031326.scope; invocation ID: 7d51f8e71771454b94d8bfafe918fefd
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 23s
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 2 tests
+test aot_executes_exact_decimal_conversion_paths ... ok
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 55.95s
+

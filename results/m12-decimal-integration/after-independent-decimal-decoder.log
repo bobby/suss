@@ -1,0 +1,19 @@
+Running as unit: run-p2867410-i90939783.scope; invocation ID: 151644e1866d47829245c62878df41b0
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.95s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 10 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.83s
+

@@ -1,0 +1,15 @@
+{
+  "results/m12-decimal-ci/after-chunked-coefficient.json": "61458f2e3cef9197f028d7896dc3b8d6a56508489d089c31830c94d2244cb96e",
+  "results/m12-decimal-ci/after-constructor-order-and-exponent.json": "3fa90891849e9b065ebf709bdd1358151c718300ba8be635cdb7d8cc81251b70",
+  "results/m12-decimal-ci/after-raw-scale-cast.json": "84ebad98536e5108ac5bc6ea211c3fee676b4632e88b77f9d25770f31b66b716",
+  "results/m12-decimal-ci/after-value-reader-repairs.json": "d826d5c952a76c9a6f6b6e2f8d855b6f5bbc6287ab09503c830897066aa05940",
+  "results/m12-decimal-ci/before-ci-repairs.json": "c16058e0198693490c56eaa325d5a15d16673f8c48aabbd55b6363098c53ab34",
+  "results/m12-decimal-ci/before-semantic-repairs.json": "a3d05da2a77600c01bf427711f5cd77d1a2b4520eae06bf29d83b11e34710609",
+  "results/m12-decimal-ci/final-focused.json": "15e7c678c8d68644748445cbe2430228a3d97b7b8a2a754cd451d260f7ff4886",
+  "results/m12-decimal-ci/gates.json": "4bb6e5865d1d26cdc296c61f9f3c439eafed5ba0ea2d0f4a81596a98b84d823d",
+  "results/m12-decimal-ci/newly-executed-rows.json": "010068c4970aedd3f8e4089a30362162840e1586696b93db5e321f985b6c3c80",
+  "results/m12-decimal-ci/proposed-known-failures.json": "58d9a7a984f35e9419f1c0512e55e928503ac39c210231b3a1d3052cb4ead5a0",
+  "results/m12-decimal-ci/suite-audit.json": "df0a47f097b2763231eeac2f97beb1954d1f0490adb5c39742973e95a0e84c42",
+  "results/m12-decimal-ci/suite-capture/suite-observations.json": "9f5a4502777834a583077efed20862e9b6ef76bdd3622f35da6596a8001f6733",
+  "results/m12-decimal-ci/suite-commands.json": "db4ca96ae5e6049bb7ce2be737f683b1f8449381afb5175d311ac2fec050e145"
+}

@@ -1342,7 +1342,8 @@ and retained-child GC checks. The preliminary five-target command passes41
 tests, including both existing BigInt matrices and runtime reader controls.
 Exact fraction dispatch preserves normalization, numeric categories, BigInteger
 projections and DECIMAL64 rounding on conversion to double. Runtime readers now
-produce Ratio values; Decimal retains its explicit unsupported boundary.
+produce Ratio values. The ABI11 Decimal reader evidence below supersedes the
+Decimal boundary recorded by this earlier capture.
 Combined-source numeric/ABI/map/bootstrap checks, complete numeric-suite
 acceptance, WIT integration and the production helper crossover remain separate
 gates. These bounded observations do not change inventory counts.
@@ -1372,8 +1373,9 @@ remain failures.
 ## Numeric type identities
 
 Long, Double, BigInt, BigInteger and Ratio have canonical, non-callable native
-class values, alongside Number and Class. BigDecimal has a class value only;
-it does not supply Decimal instances in ABI10. The original class/ifn? adapters
+class values, alongside Number and Class. ABI11 adds immutable Decimal instances
+with the canonical BigDecimal class; ABI10 supplied that class value only.
+The original class/ifn? adapters
 expose actual constructor identity and portable invocation capability. Numeric
 protocol dispatch checks the concrete class and Number inheritance before its
 existing native/default fallback, keeping different receiver classes separate
@@ -1460,3 +1462,144 @@ still require no argument array or runtime invoke at the call site and only
 the entry-cache lookup helper. `results/m12-class-call-inline` retains the
 original failed CI log, fresh JVM exception identity control and executed
 regressions; runtime globals/shared types/layouts are unchanged.
+
+
+## Decimal values and runtime readers
+
+ABI11 appends immutable arbitrary-precision unscaled-integer and signed32-bit
+scale fields. Compiler literals and macro transport retain those fields. Both
+shipped readers construct Decimal values without a floating coefficient; a
+nine-digit fold bounds the number of BigInt operations. Numeric class dispatch
+recognizes BigDecimal instances, including Number protocol inheritance.
+
+`results/m12-decimal-values` retains159 fresh JVM text/Double-bit controls and
+actual field/scale observations after GC. `results/m12-decimal-ci` adds169 fresh
+JVM literal/read-string/format/class/constant/protocol controls in Runtime,
+Macro and actual AOT. The focused five-target command passes28 tests, zero
+failed/ignored. The new large-coefficient session matrix uses100M fuel, matching
+the printer stress tests; its original10M exhaustion remains explicit. All
+existing test and production allowances stay unchanged.
+
+These observations cover values, formatting, conversion and the retained reader
+and class cases. Arithmetic, MathContext/with-precision, equality/hash/order,
+casts, bigdec and scale-sensitive case behavior remain gaps. Existing numeric
+fallbacks can still narrow Decimal to Double. This evidence does not establish
+complete Decimal semantics or alter the inventory's declaration counts.
+
+
+## Decimal arithmetic and context observations
+
+The ABI12 prototype adds immutable MathContext precision/mode fields and reads
+ordinary dynamic binding frames through a phase-owned native getter. The exact
+integer kernels support Decimal arithmetic and all eight rounding modes. The
+public str adapter recognizes MathContext; with-precision's EPL/source provenance
+and original bigdec conversion provenance are recorded under bootstrap.
+
+`results/m12-decimal-integration` retains56 fresh JVM arithmetic/context controls
+passing in both phases, and14 conversion plus19 equality/hash/order/case/sign
+controls passing in both phases. Decimal comparison avoids binary64 for non-Double
+pairs, hasheq ignores trailing zeros, and case preserves scale. Distant finite-
+precision addition uses a bounded sticky digit. Original failures and unchanged
+input hashes remain recorded. This does not certify the full numeric contract:
+subtraction overload/staging regressions, casts, independent suite Decimal
+observation, actual arithmetic AOT and complete acceptance remain required.
+
+### Decimal subtraction and field observation probes
+
+Source numeric overload facts preserve primitive versus boxed subtraction across
+captures, loops and macro transport. Boxed checked, promoting and unchecked
+operations negate the right operand in its original category before addition.
+The scoped integration receipts execute228 fresh JVM behavior controls in both
+phases and actual AOT, plus89 independently decoded coefficient/scale controls
+after GC in both phases. Strict suite observation comparison now preserves both
+Decimal fields, including preferred scale; malformed coefficients and mutable
+owner impostors are rejected. Existing numeric inference, box reuse, capture,
+primitive method and i31 regressions pass. The complete vendored capture, full
+workspace execution and Decimal cast acceptance still need fresh results. See
+`results/m12-decimal-integration/` for original failures and source-qualified runs.
+
+The complete arithmetic capture at45a20341 records4322 host matches,63 guest
+judgments,212 failures,2342 unexecuted assertions and84 failed namespaces, with
+no previously passing assertion regression. Of200 primary assertions containing
+Decimal operands,194 actually match and six remain unexecuted through namespace
+failures. A broader source-form scan retains58 unresolved Decimal candidates.
+The faithful failure baseline preserves these gaps. Explicitly widening JVM float
+results to the specified Suss Double representation leaves34 conversion mismatches
+out of109 actual CLI controls; direct rounding, narrowing, diagnostics and
+rationalization remain acceptance work. Full workspace execution and independent
+promotion review still require evidence.
+
+## Exact Decimal conversion and reload observations
+
+`results/m12-decimal-conversions` records137 fresh JVM conversion controls,
+including checked versus unchecked low-bit narrowing, direct binary32 rounding
+of Decimal/BigInteger values, aliases and ordinary functions. Eight additional
+controls distinguish pure coercion/comparison from operations requiring the
+dynamic MathContext. All145 controls execute in actual CLI AOT, with both-phase
+checks and13 independent widened Float-bit/retained Decimal-field observations
+after GC. These supersede the34 conversion mismatches recorded above. The
+standalone helper reproduces byte-identically and validates malformed scratch
+input without mutating the original Decimal value.
+
+Source-core reload replaces the validated phase-owned context getter. Four
+original reload regressions pass, and retained functions read live bindings
+after reload, GC and an initializer failure in both phases. Optional EDN padding
+is removed from per-fragment provenance; all13 fields, macro identities and
+unknown-versus-empty distinctions remain. Existing integrity/execution checks
+pass and Clojure reads all34 emitted component manifests. The unchanged AOT guard
+measures3895 bytes/form within3900, and96 extra code bytes per split form within128.
+
+The fresh complete capture records4585 actual rows:4326 host matches,63 guest
+judgments,208 failures,2342 unexecuted assertions and84 failed namespaces. Only
+four rationalize verdicts change, all to primary-confirmed success; no previously
+passing assertion regresses. Primary expectations, capture routing, count and
+skip guards are unchanged. All other baseline entries remain intact. There are
+still54 unresolved Decimal source-form candidates;194 of200 Decimal operand
+assertions match and six remain unexecuted through namespace failures. String/
+nil MathContext constructor behavior and complete suite acceptance still need
+work. This evidence does not certify complete BigDecimal semantics.
+
+### Constructor overload and raw diagnostic observations
+
+`results/m12-context-constructors` adds102 fresh JVM constructor controls passing
+Runtime/Macro/actual AOT. The one-argument MathContext constructor accepts its
+String grammar and has distinct overload rules from explicit-rounding checked
+int coercion. All eight modes, range errors, aliases, ordinary functions,
+evaluation order and binding recovery are covered. The native UTF-16 parser's
+370 digits match the complete65536-code-unit JVM domain; supplementary surrogate
+pairs are rejected. All18 additional diagnostic/range controls also match cold
+standalone CLI execution. Source provenance/EPL remains with the macro.
+
+`results/m12-decimal-raw-errors` records a new strict CI failure: a checked
+Decimal cast constructed a Double wrapper solely for its range diagnostic.
+The unchanged guard fails before repair and passes afterward. Raw f64 formatting
+is shared without numeric boxing, retaining scratch bounds/reset, UTF-16 copying
+and typed allocation failure. All37 scalar helper signatures and both numeric
+box-layout assertions remain.90 focused tests and364 Python foundation tests,
+bootstrap reproduction/execution and workspace test compilation pass. The
+unchanged AOT limits still measure3895/form and96 extra split-form code bytes.
+
+The fresh complete capture passes with all4585 observation rows byte-identical
+to the preceding capture:4326/63/208/2342/84. No primary, source-routing, count,
+skip, comparator or baseline change is made. Full workspace execution and
+independent final-head review/CI still require evidence; remaining suite gaps
+are retained rather than relabeled as successful.
+
+### Narrow cast suite profile
+
+Patch `0007-narrow-cast-suss-representations.patch` adds actual scalar-class
+assertions to the generated Suss suite, following ADR-0003: checked byte/short/
+int/long results are Long; float/double results are Double. It adds the same four
+short-range exception assertions as JVM Clojure. Vendored/JVM branches and all
+numeric value assertions remain intact. It does not claim JVM narrow scalar
+classes exist. The six full bodies execute152 assertions with zero failures,
+missing IDs or skips:140 host comparisons and12 explicit primary-opaque Class
+judgments. The latter12 additionally decode as Boolean true in the focused
+regression; they are not relabeled as host-value matches.
+
+The full capture in `results/m12-suite-platform` removes exactly124 count
+failures and one short namespace load failure, with zero previous-pass
+regressions and unchanged primary, count/skip/value-comparison guards. Counts
+are4466/75/84/2314/83 over4624 actual observations;26 Decimal source-form
+candidates and six unexecuted Decimal operands remain. This is suite-profile
+coverage evidence; compiler/runtime source is unchanged from a12b2796.

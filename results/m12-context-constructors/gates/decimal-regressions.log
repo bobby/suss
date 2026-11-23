@@ -1,0 +1,34 @@
+Running as unit: run-p3152272-i91205246.scope; invocation ID: 3204062f143348a0882ea9fd2a58744b
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 8.27s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 11 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+test subtraction_source_facts_survive_captures_loops_methods_and_macro_transport ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.90s
+
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 7 tests
+test aot_executes_exact_decimal_conversion_paths ... ok
+test direct_float_rounding_matches_primary_bits_and_preserves_decimal_storage_after_gc ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test pure_decimal_coercions_and_comparisons_ignore_unused_math_context ... ok
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... ok
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions has been running for over 60 seconds
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 114.61s
+

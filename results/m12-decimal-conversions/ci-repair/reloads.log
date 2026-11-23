@@ -1,0 +1,27 @@
+Running as unit: run-p3065506-i91136715.scope; invocation ID: 743ba3478f0f4787b41735831a73a075
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 25s
+     Running tests/core_import.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/core_import-c5fc0c2f2afadf3e)
+
+running 1 test
+test imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 19.57s
+
+     Running tests/core_sequence_interfaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/core_sequence_interfaces-6d23272e8790a01f)
+
+running 2 tests
+test canonical_core_aliases_and_retained_methods_survive_source_reload ... ok
+test imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 18.11s
+
+     Running tests/core_sorted_interfaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/core_sorted_interfaces-bcf633986b5a5f01)
+
+running 1 test
+test sorted_protocol_aliases_retained_values_reload_and_method_arities ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 29.63s
+

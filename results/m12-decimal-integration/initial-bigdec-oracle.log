@@ -1,0 +1,5 @@
+Syntax error compiling at (results/m12-decimal-integration/bigdec-oracle.clj:2:116).
+Unable to resolve symbol: catch in this context
+
+Full report at:
+/tmp/clojure-3089478037488702806.edn

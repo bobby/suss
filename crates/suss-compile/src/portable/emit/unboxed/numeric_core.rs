@@ -5,7 +5,7 @@ use super::*;
 pub(super) fn accepts(operation: Bitwise, count: usize) -> bool {
     matches!((operation, count),
         (Bitwise::Quot | Bitwise::Rem | Bitwise::UncheckedAdd
-            | Bitwise::UncheckedSubtract | Bitwise::UncheckedMultiply, 2)
+            | Bitwise::UncheckedSubtract | Bitwise::UncheckedSubtractPrimitive | Bitwise::UncheckedMultiply, 2)
         | (Bitwise::Abs | Bitwise::UncheckedNegate, 1))
 }
 
@@ -32,14 +32,18 @@ impl Locals {
                 self.push_as(code, left, kind);
                 code.push(if kind == Repr::Long { I64Sub } else { F64Neg });
             }
-            Bitwise::UncheckedAdd | Bitwise::UncheckedSubtract | Bitwise::UncheckedMultiply => {
+            Bitwise::UncheckedSubtract if kind == Repr::Double => {
+                self.boxed_double_subtraction(code, arguments, target);
+                return;
+            }
+            Bitwise::UncheckedAdd | Bitwise::UncheckedSubtract | Bitwise::UncheckedSubtractPrimitive | Bitwise::UncheckedMultiply => {
                 for argument in arguments { self.push_as(code, *argument, kind); }
                 code.push(match (operation, kind) {
                     (Bitwise::UncheckedAdd, Repr::Long) => I64Add,
-                    (Bitwise::UncheckedSubtract, Repr::Long) => I64Sub,
+                    (Bitwise::UncheckedSubtract | Bitwise::UncheckedSubtractPrimitive, Repr::Long) => I64Sub,
                     (Bitwise::UncheckedMultiply, Repr::Long) => I64Mul,
                     (Bitwise::UncheckedAdd, _) => F64Add,
-                    (Bitwise::UncheckedSubtract, _) => F64Sub,
+                    (Bitwise::UncheckedSubtractPrimitive, _) => F64Sub,
                     _ => F64Mul,
                 });
             }

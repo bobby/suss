@@ -1,0 +1,890 @@
+[
+  {
+    "id": "clojure.core-test.byte/test-byte#9",
+    "form": "(= 1 (byte 1.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "0"
+        },
+        {
+          "tag": "long",
+          "value": "0"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.byte/test-byte",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#10",
+    "form": "(= 0 (byte 0.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.byte/test-byte",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#11",
+    "form": "(= -1 (byte -1.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.byte/test-byte",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#19",
+    "form": "(= 1 (byte 1.1M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.byte/test-byte",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#20",
+    "form": "(= -1 (byte -1.1M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 20,
+      "test": "clojure.core-test.byte/test-byte",
+      "threw": true,
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.case/test-case#7",
+    "form": "(= :default (positive-tests 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.case/test-case#11",
+    "form": "(= :default (positive-tests 2.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.case/test-case#15",
+    "form": "(= :default (positive-tests 3.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.case/test-case#19",
+    "form": "(= :big-decimal-result (positive-tests 4.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires scalar literal constants at bytes 240..6428"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.char-qmark/test-char?#26",
+    "form": "(= false (char? 0.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.char-qmark/test-char?#27",
+    "form": "(= false (char? 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.char-qmark/test-char?#28",
+    "form": "(= false (char? -1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.coll-qmark/test-coll?#17",
+    "form": "(= false (coll? 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Unresolved Runtime name coll? at bytes 229..965"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.double/test-double#10",
+    "form": "(= (double 1.0) (double 1.0M))",
+    "reason": "count:15/19",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.double/test-double",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.double/test-double#11",
+    "form": "(= (double 0.0) (double 0.0M))",
+    "reason": "count:15/19",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "0000000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "0000000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.double/test-double",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.double/test-double#12",
+    "form": "(= (double -1.0) (double -1.0M))",
+    "reason": "count:15/19",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "bff0000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "bff0000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.double/test-double",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.double/test-double#19",
+    "form": "(instance? java.lang.Double (double 0.0M))",
+    "reason": "count:15/19",
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.eq/test-eq#12",
+    "form": "(eq 3.141592M 3.141592M)",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.eq/test-eq#68",
+    "form": "(identical? false (eq 1M 1))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.eval/test-eval#6",
+    "form": "(= 1.0M (eval 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.float/test-float#10",
+    "form": "(= (float 1.0) (float 1.0M))",
+    "reason": "count:19/23",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.float/test-float",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.float/test-float#11",
+    "form": "(= (float 0.0) (float 0.0M))",
+    "reason": "count:19/23",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "0000000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "0000000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.float/test-float",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.float/test-float#12",
+    "form": "(= (float -1.0) (float -1.0M))",
+    "reason": "count:19/23",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "bff0000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "bff0000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.float/test-float",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.float/test-float#23",
+    "form": "(instance? java.lang.Float (float 0.0M))",
+    "reason": "count:19/23",
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.int/test-int#9",
+    "form": "(= 1 (int 1.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "0"
+        },
+        {
+          "tag": "long",
+          "value": "0"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.int/test-int",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.int/test-int#10",
+    "form": "(= 0 (int 0.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.int/test-int",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.int/test-int#11",
+    "form": "(= -1 (int -1.0M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.int/test-int",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.int/test-int#15",
+    "form": "(= 1 (int 1.1M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.int/test-int",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.int/test-int#16",
+    "form": "(= -1 (int -1.1M))",
+    "reason": "count:27/28",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.int/test-int",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.long/test-long#9",
+    "form": "(= 1 (long 1.0M))",
+    "reason": "count:25/26",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "0"
+        },
+        {
+          "tag": "long",
+          "value": "0"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.long/test-long",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.long/test-long#10",
+    "form": "(= 0 (long 0.0M))",
+    "reason": "count:25/26",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.long/test-long",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.long/test-long#11",
+    "form": "(= -1 (long -1.0M))",
+    "reason": "count:25/26",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.long/test-long",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.long/test-long#15",
+    "form": "(= 1 (long 1.1M))",
+    "reason": "count:25/26",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.long/test-long",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.long/test-long#16",
+    "form": "(= -1 (long -1.1M))",
+    "reason": "count:25/26",
+    "actual": {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "test": "clojure.core-test.long/test-long",
+      "verdict": "pass"
+    }
+  },
+  {
+    "id": "clojure.core-test.neg-int-qmark/test-neg-int?#15",
+    "form": "(= false (neg-int? 0.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.neg-int-qmark/test-neg-int?#16",
+    "form": "(= false (neg-int? 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.neg-int-qmark/test-neg-int?#36",
+    "form": "(= false (neg-int? -1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.not-eq/test-not-eq#12",
+    "form": "(eq 3.141592M 3.141592M)",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.not-eq/test-not-eq#68",
+    "form": "(identical? false (eq 1M 1))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.num/test-num#6",
+    "form": "(instance? java.math.BigDecimal (num 1.0M))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported reader dispatch at bytes 3408..3410"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.pos-int-qmark/test-pos-int?#13",
+    "form": "(= false (pos-int? 0.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.pos-int-qmark/test-pos-int?#14",
+    "form": "(= false (pos-int? -1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.pos-int-qmark/test-pos-int?#40",
+    "form": "(= false (pos-int? 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.rationalize/test-rationalize#10",
+    "form": "(let [x' (rationalize 1.0M)] (and (= 1 x') (or (integer? x') (ratio? x'))))",
+    "reason": "verdict:fail",
+    "actual": {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 10,
+      "test": "clojure.core-test.rationalize/test-rationalize",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "verdict": "fail"
+    }
+  },
+  {
+    "id": "clojure.core-test.rationalize/test-rationalize#11",
+    "form": "(let [x' (rationalize 0.0M)] (and (= 0 x') (or (integer? x') (ratio? x'))))",
+    "reason": "verdict:fail",
+    "actual": {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 11,
+      "test": "clojure.core-test.rationalize/test-rationalize",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "verdict": "fail"
+    }
+  },
+  {
+    "id": "clojure.core-test.rationalize/test-rationalize#15",
+    "form": "(let [x' (rationalize 1.5M)] (and (= 3/2 x') (or (integer? x') (ratio? x'))))",
+    "reason": "verdict:fail",
+    "actual": {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 15,
+      "test": "clojure.core-test.rationalize/test-rationalize",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "verdict": "fail"
+    }
+  },
+  {
+    "id": "clojure.core-test.rationalize/test-rationalize#16",
+    "form": "(let [x' (rationalize 1.1M)] (and (= 11/10 x') (or (integer? x') (ratio? x'))))",
+    "reason": "verdict:fail",
+    "actual": {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 16,
+      "test": "clojure.core-test.rationalize/test-rationalize",
+      "value": {
+        "tag": "bool",
+        "value": false
+      },
+      "verdict": "fail"
+    }
+  },
+  {
+    "id": "clojure.core-test.short/test-short#9",
+    "form": "(= 1 (short 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.short/test-short#10",
+    "form": "(= 0 (short 0.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.short/test-short#11",
+    "form": "(= -1 (short -1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.short/test-short#19",
+    "form": "(= 1 (short 1.1M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.short/test-short#20",
+    "form": "(= -1 (short -1.1M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.core-test.sorted-qmark/test-sorted?#16",
+    "form": "(not (sorted? 1.0M))",
+    "reason": {
+      "stage": "namespace",
+      "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sorted? at bytes 242..1286"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#142",
+    "form": "(clojure.core/= 0M (clojure.edn/read-string \"0.0M\"))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#143",
+    "form": "(clojure.core/= 42M (clojure.edn/read-string \"42M\"))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#144",
+    "form": "(clojure.core/= -3.14M (clojure.edn/read-string \"-3.14M\"))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#145",
+    "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"3.14M\"))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+    },
+    "actual": null
+  },
+  {
+    "id": "clojure.edn-test.read-string/test-read-string#146",
+    "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"+3.14M\"))",
+    "reason": {
+      "stage": "read",
+      "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+    },
+    "actual": null
+  }
+]

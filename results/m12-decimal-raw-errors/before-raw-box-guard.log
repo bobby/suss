@@ -1,0 +1,22 @@
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.20s
+     Running tests/portable_unboxed_locals.rs (../m12-decimal-followup-target/debug/deps/portable_unboxed_locals-6c74e2ba22f4b192)
+
+running 1 test
+test raw_numeric_helpers_return_scalars_without_numeric_boxes ... FAILED
+
+failures:
+
+---- raw_numeric_helpers_return_scalars_without_numeric_boxes stdout ----
+
+thread 'raw_numeric_helpers_return_scalars_without_numeric_boxes' (3172559) panicked at crates/suss-compile/tests/portable_unboxed_locals.rs:449:25:
+raw helper number-cast-long-raw must not construct a numeric box
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    raw_numeric_helpers_return_scalars_without_numeric_boxes
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_unboxed_locals`

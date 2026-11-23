@@ -6,7 +6,7 @@
 //! `clojure.test` and portability requires to the harness namespaces; nothing
 //! else in the vendored sources changes. Each assertion's raw values are decoded
 //! independently on the host, and scripts/clojure_test_suite.py compares them
-//! with the pinned ClojureScript oracle reference and the reviewed known-failure
+//! with the pinned Clojure 1.12.6 oracle reference and the reviewed known-failure
 //! baseline. Guest equality or printing never decides a result. A namespace that
 //! cannot load is a recorded failure for all of its assertions, never a skip.
 #![cfg(not(target_family = "wasm"))]
@@ -239,6 +239,7 @@ fn tagged(value: &Observation) -> Value {
         Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
+        Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator, denominator) => json!({"tag":"ratio", "numerator":numerator, "denominator":denominator}),
         Observation::String(value) => units(value),
         Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {
@@ -980,4 +981,67 @@ assert counts['fail']==counts['not-executed']==counts['skipped']==0
     eprintln!("PINNED_WHEN_LET {}{}", String::from_utf8_lossy(&compared.stdout),
               String::from_utf8_lossy(&compared.stderr));
     assert!(compared.status.success(), "complete pinned when-let comparison failed");
+}
+
+
+/// ADR-0003's scalar representations get real platform class assertions;
+/// all numeric conversions, ordered IDs and primary count guards still run.
+#[test]
+fn pinned_narrow_cast_platform_assertions_match_primary_counts_and_values() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root).output().unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let names = ["byte", "short", "int", "long", "float", "double"]
+        .map(|name| format!("clojure.core-test.{name}"));
+    let tests = ["byte", "short", "int", "long", "float", "double"]
+        .map(|name| format!("clojure.core-test.{name}/test-{name}"));
+    let selected = json!({"namespaces": names, "tests": tests});
+    let observations = Harness::new(&source_root).run(&selected, &source_root);
+    let captured = workspace.path().join("narrow-cast-observations.json");
+    std::fs::write(&captured, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_NARROW_CAST_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::copy(&captured, directory.join("narrow-cast-observations.json")).unwrap();
+    }
+    let compared = Command::new("python3").arg("-c").arg(r#"
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'))
+import clojure_test_suite as suite
+reference=json.loads((root/'tests/oracle/clojure-test-suite-observations.json').read_text())
+names=['clojure.core-test.'+n for n in ['byte','short','int','long','float','double']]
+tests=[n+'/test-'+n.rsplit('.',1)[1] for n in names]
+reference.update(namespaces=names,tests=tests,
+ assertions=[x for x in reference['assertions'] if x['test'] in tests],
+ skips=[x for x in reference['skips'] if x['namespace'] in names])
+observed=json.loads(Path(sys.argv[2]).read_text())
+counts,failures=suite.compare(reference,observed)
+expected=sorted((x['test'],x['ordinal']) for x in reference['assertions'])
+actual=sorted((x['test'],x['ordinal']) for x in observed['assertions'])
+print(json.dumps({'counts':counts,'failures':failures,'expected_count':len(expected),
+ 'actual_count':len(actual),'all_ids_match':actual==expected}))
+assert not any(failures[k] for k in ['tests','namespaces','assertions','skip-mismatches'])
+assert expected and actual==expected
+# clojure.test's special instance? reporter records the actual Class, which
+# the primary encoder represents as opaque. Keep that limitation explicit;
+# require the actual Suss class assertions' independently decoded booleans too.
+class_rows=[x for x in reference['assertions'] if x['form'].startswith('(instance? ')]
+assert len(class_rows)==12
+actual_by_id={f"{x['test']}#{x['ordinal']}":x for x in observed['assertions']}
+for row in class_rows:
+ assert row['kind']=='value' and row['value']=={'tag':'opaque','type':'java.lang.Class','reason':'unsupported'}
+ assert row['verdict']=='pass'
+ assert actual_by_id[row['id']]['value']=={'tag':'bool','value':True}
+assert counts['pass']==len(expected)-len(class_rows) and counts['guest-judged']==len(class_rows)
+assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
+"#).arg(&repository).arg(&captured).output().unwrap();
+    assert!(compared.status.success(), "{}\n{}", String::from_utf8_lossy(&compared.stdout),
+        String::from_utf8_lossy(&compared.stderr));
+    println!("PINNED_NARROW_CAST_FIELDS {}", String::from_utf8_lossy(&compared.stdout));
 }

@@ -1,0 +1,9 @@
+Running as unit: run-p3146005-i91207718.scope; invocation ID: 733211194d5243acb1e6303fb98040f5
+    Finished `test` profile [optimized] target(s) in 0.30s
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-context-constructor-target/debug/deps/clojure_decimal_constructors-38693a500596975e)
+
+running 1 test
+test aot_executes_math_context_constructor_overloads ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 19.01s
+

@@ -61,7 +61,11 @@ fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
                     numerator: numerator.to_u32_digits().1, denominator: denominator.to_u32_digits().1 }),
                 (19, number.canonical().into_bytes()),
             ),
-            _ => return Err(fail(form.span.clone(), number.unsupported_message())),
+            suss_reader::forms::ExactValue::Decimal { unscaled, scale } => (
+                CaseConstant::Scalar(Literal::Decimal { negative: num_traits::Signed::is_negative(unscaled),
+                    unscaled: unscaled.to_u32_digits().1, scale: *scale }),
+                (20, format!("{unscaled}:{scale}").into_bytes()),
+            ),
         },
         _ => {
             return Err(fail(
@@ -85,22 +89,6 @@ impl Analyzer<'_> {
                 form.span.clone(),
                 "case bootstrap requires an expression and explicit default",
             ));
-        }
-        // Decimal values retain the explicit unsupported boundary until #339.
-        // Integer and Ratio constants are ordinary immutable numeric values.
-        let exact = args[1..args.len() - 1].chunks_exact(2).find_map(|pair| match &pair[0].kind {
-            Kind::List(constants) => constants.iter().find(|c| matches!(&c.kind, Kind::Exact(n) if matches!(n.value, suss_reader::forms::ExactValue::Decimal { .. }))),
-            Kind::Exact(n) if matches!(n.value, suss_reader::forms::ExactValue::Decimal { .. }) => Some(&pair[0]),
-            _ => None,
-        });
-        if let Some(exact) = exact {
-            let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
-            let body = at(Kind::List(vec![
-                at(Kind::Symbol(suss_reader::Symbol::new("do"))),
-                args[0].clone(),
-                exact.clone(),
-            ]));
-            return self.form_in(&body, context, tail);
         }
         let mut seen = BTreeSet::new();
         let mut groups = vec![];
@@ -130,7 +118,7 @@ impl Analyzer<'_> {
             group.iter().all(|(_, value)| {
                 matches!(
                     value,
-                    CaseConstant::Scalar(Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::String(_))
+                    CaseConstant::Scalar(Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. } | Literal::String(_))
                 )
             })
         });
@@ -187,7 +175,7 @@ impl Analyzer<'_> {
         for (group, result) in arms.into_iter().rev() {
             let mut condition = self.literal_form(form, Literal::Bool(false));
             for (syntax, value) in group.into_iter().rev() {
-                let comparison = if primitive || keywords {
+                let comparison = if primitive || keywords || matches!(&value, CaseConstant::Scalar(Literal::Decimal { .. })) {
                     let value = match value {
                         CaseConstant::Scalar(value) => value,
                         CaseConstant::Keyword(name) => {

@@ -1,0 +1,243 @@
+Running as unit: run-p2429235-i90479296.scope; invocation ID: 07eac7894ab44e588d4553583970b759
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-ci-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 42s
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test decimal_values_and_classes_execute_in_runtime_and_macro ... FAILED
+test aot_executes_decimal_values_readers_and_classes ... FAILED
+
+failures:
+
+---- decimal_values_and_classes_execute_in_runtime_and_macro stdout ----
+
+thread 'decimal_values_and_classes_execute_in_runtime_and_macro' (2433071) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_decimal_values_readers_and_classes stdout ----
+
+thread 'aot_executes_decimal_values_readers_and_classes' (2433070) panicked at crates/suss-cli/tests/clojure_decimal_values.rs:41:5:
+
+thread 'main' (2433072) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+
+failures:
+    aot_executes_decimal_values_readers_and_classes
+    decimal_values_and_classes_execute_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_values`
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... FAILED
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... FAILED
+test errors_are_catchable_and_carry_their_position ... FAILED
+test exact_numeric_literals_execute_and_preserve_reader_categories ... FAILED
+test exact_numeric_literals_pass_through_macros ... FAILED
+test macros_can_read_at_expansion_time ... FAILED
+test malformed_input_fails_with_the_compilers_message_and_position ... FAILED
+test nesting_depth_is_bounded_and_catchable ... FAILED
+test printed_data_reads_back_equal ... FAILED
+test read_string_follows_clojure ... FAILED
+test reader_conditionals_need_opts_as_in_clojure ... FAILED
+test reading_is_charged_to_the_callers_fuel ... FAILED
+test suss_edn_follows_clojure_edn ... FAILED
+test tags_and_record_literals_follow_clojure ... FAILED
+test the_repl_and_script_files_read ... FAILED
+test components_read_without_a_compiler_or_host_reader ... FAILED
+
+failures:
+
+---- anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them stdout ----
+
+thread 'anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them' (2433083) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- both_readers_agree_with_the_compilers_reader_on_the_shared_corpus stdout ----
+
+thread 'both_readers_agree_with_the_compilers_reader_on_the_shared_corpus' (2433084) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- errors_are_catchable_and_carry_their_position stdout ----
+
+thread 'errors_are_catchable_and_carry_their_position' (2433087) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- exact_numeric_literals_execute_and_preserve_reader_categories stdout ----
+
+thread 'exact_numeric_literals_execute_and_preserve_reader_categories' (2433088) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- exact_numeric_literals_pass_through_macros stdout ----
+
+thread 'exact_numeric_literals_pass_through_macros' (2433089) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- macros_can_read_at_expansion_time stdout ----
+
+thread 'macros_can_read_at_expansion_time' (2433090) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- malformed_input_fails_with_the_compilers_message_and_position stdout ----
+
+thread 'malformed_input_fails_with_the_compilers_message_and_position' (2433091) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- nesting_depth_is_bounded_and_catchable stdout ----
+
+thread 'nesting_depth_is_bounded_and_catchable' (2433092) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- printed_data_reads_back_equal stdout ----
+
+thread 'printed_data_reads_back_equal' (2433093) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- read_string_follows_clojure stdout ----
+
+thread 'read_string_follows_clojure' (2433094) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- reader_conditionals_need_opts_as_in_clojure stdout ----
+
+thread 'reader_conditionals_need_opts_as_in_clojure' (2433095) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- reading_is_charged_to_the_callers_fuel stdout ----
+
+thread 'reading_is_charged_to_the_callers_fuel' (2433096) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- suss_edn_follows_clojure_edn stdout ----
+
+thread 'suss_edn_follows_clojure_edn' (2433097) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- tags_and_record_literals_follow_clojure stdout ----
+
+thread 'tags_and_record_literals_follow_clojure' (2433098) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- the_repl_and_script_files_read stdout ----
+
+thread 'the_repl_and_script_files_read' (2433099) panicked at crates/suss-cli/tests/read_string.rs:586:5:
+assertion `left == right` failed: 
+
+thread 'main' (2433100) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+  left: []
+ right: ["[1 :a :user/b]", "nil", "{:a #{1}}"]
+
+---- components_read_without_a_compiler_or_host_reader stdout ----
+
+thread 'components_read_without_a_compiler_or_host_reader' (2433085) panicked at crates/suss-cli/tests/read_string.rs:630:5:
+
+thread 'main' (2433086) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+
+failures:
+    anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them
+    both_readers_agree_with_the_compilers_reader_on_the_shared_corpus
+    components_read_without_a_compiler_or_host_reader
+    errors_are_catchable_and_carry_their_position
+    exact_numeric_literals_execute_and_preserve_reader_categories
+    exact_numeric_literals_pass_through_macros
+    macros_can_read_at_expansion_time
+    malformed_input_fails_with_the_compilers_message_and_position
+    nesting_depth_is_bounded_and_catchable
+    printed_data_reads_back_equal
+    read_string_follows_clojure
+    reader_conditionals_need_opts_as_in_clojure
+    reading_is_charged_to_the_callers_fuel
+    suss_edn_follows_clojure_edn
+    tags_and_record_literals_follow_clojure
+    the_repl_and_script_files_read
+
+test result: FAILED. 0 passed; 16 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.22s
+
+error: test failed, to rerun pass `-p suss-cli --test read_string`
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... FAILED
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... FAILED
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... FAILED
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+
+failures:
+
+---- compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc stdout ----
+
+thread 'compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc' (2433168) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout stdout ----
+
+thread 'portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout' (2433179) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+---- portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing stdout ----
+
+thread 'portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing' (2433180) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+
+
+failures:
+    compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc
+    portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout
+    portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+error: test failed, to rerun pass `-p suss-compile --test decimal_values`
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_11_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... FAILED
+
+failures:
+
+---- constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout stdout ----
+
+thread 'constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout' (2433187) panicked at crates/suss-compile/src/runtime_abi/decimals.rs:38:43:
+no entry found for key
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_comparator_foundations`
+error: 4 targets failed:
+    `-p suss-cli --test clojure_decimal_values`
+    `-p suss-cli --test read_string`
+    `-p suss-compile --test decimal_values`
+    `-p suss-compile --test portable_comparator_foundations`

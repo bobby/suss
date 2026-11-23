@@ -1,3 +1,358 @@
+## Unfiltered Decimal workspace validation (2026-11-23)
+
+`python3 results/m12-decimal-raw-errors/run-workspace.py` completes the exact
+`cargo test --workspace --locked -- --test-threads=2` command on a12b2796:
+exit0 after9056s,2395 passed, zero failed and14 existing ignored tests, with
+all3852 input hashes unchanged. The terminal command receipt and byte-preserved
+log are archived under `results/m12-decimal-raw-errors/workspace-baseline`.
+`qualification.json` records every difference to0436ab30: compiler/runtime
+production source is identical; its added suite profile/regression has separate
+passing CI (foundation, all eight integration partitions and aggregate test,
+run45125078838). This qualifies a full local run of a12b2796, not0436ab30.
+No original test is filtered or newly ignored. Remaining Decimal suite gaps
+retain their explicit failed/unexecuted observations; this command does not
+establish complete BigDecimal acceptance.
+
+## Narrow scalar suite profile probes (2026-11-23)
+
+`results/m12-suite-platform/run-focused.py before-platform-branches
+pinned_narrow_cast_platform_assertions_match_primary_counts_and_values` records
+124 count failures and28 unexecuted short assertions. Five cast namespaces
+omit their JVM-only class checks; short's inner class conditional has no Suss
+selection, causing invalid instance? arity. Patch0007 supplies genuine Suss
+Long/Double class assertions under ADR-0003 and the same four short-range
+failures as Clojure. All original numeric assertions, JVM branches and vendored
+bytes are preserved. No narrow JVM class is fabricated in the runtime.
+
+`after-explicit-class-observations` passes all152 assertions and ordered IDs,
+with140 host comparisons and12 primary-opaque Class judgments. The focused
+regression additionally checks independently decoded Boolean true for every
+class assertion. Its initial all-host assumption failed despite zero suite
+failures; original logs/observations are retained. This correction preserves
+the primary's limitation and does not count opaque Class data as host matches.
+The36 strict suite comparator/lock unit tests pass.
+
+`run-suite.py suite-after-platform` records expected baseline drift;
+`audit-suite.py --write` verifies exactly124 count failures resolve and the short
+namespace newly loads, then writes/checks the faithful baseline. Counts are
+4466 host /75 guest /84 failure /2314 unexecuted /83 failed namespaces,4624 raw
+observations, zero previous-pass regressions. Primary/JVM source, all comparator,
+count/skip and namespace-routing decisions are unchanged; only the reviewed
+source-patch registration differs.26 unresolved Decimal source-form candidates
+and six unexecuted Decimal operands among200 remain. Compiler/runtime code is
+unchanged from a12b2796; its separate full workspace run and CI retain their
+own head-qualified evidence. No full workspace or issue acceptance pass is
+inferred from this focused suite work.
+
+## MathContext overload and raw cast diagnostic probes (2026-11-23)
+
+The complete8b70a31f CI has seven passing integration partitions and one failure:
+`portable_unboxed_locals::raw_numeric_helpers_return_scalars_without_numeric_boxes`.
+The full failed job137499533577 log is retained; no original guard is changed.
+`results/m12-decimal-raw-errors/before-raw-box-guard.log` reproduces it locally;
+`after-raw-box-guard.log` passes after factoring raw f64-to-string conversion.
+A checked Decimal overflow diagnostic no longer constructs a numeric wrapper.
+Scratch reservation/reset/bounds, UTF-16 copying and typed allocation failure
+are preserved; ordinary double coercion uses the same formatter.
+
+The required unfiltered8b70a31f local run was stopped after the decisive CI
+failure, before changing source. Its terminal receipt is exit-2 after1943s,
+inputs unchanged, under `m12-decimal-conversions/workspace-baseline`; the reason
+and dedicated scope interruption are recorded in `prior-workspace-interruption.json`.
+It is interrupted evidence, never a full pass. A fresh required command is
+`python3 results/m12-decimal-raw-errors/run-workspace.py` (two test threads).
+
+The separately validated constructor checkpoint is integrated in the same
+source. `results/m12-context-constructors/run.py expanded-constructor-controls`
+passes102 fresh primary Runtime/Macro/actual-AOT controls. Default and explicit
+rounding constructors use their distinct String/checked-int overloads; the
+native UTF-16 grammar handles37 BMP decimal digit ranges and exact signed32-bit
+bounds. Every65536 code unit is checked against the actual pinned JVM mapping.
+Original71 mismatches/phase are retained.18 additional diagnostic/large-range
+controls also match in cold standalone CLI execution. Macro provenance/EPL and
+adaptation hashes remain current. These controls do not certify all BigDecimal
+or unrelated host-object behavior.
+
+`python3 results/m12-decimal-raw-errors/run-gates.py` passes90 tests:13 unboxed
+locals,4 runtime numeric-format checks,68 Decimal/constructor/ABI/decoder/local
+inference, unchanged AOT size, and4 bootstrap checks.15 foundation commands
+(364 Python tests), Java/Node-free bootstrap reproduction/execution and workspace
+test compilation pass, frozen inputs unchanged. Sizes remain3895 <=3900 bytes/
+form and96 <=128 extra split-form code bytes. `run-suite.py suite-after-raw-strings`
+and `audit-suite.py` pass:4585 observation rows are byte-identical to the preceding
+capture, with zero assertion/test/namespace changes and unchanged primary,
+count/skip/source-routing/comparator/baseline bytes. Counts are4326/63/208/2342/84;
+54 Decimal source-form candidates and six unexecuted Decimal operands remain.
+
+## Decimal conversion, source reload and artifact size probes (2026-11-23)
+
+`results/m12-decimal-conversions` preserves original failures and fresh primary
+JVM commands/JAR hashes. `run.py after-exact-conversions` passes137 conversion
+controls in Runtime, Macro and real CLI AOT. Exact Decimal unchecked integer
+casts preserve low bits; checked casts retain the primary Double range stage.
+A private exact-text parser rounds Decimal/BigInteger directly to binary32 before
+widening. Its helper rebuild is byte-identical. Thirteen raw Float controls also
+independently decode actual bits and retained Decimal fields after GC.
+
+`run.py after-unused-context-fix` passes eight additional context controls in
+both phases and all145 combined controls in AOT. Integer coercion and pure
+Decimal comparison ignore unused invalid context; Ratio conversion/comparison
+and arithmetic continue to require it. `run-ci-repair.py` passes all five
+original CI failures: four source-core reload cases and the unchanged AOT size
+guard. A retained-function regression additionally exercises both phases, GC and
+failed initializer recovery. Optional EDN padding alone is removed; all13
+provenance fields and conservative macro graphs remain. Size is3895/form under
+3900, with96 extra split-form code bytes under128. Clojure reads all34 real
+compact manifests, preserving fields/macro identities against spaced records.
+
+`run-gates.py after-ci-repair` passes63 tests across15 numeric/Decimal targets,
+workspace test compilation, Java/Node-free bootstrap reproduction/execution and
+15 foundation commands (364 Python tests), with frozen inputs unchanged.
+`run-suite.py suite-after-conversions` records4585 rows and expected baseline
+drift; `audit-suite.py --write` proves exactly four rationalize failures resolve
+with no previous-pass regression or other assertion/test/namespace change, then
+writes and checks the faithful baseline. Outcomes are4326/63/208/2342/84.
+Primary values, capture routing, count and skip guards remain unchanged. All
+remaining failures are retained:54 Decimal source-form candidates and six
+unexecuted Decimal operand assertions among200, of which194 actually match.
+The separate precision-types oracle is exploratory; String/nil constructor
+behavior and complete suite acceptance are not certified.
+
+`prior-full-workspace` retains the required unfiltered command atc9d1c6e3,
+terminal101 after2784s, unchanged source, failing the same source-core reload.
+Do not infer a workspace pass from focused runs. Use `python3
+results/m12-decimal-conversions/run-workspace.py` for the fresh complete command
+with two threads and frozen input hashes. The initial experimental raw-source
+reload over a direct-linked shipped image failed private slot imports before
+and after the getter repair; the final source-loaded reload regression does not
+claim that separate route works. The original49-file WIP diff still matches
+its preserved SHA256 exactly; isolated integration changes leave it untouched.
+
+## MathContext setup provenance repair (2026-11-23)
+
+The c9d1c6e3 foundation job fails before bootstrap execution: original Suss
+MathContext setup had been appended to the licensed sequence initializer file,
+which must contain exactly its retained upstream forms. Restore that file
+byte-for-byte to f36cc934 and prepend the same setup to exact-integers.sus, the
+original Suss bootstrap source. Update both source hashes and regenerate imports.
+Every generated source form is identical and remains in the same order; source
+placement/comments and manifests differ. The source-equivalence proof does not
+replace fresh artifact execution.
+
+The eight sequence provenance tests pass, retaining the complete-notice,
+extra-form and malformed-target checks. All15 commands in the failing foundation
+step pass, including364 Python tests and every inventory/manifest/provenance lock
+check. Results and the original CI failure are in results/m12-decimal-provenance.
+The unfiltered workspace run on c9d1c6e3 remains isolated and unchanged. Fresh
+bootstrap execution and final-head CI still require evidence, and semantic
+acceptance gaps remain on the open issues.
+
+## Full Decimal arithmetic capture and conversion boundaries (2026-11-23)
+
+The complete unfiltered vendored capture at45a20341 records4585 actual assertions
+in373.89s. The original comparison terminates101 against the earlier baseline;
+the suite lock check terminates0. Auditing every changed record finds172 resolved
+assertion failures, two newly loaded namespaces (bigdec and with-precision), no
+previously passing assertion regression and one changed diagnostic in the still
+unloaded case namespace (unsupported composite constants). Counts are4322 host
+matches,63 guest judgments,212 failures,2342 unexecuted assertions and84 failed
+namespaces. The primary reference, all count/skip logic and source routing are
+unchanged; the new Decimal field comparator is independently strict.
+
+The initial compact audit overstated200 matching Decimal operand assertions by
+omitting inherited namespace-load failures. The complete audit corrects this to
+194 actual matches and six unexecuted assertions (eval and the EDN namespace's
+unsupported uuid reader tag). A source-form candidate scan additionally retains
+58 Decimal-related failed/unexecuted assertions, including casts, rationalize,
+case and predicates; it is not an acceptance pass. All original raw values and
+the initial audit mistake remain in the evidence. The faithful baseline write
+and subsequent compare terminate0 while preserving every remaining failure and
+unexecuted result. This baseline consistency check does not certify semantics.
+
+Fresh109-case conversion probes execute through the actual CLI. The original
+float text fixture compares JVM Float printing with Suss's specified widened
+Double and therefore includes two unsuitable text comparisons. A separate fresh
+JVM fixture explicitly widens each float result to double in both programs;
+75 cases match and34 differ. Remaining differences include exact unchecked
+integer narrowing, checked long range-error staging/diagnostics, Decimal
+rationalization and direct unchecked float rounding across a binary64 tie.
+The initial println harness failure and both original/widened controls remain.
+No expectation is replaced with Suss output. See run-cast-probe.py and the
+before-decimal-casts-widened receipts. These conversion fixes and all other
+acceptance gaps remain required before promotion.
+
+## Subtraction overload and independent Decimal observations (2026-11-23)
+
+The isolated arithmetic checkout extends source numeric overload facts from
+binary division to subtraction. Source long/long and source floating overloads
+retain direct checked/promoting/unchecked subtraction. Object subtraction first
+negates in the right operand's category, then adds: Decimal context rounding,
+Ratio conversion order, Long.MIN_VALUE overflow/promotion/wrapping and signed
+zero remain observable. Raw numeric locals keep their successful allocation-free
+path; boxed long fast paths reject a checked MIN right operand. Physical storage
+inference does not select a source overload. Unchecked Decimal negation keeps
+its Decimal type and context.
+
+results/m12-decimal-integration/after-subtraction-overload-dispatch.json records
+six tests passing, with196 fresh JVM controls in each phase. The expanded
+run-gates.py after-macro-setup run passes all five commands with frozen sources:
+Decimal/ABI tests, numeric inference/optimization tests, compilation of all
+workspace test targets and both import/source manifests. The current228 behavior
+controls execute in Runtime, Macro and actual CLI AOT; another89 controls compare
+independently decoded coefficients and scales after GC in both phases. These
+include captured primitive/boxed values, loop reanalysis, hinted methods, macro
+transport, evaluation order and all three subtraction families. Initial macro
+fixture/setup errors and all before-change failures remain in the receipts.
+The native decoder rejects mutable Decimal owner layouts and malformed exact
+coefficients. ABI tests now require12 and reject11, preserving their strict
+call-entry, allocation and shared-layout guards.
+
+The suite observer now anchors the canonical Decimal type and reads its immutable
+BigInt coefficient and signed32-bit scale. The comparator requires both actual
+fields to match each primary operand, including zero scale and trailing zeros;
+it does not normalize observations using user-visible equality. The fresh strict
+comparator regression fails before the change and passes afterward. The complete
+vendored capture and full workspace execution still need fresh results. Fresh
+JVM conversion probes also record checked versus unchecked Decimal narrowing;
+these are primary controls, not a claim of Suss cast acceptance. The original
+arithmetic worktree and user checkout remain untouched. No issue or milestone
+completion follows from these scoped probes; remaining criteria stay on GitHub.
+
+## Exact Decimal arithmetic and context probes (2026-11-23)
+
+An isolated checkout based onf36cc934 combines the preserved arithmetic source
+with the exact reader/class/ABI repair. Original dirty arithmetic files and the
+user checkout are untouched. The prototype appends immutable precision/mode
+MathContext fields as ABI12; each phase's installed getter reads its ordinary
+dynamic Var frame. Native arithmetic uses owned BigInt coefficients and checked
+signed32-bit scales. The adapted Clojure1.12.6 with-precision macro retains its
+EPL notice and exact source/JAR/form hashes. No shipped Java dependency is added.
+
+results/m12-decimal-integration/run.py before-precision-fix terminates101;
+context binding and division work but public str dispatch rejects MathContext.
+A native private predicate lets the public str adapter reach its existing exact
+formatter. after-context-string-fix terminates0: the original56 fresh JVM
+arithmetic/context controls execute in both phases, with source hashes frozen.
+All eight rounding modes, non-terminating division, preferred scales, scale
+bounds, nested bindings and exception restoration are retained.
+
+The original comparison target records17 failing controls per phase, including
+an unresolved bigdec. Native Decimal comparison now uses coefficient precision
+and adjusted exponents before bounded scale alignment. Hasheq strips trailing
+zeros without mutating values and uses the independent BigInteger word hash;
+case retains coefficient/scale identity. Sign predicates no longer unbox tiny
+Decimals to zero. Public bigdec shares the checked exact string parser, uses
+canonical Double text and converts integer/Ratio fields with the dynamic context.
+A leading decimal point requires a real original digit. The fresh14 conversion
+and19 equality/hash/order/case/sign controls pass in both phases in
+run.py after-bigdec-leading-dot-fix, terminal0, with frozen inputs unchanged.
+These are string/behavior observations; independent suite Decimal decoding,
+AOT, casts and complete workspace acceptance remain required.
+
+Additional JVM controls expose non-equivalent subtraction staging and source
+versus boxed overloads. before-subtraction-overload-fix records eight mismatches
+per phase; no expected value is changed to Suss output. The additional22-control
+fixture also records huge-exponent finite-precision fuel exhaustion. A bounded
+signed sticky digit below both the existing coefficient and rounding position
+now preserves the distant-addend result without enormous powers of ten.
+after-bounded-addition still terminates101 on seven subtraction/unchecked-negate
+controls per phase; all distant positive-addition controls match. Original
+failures, source/JAR hashes and JVM21.0.13 outputs remain. The complete arithmetic
+criteria and precise subtraction requirements are tracked on the linked issues,
+not inferred from these scoped results. Use stable Rust, two jobs/threads,
+MemoryMax4G and isolated m12-decimal-target. No fuel limits or count guards change.
+
+## Decimal reader and ABI integration probes (2026-11-22)
+
+The isolated CI repair source replays the two published Decimal commits onto
+ad46b2ee. The original four failing CI job logs remain losslessly compressed in
+results/m12-decimal-ci. ABI assertions now require11 and reject10; the unchanged
+call-site allocation/entry and shared-type/descriptor invariants still pass.
+Reader controls execute actual Decimal literals instead of expecting the prior
+unsupported diagnostic. Numeric class dispatch recognizes the immutable layout.
+
+The shipped reader retains the exact coefficient and signed32-bit scale using
+a checked private constructor. Exponent signs are parsed explicitly; coefficient
+folding uses nine-digit long groups and a BigInt accumulator. Both scale
+endpoints and1024-digit coefficients are covered by the fresh JVM controls.
+No JVM dependency is introduced. Constructor registration-order, boxed/raw cast,
+harness and default-fuel failures remain in the original receipts.
+
+python3 results/m12-decimal-ci/oracle.py records169 fresh JVM1.12.6 controls.
+python3 results/m12-decimal-ci/run-focused.py final-focused terminates0 in27.88s:
+28 tests pass, zero failed/ignored, with source/fixture hashes unchanged. It
+covers both sessions, actual AOT, both readers, raw formatter/GC fields and ABI
+invariants. The new1024-digit session stress matrix uses100M fuel as the printer
+tests do; its combined parse/print operation exceeds the default10M budget.
+Existing tests and production fuel are unchanged. The subsequent test-source
+changes only correct explanatory comments and are recorded in the final input
+diff. Use isolated m12-decimal-target, stable Rust, two jobs/threads, MemoryMax4G.
+
+The unmodified full-suite runner captures4517 actual assertions in312.36s and
+terminates101 against the earlier reviewed baseline. The audit records4082 host
+matches,63 guest judgments,384 failures,2410 unexecuted assertions and86 failed
+namespaces. No previously passing assertion regresses. Four newly loaded
+namespaces execute261 assertions: decimal?40/40, mod72/84, quot57/69, rem56/68.
+Their36 Decimal arithmetic failures remain failures. In previously loaded code,
+106 former Decimal evaluation errors now match,84 become explicit verdict
+failures, and seq completes all17 ordinals with14 matches/judgments and three
+remaining failures, including an undecodable Decimal map observation. No guard,
+reference, skip, observer or comparator is weakened. The byte-exact old baseline,
+raw capture, every changed row and newly executed row are retained. The guarded
+baseline write, compare and suite-lock checks terminate0. The original101 is
+preserved, rather than relabeled as a full-suite semantic pass.
+
+The subsequent run-gates.py completes all eight commands, terminal0 throughout,
+with227 broader test executions and frozen inputs unchanged. It preserves the
+original printer budget, exercises reader and numeric Runtime/Macro/AOT matrices,
+checks compiler/runtime decoder/layout invariants, reproduces both bootstrap
+phases twice without Java/Node, verifies both manifests and compiles every
+workspace test target. These scoped checks do not claim an unfiltered local
+workspace pass. The final input diff records documentation/comment changes and
+the faithful reviewed-baseline update separately from executable code.
+
+Arithmetic, MathContext/with-precision, equality/hash/order/casts, bigdec and
+scale-sensitive case behavior remain unverified or incomplete. Numeric fallback
+can still narrow Decimal to Double. The separate uncommitted arithmetic source
+is preserved in its own checkout; do not reset, rebase or push it as this repair.
+Full-suite and broader integration results for this source are recorded below
+only after the commands terminate; earlier source-qualified results stay intact.
+
+## Immutable Decimal artifact probes (2026-11-22)
+
+The data/conversion prototype is rebased on4cf2c6d4. Resolving handoff and
+regenerating the manifest preserves both the printer repair and Decimal forms.
+The complete scoped target onb6d4beb1 again passes4 tests, zero failed/ignored,
+in104.52s (12.22s actual execution), with frozen input hashes unchanged. The
+original pre-rebase receipts remain as pre-rebase-command.json and run.log.
+
+The independent Decimal value prototype appends immutable unscaled-BigInt and
+i32-scale fields as ABI11. Compiler literals/data and macro transport carry
+those exact fields; the original no_std formatter returns scale-preserving
+text through checked scratch copies into owned GC UTF-16. Numeric unboxing
+parses exact Decimal text once to binary64. No shipped Java dependency is added.
+
+python3 results/m12-decimal-values/oracle.py obtains159 fresh JVM1.12.6/Java
+BigDecimal format/Double pairs, through1024 unscaled digits and both scale
+endpoints. The original source/stdout/command/JAR hashes remain. python3
+results/m12-decimal-values/run.py terminates0 in110.14s, with4 tests passing,
+zero failed/ignored and frozen source/fixture hashes verified unchanged. Actual
+compiled literals retain full unscaled fields and scale after GC, and all159
+text/Double pairs match. Raw helper sizing/input/output-boundary checks and
+both adversarial decoder tests also pass. Use isolated m12-decimal-values-target,
+stable Rust, two jobs/threads and MemoryMax4G. The pinned1.98.0 helper rebuild
+check and core-import manifests terminate0. The original compiler/test/signature
+failures remain; the same target/fixture onf9 fails two tests, passes two. Its
+old raw literal path fails linking js/Error, not an observed language diagnostic.
+
+These are data/conversion observations only. Decimal arithmetic, equality/hash/
+order/casts, readers/bigdec, scale-sensitive case handling and dynamic precision
+remain required. Current unextended numeric fallback can still narrow Decimal
+to Double and the old case boundary is unsuitable once literals have values.
+Do not publish this prototype as usable Decimal arithmetic. Public both-phase/
+AOT, full suite and complete workspace acceptance remain unverified. The separate
+forty-case decimal oracle records expected behavior, not passing Suss evidence.
+
 ## Quoted-string fuel and exact operand observations (2026-11-22)
 
 results/m12-printing-fuel retains the unchanged f9 long-string regression's

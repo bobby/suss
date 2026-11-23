@@ -1,0 +1,195 @@
+Running as unit: run-p2900912-i90950163.scope; invocation ID: a9fbfa0bcdd04f7dbb8904bca80a97ca
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=212 guest-judged=63 namespaces-failed=84 not-executed=2342 pass=4322 skipped=0
+namespaces clojure.core-test.bigdec: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.bigdec (Some("<root>/clojure/core_test/bigdec.cljc")): Unresolved Runtime name bigdec at bytes 242..2103'}, observed None
+namespaces clojure.core-test.case: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.case (Some("<root>/clojure/core_test/case.cljc")): case bootstrap requires an expression and explicit default at bytes 240..6428'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.case (Some("<root>/clojure/core_test/case.cljc")): case bootstrap requires scalar literal constants at bytes 240..6428'}
+namespaces clojure.core-test.with-precision: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.with-precision (Some("<root>/clojure/core_test/with_precision.cljc")): Unresolved Runtime name with-precision at bytes 238..1641'}, observed None
+assertions clojure.core-test.abs/test-abs#7: expected 'verdict:fail', observed None
+assertions clojure.core-test.list/test-list#29: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#40: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#41: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#42: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#43: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#44: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#45: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#46: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#47: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#48: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#49: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#50: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#51: expected 'verdict:fail', observed None
+assertions clojure.core-test.minus/test--#52: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#45: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#46: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#47: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#48: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#49: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#50: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#51: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#52: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#53: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#54: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#55: expected 'verdict:fail', observed None
+assertions clojure.core-test.mod/test-mod#56: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#11: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#12: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#13: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#70: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#71: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#72: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#73: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#74: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#75: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#76: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#77: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#78: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#79: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#80: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#81: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#82: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#83: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#84: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#85: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#86: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#87: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#88: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#89: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#90: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#91: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#92: expected 'verdict:fail', observed None
+assertions clojure.core-test.plus-squote/test-+'#93: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#30: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#31: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#32: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#33: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#34: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#35: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#36: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#37: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#38: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#39: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#40: expected 'verdict:fail', observed None
+assertions clojure.core-test.quot/test-quot#41: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#29: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#30: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#31: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#32: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#33: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#34: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#35: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#36: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#37: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#38: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#39: expected 'verdict:fail', observed None
+assertions clojure.core-test.rem/test-rem#40: expected 'verdict:fail', observed None
+assertions clojure.core-test.seq/test-seq#10: expected 'verdict:fail', observed None
+assertions clojure.core-test.seq/test-seq#9: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#104: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#105: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#42: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#43: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#44: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#45: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#46: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#47: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#48: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#49: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#50: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#51: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#52: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#53: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#54: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#55: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#56: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#67: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#68: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#69: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#70: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#71: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#72: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#73: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#74: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#75: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#76: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#86: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#87: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#88: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#100: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#101: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#102: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#103: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#104: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#105: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#106: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#107: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#108: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#109: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#110: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#111: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#112: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#113: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#114: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#115: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#116: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#117: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#118: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#119: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#120: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#121: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#122: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#123: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#124: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#125: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#126: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#127: expected 'kind:error', observed None
+assertions clojure.core-test.star-squote/test-*'#35: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#36: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#37: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#38: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#39: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#40: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#41: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#42: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#43: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#44: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#45: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#46: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#8: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#80: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#81: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#82: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#83: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#84: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#85: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#86: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#87: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#88: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#89: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#90: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#91: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#92: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#93: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#94: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#95: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#96: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#97: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#98: expected 'verdict:fail', observed None
+assertions clojure.core-test.star-squote/test-*'#99: expected 'verdict:fail', observed None
+assertions clojure.core-test.vector/test-vector#24: expected 'verdict:fail', observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (2900913) panicked at crates/suss-compile/tests/clojure_test_suite.rs:618:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 373.61s
+

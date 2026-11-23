@@ -1,0 +1,13 @@
+{
+  "upstream": "org.clojure/clojure 1.12.6",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "source": "clojure/core.clj",
+  "source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "form": "bigdec",
+  "form_sha256": "71f065ed2d0ba3e0a2f75a0891285395e069c32391c436666e67dc0a7fe58c70",
+  "upstream_form": "(defn bigdec\n  \"Coerce to BigDecimal\"\n  {:tag BigDecimal\n   :added \"1.0\"\n   :static true}\n  [x] (cond\n       (decimal? x) x\n       (float? x) (. BigDecimal valueOf (double x))\n       (ratio? x) (/ (BigDecimal. (.numerator ^clojure.lang.Ratio x)) (.denominator ^clojure.lang.Ratio x))\n       (instance? clojure.lang.BigInt x) (.toBigDecimal ^clojure.lang.BigInt x)\n       (instance? BigInteger x) (BigDecimal. ^BigInteger x)\n       (number? x) (BigDecimal/valueOf (long x))\n       :else (BigDecimal. x)))",
+  "license": "EPL-1.0",
+  "license_path": "runtime/core-import/LICENSE",
+  "implementation": "Original Suss function and UTF-16 exact decimal parser; the JVM form is a behavior reference, not a copied Java implementation. Existing Decimal values retain their scale; Doubles use canonical text; integer and Ratio conversions use native exact fields and the dynamic context.",
+  "implementation_source": "docs/compatibility/bootstrap/exact-integers.sus"
+}

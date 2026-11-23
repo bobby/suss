@@ -89,11 +89,14 @@ fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
     coercing: bool,
-    division_primitive: bool,
+    primitive_overload: bool,
     function: &IrFunction,
 ) -> &'static str {
     if operator == Arithmetic::Divide && !coercing {
-        return if division_primitive { "checked-divide-primitive" } else { "checked-divide" };
+        return if primitive_overload { "checked-divide-primitive" } else { "checked-divide" };
+    }
+    if operator == Arithmetic::Subtract && !coercing && primitive_overload {
+        return "checked-subtract-primitive";
     }
     let numeric = arguments
         .iter()
@@ -251,6 +254,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("number-box");
                     }
                     Operation::Literal(Literal::Ratio { .. }) => { names.insert("bigint-new"); names.insert("ratio-literal"); }
+                    Operation::Literal(Literal::Decimal { .. }) => { names.insert("bigint-new"); names.insert("decimal-literal"); }
                     Operation::Literal(Literal::String(_)) => {}
                     Operation::Literal(Literal::BigInt { big_integer, .. }) => { names.insert("bigint-new"); if *big_integer { names.insert("integer-biginteger"); } }
                     Operation::GlobalCell(global) => {
@@ -321,12 +325,16 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsDecimal | Nominal::IsMathContext | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
+                        Nominal::DecimalNew => { names.insert("decimal-from-integer"); }
+                        Nominal::DecimalCoerce => { names.insert("decimal-coerce"); }
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
                         Nominal::KeywordIntern => { names.insert("keyword-intern"); }
                         Nominal::CoerceString => { names.insert("coerce-string"); }
+                        Nominal::DecimalContextNew => { names.insert("decimal-context-new"); }
+                        Nominal::DecimalContextGetter => { names.insert("decimal-context-getter-install"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::JoinStrings => { names.insert("string-join"); }
@@ -528,9 +536,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         operator,
                         arguments,
                         coercing,
-                        division_primitive,
+                        primitive_overload,
                     } => {
-                        names.insert(arithmetic_name(*operator, arguments, *coercing, *division_primitive, function));
+                        names.insert(arithmetic_name(*operator, arguments, *coercing, *primitive_overload, function));
                     }
                     _ => {}
                 }
@@ -888,7 +896,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
-            "ratio-new" | "ratio-literal" => (vec![VALUE, VALUE], vec![VALUE]),
+            "ratio-new" | "ratio-literal" | "decimal-from-integer" => (vec![VALUE, VALUE], vec![VALUE]),
+            "decimal-literal" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "decimal-coerce" => (vec![VALUE], vec![VALUE]),
+            "decimal-context-new" => (vec![VALUE,VALUE],vec![VALUE]),
+            "decimal-context-getter-install" => (vec![VALUE],vec![VALUE]),
             "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
                 nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
             }), ValType::I32], vec![VALUE]),
@@ -2352,9 +2364,9 @@ fn emit_function(
             if unboxed::inline(&locals, inst) {
                 match &inst.operation {
                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
-                    Operation::Arithmetic { operator, arguments, coercing, division_primitive } => locals.arithmetic(
-                        &mut code, *operator, arguments, inst.result,
-                        index(arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir)),
+                    Operation::Arithmetic { operator, arguments, coercing, primitive_overload } => locals.arithmetic(
+                        &mut code, *operator, arguments, inst.result, *primitive_overload,
+                        index(arithmetic_name(*operator, arguments, *coercing, *primitive_overload, ir)),
                     ),
                     Operation::Comparison { operation, arguments } => locals.comparison(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
@@ -2604,6 +2616,15 @@ fn emit_function(
                         function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
                     }
                     function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Literal(Literal::Decimal { negative, unscaled, scale }) => {
+                    function.instruction(&I32Const(if unscaled.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                    for limb in unscaled { function.instruction(&I32Const(*limb as i32)); }
+                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                        array_size: u32::try_from(unscaled.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Decimal literal exceeds Wasm array length".into() })? });
+                    function.instruction(&I32Const(unscaled.len() as i32)).instruction(&Call(index("bigint-new")));
+                    function.instruction(&I32Const(*scale)).instruction(&Call(index("decimal-literal")));
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
@@ -3260,6 +3281,22 @@ fn emit_function(
                         Nominal::IsRatio => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::RATIO)));
+                        }
+                        Nominal::DecimalCoerce => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            function.instruction(&Call(index("decimal-coerce")));
+                        }
+                        Nominal::DecimalNew => {
+                            for value in arguments { function.instruction(&LocalGet(value.0 as u32 + offset)); }
+                            function.instruction(&Call(index("decimal-from-integer")));
+                        }
+                        Nominal::IsMathContext => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            function.instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::MATH_CONTEXT)));
+                        }
+                        Nominal::IsDecimal => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            function.instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::DECIMAL)));
                         }
                         Nominal::IsBigInt => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -4376,6 +4413,8 @@ fn emit_function(
                         }
                         Nominal::Class
                         | Nominal::BindingDefined
+                        | Nominal::DecimalContextNew
+                        | Nominal::DecimalContextGetter
                         | Nominal::CoerceString
                         | Nominal::ConcatString
                         | Nominal::JoinStrings
@@ -4459,6 +4498,8 @@ fn emit_function(
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
                                 Nominal::BindingDefined => "binding-defined",
+                                Nominal::DecimalContextNew => "decimal-context-new",
+                                Nominal::DecimalContextGetter => "decimal-context-getter-install",
                                 Nominal::CoerceString => "coerce-string",
                                 Nominal::ObjectCoerceString => "object-coerce-string",
                                 Nominal::ConcatString => "string-concat",
@@ -4521,16 +4562,16 @@ fn emit_function(
                     operator,
                     arguments,
                     coercing,
-                    division_primitive,
+                    primitive_overload,
                 } => {
-                    let name = arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir);
+                    let name = arithmetic_name(*operator, arguments, *coercing, *primitive_overload, ir);
                     // Two i31 longs add or subtract inline (#361) while the
                     // result is an i31; the runtime boxes a larger one.
                     let inline = match name {
                         // value-add and value-subtract (JS convention) treat
                         // two numbers as number-add and number-subtract do.
                         "number-add" | "checked-add" | "value-add" => Some(I32Add),
-                        "number-subtract" | "checked-subtract" | "value-subtract" => Some(I32Sub),
+                        "number-subtract" | "checked-subtract" | "checked-subtract-primitive" | "value-subtract" => Some(I32Sub),
                         _ => None,
                     }
                     .filter(|_| arguments.len() == 2);

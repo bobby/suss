@@ -38,9 +38,9 @@ pub(super) fn annotate(
 }
 
 #[derive(Clone, Copy, Default)]
-struct Features { division: bool, hints: bool, extrema: bool, numeric_core: bool }
+struct Features { overloads: bool, hints: bool, extrema: bool, numeric_core: bool }
 impl Features {
-    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; }
+    fn include(&mut self, other: Self) { self.overloads |= other.overloads; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; }
 }
 
 struct Pass<'a> {
@@ -70,12 +70,13 @@ impl Pass<'_> {
             match &*hir.kind {
                 Arithmetic { operator, coercing, arguments, .. } => {
                     let mut features = self.any(arguments)?;
-                    features.division |= *operator == super::Arithmetic::Divide && !*coercing;
+                    features.overloads |= matches!(operator, super::Arithmetic::Divide | super::Arithmetic::Subtract) && !*coercing;
                     Ok(features)
                 }
                 Bitwise { operation, arguments } => {
                     let mut features = self.any(arguments)?;
-                    features.numeric_core |= matches!(operation, super::Bitwise::Int | super::Bitwise::Cast);
+                    features.numeric_core |= matches!(operation, super::Bitwise::Int | super::Bitwise::Cast
+                        | super::Bitwise::UncheckedSubtract | super::Bitwise::PromoteSubtract);
                     Ok(features)
                 }
                 Comparison { arguments, .. } | Array { arguments, .. }
@@ -112,7 +113,7 @@ impl Pass<'_> {
         (self.meter)(1)?;
         if !self.hints && !self.validate_methods {
             let needed = self.features(hir)?;
-            if !needed.division && !needed.extrema && !needed.numeric_core { return Ok(()); }
+            if !needed.overloads && !needed.extrema && !needed.numeric_core { return Ok(()); }
         }
         let key = Arc::as_ptr(&hir.kind) as usize;
         if let Some((rewritten, ty)) = self.rewritten.get(&key) {
@@ -199,7 +200,7 @@ impl Pass<'_> {
                         result?;
                     }
                 }
-                Arithmetic { operator, arguments, coercing, division_primitives } => {
+                Arithmetic { operator, arguments, coercing, primitive_overloads } => {
                     let inline = arguments_len_inline(*operator, arguments.len())
                         && (!self.hints || self.validate_only
                             || local_hints::numeric_operands(arguments, facts, self.meter)?);
@@ -209,15 +210,19 @@ impl Pass<'_> {
                             local_hints::operand(argument, facts, self.meter)?;
                         }
                     }
-                    division_primitives.clear();
-                    if *operator == super::Arithmetic::Divide && !*coercing && arguments.len() > 1 {
-                        use Primitive::{Boxed, Double, Float};
+                    primitive_overloads.clear();
+                    if matches!(operator, super::Arithmetic::Divide | super::Arithmetic::Subtract)
+                        && !*coercing && arguments.len() > 1
+                    {
+                        use Primitive::{Boxed, Double, Float, Long};
                         let mut previous = primitive_returns::kind(&arguments[0], facts, self.meter)?;
                         for argument in &arguments[1..] {
                             let kind = primitive_returns::kind(argument, facts, self.meter)?;
-                            let primitive = matches!(previous, Double | Float) || matches!(kind, Double | Float);
-                            division_primitives.push(primitive);
-                            previous = if primitive { Double } else { Boxed };
+                            let floating = matches!(previous, Double | Float) || matches!(kind, Double | Float);
+                            let primitive = floating || (*operator == super::Arithmetic::Subtract
+                                && integer(previous) && integer(kind));
+                            primitive_overloads.push(primitive);
+                            previous = if floating { Double } else if primitive { Long } else { Boxed };
                         }
                     }
                 }
@@ -233,8 +238,22 @@ impl Pass<'_> {
                             && local_hints::numeric_operands(arguments, facts, self.meter)?)
                         || (long_only && self.hints && !self.validate_only
                             && local_hints::long_operands(arguments, facts, self.meter)?);
-                    for argument in arguments { self.walk(argument, facts)?;
+                    for argument in arguments.iter_mut() { self.walk(argument, facts)?;
                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
+                    }
+                    if !self.validate_only && arguments.len() == 2
+                        && matches!(operation, super::Bitwise::UncheckedSubtract | super::Bitwise::PromoteSubtract)
+                    {
+                        let a = primitive_returns::kind(&arguments[0], facts, self.meter)?;
+                        let b = primitive_returns::kind(&arguments[1], facts, self.meter)?;
+                        if matches!(a, Primitive::Double | Primitive::Float)
+                            || matches!(b, Primitive::Double | Primitive::Float)
+                            || (integer(a) && integer(b))
+                        {
+                            *operation = if *operation == super::Bitwise::UncheckedSubtract {
+                                super::Bitwise::UncheckedSubtractPrimitive
+                            } else { super::Bitwise::PromoteSubtractPrimitive };
+                        }
                     }
                 }
                 Comparison { arguments, .. } => {
@@ -301,4 +320,9 @@ fn restore(facts: &mut SourceFacts, previous: Vec<(BindingId, Option<SourceType>
 
 fn arguments_len_inline(operator: Arithmetic, count: usize) -> bool {
     count > 1 || matches!(operator, Arithmetic::Subtract | Arithmetic::Negate)
+}
+
+/// JVM widens these source primitives to the long numeric overload.
+fn integer(kind: Primitive) -> bool {
+    matches!(kind, Primitive::Byte | Primitive::Short | Primitive::Int | Primitive::Long)
 }

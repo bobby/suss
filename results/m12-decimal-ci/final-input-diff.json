@@ -1,0 +1,19 @@
+{
+  "focused_to_final": [
+    "crates/suss-cli/tests/clojure_decimal_values.rs",
+    "crates/suss-cli/tests/read_string.rs",
+    "docs/compatibility/README.md",
+    "docs/roadmap/handoff.md",
+    "tests/oracle/clojure-test-suite-known-failures.json"
+  ],
+  "test_changes_proven_comment_only": true,
+  "capture_to_final": [
+    "docs/roadmap/handoff.md",
+    "tests/oracle/clojure-test-suite-known-failures.json"
+  ],
+  "gates_to_final": [
+    "docs/roadmap/handoff.md"
+  ],
+  "executable_inputs_unchanged_since_focused": true,
+  "fixture_sha256": "7b7c4eee54dbef686e055f5b411d23d35ecc9a120cfbd8cb675a59ed8cce4ca9"
+}

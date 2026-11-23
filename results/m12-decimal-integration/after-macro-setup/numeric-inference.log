@@ -1,0 +1,105 @@
+Running as unit: run-p2878111-i90945388.scope; invocation ID: 1a50b1c68c6c424f951e1b69540208d7
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4.37s
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_division_overloads-d7739722c627dad8)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... ok
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.14s
+
+     Running tests/clojure_exact_inline.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_exact_inline-1e2f5887bae5ca82)
+
+running 2 tests
+test exact_operands_match_jvm_on_raw_and_boxed_paths ... ok
+test aot_executes_raw_and_boxed_exact_operand_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.14s
+
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.37s
+
+     Running tests/clojure_numeric_box_reuse.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_numeric_box_reuse-a3060681a3a0a766)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_box_reuse ... ok
+test aot_preserves_numeric_box_reuse ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.66s
+
+     Running tests/clojure_numeric_captures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_numeric_captures-6c8a8b31bd97e2bf)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_captures ... ok
+test aot_preserves_numeric_captures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.93s
+
+     Running tests/clojure_primitive_method_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_primitive_method_types-c5ca8037cd919178)
+
+running 4 tests
+test aot_preserves_primitive_method_types ... ok
+test primitive_method_diagnostics_use_lexical_source_types ... ok
+test runtime_and_macro_preserve_primitive_method_types ... ok
+test aot_rejects_invalid_primitive_method_types ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.95s
+
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_raw_numeric_core-adef0af7f969bf49)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... ok
+test aot_preserves_known_numeric_core_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.59s
+
+     Running tests/clojure_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_unboxed_locals-67ac12a7b57e950c)
+
+running 12 tests
+test bit_tests_keep_shift_masking_flags_and_boxed_fallbacks ... ok
+test core_int32_operations_keep_low_bits_shift_masks_and_signed_results ... ok
+test core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks ... ok
+test double_zero_division_keeps_source_overloads_separate_from_storage ... ok
+test doubles_keep_nan_and_signed_zero ... ok
+test constant_long_products_keep_both_operand_orders_and_exact_overflow ... ok
+test guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order ... ok
+test long_overflow_throws_on_both_paths ... ok
+test longs_and_doubles_mix_as_in_clojure ... ok
+test guarded_array_indices_keep_aliases_bounds_and_boxed_fallbacks ... ok
+test loops_keep_counters_raw_and_box_where_values_escape ... ok
+test non_numbers_throw_as_on_the_boxed_path ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.40s
+
+     Running tests/clojure_unchecked_ratios.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_unchecked_ratios-49caaee40ba254a6)
+
+running 2 tests
+test unchecked_ratios_and_integer_categories_match_jvm_in_both_phases ... ok
+test aot_executes_unchecked_ratios_and_integer_categories ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.65s
+
+     Running tests/numeric_operand_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/numeric_operand_types-1228fb8d0a0077e7)
+
+running 3 tests
+test core_namespace_source_keeps_its_coercing_primitives ... ok
+test non_numeric_operands_throw_naming_the_operation ... ok
+test numeric_operands_keep_clojure_results ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.71s
+
+     Running tests/portable_i31_operations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_i31_operations-e8d8cac2abc3f476)
+
+running 1 test
+test i31_operations_match_jvm_clojure ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.44s
+

@@ -215,6 +215,13 @@ impl ExactNumber {
         let denominator = num_bigint::BigInt::new(num_bigint::Sign::Plus, denominator);
         Self { text: format!("{numerator}/{denominator}"), value: ExactValue::Ratio { numerator, denominator } }
     }
+    /// Reconstitute a GC Decimal datum, preserving its exact 32-bit scale.
+    pub fn decimal(negative: bool, unscaled: Vec<u32>, scale: i32) -> Self {
+        let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
+        let unscaled = num_bigint::BigInt::new(sign, unscaled);
+        Self { text: format!("{unscaled}E{}M", -i64::from(scale)),
+            value: ExactValue::Decimal { unscaled, scale } }
+    }
     /// The literal a macro-data symbol stands for, if it is one.
     pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {
         if namespace != Some(EXACT_NUMBER_NAMESPACE) {

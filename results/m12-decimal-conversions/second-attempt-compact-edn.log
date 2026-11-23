@@ -1,0 +1,5 @@
+Syntax error compiling at (results/m12-decimal-conversions/compact-edn.clj:21:47).
+Unable to resolve symbol: files in this context
+
+Full report at:
+/tmp/clojure-7000805130369893487.edn

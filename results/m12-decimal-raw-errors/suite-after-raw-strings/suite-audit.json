@@ -1,0 +1,51 @@
+{
+  "base": "8b70a31f3ab2a4d3180ff5baf3948bd14fc701ef",
+  "checkpoint": "8b70a31f3ab2a4d3180ff5baf3948bd14fc701ef",
+  "capture_sha256": "c7e194aa5bf52ff652ab1bde5e0b69dee9d9cd7727705da8439c1bd6a5a846a9",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "raw_assertions": 4585,
+  "counts": {
+    "pass": 4326,
+    "guest-judged": 63,
+    "fail": 208,
+    "not-executed": 2342,
+    "skipped": 0,
+    "namespaces-failed": 84
+  },
+  "changed_record_counts": {
+    "assertions": 0,
+    "tests": 0,
+    "namespaces": 0
+  },
+  "changes": {
+    "assertions": [],
+    "tests": [],
+    "namespaces": []
+  },
+  "previously_passing_regressions": [],
+  "primary_and_count_skip_guards_unchanged": true,
+  "decimal_value_observations": {
+    "pass": 194,
+    "not-executed": 6
+  },
+  "unresolved_decimal_source_candidates": 54,
+  "unresolved_candidates_by_namespace": {
+    "clojure.core-test.byte": 5,
+    "clojure.core-test.case": 4,
+    "clojure.core-test.char-qmark": 3,
+    "clojure.core-test.coll-qmark": 1,
+    "clojure.core-test.double": 4,
+    "clojure.core-test.eq": 2,
+    "clojure.core-test.eval": 1,
+    "clojure.core-test.float": 4,
+    "clojure.core-test.int": 5,
+    "clojure.core-test.long": 5,
+    "clojure.core-test.neg-int-qmark": 3,
+    "clojure.core-test.not-eq": 2,
+    "clojure.core-test.num": 1,
+    "clojure.core-test.pos-int-qmark": 3,
+    "clojure.core-test.short": 5,
+    "clojure.core-test.sorted-qmark": 1,
+    "clojure.edn-test.read-string": 5
+  }
+}

@@ -1,0 +1,29 @@
+Running as unit: run-p3247688-i91309540.scope; invocation ID: 3e404c4257134113b4455927d8771c65
+    Finished `test` profile [optimized] target(s) in 0.25s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_test_suite-684b122543cdeb29)
+
+running 1 test
+test pinned_narrow_cast_platform_assertions_match_primary_counts_and_values ... FAILED
+
+failures:
+
+---- pinned_narrow_cast_platform_assertions_match_primary_counts_and_values stdout ----
+
+thread 'pinned_narrow_cast_platform_assertions_match_primary_counts_and_values' (3247704) panicked at crates/suss-compile/tests/clojure_test_suite.rs:1034:5:
+{"counts": {"pass": 140, "guest-judged": 12, "fail": 0, "not-executed": 0, "skipped": 0, "namespaces-failed": 0}, "failures": {"schema": 1, "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f", "namespaces": {}, "tests": {}, "assertions": {}, "skip-mismatches": []}, "expected_count": 152, "actual_count": 152, "all_ids_match": true}
+
+Traceback (most recent call last):
+  File "<string>", line 20, in <module>
+    assert counts['pass']==len(expected) and counts['guest-judged']==0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    pinned_narrow_cast_platform_assertions_match_primary_counts_and_values
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 15.06s
+
+error: test failed, to rerun pass `-p suss-compile --test clojure_test_suite`

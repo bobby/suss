@@ -738,7 +738,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
                 return Ok(Some(named(match value {
                     Literal::Nil | Literal::Undefined => "clj-nil",
                     Literal::Bool(_) => "boolean",
-                    Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } => "number",
+                    Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. } => "number",
                     Literal::String(_) => "string",
                 })));
             }

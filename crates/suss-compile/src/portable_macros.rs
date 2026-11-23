@@ -310,6 +310,7 @@ impl CompiledMacros {
         macros.define(crate::portable_lazy_seq::SOURCE)?;
         macros.define(crate::portable_state_macros::DELAY)?;
         macros.define(crate::portable_state_macros::VSWAP)?;
+        macros.define(crate::portable_state_macros::WITH_PRECISION)?;
         macros.define(crate::portable_core_macros::DOSEQ)?;
         macros.define(crate::portable_core_macros::THREAD_LAST)?;
         macros.define(crate::portable_core_macros::DEFMULTI)?;
@@ -877,7 +878,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let"]
+                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision"]
                     .into_iter()
                     .find_map(|core_name| {
                         context

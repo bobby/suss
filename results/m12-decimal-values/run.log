@@ -1,0 +1,15 @@
+Running as unit: run-p1334297-i89378806.scope; invocation ID: 35221641ae804a0ba11ff5721e0ede6d
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 32s
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-target/debug/deps/decimal_values-b2f1d4a8fd56099e)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.22s
+

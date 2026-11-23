@@ -1,0 +1,37 @@
+[
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py",
+      "compare",
+      "--suite",
+      "suite",
+      "--observations",
+      "results/m12-decimal-ci/suite-capture/suite-observations.json",
+      "--write"
+    ],
+    "exit_code": 0,
+    "seconds": 0.30942249298095703
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py",
+      "compare",
+      "--suite",
+      "suite",
+      "--observations",
+      "results/m12-decimal-ci/suite-capture/suite-observations.json"
+    ],
+    "exit_code": 0,
+    "seconds": 0.290027379989624
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.09830951690673828
+  }
+]

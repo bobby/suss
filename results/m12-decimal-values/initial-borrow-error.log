@@ -1,0 +1,18 @@
+Running as unit: run-p1292591-i89352357.scope; invocation ID: 5d9d9640aa07452e8923850108b28f61
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+error[E0509]: cannot move out of type `suss_reader::forms::Form`, which implements the `Drop` trait
+    --> crates/suss-compile/src/portable_macro_data.rs:1365:39
+     |
+1365 |             let Kind::Exact(number) = integer.kind else { return Err(error("Invalid Decimal unscaled integer")); };
+     |                             ------    ^^^^^^^^^^^^ cannot move out of here
+     |                             |
+     |                             data moved here because `number` has type `ExactNumber`, which does not implement the `Copy` trait
+     |
+help: consider borrowing the pattern binding
+     |
+1365 |             let Kind::Exact(ref number) = integer.kind else { return Err(error("Invalid Decimal unscaled integer")); };
+     |                             +++
+
+For more information about this error, try `rustc --explain E0509`.
+error: could not compile `suss-compile` (lib) due to 1 previous error

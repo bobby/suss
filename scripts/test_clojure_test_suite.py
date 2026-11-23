@@ -70,6 +70,23 @@ class SuiteMatches(unittest.TestCase):
         self.assertTrue(suite.suite_matches(large, dict(large)))
         self.assertFalse(suite.suite_matches(large, dict(large, value='2'+'0'*5000)))
 
+    def test_decimal_observations_preserve_coefficient_and_preferred_scale(self):
+        for coefficient, scale in [('0', 2), ('150', 2), ('-150', 2),
+                                   ('1', -2147483648), ('1', 2147483647),
+                                   ('1'+'0'*5000, -17)]:
+            expected = {'tag':'decimal', 'unscaled':coefficient, 'scale':scale}
+            self.assertTrue(suite.suite_matches(expected, dict(expected)))
+            for other in [dict(expected, unscaled=coefficient+'0'),
+                          dict(expected, scale=scale-1),
+                          {'tag':'bigint', 'value':coefficient},
+                          {'tag':'long', 'value':'1'}, NUMBER_ONE]:
+                self.assertFalse(suite.suite_matches(expected, other))
+        # Observations check each operand's actual representation, independently
+        # of the user-visible scale-insensitive Decimal equality predicate.
+        self.assertFalse(suite.suite_matches(
+            {'tag':'decimal', 'unscaled':'10', 'scale':1},
+            {'tag':'decimal', 'unscaled':'100', 'scale':2}))
+
     def test_exact_types_never_match(self):
         for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
                     {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):

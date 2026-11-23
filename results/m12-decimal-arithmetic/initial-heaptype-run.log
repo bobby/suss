@@ -1,0 +1,15 @@
+Running as unit: run-p1405045-i89447542.scope; invocation ID: 46659b325fcb42aeb64dbd338c76dc0c
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-reader)
+error[E0599]: no variant, associated function, or constant named `Eq` found for enum `wasm_encoder::HeapType` in the current scope
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/decimals.rs:49:105
+   |
+49 |     globals.global(GlobalType {val_type:VALUE,mutable:true,shared:false},&ConstExpr::ref_null(HeapType::Eq));
+   |                                                                                                         ^^ variant, associated function, or constant not found in `wasm_encoder::HeapType`
+   |
+help: there is a method `eq` with a similar name
+  --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/cmp.rs:258:4
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `suss-compile-generator` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

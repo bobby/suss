@@ -60,6 +60,7 @@ pub enum Literal {
     Long(i64),
     BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
     Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
+    Decimal { negative: bool, unscaled: Vec<u32>, scale: i32 },
     String(Vec<u16>),
 }
 impl Literal {
@@ -68,7 +69,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } => Type::Number,
+            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } | Self::Decimal { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -290,9 +291,10 @@ pub enum Bitwise {
     Abs,
     UncheckedAdd,
     UncheckedSubtract,
+    UncheckedSubtractPrimitive,
     UncheckedMultiply,
     UncheckedNegate,
-    PromoteAdd, PromoteSubtract, PromoteMultiply, PromoteNegate,
+    PromoteAdd, PromoteSubtract, PromoteSubtractPrimitive, PromoteMultiply, PromoteNegate,
     ToBigInt, ToBigInteger, MakeRatio, RatioNumerator, RatioDenominator, RatioInteger,
     /// Source max/min distinguish primitive double/double Math operations,
     /// primitive long/long results, and Object-returning overloads (#337).
@@ -437,10 +439,12 @@ impl Bitwise {
             Self::Abs => "number-abs",
             Self::UncheckedAdd => "number-unchecked-add",
             Self::UncheckedSubtract => "number-unchecked-subtract",
+            Self::UncheckedSubtractPrimitive => "number-unchecked-subtract-primitive",
             Self::UncheckedMultiply => "number-unchecked-multiply",
             Self::UncheckedNegate => "number-unchecked-negate",
             Self::PromoteAdd => "number-promote-add",
             Self::PromoteSubtract => "number-promote-subtract",
+            Self::PromoteSubtractPrimitive => "number-promote-subtract-primitive",
             Self::PromoteMultiply => "number-promote-multiply",
             Self::PromoteNegate => "number-promote-negate",
             Self::MakeRatio => "ratio-new",
@@ -544,6 +548,12 @@ pub enum Nominal {
     IsNumber,
     IsBigInt,
     IsRatio,
+    IsDecimal,
+    IsMathContext,
+    DecimalNew,
+    DecimalCoerce,
+    DecimalContextNew,
+    DecimalContextGetter,
     IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
@@ -763,6 +773,7 @@ impl Nominal {
             | Self::IsBigInt
             | Self::IsRatio
             | Self::IsBigInteger
+            | Self::IsDecimal | Self::IsMathContext
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
@@ -797,6 +808,8 @@ impl Nominal {
                 Self::ApplySequenceOps => count == 10,
                 Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
+                Self::DecimalNew => count == 2,
+                Self::DecimalCoerce => count == 1,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
@@ -805,6 +818,8 @@ impl Nominal {
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
+                Self::DecimalContextNew => count == 2,
+                Self::DecimalContextGetter => count == 1,
                 Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard
             | Self::ScalarMapEntryGuard | Self::MapEntryType => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
@@ -821,7 +836,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsRatio | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1213,9 +1228,9 @@ pub enum Expression {
         /// Shipped core keeps JavaScript coercion internally; source arithmetic
         /// rejects non-numbers as Clojure does (#286).
         coercing: bool,
-        /// Source overload for each binary division in the left fold. This
+        /// Source overload for each binary division or subtraction in the left fold. This
         /// is independent of the backend's raw/boxed storage inference.
-        division_primitives: Vec<bool>,
+        primitive_overloads: Vec<bool>,
     },
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
@@ -1320,9 +1335,7 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
-    /// BigInt and Ratio literals retain their exact values. Decimal literals
-    /// still throw at evaluation until their runtime type arrives;
-    /// unselected forms can load without silently rounding their values.
+    /// Exact literals retain their integer fields and Decimal's signed scale.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
         if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
             let (_, limbs) = value.to_u32_digits();
@@ -1338,19 +1351,11 @@ impl Analyzer<'_> {
                     denominator: denominator.to_u32_digits().1,
                 })) });
         }
-        let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
-        let symbol = |namespace: Option<&str>, name: &str| {
-            at(Kind::Symbol(suss_reader::Symbol {
-                namespace: namespace.map(str::to_owned),
-                name: name.to_owned(),
-            }))
-        };
-        let error = at(Kind::List(vec![
-            symbol(None, "new"),
-            symbol(Some("js"), "Error"),
-            at(Kind::String(number.unsupported_message().encode_utf16().collect())),
-        ]));
-        self.form(&at(Kind::List(vec![symbol(None, "throw"), error])))
+        let suss_reader::forms::ExactValue::Decimal { unscaled, scale } = &number.value else { unreachable!() };
+        Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+            ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::Decimal {
+                negative: num_traits::Signed::is_negative(unscaled), unscaled: unscaled.to_u32_digits().1, scale: *scale,
+            })) })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
         self.form_in(form, super::AnalysisContext::Expression, false)
@@ -3445,6 +3450,10 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            if symbol.name=="decimal-context-getter-install" && !self.privileged
+                && self.environment.current_namespace(self.phase)!="suss.core" {
+                return Err(fail(form.span.clone(),"Math context installation requires compiled core"));
+            }
             if matches!(symbol.name.as_str(), "long-add" | "long-less" | "chunk-index-add") {
                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
@@ -3478,7 +3487,7 @@ impl Analyzer<'_> {
                     metadata: form.metadata.clone(), ty: Type::Number,
                     kind: std::sync::Arc::new(Expression::Arithmetic {
                         operator: Arithmetic::Add, arguments, coercing: false,
-                        division_primitives: vec![],
+                        primitive_overloads: vec![],
                     }) });
             }
             let operation = match symbol.name.as_str() {
@@ -3490,6 +3499,12 @@ impl Analyzer<'_> {
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
                 "ratio?" => Some(Nominal::IsRatio),
+                "decimal?" => Some(Nominal::IsDecimal),
+                "math-context?" => Some(Nominal::IsMathContext),
+                "decimal-from-integer" => Some(Nominal::DecimalNew),
+                "as-decimal" => Some(Nominal::DecimalCoerce),
+                "math-context-new" => Some(Nominal::DecimalContextNew),
+                "decimal-context-getter-install" => Some(Nominal::DecimalContextGetter),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),
@@ -4434,7 +4449,7 @@ impl Analyzer<'_> {
                         operator,
                         arguments,
                         coercing: self.coercing_operands(),
-                        division_primitives: vec![],
+                        primitive_overloads: vec![],
                     },
                     ty,
                 )

@@ -1,0 +1,7 @@
+"\"-0.19999999999999996\""
+"\"-0.19999999999999996\""
+Syntax error (UnsupportedOperationException) compiling let* at (results/m12-decimal-integration/subtraction-dispatch-oracle.clj:4:57).
+Can't type hint a local with a primitive initializer
+
+Full report at:
+/tmp/clojure-12823370338446291300.edn

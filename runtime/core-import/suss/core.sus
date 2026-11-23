@@ -5856,6 +5856,9 @@
         (suss.bootstrap/bigint? obj)
         (-write writer (suss.bootstrap/concat-string (str_ obj) "N"))
 
+        (suss.bootstrap/decimal? obj)
+        (-write writer (suss.bootstrap/concat-string (str_ obj) "M"))
+
         (number? obj)
         (-write writer
           (cond
@@ -6660,7 +6663,8 @@
   ([] "")
   ([x] (if (suss.bootstrap/nil? x)
          ""
-         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x))
+         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x)
+                 (suss.bootstrap/math-context? x))
            (suss.bootstrap/coerce-string x)
            ;; A type value is Clojure's Class, whose toString is "class Name" (#304).
            (if (or (suss.bootstrap/type-constructor? x)
@@ -9976,6 +9980,11 @@ reduces them without incurring seq initialization"
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
+;; Original native MathContext integration. The getter uses the same dynamic
+;; Var lookup as source code; Runtime and Macro instances own separate roots.
+(def ^:dynamic *math-context* nil)
+(suss.bootstrap/decimal-context-getter-install (fn [] *math-context*))
+
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
@@ -10600,6 +10609,46 @@ reduces them without incurring seq initialization"
                     false))
                 false))))
         false))))
+;; Original Suss: fold validated decimal coefficient digits in nine-digit
+;; groups. Each group fits a long; only the accumulated magnitude needs BigInt.
+;; This avoids one arbitrary-precision multiplication/allocation per digit.
+(def ^:private reader-decimal-coefficient
+  (fn [s negative]
+    (let [n (.-length s)
+          remainder (rem n 9)
+          first (if (zero? remainder) 9 remainder)]
+      (loop [i first value (suss.bootstrap/as-bigint (suss.bootstrap/parse-long s 0 first 10))]
+        (if (< i n)
+          (recur (+ i 9)
+            (+ (* value 1000000000) (suss.bootstrap/parse-long s i (+ i 9) 10)))
+          (if negative (- value) value))))))
+;; Original Suss: retain a validated Decimal's coefficient digits and scale.
+;; BigInt construction avoids an intermediate double, including for huge values.
+(def ^:private reader-decimal-value
+  (fn [st start s end from negative]
+    (if (reader-skipping-number? st)
+      nil
+      (let [to (dec end)
+            lower-e (reader-index-of s 101 from to)
+            exponent-at (if (<= 0 lower-e) lower-e (reader-index-of s 69 from to))
+            mantissa-end (if (<= 0 exponent-at) exponent-at to)
+            dot (reader-index-of s 46 from mantissa-end)
+            places (if (<= 0 dot) (- mantissa-end (inc dot)) 0)
+            exponent (if (<= 0 exponent-at)
+                       (let [e (inc exponent-at)
+                             sign (.charCodeAt s e)
+                             negative-exponent (== sign 45)
+                             digits-at (if (or negative-exponent (== sign 43)) (inc e) e)]
+                         (suss.bootstrap/parse-long s digits-at to
+                           (if negative-exponent -10 10)))
+                       0)
+            digits (if (<= 0 dot)
+                     (suss.bootstrap/concat-string
+                       (suss.bootstrap/string-slice s from dot)
+                       (suss.bootstrap/string-slice s (inc dot) mantissa-end))
+                     (suss.bootstrap/string-slice s from mantissa-end))
+            coefficient (reader-decimal-coefficient digits negative)]
+        (suss.bootstrap/decimal-from-integer coefficient (- places exponent))))))
 (def ^:private reader-number
   (fn [st start s end]
     (let [last (.charCodeAt s (dec end))
@@ -10616,7 +10665,7 @@ reduces them without incurring seq initialization"
               (if (< (reader-index-of s 114 start end) 0) (< (reader-index-of s 82 start end) 0) false)
               false)
           (if (reader-decimal? st start s d (dec end))
-            (reader-exact st start s end)
+            (reader-decimal-value st start s end d negative)
             (reader-fail st start "Invalid decimal literal" false))
           ;; N follows a hexadecimal, octal or decimal integer; a radix
           ;; integer's trailing N is one of its digits, as in Clojure.
@@ -12113,7 +12162,8 @@ reduces them without incurring seq initialization"
 
 ;; Original exact rational API; the runtime owns normalization and magnitudes.
 (def ratio? (fn [x] (suss.bootstrap/ratio? x)))
-(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x))))
+(def decimal? (fn [x] (suss.bootstrap/decimal? x)))
+(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x) (suss.bootstrap/decimal? x))))
 (def numerator (fn [x] (suss.bootstrap/ratio-numerator x)))
 (def denominator (fn [x] (suss.bootstrap/ratio-denominator x)))
 ;; Clojure rationalizes a double's shortest decimal spelling, not its exact
@@ -12141,7 +12191,7 @@ reduces them without incurring seq initialization"
       (if (< 0 scale) (suss.bootstrap/ratio magnitude power) (* magnitude power)))))
 (def rationalize
   (fn [x]
-    (if (suss.bootstrap/double? x)
+    (if (or (suss.bootstrap/double? x) (suss.bootstrap/decimal? x))
       (numeric-rationalize-text (suss.bootstrap/coerce-string x))
       (if (or (nil? x) (suss.bootstrap/number? x)) x
         (throw (suss.bootstrap/error "rationalize requires a number"))))))
@@ -12155,3 +12205,40 @@ reduces them without incurring seq initialization"
 ;; Original capability adapter: classes are not IFn values, while functions
 ;; and values implementing the portable invocation protocol are callable.
 (def ifn? (fn [x] (or (fn? x) (satisfies? IFn x))))
+
+
+;; Original Suss conversion using the reader's checked exact coefficient/scale
+;; parser. BigDecimal string construction also accepts a leading decimal point;
+;; adding its implicit zero leaves every coefficient digit and scale intact.
+(def ^:private numeric-decimal-text
+  (fn [s]
+    (let [n (.-length s)
+          c (if (< 0 n) (.charCodeAt s 0) 0)
+          negative (== c 45)
+          from (if (or negative (== c 43)) 1 0)
+          s (if (and (< from n) (== (.charCodeAt s from) 46))
+              (if (and (< (inc from) n)
+                       (<= 48 (.charCodeAt s (inc from)))
+                       (<= (.charCodeAt s (inc from)) 57))
+                (suss.bootstrap/concat-string
+                  (suss.bootstrap/concat-string (suss.bootstrap/string-slice s 0 from) "0")
+                  (suss.bootstrap/string-slice s from n))
+                (throw (suss.bootstrap/error "Invalid BigDecimal string")))
+              s)
+          token (suss.bootstrap/concat-string s "M")
+          end (.-length token)
+          state (reader-state token false nil nil nil nil)]
+      (if (reader-decimal? state 0 token from (dec end))
+        (reader-decimal-value state 0 token end from negative)
+        (throw (suss.bootstrap/error "Invalid BigDecimal string"))))))
+(def bigdec
+  (fn [x]
+    (if (suss.bootstrap/decimal? x)
+      x
+      (if (suss.bootstrap/string? x)
+        (numeric-decimal-text x)
+        (if (suss.bootstrap/double? x)
+          (numeric-decimal-text (suss.bootstrap/coerce-string x))
+          (if (suss.bootstrap/number? x)
+            (suss.bootstrap/as-decimal x)
+            (throw (suss.bootstrap/error "bigdec requires a number or decimal string"))))))))

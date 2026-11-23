@@ -1,0 +1,191 @@
+Running as unit: run-p2746632-i90813789.scope; invocation ID: 1f61ce33674f4e9381cd566b7a501250
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.03s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 4 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... FAILED
+test decimal_bigdec_conversions_match_clojure ... FAILED
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... FAILED
+
+failures:
+
+---- decimal_additional_precision_and_dynamic_context_match_clojure stdout ----
+
+thread 'decimal_additional_precision_and_dynamic_context_match_clojure' (2746674) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case0: (with-precision 2 (pr-str [(- 1M 1.234M) (- 1.0 1.234M) (- 1.234M 1M)]))
+expected "[-0.2M -0.23399999999999999 0.23M]"
+actual Ok("\"[-0.23M -0.23399999999999999 0.23M]\"")
+Runtime case1: (with-precision 2 (pr-str [(-' 1M 1.234M) (unchecked-subtract 1M 1.234M)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Runtime case2: (with-precision 2 (pr-str [(unchecked-negate 1.234M) (unchecked-inc 1.234M) (unchecked-dec 1.234M)]))
+expected "[-1.2M 2.2M 0.23M]"
+actual Ok("\"[-1.234 2.2M 0.23M]\"")
+Runtime case4: (with-precision 2 (pr-str [(apply - [1M 1.234M]) ((fn [f] (f 1M 1.234M)) -)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Runtime case8: (with-precision 2 (let [events (atom [])] [(pr-str (- (do (swap! events conj :left) 1M) (do (swap! events conj :right) 1.234M))) @events]))
+expected ["-0.2M" [:left :right]]
+actual Ok("[\"-0.23M\" [:left :right]]")
+Runtime case12: (with-precision 3 (pr-str (+ 1E+2147483648M 1M)))
+expected "1.00E+2147483648M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x101f - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xec5 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe22 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd88 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case13: (with-precision 3 (pr-str (+ 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x101d - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xec5 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe22 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd88 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case14: (with-precision 3 (pr-str (- 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc467 - <unknown>!<wasm function 99>\n    5:   0xccf4 - <unknown>!<wasm function 115>\n    6:   0x1024 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeca - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe27 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd8d - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case15: (with-precision 3 :rounding FLOOR (pr-str (- 1E+1000000M 1M)))
+expected "9.99E+999999M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc467 - <unknown>!<wasm function 99>\n    5:   0xccf4 - <unknown>!<wasm function 115>\n    6:   0x1024 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeca - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe27 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd8d - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case16: (with-precision 3 :rounding UP (pr-str (+ 1E+1000000M 1M)))
+expected "1.01E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x101d - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xec5 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe22 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd88 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Runtime case17: (with-precision 3 :rounding UNNECESSARY (pr-str (+ 1E+1000000M 1M)))
+expected [:error "Rounding necessary"]
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x101d - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xec5 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe22 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd88 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case0: (with-precision 2 (pr-str [(- 1M 1.234M) (- 1.0 1.234M) (- 1.234M 1M)]))
+expected "[-0.2M -0.23399999999999999 0.23M]"
+actual Ok("\"[-0.23M -0.23399999999999999 0.23M]\"")
+Macro case1: (with-precision 2 (pr-str [(-' 1M 1.234M) (unchecked-subtract 1M 1.234M)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Macro case2: (with-precision 2 (pr-str [(unchecked-negate 1.234M) (unchecked-inc 1.234M) (unchecked-dec 1.234M)]))
+expected "[-1.2M 2.2M 0.23M]"
+actual Ok("\"[-1.234 2.2M 0.23M]\"")
+Macro case4: (with-precision 2 (pr-str [(apply - [1M 1.234M]) ((fn [f] (f 1M 1.234M)) -)]))
+expected "[-0.2M -0.2M]"
+actual Ok("\"[-0.23M -0.23M]\"")
+Macro case8: (with-precision 2 (let [events (atom [])] [(pr-str (- (do (swap! events conj :left) 1M) (do (swap! events conj :right) 1.234M))) @events]))
+expected ["-0.2M" [:left :right]]
+actual Ok("[\"-0.23M\" [:left :right]]")
+Macro case12: (with-precision 3 (pr-str (+ 1E+2147483648M 1M)))
+expected "1.00E+2147483648M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x100b - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb1 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe0e - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd74 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case13: (with-precision 3 (pr-str (+ 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x1009 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb1 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe0e - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd74 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case14: (with-precision 3 (pr-str (- 1E+1000000M 1M)))
+expected "1.00E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc467 - <unknown>!<wasm function 99>\n    5:   0xccf4 - <unknown>!<wasm function 115>\n    6:   0x1010 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb6 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe13 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd79 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case15: (with-precision 3 :rounding FLOOR (pr-str (- 1E+1000000M 1M)))
+expected "9.99E+999999M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc467 - <unknown>!<wasm function 99>\n    5:   0xccf4 - <unknown>!<wasm function 115>\n    6:   0x1010 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb6 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe13 - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd79 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case16: (with-precision 3 :rounding UP (pr-str (+ 1E+1000000M 1M)))
+expected "1.01E+1000000M"
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x1009 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb1 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe0e - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd74 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+Macro case17: (with-precision 3 :rounding UNNECESSARY (pr-str (+ 1E+1000000M 1M)))
+expected [:error "Rounding necessary"]
+actual Err("Trap(error while executing at wasm backtrace:\n    0:   0x804d - <unknown>!<wasm function 4>\n    1:   0xaf13 - <unknown>!<wasm function 54>\n    2:   0xafa0 - <unknown>!<wasm function 55>\n    3:   0xbd0e - <unknown>!<wasm function 92>\n    4:   0xc3d1 - <unknown>!<wasm function 98>\n    5:   0xcab6 - <unknown>!<wasm function 113>\n    6:   0x1009 - <unknown>!<wasm function 41>\n    7:  0x20bcf - <unknown>!<wasm function 504>\n    8:  0x2125a - <unknown>!<wasm function 508>\n    9:    0xeb1 - <unknown>!<wasm function 40>\n   10:  0x20bcf - <unknown>!<wasm function 504>\n   11:    0xe0e - <unknown>!<wasm function 39>\n   12:  0x20bcf - <unknown>!<wasm function 504>\n   13:  0x2125a - <unknown>!<wasm function 508>\n   14:    0xd74 - <unknown>!<wasm function 38>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- decimal_bigdec_conversions_match_clojure stdout ----
+
+thread 'decimal_bigdec_conversions_match_clojure' (2746906) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case0: (pr-str (mapv bigdec [0 1 -1 1N -1N 9223372036854775808N 1/2 -1/2 0.1 -0.0 1.50M]))
+expected "[0M 1M -1M 1M -1M 9223372036854775808M 0.5M -0.5M 0.1M 0.0M 1.50M]"
+actual Err("Compile(Diagnostic { span: 27..33, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case1: (pr-str (bigdec (biginteger "123456789012345678901234567890")))
+expected "123456789012345678901234567890M"
+actual Err("Compile(Diagnostic { span: 22..28, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case2: (pr-str (mapv bigdec ["1.50" "-0.00" "010" "+.5e+2" ".5" "1." "1e-5"]))
+expected "[1.50M 0.00M 10M 5E+1M 0.5M 1M 0.00001M]"
+actual Err("Compile(Diagnostic { span: 27..33, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case3: (bigdec 1/3)
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Err("Compile(Diagnostic { span: 14..20, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case4: (with-precision 3 (pr-str (bigdec 1/3)))
+expected "0.333M"
+actual Err("Compile(Diagnostic { span: 13..53, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case5: (with-precision 2 :rounding DOWN (pr-str (bigdec -1/3)))
+expected "-0.33M"
+actual Err("Compile(Diagnostic { span: 13..69, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case6: (with-precision 2 (pr-str [(bigdec "1.23456") (bigdec 1.23456M) (bigdec 1.23456)]))
+expected "[1.23456M 1.23456M 1.23456M]"
+actual Err("Compile(Diagnostic { span: 13..96, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case7: (pr-str [(bigdec 4.9e-324) (bigdec 1.7976931348623157e308)])
+expected "[4.9E-324M 1.7976931348623157E+308M]"
+actual Err("Compile(Diagnostic { span: 23..29, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case8: (pr-str [(bigdec "1E2147483648") (bigdec "1E-2147483647") (bigdec "100E+2147483648")])
+expected "[1E+2147483648M 1E-2147483647M 1.00E+2147483650M]"
+actual Err("Compile(Diagnostic { span: 23..29, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case9: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) [nil [] {} true false :x "abc" "1M" " 1" "1 " ##Inf ##NaN])
+expected [true true true true true true true true true true true true]
+actual Err("Compile(Diagnostic { span: 33..39, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case10: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) ["" "." "-" "-." "1e" "1E-2147483648" "1E2147483649" "0x10"])
+expected [true true true true true true true true]
+actual Err("Compile(Diagnostic { span: 33..39, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case11: (let [trace (atom [])] [(pr-str (bigdec (do (swap! trace conj :value) "1.50"))) @trace])
+expected ["1.50M" [:value]]
+actual Err("Compile(Diagnostic { span: 46..52, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case12: (let [f bigdec] (pr-str [(f 1/2) (f "1.50") (f 9007199254740993N)]))
+expected "[0.5M 1.50M 9007199254740993M]"
+actual Err("Compile(Diagnostic { span: 21..27, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("Compile(Diagnostic { span: 20..26, message: \"Unresolved Runtime name bigdec\" })")
+Macro case0: (pr-str (mapv bigdec [0 1 -1 1N -1N 9223372036854775808N 1/2 -1/2 0.1 -0.0 1.50M]))
+expected "[0M 1M -1M 1M -1M 9223372036854775808M 0.5M -0.5M 0.1M 0.0M 1.50M]"
+actual Err("Compile(Diagnostic { span: 27..33, message: \"Unresolved Macro name bigdec\" })")
+Macro case1: (pr-str (bigdec (biginteger "123456789012345678901234567890")))
+expected "123456789012345678901234567890M"
+actual Err("Compile(Diagnostic { span: 22..28, message: \"Unresolved Macro name bigdec\" })")
+Macro case2: (pr-str (mapv bigdec ["1.50" "-0.00" "010" "+.5e+2" ".5" "1." "1e-5"]))
+expected "[1.50M 0.00M 10M 5E+1M 0.5M 1M 0.00001M]"
+actual Err("Compile(Diagnostic { span: 27..33, message: \"Unresolved Macro name bigdec\" })")
+Macro case3: (bigdec 1/3)
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Err("Compile(Diagnostic { span: 14..20, message: \"Unresolved Macro name bigdec\" })")
+Macro case4: (with-precision 3 (pr-str (bigdec 1/3)))
+expected "0.333M"
+actual Err("Compile(Diagnostic { span: 13..53, message: \"Unresolved Macro name bigdec\" })")
+Macro case5: (with-precision 2 :rounding DOWN (pr-str (bigdec -1/3)))
+expected "-0.33M"
+actual Err("Compile(Diagnostic { span: 13..69, message: \"Unresolved Macro name bigdec\" })")
+Macro case6: (with-precision 2 (pr-str [(bigdec "1.23456") (bigdec 1.23456M) (bigdec 1.23456)]))
+expected "[1.23456M 1.23456M 1.23456M]"
+actual Err("Compile(Diagnostic { span: 13..96, message: \"Unresolved Macro name bigdec\" })")
+Macro case7: (pr-str [(bigdec 4.9e-324) (bigdec 1.7976931348623157e308)])
+expected "[4.9E-324M 1.7976931348623157E+308M]"
+actual Err("Compile(Diagnostic { span: 23..29, message: \"Unresolved Macro name bigdec\" })")
+Macro case8: (pr-str [(bigdec "1E2147483648") (bigdec "1E-2147483647") (bigdec "100E+2147483648")])
+expected "[1E+2147483648M 1E-2147483647M 1.00E+2147483650M]"
+actual Err("Compile(Diagnostic { span: 23..29, message: \"Unresolved Macro name bigdec\" })")
+Macro case9: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) [nil [] {} true false :x "abc" "1M" " 1" "1 " ##Inf ##NaN])
+expected [true true true true true true true true true true true true]
+actual Err("Compile(Diagnostic { span: 33..39, message: \"Unresolved Macro name bigdec\" })")
+Macro case10: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) ["" "." "-" "-." "1e" "1E-2147483648" "1E2147483649" "0x10"])
+expected [true true true true true true true true]
+actual Err("Compile(Diagnostic { span: 33..39, message: \"Unresolved Macro name bigdec\" })")
+Macro case11: (let [trace (atom [])] [(pr-str (bigdec (do (swap! trace conj :value) "1.50"))) @trace])
+expected ["1.50M" [:value]]
+actual Err("Compile(Diagnostic { span: 46..52, message: \"Unresolved Macro name bigdec\" })")
+Macro case12: (let [f bigdec] (pr-str [(f 1/2) (f "1.50") (f 9007199254740993N)]))
+expected "[0.5M 1.50M 9007199254740993M]"
+actual Err("Compile(Diagnostic { span: 21..27, message: \"Unresolved Macro name bigdec\" })")
+Macro case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("Compile(Diagnostic { span: 20..26, message: \"Unresolved Macro name bigdec\" })")
+
+---- decimal_equality_hash_order_case_and_signs_match_clojure stdout ----
+
+thread 'decimal_equality_hash_order_case_and_signs_match_clojure' (2746964) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("Compile(Diagnostic { span: 20..26, message: \"Unresolved Runtime name bigdec\" })")
+Macro case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("Compile(Diagnostic { span: 20..26, message: \"Unresolved Macro name bigdec\" })")
+
+
+failures:
+    decimal_additional_precision_and_dynamic_context_match_clojure
+    decimal_bigdec_conversions_match_clojure
+    decimal_equality_hash_order_case_and_signs_match_clojure
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.65s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`
