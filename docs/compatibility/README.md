@@ -1,3 +1,13 @@
+Clojure `min-key` now executes32 fresh primary controls through shipped core in
+Runtime, isolated Macro and actual AOT, with independently decoded candidate
+values and key-effect traces. All49 ordered assertions of the unchanged vendored
+body match the pinned primary on the host. The complete imported arity bodies
+retain their original `<`/`<=` choice, cached keys and source evaluation order;
+lexical bindings select checked numeric function values inside core. The
+[separate shipped adaptation and provenance](bootstrap/clojure-min-key.json)
+retain the upstream form, exact patch and EPL license. Full-suite baseline,
+workspace, bootstrap, CI and review checks retain their separate evidence.
+
 Checked `char` coercion now follows Clojure source overloads in the compiled
 pipeline. [Character evidence](../../results/m12-character-coercion/README.md)
 retains401 Runtime/Macro/actual-AOT controls (397 primary matches/four explicit

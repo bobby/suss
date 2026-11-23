@@ -4,7 +4,7 @@ ROOT=Path(__file__).resolve().parents[2];OUT=Path(__file__).resolve().parent
 if len(sys.argv)>1: OUT=OUT/sys.argv[1]
 OUT.mkdir(parents=True,exist_ok=True)
 assert not (OUT/'suite-commands.json').exists()
-ENV=os.environ|{'XDG_RUNTIME_DIR':'/run/user/1000','CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','CARGO_TARGET_DIR':str(ROOT.parent/'m12-case-followup-target'),'SUSS_CLOJURE_TEST_SUITE_CAPTURE':str(OUT/'suite-capture')}
+ENV=os.environ|{'XDG_RUNTIME_DIR':'/run/user/1000','CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','CARGO_TARGET_DIR':os.environ.get('SUSS_SUITE_TARGET',str(ROOT.parent/'m12-case-followup-target')),'SUSS_CLOJURE_TEST_SUITE_CAPTURE':str(OUT/'suite-capture')}
 ENV.pop('SUSS_CLOJURE_TEST_SUITE_WRITE',None)
 paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')
 inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and not p.startswith('results/') and (ROOT/p).is_file()}
