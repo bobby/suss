@@ -1,6 +1,10 @@
 from pathlib import Path
 import hashlib,json,os,subprocess,time
 ROOT=Path(__file__).resolve().parents[2];OUT=Path(__file__).resolve().parent
+import sys
+if len(sys.argv)>1: OUT=OUT/sys.argv[1]
+OUT.mkdir(exist_ok=True)
+assert not (OUT/'foundation.json').exists()
 commands=[['python3','-m','unittest','discover','-s','scripts','-p','test_*.py']]+[['python3','scripts/'+s,*args] for s,args in [('cljs_inventory.py',['--check']),('cljs_reviews.py',[]),('core_import.py',['--check']),('reader_core_catalog.py',['--check']),('apply_bootstrap.py',['--check']),('sequence_provenance.py',[]),('check_transducer_provenance.py',[]),('check_when_let_provenance.py',[]),('bitwise_provenance.py',[]),('wasi_lock.py',[]),('numeric_runtime.py',['--check']),('jvm_array_oracle.py',['--check']),('clojure_test_suite.py',[]),('clojure_test_suite.py',['overlap'])]]
 paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0');inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and not p.startswith('results/') and (ROOT/p).is_file()}
 record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'commands':[],'inputs':inputs,'complete':False}

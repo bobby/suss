@@ -146,6 +146,23 @@ pub unsafe extern "C" fn suss_parse_number(ptr: *mut u16, len: usize) -> f64 {
     text.parse().unwrap_or(f64::NAN)
 }
 
+/// Canonical Decimal/BigInteger text rounded directly to binary32, then
+/// widened for Suss's Double representation. A binary64 intermediate would
+/// lose the side of an f32 midpoint. Input is a private UTF-16 scratch copy.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn suss_parse_decimal_f32(ptr: *mut u16, len: usize) -> f64 {
+    let output = ptr.cast::<u8>();
+    for index in 0..len {
+        let unit = unsafe { ptr.add(index).read() };
+        if unit > 0x7f { return f64::NAN; }
+        unsafe { output.add(index).write(unit as u8) };
+    }
+    let bytes = unsafe { core::slice::from_raw_parts(output, len) };
+    if !decimal(bytes) { return f64::NAN; }
+    let text = unsafe { core::str::from_utf8_unchecked(bytes) };
+    f64::from(text.parse::<f32>().unwrap_or(f32::NAN))
+}
+
 /// 10^power, correctly rounded, through core's decimal parser.
 fn power_of_ten(power: i32) -> f64 {
     let mut text = [0u8; 8];

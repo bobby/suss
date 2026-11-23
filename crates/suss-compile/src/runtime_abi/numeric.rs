@@ -31,6 +31,7 @@ pub(super) struct Helper {
     pub memory: MemorySection,
     pub data: DataSection,
     pub parse: u32,
+    pub parse_float: u32,
     pub format: u32,
     pub multiply: u32,
     pub decimal_format: u32,
@@ -44,6 +45,7 @@ pub(super) struct Helper {
 #[derive(Clone, Copy)]
 pub(super) struct Info {
     pub parse: u32,
+    pub parse_float: u32,
     format: u32,
     pub multiply: u32,
     pub decimal_format: u32,
@@ -55,6 +57,7 @@ impl Helper {
     pub fn info(&self) -> Info {
         Info {
             parse: self.parse,
+            parse_float: self.parse_float,
             format: self.format,
             multiply: self.multiply,
             decimal_format: self.decimal_format,
@@ -76,6 +79,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
         memory: MemorySection::new(),
         data: DataSection::new(),
         parse: u32::MAX,
+        parse_float: u32::MAX,
         format: u32::MAX,
         multiply: u32::MAX,
         decimal_format: u32::MAX,
@@ -151,10 +155,12 @@ fn helper_from(bytes: &[u8]) -> Helper {
                 for export in reader {
                     let export = export.unwrap();
                     match export.name {
-                        "suss_parse_number" | "suss_format_number" | "suss_bigint_multiply" | "suss_format_decimal" => {
+                        "suss_parse_number" | "suss_parse_decimal_f32" | "suss_format_number" | "suss_bigint_multiply" | "suss_format_decimal" => {
                             assert_eq!(export.kind, wasmparser::ExternalKind::Func);
                             if export.name == "suss_parse_number" {
                                 result.parse = export.index;
+                            } else if export.name == "suss_parse_decimal_f32" {
+                                result.parse_float = export.index;
                             } else if export.name == "suss_format_number" {
                                 result.format = export.index;
                             } else if export.name == "suss_bigint_multiply" {
@@ -209,6 +215,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
         }
     }
     assert_ne!(result.parse, u32::MAX);
+    assert_ne!(result.parse_float, u32::MAX);
     assert_ne!(result.format, u32::MAX);
     assert_ne!(result.multiply, u32::MAX);
     assert_ne!(result.decimal_format, u32::MAX);
@@ -225,6 +232,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
             vec![wasmparser::ValType::F64, wasmparser::ValType::I32],
             vec![wasmparser::ValType::I32],
         ),
+        (result.parse_float, vec![wasmparser::ValType::I32; 2], vec![wasmparser::ValType::F64]),
         (result.multiply, vec![wasmparser::ValType::I32; 5], vec![wasmparser::ValType::I32]),
         (result.decimal_format, vec![wasmparser::ValType::I32; 4], vec![wasmparser::ValType::I32]),
     ] {

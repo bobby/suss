@@ -1,3 +1,47 @@
+## Decimal conversion, source reload and artifact size probes (2026-11-23)
+
+`results/m12-decimal-conversions` preserves original failures and fresh primary
+JVM commands/JAR hashes. `run.py after-exact-conversions` passes137 conversion
+controls in Runtime, Macro and real CLI AOT. Exact Decimal unchecked integer
+casts preserve low bits; checked casts retain the primary Double range stage.
+A private exact-text parser rounds Decimal/BigInteger directly to binary32 before
+widening. Its helper rebuild is byte-identical. Thirteen raw Float controls also
+independently decode actual bits and retained Decimal fields after GC.
+
+`run.py after-unused-context-fix` passes eight additional context controls in
+both phases and all145 combined controls in AOT. Integer coercion and pure
+Decimal comparison ignore unused invalid context; Ratio conversion/comparison
+and arithmetic continue to require it. `run-ci-repair.py` passes all five
+original CI failures: four source-core reload cases and the unchanged AOT size
+guard. A retained-function regression additionally exercises both phases, GC and
+failed initializer recovery. Optional EDN padding alone is removed; all13
+provenance fields and conservative macro graphs remain. Size is3895/form under
+3900, with96 extra split-form code bytes under128. Clojure reads all34 real
+compact manifests, preserving fields/macro identities against spaced records.
+
+`run-gates.py after-ci-repair` passes63 tests across15 numeric/Decimal targets,
+workspace test compilation, Java/Node-free bootstrap reproduction/execution and
+15 foundation commands (364 Python tests), with frozen inputs unchanged.
+`run-suite.py suite-after-conversions` records4585 rows and expected baseline
+drift; `audit-suite.py --write` proves exactly four rationalize failures resolve
+with no previous-pass regression or other assertion/test/namespace change, then
+writes and checks the faithful baseline. Outcomes are4326/63/208/2342/84.
+Primary values, capture routing, count and skip guards remain unchanged. All
+remaining failures are retained:54 Decimal source-form candidates and six
+unexecuted Decimal operand assertions among200, of which194 actually match.
+The separate precision-types oracle is exploratory; String/nil constructor
+behavior and complete suite acceptance are not certified.
+
+`prior-full-workspace` retains the required unfiltered command atc9d1c6e3,
+terminal101 after2784s, unchanged source, failing the same source-core reload.
+Do not infer a workspace pass from focused runs. Use `python3
+results/m12-decimal-conversions/run-workspace.py` for the fresh complete command
+with two threads and frozen input hashes. The initial experimental raw-source
+reload over a direct-linked shipped image failed private slot imports before
+and after the getter repair; the final source-loaded reload regression does not
+claim that separate route works. The original49-file WIP diff still matches
+its preserved SHA256 exactly; isolated integration changes leave it untouched.
+
 ## MathContext setup provenance repair (2026-11-23)
 
 The c9d1c6e3 foundation job fails before bootstrap execution: original Suss

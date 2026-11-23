@@ -1,0 +1,53 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/results/m12-decimal-conversions/compact-edn.clj"
+  ],
+  "exit_code": 1,
+  "seconds": 0.8409807682037354,
+  "source_sha256": "48f0057f9ff84815b372d3d9894d60b8b99021dcfd30470d110309c984a126f2",
+  "manifests": {
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-0.edn": "798688dc84596c85e900e649b69c59ad57c3107a7f5406d06cc4342eef3163ce",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-1.edn": "16e630cac6f105e5680a4fc3f4912897f9f0c34485626d429e28bd2ce06d46b3",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-2.edn": "cad4765cafffe1c1d279611484963c70ca8471392c97bea92d284a1b46b6477b",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-3.edn": "589d9a83d324be0e24b1dfcdd62e30e4597af3290f92d7d917af119b3360d769",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-4.edn": "2c86f6bc071cbe281e8e591bf685ca654134513957f67d7bd78e14a3befd8330",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-5.edn": "2b0f2c756c913518875dfaf9c070941799a080c3334028e9b0e4be4a08b6c596",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-4-6.edn": "310f539b3bffb4a3955e9d84bdf884cf4d9b015a76844e7063ae73e0ef8d31f4",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-0.edn": "c21d0e10ca77467cb4aeeb9ac29d9df318f6fb175dcf6e0315b78471a01eb55c",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-1.edn": "16e630cac6f105e5680a4fc3f4912897f9f0c34485626d429e28bd2ce06d46b3",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-2.edn": "2792a0dbd77161448fe987ec8afbd6e5453c5848a0994f7cac5357f08bcabeb3",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-3.edn": "c39febe7611558d69725d5b7ecd5f75467962a773fedc807489d789559af8dfe",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-4.edn": "dc49860c1beafdc1b589ce46a29f0916fbfdbca444f956751610807c6d929c78",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-5.edn": "7aa3d836d3221e8654036d3383829f440c3d01b7c00eb79e6933f0849207699d",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-6.edn": "c47e4ea382d9bf59f22398fb44ca3d0bf098990088a37443a0f9320e484dcfec",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-7.edn": "a08aaace01abe645cd6937c41987b81f38687210c448ffa7429d9aa7b464df14",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-8.edn": "00100b433c945df0fd2463fac549b49d1044c21c38556236ba5441f413417b71",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-9.edn": "a4689dda7a5d3ef9d2f229b523c8406d2b109f5c7aae1f0bc6c89a7c058ec8d8",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-10.edn": "492f8178e39c6cb93af9fae69e2b07dc5d8f9dd9b61687d31c37e64bc97153fb",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-11.edn": "69ddf66ca4f27e16adff85310200facce16c0d65bd1ff171e3ee3773701d8bc0",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-12.edn": "263b228310e65f49b5fd54b697d42b5d73c3dce71991d20632f2aaeba870d4c7",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-13.edn": "8a8bc45cbbbaa1a97020757ba00430ef191ff0c3f74d64c2f19a85e116433cd3",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-14.edn": "fb7de24499cca87d5dfb015e4601448fc85f26ea2e4ceed15cd897d4a2f4db22",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-15.edn": "bbfd465169f39e18af797e482efeb3420789a7418975f793aabf7bf0cfc38afa",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-16.edn": "17285550ad534d184d454fa9683519bdcebae3b1c5542af21ca80fbc3261aa5a",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-17.edn": "3a1a50c96e34084c9dd0cdde52d62e8fea9fac466ff2f34e5df402c318c53a67",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-18.edn": "1d505b53a1b7717d45c0e76f1091955e916b2c5452fc8198075ca653397ec689",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-19.edn": "762456cfb01f924da5750559b6a8dc32336dbe3ec186c52053a5c6b4d020a8e9",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-20.edn": "33410a86df220269e28cbb9cfde5db814429f977b00b0878fd4d8d66758ac96f",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-21.edn": "7538d181729030c2a37649bc0dca2bb439920ab9c4d5722f4efcd8c8eaf8f99e",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-22.edn": "e6a930ba65a8578db25b8fbf320313105e22c82d8b181a0806dfb36cfdba43ea",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-23.edn": "2f81e3a1548330ebb6183b4d72821a20ff3748fa86a0e7ac04101e0bee43fabb",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-24.edn": "64c3c9fd7c1a119cde6e11f7d37a71f22974bfb688c5743c722d0828363fdd48",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-25.edn": "15aaac66476623c8497a966a1a1c85964b573695cd6360b8b2ce56e45c595011",
+    "results/m12-decimal-conversions/ci-repair/aot-size-after/manifest-24-26.edn": "3d2aba94d8b23ed40ab1996bd01ade373f3612dca2d27bebdd1269f1e9939d1f"
+  },
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  }
+}

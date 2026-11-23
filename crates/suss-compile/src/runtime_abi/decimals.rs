@@ -5,6 +5,7 @@ mod arithmetic;
 mod addition;
 mod context;
 mod comparison;
+mod conversions;
 
 const DOUBLE_ROOT: u32 = MAP_ENTRY_DESCRIPTOR_GLOBAL + 2;
 const CONTEXT_ROOT: u32 = DOUBLE_ROOT + 1;
@@ -105,25 +106,37 @@ pub(super) fn functions(b: &mut Builder, helper: numeric::Info) -> u32 {
         (1, VALUE), (4, ValType::I32), (1, VALUE), (1, ValType::I32),
     ], &code);
 
-    // The helper's UTF-16 decimal parser rounds the exact printed decimal to
-    // binary64 once. No unscaled-integer-to-double intermediate loses digits.
-    let code = [
-        LocalGet(0), Call(b.names["decimal-string"]), LocalSet(1),
-        LocalGet(1), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, LocalTee(2),
-        I64ExtendI32U, I64Const(2), I64Mul, Call(reserve), LocalSet(3),
-        Block(BlockType::Empty), Loop(BlockType::Empty),
-        LocalGet(4), LocalGet(2), I32GeU, BrIf(1),
-        LocalGet(3), LocalGet(4), I32Const(1), I32Shl, I32Add,
-        LocalGet(1), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(4), ArrayGetU(STRING), I32Store16(byte),
-        LocalGet(4), I32Const(1), I32Add, LocalSet(4), Br(0), End, End,
-        I32Const(helper.stack_top), GlobalSet(helper.stack_global),
-        LocalGet(3), LocalGet(2), Call(helper.parse),
-    ];
-    let double=b.function_with_locals("decimal-double-impl", &[VALUE], &[ValType::F64], &[
-        (1, VALUE), (3, ValType::I32),
-    ], &code);
+    // Convert exact canonical text with the requested single rounding stage.
+    let mut double = 0;
+    for (name, parse, integer) in [
+        ("decimal-double-impl", helper.parse, false),
+        ("decimal-float", helper.parse_float, false),
+        ("integer-float", helper.parse_float, true),
+    ] {
+        let mut code = vec![LocalGet(0)];
+        if integer {
+            code.extend([Call(b.names["integer-biginteger"]), Call(b.names["bigint-string"])]);
+        } else { code.push(Call(b.names["decimal-string"])); }
+        code.extend([
+            LocalSet(1),
+            LocalGet(1), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, LocalTee(2),
+            I64ExtendI32U, I64Const(2), I64Mul, Call(reserve), LocalSet(3),
+            Block(BlockType::Empty), Loop(BlockType::Empty),
+            LocalGet(4), LocalGet(2), I32GeU, BrIf(1),
+            LocalGet(3), LocalGet(4), I32Const(1), I32Shl, I32Add,
+            LocalGet(1), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(4), ArrayGetU(STRING), I32Store16(byte),
+            LocalGet(4), I32Const(1), I32Add, LocalSet(4), Br(0), End, End,
+            I32Const(helper.stack_top), GlobalSet(helper.stack_global),
+            LocalGet(3), LocalGet(2), Call(parse),
+        ]);
+        let index = b.function_with_locals(name, &[VALUE], &[ValType::F64], &[
+            (1, VALUE), (3, ValType::I32),
+        ], &code);
+        if name == "decimal-double-impl" { double = index; }
+    }
     context::string(b);
     arithmetic::functions(b);
     comparison::functions(b);
+    conversions::functions(b);
     double
 }

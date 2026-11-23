@@ -191,6 +191,42 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
     ));
     code.push(End);
     let range = format!("Value out of range for {}: ", name.trim_start_matches("unchecked-"));
+    // Decimal's checked Object casts first use RT.longCast(doubleValue),
+    // including that stage's Double diagnostic. Unchecked Number casts use
+    // exact low integer bits instead, with no binary64 saturation.
+    if let Cast::Checked(bits) | Cast::ObjectChecked(bits) | Cast::Unchecked(bits) = kind {
+        code.extend([LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty)]);
+        if matches!(kind, Cast::Unchecked(_)) {
+            code.extend([LocalGet(0), Call(b.names["decimal-low-long"]), LocalSet(1)]);
+        } else {
+            code.extend([LocalGet(0), Call(double), LocalTee(2),
+                F64Const((-9_223_372_036_854_775_808.0).into()), F64Lt,
+                LocalGet(2), F64Const(9_223_372_036_854_775_808.0.into()), F64Gt, I32Or,
+                If(BlockType::Empty), LocalGet(2), StructNew(NUMBER), LocalSet(3)]);
+            code.extend(throw_with_value(b, "Value out of range for long: ", 3));
+            code.extend([End, LocalGet(2), I64TruncSatF64S, LocalSet(1)]);
+        }
+        if bits < 64 {
+            let shift = I64Const(i64::from(64-bits));
+            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS]);
+            if !matches!(kind, Cast::Unchecked(_)) {
+                code.extend([LocalGet(1), I64Ne, If(BlockType::Empty)]);
+                if bits == 32 { code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL)); }
+                else { code.extend(throw_with_value(b, &range, 0)); }
+                code.extend([End, LocalGet(1)]);
+            }
+        } else { code.push(LocalGet(1)); }
+        if !raw { code.push(Call(boxed)); }
+        code.extend([Return, End]);
+    }
+    if matches!(kind, Cast::Float(false)) {
+        for (test, convert) in [("decimal-test", "decimal-float"), ("bigint-test", "integer-float")] {
+            code.extend([LocalGet(0), Call(b.names[test]), If(BlockType::Empty),
+                LocalGet(0), Call(b.names[convert])]);
+            if !raw { code.push(Call(b.names["number-box"])); }
+            code.extend([Return, End]);
+        }
+    }
     // Checked Ratio casts use its exact BigInteger quotient. Unchecked int
     // (and Number's byte/short narrowing) uses Ratio.intValue: decimal-rounded
     // double followed by Java's saturating int conversion. longValue is exact.

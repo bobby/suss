@@ -1528,3 +1528,33 @@ results to the specified Suss Double representation leaves34 conversion mismatch
 out of109 actual CLI controls; direct rounding, narrowing, diagnostics and
 rationalization remain acceptance work. Full workspace execution and independent
 promotion review still require evidence.
+
+## Exact Decimal conversion and reload observations
+
+`results/m12-decimal-conversions` records137 fresh JVM conversion controls,
+including checked versus unchecked low-bit narrowing, direct binary32 rounding
+of Decimal/BigInteger values, aliases and ordinary functions. Eight additional
+controls distinguish pure coercion/comparison from operations requiring the
+dynamic MathContext. All145 controls execute in actual CLI AOT, with both-phase
+checks and13 independent widened Float-bit/retained Decimal-field observations
+after GC. These supersede the34 conversion mismatches recorded above. The
+standalone helper reproduces byte-identically and validates malformed scratch
+input without mutating the original Decimal value.
+
+Source-core reload replaces the validated phase-owned context getter. Four
+original reload regressions pass, and retained functions read live bindings
+after reload, GC and an initializer failure in both phases. Optional EDN padding
+is removed from per-fragment provenance; all13 fields, macro identities and
+unknown-versus-empty distinctions remain. Existing integrity/execution checks
+pass and Clojure reads all34 emitted component manifests. The unchanged AOT guard
+measures3895 bytes/form within3900, and96 extra code bytes per split form within128.
+
+The fresh complete capture records4585 actual rows:4326 host matches,63 guest
+judgments,208 failures,2342 unexecuted assertions and84 failed namespaces. Only
+four rationalize verdicts change, all to primary-confirmed success; no previously
+passing assertion regresses. Primary expectations, capture routing, count and
+skip guards are unchanged. All other baseline entries remain intact. There are
+still54 unresolved Decimal source-form candidates;194 of200 Decimal operand
+assertions match and six remain unexecuted through namespace failures. String/
+nil MathContext constructor behavior and complete suite acceptance still need
+work. This evidence does not certify complete BigDecimal semantics.

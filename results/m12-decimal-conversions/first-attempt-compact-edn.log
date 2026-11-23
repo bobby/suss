@@ -1,0 +1,5 @@
+Execution error (AssertionError) at user/eval142 (compact-edn.clj:13).
+Assert failed: (some (fn* [p1__140#] (= "macro:suss.core/with-precision" (first p1__140#))) (:macro-dependencies m))
+
+Full report at:
+/tmp/clojure-10614221886555016649.edn

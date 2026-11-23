@@ -83,3 +83,38 @@ fn compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after
         assert_eq!(format!("{:016x}",bits[0].unwrap_f64().to_bits()),case["double_bits"].as_str().unwrap(),"{case}");
     }
 }
+
+#[test]
+fn canonical_binary32_parser_executes_primary_bits_with_bounded_scratch() {
+    let engine = support::engine();
+    let module = Module::new(&engine,
+        include_bytes!("../../../runtime/numeric/artifact/numeric.wasm")).unwrap();
+    let mut store = Store::new(&engine, ());
+    let instance = Instance::new(&mut store, &module, &[]).unwrap();
+    let memory = instance.get_memory(&mut store, "memory").unwrap();
+    let base = memory.data_size(&store) + 16;
+    memory.grow(&mut store, 1).unwrap();
+    let parse = instance.get_typed_func::<(i32, i32), f64>(&mut store, "suss_parse_decimal_f32").unwrap();
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-decimal-conversions/float-fields-cases.json")).unwrap();
+    for row in cases {
+        let units = row["text"].as_str().unwrap().encode_utf16().collect::<Vec<_>>();
+        let end = base + units.len() * 2;
+        memory.data_mut(&mut store)[base-16..end+16].fill(0xa5);
+        for (i, unit) in units.iter().enumerate() {
+            memory.data_mut(&mut store)[base+i*2..base+i*2+2].copy_from_slice(&unit.to_le_bytes());
+        }
+        let actual = parse.call(&mut store, (base as i32, units.len() as i32)).unwrap();
+        assert_eq!(format!("{:016x}", actual.to_bits()), row["f64_bits"].as_str().unwrap(), "{row}");
+        assert_eq!(format!("{:08x}", (actual as f32).to_bits()), row["f32_bits"].as_str().unwrap(), "{row}");
+        let bytes = memory.data(&store);
+        assert!(bytes[base-16..base].iter().chain(&bytes[end..end+16]).all(|x| *x==0xa5));
+    }
+    for text in ["", "1e+", "--1", "1.2.3", "NaN", "Infinity", "0x10", "1M", "\u{d7ff}"] {
+        let units = text.encode_utf16().collect::<Vec<_>>();
+        for (i, unit) in units.iter().enumerate() {
+            memory.data_mut(&mut store)[base+i*2..base+i*2+2].copy_from_slice(&unit.to_le_bytes());
+        }
+        assert!(parse.call(&mut store, (base as i32, units.len() as i32)).unwrap().is_nan(), "{text}");
+    }
+}

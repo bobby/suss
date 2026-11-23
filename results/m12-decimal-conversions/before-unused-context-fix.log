@@ -1,0 +1,34 @@
+Running as unit: run-p3016014-i91080258.scope; invocation ID: 7bc033b8103f4dfeadef68ba79a11566
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 5.39s
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 1 test
+test pure_decimal_coercions_and_comparisons_ignore_unused_math_context ... FAILED
+
+failures:
+
+---- pure_decimal_coercions_and_comparisons_ignore_unused_math_context stdout ----
+
+thread 'pure_decimal_coercions_and_comparisons_ignore_unused_math_context' (3016186) panicked at crates/suss-cli/tests/clojure_decimal_conversions.rs:47:5:
+Runtime case0: (pr-str (binding [*math-context* :invalid] (mapv bigdec [1 1N (biginteger 1)])))
+expected "[1M 1M 1M]"
+actual Ok("[:error \"Math context must be a MathContext\"]")
+Runtime case2: (pr-str (binding [*math-context* :invalid] [(= 1M 1.00M) (== 1M 1) (compare 1M 1) (< 1M 2) (zero? 0.00M) (pos? 1E-1000M) (neg? -1E-1000M)]))
+expected "[true true 0 true true true true]"
+actual Ok("[:error \"Math context must be a MathContext\"]")
+Macro case0: (pr-str (binding [*math-context* :invalid] (mapv bigdec [1 1N (biginteger 1)])))
+expected "[1M 1M 1M]"
+actual Ok("[:error \"Math context must be a MathContext\"]")
+Macro case2: (pr-str (binding [*math-context* :invalid] [(= 1M 1.00M) (== 1M 1) (compare 1M 1) (< 1M 2) (zero? 0.00M) (pos? 1E-1000M) (neg? -1E-1000M)]))
+expected "[true true 0 true true true true]"
+actual Ok("[:error \"Math context must be a MathContext\"]")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    pure_decimal_coercions_and_comparisons_ignore_unused_math_context
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 2.93s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_conversions`

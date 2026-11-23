@@ -1,0 +1,13 @@
+0 "42"
+1 [:error "No matching ctor found for class java.math.MathContext"]
+2 [:error "No matching ctor found for class java.math.MathContext"]
+3 [:error "No matching ctor found for class java.math.MathContext"]
+4 [:error "No matching ctor found for class java.math.MathContext"]
+5 [:error "null String"]
+6 [:error "bad string format"]
+7 [:error "No matching ctor found for class java.math.MathContext"]
+8 "42"
+9 [:error "integer overflow"]
+10 [:error "integer overflow"]
+11 [:error "integer overflow"]
+12 [:error "Digits < 0"]

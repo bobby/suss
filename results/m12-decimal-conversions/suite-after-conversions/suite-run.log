@@ -1,0 +1,24 @@
+Running as unit: run-p3085606-i91142896.scope; invocation ID: 9d414cdebfe54fb1ba598fcbc39e8d59
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=208 guest-judged=63 namespaces-failed=84 not-executed=2342 pass=4326 skipped=0
+assertions clojure.core-test.rationalize/test-rationalize#10: expected 'verdict:fail', observed None
+assertions clojure.core-test.rationalize/test-rationalize#11: expected 'verdict:fail', observed None
+assertions clojure.core-test.rationalize/test-rationalize#15: expected 'verdict:fail', observed None
+assertions clojure.core-test.rationalize/test-rationalize#16: expected 'verdict:fail', observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (3085607) panicked at crates/suss-compile/tests/clojure_test_suite.rs:618:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 250.35s
+

@@ -1,0 +1,54 @@
+[
+  [
+    "(pr-str (with-precision 3 42))",
+    "\"42\""
+  ],
+  [
+    "(pr-str (with-precision 3N 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3M 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3.0 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 3/2 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision nil 42))",
+    "[:error \"null String\"]"
+  ],
+  [
+    "(pr-str (with-precision \"3\" 42))",
+    "[:error \"bad string format\"]"
+  ],
+  [
+    "(pr-str (with-precision true 42))",
+    "[:error \"No matching ctor found for class java.math.MathContext\"]"
+  ],
+  [
+    "(pr-str (with-precision 2147483647 42))",
+    "\"42\""
+  ],
+  [
+    "(pr-str (with-precision 2147483648 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision 4294967296 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision -4294967296 42))",
+    "[:error \"integer overflow\"]"
+  ],
+  [
+    "(pr-str (with-precision -1 42))",
+    "[:error \"Digits < 0\"]"
+  ]
+]

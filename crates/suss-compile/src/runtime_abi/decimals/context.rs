@@ -24,21 +24,8 @@ pub(super) fn registration(b: &mut Builder) {
     ];
     code.extend(error("Math context getter must be a function"));
     code.push(End);
-    code.extend([
-        GlobalGet(GETTER_ROOT),
-        RefIsNull,
-        I32Eqz,
-        If(BlockType::Empty),
-        GlobalGet(GETTER_ROOT),
-        LocalGet(0),
-        RefEq,
-        If(BlockType::Empty),
-        LocalGet(0),
-        Return,
-        End,
-    ]);
-    code.extend(error("Math context getter is already installed"));
-    code.push(End);
+    // Reloading core constructs another closure over the same dynamic Var cell.
+    // Keep the current phase's getter rooted, including after source reload.
     code.extend([LocalGet(0), GlobalSet(GETTER_ROOT), LocalGet(0)]);
     b.function("decimal-context-getter-install", &[VALUE], &[VALUE], &code);
 }

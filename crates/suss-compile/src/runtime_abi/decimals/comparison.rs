@@ -6,7 +6,12 @@ use super::*;
 
 pub(super) fn functions(b: &mut Builder) {
     compare_values(b);
-    let mut code = vec![Call(b.names["decimal-context"]), LocalSet(3), LocalSet(2)];
+    // Comparing existing Decimals/integers does not consult MathContext.
+    // A Ratio conversion alone needs contextual decimal division.
+    let mut code = vec![LocalGet(0), Call(b.names["ratio-test"]),
+        LocalGet(1), Call(b.names["ratio-test"]), I32Or, If(BlockType::Empty),
+        Call(b.names["decimal-context"]), LocalSet(3), LocalSet(2), Else,
+        I32Const(0), LocalSet(2), I32Const(4), LocalSet(3), End];
     for (input, output) in [(0, 4), (1, 5)] {
         code.extend([
             LocalGet(input),

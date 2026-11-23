@@ -2209,7 +2209,7 @@
       (if (< 0 scale) (suss.bootstrap/ratio magnitude power) (* magnitude power)))))
 (def rationalize
   (fn [x]
-    (if (suss.bootstrap/double? x)
+    (if (or (suss.bootstrap/double? x) (suss.bootstrap/decimal? x))
       (numeric-rationalize-text (suss.bootstrap/coerce-string x))
       (if (or (nil? x) (suss.bootstrap/number? x)) x
         (throw (suss.bootstrap/error "rationalize requires a number"))))))

@@ -117,8 +117,43 @@ fn split(bytes: &[u8]) -> Result<(Vec<u8>, Option<Manifest>), String> {
 /// The identity section's canonical EDN.
 fn encode(manifest: &Manifest) -> Result<Vec<u8>, String> {
     suss_reader::edn::to_string(manifest)
-        .map(String::into_bytes)
+        .map(|text| compact_manifest(&text).into_bytes())
         .map_err(|error| error.to_string())
+}
+/// This schema emits only strings, keywords, numbers, nil and collections.
+/// Keep all string bytes and separators between adjacent atomic tokens, but
+/// omit optional EDN padding. Every source fragment carries the full manifest,
+/// so padding otherwise grows with both form count and the macro graph.
+fn compact_manifest(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    let mut quoted = false;
+    let mut escaped = false;
+    let mut atom = false;
+    let mut separated = false;
+    for ch in text.chars() {
+        if quoted {
+            output.push(ch);
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                quoted = false;
+            }
+        } else if ch.is_whitespace() || ch == ',' {
+            separated = true;
+        } else {
+            let next_atom = !matches!(ch, '"' | '[' | ']' | '{' | '}');
+            if separated && atom && next_atom {
+                output.push(' ');
+            }
+            output.push(ch);
+            quoted = ch == '"';
+            atom = next_atom;
+            separated = false;
+        }
+    }
+    output
 }
 fn decode(data: &[u8]) -> Result<Manifest, String> {
     std::str::from_utf8(data)
@@ -247,6 +282,30 @@ pub fn verify(bytes: &[u8], expected: Expected<'_>) -> Result<Manifest, String> 
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
+    #[test]
+    fn compact_identity_preserves_strings_and_unknown_or_empty_graphs() {
+        let mut manifest = current();
+        manifest.source_path = Some("input, [λ] \"quoted\" \\path\n.sus".into());
+        manifest.flags = vec!["a,b [c]".into(), "\\\"λ\n\t".into()];
+        manifest.phase = Some("runtime".into());
+        manifest.source_sha256 = Some(bootstrap::sha256(b"42"));
+        manifest.wasm_sha256 = bootstrap::sha256(b"module");
+        for dependencies in [
+            None,
+            Some(vec![]),
+            Some(vec![(
+                "macro:λ, [x] \"q\" \\".into(),
+                bootstrap::sha256(b"macro"),
+            )]),
+        ] {
+            manifest.macro_dependencies = dependencies;
+            let spaced = suss_reader::edn::to_string(&manifest).unwrap();
+            let compact = encode(&manifest).unwrap();
+            assert_eq!(decode(&compact).unwrap(), manifest);
+            assert_eq!(decode(spaced.as_bytes()).unwrap(), manifest);
+            assert!(compact.len() < spaced.len());
+        }
+    }
     fn source() -> Vec<u8> {
         super::super::compile("42.5").unwrap()
     }

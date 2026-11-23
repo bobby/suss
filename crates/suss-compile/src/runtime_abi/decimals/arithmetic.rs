@@ -348,9 +348,12 @@ fn coercion(b: &mut Builder) {
         &[VALUE],
         &[VALUE],
         &[
-            LocalGet(0),
-            Call(b.names["decimal-context"]),
-            Call(b.names["decimal-from-number"]),
+            LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Result(VALUE)),
+            LocalGet(0), Call(b.names["decimal-context"]), Call(b.names["decimal-from-number"]),
+            Else,
+            // Integer and existing Decimal coercions are exact and never read
+            // the dynamic context. Only Ratio conversion needs its division.
+            LocalGet(0), I32Const(0), I32Const(4), Call(b.names["decimal-from-number"]), End,
         ],
     );
 }
