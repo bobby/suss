@@ -1,0 +1,18 @@
+{
+  "baseline_head": "a783ad60540b4bc22820e8811a568132a0b14210",
+  "baseline_complete": true,
+  "baseline_exit_code": 0,
+  "baseline_seconds": 10236.65452337265,
+  "passed": 2423,
+  "failed": 0,
+  "ignored": 14,
+  "test_groups": 366,
+  "recorded_inputs": 6745,
+  "baseline_inputs_unchanged": true,
+  "publication_existing_input_changes": [
+    "docs/roadmap/handoff.md",
+    "results/m12-case-budget/README.md"
+  ],
+  "all_other_recorded_inputs_match": true,
+  "limitation": "The later publication differs only in these two documentation inputs and new terminal evidence. CI and independent review must cover the final publication head; this does not establish complete BigDecimal acceptance."
+}

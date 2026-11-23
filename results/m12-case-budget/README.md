@@ -1,3 +1,17 @@
+## Case baseline terminal evidence (2026-11-23)
+
+`cargo test --workspace --locked -- --test-threads=2` terminates0 on
+a783ad60540b4bc22820e8811a568132a0b14210 after10236.655s:2423 passed,
+zero failed and14 existing ignored tests across366 completed test groups.
+All6745 tracked/pinned inputs remain unchanged. The complete byte-preserved
+log and terminal receipt are retained in
+`results/m12-case-budget/workspace-baseline` as deterministic gzip archives;
+local raw originals remain in the isolated baseline worktree. The earlier
+2254f70c interrupted run remains separately recorded and is not a pass.
+This publication changes documentation/evidence only; source qualification
+lists the exact two changed existing input files. Final-head CI and independent
+promotion review remain GitHub gates; no merge is performed.
+
 # Case integration CI repairs
 
 CI45158952814 on2254f70c exposes four failing integration groups; their complete
