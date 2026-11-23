@@ -90,6 +90,11 @@ impl SourceOrigin {
     pub fn text(&self) -> &str {
         &self.text
     }
+    /// Reader rewrites retain their input. Equal byte ranges in a separately
+    /// loaded source must never select another module's declaration context.
+    pub(crate) fn same_input(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.text, &other.text) && self.path == other.path && self.privileged == other.privileged
+    }
     pub fn path(&self) -> Option<&Path> {
         self.path.as_deref()
     }

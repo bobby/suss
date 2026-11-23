@@ -112,6 +112,15 @@ pub trait ExpansionHost {
         false
     }
     fn source_paths(&mut self, _paths: &[std::path::PathBuf]) {}
+    /// Staged source declarations may outlive individual transformer calls.
+    /// Hosts without source declarations have no state to journal.
+    fn begin_declarations(&mut self) -> Result<(), Diagnostic> { Ok(()) }
+    fn end_declarations(&mut self, _commit: bool) -> Result<(), Diagnostic> { Ok(()) }
+    fn begin_source_module(
+        &mut self, _forms: &[suss_reader::forms::Form], _origin: &SourceOrigin,
+    ) -> Result<(), Diagnostic> { Ok(()) }
+    fn end_source_module(&mut self) -> Result<(), Diagnostic> { Ok(()) }
+    fn declared_macro_exports(&self, _namespace: &str) -> Option<Vec<String>> { None }
     fn load_macro_namespace(
         &mut self,
         _namespace: &str,
@@ -381,6 +390,13 @@ impl ExpansionHost for ExpansionRequest<'_> {
     }
     fn supports_macro_imports(&self) -> bool { self.host.supports_macro_imports() }
     fn source_paths(&mut self, paths: &[std::path::PathBuf]) { self.host.source_paths(paths) }
+    fn begin_declarations(&mut self) -> Result<(), Diagnostic> { self.host.begin_declarations() }
+    fn end_declarations(&mut self, commit: bool) -> Result<(), Diagnostic> { self.host.end_declarations(commit) }
+    fn begin_source_module(&mut self, forms: &[suss_reader::forms::Form], origin: &SourceOrigin) -> Result<(), Diagnostic> {
+        self.host.begin_source_module(forms, origin)
+    }
+    fn end_source_module(&mut self) -> Result<(), Diagnostic> { self.host.end_source_module() }
+    fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> { self.host.declared_macro_exports(namespace) }
     fn load_macro_namespace(&mut self, namespace: &str, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
         self.host.load_macro_namespace(namespace, span)
     }

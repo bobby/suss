@@ -1,3 +1,40 @@
+## Compiled namespace-local declarations and rollback (2026-11-23)
+
+`run-inline-gates.py inline-source-origin-and-cache-work` passes67 tests with
+all recorded source/fixture inputs unchanged:40 namespace/frontend/source-
+metadata tests, one actual linker-failure rollback test,13 UUID tests and13
+original record/namespace/artifact guards. Runtime and Macro namespaces can
+now compile local defmacro declarations through the isolated compiled host,
+including imported functions/macros, sequential declarations and source data
+retained after GC. The shared script/AOT declaration path retains each namespace's
+imports and original file positions. Actual AOT checks line5/column15/the exact
+source filename and once-only Runtime initialization. Failed reload, later script
+compilation failure and real missing-linker-import failure preserve previous
+bindings/exports and recover. Successfully initialized Macro dependencies remain
+loaded without replay. Source contexts distinguish original inputs and top-level
+heads; dependency identity hashing is charged before allocation/hashing.
+
+All15 foundation checks pass, including364 Python tests, in
+`results/m12-case-budget/inline-source-foundation`, inputs unchanged. The earlier
+67-test run and original failing regression remain retained. The low-level raw-
+core fixture reaches the UUID shipped-core guard after declarations prepare;
+its source and failure are preserved separately. The actual module regression
+uses the ordinary shipped-bootstrap constructors in both phases.
+
+Nineteen additional fresh JVM UUID case controls use independently read selectors
+and nested collection constants. All17 value/effect controls match through Runtime,
+Macro and actual CLI AOT; both duplicate-constant controls reject through actual
+source compilation in all three routes. The private value-hash branch already
+exists; these controls establish its behavior without relying on pooled literals.
+No primary value, count/skip rule, failure baseline, original budget or size
+threshold changes. Full EDN/full-suite execution, the unfiltered workspace run,
+final-head CI and independent promotion review remain required evidence.
+
+CI45196497382 on24da88f4 has completed failing jobs1/3 for the published pre-fix
+inline-defmacro regression and known-failure diagnostic drift. Both byte-exact
+job logs are retained before cancelling the remaining redundant work. Cancellation
+is not a passing result; PR505's promotion workflow is untouched.
+
 ## Source namespace macro dependency and fresh core probes (2026-11-23)
 
 `run-suite.py full-suite-after-clojure-edn-namespace` finishes on c42b75bf,

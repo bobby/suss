@@ -139,6 +139,10 @@ fn signed_boundaries_keys_and_quotation_follow_primary() {
     check_cases(&[include_str!("../../../results/m12-reader-followup/uuid-boundary-cases.json")]);
 }
 #[test]
+fn independently_read_uuid_case_values_follow_primary_in_both_phases() {
+    check_cases(&[include_str!("../../../results/m12-reader-followup/uuid-case-runtime-cases.json")]);
+}
+#[test]
 fn uuid_fields_and_private_width_adapters_remain_sealed() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         for source in [
@@ -227,6 +231,41 @@ fn actual_aot_executes_uuid_values_readers_and_signed_boundaries() {
         include_str!("../../../results/m12-reader-followup/reader-cases.json"),
         include_str!("../../../results/m12-reader-followup/uuid-boundary-cases.json"),
     ]);
+}
+
+#[test]
+fn actual_aot_dispatches_independently_read_uuid_case_values() {
+    check_aot_cases(&[include_str!("../../../results/m12-reader-followup/uuid-case-runtime-cases.json")]);
+}
+
+#[test]
+fn uuid_duplicate_case_constants_are_rejected_in_both_phases_and_actual_aot() {
+    use std::process::Command;
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-reader-followup/uuid-case-expansion-cases.json")).unwrap();
+    assert_eq!(cases.len(), 2);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        for row in &cases {
+            let source = row["compile_source"].as_str().unwrap();
+            let error = session.eval_with_macros(source, &mut macros).unwrap_err();
+            assert!(error.to_string().contains("Duplicate case test constant"), "{source}: {error}");
+        }
+    }
+    let root = tempfile::tempdir().unwrap();
+    let file = root.path().join("duplicate.sus");
+    let wit = root.path().join("probe.wit");
+    std::fs::write(&wit, "package test:duplicate; world w { export check: func(unused: u32) -> u32; }").unwrap();
+    for row in &cases {
+        let source = row["compile_source"].as_str().unwrap();
+        std::fs::write(&file, format!("(ns duplicate) (def check (fn [unused] {source}))")).unwrap();
+        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
+            .args(["--no-cache", "compile"]).arg(&file).args(["-w"]).arg(&wit)
+            .args(["--export", "check=duplicate/check", "-o"]).arg(root.path().join("probe.wasm"))
+            .output().unwrap();
+        assert!(!output.status.success(), "{source}: {output:?}");
+        assert!(String::from_utf8_lossy(&output.stderr).contains("Duplicate case test constant"), "{source}: {output:?}");
+    }
 }
 
 #[test]

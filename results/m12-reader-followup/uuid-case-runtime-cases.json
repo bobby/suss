@@ -1,0 +1,87 @@
+[
+  {
+    "name": "uuid-case-fresh",
+    "expression": "(case (read-string \"#uuid \\\"1-2-3-4-5\\\"\") #uuid \"00000001-0002-0003-0004-000000000005\" :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-vector",
+    "expression": "(case (read-string \"[#uuid \\\"1-2-3-4-5\\\"]\") [#uuid \"00000001-0002-0003-0004-000000000005\"] :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-list",
+    "expression": "(case (read-string \"(#uuid \\\"1-2-3-4-5\\\")\") (#uuid \"00000001-0002-0003-0004-000000000005\") :hit :miss)",
+    "expected": ":miss"
+  },
+  {
+    "name": "uuid-case-map-value",
+    "expression": "(case (read-string \"{:id #uuid \\\"1-2-3-4-5\\\"}\") {:id #uuid \"00000001-0002-0003-0004-000000000005\"} :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-map-key",
+    "expression": "(case (read-string \"{#uuid \\\"1-2-3-4-5\\\" :value}\") {#uuid \"00000001-0002-0003-0004-000000000005\" :value} :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-set",
+    "expression": "(case (read-string \"#{#uuid \\\"1-2-3-4-5\\\"}\") #{#uuid \"00000001-0002-0003-0004-000000000005\"} :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-nested",
+    "expression": "(case (read-string \"[{#uuid \\\"1-2-3-4-5\\\" #{[#uuid \\\"1-2-3-4-5\\\"]}}]\") [{#uuid \"00000001-0002-0003-0004-000000000005\" #{[#uuid \"00000001-0002-0003-0004-000000000005\"]}}] :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-signed-0",
+    "expression": "(case (read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\") #uuid \"00000000-0000-0000-0000-000000000000\" :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-signed-1",
+    "expression": "(case (read-string \"#uuid \\\"ffffffff-ffff-ffff-ffff-ffffffffffff\\\"\") #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-signed-2",
+    "expression": "(case (read-string \"#uuid \\\"80000000-0000-0001-ffff-fffffffffffe\\\"\") #uuid \"80000000-0000-0001-ffff-fffffffffffe\" :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-signed-3",
+    "expression": "(case (read-string \"#uuid \\\"7fffffff-ffff-fffe-8000-000000000001\\\"\") #uuid \"7fffffff-ffff-fffe-8000-000000000001\" :hit :miss)",
+    "expected": ":hit"
+  },
+  {
+    "name": "uuid-case-zero-collision",
+    "expression": "(case (read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\") nil :nil 0 :zero #uuid \"00000000-0000-0000-0000-000000000000\" :uuid :miss)",
+    "expected": ":uuid"
+  },
+  {
+    "name": "uuid-case-fresh-miss",
+    "expression": "(case (read-string \"#uuid \\\"1-2-3-4-5\\\"\") #uuid \"2-3-4-5-6\" :wrong :miss)",
+    "expected": ":miss"
+  },
+  {
+    "name": "uuid-case-single-evaluation",
+    "expression": "(let [n (atom 0) value (case (do (swap! n inc) (read-string \"#uuid \\\"1-2-3-4-5\\\"\")) #uuid \"1-2-3-4-5\" :hit :miss)] [value @n])",
+    "expected": "[:hit 1]"
+  },
+  {
+    "name": "uuid-case-live-equality-fresh",
+    "expression": "(let [trace (atom []) original = value (with-redefs [= (fn [a b] (swap! trace conj [(uuid? a) (uuid? b)]) (original a b))] (case (read-string \"#uuid \\\"1-2-3-4-5\\\"\") #uuid \"1-2-3-4-5\" :hit :miss))] [value @trace])",
+    "expected": "[:hit []]"
+  },
+  {
+    "name": "uuid-case-live-equality-zero",
+    "expression": "(let [trace (atom []) original = value (with-redefs [= (fn [a b] (swap! trace conj [(uuid? a) (uuid? b)]) (original a b))] (case (read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\") #uuid \"00000000-0000-0000-0000-000000000000\" :hit :miss))] [value @trace])",
+    "expected": "[:hit []]"
+  },
+  {
+    "name": "uuid-case-live-hash-independent",
+    "expression": "(with-redefs [hash (fn [_] (throw (ex-info \"public hash\" {})))] (case (read-string \"#uuid \\\"1-2-3-4-5\\\"\") #uuid \"1-2-3-4-5\" :hit :miss))",
+    "expected": ":hit"
+  }
+]

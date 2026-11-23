@@ -1528,6 +1528,12 @@ impl Analyzer<'_> {
                         function_scopes: &self.function_scopes,
                     };
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                        if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
+                            let namespace = self.environment.current_namespace(self.phase).to_owned();
+                            if let Some(names) = self.expander.declared_macro_exports(&namespace) {
+                                self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
+                            }
+                        }
                         return self.form_in_named(&expanded, context, tail, name_hint);
                     }
                     // Bootstrap binding forms lower before source facts are

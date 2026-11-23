@@ -374,7 +374,7 @@ pub(crate) fn prepare_script_compiled(
 /// Return the completed immutable input snapshot for multi-source AOT batches.
 /// The ordinary script entrypoint retains its existing result and transaction.
 pub(crate) fn prepare_script_compiled_batch(
-    mut snapshot: crate::portable_session::CompilationSnapshot,
+    snapshot: crate::portable_session::CompilationSnapshot,
     macros: &mut crate::portable_macros::CompiledMacros,
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
@@ -386,54 +386,42 @@ pub(crate) fn prepare_script_compiled_batch(
     ),
     SessionError,
 > {
-    let checkpoint = macros.binding_checkpoint()?;
-    let mut staged_macros = Vec::new();
-    let preparation = (|| -> Result<Vec<PreparedScript>, SessionError> {
+    crate::portable::ExpansionHost::begin_declarations(macros).map_err(SessionError::Compile)?;
+    if let Err(error) = crate::portable::ExpansionHost::begin_source_module(macros, &forms, origin) {
+        crate::portable::ExpansionHost::end_declarations(macros, false).map_err(SessionError::Compile)?;
+        return Err(SessionError::Compile(error));
+    }
+    let result = prepare_script_declarations(snapshot, macros, forms, source_len, origin);
+    let finished = crate::portable::ExpansionHost::end_source_module(macros);
+    crate::portable::ExpansionHost::end_declarations(macros, result.is_ok() && finished.is_ok()).map_err(SessionError::Compile)?;
+    finished.map_err(SessionError::Compile)?;
+    result
+}
+fn prepare_script_declarations(
+    mut snapshot: crate::portable_session::CompilationSnapshot,
+    macros: &mut crate::portable_macros::CompiledMacros,
+    forms: Vec<suss_reader::forms::Form>, source_len: usize,
+    origin: &crate::portable::SourceOrigin,
+) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
         let mut prepared = Vec::new();
-        for mut form in forms {
+        for form in forms {
             let definition = matches!(&form.kind, suss_reader::forms::Kind::List(items)
             if matches!(items.first().map(|head| &head.kind),
                 Some(suss_reader::forms::Kind::Symbol(symbol))
                 if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), symbol, "defmacro")));
             if definition {
-                let suss_reader::forms::Kind::List(items) = &mut form.kind else {
-                    unreachable!()
-                };
-                items[0].kind = suss_reader::forms::Kind::Symbol(suss_reader::Symbol {
-                    namespace: Some("suss.core".into()),
-                    name: "defmacro".into(),
-                });
-                let namespace = snapshot.environment.current_namespace(snapshot.phase());
-                if let Some(suss_reader::forms::Form {
-                    kind: suss_reader::forms::Kind::Symbol(name),
-                    ..
-                }) = items.get(1)
-                {
-                    let global = crate::portable::resolve::Environment::default()
-                        .declare_cell(
-                            crate::portable::resolve::Phase::Macro,
-                            namespace,
-                            &name.name,
-                        )
-                        .map_err(SessionError::Compile)?;
-                    staged_macros.push((macros.binding_checkpoint()?, global));
-                }
-                // Auto-resolved keywords use the runtime namespace's aliases,
-                // which the macro session does not see (#30).
-                crate::portable::source::resolve_auto_keywords(
-                    std::slice::from_mut(&mut form),
-                    &snapshot.environment,
-                    snapshot.phase(),
-                )
-                .map_err(SessionError::Compile)?;
-                macros.enter_namespace(namespace)?;
+                let namespace = snapshot.environment.current_namespace(snapshot.phase()).to_owned();
                 let var = match defined_name(&form) {
-                    Some(name) => var_text(namespace, name),
+                    Some(name) => var_text(&namespace, name),
                     None => String::new(),
                 };
                 macros
-                    .define_form_with_origin(form, 0..source_len, Some(origin))
+                    .define_inline_macro(&form, &snapshot.environment, snapshot.phase())
                     .map_err(|error| macro_definition_error(error, 0..source_len))?;
+                if let Some(names) = crate::portable::ExpansionHost::declared_macro_exports(macros, &namespace) {
+                    snapshot.environment.declare_macro_exports(snapshot.phase(), &namespace, &names)
+                        .map_err(SessionError::Compile)?;
+                }
                 prepared.push(PreparedScript::Macro(var));
             } else {
                 let input = snapshot.prepare_with_origin(
@@ -449,19 +437,6 @@ pub(crate) fn prepare_script_compiled_batch(
                 prepared.push(PreparedScript::Runtime(input));
             }
         }
-        Ok(prepared)
-    })();
-    let prepared = match preparation {
-        Ok(prepared) => prepared,
-        Err(error) => {
-            for (before, global) in staged_macros.into_iter().rev() {
-                macros.restore_bindings(before, &[global])?;
-            }
-            macros.restore_bindings(checkpoint, &[])?;
-            return Err(error);
-        }
-    };
-    drop(checkpoint);
     Ok((prepared, snapshot))
 }
 

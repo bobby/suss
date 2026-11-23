@@ -32,6 +32,30 @@
     "archive_bytes": 183153
   },
   {
+    "raw": "after-inline-declaration-transactions/commands.json",
+    "archive": "after-inline-declaration-transactions/commands.json.gz",
+    "raw_sha256": "02705d0317232dcfaa1b7b93b4a9ae2ad2c02e5efbe0d9f4aae72b1eb4fa0fcd",
+    "raw_bytes": 497106,
+    "archive_sha256": "349983da78e625b33542c921a6e7cc37eeb1536b60078776bb54ed7f87088951",
+    "archive_bytes": 183188
+  },
+  {
+    "raw": "after-inline-source-module-declarations/commands.json",
+    "archive": "after-inline-source-module-declarations/commands.json.gz",
+    "raw_sha256": "67b93ba6063aa87a75743a8495c916600414387b2ebb23b5f6e19e521b86a7b3",
+    "raw_bytes": 497190,
+    "archive_sha256": "6ea3baa0f8d71a74e236ae5d1a1e3950ee16a2cd53a91c622473e6fed139207c",
+    "archive_bytes": 183241
+  },
+  {
+    "raw": "after-inline-with-shipped-core/commands.json",
+    "archive": "after-inline-with-shipped-core/commands.json.gz",
+    "raw_sha256": "1038d0787fc3f1310e39c71873da1d5801990b7a993869a9db1f5b9e073ec569",
+    "raw_bytes": 497187,
+    "archive_sha256": "c8a71a004e1bc940d4b043cbcfebf56aaedf5bc63a2f5e1f0c37b9018e9de97a",
+    "archive_bytes": 183240
+  },
+  {
     "raw": "after-positive-long-limit-and-top-level-macro/commands.json",
     "archive": "after-positive-long-limit-and-top-level-macro/commands.json.gz",
     "raw_sha256": "bd71c19a3b6943036bc338eb486ba67c9cf4e9037b979c2439be8960a4f9fcdf",
@@ -152,6 +176,22 @@
     "archive_bytes": 42043
   },
   {
+    "raw": "ci-45196497382/integration-1.log",
+    "archive": "ci-45196497382/integration-1.log.gz",
+    "raw_sha256": "dbf80deb4fa14e5526e43dad09315cbabf0d16f8fea01dc34a8120985755a192",
+    "raw_bytes": 179235,
+    "archive_sha256": "112824d6d85636857daabaf3007b1df1544fbcfed8483674b626e8d1a7c2bb18",
+    "archive_bytes": 35850
+  },
+  {
+    "raw": "ci-45196497382/integration-3.log",
+    "archive": "ci-45196497382/integration-3.log.gz",
+    "raw_sha256": "295b1cf3c76ccbe341697b09c151ecc51edd6c964fd0e59f2f0c1b412d29341c",
+    "raw_bytes": 203808,
+    "archive_sha256": "96f9227bc0e9863598a8746a0f632444502893f3547fea3381b3747f4e285cbd",
+    "archive_bytes": 42525
+  },
+  {
     "raw": "clojure-edn-compatibility/commands.json",
     "archive": "clojure-edn-compatibility/commands.json.gz",
     "raw_sha256": "71fd1ecbfa8fb9b33a837519ec90e26601b2d695208f9c3d9a2dfc8c1e6ee9a6",
@@ -222,6 +262,22 @@
     "raw_bytes": 497801,
     "archive_sha256": "8d49746cbb2b556e0fb03a077877a9e4a205ee99bf30e4b3258ea34bbf7c5655",
     "archive_bytes": 183448
+  },
+  {
+    "raw": "inline-source-origin-and-cache-work/commands.json",
+    "archive": "inline-source-origin-and-cache-work/commands.json.gz",
+    "raw_sha256": "72cddb639ead6e850cd1e41fa702b4bf7f9094e669af95099c25252a67581fae",
+    "raw_bytes": 501097,
+    "archive_sha256": "d6ce4a087a78b5fc640c099c409b582aac4128ab7bff1b71babbe0f3ae0228cd",
+    "archive_bytes": 184103
+  },
+  {
+    "raw": "inline-source-scopes-and-link-transactions/commands.json",
+    "archive": "inline-source-scopes-and-link-transactions/commands.json.gz",
+    "raw_sha256": "8213facceaed890014924ed22c1da948d3bf6107ba5e9569e2bc6dd8f7b225f8",
+    "raw_bytes": 501099,
+    "archive_sha256": "19b63095fd00edc807f5d06a64a39651464b093aeec1e3ea7dfe4ac655b854af",
+    "archive_bytes": 184097
   },
   {
     "raw": "integration-budgets-and-source-tooling/commands.json",

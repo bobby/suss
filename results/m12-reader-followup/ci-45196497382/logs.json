@@ -1,0 +1,17 @@
+{
+  "head": "24da88f4fac6a75e7e80a426a8b5e0c5af4855e8",
+  "run": 45196497382,
+  "failed_completed_jobs": [
+    {
+      "job": 137768451147,
+      "path": "integration-1.log",
+      "sha256": "dbf80deb4fa14e5526e43dad09315cbabf0d16f8fea01dc34a8120985755a192"
+    },
+    {
+      "job": 137768450908,
+      "path": "integration-3.log",
+      "sha256": "295b1cf3c76ccbe341697b09c151ecc51edd6c964fd0e59f2f0c1b412d29341c"
+    }
+  ],
+  "qualification": "Raw completed CI job logs copied before any cancellation. No failure or cancellation is counted as passing."
+}
