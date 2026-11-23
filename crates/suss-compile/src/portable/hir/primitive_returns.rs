@@ -369,6 +369,11 @@ fn infer(
                 if array_kind(&arguments[0], meter)?.is_some() { Int } else { Boxed },
             Expression::NilTest(_) | Expression::Comparison { .. } => Boolean,
             Expression::Bitwise { operation, arguments } => match operation {
+                Bitwise::PromoteSubtractPrimitive => {
+                    let a = infer(&arguments[0], bindings, meter, loops)?;
+                    let b = infer(&arguments[1], bindings, meter, loops)?;
+                    if a.floating() || b.floating() { Double } else { Boxed }
+                }
                 Bitwise::LongMax | Bitwise::LongMin => Long,
                 Bitwise::DoubleMax | Bitwise::DoubleMin => Double,
                 Bitwise::Int | Bitwise::IntPrimitive | Bitwise::IntFloat => Int,

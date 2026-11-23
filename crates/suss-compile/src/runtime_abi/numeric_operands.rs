@@ -73,6 +73,11 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
         LocalGet(1), Call(b.names["number-unbox"]), F64Div, StructNew(NUMBER)]);
     b.function("checked-divide-primitive", &[VALUE, VALUE], &[VALUE], &code);
     let mut code = vec![];
+    require_numbers(b, &mut code, "-", 2);
+    code.extend([LocalGet(0), LocalGet(1), Call(b.names["number-subtract-primitive"])]);
+    b.function("checked-subtract-primitive", &[VALUE, VALUE], &[VALUE], &code);
+
+    let mut code = vec![];
     require_numbers(b, &mut code, "-", 1);
     code.extend([LocalGet(0), Call(b.names["number-negate"])]);
     checked.push(b.function("checked-negate", &[VALUE], &[VALUE], &code));

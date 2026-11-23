@@ -111,6 +111,10 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
         ]);
         boolean(&mut body);
         body.extend([Return, End]);
+        body.extend(decimals::pair(b));
+        body.extend([If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["decimal-compare"]), I32Const(0),
+            [I32LtS, I32LeS, I32GtS, I32GeS][op].clone()]);
+        boolean(&mut body); body.extend([Return, End]);
         body.extend(ratios::pair(b));
         body.extend([If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["fraction-compare"]), I32Const(0),
             [I32LtS, I32LeS, I32GtS, I32GeS][op].clone()]);
@@ -174,6 +178,9 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
     equiv.extend([LocalGet(0), Call(b.names["ratio-test"]), LocalGet(1), Call(b.names["ratio-test"]), I32And,
         If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["fraction-compare"]), I32Eqz]);
     boolean(&mut equiv); equiv.extend([Return, End]);
+    equiv.extend([LocalGet(0), Call(b.names["decimal-test"]), LocalGet(1), Call(b.names["decimal-test"]), I32And,
+        If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["decimal-compare-values"]), I32Eqz]);
+    boolean(&mut equiv); equiv.extend([Return, End]);
     let double = b.names["double-test"];
     equiv.extend([LocalGet(0), Call(double), LocalGet(1), Call(double), I32And, If(BlockType::Empty)]);
     let number = b.names["number-unbox"];
@@ -199,6 +206,9 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
     boolean(&mut case); case.extend([Return, End]);
     case.extend([LocalGet(0), Call(b.names["ratio-test"]), LocalGet(1), Call(b.names["ratio-test"]), I32And,
         If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["fraction-compare"]), I32Eqz]);
+    boolean(&mut case); case.extend([Return, End]);
+    case.extend([LocalGet(0), Call(b.names["decimal-test"]), LocalGet(1), Call(b.names["decimal-test"]), I32And,
+        If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["decimal-case-equal"])]);
     boolean(&mut case); case.extend([Return, End]);
     let double = b.names["double-test"];
     case.extend([LocalGet(0), Call(double), LocalGet(1), Call(double), I32And, If(BlockType::Empty)]);

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "python3",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "scripts",
+    "-p",
+    "test_clojure_test_suite.py"
+  ],
+  "exit_code": 1,
+  "inputs": {
+    "scripts/clojure_test_suite.py": "5fbb2534f7dd30233f34e82cc7215135085906e6bf20fd2652e423efd707ed23",
+    "scripts/test_clojure_test_suite.py": "18a4e847901aee8d21e74ff4a1e8ab4074caa3fa61c827206a2e80305c8b1b18"
+  }
+}

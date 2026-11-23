@@ -1,0 +1,122 @@
+[
+  {
+    "path": "results/m12-decimal-arithmetic/command.json",
+    "archive": "results/m12-decimal-arithmetic/command.json.gz",
+    "bytes": 490943,
+    "sha256": "40ae8ee1150f3f32a02688f40b915188e9c80c29eb121a02a33edb61242829d8"
+  },
+  {
+    "path": "results/m12-decimal-arithmetic/initial-heaptype-inputs.json",
+    "archive": "results/m12-decimal-arithmetic/initial-heaptype-inputs.json.gz",
+    "bytes": 482809,
+    "sha256": "3c05cd3f5cf901ab4fb0341239b86644ad70d6f786df972951cdf933487c2e4c"
+  },
+  {
+    "path": "results/m12-decimal-arithmetic/initial-macro-stage-command.json",
+    "archive": "results/m12-decimal-arithmetic/initial-macro-stage-command.json.gz",
+    "bytes": 490820,
+    "sha256": "d546cf0da4163d042b2f5c2587c697d72dd75c8f1175deae6efb0c5d381d7777"
+  },
+  {
+    "path": "results/m12-decimal-arithmetic/initial-public-macro-command.json",
+    "archive": "results/m12-decimal-arithmetic/initial-public-macro-command.json.gz",
+    "bytes": 490942,
+    "sha256": "95bcc530e27854421635edc0fac0bd5c386f5218a7831a26c0f39290e0f8f144"
+  },
+  {
+    "path": "results/m12-decimal-arithmetic/inputs.json",
+    "archive": "results/m12-decimal-arithmetic/inputs.json.gz",
+    "bytes": 482809,
+    "sha256": "3c05cd3f5cf901ab4fb0341239b86644ad70d6f786df972951cdf933487c2e4c"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-bigdec-conversion.json",
+    "archive": "results/m12-decimal-integration/after-bigdec-conversion.json.gz",
+    "bytes": 492755,
+    "sha256": "1f92aba5042323abfaeea5138d0b0821743f96b540fda578d2b3fa34f62bf3f4"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-bigdec-leading-dot-fix.json",
+    "archive": "results/m12-decimal-integration/after-bigdec-leading-dot-fix.json.gz",
+    "bytes": 492817,
+    "sha256": "9aa0d1eb820b024d03231b7490901d886490c4d9fdd08c77cb4fc4a5679c5efe"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-bounded-addition.json",
+    "archive": "results/m12-decimal-integration/after-bounded-addition.json.gz",
+    "bytes": 493046,
+    "sha256": "fa46f5433e14319a6e7ae54bf04372355edb293b233b983b437afe076a953ab1"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-context-string-fix.json",
+    "archive": "results/m12-decimal-integration/after-context-string-fix.json.gz",
+    "bytes": 492052,
+    "sha256": "a8a4f5a5f344495c26c2b58e11222a23dad095d25470b61e64248962cabb1845"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-decimal-comparison-fix.json",
+    "archive": "results/m12-decimal-integration/after-decimal-comparison-fix.json.gz",
+    "bytes": 492522,
+    "sha256": "decb8eddd517a1edbc99d79495e8bb497c3678f60ba376c69b3885860d86a9e0"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-independent-decimal-decoder.json",
+    "archive": "results/m12-decimal-integration/after-independent-decimal-decoder.json.gz",
+    "bytes": 493249,
+    "sha256": "46d122bb882cb72d85ed30f7029274e31ae8712d705537e824d8a99caab4c747"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-macro-setup/gates.json",
+    "archive": "results/m12-decimal-integration/after-macro-setup/gates.json.gz",
+    "bytes": 497282,
+    "sha256": "a0bed66949833e99b3783846a9a2c966025de12037c4c6101a3e1590ffd3e2c8"
+  },
+  {
+    "path": "results/m12-decimal-integration/after-subtraction-overload-dispatch.json",
+    "archive": "results/m12-decimal-integration/after-subtraction-overload-dispatch.json.gz",
+    "bytes": 493117,
+    "sha256": "4f734832edcc4bd0d2cf12360c9266f0af5ccd29e7435391d4df6fcdf23b025e"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-bigdec-and-additional-precision.json",
+    "archive": "results/m12-decimal-integration/before-bigdec-and-additional-precision.json.gz",
+    "bytes": 492581,
+    "sha256": "69cbcfdab2bc27741584b22c6b9323eb2dbb5855e4175572dba2278c3193b628"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-decimal-comparison-fix.json",
+    "archive": "results/m12-decimal-integration/before-decimal-comparison-fix.json.gz",
+    "bytes": 492247,
+    "sha256": "90f72598fbef6575ff4f26ff59033ba2a59f27932728149463af867d6b56fc57"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-independent-decimal-decoder.json",
+    "archive": "results/m12-decimal-integration/before-independent-decimal-decoder.json.gz",
+    "bytes": 493291,
+    "sha256": "b31ff07d8ab9db9c17475c3031c140a8af514546bd4e1e7d302e3ad3fe0eeff4"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-precision-fix.json",
+    "archive": "results/m12-decimal-integration/before-precision-fix.json.gz",
+    "bytes": 492057,
+    "sha256": "3e60aff598b368ecd746025a27bdd4bb77187520daced5e5c0a0abab59d97ce2"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-subtraction-boundaries-fix.json",
+    "archive": "results/m12-decimal-integration/before-subtraction-boundaries-fix.json.gz",
+    "bytes": 493148,
+    "sha256": "8ad57eeb2668e853b4bee15853cd73bc411734a8d0d68b49d277b14d597c567e"
+  },
+  {
+    "path": "results/m12-decimal-integration/before-subtraction-overload-fix.json",
+    "archive": "results/m12-decimal-integration/before-subtraction-overload-fix.json.gz",
+    "bytes": 492908,
+    "sha256": "d372e0325a8d2288ac440999e52b4f4ea8f01d89c82fee4f7df0a07da22e3d75"
+  },
+  {
+    "path": "results/m12-decimal-integration/gates.json",
+    "archive": "results/m12-decimal-integration/gates.json.gz",
+    "bytes": 495771,
+    "sha256": "badb1f5974eb3721fa4b67bb689e2b9b2e8a9e98f364b78ca67724c11b9ab4f0"
+  }
+]

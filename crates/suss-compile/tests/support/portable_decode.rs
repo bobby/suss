@@ -2,7 +2,9 @@
 //! Inspect canonical storage directly; unknown objects and malformed layouts fail.
 // Each test includes only the decoding entry points it needs.
 #![allow(dead_code)]
-use suss_compile::portable_session::{runtime_number, sentinel_tag, RuntimeNumber, Session, SessionError, SessionValue};
+use suss_compile::portable_session::{
+    RuntimeNumber, Session, SessionError, SessionValue, runtime_number, sentinel_tag,
+};
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, StoreContextMut, Val};
 
 #[path = "probe_eval.rs"]
@@ -19,6 +21,10 @@ pub enum Observation {
     Long(i64),
     BigInt(String),
     Ratio(String, String),
+    Decimal {
+        unscaled: String,
+        scale: i32,
+    },
     String(Vec<u16>),
     Keyword(Option<Vec<u16>>, Vec<u16>),
     Symbol(Option<Vec<u16>>, Vec<u16>),
@@ -82,6 +88,7 @@ pub struct Decoder {
     canonical: Vec<Canonical>,
     integer_type: Option<wasmtime::StructType>,
     ratio_type: Option<wasmtime::StructType>,
+    decimal_type: Option<wasmtime::StructType>,
 }
 
 impl Decoder {
@@ -96,6 +103,7 @@ impl Decoder {
             canonical: Vec::new(),
             integer_type: None,
             ratio_type: None,
+            decimal_type: None,
         }
     }
 
@@ -115,29 +123,75 @@ impl Decoder {
         remaining: usize,
     ) -> wasmtime::Result<Self> {
         let mut integer = [Val::null_any_ref()];
-        runtime.get_func(&mut *store, "bigint-from-long").unwrap()
+        runtime
+            .get_func(&mut *store, "bigint-from-long")
+            .unwrap()
             .call(&mut *store, &[Val::I64(1)], &mut integer)?;
         let mut denominator = [Val::null_any_ref()];
-        runtime.get_func(&mut *store, "bigint-from-long").unwrap()
+        runtime
+            .get_func(&mut *store, "bigint-from-long")
+            .unwrap()
             .call(&mut *store, &[Val::I64(3)], &mut denominator)?;
         let mut ratio = [Val::null_any_ref()];
-        runtime.get_func(&mut *store, "ratio-literal").unwrap()
-            .call(&mut *store, &[integer[0].clone(), denominator[0].clone()], &mut ratio)?;
+        runtime
+            .get_func(&mut *store, "ratio-literal")
+            .unwrap()
+            .call(
+                &mut *store,
+                &[integer[0].clone(), denominator[0].clone()],
+                &mut ratio,
+            )?;
+        let mut decimal = [Val::null_any_ref()];
+        runtime
+            .get_func(&mut *store, "decimal-literal")
+            .unwrap()
+            .call(
+                &mut *store,
+                &[integer[0].clone(), Val::I32(0)],
+                &mut decimal,
+            )?;
         let mut decoder = Self::new(remaining);
-        decoder.integer_type = Some(non_null_ref(&integer[0])?.as_struct(&*store)?.unwrap().ty(&*store)?);
-        decoder.ratio_type = Some(non_null_ref(&ratio[0])?.as_struct(&*store)?.unwrap().ty(&*store)?);
+        decoder.decimal_type = Some(
+            non_null_ref(&decimal[0])?
+                .as_struct(&*store)?
+                .unwrap()
+                .ty(&*store)?,
+        );
+        decoder.integer_type = Some(
+            non_null_ref(&integer[0])?
+                .as_struct(&*store)?
+                .unwrap()
+                .ty(&*store)?,
+        );
+        decoder.ratio_type = Some(
+            non_null_ref(&ratio[0])?
+                .as_struct(&*store)?
+                .unwrap()
+                .ty(&*store)?,
+        );
         Ok(decoder)
     }
     fn capture_number_types(&mut self, session: &mut Session) -> Result<(), SessionError> {
         let integer = session.eval_probe("1N")?;
         self.integer_type = Some(session.inspect(&integer, |store, value| {
-            non_null_ref(&value)?.as_struct(&store)?
-                .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?.ty(&store)
+            non_null_ref(&value)?
+                .as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?
+                .ty(&store)
+        })?);
+        let decimal = session.eval_probe("1M")?;
+        self.decimal_type = Some(session.inspect(&decimal, |store, value| {
+            non_null_ref(&value)?
+                .as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Decimal"))?
+                .ty(&store)
         })?);
         let ratio = session.eval_probe("1/3")?;
         self.ratio_type = Some(session.inspect(&ratio, |store, value| {
-            non_null_ref(&value)?.as_struct(&store)?
-                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Ratio"))?.ty(&store)
+            non_null_ref(&value)?
+                .as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Ratio"))?
+                .ty(&store)
         })?);
         Ok(())
     }
@@ -401,36 +455,89 @@ impl Decoder {
             if let [Val::F64(_)] = fields.as_slice() {
                 return Ok(Observation::Number(number_bits(store, value)?));
             }
-            if self.ratio_type.as_ref().is_some_and(|canonical|
-                wasmtime::StructType::eq(&structure.ty(&*store).expect("live structure type"), canonical)) {
-                if fields.len()!=2 { return Err(wasmtime::Error::msg("Malformed Ratio storage")); }
-                let Observation::BigInt(numerator) = self.value(store, &fields[0], depth+1)? else {
+            if self.decimal_type.as_ref().is_some_and(|canonical| {
+                wasmtime::StructType::eq(
+                    &structure.ty(&*store).expect("live structure type"),
+                    canonical,
+                )
+            }) {
+                let [coefficient, Val::I32(scale)] = fields.as_slice() else {
+                    return Err(wasmtime::Error::msg("Malformed Decimal storage"));
+                };
+                let Observation::BigInt(unscaled) = self.value(store, coefficient, depth + 1)?
+                else {
+                    return Err(wasmtime::Error::msg("Malformed Decimal coefficient"));
+                };
+                // Report the actual coefficient and preferred scale, including
+                // zero's scale and trailing coefficient zeros. No normalization
+                // or guest printer/equality can hide a wrong arithmetic result.
+                return Ok(Observation::Decimal {
+                    unscaled,
+                    scale: *scale,
+                });
+            }
+            if self.ratio_type.as_ref().is_some_and(|canonical| {
+                wasmtime::StructType::eq(
+                    &structure.ty(&*store).expect("live structure type"),
+                    canonical,
+                )
+            }) {
+                if fields.len() != 2 {
+                    return Err(wasmtime::Error::msg("Malformed Ratio storage"));
+                }
+                let Observation::BigInt(numerator) = self.value(store, &fields[0], depth + 1)?
+                else {
                     return Err(wasmtime::Error::msg("Malformed Ratio numerator"));
                 };
-                let Observation::BigInt(denominator) = self.value(store, &fields[1], depth+1)? else {
+                let Observation::BigInt(denominator) = self.value(store, &fields[1], depth + 1)?
+                else {
                     return Err(wasmtime::Error::msg("Malformed Ratio denominator"));
                 };
-                if numerator=="0" || denominator.starts_with('-') || denominator=="0" || denominator=="1" {
+                if numerator == "0"
+                    || denominator.starts_with('-')
+                    || denominator == "0"
+                    || denominator == "1"
+                {
                     return Err(wasmtime::Error::msg("Malformed normalized Ratio"));
                 }
                 // Report the actual pair, without reducing it on the host:
                 // an unnormalized guest result must differ from the oracle.
                 return Ok(Observation::Ratio(numerator, denominator));
             }
-            if self.integer_type.as_ref().is_some_and(|canonical|
-                wasmtime::StructType::eq(&structure.ty(&*store).expect("live structure type"), canonical)) {
-                let [Val::I32(sign), Val::AnyRef(Some(limbs)), Val::I32(used), Val::I32(display)] = fields.as_slice() else {
+            if self.integer_type.as_ref().is_some_and(|canonical| {
+                wasmtime::StructType::eq(
+                    &structure.ty(&*store).expect("live structure type"),
+                    canonical,
+                )
+            }) {
+                let [
+                    Val::I32(sign),
+                    Val::AnyRef(Some(limbs)),
+                    Val::I32(used),
+                    Val::I32(display),
+                ] = fields.as_slice()
+                else {
                     return Err(wasmtime::Error::msg("Malformed BigInt storage"));
                 };
-                let limbs = limbs.as_array(&*store)?.ok_or_else(|| wasmtime::Error::msg("Malformed BigInt limbs"))?;
-                if !(-1..=1).contains(sign) || *used < 0 || *used as u32 > limbs.len(&*store)?
-                    || !(0..=1).contains(display) || (*used==0) != (*sign==0) {
+                let limbs = limbs
+                    .as_array(&*store)?
+                    .ok_or_else(|| wasmtime::Error::msg("Malformed BigInt limbs"))?;
+                if !(-1..=1).contains(sign)
+                    || *used < 0
+                    || *used as u32 > limbs.len(&*store)?
+                    || !(0..=1).contains(display)
+                    || (*used == 0) != (*sign == 0)
+                {
                     return Err(wasmtime::Error::msg("Malformed BigInt metadata"));
                 }
                 self.spend(*used as usize)?;
                 let mut words = Vec::with_capacity(*used as usize);
-                for index in 0..*used as u32 { words.push(limbs.get(&mut *store, index)?.unwrap_i32() as u32); }
-                if words.last()==Some(&0) { return Err(wasmtime::Error::msg("Unnormalized BigInt magnitude")); }
+                for index in 0..*used as u32 {
+                    words.push(limbs.get(&mut *store, index)?.unwrap_i32() as u32);
+                }
+                if words.last() == Some(&0) {
+                    return Err(wasmtime::Error::msg("Unnormalized BigInt magnitude"));
+                }
                 return Ok(Observation::BigInt(integer_decimal(*sign, &words)));
             }
             if fields.len() == 4 {
@@ -752,9 +859,7 @@ impl Decoder {
         }
         let tail = self.source_array(store, &data[4], count - tail_start)?;
         let (root_class, root_data) = self.object(store, &data[3])?;
-        if root_class != Class::Node
-            || sentinel(store, &root_data[0])? != Some(0)
-        {
+        if root_class != Class::Node || sentinel(store, &root_data[0])? != Some(0) {
             return Err(wasmtime::Error::msg(
                 "Persistent vector root has an active edit token",
             ));
@@ -849,7 +954,10 @@ impl Decoder {
             let fields = packed.fields(&mut *store)?.collect::<Vec<_>>();
             if let [Val::AnyRef(Some(storage)), _] = fields.as_slice() {
                 if let Some(storage) = storage.as_array(&*store)? {
-                    if matches!(storage.ty(&*store)?.element_type(), StorageType::ValType(wasmtime::ValType::Ref(_))) {
+                    if matches!(
+                        storage.ty(&*store)?.element_type(),
+                        StorageType::ValType(wasmtime::ValType::Ref(_))
+                    ) {
                         return Ok(storage.elems(&mut *store)?.collect());
                     }
                 }
@@ -1105,7 +1213,10 @@ impl Decoder {
         };
         // An object array's elements are values (#378).
         if let Some(storage) = packed.as_ref().filter(|storage| {
-            matches!(storage.ty(&*store).map(|ty| ty.element_type()), Ok(StorageType::ValType(wasmtime::ValType::Ref(_))))
+            matches!(
+                storage.ty(&*store).map(|ty| ty.element_type()),
+                Ok(StorageType::ValType(wasmtime::ValType::Ref(_)))
+            )
         }) {
             let length = storage.len(&*store)? as usize;
             if index > length || length - index > self.remaining {
@@ -1203,7 +1314,10 @@ impl Decoder {
         // A range of longs yields longs.
         let longs = [&data[1], &data[2], &data[3]]
             .into_iter()
-            .map(|value| runtime_number(&mut *store, value).map(|n| matches!(n, Some(RuntimeNumber::Long(_)))))
+            .map(|value| {
+                runtime_number(&mut *store, value)
+                    .map(|n| matches!(n, Some(RuntimeNumber::Long(_))))
+            })
             .collect::<wasmtime::Result<Vec<_>>>()?
             .into_iter()
             .all(|long| long);
@@ -1785,10 +1899,20 @@ pub fn integer_decimal(sign: i32, words: &[u32]) -> String {
             *digit = (value % 1_000_000_000) as u32;
             carry = value / 1_000_000_000;
         }
-        while carry != 0 { decimal.push((carry % 1_000_000_000) as u32); carry /= 1_000_000_000; }
+        while carry != 0 {
+            decimal.push((carry % 1_000_000_000) as u32);
+            carry /= 1_000_000_000;
+        }
     }
-    let mut text = if sign<0 { "-".to_owned() } else { String::new() };
+    let mut text = if sign < 0 {
+        "-".to_owned()
+    } else {
+        String::new()
+    };
     text.push_str(&decimal.pop().unwrap().to_string());
-    for digit in decimal.iter().rev() { use std::fmt::Write; write!(&mut text, "{digit:09}").unwrap(); }
+    for digit in decimal.iter().rev() {
+        use std::fmt::Write;
+        write!(&mut text, "{digit:09}").unwrap();
+    }
     text
 }

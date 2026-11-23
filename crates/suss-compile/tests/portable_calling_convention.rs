@@ -128,11 +128,12 @@ fn a_locally_called_closure_needs_no_call_entry() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_11_and_prior_abis_are_rejected() {
-    // ABI 11 adds immutable Decimal values; ABI 10 adds immutable Ratios.
+fn artifacts_record_runtime_abi_12_and_prior_abis_are_rejected() {
+    // ABI 12 adds immutable MathContext values; ABI 11 adds Decimals.
+    // ABI 10 adds immutable Ratios.
     // ABI 7 (#448) makes CODE extensible for primitive signature subtypes;
     // ABI 6's eqref closure parameter and call-site caches remain.
-    assert_eq!(runtime_abi::VERSION, 11);
+    assert_eq!(runtime_abi::VERSION, 12);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -147,8 +148,8 @@ fn artifacts_record_runtime_abi_11_and_prior_abis_are_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(11), &expected), Ok(()));
-    for abi in [5, 6, 7, 8, 9, 10] {
+    assert_eq!(runtime_abi::verify_artifact(&module(12), &expected), Ok(()));
+    for abi in [5, 6, 7, 8, 9, 10, 11] {
         let error = runtime_abi::verify_artifact(&module(abi), &expected).unwrap_err();
         assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
     }

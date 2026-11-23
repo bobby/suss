@@ -173,6 +173,8 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
         &[VALUE],
         &[VALUE],
         &[
+            LocalGet(0),RefTestNonNull(HeapType::Concrete(MATH_CONTEXT)),If(BlockType::Empty),
+            LocalGet(0),ReturnCall(b.names["decimal-context-string"]),End,
             LocalGet(0),
             I32Const(1),
             Call(primitive),

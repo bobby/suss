@@ -1,0 +1,21 @@
+{
+  "changes": [
+    {
+      "path": "crates/suss-compile/tests/support/probe_eval.rs",
+      "tested_sha256": "a4634bb512634cc744c620cb858c78c08b4cf53daafe3a328cb74beee0ed7001",
+      "current_sha256": "470427fa0d1ed8ce0ff8442ce391931620ee8dae451fe0a19cb0fee96593cf24"
+    },
+    {
+      "path": "docs/compatibility/README.md",
+      "tested_sha256": "dda23c9468794c67f4603e65db03ca5344f4af83573a45877670b73f9b18b684",
+      "current_sha256": "5b3e65f6ad6c32bbdb52b4f009067e1a2ce9a968cd62225f0306c1f62aba3057"
+    },
+    {
+      "path": "docs/roadmap/handoff.md",
+      "tested_sha256": "021113415730939e247ac68ef61b78202c1a0e8e9ef22999d6b1c693f0ea71fb",
+      "current_sha256": "09b4b104a9df47b393cec6d59892c1db57ae703c8cf13172c39166b5b15d1966"
+    }
+  ],
+  "production_sources_unchanged": true,
+  "probe_eval_change": "Only unrelated rustfmt whitespace reverted; original HEAD text restored."
+}

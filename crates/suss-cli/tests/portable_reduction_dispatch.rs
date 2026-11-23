@@ -125,6 +125,7 @@ fn raw(value: Observation) -> Value {
             json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
         }
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
+        Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator,denominator) => json!({"tag":"ratio", "numerator":numerator,"denominator":denominator}),
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => {

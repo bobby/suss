@@ -6663,7 +6663,8 @@
   ([] "")
   ([x] (if (suss.bootstrap/nil? x)
          ""
-         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x))
+         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x)
+                 (suss.bootstrap/math-context? x))
            (suss.bootstrap/coerce-string x)
            ;; A type value is Clojure's Class, whose toString is "class Name" (#304).
            (if (or (suss.bootstrap/type-constructor? x)
@@ -9979,6 +9980,13 @@ reduces them without incurring seq initialization"
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
+
+
+
+;; Original native MathContext integration. The getter uses the same dynamic
+;; Var lookup as source code; Runtime and Macro instances own separate roots.
+(def ^:dynamic *math-context* nil)
+(suss.bootstrap/decimal-context-getter-install (fn [] *math-context*))
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
@@ -12199,3 +12207,40 @@ reduces them without incurring seq initialization"
 ;; Original capability adapter: classes are not IFn values, while functions
 ;; and values implementing the portable invocation protocol are callable.
 (def ifn? (fn [x] (or (fn? x) (satisfies? IFn x))))
+
+
+;; Original Suss conversion using the reader's checked exact coefficient/scale
+;; parser. BigDecimal string construction also accepts a leading decimal point;
+;; adding its implicit zero leaves every coefficient digit and scale intact.
+(def ^:private numeric-decimal-text
+  (fn [s]
+    (let [n (.-length s)
+          c (if (< 0 n) (.charCodeAt s 0) 0)
+          negative (== c 45)
+          from (if (or negative (== c 43)) 1 0)
+          s (if (and (< from n) (== (.charCodeAt s from) 46))
+              (if (and (< (inc from) n)
+                       (<= 48 (.charCodeAt s (inc from)))
+                       (<= (.charCodeAt s (inc from)) 57))
+                (suss.bootstrap/concat-string
+                  (suss.bootstrap/concat-string (suss.bootstrap/string-slice s 0 from) "0")
+                  (suss.bootstrap/string-slice s from n))
+                (throw (suss.bootstrap/error "Invalid BigDecimal string")))
+              s)
+          token (suss.bootstrap/concat-string s "M")
+          end (.-length token)
+          state (reader-state token false nil nil nil nil)]
+      (if (reader-decimal? state 0 token from (dec end))
+        (reader-decimal-value state 0 token end from negative)
+        (throw (suss.bootstrap/error "Invalid BigDecimal string"))))))
+(def bigdec
+  (fn [x]
+    (if (suss.bootstrap/decimal? x)
+      x
+      (if (suss.bootstrap/string? x)
+        (numeric-decimal-text x)
+        (if (suss.bootstrap/double? x)
+          (numeric-decimal-text (suss.bootstrap/coerce-string x))
+          (if (suss.bootstrap/number? x)
+            (suss.bootstrap/as-decimal x)
+            (throw (suss.bootstrap/error "bigdec requires a number or decimal string"))))))))

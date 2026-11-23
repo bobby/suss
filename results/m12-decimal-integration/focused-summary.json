@@ -1,0 +1,30 @@
+{
+  "gates": {
+    "decimal-and-abi": {
+      "test_targets": 6,
+      "passed": 49,
+      "failed": 0,
+      "ignored": 0
+    },
+    "numeric-inference": {
+      "test_targets": 11,
+      "passed": 36,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "behavior_controls": 228,
+  "independent_decimal_field_controls": 89,
+  "behavior_phases": [
+    "Runtime",
+    "Macro",
+    "CLI AOT"
+  ],
+  "field_phases": [
+    "Runtime",
+    "Macro"
+  ],
+  "observations": 862,
+  "full_workspace_execution": false,
+  "full_vendored_arithmetic_capture": false
+}

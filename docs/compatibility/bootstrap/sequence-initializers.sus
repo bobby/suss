@@ -362,3 +362,10 @@
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
+
+
+
+;; Original native MathContext integration. The getter uses the same dynamic
+;; Var lookup as source code; Runtime and Macro instances own separate roots.
+(def ^:dynamic *math-context* nil)
+(suss.bootstrap/decimal-context-getter-install (fn [] *math-context*))

@@ -1,0 +1,124 @@
+Running as unit: run-p2710654-i90772987.scope; invocation ID: 553d62fa631f427f8402040b8ce95ef4
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.70s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test decimal_equality_hash_order_case_and_signs_match_clojure ... FAILED
+
+failures:
+
+---- decimal_equality_hash_order_case_and_signs_match_clojure stdout ----
+
+thread 'decimal_equality_hash_order_case_and_signs_match_clojure' (2710851) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:78:5:
+Runtime case0: [(= 1M 1.0M) (= 1M 1.00M) (= 1M 1) (= 1M 1N) (= 1M 1.0) (= 0M 0.00M)]
+expected [true true false false false true]
+actual Ok("[false false false false false false]")
+Runtime case1: [(== 1M 1) (== 1M 1N) (== 1M 1.0) (== 0.5M 1/2) (== 1M 1/3)]
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Runtime case2: [(hash 0M) (hash 0.00M) (hash 1M) (hash 1.00M) (hash 1.50M) (hash -1.50M) (hash 123456789012345678901234567890.00M)]
+expected [0 0 31 31 466 -464 354583177]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Runtime case3: [(= 9007199254740992M 9007199254740993M) (< 9007199254740992M 9007199254740993M) (compare 9007199254740993M 9007199254740992M)]
+expected [false true 1]
+actual Ok("[false false 0]")
+Runtime case5: [(compare 0.50M 1/2) (< 0.25M 1/2) (> 1/2 0.25M)]
+expected [0 true true]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Runtime case6: (compare 1M 1/3)
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Runtime case7: (with-precision 3 [(== 1/3 0.333M) (= 1/3 0.333M) (compare 1/3 0.333M) (compare 0.333M 1/3)])
+expected [true false 0 0]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Runtime case8: (with-precision 2 [(= 1.234M 1.23M) (compare 1.234M 1.23M) (== 1.234M 1.23M) (hash 1.234M)])
+expected [false 1 false 38257]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Runtime case9: [(case 1.00M 1.0M :same :different) (case 1.00M 1.00M :same :different) (case 1M 1 :same :different)]
+expected [:different :same :different]
+actual Ok("[1.0M 1.00M :different]")
+Runtime case10: [(case 1.0M 1M :a 2M :b :none) (case 1M 1.0M :a 2M :b :none)]
+expected [:none :none]
+actual Ok("[1M 1.0M]")
+Runtime case11: [(compare 1E+2147483648M 1M) (compare 1E-2147483647M 0M) (compare -1E-2147483647M 0M) (= 0E+2147483648M 0E-2147483647M)]
+expected [1 1 -1 true]
+actual Ok("[1 0 0 false]")
+Runtime case12: [(hash 0E+2147483648M) (hash 1E+2147483648M) (hash 1E-2147483647M)]
+expected [0 -2147483617 -2147483618]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Runtime case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("(pr-str (try (hash (bigdec \"10E+2147483648\")) (catch :default e [:error (ex-message e)]))): Compile(Diagnostic { span: 20..26, message: \"Unresolved Runtime name bigdec\" })")
+Runtime case14: [(= 1.00000000000000000000000000000000000001M 1M) (> 1.00000000000000000000000000000000000001M 1M)]
+expected [false true]
+actual Ok("[false false]")
+Runtime case15: (count (hash-set 1M 1.0M 1.00M))
+expected 1
+actual Ok("3")
+Runtime case16: (get (hash-map 1.00M :decimal 1 :integer 1.0 :double) 1.0M)
+expected :decimal
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Runtime case18: [(pos? 1E-2147483647M) (neg? -1E-2147483647M) (zero? 1E-2147483647M) (zero? 0.00M)]
+expected [true true false true]
+actual Ok("[false false true true]")
+Macro case0: [(= 1M 1.0M) (= 1M 1.00M) (= 1M 1) (= 1M 1N) (= 1M 1.0) (= 0M 0.00M)]
+expected [true true false false false true]
+actual Ok("[false false false false false false]")
+Macro case1: [(== 1M 1) (== 1M 1N) (== 1M 1.0) (== 0.5M 1/2) (== 1M 1/3)]
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Macro case2: [(hash 0M) (hash 0.00M) (hash 1M) (hash 1.00M) (hash 1.50M) (hash -1.50M) (hash 123456789012345678901234567890.00M)]
+expected [0 0 31 31 466 -464 354583177]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Macro case3: [(= 9007199254740992M 9007199254740993M) (< 9007199254740992M 9007199254740993M) (compare 9007199254740993M 9007199254740992M)]
+expected [false true 1]
+actual Ok("[false false 0]")
+Macro case5: [(compare 0.50M 1/2) (< 0.25M 1/2) (> 1/2 0.25M)]
+expected [0 true true]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Macro case6: (compare 1M 1/3)
+expected [:error "Non-terminating decimal expansion; no exact representable decimal result."]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Macro case7: (with-precision 3 [(== 1/3 0.333M) (= 1/3 0.333M) (compare 1/3 0.333M) (compare 0.333M 1/3)])
+expected [true false 0 0]
+actual Ok("[:error \"bigint requires an integer operand\"]")
+Macro case8: (with-precision 2 [(= 1.234M 1.23M) (compare 1.234M 1.23M) (== 1.234M 1.23M) (hash 1.234M)])
+expected [false 1 false 38257]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Macro case9: [(case 1.00M 1.0M :same :different) (case 1.00M 1.00M :same :different) (case 1M 1 :same :different)]
+expected [:different :same :different]
+actual Ok("[1.0M 1.00M :different]")
+Macro case10: [(case 1.0M 1M :a 2M :b :none) (case 1M 1.0M :a 2M :b :none)]
+expected [:none :none]
+actual Ok("[1M 1.0M]")
+Macro case11: [(compare 1E+2147483648M 1M) (compare 1E-2147483647M 0M) (compare -1E-2147483647M 0M) (= 0E+2147483648M 0E-2147483647M)]
+expected [1 1 -1 true]
+actual Ok("[1 0 0 false]")
+Macro case12: [(hash 0E+2147483648M) (hash 1E+2147483648M) (hash 1E-2147483647M)]
+expected [0 -2147483617 -2147483618]
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Macro case13: (hash (bigdec "10E+2147483648"))
+expected [:error "Overflow"]
+actual Err("(pr-str (try (hash (bigdec \"10E+2147483648\")) (catch :default e [:error (ex-message e)]))): Compile(Diagnostic { span: 20..26, message: \"Unresolved Macro name bigdec\" })")
+Macro case14: [(= 1.00000000000000000000000000000000000001M 1M) (> 1.00000000000000000000000000000000000001M 1M)]
+expected [false true]
+actual Ok("[false false]")
+Macro case15: (count (hash-set 1M 1.0M 1.00M))
+expected 1
+actual Ok("3")
+Macro case16: (get (hash-map 1.00M :decimal 1 :integer 1.0 :double) 1.0M)
+expected :decimal
+actual Ok("[:error \"hash-number requires a number operand\"]")
+Macro case18: [(pos? 1E-2147483647M) (neg? -1E-2147483647M) (zero? 1E-2147483647M) (zero? 0.00M)]
+expected [true true false true]
+actual Ok("[false false true true]")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_equality_hash_order_case_and_signs_match_clojure
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.23s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

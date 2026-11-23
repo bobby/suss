@@ -1,0 +1,88 @@
+Running as unit: run-p2876793-i90933808.scope; invocation ID: 5debd9716b0b4a48a371c775612893a5
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.75s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 11 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+test subtraction_source_facts_survive_captures_loops_methods_and_macro_transport ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.49s
+
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test aot_executes_decimal_values_readers_and_classes ... ok
+test decimal_values_and_classes_execute_in_runtime_and_macro ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.22s
+
+     Running tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/decimal_values-0b1ee0880aac06d6)
+
+running 4 tests
+test decimal_helper_preserves_primary_scales_and_scratch_bounds ... ok
+test compiled_decimal_values_keep_unscaled_fields_scale_text_and_double_bits_after_gc ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s
+
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883)
+
+running 4 tests
+test artifacts_record_runtime_abi_12_and_prior_abis_are_rejected ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_comparator_foundations-9d9608346cb8bf1e)
+
+running 2 tests
+test private_comparator_adapters_require_one_operand_and_are_not_first_class ... ok
+test constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/portable_value_decoder.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_value_decoder-bdff15d92878dc0e)
+
+running 26 tests
+test canonical_identifiers_reject_malformed_namespaces_names_and_excessive_nesting ... ok
+test bigint_decoder_reads_exact_storage_after_gc_without_guest_printers ... ok
+test captured_decoder_rejects_foreign_and_reset_sessions_before_descriptor_access ... ok
+test chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values ... ok
+test decimal_decoder_rejects_mutable_owners_and_malformed_exact_coefficients ... ok
+test decoder_bounds_are_checked_before_string_traversal ... ok
+test collection_decoder_rejects_nominal_impostors_malformed_counts_and_missing_backing ... ok
+test decoder_rejects_unknown_sentinels_nulls_and_unboxed_values ... ok
+test identifier_decoder_retains_canonical_identity_through_gc_and_redefinition ... ok
+test indexed_sequences_and_map_entries_decode_actual_storage_after_gc ... ok
+test indexed_sequences_reject_invalid_offsets_and_storage ... ok
+test map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries ... ok
+test map_set_decoder_rejects_invalid_counts_flags_and_node_storage ... ok
+test persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_calls ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test ratio_decoder_reads_actual_exact_children_after_gc ... ok
+test scalar_decoder_preserves_bits_and_language_sentinels_after_gc ... ok
+test scalar_decoder_rejects_mutable_number_impostor ... ok
+test string_decoder_preserves_utf16_including_astral_and_lone_surrogates ... ok
+test string_decoder_rejects_immutable_utf16_array_impostor ... ok
+test unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors ... ok
+test set_decoder_preserves_nested_elements_and_nil_through_gc ... ok
+test vector_decoder_rejects_count_exceeding_trie_capacity ... ok
+test vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.19s
+

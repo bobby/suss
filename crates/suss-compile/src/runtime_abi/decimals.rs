@@ -1,10 +1,22 @@
 //! Original immutable decimal storage and scale-preserving conversion (#339).
 use super::*;
 use Instruction::*;
+mod arithmetic;
+mod addition;
+mod context;
+mod comparison;
 
 const DOUBLE_ROOT: u32 = MAP_ENTRY_DESCRIPTOR_GLOBAL + 2;
+const CONTEXT_ROOT: u32 = DOUBLE_ROOT + 1;
+const GETTER_ROOT: u32 = CONTEXT_ROOT + 1;
 
-pub(super) fn declare(b: &mut Builder) -> u32 {
+/// Decimal contagion applies before Ratio/BigInt, with Double still dominant.
+pub(super) fn pair(b: &Builder) -> Vec<Instruction<'static>> {
+    vec![LocalGet(0),Call(b.names["decimal-test"]),LocalGet(1),Call(b.names["decimal-test"]),I32Or,
+        LocalGet(0),Call(b.names["double-test"]),LocalGet(1),Call(b.names["double-test"]),I32Or,I32Eqz,I32And]
+}
+
+pub(super) fn declare(b: &mut Builder) -> (u32, u32) {
     b.function("decimal-test", &[VALUE], &[ValType::I32], &[
         LocalGet(0), RefTestNonNull(HeapType::Concrete(DECIMAL)),
     ]);
@@ -17,13 +29,27 @@ pub(super) fn declare(b: &mut Builder) -> u32 {
     b.function("decimal-double", &[VALUE], &[ValType::F64], &[
         LocalGet(0), GlobalGet(DOUBLE_ROOT), CallRef(ty),
     ]);
-    ty
+    let context_ty=b.next_type;
+    b.types.ty().function([], [ValType::I32,ValType::I32]);
+    b.next_type+=1;
+    b.function("decimal-context", &[], &[ValType::I32,ValType::I32], &[
+        GlobalGet(CONTEXT_ROOT),CallRef(context_ty),
+    ]);
+    context::registration(b);
+    (ty,context_ty)
 }
 
-pub(super) fn append_global(globals: &mut GlobalSection, ty: u32, function: u32) {
+pub(super) fn append_global(globals: &mut GlobalSection, ty: u32, function: u32,
+    context_ty: u32, context_function: u32) {
     assert_eq!(globals.len(), DOUBLE_ROOT);
     globals.global(GlobalType { val_type: reference(ty), mutable: false, shared: false },
         &ConstExpr::extended([RefFunc(function)]));
+    assert_eq!(globals.len(),CONTEXT_ROOT);
+    globals.global(GlobalType {val_type:reference(context_ty),mutable:false,shared:false},
+        &ConstExpr::extended([RefFunc(context_function)]));
+    assert_eq!(globals.len(),GETTER_ROOT);
+    globals.global(GlobalType {val_type:VALUE,mutable:true,shared:false},
+        &ConstExpr::ref_null(HeapType::Abstract {shared:false,ty:AbstractHeapType::Eq}));
 }
 
 /// Register after the checked integer casts used by the private reader constructor.
@@ -45,6 +71,8 @@ pub(super) fn constructor(b: &mut Builder) {
         RefCastNonNull(HeapType::Concrete(BIGINT)), LocalGet(2), I32WrapI64, StructNew(DECIMAL)]);
     b.function_with_locals("decimal-from-integer", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I64)], &make);
 }
+pub(super) fn context_constructor(b: &mut Builder) { context::constructor(b); }
+pub(super) fn late_functions(b: &mut Builder) { context::reader(b); }
 
 pub(super) fn functions(b: &mut Builder, helper: numeric::Info) -> u32 {
     let reserve = b.names["numeric-reserve"];
@@ -91,7 +119,11 @@ pub(super) fn functions(b: &mut Builder, helper: numeric::Info) -> u32 {
         I32Const(helper.stack_top), GlobalSet(helper.stack_global),
         LocalGet(3), LocalGet(2), Call(helper.parse),
     ];
-    b.function_with_locals("decimal-double-impl", &[VALUE], &[ValType::F64], &[
+    let double=b.function_with_locals("decimal-double-impl", &[VALUE], &[ValType::F64], &[
         (1, VALUE), (3, ValType::I32),
-    ], &code)
+    ], &code);
+    context::string(b);
+    arithmetic::functions(b);
+    comparison::functions(b);
+    double
 }

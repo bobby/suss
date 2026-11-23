@@ -1,0 +1,73 @@
+{
+  "exe_sha256": "2349053843c987a5ec593f89362b603ed90c3352c4d29c0f66ce078403239e73",
+  "rows": [
+    {
+      "source": "(with-precision 3 42)",
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=4G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+        "-e",
+        "(with-precision 3 42)"
+      ],
+      "exit_code": 0,
+      "stdout": "42\n",
+      "stderr": "Running as unit: run-p2677645-i90748786.scope; invocation ID: 28826998707d4f968913bafc5f0fa20e\n"
+    },
+    {
+      "source": "(with-precision 3 (pr-str (/ 1M 3)))",
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=4G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+        "-e",
+        "(with-precision 3 (pr-str (/ 1M 3)))"
+      ],
+      "exit_code": 0,
+      "stdout": "\"0.333M\"\n",
+      "stderr": "Running as unit: run-p2678289-i90724851.scope; invocation ID: 40fc5c2986d14619a58eb3b2e9f45db2\n"
+    },
+    {
+      "source": "(with-precision 3 (str *math-context*))",
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=4G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+        "-e",
+        "(with-precision 3 (str *math-context*))"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Running as unit: run-p2678379-i90724861.scope; invocation ID: 4b5d99fea03b440bb7ec817a665cf0bd\nError: Uncaught language exception: Invalid nominal operation\n"
+    },
+    {
+      "source": "(str (suss.bootstrap/math-context-new 3 4))",
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=4G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/suss",
+        "-e",
+        "(str (suss.bootstrap/math-context-new 3 4))"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Running as unit: run-p2678452-i90720667.scope; invocation ID: e0c767bf2bcb4f75bb2cc46ae41191c9\nError: Uncaught language exception: Invalid nominal operation\n"
+    }
+  ]
+}

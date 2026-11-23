@@ -1,3 +1,84 @@
+## Subtraction overload and independent Decimal observations (2026-11-23)
+
+The isolated arithmetic checkout extends source numeric overload facts from
+binary division to subtraction. Source long/long and source floating overloads
+retain direct checked/promoting/unchecked subtraction. Object subtraction first
+negates in the right operand's category, then adds: Decimal context rounding,
+Ratio conversion order, Long.MIN_VALUE overflow/promotion/wrapping and signed
+zero remain observable. Raw numeric locals keep their successful allocation-free
+path; boxed long fast paths reject a checked MIN right operand. Physical storage
+inference does not select a source overload. Unchecked Decimal negation keeps
+its Decimal type and context.
+
+results/m12-decimal-integration/after-subtraction-overload-dispatch.json records
+six tests passing, with196 fresh JVM controls in each phase. The expanded
+run-gates.py after-macro-setup run passes all five commands with frozen sources:
+Decimal/ABI tests, numeric inference/optimization tests, compilation of all
+workspace test targets and both import/source manifests. The current228 behavior
+controls execute in Runtime, Macro and actual CLI AOT; another89 controls compare
+independently decoded coefficients and scales after GC in both phases. These
+include captured primitive/boxed values, loop reanalysis, hinted methods, macro
+transport, evaluation order and all three subtraction families. Initial macro
+fixture/setup errors and all before-change failures remain in the receipts.
+The native decoder rejects mutable Decimal owner layouts and malformed exact
+coefficients. ABI tests now require12 and reject11, preserving their strict
+call-entry, allocation and shared-layout guards.
+
+The suite observer now anchors the canonical Decimal type and reads its immutable
+BigInt coefficient and signed32-bit scale. The comparator requires both actual
+fields to match each primary operand, including zero scale and trailing zeros;
+it does not normalize observations using user-visible equality. The fresh strict
+comparator regression fails before the change and passes afterward. The complete
+vendored capture and full workspace execution still need fresh results. Fresh
+JVM conversion probes also record checked versus unchecked Decimal narrowing;
+these are primary controls, not a claim of Suss cast acceptance. The original
+arithmetic worktree and user checkout remain untouched. No issue or milestone
+completion follows from these scoped probes; remaining criteria stay on GitHub.
+
+## Exact Decimal arithmetic and context probes (2026-11-23)
+
+An isolated checkout based onf36cc934 combines the preserved arithmetic source
+with the exact reader/class/ABI repair. Original dirty arithmetic files and the
+user checkout are untouched. The prototype appends immutable precision/mode
+MathContext fields as ABI12; each phase's installed getter reads its ordinary
+dynamic Var frame. Native arithmetic uses owned BigInt coefficients and checked
+signed32-bit scales. The adapted Clojure1.12.6 with-precision macro retains its
+EPL notice and exact source/JAR/form hashes. No shipped Java dependency is added.
+
+results/m12-decimal-integration/run.py before-precision-fix terminates101;
+context binding and division work but public str dispatch rejects MathContext.
+A native private predicate lets the public str adapter reach its existing exact
+formatter. after-context-string-fix terminates0: the original56 fresh JVM
+arithmetic/context controls execute in both phases, with source hashes frozen.
+All eight rounding modes, non-terminating division, preferred scales, scale
+bounds, nested bindings and exception restoration are retained.
+
+The original comparison target records17 failing controls per phase, including
+an unresolved bigdec. Native Decimal comparison now uses coefficient precision
+and adjusted exponents before bounded scale alignment. Hasheq strips trailing
+zeros without mutating values and uses the independent BigInteger word hash;
+case retains coefficient/scale identity. Sign predicates no longer unbox tiny
+Decimals to zero. Public bigdec shares the checked exact string parser, uses
+canonical Double text and converts integer/Ratio fields with the dynamic context.
+A leading decimal point requires a real original digit. The fresh14 conversion
+and19 equality/hash/order/case/sign controls pass in both phases in
+run.py after-bigdec-leading-dot-fix, terminal0, with frozen inputs unchanged.
+These are string/behavior observations; independent suite Decimal decoding,
+AOT, casts and complete workspace acceptance remain required.
+
+Additional JVM controls expose non-equivalent subtraction staging and source
+versus boxed overloads. before-subtraction-overload-fix records eight mismatches
+per phase; no expected value is changed to Suss output. The additional22-control
+fixture also records huge-exponent finite-precision fuel exhaustion. A bounded
+signed sticky digit below both the existing coefficient and rounding position
+now preserves the distant-addend result without enormous powers of ten.
+after-bounded-addition still terminates101 on seven subtraction/unchecked-negate
+controls per phase; all distant positive-addition controls match. Original
+failures, source/JAR hashes and JVM21.0.13 outputs remain. The complete arithmetic
+criteria and precise subtraction requirements are tracked on the linked issues,
+not inferred from these scoped results. Use stable Rust, two jobs/threads,
+MemoryMax4G and isolated m12-decimal-target. No fuel limits or count guards change.
+
 ## Decimal reader and ABI integration probes (2026-11-22)
 
 The isolated CI repair source replays the two published Decimal commits onto

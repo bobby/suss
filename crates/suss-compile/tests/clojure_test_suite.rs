@@ -6,7 +6,7 @@
 //! `clojure.test` and portability requires to the harness namespaces; nothing
 //! else in the vendored sources changes. Each assertion's raw values are decoded
 //! independently on the host, and scripts/clojure_test_suite.py compares them
-//! with the pinned ClojureScript oracle reference and the reviewed known-failure
+//! with the pinned Clojure 1.12.6 oracle reference and the reviewed known-failure
 //! baseline. Guest equality or printing never decides a result. A namespace that
 //! cannot load is a recorded failure for all of its assertions, never a skip.
 #![cfg(not(target_family = "wasm"))]
@@ -239,6 +239,7 @@ fn tagged(value: &Observation) -> Value {
         Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
+        Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator, denominator) => json!({"tag":"ratio", "numerator":numerator, "denominator":denominator}),
         Observation::String(value) => units(value),
         Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {

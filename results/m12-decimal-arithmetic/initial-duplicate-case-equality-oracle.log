@@ -1,0 +1,15 @@
+"[true true false false false true]"
+"[:error \"Non-terminating decimal expansion; no exact representable decimal result.\"]"
+"[0 0 31 31 466 -464 354583177]"
+"[false true 1]"
+"[1 -1 -1 0]"
+"[0 true true]"
+"[:error \"Non-terminating decimal expansion; no exact representable decimal result.\"]"
+"[true false 0 0]"
+"[false 1 false 38257]"
+"[:different :same :different]"
+Syntax error macroexpanding case at (results/m12-decimal-arithmetic/equality-oracle.clj:12:32).
+Duplicate case test constant: 1.0
+
+Full report at:
+/tmp/clojure-11844722802069565922.edn

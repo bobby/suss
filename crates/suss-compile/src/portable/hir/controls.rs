@@ -68,7 +68,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
-                    kind: std::sync::Arc::new(Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands(), division_primitives: vec![] }),
+                    kind: std::sync::Arc::new(Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands(), primitive_overloads: vec![] }),
                 })
             }
             ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {

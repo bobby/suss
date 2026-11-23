@@ -654,7 +654,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
                         operator: Arithmetic::Subtract,
                         arguments: vec![ValueId(3), ValueId(4)],
                         coercing: false,
-                        division_primitive: false,
+                        primitive_overload: false,
                     },
                     span: 0..1,
                 }],
@@ -705,6 +705,7 @@ fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
             ).unwrap();
             return match decoder.decode(&mut store.as_context_mut(), value).unwrap() {
                 portable_decode::Observation::BigInt(value) => serde_json::json!({"tag":"bigint","value":value}),
+                portable_decode::Observation::Decimal { unscaled, scale } => serde_json::json!({"tag":"decimal","unscaled":unscaled,"scale":scale}),
                 portable_decode::Observation::Ratio(numerator, denominator) =>
                     serde_json::json!({"tag":"ratio","numerator":numerator,"denominator":denominator}),
                 other => panic!("unknown numeric GC object layout: {other:?}"),
@@ -964,7 +965,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
                 })
                 .collect(),
             coercing: false,
-            division_primitives: vec![],
+            primitive_overloads: vec![],
         }),
     };
     let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();

@@ -302,11 +302,14 @@ pub(super) fn relation(
         If(BlockType::Result(ValType::I32)), LocalGet(0), LocalGet(1), Call(b.names["integer-compare"]),
         I32Const(0), small_relation(&exact), Else,
     ]);
+    code.extend(decimals::pair(b));
+    code.extend([If(BlockType::Result(ValType::I32)), LocalGet(0), LocalGet(1),
+        Call(b.names["decimal-compare"]), I32Const(0), small_relation(&exact), Else]);
     code.extend(ratios::pair(b));
     code.extend([If(BlockType::Result(ValType::I32)), LocalGet(0), LocalGet(1), Call(b.names["fraction-compare"]),
         I32Const(0), small_relation(&exact), Else,
         LocalGet(0), Call(number), LocalGet(1), Call(number), floating,
-        End, End, End, End,
+        End, End, End, End, End,
     ]);
     code
 }
@@ -337,6 +340,9 @@ pub(super) fn long_arithmetic_fast_path(add: bool, x: u32, y: u32, r: u32) -> Ve
         code.extend([LocalGet(x), LocalGet(y), I64Add, LocalTee(r), LocalGet(x), I64Xor,
             LocalGet(y), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]);
     } else {
+        // Boxed Numbers.minus negates the right long before addition. MIN
+        // must take that path even when the mathematical difference fits.
+        code.extend([LocalGet(y), I64Const(i64::MIN), I64Eq, BrIf(0)]);
         code.extend([LocalGet(x), LocalGet(y), I64Sub, LocalTee(r), LocalGet(x), LocalGet(y), I64Xor,
             LocalGet(x), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]);
     }
@@ -476,6 +482,8 @@ pub(super) fn arithmetic(b: &mut Builder) {
         code.extend(throw("long overflow"));
         code.extend([End, LocalGet(4), Call(boxed), Return, End]);
         let tail = code.len();
+        code.extend(decimals::pair(b));
+        code.extend([If(BlockType::Empty),LocalGet(0),LocalGet(1),Call(b.names[&format!("decimal-{name}")]),Return,End]);
         code.extend(ratios::pair(b));
         code.extend([If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names[&format!("fraction-{name}")]), Return, End]);
         code.extend([
@@ -492,8 +500,9 @@ pub(super) fn arithmetic(b: &mut Builder) {
             match name { "add" => "+'", "subtract" => "-'", "multiply" => "*'", _ => unreachable!() }, 2);
         checked_promoting.extend(promoting);
         let promoting = checked_promoting;
-        b.function_with_locals(&format!("number-{name}"), &[VALUE, VALUE], &[VALUE], &locals, &code);
-        b.function_with_locals(&format!("number-promote-{name}"), &[VALUE, VALUE], &[VALUE], &locals, &promoting);
+        let suffix = if name == "subtract" { "-primitive" } else { "" };
+        b.function_with_locals(&format!("number-{name}{suffix}"), &[VALUE, VALUE], &[VALUE], &locals, &code);
+        b.function_with_locals(&format!("number-promote-{name}{suffix}"), &[VALUE, VALUE], &[VALUE], &locals, &promoting);
     }
     // Two ordinary longs retain Long when exact. MIN operands use the
     // arbitrary-precision route, matching Clojure's LongOps division.
@@ -503,7 +512,9 @@ pub(super) fn arithmetic(b: &mut Builder) {
     code.extend([End, LocalGet(2), I64Const(i64::MIN), I64Ne,
         LocalGet(3), I64Const(i64::MIN), I64Ne, I32And, If(BlockType::Empty),
         LocalGet(2), LocalGet(3), I64RemS, I64Eqz, If(BlockType::Empty),
-        LocalGet(2), LocalGet(3), I64DivS, Call(boxed), Return, End, End, End,
+        LocalGet(2), LocalGet(3), I64DivS, Call(boxed), Return, End, End, End]);
+    code.extend(decimals::pair(b));
+    code.extend([If(BlockType::Empty),LocalGet(0),LocalGet(1),Call(b.names["decimal-divide"]),Return,End,
         LocalGet(0), Call(b.names["double-test"]), LocalGet(1), Call(b.names["double-test"]), I32Or, I32Eqz,
         If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(b.names["fraction-divide"]), Return, End]);
     code.extend(floating(F64Div));
@@ -528,6 +539,7 @@ pub(super) fn arithmetic(b: &mut Builder) {
         Call(boxed),
         Return,
         End,
+        LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["decimal-negate"]), Return, End,
         LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["ratio-negate"]), Return, End,
         LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
         LocalGet(0), Call(b.names["bigint-negate"]), Return, End,
@@ -741,6 +753,10 @@ pub(super) fn functions(b: &mut Builder) {
     let operands = |b: &Builder, symbol: &str| {
         let mut code = Vec::new();
         super::numeric_operands::require_numbers(b, &mut code, symbol, 2);
+        code.extend(decimals::pair(b));
+        code.extend([If(BlockType::Empty),LocalGet(0),LocalGet(1),
+            Call(b.names[match symbol {"quot"=>"decimal-quot","rem"=>"decimal-rem",
+                "unchecked-add"=>"decimal-add","unchecked-subtract"=>"decimal-subtract","unchecked-multiply"=>"decimal-multiply",_=>unreachable!()}]),Return,End]);
         code.extend(ratios::pair(b));
         code.extend([If(BlockType::Empty), LocalGet(0), LocalGet(1),
             Call(b.names[match symbol { "quot"=>"fraction-quot", "rem"=>"fraction-rem",
@@ -862,6 +878,7 @@ pub(super) fn functions(b: &mut Builder) {
     let mut checked = Vec::new();
     super::numeric_operands::require_numbers(b, &mut checked, "abs", 1);
     checked.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["bigint-abs"]), Return, End,
+        LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["decimal-abs"]), Return, End,
         LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["ratio-abs"]), Return, End]);
     checked.extend(code);
     b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &checked);
@@ -882,7 +899,7 @@ pub(super) fn functions(b: &mut Builder) {
             StructNew(NUMBER),
         ]);
         b.function_with_locals(
-            &format!("number-unchecked-{name}"),
+            &format!("number-unchecked-{name}{}", if name == "subtract" { "-primitive" } else { "" }),
             &[VALUE, VALUE],
             &[VALUE],
             &locals,
@@ -901,6 +918,8 @@ pub(super) fn functions(b: &mut Builder) {
         Else,
         LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
         LocalGet(0), Call(b.names["bigint-negate"]), Return, End,
+        LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["decimal-negate"]), Return, End,
         LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
         LocalGet(0), Call(b.names["ratio-negate"]), Return, End,
         LocalGet(0),
@@ -1102,7 +1121,8 @@ fn hash(b: &mut Builder) {
     // Local 1 is the long or the double's bits, local 2 the hash. A long, an
     // i31 or a boxed one, is read inline, with no long-test or long-unbox
     // call (#387).
-    let mut code = vec![LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["ratio-hash"]), Return, End,
+    let mut code = vec![LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["decimal-hash"]), Return, End,
+        LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty), LocalGet(0), Call(b.names["ratio-hash"]), Return, End,
         LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
         LocalGet(0), Call(b.names["bigint-hash"]), Return, End,
         LocalGet(0),
@@ -1353,4 +1373,22 @@ pub(super) fn parse(b: &mut Builder) {
         ],
         &code,
     );
+}
+
+/// Object subtraction dispatches negation on the right operand first. Keep
+/// this separate from source primitive overloads: context rounding, promotion,
+/// unchecked long wrapping and signed zero are observable at that stage.
+/// Original Suss implementation of Clojure 1.12.6 Numbers.minus semantics.
+pub(super) fn boxed_subtractions(b: &mut Builder) {
+    use Instruction::*;
+    for (name, negate, add, symbol) in [
+        ("number-subtract", "number-negate", "number-add", "-"),
+        ("number-promote-subtract", "number-promote-negate", "number-promote-add", "-'"),
+        ("number-unchecked-subtract", "number-unchecked-negate", "number-unchecked-add", "unchecked-subtract"),
+    ] {
+        let mut code = Vec::new();
+        numeric_operands::require_numbers(b, &mut code, symbol, 2);
+        code.extend([LocalGet(0), LocalGet(1), Call(b.names[negate]), Call(b.names[add])]);
+        b.function(name, &[VALUE, VALUE], &[VALUE], &code);
+    }
 }

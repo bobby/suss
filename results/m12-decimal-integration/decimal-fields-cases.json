@@ -1,0 +1,447 @@
+[
+  {
+    "source": "0M",
+    "unscaled": "0",
+    "scale": 0
+  },
+  {
+    "source": "0.00M",
+    "unscaled": "0",
+    "scale": 2
+  },
+  {
+    "source": "1.50M",
+    "unscaled": "150",
+    "scale": 2
+  },
+  {
+    "source": "-184467440737095516170.0020M",
+    "unscaled": "-1844674407370955161700020",
+    "scale": 4
+  },
+  {
+    "source": "1E+2147483648M",
+    "unscaled": "1",
+    "scale": -2147483648
+  },
+  {
+    "source": "1E-2147483647M",
+    "unscaled": "1",
+    "scale": 2147483647
+  },
+  {
+    "source": "0E+2147483648M",
+    "unscaled": "0",
+    "scale": -2147483648
+  },
+  {
+    "source": "(* 1.5M 2)",
+    "unscaled": "30",
+    "scale": 1
+  },
+  {
+    "source": "(/ 1M 32M)",
+    "unscaled": "3125",
+    "scale": 5
+  },
+  {
+    "source": "(quot 5.00M 2.0M)",
+    "unscaled": "20",
+    "scale": 1
+  },
+  {
+    "source": "(rem 5.00M 2.0M)",
+    "unscaled": "100",
+    "scale": 2
+  },
+  {
+    "source": "(bigdec \"184467440737095516170.0020\")",
+    "unscaled": "1844674407370955161700020",
+    "scale": 4
+  },
+  {
+    "source": "(bigdec 0.1)",
+    "unscaled": "1",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 3 (/ 1M 3M))",
+    "unscaled": "333",
+    "scale": 3
+  },
+  {
+    "source": "(with-precision 3 (* 1234M 56.78M))",
+    "unscaled": "701",
+    "scale": -2
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 1M 1E-1000000M))",
+    "unscaled": "11",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ -1M 1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 1M -1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ -1M -1E-1000000M))",
+    "unscaled": "-11",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 1.25M 0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 1.25M -0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ -1.25M 0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ -1.25M -0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 0.00M 1.2345M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding UP (+ 1.2345M 0.00M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 1M 1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ -1M 1E-1000000M))",
+    "unscaled": "-99",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 1M -1E-1000000M))",
+    "unscaled": "99",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ -1M -1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 1.25M 0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 1.25M -0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ -1.25M 0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ -1.25M -0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 0.00M 1.2345M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding DOWN (+ 1.2345M 0.00M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 1M 1E-1000000M))",
+    "unscaled": "11",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ -1M 1E-1000000M))",
+    "unscaled": "-99",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 1M -1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ -1M -1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 1.25M 0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 1.25M -0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ -1.25M 0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ -1.25M -0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 0.00M 1.2345M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (+ 1.2345M 0.00M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 1M 1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ -1M 1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 1M -1E-1000000M))",
+    "unscaled": "99",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ -1M -1E-1000000M))",
+    "unscaled": "-11",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 1.25M 0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 1.25M -0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ -1.25M 0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ -1.25M -0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 0.00M 1.2345M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding FLOOR (+ 1.2345M 0.00M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 1M 1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ -1M 1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 1M -1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ -1M -1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 1.25M 0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 1.25M -0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ -1.25M 0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ -1.25M -0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 0.00M 1.2345M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_UP (+ 1.2345M 0.00M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 1M 1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ -1M 1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 1M -1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ -1M -1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 1.25M 0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 1.25M -0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ -1.25M 0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ -1.25M -0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 0.00M 1.2345M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_DOWN (+ 1.2345M 0.00M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 1M 1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ -1M 1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 1M -1E-1000000M))",
+    "unscaled": "10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ -1M -1E-1000000M))",
+    "unscaled": "-10",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 1.25M 0.000001M))",
+    "unscaled": "13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 1.25M -0.000001M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ -1.25M 0.000001M))",
+    "unscaled": "-12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ -1.25M -0.000001M))",
+    "unscaled": "-13",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 0.00M 1.2345M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding HALF_EVEN (+ 1.2345M 0.00M))",
+    "unscaled": "12",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 3 :rounding UNNECESSARY (+ 1.00M 0.00M))",
+    "unscaled": "100",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 (- 1M 1.234M))",
+    "unscaled": "-2",
+    "scale": 1
+  },
+  {
+    "source": "(with-precision 2 :rounding CEILING (- 1M 1/3))",
+    "unscaled": "67",
+    "scale": 2
+  },
+  {
+    "source": "(with-precision 2 (- 1/3 1.234M))",
+    "unscaled": "-87",
+    "scale": 2
+  }
+]

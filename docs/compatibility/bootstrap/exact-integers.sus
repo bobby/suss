@@ -2218,3 +2218,40 @@
 ;; Original capability adapter: classes are not IFn values, while functions
 ;; and values implementing the portable invocation protocol are callable.
 (def ifn? (fn [x] (or (fn? x) (satisfies? IFn x))))
+
+
+;; Original Suss conversion using the reader's checked exact coefficient/scale
+;; parser. BigDecimal string construction also accepts a leading decimal point;
+;; adding its implicit zero leaves every coefficient digit and scale intact.
+(def ^:private numeric-decimal-text
+  (fn [s]
+    (let [n (.-length s)
+          c (if (< 0 n) (.charCodeAt s 0) 0)
+          negative (== c 45)
+          from (if (or negative (== c 43)) 1 0)
+          s (if (and (< from n) (== (.charCodeAt s from) 46))
+              (if (and (< (inc from) n)
+                       (<= 48 (.charCodeAt s (inc from)))
+                       (<= (.charCodeAt s (inc from)) 57))
+                (suss.bootstrap/concat-string
+                  (suss.bootstrap/concat-string (suss.bootstrap/string-slice s 0 from) "0")
+                  (suss.bootstrap/string-slice s from n))
+                (throw (suss.bootstrap/error "Invalid BigDecimal string")))
+              s)
+          token (suss.bootstrap/concat-string s "M")
+          end (.-length token)
+          state (reader-state token false nil nil nil nil)]
+      (if (reader-decimal? state 0 token from (dec end))
+        (reader-decimal-value state 0 token end from negative)
+        (throw (suss.bootstrap/error "Invalid BigDecimal string"))))))
+(def bigdec
+  (fn [x]
+    (if (suss.bootstrap/decimal? x)
+      x
+      (if (suss.bootstrap/string? x)
+        (numeric-decimal-text x)
+        (if (suss.bootstrap/double? x)
+          (numeric-decimal-text (suss.bootstrap/coerce-string x))
+          (if (suss.bootstrap/number? x)
+            (suss.bootstrap/as-decimal x)
+            (throw (suss.bootstrap/error "bigdec requires a number or decimal string"))))))))

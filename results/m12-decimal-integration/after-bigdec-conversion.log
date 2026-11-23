@@ -1,0 +1,30 @@
+Running as unit: run-p2757519-i90803066.scope; invocation ID: 1f002bdbaf724bbf85c90215d50d6e36
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-arithmetic-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 56s
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 1 test
+test decimal_bigdec_conversions_match_clojure ... FAILED
+
+failures:
+
+---- decimal_bigdec_conversions_match_clojure stdout ----
+
+thread 'decimal_bigdec_conversions_match_clojure' (2762362) panicked at crates/suss-cli/tests/clojure_decimal_arithmetic.rs:47:5:
+Runtime case10: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) ["" "." "-" "-." "1e" "1E-2147483648" "1E2147483649" "0x10"])
+expected [true true true true true true true true]
+actual Ok("[true false true false true true true true]")
+Macro case10: (mapv (fn [x] (try (bigdec x) false (catch Throwable _ true))) ["" "." "-" "-." "1e" "1E-2147483648" "1E2147483649" "0x10"])
+expected [true true true true true true true true]
+actual Ok("[true false true false true true true true]")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    decimal_bigdec_conversions_match_clojure
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 32.65s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_decimal_arithmetic`

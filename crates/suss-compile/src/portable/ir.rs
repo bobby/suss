@@ -89,8 +89,8 @@ pub enum Operation {
         arguments: Vec<ValueId>,
         /// JavaScript coercion for shipped core; checked Numbers otherwise.
         coercing: bool,
-        /// A source double overload, never inferred from physical storage.
-        division_primitive: bool,
+        /// A source numeric overload, never inferred from physical storage.
+        primitive_overload: bool,
     },
 }
 #[derive(Debug, Clone)]
@@ -1018,14 +1018,14 @@ impl<'a> Lowerer<'a> {
                 operator,
                 arguments,
                 coercing,
-                division_primitives,
+                primitive_overloads,
             } => {
-                if !division_primitives.is_empty()
-                    && (*operator != Arithmetic::Divide || *coercing
-                        || division_primitives.len() != arguments.len().saturating_sub(1))
+                if !primitive_overloads.is_empty()
+                    && (!matches!(operator, Arithmetic::Divide | Arithmetic::Subtract) || *coercing
+                        || primitive_overloads.len() != arguments.len().saturating_sub(1))
                 {
                     return Err(Diagnostic { span: hir.span.clone(),
-                        message: "HIR division overload shape mismatch".into() });
+                        message: "HIR numeric overload shape mismatch".into() });
                 }
                 // Public HIR can represent Negate directly or malformed call arities.
                 if (*operator == Arithmetic::Negate && arguments.len() != 1)
@@ -1052,7 +1052,7 @@ impl<'a> Lowerer<'a> {
                         result = self.emit(Operation::Arithmetic {
                             operator: *operator, arguments: vec![result, next],
                             coercing: *coercing,
-                            division_primitive: division_primitives.get(index).copied().unwrap_or(false),
+                            primitive_overload: primitive_overloads.get(index).copied().unwrap_or(false),
                         }, ty, hir.span.clone())?;
                     }
                     return Ok(Some(result));
@@ -1077,7 +1077,7 @@ impl<'a> Lowerer<'a> {
                                 operator: *operator,
                                 arguments: values,
                                 coercing: false,
-                                division_primitive: false,
+                                primitive_overload: false,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -1091,7 +1091,7 @@ impl<'a> Lowerer<'a> {
                                 operator: Arithmetic::Negate,
                                 arguments: values,
                                 coercing: *coercing,
-                                division_primitive: false,
+                                primitive_overload: false,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -1104,7 +1104,7 @@ impl<'a> Lowerer<'a> {
                                 operator: *operator,
                                 arguments: vec![one, result],
                                 coercing: *coercing,
-                                division_primitive: false,
+                                primitive_overload: false,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -1129,7 +1129,7 @@ impl<'a> Lowerer<'a> {
                             operator: *operator,
                             arguments: vec![result, *value],
                             coercing: *coercing,
-                            division_primitive: division_primitives.get(index).copied().unwrap_or(false),
+                            primitive_overload: primitive_overloads.get(index).copied().unwrap_or(false),
                         },
                         ty,
                         hir.span.clone(),
@@ -1427,7 +1427,7 @@ fn loop_safe(operation: &Operation) -> bool {
             use super::hir::Nominal as N;
             matches!(
                 operation,
-                N::DecimalNew | N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                N::IsMathContext | N::DecimalNew | N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
@@ -1974,10 +1974,10 @@ fn verify_function_inner(
                     operator,
                     arguments,
                     coercing,
-                    division_primitive,
+                    primitive_overload,
                 } => {
-                    if *division_primitive && (*operator != Arithmetic::Divide || *coercing) {
-                        return Err(fail("IR source division overload mismatch"));
+                    if *primitive_overload && (!matches!(operator, Arithmetic::Divide | Arithmetic::Subtract) || *coercing) {
+                        return Err(fail("IR source numeric overload mismatch"));
                     }
                     let arity = match operator {
                         Arithmetic::Negate => 1..=1,

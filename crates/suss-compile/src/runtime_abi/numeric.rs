@@ -549,6 +549,8 @@ pub(super) fn intrinsics(
         LocalGet(0), ReturnCall(b.names["ratio-string"]), End]);
     to_string.extend([LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty),
         LocalGet(0), ReturnCall(b.names["decimal-string"]), End]);
+    to_string.extend([LocalGet(0),RefTestNonNull(HeapType::Concrete(MATH_CONTEXT)),If(BlockType::Empty),
+        LocalGet(0),ReturnCall(b.names["decimal-context-string"]),End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),

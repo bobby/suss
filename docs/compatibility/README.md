@@ -1485,3 +1485,35 @@ and class cases. Arithmetic, MathContext/with-precision, equality/hash/order,
 casts, bigdec and scale-sensitive case behavior remain gaps. Existing numeric
 fallbacks can still narrow Decimal to Double. This evidence does not establish
 complete Decimal semantics or alter the inventory's declaration counts.
+
+
+## Decimal arithmetic and context observations
+
+The ABI12 prototype adds immutable MathContext precision/mode fields and reads
+ordinary dynamic binding frames through a phase-owned native getter. The exact
+integer kernels support Decimal arithmetic and all eight rounding modes. The
+public str adapter recognizes MathContext; with-precision's EPL/source provenance
+and original bigdec conversion provenance are recorded under bootstrap.
+
+`results/m12-decimal-integration` retains56 fresh JVM arithmetic/context controls
+passing in both phases, and14 conversion plus19 equality/hash/order/case/sign
+controls passing in both phases. Decimal comparison avoids binary64 for non-Double
+pairs, hasheq ignores trailing zeros, and case preserves scale. Distant finite-
+precision addition uses a bounded sticky digit. Original failures and unchanged
+input hashes remain recorded. This does not certify the full numeric contract:
+subtraction overload/staging regressions, casts, independent suite Decimal
+observation, actual arithmetic AOT and complete acceptance remain required.
+
+### Decimal subtraction and field observation probes
+
+Source numeric overload facts preserve primitive versus boxed subtraction across
+captures, loops and macro transport. Boxed checked, promoting and unchecked
+operations negate the right operand in its original category before addition.
+The scoped integration receipts execute228 fresh JVM behavior controls in both
+phases and actual AOT, plus89 independently decoded coefficient/scale controls
+after GC in both phases. Strict suite observation comparison now preserves both
+Decimal fields, including preferred scale; malformed coefficients and mutable
+owner impostors are rejected. Existing numeric inference, box reuse, capture,
+primitive method and i31 regressions pass. The complete vendored capture, full
+workspace execution and Decimal cast acceptance still need fresh results. See
+`results/m12-decimal-integration/` for original failures and source-qualified runs.
