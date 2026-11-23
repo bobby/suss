@@ -136,6 +136,19 @@ fn partial_macro_import_failure_recovers_source_identities_and_emission_reuse() 
         "(ns b (:require [a])) (throw (suss.bootstrap/error \"later initializer failed\")) (def value (fn [] (a/value)))").unwrap();
     std::fs::write(root.path().join("app.sus"),
         "(ns app (:require [b])) (defmacro result [] (b/value)) (def value (result))").unwrap();
+    // Observe A's original identity from a successful, independent source
+    // load; a repair must retain this identity even after A's file changes.
+    std::fs::write(root.path().join("identity_probe.sus"),
+        "(ns identity-probe (:require [a])) (defmacro result [] (a/value)) (def value (result))").unwrap();
+    let original_a_identity = {
+        let mut witness = Session::new_repl_with_options(SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
+        }).unwrap();
+        let mut witness_macros = CompiledMacros::new().unwrap();
+        witness.load_namespace_with_macros("identity-probe", &mut witness_macros).unwrap();
+        witness_macros.artifact_dependencies().unwrap().into_iter()
+            .find(|(name, _)| name == "module:a").unwrap().1
+    };
     let mut session = Session::new_repl_with_options(SessionOptions {
         source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
     }).unwrap();
@@ -159,6 +172,8 @@ fn partial_macro_import_failure_recovers_source_identities_and_emission_reuse() 
         assert!(dependencies.iter().any(|(actual, identity)| actual == name && identity.len() == 64),
             "missing initialized dependency {name}: {dependencies:?}");
     }
+    assert_eq!(dependencies.iter().find(|(name, _)| name == "module:a").unwrap().1,
+        original_a_identity, "retain the initialized source, not A's changed file");
     assert_eq!(value(&mut session, &mut macros, "(app/result)"), "1");
     let before = macros.artifact_cache_stats();
     assert_eq!(value(&mut session, &mut macros, "(app/result)"), "1");
