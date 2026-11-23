@@ -1,0 +1,21 @@
+[
+  {
+    "before": "complete-gates",
+    "after": "class-ast-gates",
+    "changed_inputs": {
+      "crates/suss-cli/tests/analyzer_edn.rs": {
+        "before": "04bce20eb84e44eac07891508728622cf901e42ac0f5adbba5814d10a7b4fd52",
+        "after": "297c61580e51384188bf90fd15628974d37ba1ecad44ae45a9509b18e7b31d9c"
+      },
+      "crates/suss-compile/src/portable/analyzer_edn.rs": {
+        "before": "743781b1b5dc130eb7228cc77c2e98aa1c98b07baea04025b63a90ac471d0bac",
+        "after": "6e171b2b3fe458b6539415ef3068427728229ec2bc8f8eda55c3980d58d63fee"
+      }
+    }
+  },
+  {
+    "before": "class-ast-gates",
+    "after": "suite-commands",
+    "changed_inputs": {}
+  }
+]

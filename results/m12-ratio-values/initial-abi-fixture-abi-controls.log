@@ -1,0 +1,32 @@
+Running as unit: run-p741131-i88795657.scope; invocation ID: 7658dcfa5f4044be81aa046761583955
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 53s
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/portable_calling_convention-6136ee739ee6ed12)
+
+running 4 tests
+test artifacts_record_runtime_abi_9_and_prior_abis_are_rejected ... FAILED
+test a_locally_called_closure_needs_no_call_entry ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+failures:
+
+---- artifacts_record_runtime_abi_9_and_prior_abis_are_rejected stdout ----
+
+thread 'artifacts_record_runtime_abi_9_and_prior_abis_are_rejected' (747739) panicked at crates/suss-compile/tests/portable_calling_convention.rs:149:5:
+assertion `left == right` failed
+  left: Err("runtime ABI version mismatch: expected Manifest { runtime_abi: 10, compiler: \"0.1.0+portable.3\", wasm_tools: \"0.258.0\" }, actual Manifest { runtime_abi: 9, compiler: \"0.1.0+portable.3\", wasm_tools: \"0.258.0\" }")
+ right: Ok(())
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    artifacts_record_runtime_abi_9_and_prior_abis_are_rejected
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_calling_convention`

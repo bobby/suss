@@ -1,0 +1,12 @@
+Running as unit: run-p1041534-i89087845.scope; invocation ID: 03c817a471c84eaa9133ddd0760d8afc
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3m 27s
+     Running tests/bigint_helper.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/bigint_helper-3a0b88a42cfcd2c9)
+
+running 2 tests
+test helper_scratch_growth_failure_is_a_language_error_and_preserves_inputs ... ok
+test production_bigint_multiply_paths_match_primary_limbs_and_keep_owned_values ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+

@@ -1,0 +1,248 @@
+Running as unit: run-p1553167-i89617697.scope; invocation ID: 16cdac77316e48a5b46a9523da2940b9
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=459 guest-judged=54 namespaces-failed=92 not-executed=2712 pass=3714 skipped=0
+namespaces clojure.core-test.abs: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.bigint: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.bigint (Some("<root>/clojure/core_test/bigint.cljc")): Unresolved Runtime name clojure.lang.BigInt at bytes 267..2781'}
+namespaces clojure.core-test.bit-and: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.bit-and-not: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.bit-or: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.bit-xor: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.boolean: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.boolean-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.boolean-qmark (Some("<root>/clojure/core_test/boolean_qmark.cljc")): Unresolved Runtime name boolean? at bytes 279..941'}
+namespaces clojure.core-test.char-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.char-qmark (Some("<root>/clojure/core_test/char_qmark.cljc")): Unresolved Runtime name char? at bytes 268..1615'}
+namespaces clojure.core-test.dec: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.decimal-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.decimal-qmark (Some("<root>/clojure/core_test/decimal_qmark.cljc")): Unresolved Runtime name decimal? at bytes 271..1106'}
+namespaces clojure.core-test.double-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.empty: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.false-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.float: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.float-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.inc: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.int-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.integer-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.minus: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.neg-int-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.neg-int-qmark (Some("<root>/clojure/core_test/neg_int_qmark.cljc")): Unresolved Runtime name neg-int? at bytes 271..1611'}
+namespaces clojure.core-test.neg-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.number-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 88..103'}, observed None
+namespaces clojure.core-test.number-range: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.plus: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.plus-squote: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.pos-int-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.pos-int-qmark (Some("<root>/clojure/core_test/pos_int_qmark.cljc")): Unresolved Runtime name pos-int? at bytes 271..1687'}
+namespaces clojure.core-test.pos-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.ratio-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.rational-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.star: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.star-squote: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.string-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.true-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+namespaces clojure.core-test.zero-qmark: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.number-range (Some("<root>/clojure/core_test/number_range.cljc")): Definition const/macro attributes are not implemented yet at bytes 42..57'}, observed None
+assertions clojure.core-test.abs/test-abs#7: expected None, observed 'kind:error'
+assertions clojure.core-test.boolean/test-boolean#23: expected None, observed 'kind:error'
+assertions clojure.core-test.boolean/test-boolean#24: expected None, observed 'kind:error'
+assertions clojure.core-test.boolean/test-boolean#25: expected None, observed 'kind:error'
+assertions clojure.core-test.double-qmark/test-double?#10: expected None, observed 'verdict:fail'
+assertions clojure.core-test.double-qmark/test-double?#11: expected None, observed 'verdict:fail'
+assertions clojure.core-test.double-qmark/test-double?#23: expected None, observed 'kind:error'
+assertions clojure.core-test.double-qmark/test-double?#24: expected None, observed 'kind:error'
+assertions clojure.core-test.double-qmark/test-double?#25: expected None, observed 'kind:error'
+assertions clojure.core-test.double-qmark/test-double?#9: expected None, observed 'verdict:fail'
+assertions clojure.core-test.empty/test-empty#1: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#10: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#11: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#12: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#13: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#14: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#15: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#16: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#17: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#18: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#19: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#2: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#3: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#4: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#5: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#6: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#7: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#8: expected None, observed 'count:18/19'
+assertions clojure.core-test.empty/test-empty#9: expected None, observed 'count:18/19'
+assertions clojure.core-test.false-qmark/test-false?#24: expected None, observed 'kind:error'
+assertions clojure.core-test.false-qmark/test-false?#25: expected None, observed 'kind:error'
+assertions clojure.core-test.false-qmark/test-false?#26: expected None, observed 'kind:error'
+assertions clojure.core-test.float-qmark/test-float?#23: expected None, observed 'kind:error'
+assertions clojure.core-test.float-qmark/test-float?#24: expected None, observed 'kind:error'
+assertions clojure.core-test.float-qmark/test-float?#25: expected None, observed 'kind:error'
+assertions clojure.core-test.float/test-float#1: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#10: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#11: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#12: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#13: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#14: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#15: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#16: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#17: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#18: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#19: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#2: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#20: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#21: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#22: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#23: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#3: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#4: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#5: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#6: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#7: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#8: expected None, observed 'count:19/23'
+assertions clojure.core-test.float/test-float#9: expected None, observed 'count:19/23'
+assertions clojure.core-test.int-qmark/test-int?#38: expected None, observed 'kind:error'
+assertions clojure.core-test.int-qmark/test-int?#39: expected None, observed 'kind:error'
+assertions clojure.core-test.int-qmark/test-int?#40: expected None, observed 'kind:error'
+assertions clojure.core-test.integer-qmark/test-integer?#23: expected None, observed 'kind:error'
+assertions clojure.core-test.integer-qmark/test-integer?#24: expected None, observed 'kind:error'
+assertions clojure.core-test.integer-qmark/test-integer?#25: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#40: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#41: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#42: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#43: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#44: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#45: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#46: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#47: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#48: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#49: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#50: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#51: expected None, observed 'kind:error'
+assertions clojure.core-test.minus/test--#52: expected None, observed 'kind:error'
+assertions clojure.core-test.neg-qmark/test-neg?#18: expected None, observed 'kind:error'
+assertions clojure.core-test.neg-qmark/test-neg?#19: expected None, observed 'kind:error'
+assertions clojure.core-test.neg-qmark/test-neg?#6: expected None, observed 'kind:error'
+assertions clojure.core-test.number-qmark/test-number?#17: expected None, observed 'kind:error'
+assertions clojure.core-test.number-qmark/test-number?#18: expected None, observed 'kind:error'
+assertions clojure.core-test.number-qmark/test-number?#19: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#11: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#12: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#13: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#70: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#71: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#72: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#73: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#74: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#75: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#76: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#77: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#78: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#79: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#80: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#81: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#82: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#83: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#84: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#85: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#86: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#87: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#88: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#89: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#90: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#91: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#92: expected None, observed 'kind:error'
+assertions clojure.core-test.plus-squote/test-+'#93: expected None, observed 'kind:error'
+assertions clojure.core-test.pos-qmark/test-pos?#15: expected None, observed 'kind:error'
+assertions clojure.core-test.pos-qmark/test-pos?#16: expected None, observed 'kind:error'
+assertions clojure.core-test.pos-qmark/test-pos?#17: expected None, observed 'kind:error'
+assertions clojure.core-test.ratio-qmark/test-ratio?#17: expected None, observed 'kind:error'
+assertions clojure.core-test.ratio-qmark/test-ratio?#18: expected None, observed 'kind:error'
+assertions clojure.core-test.ratio-qmark/test-ratio?#19: expected None, observed 'kind:error'
+assertions clojure.core-test.rational-qmark/test-rational?#10: expected None, observed 'kind:error'
+assertions clojure.core-test.rational-qmark/test-rational?#11: expected None, observed 'kind:error'
+assertions clojure.core-test.rational-qmark/test-rational?#9: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#100: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#101: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#102: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#103: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#104: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#105: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#106: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#107: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#108: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#109: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#110: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#111: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#112: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#113: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#114: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#115: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#116: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#117: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#118: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#119: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#120: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#121: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#122: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#123: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#124: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#125: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#126: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#127: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#35: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#36: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#37: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#38: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#39: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#40: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#41: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#42: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#43: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#44: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#45: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#46: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#8: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#80: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#81: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#82: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#83: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#84: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#85: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#86: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#87: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#88: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#89: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#90: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#91: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#92: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#93: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#94: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#95: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#96: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#97: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#98: expected None, observed 'kind:error'
+assertions clojure.core-test.star-squote/test-*'#99: expected None, observed 'kind:error'
+assertions clojure.core-test.string-qmark/test-string?#27: expected None, observed 'kind:error'
+assertions clojure.core-test.string-qmark/test-string?#28: expected None, observed 'kind:error'
+assertions clojure.core-test.string-qmark/test-string?#29: expected None, observed 'kind:error'
+assertions clojure.core-test.string-qmark/test-string?#42: expected None, observed 'verdict:fail'
+assertions clojure.core-test.string-qmark/test-string?#43: expected None, observed 'verdict:fail'
+assertions clojure.core-test.string-qmark/test-string?#44: expected None, observed 'verdict:fail'
+assertions clojure.core-test.string-qmark/test-string?#45: expected None, observed 'verdict:fail'
+assertions clojure.core-test.true-qmark/test-true?#24: expected None, observed 'kind:error'
+assertions clojure.core-test.true-qmark/test-true?#25: expected None, observed 'kind:error'
+assertions clojure.core-test.true-qmark/test-true?#26: expected None, observed 'kind:error'
+assertions clojure.core-test.zero-qmark/test-zero?#19: expected None, observed 'kind:error'
+assertions clojure.core-test.zero-qmark/test-zero?#20: expected None, observed 'kind:error'
+assertions clojure.core-test.zero-qmark/test-zero?#3: expected None, observed 'kind:error'
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (1553168) panicked at crates/suss-compile/tests/clojure_test_suite.rs:617:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 587.00s
+

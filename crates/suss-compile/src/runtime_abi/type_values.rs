@@ -3,7 +3,7 @@
 //! no global owner registry, source name lookup, or recursive ABI layout change.
 use super::*;
 
-pub(super) const KEY_GLOBAL: u32 = r#async::STREAM_GLOBAL_BASE + streams::GLOBAL_COUNT;
+pub(super) const KEY_GLOBAL: u32 = numeric_classes::ROOT_END;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     use Instruction::*;
@@ -29,7 +29,8 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
 
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
-    let mut body = vec![];
+    let mut body = vec![LocalGet(0), Call(b.names["numeric-value-class"]), LocalTee(2),
+        I32Const(0), I32GeS, If(BlockType::Empty), LocalGet(2), Call(b.names["numeric-class-value"]), Return, End];
     for (ty, constructor) in [
         (NUMBER, "number-constructor"),
         (STRING, "string-constructor"),
@@ -137,7 +138,7 @@ pub(super) fn functions(b: &mut Builder) {
         "value-constructor",
         &[VALUE],
         &[VALUE],
-        &[(1, VALUE)],
+        &[(1, VALUE), (1, ValType::I32)],
         &body,
     );
 }

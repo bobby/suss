@@ -1,0 +1,42 @@
+Running as unit: run-p1667673-i89725772.scope; invocation ID: 20eff9cb675c4b9bb4474db214ae484d
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 7.53s
+     Running tests/portable_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_definitions-aa3b6e8945e3aa6d)
+
+running 13 tests
+test definition_and_namespace_diagnostics_are_located_and_transactional ... ok
+test declaration_expression_contexts_are_explicitly_unsupported ... ok
+test definition_cells_remain_separate_by_phase ... ok
+test definitions_inside_functions_capture_lexicals_and_preserve_name_metadata ... ok
+test namespace_declarations_replace_import_scopes_but_keep_existing_cells ... ok
+test reviewed_declaration_preserves_source_metadata_and_phase_identity ... ok
+test failed_compile_and_initializer_preserve_existing_cells_and_prior_effects ... ok
+test source_definition_initializes_a_shared_cell ... ok
+test source_definitions_rebind_live_globals_without_changing_old_captures ... ok
+test source_defonce_checks_bound_state_and_skips_initializer_effects ... ok
+test source_namespaces_resolve_requires_renames_core_aliases_and_exclusions ... ok
+test verifier_rejects_malformed_global_writes_and_bound_checks ... ok
+test source_require_reload_metadata_is_explicitly_unsupported ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.70s
+
+     Running tests/portable_resolution.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_resolution-011308e11f6ae65e)
+
+running 14 tests
+test namespace_arithmetic_values_materialize_canonical_phase_cells ... ok
+test namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval ... ok
+test namespace_configuration_and_compile_failures_do_not_change_resolution ... ok
+test namespace_core_aliases_import_one_canonical_live_cell ... ok
+test namespace_aliases_refers_exclusions_and_shadowing_share_resolution ... ok
+test namespace_global_reads_preserve_once_only_source_order_and_short_circuit ... ok
+test namespace_phases_resolve_and_execute_distinct_cells ... ok
+test namespace_scopes_persist_independently_when_reentered ... ok
+test namespace_sources_reject_extension_and_root_ambiguity ... ok
+test namespace_globals_lower_into_shared_binding_reads ... ok
+test source_core_require_records_identity_without_weakening_core_alias_guards ... ok
+test source_namespace_snapshots_share_unchanged_declarations_and_keep_old_revisions ... ok
+test namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise ... ok
+test source_requires_retain_library_identity_without_aliases_in_each_phase ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.17s
+

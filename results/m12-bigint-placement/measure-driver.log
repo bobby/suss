@@ -1,0 +1,48 @@
+Running as unit: run-p287791-i88356100.scope; invocation ID: 2476952c0585465684ce738c58e37966
+add (1, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 369.34, 'bridge_add': 512.55, 'linear_add': 114.0}
+mul (1, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 384.34, 'bridge_mul': 588.55, 'linear_mul': 193.0}
+add (2, 2) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 452.32, 'bridge_add': 624.53, 'linear_add': 134.0}
+mul (2, 2) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 644.99, 'bridge_mul': 805.3, 'linear_mul': 282.0}
+add (3, 3) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 538.97, 'bridge_add': 740.29, 'linear_add': 154.0}
+mul (3, 3) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 1034.01, 'bridge_mul': 1058.34, 'linear_mul': 411.02}
+add (4, 4) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 621.98, 'bridge_add': 852.31, 'linear_add': 174.0}
+mul (4, 4) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 1555.59, 'bridge_mul': 1349.0, 'linear_mul': 577.01}
+add (8, 8) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 954.69, 'bridge_add': 1301.12, 'linear_add': 253.99}
+mul (8, 8) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 4966.91, 'bridge_mul': 2928.7, 'linear_mul': 1653.01}
+add (32, 32) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 2983.26, 'bridge_add': 4026.4, 'linear_add': 733.98}
+mul (32, 32) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 69796.57, 'bridge_mul': 25871.48, 'linear_mul': 21562.23}
+add (128, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 11071.92, 'bridge_add': 14901.71, 'linear_add': 2653.84}
+mul (128, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 1089522.67, 'bridge_mul': 348100.8, 'linear_mul': 331603.63}
+add (512, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 43456.48, 'bridge_add': 58436.57, 'linear_add': 10333.86}
+mul (512, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 17333603.3, 'bridge_mul': 5323288.9, 'linear_mul': 5257862.1}
+add (1, 8) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 837.69, 'bridge_add': 1078.12, 'linear_add': 241.0}
+mul (1, 8) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 850.69, 'bridge_mul': 1164.13, 'linear_mul': 330.01}
+add (8, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 840.69, 'bridge_add': 1087.12, 'linear_add': 250.0}
+mul (8, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 855.69, 'bridge_mul': 1166.13, 'linear_mul': 332.02}
+add (1, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 8551.72, 'bridge_add': 10835.4, 'linear_add': 2401.04}
+mul (1, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 8923.49, 'bridge_mul': 11197.39, 'linear_mul': 2766.94}
+add (128, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 8554.58, 'bridge_add': 10844.31, 'linear_add': 2409.94}
+mul (128, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 8928.53, 'bridge_mul': 11199.51, 'linear_mul': 2769.15}
+add (1, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 33190.57, 'bridge_add': 42015.41, 'linear_add': 9313.54}
+mul (1, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 34724.15, 'bridge_mul': 43124.42, 'linear_mul': 10417.2}
+add (512, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 33193.71, 'bridge_add': 42024.47, 'linear_add': 9321.91}
+mul (512, 1) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 34727.14, 'bridge_mul': 43125.98, 'linear_mul': 10419.41}
+add (2, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 33210.46, 'bridge_add': 42047.4, 'linear_add': 9315.04}
+mul (2, 512) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 68558.89, 'bridge_mul': 53439.74, 'linear_mul': 20687.81}
+add (512, 2) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 33213.45, 'bridge_add': 42056.56, 'linear_add': 9324.18}
+mul (512, 2) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 68562.67, 'bridge_mul': 53441.17, 'linear_mul': 20688.26}
+add (32, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 9173.82, 'bridge_add': 11829.72, 'linear_add': 2462.96}
+mul (32, 128) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 272709.87, 'bridge_mul': 93439.36, 'linear_mul': 83035.21}
+add (128, 32) {'control': 34.0, 'linear_control': 13.0, 'gc_add': 9176.79, 'bridge_add': 11838.72, 'linear_add': 2471.97}
+mul (128, 32) {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 272709.84, 'bridge_mul': 93446.24, 'linear_mul': 83034.17}
+array 2 [23.837899150097066, 23.96973513474529]
+array 3 [23.91748759671676, 23.914802049041405]
+array 5 [31.928712840599587, 31.849367132745215]
+array 9 [48.148684510510236, 47.87890910380537]
+array 16 [79.80476360775339, 80.138748301266]
+array 33 [143.7403714565005, 144.24086021505377]
+array 64 [271.5303326810176, 271.93463109829366]
+array 129 [526.8966283143204, 529.7396558904468]
+array 256 [1042.0791188040912, 1036.471691581432]
+array 513 [2062.6917176485204, 2060.402099313686]
+array 1024 [4110.062933333334, 4105.966933333333]

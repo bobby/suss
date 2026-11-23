@@ -1,0 +1,24 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-q",
+    "-p",
+    "MemoryMax=3G",
+    "--",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/suss",
+    "repl",
+    "--compile-fuel",
+    "4000000"
+  ],
+  "exit_code": 0,
+  "seconds": 106.1680920124054,
+  "binary_sha256": "aa72c8c81e94efd250067e9aa984eff7064669632bca185fa01664306c7d9d02",
+  "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+  "costs": [
+    992401,
+    1003928
+  ],
+  "under_original_one_million_gate": false
+}

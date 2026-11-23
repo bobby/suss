@@ -1,0 +1,124 @@
+Running as unit: run-p2074458-i90138484.scope; invocation ID: 0827e1671d4f494c8d9b9d3e9787925a
+    Finished `test` profile [optimized] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/suss_reader-10c228a0d621537c)
+
+running 31 tests
+test edn::source::tests::exact_number_tooling_data_emits_numeric_source_tokens ... ok
+test edn::source::tests::forms_convert_to_the_values_they_read_as ... ok
+test edn::source::tests::lines_end_at_any_line_terminator ... ok
+test edn::source::tests::lone_surrogates_are_tagged_utf16 ... ok
+test edn::source::tests::metadata_merges_inner_first_and_round_trips ... ok
+test edn::source::tests::printed_forms_keep_entry_order_and_read_back ... ok
+test edn::source::tests::span_trees_follow_printed_order_with_lines_and_columns ... ok
+test forms::source_metadata::tests::indexed_positions_match_utf16_at_every_boundary_with_mixed_newlines ... ok
+test forms::source_snapshot::tests::demand_snapshot_matches_indexed_reader_on_complete_sources_and_root_projection ... ok
+test forms::source_snapshot::tests::snapshot_cancellation_does_not_publish_partial_reader_facts ... ok
+test forms::source_snapshot::tests::unsupported_selection_metadata_and_anonymous_forms_require_explicit_fallback ... ok
+test parser::tests::test_parse_bool ... ok
+test parser::tests::test_parse_keyword ... ok
+test parser::tests::test_parse_list ... ok
+test parser::tests::test_parse_map ... ok
+test parser::tests::test_parse_metadata ... ok
+test parser::tests::test_parse_namespaced_keyword ... ok
+test parser::tests::test_parse_namespaced_symbol ... ok
+test parser::tests::test_parse_nested ... ok
+test parser::tests::test_parse_nil ... ok
+test parser::tests::test_parse_number ... ok
+test parser::tests::test_parse_quote ... ok
+test parser::tests::test_parse_set ... ok
+test parser::tests::test_parse_string ... ok
+test parser::tests::test_parse_symbol ... ok
+test parser::tests::test_parse_symbols_with_bang ... ok
+test parser::tests::test_parse_symbols_with_question_mark ... ok
+test parser::tests::test_parse_var_quote ... ok
+test parser::tests::test_parse_var_quote_namespaced ... ok
+test parser::tests::test_parse_vector ... ok
+test forms::source_metadata::tests::long_ascii_line_uses_constant_space_column_index ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/biginteger_carrier-a53fab496a7b4299)
+
+running 2 tests
+test invalid_carriers_and_numeric_duplicate_keys_are_rejected ... ok
+test typed_biginteger_carrier_keeps_decimal_value_and_category ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/edn-e4e5deba504b0800)
+
+running 13 tests
+test code_only_syntax_and_unknown_tags_fail_with_spans ... ok
+test edn_conformance_with_the_compilers_reader ... ok
+test depth_and_size_are_bounded ... ok
+test integers_must_be_longs ... ok
+test pretty_printing_breaks_wide_collections_only ... ok
+test printing_is_byte_stable_across_processes ... ok
+test printing_is_canonical ... ok
+test read_one_requires_exactly_one_value ... ok
+test review_edge_cases_round_trip_or_fail_clearly ... ok
+test serde_types_round_trip_through_canonical_edn ... ok
+test tag_readers_and_defaults_follow_clojure_edn ... ok
+test unreadable_names_are_refused_rather_than_misprinted ... ok
+test every_printable_value_reads_back_equal_and_reprints_identically ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/exact_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/exact_edn-d1877e999dc968c0)
+
+running 4 tests
+test native_edn_detects_normalized_exact_duplicate_keys ... ok
+test native_edn_reads_and_prints_exact_numbers_without_binary64 ... ok
+test serde_keeps_wide_integer_bits_and_rejects_unrepresentable_ratios ... ok
+test printer_rejects_exact_data_that_cannot_read_back ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/forms.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/forms-0fd72a6941cabfa3)
+
+running 22 tests
+test auto_resolved_keywords_await_namespace_resolution ... ok
+test apostrophes_continue_tokens_but_quote_at_form_start ... ok
+test conditional_clause_pairing_follows_deferred_prefix_selection ... ok
+test byte_spans_exclude_padding_and_locate_nested_forms ... ok
+test conditional_resolution_uses_first_portable_feature_in_source_order ... ok
+test every_clojure_numeric_literal_reads ... ok
+test deep_reader_clone_selection_and_cleanup_are_stack_safe ... ok
+test malformed_forms_fail_with_located_diagnostics_and_bounded_nesting ... ok
+test metadata_is_retained_on_target_with_order_and_original_spans ... ok
+test metadata_targets_are_checked_after_conditional_selection ... ok
+test ordinary_numbers_read_as_longs_or_doubles_and_keep_float_zero_sign ... ok
+test queue_literals_read_as_tagged_vectors_after_selection ... ok
+test quote_discard_collections_and_terminating_character_literals ... ok
+test reader_and_selection_share_a_supplied_budget_and_recover_after_errors ... ok
+test reader_cancellation_preserves_callback_error_and_next_read_recovers ... ok
+test reader_features_are_suss_and_default ... ok
+test reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth ... ok
+test source_metadata_meter_preserves_locations_and_checks_work ... ok
+test tagged_literals_fail_as_clojure_does_without_a_reader ... ok
+test unselected_branches_check_numeric_syntax ... ok
+test utf16_literals_preserve_lone_surrogates_and_astral_units ... ok
+test large_anonymous_indices_are_metered_before_generated_slot_allocation ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/portable_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_dispatch-08907ba7c5894e34)
+
+running 8 tests
+test anonymous_literals_have_distinct_names_and_consistent_references ... ok
+test anonymous_indexing_metadata_matches_pinned_generated_and_real_nodes ... ok
+test logical_index_discard_requests_following_raw_forms ... ok
+test metadata_on_splice_follows_first_retained_logical_form ... ok
+test closed_inner_queue_errors_do_not_consume_outer_siblings ... ok
+test pinned_logical_argument_indices_match ... ok
+test pinned_reader_edges_match ... ok
+test pinned_reader_shapes_match ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests suss_reader
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

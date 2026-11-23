@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/scripts/core_import.py", line 273, in <module>
+    main()
+    ~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/scripts/core_import.py", line 256, in main
+    outputs = build()
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/scripts/core_import.py", line 208, in build
+    if not Scanner(source).all():
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/scripts/cljs_inventory.py", line 118, in all
+    result.append(self.read())
+                  ~~~~~~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/scripts/cljs_inventory.py", line 92, in read
+    raise ValueError(f'unclosed {c} at {start}')
+ValueError: unclosed ( at 26858

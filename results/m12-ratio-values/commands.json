@@ -1,0 +1,196 @@
+{
+  "base": "a5c59e83",
+  "head": "84fece33c6ec62e20329e5e803fac616792ba8e5",
+  "inputs": {
+    "crates/suss-cli/tests/clojure_longs_doubles.rs": "f17ef34ae516ae12fc2293be537d44789449ca6a3f21594014daa43b58750600",
+    "crates/suss-cli/tests/clojure_ratios.rs": "40f2c51ff2db237206c7e3550b8c953cc8baa1aec242a2bd6a07330397ffa8c7",
+    "crates/suss-cli/tests/read_string.rs": "8fbc1d6356d7d64240f4ec795fe036cc67d8c3bfcf4b28fc4731f10d4841ef78",
+    "crates/suss-compile/src/portable/emit.rs": "acda8081d34726188df7e564cd171316c7b93c0cb5343b2ad9cf9d04d0379912",
+    "crates/suss-compile/src/portable/hir.rs": "5a911ce573c9873e256f8894d80896b9de8e533a00b5d0900acd8ba416b3938e",
+    "crates/suss-compile/src/portable/hir/cases.rs": "0829c8653c33b2bbc02d3aa4fb88a42ab898a1a0bb3072718b205cb3ec784187",
+    "crates/suss-compile/src/portable/hir/source_tags.rs": "912228dbbb31006c816c2130ded16adfebbe3124580d281753bf5ddda61ba68d",
+    "crates/suss-compile/src/portable_macro_data.rs": "1d251684c0d2183d685244404cc52fb34a3a5c640c182ac4fd3fd50104e4e88e",
+    "crates/suss-compile/src/portable_macro_graph.rs": "963431f3ed6cb8d3c79ebb9445af586bc438598bf9a4f4ce2ec20b54d63f390a",
+    "crates/suss-compile/src/portable_session.rs": "f69b1f9e6722ad16e121a8306336f2ac53796e09f6f6e7e0bfc9b6b4d6d64c0f",
+    "crates/suss-compile/src/runtime_abi.rs": "56768609cdfce056f71dbf65e6b5e498712bb71250f9823fff10d0acc7524172",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "9ba7facc68a0ec9d259497863d6a37f2a051d9bede772e0ee19398177b686523",
+    "crates/suss-compile/src/runtime_abi/bitwise.rs": "641f4a343b354f64c784e6a23f134249ab89a4fdecc8c86880f75088b883e735",
+    "crates/suss-compile/src/runtime_abi/comparisons.rs": "c71f28517258163f0068c7f1da50040065f36fe6e605ecad8089bb10928f7e8a",
+    "crates/suss-compile/src/runtime_abi/longs.rs": "947d2bd5ec26cc658ddc4cff55d3f26de51edf733afd87e3d287f72be44003c3",
+    "crates/suss-compile/src/runtime_abi/numeric.rs": "2fad9b8d923bb3f5932518c629ddc908775eba7ed3347eed43aec2b9ad3262ff",
+    "crates/suss-compile/src/runtime_abi/ratios.rs": "655b14782aa0bf7744a455c27686009fd534948006002b66b38156e33296dd6b",
+    "crates/suss-compile/tests/clojure_test_suite.rs": "b450f1805abe73285ac2cc55bfc5f0212c511ac97f569a6b52543fb1f0ec8fb1",
+    "crates/suss-compile/tests/oracle.rs": "73236a5c8fcaefa4981aabfbea657534dd6de55aa9ad10a350dfe1a7a6e2c5eb",
+    "crates/suss-compile/tests/portable_calling_convention.rs": "da6826ee6b406451fb583ad83f0c5eaef2894488f3a463ae456e8f9ee3e433ae",
+    "crates/suss-compile/tests/portable_comparator_foundations.rs": "93952656f7fb84148e20bd63d19d088a73ec3309439191f74eee58dfc3fa49bb",
+    "crates/suss-compile/tests/portable_value_decoder.rs": "8162da82aabf42f2ffc570ba2a9403fcb6186dcb3838e611c7a49b6a2d97c1cb",
+    "crates/suss-compile/tests/support/portable_decode.rs": "c2000e7c4dbcca2f17b0db388abecfbd13e5f70a154936ab2e49f84dfaf0fa46",
+    "crates/suss-reader/src/forms.rs": "805468040219c769a10884fd2a46632aebd03c9617063ad98fda1816a315d3e0",
+    "docs/compatibility/README.md": "36e7c3e7eaec50d9326a7c57362f987de95c7c2cbf1ad0425ad0d1498d54e2b7",
+    "docs/compatibility/bootstrap/exact-integers.sus": "50be5c5bd86c400ef56e5f529ceeab37be49e1b359db417d2642198bd4fc35a5",
+    "docs/compatibility/core-import.json": "1841978d079f7de5b4d673f44e103171f8f0cf985335a9115d0159e57bc09d5f",
+    "docs/roadmap/handoff.md": "aecc97a8d9e032187ceef674f1b05bbc236e49a9d118b7d694c2a5f1531cbcf1",
+    "results/m12-ratio-values/cases.json": "4feb065d8a10ea86e0445e843082eae16016e51be92757af1cd4348c6aea450a",
+    "runtime/core-import/manifest.json": "07415bcc8270e185952f7a937fb9c4cd7fe420a72e269c152f982328b0dcf742",
+    "runtime/core-import/suss/core.sus": "876a546fcf39fc33b9906d4d884b05079cafc8b88e0dd9d3b5fac615be673ee1",
+    "scripts/clojure_test_suite.py": "5fbb2534f7dd30233f34e82cc7215135085906e6bf20fd2652e423efd707ed23",
+    "scripts/test_clojure_test_suite.py": "db3800dc8972ee5706b242f5c260edf04e819d7c9e7ee6bfaca25d23a2faefff"
+  },
+  "commands": [
+    {
+      "label": "focused-final",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_ratios",
+        "--test",
+        "clojure_bigint_integers",
+        "--test",
+        "clojure_bigints",
+        "--test",
+        "read_string",
+        "--test",
+        "clojure_longs_doubles",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 68.88651752471924
+    },
+    {
+      "label": "numeric-controls",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_equality_bitwise",
+        "--test",
+        "clojure_unboxed_locals",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--test",
+        "clojure_raw_numeric_core",
+        "--test",
+        "clojure_raw_bits_and_casts",
+        "--test",
+        "clojure_numeric_extrema",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 86.60000562667847
+    },
+    {
+      "label": "abi-controls",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--test",
+        "portable_calling_convention",
+        "--test",
+        "portable_comparator_foundations",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 65.5324010848999
+    },
+    {
+      "label": "map-controls",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "map_lookups",
+        "--test",
+        "portable_hash_map_sharing",
+        "--test",
+        "compiled_macro_hash_maps",
+        "--test",
+        "compiled_macro_maps",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 19.5111563205719
+    },
+    {
+      "label": "source-decoder-controls",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "analyzer_edn_core",
+        "--test",
+        "portable_value_decoder",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 14.498188495635986
+    },
+    {
+      "label": "bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "exit_code": 0,
+      "seconds": 75.13211703300476
+    },
+    {
+      "label": "core-import",
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 2.659362554550171
+    },
+    {
+      "label": "numeric-helper",
+      "command": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08657979965209961
+    },
+    {
+      "label": "suite-comparator",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_clojure_test_suite.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.3135552406311035
+    }
+  ],
+  "complete": true
+}

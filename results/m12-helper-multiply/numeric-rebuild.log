@@ -1,0 +1,11 @@
+Running as unit: run-p1031253-i89100528.scope; invocation ID: cb32b2d170fb4187af290f278d48a6f6
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/scripts/numeric_runtime.py", line 93, in <module>
+    main()
+    ~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/scripts/numeric_runtime.py", line 87, in main
+    if args.rebuild_check and rebuild() != (ROOT / 'artifact/numeric.wasm').read_bytes():
+                              ~~~~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/scripts/numeric_runtime.py", line 61, in rebuild
+    raise ValueError('wrong numeric helper Rust toolchain')
+ValueError: wrong numeric helper Rust toolchain

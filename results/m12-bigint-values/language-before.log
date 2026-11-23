@@ -1,0 +1,25 @@
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 38s
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 1 test
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... FAILED
+
+failures:
+
+---- bigint_literals_and_signed_arithmetic_execute_in_both_phases stdout ----
+
+thread 'bigint_literals_and_signed_arithmetic_execute_in_both_phases' (340784) panicked at crates/suss-cli/tests/clojure_bigints.rs:5:57:
+(pr-str [0N 1N -1N 9223372036854775808 -9223372036854775809]): Uncaught language exception
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    bigint_literals_and_signed_arithmetic_execute_in_both_phases
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.01s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_bigints`

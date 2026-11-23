@@ -1,0 +1,13 @@
+Running as unit: run-p961873-i89023648.scope; invocation ID: 59590004d553470a9d51635e23e78ea9
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 6.91s
+     Running tests/portable_aot_wit_numbers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_wit_numbers-4519ad6066fb8ea7)
+
+running 14 tests
+test aliased_long_types_and_option_and_list_schemas_keep_mixed_flat_positions ... ok
+test async_long_results_use_distinct_completion_indices_and_mixed_parameter_positions ... ok
+test exact_numeric_results_convert_at_float_boundaries ... FAILED
+test boundary_checks_survive_public_core_redefinition has been running for over 60 seconds
+test f32_results_from_longs_round_once ... ok
+test boundary_checks_survive_public_core_redefinition ... ok
+test floats_cross_as_doubles_and_f32_rounds_when_leaving ... ok

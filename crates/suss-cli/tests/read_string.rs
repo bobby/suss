@@ -180,19 +180,60 @@ fn malformed_input_fails_with_the_compilers_message_and_position() {
     }
 }
 
-/// Each :exact entry fails in both runtime readers with the compiler's
-/// evaluation message, at its start, unless it is in an unselected branch;
-/// evaluating it in source fails with the same message (#333).
+/// Exact integer/Ratio literals execute in code and runtime readers; Decimal
+/// values retain located failures and unselected-branch behavior.
 #[test]
-fn exact_numeric_literals_fail_when_read_and_load_when_unselected() {
-    let sources = corpus("exact");
+fn exact_numeric_literals_execute_or_preserve_unsupported_boundaries() {
+    let (values, sources): (Vec<_>, Vec<_>) = corpus("exact").into_iter().partition(|source| {
+        matches!(&suss_reader::forms::read_forms(source).unwrap()[0].kind,
+            Kind::Exact(number) if !matches!(number.value, suss_reader::forms::ExactValue::Decimal { .. }))
+    });
     for (mut session, mut macros) in sessions() {
+        // Exact integers and Ratios are values in code and both readers.
+        // Decimal failures remain explicit, located boundaries.
+        for source in &values {
+            for reader in ["read-string", "edn/read-string"] {
+                truthy(
+                    &mut session,
+                    &mut macros,
+                    &format!("(= {source} ({reader} {}))", literal(source)),
+                );
+                truthy(
+                    &mut session,
+                    &mut macros,
+                    &format!(
+                        "(= [{source}] ({reader} {}))",
+                        literal(&format!("[{source}]"))
+                    ),
+                );
+            }
+            truthy(
+                &mut session,
+                &mut macros,
+                &format!("(= (quote [{source}]) [{source}])"),
+            );
+            let unselected = format!("#?(:clj {source} :default 2)");
+            truthy(&mut session, &mut macros, &format!("(= 2 {unselected})"));
+            truthy(
+                &mut session,
+                &mut macros,
+                &format!(
+                    "(= 2 (read-string {{:read-cond :allow}} {}))",
+                    literal(&unselected)
+                ),
+            );
+        }
         let expected = sources
             .iter()
             .map(|source| {
-                let forms = suss_reader::forms::read_forms(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
-                let [form] = forms.as_slice() else { panic!("{source}: one form") };
-                let Kind::Exact(number) = &form.kind else { panic!("{source}: {:?}", form.kind) };
+                let forms = suss_reader::forms::read_forms(source)
+                    .unwrap_or_else(|error| panic!("{source}: {error:?}"));
+                let [form] = forms.as_slice() else {
+                    panic!("{source}: one form")
+                };
+                let Kind::Exact(number) = &form.kind else {
+                    panic!("{source}: {:?}", form.kind)
+                };
                 number.unsupported_message()
             })
             .collect::<Vec<_>>();
@@ -204,11 +245,18 @@ fn exact_numeric_literals_fail_when_read_and_load_when_unselected() {
             }
         }
         for (source, message) in sources.iter().zip(&expected) {
-            for evaluated in [source.clone(), format!("(quote [{source}])"), format!("[1 {source}]")] {
+            for evaluated in [
+                source.clone(),
+                format!("(quote [{source}])"),
+                format!("[1 {source}]"),
+            ] {
                 truthy(
                     &mut session,
                     &mut macros,
-                    &format!("(= {} (try {evaluated} :evaluated (catch :default e (ex-message e))))", literal(message)),
+                    &format!(
+                        "(= {} (try {evaluated} :evaluated (catch :default e (ex-message e))))",
+                        literal(message)
+                    ),
                 );
             }
             let unselected = format!("#?(:clj {source} :default 2)");
@@ -216,12 +264,18 @@ fn exact_numeric_literals_fail_when_read_and_load_when_unselected() {
             truthy(
                 &mut session,
                 &mut macros,
-                &format!("(= 2 (read-string {{:read-cond :allow}} {}))", literal(&unselected)),
+                &format!(
+                    "(= 2 (read-string {{:read-cond :allow}} {}))",
+                    literal(&unselected)
+                ),
             );
             truthy(
                 &mut session,
                 &mut macros,
-                &format!("(= [] (read-string {{:read-cond :allow}} {}))", literal(&format!("[#?@(:clj [{source}])]"))),
+                &format!(
+                    "(= [] (read-string {{:read-cond :allow}} {}))",
+                    literal(&format!("[#?@(:clj [{source}])]"))
+                ),
             );
         }
     }
@@ -631,8 +685,8 @@ fn unquoted(text: &str) -> String {
     }
 }
 
-/// A macro receives an exact literal as data and returns it unchanged, so
-/// evaluating the expansion fails with the literal's own message (#333).
+/// Exact macro data preserves integer/Ratio values and the remaining Decimal
+/// evaluation-time boundary (#339).
 #[test]
 fn exact_numeric_literals_pass_through_macros() {
     // Expansion runs in the Macro phase; the REPL defines the macros.
@@ -652,31 +706,49 @@ fn exact_numeric_literals_pass_through_macros() {
     }
     let message = |source: &str| {
         let forms = suss_reader::forms::read_forms(source).unwrap();
-        let Kind::Exact(number) = &forms[0].kind else { panic!("{source}") };
+        let Kind::Exact(number) = &forms[0].kind else {
+            panic!("{source}")
+        };
         literal(&number.unsupported_message())
     };
-    for (expression, literal_text) in [
-        ("(same-form 1/3)", "1/3"),
-        ("(quoted 1.50M)", "1.50M"),
-        ("(in-vector 9223372036854775808)", "9223372036854775808"),
-    ] {
-        let source = format!("(= {} (try {expression} :evaluated (catch :default e (ex-message e))))", message(literal_text));
+    for (expression, literal_text) in [("(quoted 1.50M)", "1.50M")] {
+        let source = format!(
+            "(= {} (try {expression} :evaluated (catch :default e (ex-message e))))",
+            message(literal_text)
+        );
         assert_eq!(evaluate(&source), "true", "{source}");
     }
-    // A case with an exact constant evaluates its expression, then throws.
+    for source in [
+        "(= 1/3 (same-form 1/3))",
+        "(= [1 1/3] (in-vector 1/3))",
+        "(= [1 9223372036854775808N] (in-vector 9223372036854775808))",
+        "(= 18446744073709551616N (quoted 18446744073709551616N))",
+    ] {
+        assert_eq!(evaluate(source), "true", "{source}");
+    }
+    evaluate("(defmacro plain-integer [x] (biginteger x))");
+    assert_eq!(
+        evaluate("(= \"9223372036854775808\" (pr-str (plain-integer 9223372036854775808N)))"),
+        "true"
+    );
+    // A case with a Ratio constant evaluates its selector exactly once.
     let source = format!(
         "(let [v (volatile! 0)] [(try (case (vswap! v inc) 1/2 :a :b) (catch :default e (ex-message e))) @v])"
     );
-    assert_eq!(evaluate(&source), format!("[{} 1]", message("1/2")), "{source}");
+    assert_eq!(
+        evaluate(&source),
+        "[:b 1]",
+        "{source}"
+    );
     // A macro call holding one keeps its source position.
     evaluate("(defmacro line-of [& _] (:line (meta &form)))");
     assert_eq!(evaluate("(line-of 1/3)"), "1");
     // Macro arguments in unselected branches never reach the macro.
-    assert_eq!(evaluate("(= 2 (same-form #?(:clj 1/3 :default 2)))"), "true");
-    // A literal in the macro's own code evaluates when the macro runs, so a
-    // template holding one fails to expand until #335; one it never
-    // evaluates is harmless.
+    assert_eq!(
+        evaluate("(= 2 (same-form #?(:clj 1/3 :default 2)))"),
+        "true"
+    );
+    // The macro's Ratio literal executes and its expansion retains the value.
     assert_eq!(evaluate("(unused)"), ":ok");
-    let error = portable_repl::evaluate_compiled(&mut session, &mut macros, "(templated)").expect_err("templated");
-    assert!(format!("{error:?}").contains("Compiled macro expansion failed"), "{error:?}");
+    assert_eq!(evaluate("(templated)"), "4/3");
 }

@@ -53,7 +53,12 @@ fn conformance_corpus_round_trips() {
     let mut count = 0;
     for file in ["core", "collections", "benchmarks"] {
         let text = std::fs::read_to_string(root().join(format!("reference/cljs-tests/{file}.sus"))).unwrap();
-        let cases = suss_reader::edn::read_one(&text, &suss_reader::edn::Options::default()).unwrap();
+        // Only source expressions/setup are consumed here. The corpus also
+        // contains exact numeric expectations; the forms-to-tooling boundary
+        // retains the reader's selected source data and categories.
+        let forms = suss_reader::forms::read_forms(&text).unwrap();
+        assert_eq!(forms.len(), 1, "{file}: one corpus vector");
+        let cases = suss_reader::edn::source::form_to_value(&forms[0]).unwrap();
         let suss_reader::edn::Value::Vector(cases) = cases else { panic!("{file}: not a vector") };
         for case in cases {
             let suss_reader::edn::Value::Map(case) = case else { panic!("{file}: not a map") };
@@ -373,4 +378,85 @@ fn swapped_branches_compare_unequal() {
     let second = hir_document(&analyze_source(&emitted, &path, &[], None, None).unwrap(), &path).unwrap();
     assert_ne!(print(&comparable_asts(&document)).unwrap(), print(&comparable_asts(&second)).unwrap());
     assert_eq!(print(&comparable_asts(&swapped)).unwrap(), print(&comparable_asts(&second)).unwrap());
+}
+
+#[test]
+fn exact_numeric_ast_values_survive_native_edn_and_source_round_trips() {
+    use suss_reader::edn::{self, Options};
+    let source = "1N\n18446744073709551616N\n1/3";
+    let path = root().join("target/exact-data.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    let nodes = asts(&document);
+    assert_eq!(nodes.len(), 3);
+    for (node, source) in nodes.iter().zip(source.lines()) {
+        assert_eq!(get(node, "val"), &edn::read_one(source, &Options::default()).unwrap());
+    }
+    let wire = print(&document).unwrap();
+    assert!(!wire.contains("#suss/exact-number"));
+    let restored = edn::read_one(&wire, &Options::default()).unwrap();
+    assert_eq!(restored, document);
+    let emitted = emitted_source(&restored).unwrap();
+    assert_round_trip(&emitted, &path, &[]);
+}
+
+#[test]
+fn native_numeric_class_references_round_trip_as_class_constants() {
+    use suss_reader::edn::{self, Options, Value};
+    let source = "Long\nclojure.lang.BigInt\njava.math.BigInteger\nclojure.lang.Ratio\nNumber\nClass";
+    let path = root().join("target/exact-classes.sus");
+    assert_round_trip(source, &path, &[]);
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    for node in asts(&document) {
+        assert_eq!(get(node, "op"), &Value::keyword("const"));
+        assert_eq!(get(node, "type"), &Value::keyword("class"));
+        let Value::Symbol(symbol) = get(node, "val") else { panic!("class symbol") };
+        assert!(symbol.namespace.is_none());
+        assert!(symbol.name.contains('.'));
+    }
+    let wire = print(&document).unwrap();
+    assert_eq!(edn::read_one(&wire, &Options::default()).unwrap(), document);
+    assert_round_trip(source, &path, &[]);
+}
+
+#[test]
+fn macro_biginteger_constants_keep_their_category_in_emitted_source() {
+    for value in ["1", "0", "-1", "9223372036854775808N", "-18446744073709551616N"] {
+        let source = format!("(ns macrointeger.probe) (defmacro asbig [] (biginteger {value})) (def result (asbig))");
+        assert_round_trip(&source, &root().join("target/macro-biginteger.sus"), &[]);
+    }
+    assert_round_trip("(ns macrointeger.children) (defmacro children [] (list 'quote [(numerator 2/7) (denominator 2/7) (biginteger 1)])) (def result (children))", &root().join("target/macro-biginteger-children.sus"), &[]);
+}
+
+#[test]
+fn emitted_macro_biginteger_source_executes_as_an_aot_component() {
+    use std::process::Command;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("emitted.sus");
+    let source = r#"(ns emittedinteger.probe)
+      (defmacro asbig [x] (biginteger x))
+      (defmacro children [] (list 'quote [(numerator 2/7) (denominator 2/7)]))
+      (def small (asbig 1))
+      (def wide (asbig 9223372036854775808N))
+      (def pair (children))
+      (def check (fn [unused]
+        (if (and (= small 1N) (= wide 9223372036854775808N) (= pair [2N 7N])
+                 (instance? java.math.BigInteger small)
+                 (instance? java.math.BigInteger wide)
+                 (instance? java.math.BigInteger (nth pair 0))
+                 (instance? java.math.BigInteger (nth pair 1))) 1 0)))"#;
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    let emitted = emitted_source(&document).unwrap();
+    assert!(emitted.contains("#suss/biginteger"));
+    std::fs::write(&path, emitted).unwrap();
+    std::fs::write(dir.path().join("probe.wit"), "package test:emittedinteger; world w { export check: func(unused: u32) -> u32; }").unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(dir.path())
+      .args(["compile","emitted.sus","-w","probe.wit","--export","check=emittedinteger.probe/check","-o","probe.wasm"]).output().unwrap();
+    assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+    let result = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(dir.path())
+      .args(["run","probe.wasm","--invoke","check","--","0"]).output().unwrap();
+    assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+    assert_eq!(String::from_utf8_lossy(&result.stdout).trim(), "1");
 }

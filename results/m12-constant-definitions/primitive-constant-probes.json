@@ -1,0 +1,62 @@
+[
+  {
+    "source": "(def ^:const primitive-return-long 7) (def primitive-return-ok (fn ^long [] primitive-return-long)) (primitive-return-ok)",
+    "jvm": {
+      "exit_code": 0,
+      "stdout": "#'user/primitive-return-long\n#'user/primitive-return-ok\n7\n",
+      "stderr": "",
+      "seconds": 1.3080074787139893
+    },
+    "suss": {
+      "exit_code": 0,
+      "stdout": "7\n",
+      "stderr": "",
+      "seconds": 40.70743536949158
+    }
+  },
+  {
+    "source": "(def ^:const primitive-return-double 5.5) (def primitive-return-bad (fn ^long [] primitive-return-double)) (primitive-return-bad)",
+    "jvm": {
+      "exit_code": 1,
+      "stdout": "#'user/primitive-return-double\n",
+      "stderr": "Syntax error (IllegalArgumentException) compiling fn* at (REPL:1:69).\nMismatched primitive return, expected: long, had: double\n\nFull report at:\n/tmp/clojure-777320384738113401.edn\n",
+      "seconds": 1.9276909828186035
+    },
+    "suss": {
+      "exit_code": 0,
+      "stdout": "5\n",
+      "stderr": "",
+      "seconds": 4.020034551620483
+    }
+  },
+  {
+    "source": "(def ^:const primitive-local-long 7) (let [^long x primitive-local-long] x)",
+    "jvm": {
+      "exit_code": 1,
+      "stdout": "#'user/primitive-local-long\n",
+      "stderr": "Syntax error (UnsupportedOperationException) compiling let* at (REPL:1:38).\nCan't type hint a local with a primitive initializer\n\nFull report at:\n/tmp/clojure-17499341316671469951.edn\n",
+      "seconds": 2.1478679180145264
+    },
+    "suss": {
+      "exit_code": 0,
+      "stdout": "7\n",
+      "stderr": "",
+      "seconds": 3.972463846206665
+    }
+  },
+  {
+    "source": "(def ^:const primitive-local-double 5.5) (let [^long x primitive-local-double] x)",
+    "jvm": {
+      "exit_code": 1,
+      "stdout": "#'user/primitive-local-double\n",
+      "stderr": "Syntax error (UnsupportedOperationException) compiling let* at (REPL:1:42).\nCan't type hint a local with a primitive initializer\n\nFull report at:\n/tmp/clojure-17502372561970272016.edn\n",
+      "seconds": 1.6581501960754395
+    },
+    "suss": {
+      "exit_code": 0,
+      "stdout": "5.5\n",
+      "stderr": "",
+      "seconds": 3.27292799949646
+    }
+  }
+]

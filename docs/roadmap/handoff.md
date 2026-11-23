@@ -1,3 +1,59 @@
+## Quoted-string fuel and exact operand observations (2026-11-22)
+
+results/m12-printing-fuel retains the unchanged f9 long-string regression's
+terminal101 failure and the exact FormBridge-input measurement in both phases.
+The cold/repeated32,768-unit calls use100227864/100824706 fuel. Hoisting the
+next index alone passed the old test but left the repeated call above100M;
+that intermediate patch, passing scoped gates and extra probe failure remain.
+The selected traversal also skips substring allocation/table lookup above92,
+the highest code unit in the complete retained seven-key escape table. It keeps
+all escapes, writes and UTF-16 units. Actual shipped Runtime/Macro calls now use
+83364722/83961474 fuel cold/repeated, and all cases pass at the original100M
+allowance after GC. No production/test fuel limit changes. The original literal
+warmup discrepancy and failed private-slot injection remain explicit evidence.
+
+python3 results/m12-printing-fuel/run-gates.py passes4 chunk-printer tests,
+45 neighboring tests, Java/Node-free two-build bootstrap reproduction and its
+4 executing tests, then core-import manifest verification. All four commands
+terminate0 with tracked inputs frozen. Use isolated m12-decimal-target, stable
+Rust, two jobs/threads, MemoryMax4G. profile.py records the actual selected
+compiler/reader library and executable hashes; the README gives its override.
+
+The separately frozen f9 full workspace command terminates101 after2845.76s:
+566 tests pass in133 completed targets, then numeric_operand_types reports two
+passes and a stale Ratio/Double equality failure. The complete receipt/log is
+copied unchanged to results/m12-helper-workspace-f9. Later targets are unexecuted
+by that run. The corrected numeric_operand_types target passes all3 tests,
+zero failed/ignored; fresh JVM1.12.6 observations retain exact and first-class
+Ratio results, strict category equality, cross-category == and the Double case.
+These source-qualified scoped results do not prove a complete workspace pass.
+
+## Exact numeric observations in pipeline tests (2026-11-22)
+
+The f9d5f91a CI shard0 failure is retained under results/m12-ratio-pipeline.
+Its two pipeline failures were stale observations: unary integer division was
+still expected to return a Double, and the raw observer rejected Ratio storage.
+The observer now anchors canonical numeric types from the shared runtime and
+uses the existing independent field/limb decoder. No guest printer, binary64
+conversion or host normalization supplies the observed result. Unknown layouts
+and malformed fields still fail; both adversarial decoder regressions pass.
+
+python3 results/m12-ratio-pipeline/oracle.py records12 fresh JVM Clojure1.12.6
+observations, original source/stdout and JAR hashes. The historical397-case
+corpus remains unchanged, with an explicit Clojure override for unary division.
+python3 results/m12-ratio-pipeline/run.py terminates0 after635.98s, with22 tests
+passed, zero failed/ignored and frozen tracked inputs verified unchanged. It
+runs cargo test --locked -p suss-compile --test portable_pipeline --
+--test-threads=2 using isolated m12-decimal-target, stable Rust, two jobs and a
+4GiB scope. This test-only repair does not certify a complete workspace pass.
+
+The same f9 CI run's shard5 separately exhausts100M fuel in the unchanged
+long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc regression.
+Its original log remains alongside shard0. Production printing and fuel limits
+are unchanged by this repair. The separately frozen f9 full workspace command
+is still active in m12-helper-source; inspect its terminal receipt before
+claiming a result. Complete issue acceptance remains on GitHub.
+
 ## Letfn CI helper and suite review (2026-11-22)
 
 CI exposed two old test helpers with exhaustive matches on the previous
@@ -32172,3 +32228,543 @@ in both phases and four execution tests pass. Build/test/probe commands remain i
 MemoryMax4G user scopes with two jobs/threads, cargo +stable, named build/compile
 and TMPDIR/output under target/probe. New final-head quiet/correctness CI remains
 required; this evidence does not by itself establish the5× time criterion.
+
+
+## BigInt magnitude placement experiment (2026-11-22)
+
+[Placement receipts](../../results/m12-bigint-placement/README.md) retain
+GC-array and embedded no_std helper kernels, including both operand copies,
+checked scratch growth, stack reset and the result copy into GC storage.
+Run `python3 experiments/numeric-representation/bigint-placement-build.py`,
+build the `bigint_placement` example with the locked workspace, then run
+`bigint-placement-verify.py`, `bigint-placement-oracle.py` and
+`bigint-placement-measure.py` from that experiment directory. The README records
+the isolated executable override and Binaryen133 requirement.
+
+All876 complete magnitude results match independent integer arithmetic in two
+collectors; fresh JVM Clojure1.12.6 checks146 exact arithmetic results. The36
+operation/shape rows retain720 instruction samples and44 allocation samples.
+GC addition wins the measured shapes; larger balanced multiplication favors
+the helper including copies. One-limb by512-limb multiplication still favors
+GC, so the crossover cannot depend only on the larger operand. Both paths
+retain GC-owned magnitude arrays. The initial inherited-RSS samples and feature
+failures remain separately identified. Sign dispatch, value wrappers, division
+and GCD are excluded; this probe does not establish language BigInt/Ratio support
+or a production crossover.
+
+
+## Executable GC BigInt value probes (2026-11-22)
+
+[Value receipts](../../results/m12-bigint-values/README.md) retain35 fresh JVM
+Clojure1.12.6 results executed in Runtime/Macro and actual AOT (105 matrix
+observations), plus BigInt macro arguments/results. The three-test execution
+run passes. ABI8 appends immutable sign/magnitude/used-length storage; input
+limbs remain GC-owned and arithmetic writes new result arrays. Signed +, -
+and * preserve exact BigInt results. Printing appends N; str omits it. The
+binary64 conversion rounds once using guard/sticky bits.
+
+Run `python3 results/m12-bigint-values/run-focused.py` with the local target
+layout recorded there. It uses two build/test threads and MemoryMax4G scopes.
+The final source adds retained-magnitude GC checks; its four-test rerun and
+nearby numeric/ABI controls are still running at this checkpoint. Keep that
+source frozen and poll the existing process before starting another run. The
+original unsupported-literal, Wasm nullability and typed-import failures remain.
+
+The runtime reader, promotion, exact division/Ratio, BigInt equality/comparison/
+hashing, remaining conversions and WIT integration still need implementation.
+The GC multiplication kernel is a reference pending the measured helper bridge
+and production crossover. These observations do not establish complete numeric
+semantics or an unfiltered workspace baseline for this source.
+
+
+## Exact integer dispatch and promotion probes (2026-11-22)
+
+[Integer receipts](../../results/m12-bigint-integers/README.md) retain67 fresh
+JVM Clojure1.12.6 expectations, exercised in Runtime/Macro and actual AOT, plus
+renamed promoting-core-var calls. ABI9 appends the immutable BigInteger display
+flag to the integer value layout; old artifact versions are rejected. Exact
+integer comparison/hash, checked/unchecked casts, promotion, runtime reading and
+signed quot/rem/mod use GC-owned magnitudes. Small-map and HAMT lookups preserve
+numeric equality across long/BigInt keys, including with public vars rebound.
+Promoting core inlining preserves Clojure's arities and nested evaluation order.
+
+Run `python3 results/m12-bigint-integers/run-gates.py` with the isolated target
+layout recorded there. Its terminal receipt freezes every changed implementation
+input and passes156 tests:37 focused,31 numeric controls,65 ABI controls,19 map
+controls and4 bootstrap tests. The Java-free bootstrap reproduces both phases
+byte-for-byte, and both source/artifact manifest checks pass. Two jobs/threads
+and MemoryMax4G scopes keep the run bounded; no RUSTFLAGS override is used.
+Earlier reader/map/source-inline failures and the incorrectly packaged test
+invocation remain in the receipts. Earlier ABI8 and capture-parent workspace
+runs are qualified separately and do not certify ABI9.
+
+Full Ratio values, generic exact division, rationalize and WIT u64 integration
+remain unimplemented here. GC multiplication/division are reference kernels;
+the measured helper bridge/crossover and full numeric API acceptance remain.
+The changed reviewed-suite observations require an explicit primary-oracle
+audit before any known-failure baseline update.
+
+
+## BigInt observation decoding and exact source emission (2026-11-22)
+
+[Suite receipts](../../results/m12-bigint-suite/README.md) retain complete
+compressed raw captures and a lossless per-assertion primary-oracle audit.
+Independent host decoding reads canonical BigInt storage and validates its
+metadata/magnitudes without guest printing, equality or arithmetic. The audit
+verifies73 new host-judged passes and preserves15 newly executing but incorrect
+exact-division assertions as failures. Namespace/test/skip failures are unchanged;
+no opaque or guest-only result is promoted to success. Run
+`python3 results/m12-bigint-suite/review.py` to reproduce all88 changed rows.
+
+CI also exposed numeric transport tags escaping into emitted source.
+EDN-to-form conversion now restores validated exact tokens; source printing
+retains their spellings/categories. Malformed tagged text stays tagged.
+The reader regression passes; `cargo test -p suss-compile --locked --test
+analyzer_edn_core --test portable_value_decoder -- --test-threads=2` passes26
+tests, including both core phases and canonical/adversarial decoder checks.
+All34 Python suite-comparison checks pass. Capture command statuses retain the
+old-baseline comparison failures; the primary reference is unchanged. These
+scoped observations do not replace final-head CI or a full workspace baseline.
+
+
+## Exact Ratio execution probes (2026-11-22)
+
+[Ratio receipts](../../results/m12-ratio-values/README.md) retain88 fresh JVM
+Clojure1.12.6 expectations, all passing in Runtime/Macro and actual AOT, plus
+compiled-macro argument/result and retained-child GC checks. The preliminary
+five-target command passes41 tests. Its source predates integration of the
+published analyzer/observation fixes; use the source-frozen run-gates.py on the
+combined source before claiming its numeric/ABI/map/bootstrap results.
+
+ABI10 appends immutable normalized Ratio values with stable BigInteger children.
+Arithmetic, exact integer division, quotient/remainder, conversions, hash/order,
+case constants, runtime readers and rationalize use exact magnitudes. Ratio
+double conversion follows DECIMAL64 HALF_EVEN before binary64 parsing. Checked
+and unchecked cast overloads follow distinct primary paths. Compiler literals
+use already-normalized values; runtime readers/arithmetic still reduce by GCD.
+The largest eight-operation1024-bit stress case uses an explicit10-billion
+test fuel budget; production limits are unchanged. Original unsupported-case,
+cast, fixture-adapter and fuel failures remain in the receipts.
+
+The combined source adds independent Ratio observation decoding and exact pair
+comparison; it reports actual child integers without normalizing guest errors.
+Full numeric-suite acceptance, WIT u64 integration, production helper crossover
+and an unfiltered workspace baseline remain required. BigDecimal remains a
+separate runtime representation and arithmetic task.
+
+
+## Combined Ratio gates and suite review (2026-11-22)
+
+The expanded104-case primary matrix passes Runtime/Macro and actual AOT
+(312 observations). The combined source-frozen gates pass187 Rust tests and35
+Python checks, reproduce both bootstrap phases without Java/Node and verify
+import/helper manifests. `results/m12-ratio-values/commands.json` retains
+input hashes and every terminal result, including the earlier failed ABI9
+fixture under its separate original filename.
+
+`results/m12-ratio-suite/review.py` audits the complete raw capture:94 recovered
+failures plus32 newly executed primary matches;2512 pass/54 guest-judged/266
+fail/4107 not executed/121 namespace failures. Numerator, denominator and
+rationalize's36 unchanged assertions also pass on fresh JVM1.12.6. Four Decimal
+rationalize assertions remain errors. Thrown tests with unsupported Decimal
+arguments do not prove callee behavior; the review records that limitation.
+
+CI repairs replace three stale floating quotient expectations with freshly
+verified exact results, update exhaustive observation helpers and retain the
+native Rust tooling EDN diagnostic. That tooling model still cannot represent
+raw exact numbers; the executed Suss readers do. These repairs need their own
+terminal checks and final-head CI; earlier187-test evidence does not by itself
+certify later source changes. WIT u64, production helper bridging/crossover,
+complete API/inline/tooling acceptance, Decimal and the full workspace baseline
+remain required.
+
+
+## Ratio integration repair checks (2026-11-22)
+
+`results/m12-ratio-ci/commands.json` records terminal74-reader/42-CLI/16-legacy
+test results, with two existing manual-recording ignores in legacy conformance.
+Both201-case corpus targets pass. All source expressions and case identities
+are unchanged; only reciprocal2's expected value changes to1/2 after fresh
+JVM verification. Observation adapters retain exact categories. Minimal runtime
+sessions use numeric anchors without requiring core Keyword constructors.
+
+The Java-free bootstrap reproduces both phases and passes4 tests. Import/helper
+manifests, legacy overlap and the per-assertion suite audit pass. Earlier failed
+CI/fixture attempts remain. The complete unfiltered command remains
+`cargo test --workspace --locked -- --test-threads=2`; its future/live receipt
+must be checked independently before claiming success. Final-head CI and the
+remaining WIT/helper/Decimal/API acceptance still apply.
+
+
+## Analyzer corpus loading after exact division (2026-11-22)
+
+`results/m12-ratio-workspace/command.json` retains the required unfiltered
+workspace command at5ee8a0d7, terminal101 after606.88 seconds with frozen inputs
+unchanged. It stops at the analyzer corpus fixture: its native EDN loader
+rejects the corrected1/2 expectation before extracting source expressions.
+The fixture now uses the analyzer's forms-to-tooling boundary and retains all
+expressions/setup, skips and round-trip assertions. The complete focused
+`cargo test -p suss-cli --locked --test analyzer_edn -- --test-threads=2`
+passes9 tests. This does not implement raw exact values in native tooling EDN.
+A separate full workspace retry is required; the failed invocation certifies
+no later targets.
+
+
+## Exact unsigned WIT boundary probes (2026-11-22)
+
+`results/m12-wide-wit/README.md` describes the unsigned adapter conversion and
+retains fresh primary Clojure 1.12.6 hashes/float bits. High u64 inputs become
+positive BigInts; outgoing u64 checks the exact unsigned range. Float output
+accepts BigInt and Ratio through runtime numeric conversion. Shared ABI 10
+layouts are unchanged, and u64 retains its existing boxed parameter storage.
+
+The original component regression fails on the previous adapter and passes
+after the production change, including printing, exact incrementing, scalar,
+list/option round trips and retained GC values. The expanded fixtures add
+primary hashes, full-range BigInt results, invalid magnitudes/categories and
+mixed asynchronous high-u64 calls. The first expanded run exposes an option
+fixture error; its isolated terminal failure and interrupted partial run remain
+in the receipts. Corrected fixtures use [:some value]. Run
+`python3 results/m12-wide-wit/run-gates.py` for the expanded numeric, general
+adapter, ABI, parameter-hint and Java-free bootstrap checks; those gates are
+still running at this publication. The separate full workspace retry at
+d7d2919b predates these WIT production changes and cannot certify them.
+
+
+## Production BigInt multiplication bridge probes (2026-11-22)
+
+`results/m12-helper-multiply` retains a source-pinned allocator-free multiply
+kernel and GC-owned value bridge. The independent field tests pass204 signed
+path observations from17 fresh JVM magnitude products, plus typed allocation
+failure, scratch reuse and GC retention. The scoped ABI targets pass63 tests
+and numeric CLI targets pass11 tests. The subsequent rebuild check fails
+because stable1.99.1 overrides the numeric helper's pinned1.98.0; its original
+failure is retained and bootstrap is unexecuted by that command. Clear only
+RUSTUP_TOOLCHAIN for the pinned check; developer RUSTFLAGS remain untouched.
+
+The actual-wrapper profiler verifies250 complete observations across auto/null
+GC and retains400 instruction samples and20 allocation samples. Large products
+favor the copied helper; full result storage measures about40+4*capacity bytes.
+The conservative initial crossover remains provisional. Cache the GC outer
+limb and refine the crossover from new wrapper measurements, then run the
+compiled Suss bench.py instruction/byte columns. Division/GCD remain GC kernels.
+
+The a21a715d CI record membership failure is independently reproduced at fuel
+992401/1003928. Preserve its one-million acceptance gate and remove redundant
+numeric fallback checks rather than adjusting the threshold. These probes do
+not establish full numeric API/suite/tooling or final-head CI acceptance.
+
+
+## Terminal WIT revision checks (2026-11-22)
+
+results/m12-wide-wit/commands.json is terminal with every command0 and frozen
+implementation inputs unchanged at a21a715d. The scoped Rust targets pass136
+checks:14 numeric,54 adapter,63 ABI/calling convention,1 parameter-hint and4
+bootstrap tests. Java-free byte reproduction and both manifests pass. The
+production numeric-helper and namespace-sort changes are later source and need
+their own evidence; these receipts do not certify those revisions.
+
+
+## Measured multiply dispatch and record membership work (2026-11-22)
+
+results/m12-helper-multiply-final retains99 passing scoped Rust checks, a pinned
+byte-identical helper rebuild, Java-free double bootstrap reproduction and the
+core manifest check. The source-frozen wrapper profile verifies320 complete
+observations with512 instruction and20 allocation samples. Caching the GC row
+limb reduces the512x512 reference from23.1M to17.36M instructions; the helper
+uses5.36M. Both lengths select the copied helper when each is at least2 and
+(la-1)*(lb-1)>=8. Result storage remains GC-owned on both paths.
+
+The unchanged bench.py measurement engine executes four compiled BigInt cases
+with instruction and byte columns; complete AOT results are checked against the
+primary fixture. Approximate gross bytes are72.5,674.8,2090.2 and2098.8 for4x4,
+32x128,1x512 and2x512 respectively. Unknown control/net RSS slopes remain empty.
+The initial sampler's executable hashing raised its inherited RSS floor; its
+unselected run remains, and streaming hashing corrects that overhead. An earlier
+CLI-e validation hits its default fuel limit on the large printed products;
+the compiled path validates the same values, with production limits unchanged.
+
+The record membership regression is fixed by skipping already-ordered name
+merges while preserving complete namespace data, duplicates, UTF-16 order and
+work charging. Its original strict one-million gate now measures940200/951046,
+versus992401/1003928. The scalar shortcut experiment did not affect this span
+and is removed, with its failed receipt retained. The historical unfiltered
+workspace retry atd7d2919b terminates101 after4190.20 seconds at that old budget
+failure; later targets are unexecuted. That invocation is not a passing baseline.
+A new integrated-source full workspace command and final-head CI remain needed.
+
+
+## Scalar constant declaration probes (2026-11-22)
+
+`results/m12-constant-definitions` retains12 fresh JVM Clojure1.12.6
+observations for top-level scalar :const declarations. The before regression
+fails both Runtime/Macro and AOT tests on the original unsupported-attribute
+diagnostic; the changed compiler passes both tests (36 primary observations
+across Runtime/Macro/actual AOT). Separate-fragment readers retain the old
+constant after redefinition, ordinary redefinitions remove the flag, false/nil
+flags stay live, lexical shadows win, and a compile failure publishes no new
+constant. Signed zero, numeric boundaries, BigInt/Ratio, strings, nil and false
+are covered. Commands and frozen-input hashes are in before-runtime.json and
+after-first.json. An initial missing user-bus setup is retained in before.json.
+
+The analyzer snapshots immutable declaration revisions at top-level form
+boundaries instead of substituting provisional nested initializers. Support is
+bounded to scalar literal initializers (and already-resolved scalar constants).
+Computed/collection constants and nested definitions involving constants remain
+explicit diagnostics. Ignoring the metadata would not preserve Clojure behavior.
+The initial do-wrapped oracle probes are retained separately; their live reads
+do not demonstrate an earlier initialized top-level constant.
+
+Run `python3 results/m12-constant-definitions/run-gate.py LABEL` for the focused
+regressions. The unchanged vendored suite and declaration/bootstrap gates must
+be executed on this production change; the earlier green4cf2c6d4 CI and its live
+unfiltered workspace command do not certify it. Numeric class aliases and
+Decimal-dependent assertions require their own observed results. No suite
+failure is changed to success by the constant tests.
+
+
+The scalar constant implementation now retains one initialized private cell per
+declaration revision, preserving repeated BigInt/Ratio reference identity while
+ordinary repeated literals remain distinct. The first literal-substitution
+implementation's identity failure is retained in identity.json; before-root.patch
+reconstructs that production source. The private-cell revision then exposed
+three primitive source-type diagnostic mismatches. Its original observations
+remain in primitive-constant-probes.json and before-source-facts.patch. Source
+records now retain the preceding constant declaration revision, and primitive
+analysis uses its initializer's source class independently of boxed storage.
+after-source-facts.json is terminal0 with18 value/identity cases in Runtime,
+Macro and actual AOT, plus the three compile diagnostics in both phases.
+
+The first implementation's unchanged vendored suite capture is terminal101
+(the expected baseline comparison changes), with3714 primary matches,54
+guest-judged,459 failures,2712 unexecuted and92 namespace failures. It loads29
+additional namespaces; audit-suite.py finds no changed assertions outside those
+newly loaded namespaces. All new +' and *' failures contain Decimal literals;
+BigInt's namespace instead stops at unresolved clojure.lang.BigInt. These are
+source-qualified observations, not a passing suite-acceptance claim or evidence
+for the later private-cell/source-type revision. The original known-failure
+baseline is still unchanged. Run the labeled final suite capture, declaration
+and Java-free bootstrap gates before publishing current acceptance evidence.
+
+
+The final scalar-constant gate is terminal0 with19 primary JVM cases executed
+in Runtime/Macro/actual AOT (57 observations), six exact compile diagnostics,
+and separate-fragment/rollback controls. oracle-check.json confirms all19 in
+fresh JVM processes. The later full suite capture reproduces3714/54/459/2712
+and92 failed namespaces, with zero changed assertions in previously loaded
+namespaces. Both original101 baseline comparisons remain in their receipts.
+The reviewed known-failure baseline now records the actual newly executed
+failures and class-load diagnostics; it does not omit them or modify the
+primary reference. The corresponding Python comparison returns0.
+
+The declaration run exposes one stale negative test expecting a scalar :const
+literal to be unsupported. Its failure remains in final-gates.json; the test
+now uses an unsupported computed initializer. The focused rerun passes13
+portable_definitions and14 portable_resolution tests. Earlier declaration
+CLI targets pass14 tests, bootstrap passes4, and the constant target passes2:
+47 scoped Rust tests in total. The suite comparator's35 Python tests pass.
+Java/Node-free double bootstrap reproduction, compiler identity verification,
+core-import and bootstrap-source manifests pass. repair-input-diff.json proves
+that only the stale test and reviewed baseline differ from the full-gate
+inputs; production source is unchanged. The separate unfiltered workspace
+command remains source-qualified to4cf2c6d4 and does not certify these changes.
+Numeric class support remains the next observed BigInt namespace blocker.
+
+
+## Native numeric class and exact-operand evidence (2026-11-22)
+
+`python3 results/m12-numeric-classes/run-combined.py LABEL` executes24 fresh
+JVM numeric-class cases, five class-protocol cases and24 raw/boxed exact-operand
+cases in Runtime/Macro and actual AOT. Six Rust tests pass in final-combined,
+with every source/fixture hash unchanged. Its raw parameter signatures are
+inspected against the shipped core environment; the initial missing-environment
+failure and actual AOT control remain. The class matrix separately checks the
+four opaque BigInt suite recordings as fresh JVM booleans. Eight current-var
+extension/GC steps pass in Runtime/Macro, including Number inheritance,
+class-specific overrides, markers and generic apply.
+
+Canonical descriptors distinguish Long, Double, BigInt, BigInteger, Ratio,
+Number and Class. They are non-callable, have stable identity/name/membership,
+and numeric protocol dispatch consults actual class and Number inheritance
+before native/default fallback. Native numeric/class receivers cannot reuse a
+shared native-kind cache entry. Existing source/packed class values dispatch
+as Class. BigDecimal has a class descriptor only in ABI10; no Decimal instance
+or arithmetic behavior is supplied. The original class/ifn? bootstrap adapters
+are included in the checked core manifest, without a shipped JVM dependency.
+
+`run-focused.py` passes45 surrounding protocol, record/identity and bootstrap
+tests. Java/Node-free double bootstrap reproduction, compiler identity and both
+manifests pass. `run-suite.py` retains the original101 old-baseline comparison
+and its4247 raw assertion observations. `audit-suite.py` finds3739 primary host
+matches,61 guest-judged,459 failures,2680 unexecuted and90 failed namespaces.
+The two newly loaded namespaces are BigInt (14 host/four guest) and juxt (11
+host/three guest). No assertion changes in previously loaded namespaces. The
+ifn? namespace now stops at unresolved var. The reviewed known-failure baseline
+retains every actual remaining failure; comparison against it returns0. Primary
+reference, skip selection and runtime budgets are unchanged. final-input-diff
+proves only the new raw/boxed test and reviewed baseline differ from the full
+capture/surrounding-gate inputs; production source is the same.
+
+`results/m12-exact-workspace/command.json.gz` and run.log retain terminal0 for
+`cargo test --workspace --locked -- --test-threads=2` at4cf2c6d4, with its source
+unchanged (10,690 seconds). This earlier unfiltered run does not certify later
+constant or class changes. Native Rust tooling EDN still lacks raw exact values,
+although its source-form tags retain them losslessly and executed Suss readers
+accept them. The fresh captured-protocol experiment shows another limit: JVM
+function values captured before extension retain old implementations, whereas
+Suss consults current tables. The passing extension matrix calls the current
+var. Full JVM interop, namespace imports, Decimal and these wider surfaces are
+not inferred from numeric class probes. GitHub holds acceptance/promotion state.
+
+## Exact native EDN and analyzer round-trip evidence (2026-11-22)
+
+`python3 results/m12-native-edn/run-complete.py` passes78 reader,29 compiler
+EDN/decoder/hook,39 CLI analyzer/numeric/reader and4 bootstrap tests. Native
+tooling retains BigInt/Ratio directly, without binary64 or exact-number source
+tags. Normalized reader keys coalesce Long/BigInt even in nested collections;
+both printers reject unreadable duplicate-key or integral-Ratio data. Serde
+preserves supported128-bit integer values and rejects representations it cannot
+retain exactly. The17 fresh JVM samples include discarded distinct numeric
+keys; the original false duplicate-nil error remains in before-discard.
+Decimal data and legacy source carriers remain separate explicit boundaries.
+
+The final analyzer refinement records native numeric class references as class
+constants with dotted names. Its original emitted java.lang/Long error is
+retained in before-class-ast. Exact BigInt/Ratio literal nodes now expose
+val/type fields; their original missing-val probe also remains. The final
+`run-class-ast-gates.py` passes all11 analyzer tests,29 decoder/hook tests,
+Java/Node-free bootstrap reproduction, compiler identity, both manifests and
+`cargo check --workspace --tests --locked`. final-input-diff records only the
+compiler analyzer and its added regression as differences from the earlier
+broad gate. The final analyzer gate and full suite capture have identical
+source inputs.
+
+`python3 results/m12-native-edn/run-suite.py` is terminal0 against the existing
+reviewed baseline, with4247 raw assertions and3739 host matches/61 guest
+judgments/459 failures/2680 unexecuted/90 failed namespaces. Its audit finds
+zero changed assertions or namespace diagnostics; no baseline, reference or
+skip changes are made. The expanded25-case class matrix additionally proves
+unequal class identities and eight distinct class keys against fresh JVM
+results. It passes Runtime/Macro/actual AOT alongside the existing protocol
+and raw/boxed exact-operand matrices in after-native-edn. GitHub holds issue
+acceptance, independent-review and final-head-CI state; no merge is inferred.
+
+
+The acceptance audit additionally retains31 exact-number forms under existing
+whole-test count guards. `scoped-cast-controls.py` obtains fresh JVM reports
+from each original vendored assertion;30 applicable forms match in isolated
+Runtime/Macro/actual AOT controls (90 observations). The sole Float class
+assertion has no Suss equivalent under ADR-0003 Types. Its primary result and
+platform limitation remain explicit. Original count guards and all459 full
+baseline failures are unchanged, with no partial count-mismatch passes inferred.
+`audit-scoped-failures.py` finds no remaining non-Decimal failure rows for the
+eight functions required by the exact-number issue. The isolated controls add
+only a regression target/fixtures after the final full capture; production
+source is unchanged.
+
+## Promotion-review numeric fixes (2026-11-22)
+
+`results/m12-promotion-fixes` records independent review of8a6e350c and its
+142-expression primary comparison. The review found unchecked-negate converting
+Ratio to double and small/wide BigInteger macro constants failing reconstruction.
+Before-unchecked and before-macro-biginteger preserve the actual failures.
+
+Ratio now uses exact negation. Expanded unary controls also found positive
+BigInteger abs retaining its projection rather than producing BigInt;
+integer-bigint handles that branch.33 fresh cases pass in Runtime/Macro/actual
+AOT. BigInteger has a distinct native tooling value and reserved #suss/biginteger
+decimal-string carrier, normalized to the existing datum during selection.
+Both shipped readers implement it and respect configured reader overrides.
+Runtime printing stays plain;010 is decimal10. The accepted design and original
+source hash record this narrow reader addition.
+
+`run-focused.py after-abs-category` passes16 tests with source/fixtures unchanged,
+including23 carrier controls in all three routes. `run-gates.py` passes222 tests:
+80 reader,50 CLI,88 compiler/ABI/decoder plus4 bootstrap checks. Java/Node-free
+double reproduction, identity, both manifests and workspace test-target
+compilation pass. The final suite has4247 rows and exactly3739/61/459/2680/90,
+with zero changed assertions or namespace diagnostics and no baseline/reference/
+skip/count-guard change. The emitted-aot probe executes generated source with
+small/wide BigInteger macro values and quoted numerator/denominator data; it
+returns1. Only this regression target differs after the capture; production
+source is unchanged. Independent delta review and final-head CI live on GitHub.
+
+
+## Numeric class integration diagnostics and call order (2026-11-22)
+
+`results/m12-class-integration/before-ci.log.gz` preserves the complete failed
+CI log at8a6e350c. Four tests exposed stale opaque/callable Number expectations
+and an actual nth diagnostic failure: numeric Class values have no constructor
+properties. type->str recognizes their names first; both nth arities use the
+fresh JVM colon/simple-class diagnostic. The original132-case CLJS corpus is
+unchanged. Its scalar set forEach diagnostic alone uses the primary nth result;
+error structure/message and zero callback trace remain independently decoded.
+
+The fresh primary oracle also found Class invocation evaluating arguments too
+early. before-class-call records JVM[true0] versus the reviewed executable's
+[true12]. An internal check now rejects numeric Class callees after evaluating
+the callee and before its arguments. It retains the original callee SSA and
+omits checks for proven MakeClosure/MakeGeneralClosure values, preserving
+closure elimination. Explicit apply arguments still execute before rejection.
+The check's success path writes no var and calls no user code.
+
+`python3 results/m12-class-integration/oracle.py` records23 fresh JVM controls;
+22 execute in the existing Runtime/Macro/actual-AOT matrix. The remaining
+multimethod declaration executes through core_state's macro-aware Repl test;
+all-cases.json records this mapping. `run-focused.py after-known-closures`
+returns0 with77 tests and unchanged source/fixtures, including all four original
+failing targets, strict record fuel, compiler catalog, nonescaping closures and
+vectors, and13 unboxed codegen tests. The key closure regression still executes
+without boxes or calls. Original bootstrap/harness failures are retained;
+no unknown result is counted as passing. Gate/capture receipts identify their
+source inputs, and GitHub holds final review/CI and issue acceptance state.
+
+
+`python3 results/m12-class-integration/run-gates.py` returns0 for227 tests:
+80 reader,51 numeric/analyzer CLI,88 compiler/ABI,4 bootstrap and4 printer
+checks. The100M quoted-string fuel test, Java/Node-free double reproduction,
+compiler identity, both manifests and workspace test-target compilation pass.
+`run-suite.py` and `audit-suite.py` return0 with4247 raw rows and exactly the
+existing3739/61/459/2680/90 outcomes. No assertion or namespace diagnostic
+changes; no baseline/reference/skip/count-guard changes. independent-final
+retains fresh subprocess captures matching all23 JVM controls and11 combined
+current-CLI probes. Final-input-diff qualifies documentation-only additions
+after the source-frozen gates/capture; production, tests and fixtures match.
+
+
+## Inline noncallable errors and calling convention (2026-11-22)
+
+The failed partition6 job at22c0a3f2 is retained byte-exact in
+`results/m12-class-call-inline/before-ci.log.gz`. Its unchanged calling-
+convention test caught an argument array, invoke import and extra helper calls
+in the Class guard's cold path. The fix preserves those assertions: a physical
+DESCRIPTOR is not a callable closure or object, so the fragment throws directly
+before arguments. It imports existing canonical error global2 read-only, pools
+the short message, and allocates a fresh error with nil data/cause and UID0.
+The runtime adds only an export, with no relocated globals, changed shared
+types or ABI version. The import is included in definition/cache/literal
+positions after any protocol epoch.
+
+`python3 results/m12-class-call-inline/oracle.py` records fresh JVM error
+identity/data [false true true]; the existing primary fixtures are unchanged.
+`run-focused.py inline-descriptor-throw` returns0 with86 tests across12 targets,
+source/fixture inputs unchanged. All four original calling-convention tests
+pass without editing their assertions, including no argument array/invoke and
+only the entry-cache helper. Exception constructors, actual AOT class controls,
+closure elimination, unboxed codegen, compiler catalog, strict record fuel and
+prior integration regressions pass. The separate direct executable receipt
+also preserves the four calling-convention results and binary hash. Surrounding
+gate/capture receipts qualify their own source; GitHub holds review/CI state.
+
+
+`python3 results/m12-class-call-inline/run-gates.py` returns0 for227 tests,
+Java/Node-free double bootstrap reproduction, compiler identity, both manifests
+and workspace test-target compilation. `run-suite.py` and `audit-suite.py`
+return0, source unchanged:4247 raw rows,3739 host matches/61 guest judgments/
+459 failures/2680 unexecuted/90 failed namespaces, zero changed assertion or
+namespace outcomes and no baseline/reference/skip/count-guard rewrite.
+independent-final preserves24 fresh JVM expectations and23 current-CLI rows,
+plus cache-disabled retention of distinct errors/messages/nil data across20,000
+escaping vector allocations with a1MiB initial heap. That is allocation-pressure
+evidence, not a claim of observed GC event counts. Final-input-diff qualifies
+only documentation additions after frozen runs; production/tests/fixtures match.

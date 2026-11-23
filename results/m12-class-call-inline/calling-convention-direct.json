@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_calling_convention-aad24cb78f3f0883",
+    "--test-threads=2"
+  ],
+  "sha256": "25114bfe7c77979ad760e7b66f80bddc8af83e886035d0f6144533637ed7a12d",
+  "exit_code": 0,
+  "stdout": "\nrunning 4 tests\ntest artifacts_record_runtime_abi_10_and_prior_abis_are_rejected ... ok\ntest a_locally_called_closure_needs_no_call_entry ... ok\ntest call_sites_call_the_entry_without_an_argument_array ... ok\ntest known_callees_are_static_calls ... ok\n\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n",
+  "stderr": "",
+  "seconds": 0.02630329132080078,
+  "complete": true
+}

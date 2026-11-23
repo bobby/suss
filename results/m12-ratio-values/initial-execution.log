@@ -1,0 +1,35 @@
+Running as unit: run-p630122-i88699529.scope; invocation ID: c5c39d468ac74eeaa9dfffb3b5c097c8
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 21s
+     Running tests/clojure_ratios.rs (../m12-integer-target/debug/deps/clojure_ratios-636cb7c2021547ed)
+
+running 2 tests
+test ratios_match_jvm_in_both_phases ... FAILED
+test aot_executes_exact_ratios ... FAILED
+
+failures:
+
+---- ratios_match_jvm_in_both_phases stdout ----
+
+thread 'ratios_match_jvm_in_both_phases' (633113) panicked at crates/suss-cli/tests/clojure_ratios.rs:32:13:
+assertion `left == right` failed: (pr-str (try [(bigint 18446744073709551617/2) (biginteger -18446744073709551617/2) (long 18446744073709551617/2)] (catch :default e :error)))
+  left: "[9223372036854775808N -9223372036854775808 9223372036854775807]"
+ right: ":error"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_exact_ratios stdout ----
+
+thread 'aot_executes_exact_ratios' (633112) panicked at crates/suss-cli/tests/clojure_ratios.rs:74:5:
+Compilation error: Semantic error: While compiling ratios.sus: Unresolved Runtime name suss.edn/read-string at bytes 5447..5467
+
+
+
+failures:
+    aot_executes_exact_ratios
+    ratios_match_jvm_in_both_phases
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.94s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_ratios`

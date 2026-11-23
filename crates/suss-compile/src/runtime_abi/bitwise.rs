@@ -191,6 +191,55 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
     ));
     code.push(End);
     let range = format!("Value out of range for {}: ", name.trim_start_matches("unchecked-"));
+    // Checked Ratio casts use its exact BigInteger quotient. Unchecked int
+    // (and Number's byte/short narrowing) uses Ratio.intValue: decimal-rounded
+    // double followed by Java's saturating int conversion. longValue is exact.
+    if let Cast::Checked(bits) | Cast::ObjectChecked(bits) | Cast::Unchecked(bits) = kind {
+        code.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty)]);
+        if matches!(kind, Cast::Unchecked(_)) && bits <= 32 {
+            code.extend([LocalGet(0), Call(double), I32TruncSatF64S, I64ExtendI32S, LocalSet(1)]);
+        } else {
+            code.extend([LocalGet(0), Call(b.names["ratio-integer"]), Call(b.names["integer-biginteger"]), LocalSet(3)]);
+            if !matches!(kind, Cast::Unchecked(_)) {
+                code.extend([LocalGet(3), Call(b.names["bigint-fits-long"]), I32Eqz, If(BlockType::Empty)]);
+                code.extend(throw_with_value(b, "Value out of range for long: ", 3)); code.push(End);
+            }
+            code.extend([LocalGet(3), Call(b.names["bigint-low-long"]), LocalSet(1)]);
+        }
+        if bits < 64 {
+            let shift = I64Const(i64::from(64-bits));
+            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS]);
+            if !matches!(kind, Cast::Unchecked(_)) {
+                code.extend([LocalGet(1), I64Ne, If(BlockType::Empty)]);
+                if bits==32 { code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL)); }
+                else { code.extend(throw_with_value(b, &range, 0)); }
+                code.extend([End, LocalGet(1)]);
+            }
+        } else { code.push(LocalGet(1)); }
+        if !raw { code.push(Call(boxed)); }
+        code.extend([Return, End]);
+    }
+    // BigInt/BigInteger must not round through binary64 before integer casts.
+    if let Cast::Checked(bits) | Cast::ObjectChecked(bits) | Cast::Unchecked(bits) = kind {
+        code.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty)]);
+        if !matches!(kind, Cast::Unchecked(_)) {
+            code.extend([LocalGet(0), Call(b.names["bigint-fits-long"]), I32Eqz, If(BlockType::Empty)]);
+            code.extend(throw_with_value(b, "Value out of range for long: ", 0)); code.push(End);
+        }
+        code.extend([LocalGet(0), Call(b.names["bigint-low-long"]), LocalSet(1)]);
+        if bits < 64 {
+            let shift=I64Const(i64::from(64-bits));
+            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS]);
+            if !matches!(kind, Cast::Unchecked(_)) {
+                code.extend([LocalGet(1), I64Ne, If(BlockType::Empty)]);
+                if bits == 32 { code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL)); }
+                else { code.extend(throw_with_value(b, &range, 0)); }
+                code.extend([End, LocalGet(1)]);
+            }
+        } else { code.push(LocalGet(1)); }
+        if !raw { code.push(Call(boxed)); }
+        code.extend([Return, End]);
+    }
     match kind {
         Cast::Checked(bits) => {
             code.extend([LocalGet(0), Call(long), If(BlockType::Empty)]);
@@ -355,13 +404,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &format!("number-cast-{name}"),
             &[VALUE],
             &[VALUE],
-            &[(1, ValType::I64), (1, ValType::F64)],
+            &[(1, ValType::I64), (1, ValType::F64), (1, VALUE)],
             &body,
         ));
         let raw_body = cast(b, name, kind, true);
         b.function_with_locals(CAST_RAW_EXPORTS[index], &[VALUE],
             &[if (8..=11).contains(&index) { ValType::F64 } else { ValType::I64 }],
-            &[(1, ValType::I64), (1, ValType::F64)], &raw_body);
+            &[(1, ValType::I64), (1, ValType::F64), (1, VALUE)], &raw_body);
     }
     let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
     dispatch.extend(numeric::error("Invalid numeric cast", nominal::ERROR_GLOBAL));

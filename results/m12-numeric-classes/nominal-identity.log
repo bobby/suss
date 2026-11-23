@@ -1,0 +1,34 @@
+Running as unit: run-p1791400-i89837309.scope; invocation ID: 23905040f8af4bd58294df65fb62dd2f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.14s
+     Running tests/portable_identity_hash.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_identity_hash-6d3f9183b2f82745)
+
+running 4 tests
+test explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols ... ok
+test identity_uid_errors_preserve_effects_and_compile_atomicity ... ok
+test identity_uids_remain_owned_stable_and_distinct_across_gc_fragments ... ok
+test identity_hash_contract_matches_pinned_owned_value_relations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.48s
+
+     Running tests/portable_nominal.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_nominal-62ed5f3e8c0a8368)
+
+running 5 tests
+test live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types ... ok
+test implements_bootstrap_uses_phase_local_protocol_keys_and_located_diagnostics ... ok
+test nominal_compiler_keys_are_phase_isolated_stable_and_inaccessible_to_source ... ok
+test nominal_public_hir_and_ir_reject_bad_shapes_before_emission ... ok
+test mutable_field_assignment_rejects_immutable_flags_and_shadowing_locals ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/portable_record_identity.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/portable_record_identity-a56f345587c7baf7)
+
+running 3 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test record_descriptor_identity_ignores_constructor_override_and_preserves_order_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.61s
+

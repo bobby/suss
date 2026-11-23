@@ -93,13 +93,19 @@ features are `:suss` and `:default`, taking the first matching branch in source
 order; Suss claims neither `:cljs` nor `:clj` (2026-11-06 decision,
 [ADR-0003](../adr/0003-clojure-numeric-tower.md), #334), whatever the file's
 extension, so a `.cljs` file is read with the same features.
-The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-in
+The reader reads tagged literals, `#tag form`, as Clojure's does. One built-in
 tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
 literal and prints queues as unreadable objects. It reads as a persistent queue
 in source, the REPL, quoted data and macro data, so printed queues read back.
 As with any tagged literal in Clojure, the queue is a constant: its elements and
 metadata are not evaluated (unlike ClojureScript), and neither are those of a
-queue a macro returns. Any other tag, and `#queue` with anything but a vector,
+queue a macro returns. The additional reserved `#suss/biginteger "decimal"`
+carrier preserves native BigInteger constants in emitted compiler source/data
+(2026-11-22 numeric integration). Its payload is a signed decimal string, read
+without evaluation or radix inference; ordinary runtime BigInteger printing
+remains plain, as in Clojure. Compiler source, native EDN and the Runtime/Macro
+readers recognize it, preserving configured runtime/EDN tag-reader precedence.
+Unknown tags, malformed BigInteger payloads and `#queue` with anything but a vector
 fails with a reader diagnostic ("No reader function for tag ..."), checked after
 conditional selection. Unselected branches are not checked, as in Clojure. A
 discarded (`#_`) tag is checked only when its target needs conditional
@@ -133,9 +139,11 @@ doubles are distinct values with Clojure's arithmetic, overflow checks,
 contagion, `quot`, `rem` and `mod`, reading and printing (#335), and with
 Clojure's `=`, `hash`, 64-bit bit operations and range-checked casts (#336).
 Until the rest is implemented, `type` doesn't distinguish them, a quotient of longs that doesn't divide evenly is a double
-(#338), and the reader reads ratios, `N` and `M` literals and integers beyond
-the long range but evaluating them throws (#333, #338, #339); these are known
-gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
+(#338). BigInt literals and signed addition, subtraction and multiplication
+execute exactly, including integers beyond the long range. The reader reads
+ratios and `M` literals but evaluating those runtime types still throws
+(#333, #338, #339). BigInt's other numeric operations and conversions remain
+incomplete; these are known gaps in the implementation. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming

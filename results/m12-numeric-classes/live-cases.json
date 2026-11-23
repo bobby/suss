@@ -1,0 +1,42 @@
+[
+  {
+    "setup": "(defprotocol LiveNumeric (live-value [x])) (extend-type Number LiveNumeric (live-value [x] :base)) (def live-call (fn [x] (live-value x)))",
+    "source": "(mapv live-call [1 1.0 1N (biginteger 1) 1/2])",
+    "expected": "[:base :base :base :base :base]"
+  },
+  {
+    "setup": "(extend-type Long LiveNumeric (live-value [x] :long))",
+    "source": "(mapv live-call [1 1.0 1N (biginteger 1) 1/2])",
+    "expected": "[:long :base :base :base :base]"
+  },
+  {
+    "setup": "(extend-type Number LiveNumeric (live-value [x] :changed))",
+    "source": "(mapv live-call [1 1.0 1N (biginteger 1) 1/2])",
+    "expected": "[:long :changed :changed :changed :changed]"
+  },
+  {
+    "setup": "(extend-type clojure.lang.BigInt LiveNumeric (live-value [x] :bigint))",
+    "source": "(mapv live-call [1 1.0 1N (biginteger 1) 1/2])",
+    "expected": "[:long :changed :bigint :changed :changed]"
+  },
+  {
+    "setup": "(extend-type Class LiveNumeric (live-value [x] :class))",
+    "source": "(mapv live-call [Long Double clojure.lang.BigInt java.math.BigInteger clojure.lang.Ratio Class])",
+    "expected": "[:class :class :class :class :class :class]"
+  },
+  {
+    "setup": "",
+    "source": "[(apply live-value [1N]) (apply live-value [1.0]) (live-call 1) (live-call 1N) (live-call 1.0)]",
+    "expected": "[:bigint :changed :long :bigint :changed]"
+  },
+  {
+    "setup": "(defprotocol NumericMarker) (extend-type Number NumericMarker) (def marker-call (fn [x] (satisfies? NumericMarker x)))",
+    "source": "(mapv marker-call [1 1.0 1N (biginteger 1) 1/2 nil Long])",
+    "expected": "[true true true true true false false]"
+  },
+  {
+    "setup": "(extend-type Class NumericMarker)",
+    "source": "(mapv marker-call [1 1N Long Class nil])",
+    "expected": "[true true true true false]"
+  }
+]

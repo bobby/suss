@@ -1,0 +1,37 @@
+Running as unit: run-p828890-i88904317.scope; invocation ID: a9151a599631472eafda917cfdbcd01c
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 54s
+     Running tests/conformance.rs (../m12-ratio-target/debug/deps/conformance-13c2060dd8c369f8)
+
+running 12 tests
+test comparison_rejects_wrong_values_and_collections ... ok
+test case_catalog_matches_reviewed_inputs ... ok
+test decoder_observes_nested_values_and_trie_boundaries ... ok
+test evidence_maps_reject_duplicates_and_changed_failures ... ok
+test malformed_case_fields_do_not_become_passing_cases ... ok
+test missing_case_file_is_an_error_not_an_empty_suite ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test record_case_catalog ... ignored, manual input catalog update; review removed cases and changed expectations
+test record_known_failures ... ignored, manual evidence capture; review the diff before accepting this baseline
+test runtime_traps_are_distinct_from_uncaught_language_exceptions ... ok
+test conformance_matches_reviewed_baseline has been running for over 60 seconds
+test conformance_matches_reviewed_baseline ... ok
+
+test result: ok. 10 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 275.98s
+
+     Running tests/portable_expression_conformance.rs (../m12-ratio-target/debug/deps/portable_expression_conformance-ae7a044bce426a69)
+
+running 6 tests
+test corpus_runner_records_actual_exception_payload_and_source_failure ... ok
+test failure_stages_preserve_validation_compile_and_runtime_distinctions ... ok
+test lossless_comparison_rejects_rounding_signed_zero_opaque_values_and_duplicate_reuse ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values has been running for over 60 seconds
+test compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 239.13s
+

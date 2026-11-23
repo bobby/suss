@@ -1,0 +1,35 @@
+Running as unit: run-p1239852-i89299067.scope; invocation ID: 358fdb971e5d4c04a69217db22d86410
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 18s
+     Running tests/portable_pipeline.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_pipeline-47db2bd38be96c0a)
+
+running 22 tests
+test arithmetic_import_trace_observes_once_only_source_order_and_short_circuit ... ok
+test closures_beyond_the_old_verifier_depth_execute ... ok
+test compiled_literal_uses_shared_abi_and_binary64_rounding ... ok
+test compiled_exact_numbers_match_primary_clojure_storage_observations ... ok
+test compiled_scalars_match_the_pinned_reader_observations ... ok
+test edge_parameter_replacements_are_parallel_in_executed_ir ... ok
+test empty_let_body_returns_nil ... ok
+test hir_retains_binding_identity_metadata_and_located_diagnostics ... ok
+test independently_compiled_fragment_values_remain_live_across_gc ... ok
+test lexical_bindings_hide_the_bootstrap_let_macro ... ok
+test malformed_hir_returns_a_located_lowering_diagnostic ... ok
+test malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets ... ok
+test nil_test_verifier_checks_result_type_and_operand_definition ... ok
+test numeric_calls_and_truthiness_execute_with_portable_bits ... ok
+test compiled_source_cases_match_the_pinned_compiler_observations has been running for over 60 seconds
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test primitive_let_star_keeps_sequential_bindings_and_special_form_identity ... ok
+test public_hir_negation_executes_and_malformed_arithmetic_is_rejected ... ok
+test recurrence_rejects_non_tail_wrong_arity_and_cross_function_targets_with_spans ... ok
+test unary_sum_and_product_check_operands_and_return_numbers_unchanged ... ok
+test verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values ... ok
+test compiled_source_cases_match_the_pinned_compiler_observations ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 557.43s
+

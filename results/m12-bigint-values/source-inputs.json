@@ -1,0 +1,25 @@
+{
+  "base_commit": "a258d31780a5f4f71756eb68a9fc1beeac6d3e41",
+  "inputs": {
+    "crates/suss-cli/tests/clojure_longs_doubles.rs": "c2b5b73cbc5719089ae885cdff0d43ba3a2c31b5263b9fb6a5a846cc0d062cd9",
+    "crates/suss-compile/src/portable/emit.rs": "94ba745b311326a21bfaf785223b1805649576e8b3f0a7a70f37d4106011389a",
+    "crates/suss-compile/src/portable/hir.rs": "e8c86bed5a1e8f73669b10152a66bb7b047886548baed83167821b189fa92a92",
+    "crates/suss-compile/src/portable/hir/source_tags.rs": "4d6c107d8c145cde064a48d819b8a4d68d32b24db2d0448d4bf0328d8c38fad1",
+    "crates/suss-compile/src/portable_macro_data.rs": "a67e6931f311a139b2c954ac719e75f629e9a492e6ac631c99a2947a4b13f93f",
+    "crates/suss-compile/src/portable_macro_graph.rs": "2f296f25b3088235729f7da0293201c32f952a0040cecf1edd99a5bc51d4cc1d",
+    "crates/suss-compile/src/portable_session.rs": "6d31d13af3d9eb389fabea6900e1e0e6b898411d07c8bec7c944aa679d162b56",
+    "crates/suss-compile/src/runtime_abi.rs": "bcd1a8fadbdb6aff4976951f7c8167670db39bceb57c9272d931af1e5cb93332",
+    "crates/suss-compile/src/runtime_abi/longs.rs": "12794debe29c662e2b4c16f3e36152e470ee5f38c23fa84c8d2103195ed96a00",
+    "crates/suss-compile/src/runtime_abi/numeric.rs": "894076bc978218fb8bd52657c1084f28777dfc9e6a9d8ebbc4f3668a88c94f1c",
+    "crates/suss-compile/tests/portable_calling_convention.rs": "9d613e1ca0919904ff9a00ca05bd46b98037b79cb4982b4bf49e2ad3d35fff44",
+    "crates/suss-compile/tests/portable_comparator_foundations.rs": "3cd4ca2272cb32686591e0cf87f10848ff276bb186c2df9fb11336fbe478f106",
+    "crates/suss-reader/src/forms.rs": "7680030edb0a03b1976c1ed2952ebeba631c155a79b2edb73a18dcda6b49b095",
+    "docs/compatibility/patches/printing-pr-writer-impl.json": "e0f3766ecb429b1bba766fcdcbfd17a97f812f0b9bd8bb7d4515268f39eabb6d",
+    "docs/design/suss-0.3.1.md": "e6380dcf9138565756c02def507b4e52c2fff32edcfabf0b2a1a8234b555f1d7",
+    "runtime/core-import/manifest.json": "bbf03790defa9d05d9b6b0a41902a42c8f9d4fa8f66239b98d3ea4191c769952",
+    "runtime/core-import/suss/core.sus": "ea5aa741a7527fcf925127a709551e1b35d58b1e6757584c82cfe1c0aa4eb27c",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "4655bc6dffe9ff487ce4dd44add5544a112f520cbe3b11615e868742e571b777",
+    "crates/suss-cli/tests/clojure_bigints.rs": "35909503471b862e6a2004a442753fc562114b5da6bf18448316712f6d60f494",
+    "results/m12-bigint-values/cases.json": "6f539023d44c723ccb00c6e4f0908c1fea5a0dd1a20a70a0d9f00575fe0dcd76"
+  }
+}

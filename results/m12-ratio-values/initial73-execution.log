@@ -1,0 +1,34 @@
+Running as unit: run-p636698-i88708049.scope; invocation ID: ea677a3ca92b44c4bf9cccf6d9cd4635
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 38s
+     Running tests/clojure_ratios.rs (../m12-ratio-target/debug/deps/clojure_ratios-636cb7c2021547ed)
+
+running 2 tests
+test ratios_match_jvm_in_both_phases ... FAILED
+test aot_executes_exact_ratios ... FAILED
+
+failures:
+
+---- ratios_match_jvm_in_both_phases stdout ----
+
+thread 'ratios_match_jvm_in_both_phases' (641528) panicked at crates/suss-cli/tests/clojure_ratios.rs:7:29:
+(pr-str (try [(read-string "2/6") (suss.edn/read-string "-2/6") (read-string "0/9223372036854775808")] (catch :default e :error))): Unresolved Runtime name suss.edn/read-string at bytes 35..55
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_exact_ratios stdout ----
+
+thread 'aot_executes_exact_ratios' (641527) panicked at crates/suss-cli/tests/clojure_ratios.rs:89:5:
+assertion `left == right` failed
+  left: "51"
+ right: "73"
+
+
+failures:
+    aot_executes_exact_ratios
+    ratios_match_jvm_in_both_phases
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.12s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_ratios`

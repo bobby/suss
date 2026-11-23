@@ -64,7 +64,12 @@ pub(super) fn functions(
     descriptor: u32,
 ) -> Vec<u32> {
     use Instruction::*;
-    let mut body = vec![];
+    // Typed numeric/class receivers cannot reuse a general number/object site.
+    let mut body = vec![LocalGet(0), Call(b.names["numeric-value-class"]), LocalTee(1),
+        I32Const(0), I32GeS, If(BlockType::Empty), LocalGet(1), I32Const(8), I32Add, Return, End];
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["class-value-is"]), LocalGet(0), Call(b.names["class-value-name"]), RefIsNull, I32Eqz, I32Or,
+        If(BlockType::Empty), I32Const(15), Return, End, End]);
     for sentinel in [NIL, UNDEFINED] {
         body.extend([
             LocalGet(0),
@@ -119,7 +124,12 @@ pub(super) fn functions(
         ]);
     }
     body.push(I32Const(5));
-    let kind = b.function("protocol-native-kind", &[VALUE], &[ValType::I32], &body);
+    let kind = b.function_with_locals("protocol-native-kind", &[VALUE], &[ValType::I32], &[(1, ValType::I32)], &body);
+    let base_kind = b.function("protocol-native-base-kind", &[ValType::I32], &[ValType::I32], &[
+        LocalGet(0), I32Const(8), I32GeS, If(BlockType::Result(ValType::I32)),
+        LocalGet(0), I32Const(15), I32Eq, If(BlockType::Result(ValType::I32)),
+        I32Const(5), Else, I32Const(2), End, Else, LocalGet(0), End,
+    ]);
     // native-satisfies? is defined under *unchecked-if*: its property tests use
     // JS truthiness, while ordinary portable if keeps ClojureScript truthiness.
     let mut body = vec![];
@@ -175,7 +185,10 @@ pub(super) fn functions(
     // implementation for a native kind, else its default, as the dispatcher
     // finds them; nil when there is none, it is not a closure, or the value
     // called is not a closure (a redefined var), so the site calls the value.
-    let mut body = vec![
+    // The direct dispatcher checks class-specific descriptor methods before
+    // the old shared native fallback. A general native cache must not bypass it.
+    let mut body = vec![LocalGet(1), I32Const(8), I32GeS, If(BlockType::Empty),
+        sentinel_value(NIL), Return, End,
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(CLOSURE)),
         I32Eqz,
@@ -379,11 +392,8 @@ pub(super) fn functions(
         I32Const(0),
         ArrayGet(ARGS),
         LocalSet(2),
-        LocalGet(2),
-        RefTestNonNull(HeapType::Concrete(7)),
-        If(BlockType::Empty),
-        LocalGet(2),
-        Call(descriptor),
+        LocalGet(2), Call(b.names["protocol-value-descriptor"]), LocalTee(6), RefIsNull, I32Eqz,
+        If(BlockType::Empty), LocalGet(6),
     ];
     // Canonical IFn dispatchers carry an extra next-arity key. Other
     // protocols retain the ordinary receiver-inclusive source signature.
@@ -439,7 +449,7 @@ pub(super) fn functions(
         LocalSet(4),
         LocalGet(4),
         LocalGet(2),
-        Call(kind),
+        Call(kind), Call(base_kind),
         Call(property_get),
         LocalSet(3),
         LocalGet(3),
@@ -465,7 +475,7 @@ pub(super) fn functions(
     body.push(Call(native_invoke));
     let dispatch = b.count;
     b.functions.function(INVOKE);
-    let mut function = Function::new([(4, VALUE)]);
+    let mut function = Function::new([(5, VALUE)]);
     for instruction in &body {
         function.instruction(instruction);
     }
@@ -477,7 +487,7 @@ pub(super) fn functions(
     // entry for k operands directly, with no argument array or `invoke`.
     // Params: 0 dispatcher, 1..=k operands; locals: environment, then impl.
     for k in 1..=MAX_FIXED {
-        let (environment, implementation, typed, bound, native_kind) = (k + 1, k + 2, k + 3, k + 4, k + 5);
+        let (environment, implementation, typed, bound, native_kind, receiver_descriptor) = (k + 1, k + 2, k + 3, k + 4, k + 5, k + 6);
         let mut body = vec![
             LocalGet(0),
             RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
@@ -493,14 +503,13 @@ pub(super) fn functions(
             RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
             StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
             LocalSet(environment),
-            LocalGet(1),
-            RefTestNonNull(HeapType::Concrete(7)),
+            LocalGet(1), Call(b.names["protocol-value-descriptor"]), LocalTee(receiver_descriptor), RefIsNull, I32Eqz,
             If(BlockType::Empty),
         ];
         // The dispatcher caches its last descriptor and method, valid while
         // the protocol epoch is unchanged (#355): environment slots 2 to 4.
         // The receiver is a user object, so its descriptor is its field 0.
-        body.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+        body.extend([LocalGet(receiver_descriptor)]);
         cast_array(&mut body, environment);
         body.extend([I32Const(2), ArrayGet(ARGS), RefEq]);
         cast_array(&mut body, environment);
@@ -515,11 +524,11 @@ pub(super) fn functions(
             If(BlockType::Result(VALUE)),
         ]);
         cast_array(&mut body, environment);
-        body.extend([I32Const(3), ArrayGet(ARGS), Else, LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+        body.extend([I32Const(3), ArrayGet(ARGS), Else, LocalGet(receiver_descriptor)]);
         cast_array(&mut body, environment);
         body.extend([I32Const(0), ArrayGet(ARGS), Call(method_get), LocalSet(implementation)]);
         cast_array(&mut body, environment);
-        body.extend([I32Const(2), LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }, ArraySet(ARGS)]);
+        body.extend([I32Const(2), LocalGet(receiver_descriptor), ArraySet(ARGS)]);
         cast_array(&mut body, environment);
         body.extend([I32Const(3), LocalGet(implementation), ArraySet(ARGS)]);
         cast_array(&mut body, environment);
@@ -572,7 +581,7 @@ pub(super) fn functions(
             ArrayGet(ARGS),
             Else,
             LocalGet(bound),
-            LocalGet(native_kind),
+            LocalGet(native_kind), Call(base_kind),
             Call(property_get),
             LocalTee(implementation),
             sentinel_value(NIL),
@@ -619,7 +628,7 @@ pub(super) fn functions(
         error(&mut body);
         let index = b.typed(
             CALL + k,
-            &[(2, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) })), (1, VALUE), (1, ValType::I32)],
+            &[(2, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) })), (1, VALUE), (1, ValType::I32), (1, VALUE)],
             &body,
         );
         b.names.insert(format!("protocol-dispatch-{k}"), index);
@@ -760,7 +769,7 @@ pub(super) fn functions(
         End,
         LocalGet(0),
         LocalGet(1),
-        Call(kind),
+        Call(kind), Call(base_kind),
         Call(property_get),
         LocalSet(2),
         LocalGet(2),
@@ -868,8 +877,8 @@ pub(super) fn functions(
     let bound = callback(b, &code);
     let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz, If(BlockType::Empty)];
     error(&mut code);
-    code.extend([End, LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Result(VALUE)),
-        LocalGet(0), Call(descriptor), LocalGet(1), Call(method_get), Else,
+    code.extend([End, LocalGet(0), Call(b.names["protocol-value-descriptor"]), LocalTee(2), RefIsNull, I32Eqz, If(BlockType::Result(VALUE)),
+        LocalGet(2), LocalGet(1), Call(method_get), Else,
         // An unbound name stays undefined, so invoke reports Clojure's unbound-fn
         // error (#288); any other non-object has no method.
         LocalGet(0), sentinel_value(UNDEFINED), RefEq, If(BlockType::Result(VALUE)), LocalGet(0), Else,

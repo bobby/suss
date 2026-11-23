@@ -58,6 +58,8 @@ pub enum Literal {
     /// A double.
     Number(f64),
     Long(i64),
+    BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
+    Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
     String(Vec<u16>),
 }
 impl Literal {
@@ -66,7 +68,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) => Type::Number,
+            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -290,6 +292,8 @@ pub enum Bitwise {
     UncheckedSubtract,
     UncheckedMultiply,
     UncheckedNegate,
+    PromoteAdd, PromoteSubtract, PromoteMultiply, PromoteNegate,
+    ToBigInt, ToBigInteger, MakeRatio, RatioNumerator, RatioDenominator, RatioInteger,
     /// Source max/min distinguish primitive double/double Math operations,
     /// primitive long/long results, and Object-returning overloads (#337).
     Max,
@@ -435,6 +439,16 @@ impl Bitwise {
             Self::UncheckedSubtract => "number-unchecked-subtract",
             Self::UncheckedMultiply => "number-unchecked-multiply",
             Self::UncheckedNegate => "number-unchecked-negate",
+            Self::PromoteAdd => "number-promote-add",
+            Self::PromoteSubtract => "number-promote-subtract",
+            Self::PromoteMultiply => "number-promote-multiply",
+            Self::PromoteNegate => "number-promote-negate",
+            Self::MakeRatio => "ratio-new",
+            Self::RatioNumerator => "ratio-numerator",
+            Self::RatioDenominator => "ratio-denominator",
+            Self::RatioInteger => "ratio-integer",
+            Self::ToBigInt => "integer-bigint",
+            Self::ToBigInteger => "integer-biginteger",
             Self::Max | Self::LongMax => "number-max",
             Self::Min | Self::LongMin => "number-min",
             Self::DoubleMax => "number-double-max",
@@ -473,6 +487,7 @@ impl Bitwise {
             | Self::IdentityUid
             | Self::Abs
             | Self::UncheckedNegate
+            | Self::PromoteNegate | Self::ToBigInt | Self::ToBigInteger | Self::RatioNumerator | Self::RatioDenominator | Self::RatioInteger
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
@@ -527,6 +542,9 @@ impl Bitwise {
 pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
+    IsBigInt,
+    IsRatio,
+    IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
     /// `(aget a i)` of an array tagged with a packed element type, its kind
@@ -699,6 +717,9 @@ pub enum Nominal {
     ApplyFixed,
     IsTypeConstructor,
     ValueConstructor,
+    NumericClass(u8),
+    /// Reject a numeric Class callee before evaluating its call arguments.
+    CheckNumericCallee,
     /// Type value -> its name string, or nil (#304).
     TypeName,
     /// Future or stream -> its display text, or nil (#288).
@@ -738,6 +759,10 @@ impl Nominal {
             Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
+            | Self::IsRatio
+            | Self::IsBigInt
+            | Self::IsRatio
+            | Self::IsBigInteger
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
@@ -776,6 +801,7 @@ impl Nominal {
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
+                Self::NumericClass(kind) => count == 0 && usize::from(kind) < crate::runtime_abi::numeric_classes::NAMES.len(),
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
@@ -795,7 +821,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsRatio | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1130,6 +1156,8 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// An initialized scalar constant revision, published with its live var.
+        constant: Option<Global>,
         global: Global,
         name_metadata: Vec<Form>,
         name_span: Range<usize>,
@@ -1230,6 +1258,7 @@ struct Analyzer<'a> {
     analysis_contexts: Vec<super::AnalysisContext>,
     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
+    constant_definitions: super::resolve::DeclarationSnapshot,
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
     callable_keys: BTreeMap<Global, Hir>,
@@ -1291,10 +1320,24 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
-    /// An exact numeric literal binary64 can't hold evaluates to a throw
-    /// until Suss has Clojure's numeric types (#333, #335): it reads, so code
-    /// that never evaluates it loads, but it never rounds silently.
+    /// BigInt and Ratio literals retain their exact values. Decimal literals
+    /// still throw at evaluation until their runtime type arrives;
+    /// unselected forms can load without silently rounding their values.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
+        if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
+            let (_, limbs) = value.to_u32_digits();
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::BigInt {
+                    negative: num_traits::Signed::is_negative(value), limbs, big_integer: !big,
+                })) });
+        }
+        if let suss_reader::forms::ExactValue::Ratio { numerator, denominator } = &number.value {
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::Ratio {
+                    negative: num_traits::Signed::is_negative(numerator), numerator: numerator.to_u32_digits().1,
+                    denominator: denominator.to_u32_digits().1,
+                })) });
+        }
         let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
         let symbol = |namespace: Option<&str>, name: &str| {
             at(Kind::Symbol(suss_reader::Symbol {
@@ -1414,6 +1457,7 @@ impl Analyzer<'_> {
             // forms, not after each nested def. Keep resolution's live catalog
             // separate so recursive definitions still resolve provisionally.
             self.namespace_snapshot = Some(self.capture_source_namespace());
+            self.constant_definitions = self.environment.declaration_snapshot();
         }
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
@@ -1535,7 +1579,9 @@ impl Analyzer<'_> {
                     {
                         return SourceBinding::JavaScript { global };
                     }
-                    let declaration = self.environment.shared_definition_info(&global).cloned();
+                    let declaration = self.constant_definitions.get(&global)
+                        .filter(|info| info.constant.is_some()).cloned()
+                        .or_else(|| self.environment.shared_definition_info(&global).cloned());
                     SourceBinding::Global {
                         global,
                         declaration,
@@ -1632,6 +1678,7 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                constant: None,
                         global: fallback.clone(),
                         name_metadata: Vec::new(),
                         name_span: form.span.clone(),
@@ -1790,7 +1837,17 @@ impl Analyzer<'_> {
         if !self.privileged && super::bootstrap::is_core_private(global.name()) && self.privileged_definition(global) {
             return Err(fail(span, format!("{} is private to suss.core", global.name())));
         }
+        if let Some(info) = self.constant_definitions.get(global)
+            && let Some(constant) = &info.constant
+            && let Some(initializer) = info.initializer.as_deref()
+        {
+            // Read the initialized revision preceding this top-level form.
+            // Copying its literal would allocate distinct BigInt/Ratio objects
+            // on every use and lose the constant's observable identity.
+            return Ok((Expression::Global(constant.clone()), initializer.ty));
+        }
         match binding {
+            ResolvedBinding::NumericClass { kind, .. } => Ok((Expression::Nominal { operation: Nominal::NumericClass(kind), arguments: vec![] }, Type::Value)),
             ResolvedBinding::Cell(global) => {
                 let global = self.core_reference_link(&global).unwrap_or(global);
                 Ok((Expression::Global(global), Type::Value))
@@ -1809,6 +1866,13 @@ impl Analyzer<'_> {
                 "Bootstrap core function/macro values are not materialized yet",
             )),
         }
+    }
+    fn constant_metadata(name: &Form) -> Result<bool, Diagnostic> {
+        Ok(reader_metadata_pairs(name)?.chunks_exact(2).any(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "const")
+                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+        }))
     }
     fn dynamic_metadata(name: &Form) -> bool {
         name.metadata.iter().any(|metadata| match &metadata.kind {
@@ -2288,7 +2352,7 @@ impl Analyzer<'_> {
         for metadata in &args[0].metadata {
             let unsupported = |form: &Form| {
                 matches!(&form.kind, Kind::Keyword(key)
-                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "macro"))
+                if key.namespace.is_none() && key.name == "macro")
             };
             if unsupported(metadata)
                 || matches!(&metadata.kind, Kind::Map(entries)
@@ -2318,6 +2382,17 @@ impl Analyzer<'_> {
                 error.span = args[0].span.clone();
                 error
             })?;
+        let constant = Self::constant_metadata(&args[0])?;
+        let prior_constant = self.constant_definitions.get(&global)
+            .map(|info| Self::constant_metadata(&info.declaration))
+            .transpose()?.unwrap_or(false);
+        // Runtime execution of a conditional/nested def is not established by
+        // analyzing it. Until that boundary can publish initialized constant
+        // values, diagnose it instead of freezing an unexecuted initializer.
+        if self.analysis_depth != 1 && (constant || prior_constant) {
+            return Err(fail(args[0].span.clone(),
+                "Nested definitions involving :const are not implemented yet"));
+        }
         let init = if args.len() == 3 {
             if !matches!(args[1].kind, Kind::String(_)) {
                 return Err(fail(
@@ -2361,6 +2436,7 @@ impl Analyzer<'_> {
             type_fields: None,
             type_is_record: false,
             once,
+            constant: None,
         };
         // A var first defined dynamic (or ^:redef) stays live when redefined.
         let prior_dynamic = self.environment.definition_info(&global)
@@ -2403,10 +2479,27 @@ impl Analyzer<'_> {
                 .map(Box::new)
             })
             .transpose()?;
+        if constant && !initializer.as_deref().is_some_and(|value| match &*value.kind {
+            Expression::Literal(_) => true,
+            Expression::Global(global) => global.namespace() == "suss.internal.constants",
+            _ => false,
+        }) {
+            return Err(fail(args[0].span.clone(),
+                "Only scalar literal :const initializers are implemented yet"));
+        }
+        let constant_cell = constant.then(|| self.environment.constant_cell(self.phase));
+        definition.constant = constant_cell.clone();
         // A nested initializer can declare this same global. Publish the outer
         // declaration and its initializer together when its analysis completes.
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         definition.analysis_completed = true;
+        if let Some(cell) = &constant_cell {
+            // Private source typing retains the initializer's original class
+            // even after the public var receives a differently typed value.
+            let mut revision = definition.clone();
+            revision.constant = None;
+            self.environment.record_definition(cell.clone(), revision);
+        }
         if !preserve_declaration {
             self.environment
                 .record_definition(global.clone(), definition);
@@ -2449,6 +2542,7 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                constant: constant_cell,
                 global,
                 name_metadata: args[0].metadata.clone(),
                 name_span: args[0].span.clone(),
@@ -3395,6 +3489,9 @@ impl Analyzer<'_> {
                 "apply-to-seq" => Some(Nominal::ApplyToSeq),
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
+                "ratio?" => Some(Nominal::IsRatio),
+                "bigint?" => Some(Nominal::IsBigInt),
+                "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),
                 // Reference identity alone, as for interned keywords (#442).
                 "same-reference?" => Some(Nominal::SameReference),
@@ -3514,6 +3611,16 @@ impl Analyzer<'_> {
                 "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
                 "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "promote-add" => Some(Bitwise::PromoteAdd),
+                "promote-subtract" => Some(Bitwise::PromoteSubtract),
+                "promote-multiply" => Some(Bitwise::PromoteMultiply),
+                "promote-negate" => Some(Bitwise::PromoteNegate),
+                "ratio" => Some(Bitwise::MakeRatio),
+                "ratio-numerator" => Some(Bitwise::RatioNumerator),
+                "ratio-denominator" => Some(Bitwise::RatioDenominator),
+                "ratio-integer" => Some(Bitwise::RatioInteger),
+                "as-bigint" => Some(Bitwise::ToBigInt),
+                "as-biginteger" => Some(Bitwise::ToBigInteger),
                 "max" => Some(Bitwise::Max),
                 "min" => Some(Bitwise::Min),
                 "long?" => Some(Bitwise::LongTest),
@@ -3740,6 +3847,45 @@ impl Analyzer<'_> {
                     arguments: arguments.clone().into(),
                 }));
             return Ok(self.nominal(form, Nominal::SameReference, arguments));
+        }
+        // JVM core's promoting arithmetic is inline at arity >=2, unary -',
+        // and inc'/dec'. Zero/unary +'/ *' remain ordinary function calls.
+        // Resolve the actual core cell so lexical/user shadowing stays live.
+        let inline_core = |name: &str| self.linked_core_call(&resolved, name)
+            || matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == name && self.privileged_definition(global));
+        let promoting = if inline_core("+'") && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+            else if inline_core("*'") && args.len() >= 2 { Some(Bitwise::PromoteMultiply) }
+            else if inline_core("-'") && !args.is_empty() {
+                Some(if args.len() == 1 { Bitwise::PromoteNegate } else { Bitwise::PromoteSubtract })
+            } else if inline_core("inc'") && args.len() == 1 { Some(Bitwise::PromoteAdd) }
+            else if inline_core("dec'") && args.len() == 1 { Some(Bitwise::PromoteSubtract) }
+            else { None };
+        if let Some(operation) = promoting {
+            if args.len() > 256 { return Err(fail(form.span.clone(), "Promoting arithmetic expansion limit exceeded")); }
+            let callee = self.form(&items[0])?;
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>,_>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") = Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee), arguments: arguments.clone().into(),
+            }));
+            // Clojure's nary-inline nests the operations. A failure in an
+            // earlier pair precedes evaluation of later arguments; aliases
+            // remain ordinary calls and evaluate all their operands first.
+            let mut operands = arguments;
+            if args.len() == 1 && operation != Bitwise::PromoteNegate {
+                operands.push(self.literal_form(form, Literal::Long(1)));
+            }
+            let mut values = operands.into_iter();
+            let first = values.next().expect("nonempty promoting operation");
+            let body = if operation == Bitwise::PromoteNegate {
+                Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![first] }) }
+            } else {
+                values.fold(first, |left, right| Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Bitwise { operation, arguments: vec![left, right] }) })
+            };
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Number,
+                kind: body.kind.clone() });
         }
         // `(= x y)` and `(hash x)` on longs in i31 range (#387). Core's `=`
         // answers equiv for two numbers, and two i31 longs are equiv exactly
@@ -4521,6 +4667,7 @@ pub(crate) fn prepare_with_origin(
         source_namespace: None,
         fragment_links: BTreeSet::new(),
         namespace_snapshot: None,
+        constant_definitions: Default::default(),
         source_callables: Vec::new(),
         source_nodes: Vec::new(),
         callable_keys: BTreeMap::new(),

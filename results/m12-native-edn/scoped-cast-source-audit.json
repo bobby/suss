@@ -1,0 +1,281 @@
+[
+  {
+    "id": "clojure.core-test.byte/test-byte#6",
+    "original": "(= 1 (byte 1N))",
+    "source": "(= 1 (byte 1N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#7",
+    "original": "(= 0 (byte 0N))",
+    "source": "(= 0 (byte 0N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#8",
+    "original": "(= -1 (byte -1N))",
+    "source": "(= -1 (byte -1N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#15",
+    "original": "(= 1 (byte 3/2))",
+    "source": "(= 1 (byte 3/2))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#16",
+    "original": "(= -1 (byte -3/2))",
+    "source": "(= -1 (byte -3/2))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#17",
+    "original": "(= 0 (byte 1/10))",
+    "source": "(= 0 (byte 1/10))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.byte/test-byte#18",
+    "original": "(= 0 (byte -1/10))",
+    "source": "(= 0 (byte -1/10))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.double/test-double#4",
+    "original": "(= (double 1.0) (double 1N))",
+    "source": "(= (double 1.0) (double 1N))",
+    "full_suite_reason": "count:15/19",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.double/test-double#5",
+    "original": "(= (double 0.0) (double 0N))",
+    "source": "(= (double 0.0) (double 0N))",
+    "full_suite_reason": "count:15/19",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.double/test-double#6",
+    "original": "(= (double -1.0) (double -1N))",
+    "source": "(= (double -1.0) (double -1N))",
+    "full_suite_reason": "count:15/19",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.double/test-double#18",
+    "original": "(instance? java.lang.Double (double 0N))",
+    "source": "(instance? java.lang.Double (double 0N))",
+    "full_suite_reason": "count:15/19",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.float/test-float#4",
+    "original": "(= (float 1.0) (float 1N))",
+    "source": "(= (float 1.0) (float 1N))",
+    "full_suite_reason": "count:19/23",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.float/test-float#5",
+    "original": "(= (float 0.0) (float 0N))",
+    "source": "(= (float 0.0) (float 0N))",
+    "full_suite_reason": "count:19/23",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.float/test-float#6",
+    "original": "(= (float -1.0) (float -1N))",
+    "source": "(= (float -1.0) (float -1N))",
+    "full_suite_reason": "count:19/23",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.float/test-float#22",
+    "original": "(instance? java.lang.Float (float 0N))",
+    "source": "(instance? java.lang.Float (float 0N))",
+    "full_suite_reason": "count:19/23",
+    "applicable": false,
+    "limitation": "ADR-0003 Types: no narrow boxed values; this :clj Float class assertion has no Suss equivalent.",
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#6",
+    "original": "(= 1 (int 1N))",
+    "source": "(= 1 (int 1N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#7",
+    "original": "(= 0 (int 0N))",
+    "source": "(= 0 (int 0N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#8",
+    "original": "(= -1 (int -1N))",
+    "source": "(= -1 (int -1N))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#17",
+    "original": "(= 1 (int 3/2))",
+    "source": "(= 1 (int 3/2))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#18",
+    "original": "(= -1 (int -3/2))",
+    "source": "(= -1 (int -3/2))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#19",
+    "original": "(= 0 (int 1/10))",
+    "source": "(= 0 (int 1/10))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.int/test-int#20",
+    "original": "(= 0 (int -1/10))",
+    "source": "(= 0 (int -1/10))",
+    "full_suite_reason": "count:27/28",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#6",
+    "original": "(= 1 (long 1N))",
+    "source": "(= 1 (long 1N))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#7",
+    "original": "(= 0 (long 0N))",
+    "source": "(= 0 (long 0N))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#8",
+    "original": "(= -1 (long -1N))",
+    "source": "(= -1 (long -1N))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#17",
+    "original": "(= 1 (long 3/2))",
+    "source": "(= 1 (long 3/2))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#18",
+    "original": "(= -1 (long -3/2))",
+    "source": "(= -1 (long -3/2))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#19",
+    "original": "(= 0 (long 1/10))",
+    "source": "(= 0 (long 1/10))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#20",
+    "original": "(= 0 (long -1/10))",
+    "source": "(= 0 (long -1/10))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#21",
+    "original": "(p/thrown? (long -9223372036854775809N))",
+    "source": "(try (long -9223372036854775809N) false (catch :default e true))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  },
+  {
+    "id": "clojure.core-test.long/test-long#22",
+    "original": "(p/thrown? (long 9223372036854775808N))",
+    "source": "(try (long 9223372036854775808N) false (catch :default e true))",
+    "full_suite_reason": "count:25/26",
+    "applicable": true,
+    "limitation": null,
+    "expected": "true"
+  }
+]

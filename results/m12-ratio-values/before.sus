@@ -1,0 +1,3 @@
+(ns ratios.before)
+(def divide (fn [unused] (pr-str (/ 1 3))))
+(def literal (fn [unused] (pr-str 1/3)))

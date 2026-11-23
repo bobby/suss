@@ -1,0 +1,10 @@
+{
+  "tests/oracle/clojure-test-suite-known-failures.json": {
+    "before": "d60fb31d96fd469d88bfe34680b21cb326691e8bbbd21e78f2b13590f6d85885",
+    "after": "c9ec67afa99f96a061e1b44b5eb966ad12f7f175d9bf5e8fe2ad63bd047ba0ed"
+  },
+  "crates/suss-compile/tests/portable_definitions.rs": {
+    "before": "2507c89903b994844f9c484ff5a6e9c4c7236c78175c5528b512c93d9b08311b",
+    "after": "838fe0c4f43421d09486ad68e3db389624f0eb7b1dc5511ab2b50064ebfbd7da"
+  }
+}

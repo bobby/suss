@@ -1,0 +1,57 @@
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 06s
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_bigint_integers-4dcb6def4fe06044)
+
+running 2 tests
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.19s
+
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 4 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test aot_executes_the_bigint_matrix ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.45s
+
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... ok
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... ok
+test components_read_without_a_compiler_or_host_reader ... ok
+test errors_are_catchable_and_carry_their_position ... ok
+test exact_numeric_literals_execute_or_preserve_unsupported_boundaries ... FAILED
+test exact_numeric_literals_pass_through_macros ... ok
+test macros_can_read_at_expansion_time ... ok
+test nesting_depth_is_bounded_and_catchable ... ok
+test malformed_input_fails_with_the_compilers_message_and_position ... ok
+test printed_data_reads_back_equal ... ok
+test read_string_follows_clojure ... ok
+test reading_is_charged_to_the_callers_fuel ... ok
+test reader_conditionals_need_opts_as_in_clojure ... ok
+test suss_edn_follows_clojure_edn ... ok
+test tags_and_record_literals_follow_clojure ... ok
+test the_repl_and_script_files_read ... ok
+
+failures:
+
+---- exact_numeric_literals_execute_or_preserve_unsupported_boundaries stdout ----
+
+thread 'exact_numeric_literals_execute_or_preserve_unsupported_boundaries' (478440) panicked at crates/suss-cli/tests/read_string.rs:34:33:
+(= 36893488147419103232/8 (read-string "36893488147419103232/8")): Language(SessionValue { identity: 13, value: Some(OwnedRooted<wasmtime::runtime::gc::enabled::anyref::AnyRef> { inner: GcRootIndex { store_id: StoreId(217), generation: 0, index: PackedIndex::Owned(Id(0)) } }), handles: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    exact_numeric_literals_execute_or_preserve_unsupported_boundaries
+
+test result: FAILED. 15 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 49.45s
+
+error: test failed, to rerun pass `-p suss-cli --test read_string`

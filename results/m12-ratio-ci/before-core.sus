@@ -1,0 +1,696 @@
+;; ClojureScript Conformance Tests: Core
+;; Adapted from clojurescript/src/test/cljs/cljs/core_test.cljs
+;; EPL 1.0 License - See README.md
+
+[
+ ;; =============================================================================
+ ;; Arithmetic
+ ;; =============================================================================
+
+ ;; Addition
+ {:name "add-zero-args"
+  :category :arithmetic
+  :expr "(+)"
+  :expected 0}
+
+ {:name "add-one-arg"
+  :category :arithmetic
+  :expr "(+ 5)"
+  :expected 5}
+
+ {:name "add-two-args"
+  :category :arithmetic
+  :expr "(+ 1 2)"
+  :expected 3}
+
+ {:name "add-many-args"
+  :category :arithmetic
+  :expr "(+ 1 2 3 4 5)"
+  :expected 15}
+
+ {:name "add-negative"
+  :category :arithmetic
+  :expr "(+ 10 -3)"
+  :expected 7}
+
+ ;; Subtraction
+ {:name "sub-one-arg"
+  :category :arithmetic
+  :expr "(- 5)"
+  :expected -5}
+
+ {:name "sub-two-args"
+  :category :arithmetic
+  :expr "(- 10 3)"
+  :expected 7}
+
+ {:name "sub-many-args"
+  :category :arithmetic
+  :expr "(- 100 10 20 30)"
+  :expected 40}
+
+ ;; Multiplication
+ {:name "mul-zero-args"
+  :category :arithmetic
+  :expr "(*)"
+  :expected 1}
+
+ {:name "mul-one-arg"
+  :category :arithmetic
+  :expr "(* 5)"
+  :expected 5}
+
+ {:name "mul-two-args"
+  :category :arithmetic
+  :expr "(* 3 4)"
+  :expected 12}
+
+ {:name "mul-many-args"
+  :category :arithmetic
+  :expr "(* 2 3 4 5)"
+  :expected 120}
+
+ ;; Division
+ {:name "div-one-arg"
+  :category :arithmetic
+  :expr "(/ 2)"
+  :expected 0.5}
+
+ {:name "div-two-args"
+  :category :arithmetic
+  :expr "(/ 10 2)"
+  :expected 5}
+
+ {:name "div-many-args"
+  :category :arithmetic
+  :expr "(/ 100 2 5)"
+  :expected 10}
+
+ ;; Modulo
+ {:name "mod-positive"
+  :category :arithmetic
+  :expr "(mod 10 3)"
+  :expected 1}
+
+ {:name "mod-zero"
+  :category :arithmetic
+  :expr "(mod 9 3)"
+  :expected 0}
+
+ {:name "mod-negative-dividend"
+  :category :arithmetic
+  :expr "(mod -10 3)"
+  :expected 2}
+
+ ;; inc/dec
+ {:name "inc"
+  :category :arithmetic
+  :expr "(inc 5)"
+  :expected 6}
+
+ {:name "inc-negative"
+  :category :arithmetic
+  :expr "(inc -1)"
+  :expected 0}
+
+ {:name "dec"
+  :category :arithmetic
+  :expr "(dec 5)"
+  :expected 4}
+
+ {:name "dec-to-negative"
+  :category :arithmetic
+  :expr "(dec 0)"
+  :expected -1}
+
+ ;; abs
+ {:name "abs-positive"
+  :category :arithmetic
+  :expr "(abs 5)"
+  :expected 5}
+
+ {:name "abs-negative"
+  :category :arithmetic
+  :expr "(abs -5)"
+  :expected 5}
+
+ {:name "abs-zero"
+  :category :arithmetic
+  :expr "(abs 0)"
+  :expected 0}
+
+ ;; min/max
+ {:name "min-two"
+  :category :arithmetic
+  :expr "(min 3 5)"
+  :expected 3}
+
+ {:name "min-many"
+  :category :arithmetic
+  :expr "(min 10 3 7 1 5)"
+  :expected 1}
+
+ {:name "max-two"
+  :category :arithmetic
+  :expr "(max 3 5)"
+  :expected 5}
+
+ {:name "max-many"
+  :category :arithmetic
+  :expr "(max 10 3 7 1 5)"
+  :expected 10}
+
+ ;; =============================================================================
+ ;; Comparisons
+ ;; =============================================================================
+
+ ;; Equality
+ {:name "eq-numbers"
+  :category :comparison
+  :expr "(= 1 1)"
+  :expected true}
+
+ {:name "eq-numbers-false"
+  :category :comparison
+  :expr "(= 1 2)"
+  :expected false}
+
+ {:name "eq-many-true"
+  :category :comparison
+  :expr "(= 5 5 5 5)"
+  :expected true}
+
+ {:name "eq-many-false"
+  :category :comparison
+  :expr "(= 5 5 5 6)"
+  :expected false}
+
+ {:name "eq-nil"
+  :category :comparison
+  :expr "(= nil nil)"
+  :expected true}
+
+ {:name "eq-keywords"
+  :category :comparison
+  :expr "(= :foo :foo)"
+  :expected true}
+
+ {:name "eq-keywords-false"
+  :category :comparison
+  :expr "(= :foo :bar)"
+  :expected false}
+
+ ;; not=
+ {:name "not-eq-true"
+  :category :comparison
+  :expr "(not= 1 2)"
+  :expected true}
+
+ {:name "not-eq-false"
+  :category :comparison
+  :expr "(not= 1 1)"
+  :expected false}
+
+ ;; Less than
+ {:name "lt-true"
+  :category :comparison
+  :expr "(< 1 2)"
+  :expected true}
+
+ {:name "lt-false"
+  :category :comparison
+  :expr "(< 2 1)"
+  :expected false}
+
+ {:name "lt-equal"
+  :category :comparison
+  :expr "(< 1 1)"
+  :expected false}
+
+ {:name "lt-many-true"
+  :category :comparison
+  :expr "(< 1 2 3 4)"
+  :expected true}
+
+ {:name "lt-many-false"
+  :category :comparison
+  :expr "(< 1 2 2 4)"
+  :expected false}
+
+ ;; Greater than
+ {:name "gt-true"
+  :category :comparison
+  :expr "(> 2 1)"
+  :expected true}
+
+ {:name "gt-false"
+  :category :comparison
+  :expr "(> 1 2)"
+  :expected false}
+
+ {:name "gt-equal"
+  :category :comparison
+  :expr "(> 1 1)"
+  :expected false}
+
+ {:name "gt-many-true"
+  :category :comparison
+  :expr "(> 4 3 2 1)"
+  :expected true}
+
+ ;; Less than or equal
+ {:name "lte-less"
+  :category :comparison
+  :expr "(<= 1 2)"
+  :expected true}
+
+ {:name "lte-equal"
+  :category :comparison
+  :expr "(<= 2 2)"
+  :expected true}
+
+ {:name "lte-greater"
+  :category :comparison
+  :expr "(<= 3 2)"
+  :expected false}
+
+ ;; Greater than or equal
+ {:name "gte-greater"
+  :category :comparison
+  :expr "(>= 2 1)"
+  :expected true}
+
+ {:name "gte-equal"
+  :category :comparison
+  :expr "(>= 2 2)"
+  :expected true}
+
+ {:name "gte-less"
+  :category :comparison
+  :expr "(>= 1 2)"
+  :expected false}
+
+ ;; =============================================================================
+ ;; Logical Operations
+ ;; =============================================================================
+
+ ;; not
+ {:name "not-true"
+  :category :logic
+  :expr "(not true)"
+  :expected false}
+
+ {:name "not-false"
+  :category :logic
+  :expr "(not false)"
+  :expected true}
+
+ {:name "not-nil"
+  :category :logic
+  :expr "(not nil)"
+  :expected true}
+
+ {:name "not-number"
+  :category :logic
+  :expr "(not 1)"
+  :expected false}
+
+ {:name "not-zero"
+  :category :logic
+  :expr "(not 0)"
+  :expected false}
+
+ ;; and
+ {:name "and-empty"
+  :category :logic
+  :expr "(and)"
+  :expected true}
+
+ {:name "and-single-true"
+  :category :logic
+  :expr "(and true)"
+  :expected true}
+
+ {:name "and-single-false"
+  :category :logic
+  :expr "(and false)"
+  :expected false}
+
+ {:name "and-two-true"
+  :category :logic
+  :expr "(and true true)"
+  :expected true}
+
+ {:name "and-two-false"
+  :category :logic
+  :expr "(and true false)"
+  :expected false}
+
+ {:name "and-short-circuit"
+  :category :logic
+  :expr "(and false (/ 1 0))"
+  :expected false}
+
+ {:name "and-returns-last"
+  :category :logic
+  :expr "(and 1 2 3)"
+  :expected 3}
+
+ {:name "and-returns-falsy"
+  :category :logic
+  :expr "(and 1 nil 3)"
+  :expected nil}
+
+ ;; or
+ {:name "or-empty"
+  :category :logic
+  :expr "(or)"
+  :expected nil}
+
+ {:name "or-single-true"
+  :category :logic
+  :expr "(or true)"
+  :expected true}
+
+ {:name "or-single-false"
+  :category :logic
+  :expr "(or false)"
+  :expected false}
+
+ {:name "or-two-true"
+  :category :logic
+  :expr "(or false true)"
+  :expected true}
+
+ {:name "or-two-false"
+  :category :logic
+  :expr "(or false false)"
+  :expected false}
+
+ {:name "or-short-circuit"
+  :category :logic
+  :expr "(or true (/ 1 0))"
+  :expected true}
+
+ {:name "or-returns-first-truthy"
+  :category :logic
+  :expr "(or nil false 1 2)"
+  :expected 1}
+
+ ;; =============================================================================
+ ;; Control Flow
+ ;; =============================================================================
+
+ ;; if
+ {:name "if-true"
+  :category :control
+  :expr "(if true 1 2)"
+  :expected 1}
+
+ {:name "if-false"
+  :category :control
+  :expr "(if false 1 2)"
+  :expected 2}
+
+ {:name "if-nil"
+  :category :control
+  :expr "(if nil 1 2)"
+  :expected 2}
+
+ {:name "if-number-truthy"
+  :category :control
+  :expr "(if 0 1 2)"
+  :expected 1}
+
+ {:name "if-no-else"
+  :category :control
+  :expr "(if false 1)"
+  :expected nil}
+
+ ;; cond
+ {:name "cond-first"
+  :category :control
+  :expr "(cond true 1 true 2)"
+  :expected 1}
+
+ {:name "cond-second"
+  :category :control
+  :expr "(cond false 1 true 2)"
+  :expected 2}
+
+ {:name "cond-else"
+  :category :control
+  :expr "(cond false 1 false 2 :else 3)"
+  :expected 3}
+
+ {:name "cond-none"
+  :category :control
+  :expr "(cond false 1 false 2)"
+  :expected nil}
+
+ ;; when
+ {:name "when-true"
+  :category :control
+  :expr "(when true 42)"
+  :expected 42}
+
+ {:name "when-false"
+  :category :control
+  :expr "(when false 42)"
+  :expected nil}
+
+ ;; when-not
+ {:name "when-not-true"
+  :category :control
+  :expr "(when-not true 42)"
+  :expected nil}
+
+ {:name "when-not-false"
+  :category :control
+  :expr "(when-not false 42)"
+  :expected 42}
+
+ ;; case
+ {:name "case-match"
+  :category :control
+  :expr "(case 2 1 :one 2 :two 3 :three :default)"
+  :expected :two}
+
+ {:name "case-default"
+  :category :control
+  :expr "(case 5 1 :one 2 :two 3 :three :default)"
+  :expected :default}
+
+ {:name "case-first"
+  :category :control
+  :expr "(case 1 1 :one 2 :two :default)"
+  :expected :one}
+
+ ;; =============================================================================
+ ;; let binding
+ ;; =============================================================================
+
+ {:name "let-single"
+  :category :let
+  :expr "(let [x 1] x)"
+  :expected 1}
+
+ {:name "let-multiple"
+  :category :let
+  :expr "(let [x 1 y 2] (+ x y))"
+  :expected 3}
+
+ {:name "let-shadow"
+  :category :let
+  :expr "(let [x 1] (let [x 2] x))"
+  :expected 2}
+
+ {:name "let-sequential"
+  :category :let
+  :expr "(let [x 1 y (+ x 1)] y)"
+  :expected 2}
+
+ {:name "let-nested"
+  :category :let
+  :expr "(let [x 1] (let [y 2] (+ x y)))"
+  :expected 3}
+
+ ;; =============================================================================
+ ;; do
+ ;; =============================================================================
+
+ {:name "do-single"
+  :category :do
+  :expr "(do 42)"
+  :expected 42}
+
+ {:name "do-multiple"
+  :category :do
+  :expr "(do 1 2 3)"
+  :expected 3}
+
+ {:name "do-with-side-effects"
+  :category :do
+  :expr "(do (+ 1 2) (+ 3 4))"
+  :expected 7}
+
+ ;; =============================================================================
+ ;; loop/recur
+ ;; =============================================================================
+
+ {:name "loop-simple"
+  :category :loop
+  :expr "(loop [x 0] (if (< x 5) (recur (+ x 1)) x))"
+  :expected 5}
+
+ {:name "loop-sum"
+  :category :loop
+  :expr "(loop [i 0 sum 0] (if (< i 10) (recur (+ i 1) (+ sum i)) sum))"
+  :expected 45}
+
+ {:name "loop-factorial"
+  :category :loop
+  :expr "(loop [n 5 acc 1] (if (<= n 1) acc (recur (- n 1) (* acc n))))"
+  :expected 120}
+
+ ;; =============================================================================
+ ;; Functions
+ ;; =============================================================================
+
+ {:name "fn-identity"
+  :category :fn
+  :expr "((fn [x] x) 42)"
+  :expected 42}
+
+ {:name "fn-add"
+  :category :fn
+  :expr "((fn [a b] (+ a b)) 3 4)"
+  :expected 7}
+
+ {:name "fn-nested"
+  :category :fn
+  :expr "((fn [x] ((fn [y] (+ x y)) 10)) 5)"
+  :expected 15}
+
+ {:name "fn-closure"
+  :category :fn
+  :expr "(let [add5 (fn [x] (+ x 5))] (add5 10))"
+  :expected 15}
+
+ {:name "fn-higher-order"
+  :category :fn
+  :expr "(let [apply-twice (fn [f x] (f (f x)))] (apply-twice inc 0))"
+  :expected 2}
+
+ ;; =============================================================================
+ ;; defn
+ ;; =============================================================================
+
+ {:name "defn-simple"
+  :category :defn
+  :expr "(do (defn double [x] (* x 2)) (double 5))"
+  :expected 10}
+
+ {:name "defn-recursive"
+  :category :defn
+  :expr "(do (defn fact [n] (if (<= n 1) 1 (* n (fact (- n 1))))) (fact 5))"
+  :expected 120}
+
+ ;; =============================================================================
+ ;; Truthiness
+ ;; =============================================================================
+
+ {:name "truthy-zero"
+  :category :truthiness
+  :expr "(if 0 :truthy :falsy)"
+  :expected :truthy}
+
+ {:name "truthy-empty-string"
+  :category :truthiness
+  :expr "(if \"\" :truthy :falsy)"
+  :expected :truthy}
+
+ {:name "truthy-empty-vector"
+  :category :truthiness
+  :expr "(if [] :truthy :falsy)"
+  :expected :truthy}
+
+ {:name "truthy-empty-map"
+  :category :truthiness
+  :expr "(if {} :truthy :falsy)"
+  :expected :truthy}
+
+ {:name "falsy-nil"
+  :category :truthiness
+  :expr "(if nil :truthy :falsy)"
+  :expected :falsy}
+
+ {:name "falsy-false"
+  :category :truthiness
+  :expr "(if false :truthy :falsy)"
+  :expected :falsy}
+
+ ;; =============================================================================
+ ;; Type predicates
+ ;; =============================================================================
+
+ {:name "nil-pred-true"
+  :category :predicates
+  :expr "(nil? nil)"
+  :expected true}
+
+ {:name "nil-pred-false"
+  :category :predicates
+  :expr "(nil? 1)"
+  :expected false}
+
+ {:name "zero-pred-true"
+  :category :predicates
+  :expr "(zero? 0)"
+  :expected true}
+
+ {:name "zero-pred-false"
+  :category :predicates
+  :expr "(zero? 1)"
+  :expected false}
+
+ {:name "pos-pred-true"
+  :category :predicates
+  :expr "(pos? 5)"
+  :expected true}
+
+ {:name "pos-pred-false"
+  :category :predicates
+  :expr "(pos? -5)"
+  :expected false}
+
+ {:name "neg-pred-true"
+  :category :predicates
+  :expr "(neg? -5)"
+  :expected true}
+
+ {:name "neg-pred-false"
+  :category :predicates
+  :expr "(neg? 5)"
+  :expected false}
+
+ {:name "even-pred-true"
+  :category :predicates
+  :expr "(even? 4)"
+  :expected true}
+
+ {:name "even-pred-false"
+  :category :predicates
+  :expr "(even? 5)"
+  :expected false}
+
+ {:name "odd-pred-true"
+  :category :predicates
+  :expr "(odd? 5)"
+  :expected true}
+
+ {:name "odd-pred-false"
+  :category :predicates
+  :expr "(odd? 4)"
+  :expected false}
+]

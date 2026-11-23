@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(assert (= 1/2 (/ 2)))
+(assert (= 1/4 (let [f /] (f 4))))
+(assert (= "7/2" ((fn [^long n] ((fn [x] (str x)) (/ n 2))) 7)))
+(println (pr-str [(/ 2) (let [f /] (f 4)) ((fn [^long n] ((fn [x] (str x)) (/ n 2))) 7)]))

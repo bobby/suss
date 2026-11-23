@@ -1,0 +1,134 @@
+[
+  [
+    "(unchecked-negate 1/3)",
+    "-1/3"
+  ],
+  [
+    "((fn [x] (unchecked-negate x)) 1/3)",
+    "-1/3"
+  ],
+  [
+    "((identity unchecked-negate) 1/3)",
+    "-1/3"
+  ],
+  [
+    "(let [x (unchecked-negate 1/3)] [(pr-str (class x)) (ratio? x) (= x (- 1/3))])",
+    "[\"clojure.lang.Ratio\" true true]"
+  ],
+  [
+    "(unchecked-negate -2/7)",
+    "2/7"
+  ],
+  [
+    "((fn [x] (unchecked-negate x)) -2/7)",
+    "2/7"
+  ],
+  [
+    "((identity unchecked-negate) -2/7)",
+    "2/7"
+  ],
+  [
+    "(let [x (unchecked-negate -2/7)] [(pr-str (class x)) (ratio? x) (= x (- -2/7))])",
+    "[\"clojure.lang.Ratio\" true true]"
+  ],
+  [
+    "(unchecked-negate 123456789012345678901234567890/991)",
+    "-123456789012345678901234567890/991"
+  ],
+  [
+    "((fn [x] (unchecked-negate x)) 123456789012345678901234567890/991)",
+    "-123456789012345678901234567890/991"
+  ],
+  [
+    "((identity unchecked-negate) 123456789012345678901234567890/991)",
+    "-123456789012345678901234567890/991"
+  ],
+  [
+    "(let [x (unchecked-negate 123456789012345678901234567890/991)] [(pr-str (class x)) (ratio? x) (= x (- 123456789012345678901234567890/991))])",
+    "[\"clojure.lang.Ratio\" true true]"
+  ],
+  [
+    "(unchecked-inc 1/3)",
+    "4/3"
+  ],
+  [
+    "(unchecked-dec 1/3)",
+    "-2/3"
+  ],
+  [
+    "(unchecked-add 1/3 2/3)",
+    "1N"
+  ],
+  [
+    "(unchecked-subtract 1/3 4/3)",
+    "-1N"
+  ],
+  [
+    "(unchecked-multiply 2/3 3/4)",
+    "1/2"
+  ],
+  [
+    "(unchecked-negate -9223372036854775808)",
+    "-9223372036854775808"
+  ],
+  [
+    "((fn [^long x] (unchecked-negate x)) -9223372036854775808)",
+    "-9223372036854775808"
+  ],
+  [
+    "(unchecked-negate 1N)",
+    "-1N"
+  ],
+  [
+    "(unchecked-negate -18446744073709551616N)",
+    "18446744073709551616N"
+  ],
+  [
+    "(unchecked-negate 0.0)",
+    "-0.0"
+  ],
+  [
+    "(unchecked-negate -0.0)",
+    "0.0"
+  ],
+  [
+    "(let [x (unchecked-negate (biginteger 1))] [(pr-str x) (pr-str (class x))])",
+    "[\"-1N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (- (biginteger 1))] [(pr-str x) (pr-str (class x))])",
+    "[\"-1N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (abs (biginteger 1))] [(pr-str x) (pr-str (class x))])",
+    "[\"1N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (inc (biginteger 1))] [(pr-str x) (pr-str (class x))])",
+    "[\"2N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (dec (biginteger 1))] [(pr-str x) (pr-str (class x))])",
+    "[\"0N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (unchecked-negate (biginteger -18446744073709551616N))] [(pr-str x) (pr-str (class x))])",
+    "[\"18446744073709551616N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (- (biginteger -18446744073709551616N))] [(pr-str x) (pr-str (class x))])",
+    "[\"18446744073709551616N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (abs (biginteger -18446744073709551616N))] [(pr-str x) (pr-str (class x))])",
+    "[\"18446744073709551616N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (inc (biginteger -18446744073709551616N))] [(pr-str x) (pr-str (class x))])",
+    "[\"-18446744073709551615N\" \"clojure.lang.BigInt\"]"
+  ],
+  [
+    "(let [x (dec (biginteger -18446744073709551616N))] [(pr-str x) (pr-str (class x))])",
+    "[\"-18446744073709551617N\" \"clojure.lang.BigInt\"]"
+  ]
+]

@@ -217,6 +217,18 @@ fn infer(
     meter(1)?;
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         use Primitive::*;
+        // A frozen constant has its initializer's source primitive class even
+        // while the runtime retains its boxed value in a private binding cell.
+        // The source record holds the revision preceding the top-level form.
+        if let Expression::Global(global) = &*hir.kind
+            && global.namespace() == "suss.internal.constants"
+            && let Some(source) = &hir.source
+            && let Some(SourceBinding::Global { declaration: Some(info), .. }) = &source.resolved
+            && info.constant.is_some()
+            && let Some(initializer) = info.initializer.as_deref()
+        {
+            return infer(initializer, bindings, meter, loops);
+        }
         // Inspect genuine source calls before compiler-generated lowering.
         // For example, Suss makes hash raw, but Clojure's hash call is boxed.
         if let Some(source) = &hir.source

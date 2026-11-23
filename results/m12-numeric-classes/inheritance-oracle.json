@@ -1,0 +1,6 @@
+{
+  "source": "(defprotocol NumericClassProtocol (numeric-class-kind [x]))\n(extend-type java.lang.Long NumericClassProtocol (numeric-class-kind [x] :long))\n(extend-type java.lang.Double NumericClassProtocol (numeric-class-kind [x] :double))\n(extend-type clojure.lang.BigInt NumericClassProtocol (numeric-class-kind [x] :bigint))\n(extend-type java.math.BigInteger NumericClassProtocol (numeric-class-kind [x] :biginteger))\n(extend-type clojure.lang.Ratio NumericClassProtocol (numeric-class-kind [x] :ratio))\n(defprotocol NumericBaseProtocol (numeric-base [x]))\n(extend-type java.lang.Number NumericBaseProtocol (numeric-base [x] :number))\n(extend-type java.lang.Long NumericBaseProtocol (numeric-base [x] :long))\n\n(prn (mapv numeric-base [1 1.0 1N (biginteger 1) 1/2 2 2.0 2N]))\n(prn [(satisfies? NumericBaseProtocol 1) (satisfies? NumericBaseProtocol 1.0) (satisfies? NumericBaseProtocol 1N) (satisfies? NumericBaseProtocol (biginteger 1)) (satisfies? NumericBaseProtocol 1/3) (satisfies? NumericBaseProtocol nil)])",
+  "exit_code": 0,
+  "stdout": "NumericClassProtocol\nNumericBaseProtocol\n[:long :number :number :number :number :long :number :number]\n[true true true true true false]\n",
+  "stderr": ""
+}

@@ -1,0 +1,11 @@
+{
+  "job_id": 137227420223,
+  "run_id": 45028712620,
+  "head": "a21a715de47921e56f2aede2f10a46c245f8b0c4",
+  "url": "https://github.com/bobby/suss/actions/runs/45028712620/job/137227420223",
+  "failure": "compiled_record_default_budget::repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default",
+  "costs": [
+    992401,
+    1003928
+  ]
+}

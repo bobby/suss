@@ -3,8 +3,8 @@
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates. Integer literals in the long range are longs and
 //! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
-//! [`ExactNumber`]s, which evaluation rejects until Suss has those types
-//! (ADR-0003, #338, #339).
+//! [`ExactNumber`]s. BigInt and Ratio evaluate as exact GC values; Decimal
+//! evaluation still needs their runtime types (ADR-0003, #338, #339).
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -42,7 +42,7 @@ impl Form {
             self.take_kind(),
         )
     }
-    /// The elements of a `#queue [...]` literal, the one built-in tag.
+    /// The elements of a `#queue [...]` literal.
     pub fn queue_items(&self) -> Option<&[Form]> {
         match &self.kind {
             Kind::Tagged { tag, form } if tag.namespace.is_none() && tag.name == "queue" => {
@@ -184,11 +184,37 @@ impl PartialEq for ExactNumber {
         self.value == other.value
     }
 }
-/// Macro data has no value for an exact literal until #335, so it carries
-/// one as a symbol in this namespace named by the literal's text, and decoding
-/// that symbol gives the literal back.
+/// Exact literals without a runtime value use this macro-data placeholder
+/// namespace. BigInt and Ratio have real runtime values; Decimal still uses a
+/// symbol named by the literal text, which decoding restores.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
+    /// The decimal-string payload of the Suss BigInteger source/data carrier.
+    /// Parse directly in base10: leading zeros never mean octal here.
+    pub(crate) fn biginteger_text(text: &str) -> Option<Self> {
+        let digits = text.strip_prefix(['+', '-']).unwrap_or(text);
+        if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        let value = num_bigint::BigInt::parse_bytes(text.as_bytes(), 10)?;
+        Some(Self { text: value.to_string(), value: ExactValue::Integer { value, big: false } })
+    }
+    /// Reconstitute a GC BigInt datum without converting through binary64.
+    /// `limbs` are the significant little-endian u32 magnitude digits.
+    pub fn bigint(negative: bool, limbs: Vec<u32>) -> Self { Self::integer(negative, limbs, true) }
+    /// Preserve a BigInteger macro datum's plain integer printing as well.
+    pub fn integer(negative: bool, limbs: Vec<u32>, big: bool) -> Self {
+        let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
+        let value = num_bigint::BigInt::new(sign, limbs);
+        Self { text: format!("{value}{}", if big { "N" } else { "" }), value: ExactValue::Integer { value, big } }
+    }
+    /// Reconstitute normalized GC Ratio data without a binary64 conversion.
+    pub fn ratio(negative: bool, numerator: Vec<u32>, denominator: Vec<u32>) -> Self {
+        let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
+        let numerator = num_bigint::BigInt::new(sign, numerator);
+        let denominator = num_bigint::BigInt::new(num_bigint::Sign::Plus, denominator);
+        Self { text: format!("{numerator}/{denominator}"), value: ExactValue::Ratio { numerator, denominator } }
+    }
     /// The literal a macro-data symbol stands for, if it is one.
     pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {
         if namespace != Some(EXACT_NUMBER_NAMESPACE) {
@@ -208,7 +234,7 @@ impl ExactNumber {
             ExactValue::Decimal { unscaled, scale } => format!("{unscaled}E{}M", -i64::from(*scale)),
         }
     }
-    /// The evaluation-time failure, until #335.
+    /// The evaluation-time failure for a runtime type not yet implemented.
     pub fn unsupported_message(&self) -> String {
         format!(
             "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
@@ -494,11 +520,16 @@ fn metadata_target(kind: &Kind) -> bool {
 }
 
 /// The value a built-in tag reads as. `#queue` follows ClojureScript; Clojure
-/// itself has none. Other tags fail as Clojure's reader does without a reader.
+/// itself has none. The Suss BigInteger carrier preserves a compiler datum's
+/// category without evaluating a constructor call. Other tags still fail.
 fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), ParseError> {
     match (tag.namespace.as_deref(), tag.name.as_str()) {
         (None, "queue") if matches!(target.kind, Kind::Vector(_)) => Ok(()),
         (None, "queue") => Err(error(span, "Queue literal expects a vector for its elements.")),
+        (Some("suss"), "biginteger") => match &target.kind {
+            Kind::String(units) if String::from_utf16(units).ok().and_then(|s| ExactNumber::biginteger_text(&s)).is_some() => Ok(()),
+            _ => Err(error(span, "BigInteger literal expects a decimal string.")),
+        },
         _ => Err(error(span, format!("No reader function for tag {tag}"))),
     }
 }
@@ -597,7 +628,10 @@ fn select_inner(
             };
             form.span.end = target.span.end;
             check_tagged(&tag, &target, form.span.clone())?;
-            form.kind = Kind::Tagged { tag, form: Box::new(target) };
+            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
+                let Kind::String(units) = &target.kind else { unreachable!() };
+                Kind::Exact(ExactNumber::biginteger_text(&String::from_utf16(units).unwrap()).unwrap())
+            } else { Kind::Tagged { tag, form: Box::new(target) } };
             Some(form)
         }
         kind => {

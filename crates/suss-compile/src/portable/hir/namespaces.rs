@@ -192,7 +192,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition { constant: None,
                 global: cell.clone(),
                 name_metadata: Vec::new(),
                 name_span: span.clone(),

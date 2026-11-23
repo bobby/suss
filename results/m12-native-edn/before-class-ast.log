@@ -1,0 +1,30 @@
+Running as unit: run-p1870047-i89914796.scope; invocation ID: f8b22a1985ca465b889452535128e02f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.90s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 1 test
+test native_numeric_class_references_round_trip_as_class_constants ... FAILED
+
+failures:
+
+---- native_numeric_class_references_round_trip_as_class_constants stdout ----
+
+thread 'native_numeric_class_references_round_trip_as_class_constants' (1870142) panicked at crates/suss-cli/tests/analyzer_edn.rs:12:33:
+/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli/../../target/exact-classes.sus: While compiling /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli/../../target/exact-classes.sus: Unresolved Runtime name java.lang/Long at bytes 0..14
+java.lang/Long
+clojure.lang/BigInt
+java.math/BigInteger
+clojure.lang/Ratio
+java.lang/Number
+java.lang/Class
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    native_numeric_class_references_round_trip_as_class_constants
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.99s
+
+error: test failed, to rerun pass `-p suss-cli --test analyzer_edn`

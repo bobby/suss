@@ -1,0 +1,13 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(defprotocol LiveNumeric (live-value [x])) (extend-type Number LiveNumeric (live-value [x] :base)) (def captured-live live-value) (def live-call (fn [x] (captured-live x)))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Long LiveNumeric (live-value [x] :long))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Number LiveNumeric (live-value [x] :changed))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type clojure.lang.BigInt LiveNumeric (live-value [x] :bigint))\n(prn (mapv live-call [1 1.0 1N (biginteger 1) 1/2]))\n(extend-type Class LiveNumeric (live-value [x] :class))\n(prn (mapv live-call [Long Double clojure.lang.BigInt java.math.BigInteger clojure.lang.Ratio Class]))\n\n(prn [(apply captured-live [1N]) (apply captured-live [1.0]) (live-call 1) (live-call 1N) (live-call 1.0)])\n(defprotocol NumericMarker) (extend-type Number NumericMarker) (def marker-call (fn [x] (satisfies? NumericMarker x)))\n(prn (mapv marker-call [1 1.0 1N (biginteger 1) 1/2 nil Long]))\n(extend-type Class NumericMarker)\n(prn (mapv marker-call [1 1N Long Class nil]))"
+  ],
+  "stdout": "LiveNumeric\n#'user/captured-live\n#'user/live-call\n[:base :base :base :base :base]\n[:base :base :base :base :base]\n[:base :base :base :base :base]\n[:base :base :base :base :base]\n",
+  "stderr": "Execution error (IllegalArgumentException) at user/eval143$fn$G (REPL:1).\nNo implementation of method: :live-value of protocol: #'user/LiveNumeric found for class: java.lang.Class\n\nFull report at:\n/tmp/clojure-6672336863812582924.edn\n",
+  "exit_code": 1
+}

@@ -1,0 +1,4 @@
+Running as unit: run-p530105-i88582800.scope; invocation ID: af5f28b421314e7c9a6bf5626c9efdbf
+error: no test target named `map_lookups` in `suss-compile` package
+help: available test in `suss-cli` package:
+    map_lookups

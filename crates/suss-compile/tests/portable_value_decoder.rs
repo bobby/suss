@@ -735,3 +735,38 @@ fn string_decoder_rejects_immutable_utf16_array_impostor() {
         .unwrap();
 }
 
+
+
+#[test]
+fn bigint_decoder_reads_exact_storage_after_gc_without_guest_printers() {
+    let mut session = Session::new_repl().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 10000).unwrap();
+    for (source, expected) in [
+        ("0N", "0"), ("-1N", "-1"),
+        ("18446744073709551617N", "18446744073709551617"),
+        ("18446744055262807542290448384N", "18446744055262807542290448384"),
+        ("-340282366920938463463374607431768211457N", "-340282366920938463463374607431768211457"),
+        ("(biginteger 18446744073709551617N)", "18446744073709551617"),
+    ] {
+        let value = session.eval_probe(source).unwrap();
+        session.collect().unwrap();
+        decoder.refill(10000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::BigInt(expected.into()), "{source}");
+    }
+}
+
+
+#[test]
+fn ratio_decoder_reads_actual_exact_children_after_gc() {
+    let mut session = Session::new_repl().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 10000).unwrap();
+    for (source, numerator, denominator) in [
+        ("1/3", "1", "3"), ("-2/6", "-1", "3"),
+        ("18446744073709551617/2", "18446744073709551617", "2"),
+        ("(let [x 1/3] (+ x x))", "2", "3"),
+    ] {
+        let value = session.eval_probe(source).unwrap();
+        session.collect().unwrap(); decoder.refill(10000);
+        assert_eq!(decoder.decode_session(&mut session,&value).unwrap(), Observation::Ratio(numerator.into(),denominator.into()), "{source}");
+    }
+}

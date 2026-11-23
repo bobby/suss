@@ -1,0 +1,26 @@
+{
+  "base": "5ee8a0d7c89943ff6b5d3c76d05f486c909d1979",
+  "inputs": {
+    "crates/suss-compile/tests/portable_aot_wit_numbers.rs": "389b4ca1ff8c0fd4f24aad4883beea28fb248bc35a721d9c30604893ff684c1d",
+    "crates/suss-compile/src/portable/aot.rs": "94c705f695a0d7850df26fb4fb51b6e6ec6e50c51c3e0939674acdde5544fc6d",
+    "crates/suss-compile/src/portable/aot/lists.rs": "3a402ad927dcae044258c1d246ed670a5023344908ca3b54916e78b8d5f99a08",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "9ba7facc68a0ec9d259497863d6a37f2a051d9bede772e0ee19398177b686523"
+  },
+  "binary_sha256": "a42a69e96b2232a23b8aaff8994072fc0e096cc49c920692901838616ff12c42",
+  "exit_code": 101,
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_aot_wit_numbers",
+    "u64_values_cross_as_longs_or_exact_bigints",
+    "--",
+    "--exact",
+    "--test-threads=2"
+  ],
+  "test_seconds": 48.61,
+  "terminal_output": "before-u64.log"
+}

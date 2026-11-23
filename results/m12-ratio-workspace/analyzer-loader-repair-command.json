@@ -1,0 +1,19 @@
+{
+  "base": "5ee8a0d7",
+  "inputs": {
+    "crates/suss-cli/tests/analyzer_edn.rs": "6b5ed75f1654c69a02327828a96ca464c3c33497dcf031f6019fa01656a2b977"
+  },
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-cli",
+    "--locked",
+    "--test",
+    "analyzer_edn",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "tests_passed": 9
+}

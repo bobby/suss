@@ -1,0 +1,11 @@
+Running as unit: run-p950787-i88997003.scope; invocation ID: c3091e38f29640168bd1e7ec26e49dcf
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 54s
+     Running tests/portable_aot_wit_numbers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_wit_numbers-4519ad6066fb8ea7)
+
+running 1 test
+test u64_values_cross_as_longs_or_exact_bigints ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 47.10s
+

@@ -14,7 +14,11 @@ mod optimize;
 mod strings;
 
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
-const HELPERS: u32 = 6;
+const NUMBER_UNBOX: u32 = 6;
+const BIGINT_FROM_U64: u32 = 7;
+const BIGINT_FITS_U64: u32 = 8;
+const BIGINT_LOW_LONG: u32 = 9;
+const HELPERS: u32 = 10;
 
 struct Export {
     name: String,
@@ -238,8 +242,8 @@ impl Scalar {
             _ => Instruction::I32Load8U(arg),
         }
     }
-    /// The range of longs an integer type accepts. A long is at most
-    /// 2^63 - 1, so `u64` above that needs BigInt (#338).
+    /// The range of longs an integer type accepts. U64's BigInt range is
+    /// checked separately before extracting its unsigned bits.
     fn integer_bounds(self) -> Option<(i64, i64)> {
         Some(match self {
             Self::U8 => (0, u8::MAX.into()),
@@ -1235,6 +1239,10 @@ fn adapter(
             vec![VALUE, ValType::I32, ValType::I32],
             vec![ValType::I32],
         ),
+        ("number-unbox", vec![VALUE], vec![ValType::F64]),
+        ("bigint-from-u64", vec![ValType::I64], vec![VALUE]),
+        ("bigint-fits-u64", vec![VALUE], vec![ValType::I32]),
+        ("bigint-low-long", vec![VALUE], vec![ValType::I64]),
     ];
     if has_memory {
         signatures.extend([
@@ -1262,7 +1270,7 @@ fn adapter(
             imports.import(
                 "suss.memory",
                 name,
-                EntityType::Function(runtime_abi::TYPE_COUNT + 8 + index as u32),
+                EntityType::Function(runtime_abi::TYPE_COUNT + HELPERS + 2 + index as u32),
             );
         }
         imports.import(
@@ -1289,7 +1297,7 @@ fn adapter(
             imports.import(
                 "suss.runtime",
                 name,
-                EntityType::Function(runtime_abi::TYPE_COUNT + 10 + index as u32),
+                EntityType::Function(runtime_abi::TYPE_COUNT + HELPERS + 4 + index as u32),
             );
         }
     }
@@ -1390,10 +1398,10 @@ fn adapter(
         };
         let string_helpers = strings::Helpers {
             new: 4,
-            length: 6,
-            unit: 7,
+            length: HELPERS,
+            unit: HELPERS + 1,
             set_unit: 5,
-            realloc: 8,
+            realloc: HELPERS + 2,
         };
         let list_locals = lists::Locals {
             value: result,
@@ -1438,7 +1446,7 @@ fn adapter(
                 }
                 Boundary::Scalar(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter));
-                    lift_scalar(&mut body, ty, sentinels, wide, scratch, &export.name);
+                    lift_scalar(&mut body, ty, sentinels, wide);
                     parameter += 1;
                 }
                 Boundary::StringOption => {
@@ -1468,7 +1476,7 @@ fn adapter(
                     body.instruction(&Instruction::LocalGet(parameter))
                         .instruction(&Instruction::If(BlockType::Result(VALUE)))
                         .instruction(&Instruction::LocalGet(parameter + 1));
-                    lift_scalar(&mut body, ty, sentinels, wide, scratch, &export.name);
+                    lift_scalar(&mut body, ty, sentinels, wide);
                     body.instruction(&Instruction::Else)
                         .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                         .instruction(&Instruction::End);
@@ -1503,7 +1511,7 @@ fn adapter(
                     .instruction(&Instruction::LocalGet(parameter + 1))
                     .instruction(&Instruction::I32Const(2))
                     .instruction(&Instruction::I32Mul)
-                    .instruction(&Instruction::Call(9));
+                    .instruction(&Instruction::Call(HELPERS + 3));
             }
             if ty.string_option() {
                 body.instruction(&Instruction::LocalGet(parameter))
@@ -1512,7 +1520,7 @@ fn adapter(
                     .instruction(&Instruction::LocalGet(parameter + 2))
                     .instruction(&Instruction::I32Const(2))
                     .instruction(&Instruction::I32Mul)
-                    .instruction(&Instruction::Call(9))
+                    .instruction(&Instruction::Call(HELPERS + 3))
                     .instruction(&Instruction::End);
             }
             parameter += ty.flat().len() as u32;
@@ -1744,7 +1752,7 @@ fn adapter(
             }))
             .instruction(&Instruction::I32Const(2))
             .instruction(&Instruction::I32Mul)
-            .instruction(&Instruction::Call(9));
+            .instruction(&Instruction::Call(HELPERS + 3));
         if optional {
             post.instruction(&Instruction::End);
         }
@@ -1802,9 +1810,8 @@ fn adapter(
         .section(&code);
     Ok(module.finish())
 }
-/// `wide` is an `i64` scratch local for boxing a long, and `scratch` a value
-/// local for an error message.
-fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32, scratch: u32, name: &str) {
+/// `wide` is an `i64` scratch local for boxing a long.
+fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
     match ty {
         Scalar::Bool => {
             for instruction in runtime_abi::boolean_in(sentinels) {
@@ -1819,21 +1826,19 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32, scra
             body.instruction(&Instruction::Call(1));
         }
         Scalar::U64 => {
-            // A long is at most 2^63 - 1; larger values need BigInt (#338).
+            // Preserve unsigned canonical bits as a positive exact magnitude.
             body.instruction(&Instruction::LocalTee(wide))
                 .instruction(&Instruction::I64Const(0))
                 .instruction(&Instruction::I64LtS)
-                .instruction(&Instruction::If(BlockType::Empty));
-            boundary_error_message(
-                body,
-                scratch,
-                &format!("WIT export {name} received a u64 above 9223372036854775807, which needs unsupported BigInt"),
-            );
-            body.instruction(&Instruction::End)
+                .instruction(&Instruction::If(BlockType::Result(VALUE)))
+                .instruction(&Instruction::LocalGet(wide))
+                .instruction(&Instruction::Call(BIGINT_FROM_U64))
+                .instruction(&Instruction::Else)
                 .instruction(&Instruction::LocalGet(wide));
             for instruction in runtime_abi::long_box_in(wide) {
                 body.instruction(&instruction);
             }
+            body.instruction(&Instruction::End);
         }
         Scalar::S64 => {
             for instruction in runtime_abi::long_box_in(wide) {
@@ -1920,16 +1925,46 @@ fn lower_scalar(
                 }
                 body.instruction(&Instruction::F32ConvertI64S)
                     .instruction(&Instruction::Else);
-                for instruction in runtime_abi::number_to_f64(result) {
-                    body.instruction(&instruction);
-                }
+                body.instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::Call(NUMBER_UNBOX));
                 body.instruction(&Instruction::F32DemoteF64)
                     .instruction(&Instruction::End);
             } else {
-                for instruction in runtime_abi::number_to_f64(result) {
-                    body.instruction(&instruction);
-                }
+                body.instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::Call(NUMBER_UNBOX));
             }
+        }
+        Scalar::U64 => {
+            for instruction in runtime_abi::long_test(result) {
+                body.instruction(&instruction);
+            }
+            body.instruction(&Instruction::If(BlockType::Result(ValType::I64)));
+            for instruction in runtime_abi::long_to_i64(result) {
+                body.instruction(&instruction);
+            }
+            body.instruction(&Instruction::LocalTee(wide))
+                .instruction(&Instruction::I64Const(0))
+                .instruction(&Instruction::I64LtS)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(wide))
+                .instruction(&Instruction::Else)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                .instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::Call(BIGINT_FITS_U64))
+                .instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&Instruction::Call(BIGINT_LOW_LONG))
+                .instruction(&Instruction::End);
         }
         scalar => {
             // A long within the type's range; a double is not converted.

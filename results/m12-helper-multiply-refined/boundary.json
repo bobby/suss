@@ -1,0 +1,4722 @@
+{
+  "source_profile": "profile.json",
+  "host_sha256": "1bcde87b4e99270cd840c175b259c0407af7f8ae33723e8f9f260c4897ce31e9",
+  "modules": {
+    "target/probe/m12-production-multiply-refined/runtime.wasm": "a962d06daa0e19b1599db81a2550af669c427613bac8b1a7cb546f4f2701ccf5",
+    "target/probe/m12-production-multiply-refined/runtime-auto.cwasm": "f2ffdc975b8ef6ca471d6c4b18cd9bb1257cf11a02e9b6eda7d76c7dd89bfd09",
+    "target/probe/m12-production-multiply-refined/loop.wasm": "244eb84b0841283bd59ac6a4aa6de13f488bd26af7f9179487f6573a8b0f1eba",
+    "target/probe/m12-production-multiply-refined/loop-auto.cwasm": "41a0109760d90c333cf2495c33dd4ec25135677a82c2130240a79e021032dd56",
+    "target/probe/m12-production-multiply-refined/runtime-null.cwasm": "02c9c128054376ab04786fc63b94ee1ddb23b5baf468e3979690780f258d921e",
+    "target/probe/m12-production-multiply-refined/loop-null.cwasm": "fefc064b8774ea7cc8b2e121953012ff269707f3e64a2329488310483b2616bd"
+  },
+  "commands": [
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "gc",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.19684505462646484,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=10964992\n242637931,,instructions:u,52825683,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "gc",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07119870185852051,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=10977280\n128351555,,instructions:u,29303765,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "gc",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09868764877319336,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=10854400\n242638326,,instructions:u,53373019,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "gc",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07137298583984375,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=10825728\n128347739,,instructions:u,29598379,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "helper",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1228940486907959,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=11042816\n247578030,,instructions:u,54739112,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "helper",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10004186630249023,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=10973184\n130821571,,instructions:u,30350427,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "helper",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.13166284561157227,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=11046912\n247577911,,instructions:u,50825749,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "helper",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08063793182373047,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=11018240\n130815331,,instructions:u,29873387,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "dispatch",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.18981266021728516,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=10993664\n250127567,,instructions:u,55204837,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "dispatch",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08369970321655273,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=11104256\n132095265,,instructions:u,29674431,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "dispatch",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09950518608093262,
+      "stdout": "-4450042679472433152\n",
+      "stderr": "peak-bytes=10846208\n250127620,,instructions:u,53424646,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "0",
+        "dispatch",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07120299339294434,
+      "stdout": "6998350697118559232\n",
+      "stderr": "peak-bytes=11173888\n132093117,,instructions:u,29100279,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "gc",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12157487869262695,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=11173888\n243285542,,instructions:u,52820676,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "gc",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08211445808410645,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=11005952\n128673994,,instructions:u,29628329,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "gc",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12359094619750977,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=11132928\n243288885,,instructions:u,51959763,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "gc",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07538890838623047,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=10878976\n128672236,,instructions:u,29597374,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "helper",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0997467041015625,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=10964992\n247260263,,instructions:u,52856865,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "helper",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0871274471282959,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=11001856\n130660507,,instructions:u,31448032,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "helper",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10256385803222656,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=11145216\n247255282,,instructions:u,55750983,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "helper",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07654023170471191,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=11112448\n130662396,,instructions:u,31580046,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "dispatch",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12816452980041504,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=10956800\n250775608,,instructions:u,54145140,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "dispatch",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09488677978515625,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=11116544\n132414049,,instructions:u,30607126,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "dispatch",
+        "107874"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10268402099609375,
+      "stdout": "1759771835157902152\n",
+      "stderr": "peak-bytes=11231232\n250771872,,instructions:u,56436287,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "1",
+        "dispatch",
+        "53937"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10407304763793945,
+      "stdout": "-8343486119275824732\n",
+      "stderr": "peak-bytes=10911744\n132417148,,instructions:u,30961730,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "gc",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1422717571258545,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=11014144\n233004884,,instructions:u,50697056,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "gc",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10677433013916016,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=10919936\n123448905,,instructions:u,28448238,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "gc",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09780240058898926,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=11067392\n233004568,,instructions:u,47275182,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "gc",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0928792953491211,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=11165696\n123451519,,instructions:u,28731153,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "helper",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10330939292907715,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=11124736\n234839001,,instructions:u,52480699,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "helper",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06578278541564941,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=11083776\n124368146,,instructions:u,28766754,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "helper",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10944819450378418,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=11124736\n234836248,,instructions:u,50720183,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "helper",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09910178184509277,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=11030528\n124367429,,instructions:u,28767299,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "dispatch",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10954451560974121,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=10944512\n241490381,,instructions:u,52205800,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "dispatch",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07987475395202637,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=10866688\n127693736,,instructions:u,29578767,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "dispatch",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1350693702697754,
+      "stdout": "4414605987602455364\n",
+      "stderr": "peak-bytes=10964992\n241491897,,instructions:u,53047259,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "2",
+        "dispatch",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07641220092773438,
+      "stdout": "2207302993801227682\n",
+      "stderr": "peak-bytes=11153408\n127699326,,instructions:u,31306216,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "gc",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09510087966918945,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11030528\n233591272,,instructions:u,50893573,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "gc",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0744788646697998,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=10973184\n123739659,,instructions:u,28807854,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "gc",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09774971008300781,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11132928\n233588139,,instructions:u,49191312,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "gc",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08584141731262207,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=10981376\n123740881,,instructions:u,35092158,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "helper",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10019397735595703,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11051008\n234451718,,instructions:u,51313862,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "helper",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09680938720703125,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=10932224\n124173355,,instructions:u,29708416,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "helper",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1888422966003418,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11100160\n234457316,,instructions:u,53012660,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "helper",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1048276424407959,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=10981376\n124173076,,instructions:u,28609147,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "dispatch",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1893177032470703,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11014144\n241105272,,instructions:u,53773599,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "dispatch",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.14708662033081055,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=11005952\n127495627,,instructions:u,30371110,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "dispatch",
+        "97276"
+      ],
+      "exit_code": 0,
+      "seconds": 0.16486811637878418,
+      "stdout": "5931369765919394112\n",
+      "stderr": "peak-bytes=11096064\n241100724,,instructions:u,54325142,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "3",
+        "dispatch",
+        "48638"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08747124671936035,
+      "stdout": "2965684882959697056\n",
+      "stderr": "peak-bytes=10887168\n127499853,,instructions:u,30837744,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "gc",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10722041130065918,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=11001856\n225096621,,instructions:u,47603129,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "gc",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07288312911987305,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=10932224\n119492133,,instructions:u,26886315,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "gc",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1966109275817871,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=10985472\n225090992,,instructions:u,48710385,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "gc",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10021162033081055,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=10838016\n119494523,,instructions:u,26463277,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "helper",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11855530738830566,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=11042816\n224373801,,instructions:u,51975956,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "helper",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11472821235656738,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=11022336\n119133578,,instructions:u,29374603,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "helper",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1351776123046875,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=11005952\n224374031,,instructions:u,50131802,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "helper",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10335946083068848,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=10964992\n119133294,,instructions:u,28424041,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "dispatch",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.17194294929504395,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=10928128\n230434955,,instructions:u,58834861,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "dispatch",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10879683494567871,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=11091968\n122164991,,instructions:u,29630729,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "dispatch",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.183502197265625,
+      "stdout": "2373732837994731560\n",
+      "stderr": "peak-bytes=11206656\n230436609,,instructions:u,53234887,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "4",
+        "dispatch",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08826208114624023,
+      "stdout": "-8036505617857410028\n",
+      "stderr": "peak-bytes=11096064\n122157565,,instructions:u,30727234,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "gc",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.18588566780090332,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=10993664\n225628333,,instructions:u,48614072,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "gc",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07960724830627441,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=11005952\n119757243,,instructions:u,28584659,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "gc",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0989835262298584,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=11014144\n225625492,,instructions:u,47490620,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "gc",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12551617622375488,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=11104256\n119758117,,instructions:u,28352606,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "helper",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09938192367553711,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=11046912\n223929858,,instructions:u,48542468,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "helper",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07334303855895996,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=10989568\n118913287,,instructions:u,28738507,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "helper",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10411238670349121,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=11137024\n223930290,,instructions:u,47998660,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "helper",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07722997665405273,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=11124736\n118910648,,instructions:u,28543355,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "dispatch",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10665082931518555,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=11137024\n229983103,,instructions:u,51318056,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "dispatch",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10886502265930176,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=11112448\n121941425,,instructions:u,29178006,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "dispatch",
+        "88572"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12723517417907715,
+      "stdout": "2980593807338818896\n",
+      "stderr": "peak-bytes=11005952\n229991016,,instructions:u,52850092,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "5",
+        "dispatch",
+        "44286"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08515167236328125,
+      "stdout": "1490296903669409448\n",
+      "stderr": "peak-bytes=11001856\n121939367,,instructions:u,30856450,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "gc",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09746932983398438,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11038720\n226990445,,instructions:u,50015100,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "gc",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07284855842590332,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=10985472\n120529350,,instructions:u,28494835,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "gc",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11520600318908691,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11132928\n226996795,,instructions:u,50400052,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "gc",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09138655662536621,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=11034624\n120530010,,instructions:u,25658312,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "helper",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10908746719360352,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11091968\n224119442,,instructions:u,50417769,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "helper",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08537077903747559,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=11018240\n119095736,,instructions:u,28707287,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "helper",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1369946002960205,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11112448\n224121917,,instructions:u,51282770,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "helper",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10333919525146484,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=10960896\n119094819,,instructions:u,28776070,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "dispatch",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.16246485710144043,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11235328\n229710290,,instructions:u,51935547,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "dispatch",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1072235107421875,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=11026432\n121894874,,instructions:u,30525732,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "dispatch",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.14440321922302246,
+      "stdout": "-6383394930254303628\n",
+      "stderr": "peak-bytes=11124736\n229710932,,instructions:u,53546677,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "6",
+        "dispatch",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07191205024719238,
+      "stdout": "6031674571727623994\n",
+      "stderr": "peak-bytes=11182080\n121890569,,instructions:u,29908589,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "gc",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09611248970031738,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=11259904\n227476883,,instructions:u,46644617,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "gc",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07943224906921387,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=10960896\n120770563,,instructions:u,38955717,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "gc",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10300755500793457,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=11010048\n227483276,,instructions:u,48031182,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "gc",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07576131820678711,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=10997760\n120777261,,instructions:u,27154741,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "helper",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10416531562805176,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=10940416\n223628346,,instructions:u,57109277,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "helper",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07671308517456055,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=11255808\n118849741,,instructions:u,32796261,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "helper",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10503721237182617,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=10948608\n223634250,,instructions:u,47139572,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "helper",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07049012184143066,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=11010048\n118849132,,instructions:u,27627235,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "dispatch",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09190702438354492,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=11145216\n229224795,,instructions:u,47752434,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "dispatch",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08213400840759277,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=11010048\n121648507,,instructions:u,30411271,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "dispatch",
+        "81300"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09638047218322754,
+      "stdout": "1573529398976341888\n",
+      "stderr": "peak-bytes=10977280\n229224170,,instructions:u,52975394,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "7",
+        "dispatch",
+        "40650"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07469773292541504,
+      "stdout": "786764699488170944\n",
+      "stderr": "peak-bytes=11075584\n121649875,,instructions:u,28791040,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "gc",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10362696647644043,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=11010048\n242376106,,instructions:u,54047340,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "gc",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07972168922424316,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=10866688\n128221055,,instructions:u,30478359,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "gc",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10242629051208496,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=10932224\n242378319,,instructions:u,52591241,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "gc",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07514142990112305,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=11034624\n128218905,,instructions:u,31756286,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "helper",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11702156066894531,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=10981376\n290777385,,instructions:u,65228372,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "helper",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08150219917297363,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=11046912\n152422845,,instructions:u,33998473,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "helper",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.17635416984558105,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=10960896\n290780972,,instructions:u,64640071,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "helper",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08394384384155273,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=10899456\n152418337,,instructions:u,34978584,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "dispatch",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09479355812072754,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=11046912\n251906058,,instructions:u,56022768,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "dispatch",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0706789493560791,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=11010048\n132979804,,instructions:u,30356027,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "dispatch",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09931778907775879,
+      "stdout": "7891004154674898738\n",
+      "stderr": "peak-bytes=11022336\n251900491,,instructions:u,57677513,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "8",
+        "dispatch",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06135702133178711,
+      "stdout": "3945502077337449369\n",
+      "stderr": "peak-bytes=10838016\n132981625,,instructions:u,25090417,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "gc",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0817103385925293,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=10862592\n243202100,,instructions:u,49095369,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "gc",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06488227844238281,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=10854400\n128630851,,instructions:u,29920105,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "gc",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10083651542663574,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=11132928\n243201895,,instructions:u,65854805,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "gc",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08198094367980957,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=11223040\n128627143,,instructions:u,29925859,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "helper",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11049318313598633,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=11022336\n290092377,,instructions:u,64547229,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "helper",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07278013229370117,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=10895360\n152079902,,instructions:u,33986191,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "helper",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09577178955078125,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=11067392\n290094030,,instructions:u,58037223,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "helper",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06649136543273926,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=11038720\n152077192,,instructions:u,27318160,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "dispatch",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10422158241271973,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=11091968\n252725747,,instructions:u,68458266,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "dispatch",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07629990577697754,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=10866688\n133389352,,instructions:u,38092653,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "dispatch",
+        "137174"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09434247016906738,
+      "stdout": "-4405402406041424066\n",
+      "stderr": "peak-bytes=10989568\n252725393,,instructions:u,53258190,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "9",
+        "dispatch",
+        "68587"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07500672340393066,
+      "stdout": "-2202701203020712033\n",
+      "stderr": "peak-bytes=10969088\n133394397,,instructions:u,36600744,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "gc",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06441712379455566,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=10964992\n159089393,,instructions:u,32136774,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "gc",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.053682565689086914,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=11132928\n86640379,,instructions:u,19603588,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "gc",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0761256217956543,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=11063296\n159089301,,instructions:u,36144165,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "gc",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06272602081298828,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=11034624\n86647712,,instructions:u,20902246,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "helper",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0952763557434082,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=11051008\n189049562,,instructions:u,53199457,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "helper",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06615757942199707,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=10948608\n101622996,,instructions:u,24479734,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "helper",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1140902042388916,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=11091968\n189049640,,instructions:u,43013753,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "helper",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06416773796081543,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=11022336\n101620282,,instructions:u,23964957,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "dispatch",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06846094131469727,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=11067392\n160016865,,instructions:u,33001605,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "dispatch",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0603792667388916,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=11124736\n87104036,,instructions:u,22103244,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "dispatch",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08032393455505371,
+      "stdout": "1494199520335478800\n",
+      "stderr": "peak-bytes=10940416\n160007906,,instructions:u,37758497,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "10",
+        "dispatch",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.05780315399169922,
+      "stdout": "747099760167739400\n",
+      "stderr": "peak-bytes=11026432\n87102522,,instructions:u,21772620,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "gc",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07693791389465332,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=11046912\n159158648,,instructions:u,35502919,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "gc",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.059755802154541016,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=10964992\n86669552,,instructions:u,20070481,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "gc",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0844423770904541,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=11055104\n159159631,,instructions:u,36391618,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "gc",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06122422218322754,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=11022336\n86673348,,instructions:u,24335134,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "helper",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07985496520996094,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=10936320\n187648532,,instructions:u,40152455,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "helper",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06214118003845215,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=11038720\n100920192,,instructions:u,24039415,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "helper",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07861828804016113,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=10924032\n187651302,,instructions:u,36661031,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "helper",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.038604021072387695,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=11055104\n100919520,,instructions:u,14117044,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "dispatch",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04786348342895508,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=11001856\n160077279,,instructions:u,22169393,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "dispatch",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04264092445373535,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=10842112\n87135488,,instructions:u,13309168,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "dispatch",
+        "11248"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0746004581451416,
+      "stdout": "-1700349553393278944\n",
+      "stderr": "peak-bytes=11124736\n160078695,,instructions:u,35047058,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "11",
+        "dispatch",
+        "5624"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06076359748840332,
+      "stdout": "-850174776696639472\n",
+      "stderr": "peak-bytes=11120640\n87134488,,instructions:u,21371239,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "gc",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09459805488586426,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=11096064\n220961641,,instructions:u,52721487,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "gc",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06805014610290527,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=11145216\n118694503,,instructions:u,30043080,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "gc",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09783458709716797,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=11083776\n220963480,,instructions:u,47134916,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "gc",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06908917427062988,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=11079680\n118698918,,instructions:u,28143087,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "helper",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10093379020690918,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=11042816\n260167521,,instructions:u,57684375,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "helper",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08227419853210449,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=10915840\n138299037,,instructions:u,30169869,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "helper",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.12733960151672363,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=10997760\n260163879,,instructions:u,56544995,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "helper",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0711359977722168,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=11153408\n138306336,,instructions:u,32837065,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "dispatch",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10200309753417969,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=11194368\n221354057,,instructions:u,50703689,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "dispatch",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07458257675170898,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=10866688\n118897877,,instructions:u,28518483,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "dispatch",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09412503242492676,
+      "stdout": "3045856020604528352\n",
+      "stderr": "peak-bytes=10932224\n221350323,,instructions:u,51097703,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "12",
+        "dispatch",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07470560073852539,
+      "stdout": "-7700444026552511632\n",
+      "stderr": "peak-bytes=11153408\n118895932,,instructions:u,29365626,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "gc",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11571049690246582,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=11173888\n220973971,,instructions:u,49200299,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "gc",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07325243949890137,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=11051008\n118706709,,instructions:u,31200490,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "gc",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0904839038848877,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=10891264\n220967133,,instructions:u,50955548,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "gc",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06785035133361816,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=10997760\n118703717,,instructions:u,29272836,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "helper",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10140299797058105,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=11055104\n258122644,,instructions:u,53401802,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "helper",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06739974021911621,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=11079680\n137289069,,instructions:u,29654422,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "helper",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08688211441040039,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=11034624\n258125925,,instructions:u,50850091,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "helper",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06231427192687988,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=11194368\n137283687,,instructions:u,29297645,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "dispatch",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07978606224060059,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=11120640\n221364702,,instructions:u,42316849,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "dispatch",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.050536155700683594,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=11132928\n118904018,,instructions:u,22181941,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "dispatch",
+        "2000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06240081787109375,
+      "stdout": "4030171024400268224\n",
+      "stderr": "peak-bytes=10874880\n221368394,,instructions:u,34975054,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "13",
+        "dispatch",
+        "1000"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04662895202636719,
+      "stdout": "2015085512200134112\n",
+      "stderr": "peak-bytes=11018240\n118907614,,instructions:u,18990479,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "gc",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08887219429016113,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=11067392\n259744506,,instructions:u,51314050,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "gc",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06133413314819336,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=11042816\n136900988,,instructions:u,28875037,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "gc",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0746610164642334,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=10977280\n259741700,,instructions:u,39187840,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "gc",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07338476181030273,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=11005952\n136900311,,instructions:u,18251332,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "helper",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0880270004272461,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=11169792\n257218487,,instructions:u,51104818,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "helper",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07342743873596191,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=11100160\n135635939,,instructions:u,29447080,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "helper",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09275007247924805,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=10907648\n257216053,,instructions:u,52442199,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "helper",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06525015830993652,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=11137024\n135634908,,instructions:u,29634216,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "dispatch",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0945291519165039,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=10993664\n268464446,,instructions:u,57725205,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "dispatch",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07191634178161621,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=10997760\n141258868,,instructions:u,31611381,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "dispatch",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09332275390625,
+      "stdout": "-4798702602257848936\n",
+      "stderr": "peak-bytes=11128832\n268468381,,instructions:u,57078238,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "14",
+        "dispatch",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06905579566955566,
+      "stdout": "6824020735725851340\n",
+      "stderr": "peak-bytes=10977280\n141260848,,instructions:u,31725464,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "gc",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09073090553283691,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=11137024\n260501321,,instructions:u,54561396,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "gc",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06863951683044434,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11243520\n137281178,,instructions:u,30478037,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "gc",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0938882827758789,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=10997760\n260503859,,instructions:u,53571128,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "gc",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07457232475280762,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11149312\n137276402,,instructions:u,30995231,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "helper",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09351778030395508,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=11227136\n257344204,,instructions:u,56241578,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "helper",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.0692133903503418,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11132928\n135704863,,instructions:u,30542445,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "helper",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10318636894226074,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=11030528\n257344745,,instructions:u,51873623,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "helper",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07131671905517578,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11046912\n135696498,,instructions:u,31062682,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "dispatch",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09466195106506348,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=11132928\n269227089,,instructions:u,56791536,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "dispatch",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06650662422180176,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11030528\n141636673,,instructions:u,27899812,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "dispatch",
+        "126422"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09986042976379395,
+      "stdout": "5191337680483919240\n",
+      "stderr": "peak-bytes=10960896\n269225768,,instructions:u,52547983,100.00,,\n"
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "-x,",
+        "-e",
+        "instructions:u",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/examples/bigint_runtime",
+        "run",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/target/probe/m12-production-multiply-refined",
+        "auto",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/results/m12-helper-multiply-refined/boundary-cases.json",
+        "15",
+        "dispatch",
+        "63211"
+      ],
+      "exit_code": 0,
+      "seconds": 0.09307217597961426,
+      "stdout": "-6627703196612816188\n",
+      "stderr": "peak-bytes=11030528\n141640522,,instructions:u,29721877,100.00,,\n"
+    }
+  ],
+  "rows": [
+    {
+      "a": 2,
+      "b": 7,
+      "candidate": "gc",
+      "n": 53937,
+      "slopes": [
+        2118.886404508964,
+        2118.964477075106
+      ]
+    },
+    {
+      "a": 2,
+      "b": 7,
+      "candidate": "helper",
+      "n": 53937,
+      "slopes": [
+        2164.682110610527,
+        2164.795594860671
+      ]
+    },
+    {
+      "a": 2,
+      "b": 7,
+      "candidate": "dispatch",
+      "n": 53937,
+      "slopes": [
+        2188.336429538165,
+        2188.377236405436
+      ]
+    },
+    {
+      "a": 7,
+      "b": 2,
+      "candidate": "gc",
+      "n": 53937,
+      "slopes": [
+        2124.915141739437,
+        2125.0097150379147
+      ]
+    },
+    {
+      "a": 7,
+      "b": 2,
+      "candidate": "helper",
+      "n": 53937,
+      "slopes": [
+        2161.776813690046,
+        2161.649442868532
+      ]
+    },
+    {
+      "a": 7,
+      "b": 2,
+      "candidate": "dispatch",
+      "n": 53937,
+      "slopes": [
+        2194.440903276044,
+        2194.3141813597344
+      ]
+    },
+    {
+      "a": 2,
+      "b": 8,
+      "candidate": "gc",
+      "n": 48638,
+      "slopes": [
+        2252.4770549775894,
+        2252.416814013734
+      ]
+    },
+    {
+      "a": 2,
+      "b": 8,
+      "candidate": "helper",
+      "n": 48638,
+      "slopes": [
+        2271.2869567005223,
+        2271.2450964266623
+      ]
+    },
+    {
+      "a": 2,
+      "b": 8,
+      "candidate": "dispatch",
+      "n": 48638,
+      "slopes": [
+        2339.6653850898474,
+        2339.5816234220156
+      ]
+    },
+    {
+      "a": 8,
+      "b": 2,
+      "candidate": "gc",
+      "n": 48638,
+      "slopes": [
+        2258.5553065504337,
+        2258.4657675068875
+      ]
+    },
+    {
+      "a": 8,
+      "b": 2,
+      "candidate": "helper",
+      "n": 48638,
+      "slopes": [
+        2267.329310415724,
+        2267.450141864386
+      ]
+    },
+    {
+      "a": 8,
+      "b": 2,
+      "candidate": "dispatch",
+      "n": 48638,
+      "slopes": [
+        2335.820654632181,
+        2335.6402607015093
+      ]
+    },
+    {
+      "a": 2,
+      "b": 9,
+      "candidate": "gc",
+      "n": 44286,
+      "slopes": [
+        2384.602086438152,
+        2384.4210134128166
+      ]
+    },
+    {
+      "a": 2,
+      "b": 9,
+      "candidate": "helper",
+      "n": 44286,
+      "slopes": [
+        2376.376800794834,
+        2376.3884071715665
+      ]
+    },
+    {
+      "a": 2,
+      "b": 9,
+      "candidate": "dispatch",
+      "n": 44286,
+      "slopes": [
+        2444.789865871833,
+        2444.9948968071176
+      ]
+    },
+    {
+      "a": 9,
+      "b": 2,
+      "candidate": "gc",
+      "n": 44286,
+      "slopes": [
+        2390.622092760692,
+        2390.5382062051212
+      ]
+    },
+    {
+      "a": 9,
+      "b": 2,
+      "candidate": "helper",
+      "n": 44286,
+      "slopes": [
+        2371.3266269249875,
+        2371.3959716388927
+      ]
+    },
+    {
+      "a": 9,
+      "b": 2,
+      "candidate": "dispatch",
+      "n": 44286,
+      "slopes": [
+        2439.6350539673936,
+        2439.8602041277154
+      ]
+    },
+    {
+      "a": 2,
+      "b": 10,
+      "candidate": "gc",
+      "n": 40650,
+      "slopes": [
+        2618.969126691267,
+        2619.1091020910208
+      ]
+    },
+    {
+      "a": 2,
+      "b": 10,
+      "candidate": "helper",
+      "n": 40650,
+      "slopes": [
+        2583.609003690037,
+        2583.6924477244775
+      ]
+    },
+    {
+      "a": 2,
+      "b": 10,
+      "candidate": "dispatch",
+      "n": 40650,
+      "slopes": [
+        2652.2857564575647,
+        2652.4074538745385
+      ]
+    },
+    {
+      "a": 10,
+      "b": 2,
+      "candidate": "gc",
+      "n": 40650,
+      "slopes": [
+        2625.0017220172203,
+        2624.9942189421895
+      ]
+    },
+    {
+      "a": 10,
+      "b": 2,
+      "candidate": "helper",
+      "n": 40650,
+      "slopes": [
+        2577.579458794588,
+        2577.739680196802
+      ]
+    },
+    {
+      "a": 10,
+      "b": 2,
+      "candidate": "dispatch",
+      "n": 40650,
+      "slopes": [
+        2646.403148831488,
+        2646.3541205412052
+      ]
+    },
+    {
+      "a": 1,
+      "b": 8,
+      "candidate": "gc",
+      "n": 68587,
+      "slopes": [
+        1664.3832067301385,
+        1664.4468193681018
+      ]
+    },
+    {
+      "a": 1,
+      "b": 8,
+      "candidate": "helper",
+      "n": 68587,
+      "slopes": [
+        2017.2122997069416,
+        2017.3303249887006
+      ]
+    },
+    {
+      "a": 1,
+      "b": 8,
+      "candidate": "dispatch",
+      "n": 68587,
+      "slopes": [
+        1733.9474535990785,
+        1733.839736393194
+      ]
+    },
+    {
+      "a": 8,
+      "b": 1,
+      "candidate": "gc",
+      "n": 68587,
+      "slopes": [
+        1670.4513829151297,
+        1670.5024567337834
+      ]
+    },
+    {
+      "a": 8,
+      "b": 1,
+      "candidate": "helper",
+      "n": 68587,
+      "slopes": [
+        2012.2249843264758,
+        2012.2885969644394
+      ]
+    },
+    {
+      "a": 8,
+      "b": 1,
+      "candidate": "dispatch",
+      "n": 68587,
+      "slopes": [
+        1739.9273185880706,
+        1739.8486010468457
+      ]
+    },
+    {
+      "a": 1,
+      "b": 128,
+      "candidate": "gc",
+      "n": 5624,
+      "slopes": [
+        12882.114864864865,
+        12880.794630156472
+      ]
+    },
+    {
+      "a": 1,
+      "b": 128,
+      "candidate": "helper",
+      "n": 5624,
+      "slopes": [
+        15545.264224751067,
+        15545.7606685633
+      ]
+    },
+    {
+      "a": 1,
+      "b": 128,
+      "candidate": "dispatch",
+      "n": 5624,
+      "slopes": [
+        12964.58552631579,
+        12963.26173541963
+      ]
+    },
+    {
+      "a": 128,
+      "b": 1,
+      "candidate": "gc",
+      "n": 5624,
+      "slopes": [
+        12889.241820768137,
+        12888.741642958748
+      ]
+    },
+    {
+      "a": 128,
+      "b": 1,
+      "candidate": "helper",
+      "n": 5624,
+      "slopes": [
+        15421.113086770982,
+        15421.725106685633
+      ]
+    },
+    {
+      "a": 128,
+      "b": 1,
+      "candidate": "dispatch",
+      "n": 5624,
+      "slopes": [
+        12969.735241820768,
+        12970.164829302987
+      ]
+    },
+    {
+      "a": 1,
+      "b": 1024,
+      "candidate": "gc",
+      "n": 1000,
+      "slopes": [
+        102267.138,
+        102264.562
+      ]
+    },
+    {
+      "a": 1,
+      "b": 1024,
+      "candidate": "helper",
+      "n": 1000,
+      "slopes": [
+        121868.484,
+        121857.543
+      ]
+    },
+    {
+      "a": 1,
+      "b": 1024,
+      "candidate": "dispatch",
+      "n": 1000,
+      "slopes": [
+        102456.18,
+        102454.391
+      ]
+    },
+    {
+      "a": 1024,
+      "b": 1,
+      "candidate": "gc",
+      "n": 1000,
+      "slopes": [
+        102267.262,
+        102263.416
+      ]
+    },
+    {
+      "a": 1024,
+      "b": 1,
+      "candidate": "helper",
+      "n": 1000,
+      "slopes": [
+        120833.575,
+        120842.238
+      ]
+    },
+    {
+      "a": 1024,
+      "b": 1,
+      "candidate": "dispatch",
+      "n": 1000,
+      "slopes": [
+        102460.684,
+        102460.78
+      ]
+    },
+    {
+      "a": 3,
+      "b": 4,
+      "candidate": "gc",
+      "n": 63211,
+      "slopes": [
+        1943.3883026688393,
+        1943.354621822151
+      ]
+    },
+    {
+      "a": 3,
+      "b": 4,
+      "candidate": "helper",
+      "n": 63211,
+      "slopes": [
+        1923.4397177706412,
+        1923.417522266694
+      ]
+    },
+    {
+      "a": 3,
+      "b": 4,
+      "candidate": "dispatch",
+      "n": 63211,
+      "slopes": [
+        2012.3962285045325,
+        2012.42715666577
+      ]
+    },
+    {
+      "a": 4,
+      "b": 3,
+      "candidate": "gc",
+      "n": 63211,
+      "slopes": [
+        1949.3465219661134,
+        1949.4622296752148
+      ]
+    },
+    {
+      "a": 4,
+      "b": 3,
+      "candidate": "helper",
+      "n": 63211,
+      "slopes": [
+        1924.338184809606,
+        1924.4790780085746
+      ]
+    },
+    {
+      "a": 4,
+      "b": 3,
+      "candidate": "dispatch",
+      "n": 63211,
+      "slopes": [
+        2018.4843777190679,
+        2018.4025881571245
+      ]
+    }
+  ],
+  "complete": true,
+  "cases_sha256": "75811566212badb65897634be26300532f41fdd137c7b87d460ad80e6625deac"
+}

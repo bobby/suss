@@ -1,4 +1,4 @@
-//! WIT integers cross as longs and floats as doubles, range-checked when
+//! WIT integers cross as longs or high-u64 BigInts and floats as doubles, checked when
 //! leaving Suss; numeric lists also leave from packed arrays (ADR-0003 "WIT
 //! boundary", #336).
 #![cfg(not(target_family = "wasm"))]
@@ -281,7 +281,7 @@ fn cases(bodies: &[String], ty: &str) -> (String, String) {
 }
 
 #[test]
-fn integer_results_must_be_longs_within_range() {
+fn integer_results_reject_other_categories_and_out_of_range_values() {
     let mut types = INTEGERS.map(|(ty, min, max)| (ty, Some((min, max)))).to_vec();
     types.extend([("f32", None), ("f64", None)]);
     for (ty, range) in types {
@@ -289,11 +289,12 @@ fn integer_results_must_be_longs_within_range() {
             Some(_) => ["1.5", "1.0", "nil", "\"1\"", "##NaN"].map(String::from).to_vec(),
             None => ["nil", "\"1\"", "true"].map(String::from).to_vec(),
         };
+        if ty == "u64" { bodies.push("18446744073709551616N".into()); }
         if let Some((min, max)) = range {
             if min > i64::MIN {
                 bodies.push(format!("{}", min - 1));
             }
-            if max < i64::MAX {
+            if max < i64::MAX && ty != "u64" {
                 bodies.push(format!("{}", max + 1));
             }
         }
@@ -318,22 +319,91 @@ fn integer_results_must_be_longs_within_range() {
 }
 
 #[test]
-fn u64_arguments_above_the_long_range_need_big_int() {
-    let source = "(defn ^:export scalar [x] x) (defn ^:export listed [x] (count x)) (defn ^:export optional [x] x)";
-    let exports = "export scalar: func(x: u64) -> u64; export listed: func(x: list<u64>) -> u32; export optional: func(x: option<u64>) -> u32;";
-    for value in [1u64 << 63, u64::MAX] {
-        for (name, argument) in [
-            ("scalar", Val::U64(value)),
-            ("listed", Val::List(vec![Val::U64(1), Val::U64(value)])),
-            ("optional", Val::Option(Some(Box::new(Val::U64(value))))),
-        ] {
-            let (store, instance) = instantiate(source, exports);
-            assert_eq!(
-                thrown(store, instance, name, &[argument]),
-                format!("WIT export {name} received a u64 above 9223372036854775807, which needs unsupported BigInt")
-            );
+fn u64_values_cross_as_longs_or_exact_bigints() {
+    let (mut store, instance) = instantiate(
+        "(def saved (atom nil))
+         (defn ^:export scalar [x] (do (reset! saved x) x))
+         (defn ^:export recall [] (deref saved))
+         (defn ^:export describe [x] (pr-str x))
+         (defn ^:export hashed [x] (hash x))
+         (defn ^:export increment [x] (pr-str (+' x 1)))
+         (defn ^:export listed [x] x)
+         (defn ^:export optional [x] x)",
+        "export scalar: func(x: u64) -> u64; export recall: func() -> u64;
+         export hashed: func(x: u64) -> s32; export describe: func(x: u64) -> string; export increment: func(x: u64) -> string;
+         export listed: func(x: list<u64>) -> list<u64>;
+         export optional: func(x: option<u64>) -> option<u64>;",
+    );
+    for (value, expected_hash) in [(0, 0), (1, 1392991556), (i64::MAX as u64, -2106506049), (1u64 << 63, i32::MIN), (u64::MAX, -32)] {
+        assert_eq!(call(&mut store, &instance, "scalar", &[Val::U64(value)]), Val::U64(value));
+        store.gc(None).unwrap();
+        assert_eq!(call(&mut store, &instance, "recall", &[]), Val::U64(value));
+        let suffix = if value > i64::MAX as u64 { "N" } else { "" };
+        assert_eq!(call(&mut store, &instance, "describe", &[Val::U64(value)]), Val::String(format!("{value}{suffix}")));
+        assert_eq!(call(&mut store, &instance, "hashed", &[Val::U64(value)]), Val::S32(expected_hash));
+        let next = u128::from(value) + 1;
+        let suffix = if next > i64::MAX as u128 { "N" } else { "" };
+        assert_eq!(call(&mut store, &instance, "increment", &[Val::U64(value)]), Val::String(format!("{next}{suffix}")));
+        let list = Val::List(vec![Val::U64(0), Val::U64(value), Val::U64(u64::MAX)]);
+        assert_eq!(call(&mut store, &instance, "listed", &[list.clone()]), list);
+        let option = Val::Option(Some(Box::new(Val::U64(value))));
+        assert_eq!(call(&mut store, &instance, "optional", &[option.clone()]), option);
+    }
+    assert_eq!(call(&mut store, &instance, "optional", &[Val::Option(None)]), Val::Option(None));
+}
+
+#[test]
+fn u64_bigint_results_are_checked_without_truncation() {
+    let mut source = String::new();
+    let mut exports = String::new();
+    let mut names = Vec::new();
+    for expression in ["-1N", "18446744073709551616N", "79228162514264337593543950335N", "1/2"] {
+        for (ty, body) in [("u64", expression.to_owned()), ("list<u64>", format!("[{expression}]")), ("option<u64>", format!("[:some {expression}]"))] {
+            let name = format!("bad-{}", names.len());
+            source.push_str(&format!("(defn ^:export {name} [] {body})"));
+            exports.push_str(&format!("export {name}: func() -> {ty};"));
+            names.push(name);
         }
     }
+    for name in names {
+        // A failed canonical call poisons its instance. Reuse the component,
+        // but give each independent range check a fresh instance.
+        let (store, instance) = instantiate(&source, &exports);
+        assert_eq!(thrown(store, instance, &name, &[]), format!("WIT export {name} returned an incompatible scalar value"));
+    }
+}
+
+#[test]
+fn u64_accepts_bigint_results_through_the_entire_unsigned_range() {
+    let values = [0, 1, i64::MAX as u64, 1u64 << 63, u64::MAX];
+    let mut source = String::new();
+    let mut exports = String::new();
+    for (i, value) in values.iter().enumerate() {
+        source.push_str(&format!("(defn ^:export good-{i} [] {value}N)"));
+        exports.push_str(&format!("export good-{i}: func() -> u64;"));
+    }
+    let (mut store, instance) = instantiate(&source, &exports);
+    for (i, value) in values.iter().enumerate() {
+        assert_eq!(call(&mut store, &instance, &format!("good-{i}"), &[]), Val::U64(*value));
+    }
+}
+
+#[test]
+fn exact_numeric_results_convert_at_float_boundaries() {
+    let (mut store, instance) = instantiate(
+        "(defn ^:export big [] 18446744073709551615N)
+         (defn ^:export big32 [] 18446744073709551615N)
+         (defn ^:export ratio [] 1/3)
+         (defn ^:export big-list [] [1N 18446744073709551615N])
+         (defn ^:export ratio-option [] [:some 1/3])",
+        "export big: func() -> f64; export big32: func() -> f32; export ratio: func() -> f32;
+         export big-list: func() -> list<f64>; export ratio-option: func() -> option<f64>;",
+    );
+    assert_eq!(call(&mut store, &instance, "big", &[]), Val::Float64(18446744073709551615u64 as f64));
+    assert_eq!(call(&mut store, &instance, "big32", &[]), Val::Float32(u64::MAX as f32));
+    assert_eq!(call(&mut store, &instance, "ratio", &[]), Val::Float32((0.3333333333333333f64) as f32));
+    assert_eq!(call(&mut store, &instance, "big-list", &[]), Val::List(vec![Val::Float64(1.0), Val::Float64(18446744073709551615u64 as f64)]));
+    assert_eq!(call(&mut store, &instance, "ratio-option", &[]), Val::Option(Some(Box::new(Val::Float64(0.3333333333333333)))));
 }
 
 #[test]
@@ -435,8 +505,8 @@ fn async_long_results_use_distinct_completion_indices_and_mixed_parameter_positi
             (-42,)
         );
         assert_eq!(
-            complete(unsigned.call_async(&mut store, ("😀λ", i64::MAX as u64))).unwrap(),
-            (i64::MAX as u64,)
+            complete(unsigned.call_async(&mut store, ("😀λ", u64::MAX - n as u64))).unwrap(),
+            (u64::MAX - n as u64,)
         );
         assert_eq!(
             complete(scalar.call_async(&mut store, (n,))).unwrap(),
@@ -492,7 +562,7 @@ fn boundary_checks_survive_public_core_redefinition() {
         let exports = "export signed: func(x: s64) -> s64; export unsigned: func(x: u64) -> u64; export bytes: func() -> list<u8>; export bad: func() -> s64;";
         let (mut store, instance) = instantiate(&source, exports);
         assert_eq!(call(&mut store, &instance, "signed", &[Val::S64(i64::MIN)]), Val::S64(i64::MIN));
-        assert_eq!(call(&mut store, &instance, "unsigned", &[Val::U64(i64::MAX as u64)]), Val::U64(i64::MAX as u64));
+        assert_eq!(call(&mut store, &instance, "unsigned", &[Val::U64(u64::MAX)]), Val::U64(u64::MAX));
         assert_eq!(call(&mut store, &instance, "bytes", &[]), Val::List(vec![Val::U8(255)]));
         let (store, instance) = instantiate(&source, exports);
         assert_eq!(
@@ -536,7 +606,7 @@ fn long_options_round_trip_synchronously_and_asynchronously() {
         assert_eq!(complete(asynchronous.call_async(&mut store, (value,))).unwrap(), (value,));
         store.gc(None).unwrap();
     }
-    for value in [None, Some(0), Some(1), Some(i64::MAX as u64)] {
+    for value in [None, Some(0), Some(1), Some(i64::MAX as u64), Some(1u64 << 63), Some(u64::MAX)] {
         assert_eq!(unsigned.call(&mut store, (value,)).unwrap(), (value,));
     }
 }
@@ -564,6 +634,7 @@ fn numeric_lists_round_trip_at_every_element_type_boundary() {
         let values = [min, min + 1, 0, max - 1, max].map(|value| val(ty, value)).to_vec();
         check(format!("list-{ty}"), Val::List(values));
     }
+    check("list-u64".into(), Val::List([0, i64::MAX as u64, 1u64 << 63, u64::MAX].map(Val::U64).to_vec()));
     check("list-f32".into(), Val::List(floats32.map(Val::Float32).to_vec()));
     check("list-f64".into(), Val::List(floats64.map(Val::Float64).to_vec()));
     for value in floats32 {

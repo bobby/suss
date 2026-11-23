@@ -555,8 +555,8 @@ fn defmulti_options_and_type_dispatch_follow_clojure() {
     check(&mut session, "[(ty \"s\") (ty (T.))]", "[:string :t]");
     for (source, message) in [
         ("(ty :k)", "No method in multimethod 'ty' for dispatch value: class suss.core.Keyword"),
-        // A host type has no class name yet, so it is printed (#302).
-        ("(ty 1)", "No method in multimethod 'ty' for dispatch value: #object[Number]"),
+        // Numeric classes retain the Clojure dispatch name.
+        ("(ty 1)", "No method in multimethod 'ty' for dispatch value: class java.lang.Long"),
     ] {
         assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
             format!("{message:?}"), "{source}");

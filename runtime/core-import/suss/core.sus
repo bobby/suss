@@ -1230,7 +1230,9 @@
       (-nth coll n)
 
       :else
-      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+      (throw (suss.bootstrap/error (str_ (if (suss.bootstrap/number? coll)
+                            "nth not supported on this type: "
+                            "nth not supported on this type ")
                           (type->str (type coll)))))))))
   ([coll n not-found]
     (cond
@@ -1263,7 +1265,9 @@
       (-nth coll n not-found)
 
       :else
-      (throw (suss.bootstrap/error (str_ "nth not supported on this type "
+      (throw (suss.bootstrap/error (str_ (if (suss.bootstrap/number? coll)
+                            "nth not supported on this type: "
+                            "nth not supported on this type ")
                           (type->str (type coll)))))))))
 
 (def -indexOf
@@ -2689,8 +2693,16 @@
     ;; The runtime's tests, not the public predicates' calls (#442).
     (suss.bootstrap/keyword? k) (array-index-of-keyword? arr k)
 
-    (or (suss.bootstrap/string? k) (suss.bootstrap/number? k))
+    (suss.bootstrap/string? k)
     (array-index-of-identical? arr k)
+
+    (suss.bootstrap/number? k)
+    (let [len (alength arr)]
+      (loop [i 0]
+        (cond
+          (<= len i) -1
+          (suss.bootstrap/equiv k (aget arr i)) i
+          :else (recur (+ i 2)))))
 
     (symbol? k) (array-index-of-symbol? arr k)
 
@@ -3084,6 +3096,8 @@
   (fn [key other]
 (cond
     (identical? key other) true
+    (or (suss.bootstrap/number? key) (suss.bootstrap/number? other))
+    (suss.bootstrap/equiv key other)
     (keyword-identical? key other) true
     :else (= key other))))
 
@@ -5382,7 +5396,7 @@
 
 (def integer?
 "Returns true if n is an integer."
-(fn [n] (suss.bootstrap/long? n)))
+(fn [n] (if (suss.bootstrap/bigint? n) true (suss.bootstrap/long? n))))
 
 (def ^number max
 "Returns the greatest of the nums."
@@ -5401,7 +5415,7 @@
 (def even?
 "Returns true if n is even, throws an exception if n is not an integer"
 (fn [n] (if (integer? n)
-         (if (bit-test (suss.bootstrap/long-cast n) 0) false true)
+         (if (bit-test (suss.bootstrap/cast n 4) 0) false true)
          (throw (suss.bootstrap/error (str_ "Argument must be an integer: " n))))))
 
 (def odd?
@@ -5669,16 +5683,18 @@
       (.append buffer "\"")
       (loop [i 0 start 0]
         (if (< i length)
-          (let [unit (suss.bootstrap/string-slice s i (inc i))
-                escaped (get char-escapes unit)]
+          (let [end (inc i)
+                code (.charCodeAt s i)
+                escaped (if (> code 92) nil
+                          (get char-escapes (suss.bootstrap/string-slice s i end)))]
             (if escaped
               (do
                 (if (< start i)
                   (.append buffer (suss.bootstrap/string-slice s start i))
                   nil)
                 (.append buffer escaped)
-                (recur (inc i) (inc i)))
-              (recur (inc i) start)))
+                (recur end end))
+              (recur end start)))
           (do
             (if (< start length)
               (.append buffer (suss.bootstrap/string-slice s start length))
@@ -5833,6 +5849,12 @@
 
         (or (true? obj) (false? obj))
         (-write writer (str_ obj))
+
+        (suss.bootstrap/biginteger? obj)
+        (-write writer (str_ obj))
+
+        (suss.bootstrap/bigint? obj)
+        (-write writer (suss.bootstrap/concat-string (str_ obj) "N"))
 
         (number? obj)
         (-write writer
@@ -7946,18 +7968,26 @@ reduces them without incurring seq initialization"
 
 (def type->str
   (fn [ty]
-    (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]
-      (if __suss_if_let_type_to_str_0
-        __suss_if_let_type_to_str_0
-        (if (identical? ty (type 0))
-          "function Number() { [native code] }"
-          (if (identical? ty (type ""))
-            "function String() { [native code] }"
-            (if (identical? ty (type true))
-              "function Boolean() { [native code] }"
-              (if (identical? ty (type []))
-                "function Array() { [native code] }"
-                (str_ ty)))))))))
+    ;; Original Suss: numeric Class values have no constructor properties.
+    ;; nth names their simple class, as Clojure does, before inspecting closures.
+    (let [name (suss.bootstrap/type-name ty)]
+      (if (and name (not (js-fn? ty)))
+        (loop [i (dec (count name))]
+          (if (or (neg? i) (= "." (suss.bootstrap/string-slice name i (inc i))))
+            (suss.bootstrap/string-slice name (inc i) (count name))
+            (recur (dec i))))
+        (let [__suss_if_let_type_to_str_0 (.-cljs$lang$ctorStr ty)]
+            (if __suss_if_let_type_to_str_0
+              __suss_if_let_type_to_str_0
+              (if (identical? ty (type 0))
+                "function Number() { [native code] }"
+                (if (identical? ty (type ""))
+                  "function String() { [native code] }"
+                  (if (identical? ty (type true))
+                    "function Boolean() { [native code] }"
+                    (if (identical? ty (type []))
+                      "function Array() { [native code] }"
+                      (str_ ty)))))))))))
 
 (deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
   Object
@@ -10468,6 +10498,17 @@ reduces them without incurring seq initialization"
 ;; decimal doubles through the runtime's correctly rounded parser.
 ;; The digits s[from, to) in base as a long, or nil when they overflow the
 ;; long range (Clojure's BigInt).
+;; Original exact magnitude fold. The complete digit span is validated before
+;; this fold; runtime reader skips still validate without building magnitudes.
+(def ^:private numeric-bigint-digits
+  (fn [s from to base negative]
+    (loop [i from value 0N]
+      (if (< i to)
+        (recur (inc i) (+ (* value base) (reader-digit (.charCodeAt s i))))
+        (if negative (- value) value)))))
+(def ^:private reader-skipping-number?
+  (fn [st] (if (< 0 (aget st 10)) true (< 0 (aget st 14)))))
+
 (def ^:private reader-radix-number
   (fn [st start s from to base negative]
     (if (< from to) nil (reader-fail st start "Invalid numeric digits" false))
@@ -10505,7 +10546,10 @@ reduces them without incurring seq initialization"
 ;; An integer literal is a long unless it overflows the long range.
 (def ^:private reader-exact-integer
   (fn [st start s end from base value]
-    (if (nil? value) (reader-exact st start s end) value)))
+    (if (nil? value)
+      (if (reader-skipping-number? st) nil
+        (numeric-bigint-digits s from end base (== (.charCodeAt s start) 45)))
+      value)))
 ;; Clojure's ratioPat, [-+]?[0-9]+/[0-9]+. A ratio of longs that divide evenly
 ;; is the long, as Clojure reads 4/2 as 2.
 (def ^:private reader-ratio
@@ -10524,7 +10568,10 @@ reduces them without incurring seq initialization"
                   (if (nil? q) false
                     (if (== n -9223372036854775808) false (zero? (rem n q)))))
               (quot n q)
-              (reader-exact st start s end))))
+              (if (reader-skipping-number? st) nil
+                (let [bn (if (nil? n) (numeric-bigint-digits s d slash 10 negative) (suss.bootstrap/as-bigint n))
+                      bq (if (nil? q) (numeric-bigint-digits s (inc slash) end 10 false) (suss.bootstrap/as-bigint q))]
+                  (suss.bootstrap/ratio bn bq))))))
         (reader-fail st start "Invalid ratio" false)))))
 ;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?.
 ;; A BigDecimal's scale, its fraction digits less its exponent, must fit 32
@@ -10576,17 +10623,15 @@ reduces them without incurring seq initialization"
           (if (if (== last 78)
                 (if (< (reader-index-of s 114 start end) 0) (< (reader-index-of s 82 start end) 0) false)
                 false)
-            (do
-              (if hex
-                (reader-radix-number st start s (+ d 2) (dec end) 16 negative)
-                (if (reader-digits? s d (dec end))
-                  (if (< 1 (- (dec end) d))
-                    (if (== (.charCodeAt s d) 48)
-                      (reader-radix-number st start s (inc d) (dec end) 8 negative)
-                      nil)
-                    nil)
-                  (reader-fail st start "Invalid ordinary numeric literal" false)))
-              (reader-exact st start s end))
+            (let [octal (if hex false
+                          (if (reader-digits? s d (dec end))
+                            (if (< 1 (- (dec end) d)) (== (.charCodeAt s d) 48) false)
+                            (reader-fail st start "Invalid ordinary numeric literal" false)))
+                  base (if hex 16 (if octal 8 10))
+                  from (if hex (+ d 2) (if octal (inc d) d))]
+              (reader-radix-number st start s from (dec end) base negative)
+              (if (reader-skipping-number? st) nil
+                (numeric-bigint-digits s from (dec end) base negative)))
           (if hex
             (reader-exact-integer st start s end (+ d 2) 16 (reader-radix-number st start s (+ d 2) end 16 negative))
             (let [r (loop [i d]
@@ -10910,6 +10955,21 @@ reduces them without incurring seq initialization"
       (reader-fail st start "Queue literal expects a vector for its elements." false))))
 (def ^:private reader-queue-tag?
   (fn [tag] (if (nil? (.-ns tag)) (= (.-name tag) "queue") false)))
+(def ^:private reader-biginteger-tag?
+  (fn [tag] (if (= (.-ns tag) "suss") (= (.-name tag) "biginteger") false)))
+;; Original typed source/data carrier. Ordinary BigInteger printing stays plain;
+;; only emitted compiler data uses this tag, whose payload is decimal text.
+(def ^:private reader-biginteger
+  (fn [st start value]
+    (if (string? value)
+      (let [n (count value)
+            first (if (< 0 n) (.charCodeAt value 0) 0)
+            from (if (if (== first 43) true (== first 45)) 1 0)]
+        (if (reader-digits? value from n)
+          (suss.bootstrap/as-biginteger
+           (numeric-bigint-digits value from n 10 (== first 45)))
+          (reader-fail st start "BigInteger literal expects a decimal string." false)))
+      (reader-fail st start "BigInteger literal expects a decimal string." false))))
 (def ^:private reader-tagged
   (fn [st s n start]
     (let [end (reader-token-end s n (inc start)) edn (aget st 3)]
@@ -10928,6 +10988,7 @@ reduces them without incurring seq initialization"
             (cond
               (some? reader) (reader value)
               (reader-queue-tag? tag) (reader-queue st start value)
+              (reader-biginteger-tag? tag) (reader-biginteger st start value)
               (some? (aget st 7)) ((aget st 7) tag value)
               :else (reader-fail st start (str "No reader function for tag " tag) false)))
           (if (if (< 0 (aget st 10)) true (keyword-identical? (aget st 4) :preserve))
@@ -10938,6 +10999,7 @@ reduces them without incurring seq initialization"
                 (cond
                   (some? reader) (reader value)
                   (reader-queue-tag? tag) (reader-queue st start value)
+                  (reader-biginteger-tag? tag) (reader-biginteger st start value)
                   (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
                   :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
 
@@ -11981,3 +12043,115 @@ reduces them without incurring seq initialization"
 ;; Exception, so suss.bootstrap/error? and the error printer take it. Its
 ;; prototype's parent is the runtime error type's prototype.
 (set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype (type (suss.bootstrap/error ""))))
+
+;; Original promoting Clojure arithmetic (#338). Inputs are evaluated before
+;; these functions run; only the long-overflow decision changes their result
+;; category. Unary +'/ *' retain the supplied object, as clojure.core does.
+(def +'
+  (fn ([] 0) ([x] x)
+    ([x y] (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+             (suss.bootstrap/promote-add x y)
+             (throw (suss.bootstrap/error "+' requires number operands"))))
+    ([x y & more] (reduce +' (+' x y) more))))
+(def -'
+  (fn ([x] (if (suss.bootstrap/number? x)
+             (suss.bootstrap/promote-negate x)
+             (throw (suss.bootstrap/error "-' requires number operands"))))
+    ([x y] (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+             (suss.bootstrap/promote-subtract x y)
+             (throw (suss.bootstrap/error "-' requires number operands"))))
+    ([x y & more] (reduce -' (-' x y) more))))
+(def *'
+  (fn ([] 1) ([x] x)
+    ([x y] (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+             (suss.bootstrap/promote-multiply x y)
+             (throw (suss.bootstrap/error "*' requires number operands"))))
+    ([x y & more] (reduce *' (*' x y) more))))
+(def inc' (fn [x] (+' x 1)))
+(def dec' (fn [x] (-' x 1)))
+;; BigInt's floating conversion follows BigDecimal.valueOf(double), hence
+;; Java's shortest decimal spelling rather than the exact binary significand.
+;; No BigDecimal object or host/JVM call is needed for this integer result.
+(def ^:private numeric-bigint-text
+  (fn [s floating]
+    (let [n (count s) first (if (< 0 n) (.charCodeAt s 0) -1)
+          negative (== first 45)
+          from (if (or negative (== first 43)) 1 0)]
+      (if floating
+        (let [e (reader-index-of s 69 from n) end (if (< e 0) n e)
+              dot (reader-index-of s 46 from end)
+              exp-from (inc e)
+              exp-sign (if (< exp-from n) (.charCodeAt s exp-from) -1)
+              exp-digits (if (or (== exp-sign 45) (== exp-sign 43)) (inc exp-from) exp-from)
+              exponent (if (< e 0) 0 (suss.bootstrap/parse-long s exp-digits n (if (== exp-sign 45) -10 10)))
+              keep (+ (- (if (< dot 0) end dot) from) exponent)]
+          (loop [i from left keep value 0N]
+            (if (< 0 left)
+              (if (< i end)
+                (let [u (.charCodeAt s i)]
+                  (if (== u 46)
+                    (recur (inc i) left value)
+                    (if (and (<= 48 u) (<= u 57))
+                      (recur (inc i) (dec left) (+ (* value 10) (- u 48)))
+                      (throw (suss.bootstrap/error "Invalid BigInt numeric conversion")))))
+                (recur i (dec left) (* value 10)))
+              (if negative (- value) value))))
+        (if (reader-digits? s from n)
+          (numeric-bigint-digits s from n 10 negative)
+          (throw (suss.bootstrap/error "Invalid BigInt integer text")))))))
+(def bigint
+  (fn [x]
+    (if (suss.bootstrap/ratio? x) (suss.bootstrap/ratio-integer x)
+      (if (suss.bootstrap/bigint? x) (suss.bootstrap/as-bigint x)
+      (if (suss.bootstrap/long? x) (suss.bootstrap/as-bigint x)
+        (if (string? x) (numeric-bigint-text x false)
+          (if (suss.bootstrap/number? x)
+            (numeric-bigint-text (suss.bootstrap/coerce-string x) true)
+            (throw (suss.bootstrap/error "bigint requires a number or integer text")))))))))
+(def biginteger (fn [x] (if (suss.bootstrap/biginteger? x) x (suss.bootstrap/as-biginteger (bigint x)))))
+
+
+;; Original exact rational API; the runtime owns normalization and magnitudes.
+(def ratio? (fn [x] (suss.bootstrap/ratio? x)))
+(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x))))
+(def numerator (fn [x] (suss.bootstrap/ratio-numerator x)))
+(def denominator (fn [x] (suss.bootstrap/ratio-denominator x)))
+;; Clojure rationalizes a double's shortest decimal spelling, not its exact
+;; binary significand. Preserve every decimal digit before applying the scale.
+(def ^:private numeric-rationalize-text
+  (fn [s]
+    (let [n (count s) first (.charCodeAt s 0) negative (== first 45)
+          from (if (or negative (== first 43)) 1 0)
+          e (reader-index-of s 69 from n) end (if (< e 0) n e)
+          dot (reader-index-of s 46 from end)
+          exp-from (inc e) exp-sign (if (< exp-from n) (.charCodeAt s exp-from) -1)
+          exp-digits (if (or (== exp-sign 45) (== exp-sign 43)) (inc exp-from) exp-from)
+          exponent (if (< e 0) 0 (suss.bootstrap/parse-long s exp-digits n (if (== exp-sign 45) -10 10)))
+          scale (- (if (< dot 0) 0 (- end (inc dot))) exponent)
+          magnitude (loop [i from value 0N]
+                      (if (< i end)
+                        (let [u (.charCodeAt s i)]
+                          (if (== u 46) (recur (inc i) value)
+                            (if (and (<= 48 u) (<= u 57))
+                              (recur (inc i) (+ (* value 10) (- u 48)))
+                              (throw (suss.bootstrap/error "Invalid rational numeric conversion")))))
+                        (if negative (- value) value)))
+          power (loop [i (if (< scale 0) (- scale) scale) value 1N]
+                  (if (< 0 i) (recur (dec i) (* value 10)) value))]
+      (if (< 0 scale) (suss.bootstrap/ratio magnitude power) (* magnitude power)))))
+(def rationalize
+  (fn [x]
+    (if (suss.bootstrap/double? x)
+      (numeric-rationalize-text (suss.bootstrap/coerce-string x))
+      (if (or (nil? x) (suss.bootstrap/number? x)) x
+        (throw (suss.bootstrap/error "rationalize requires a number"))))))
+
+;; Original Suss adapter for Clojure's class primitive. Type values are native
+;; GC identities; class does not invoke or depend on a Java class loader.
+(def class
+  (fn [x]
+    (if (suss.bootstrap/nil? x) nil (suss.bootstrap/value-constructor x))))
+
+;; Original capability adapter: classes are not IFn values, while functions
+;; and values implementing the portable invocation protocol are callable.
+(def ifn? (fn [x] (or (fn? x) (satisfies? IFn x))))

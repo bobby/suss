@@ -1,0 +1,102 @@
+[
+  {
+    "source": "(let [x 7 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.lang.Long x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class java.lang.Long\" \"java.lang.Long\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x 7.0 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.lang.Double x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class java.lang.Double\" \"java.lang.Double\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x 7N c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? clojure.lang.BigInt x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class clojure.lang.BigInt\" \"clojure.lang.BigInt\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x (biginteger 7) c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.math.BigInteger x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class java.math.BigInteger\" \"java.math.BigInteger\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x 1/3 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? clojure.lang.Ratio x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class clojure.lang.Ratio\" \"clojure.lang.Ratio\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x 99999999999999999999999N c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? clojure.lang.BigInt x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class clojure.lang.BigInt\" \"clojure.lang.BigInt\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x -2/7 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? clojure.lang.Ratio x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class clojure.lang.Ratio\" \"clojure.lang.Ratio\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x (numerator 2/7) c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.math.BigInteger x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class java.math.BigInteger\" \"java.math.BigInteger\" true true true true false false nil :found]"
+  },
+  {
+    "source": "(let [x (denominator 2/7) c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.math.BigInteger x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])",
+    "expected": "[\"class java.math.BigInteger\" \"java.math.BigInteger\" true true true true false false nil :found]"
+  },
+  {
+    "source": "[(instance? java.lang.Long 7) (instance? java.lang.Long 7.0) (instance? java.lang.Long 7N) (instance? java.lang.Long (biginteger 7)) (instance? java.lang.Long 1/3)]",
+    "expected": "[true false false false false]"
+  },
+  {
+    "source": "[(instance? java.lang.Double 7) (instance? java.lang.Double 7.0) (instance? java.lang.Double 7N) (instance? java.lang.Double (biginteger 7)) (instance? java.lang.Double 1/3)]",
+    "expected": "[false true false false false]"
+  },
+  {
+    "source": "[(instance? clojure.lang.BigInt 7) (instance? clojure.lang.BigInt 7.0) (instance? clojure.lang.BigInt 7N) (instance? clojure.lang.BigInt (biginteger 7)) (instance? clojure.lang.BigInt 1/3)]",
+    "expected": "[false false true false false]"
+  },
+  {
+    "source": "[(instance? java.math.BigInteger 7) (instance? java.math.BigInteger 7.0) (instance? java.math.BigInteger 7N) (instance? java.math.BigInteger (biginteger 7)) (instance? java.math.BigInteger 1/3)]",
+    "expected": "[false false false true false]"
+  },
+  {
+    "source": "[(instance? clojure.lang.Ratio 7) (instance? clojure.lang.Ratio 7.0) (instance? clojure.lang.Ratio 7N) (instance? clojure.lang.Ratio (biginteger 7)) (instance? clojure.lang.Ratio 1/3)]",
+    "expected": "[false false false false true]"
+  },
+  {
+    "source": "[(= (type (type 1N)) java.lang.Class) (= (class java.lang.Class) java.lang.Class) (instance? java.lang.Class java.lang.Class)]",
+    "expected": "[true true true]"
+  },
+  {
+    "source": "(let [c (class 1N) f (fn [x] (instance? clojure.lang.BigInt x))] [(f 1) (f 1N) (f 1/3) (f nil) (f (biginteger 1)) (identical? c (class (+ 1N 2N)))])",
+    "expected": "[false true false false false true]"
+  },
+  {
+    "source": "(let [c (class 1N)] (try (c) (catch :default e :not-callable)))",
+    "expected": ":not-callable"
+  },
+  {
+    "source": "[(instance? java.lang.Number nil) (instance? java.lang.Number \"7\") (instance? java.lang.Number []) (instance? java.lang.Class 7) (instance? java.lang.Class nil)]",
+    "expected": "[false false false false false]"
+  },
+  {
+    "source": "[(str java.math.BigDecimal) (pr-str java.math.BigDecimal) (instance? java.lang.Class java.math.BigDecimal)]",
+    "expected": "[\"class java.math.BigDecimal\" \"java.math.BigDecimal\" true]"
+  },
+  {
+    "source": "[(pr-str Long) (pr-str Double) (pr-str BigInteger) (pr-str BigDecimal) (pr-str Number) (pr-str Class)]",
+    "expected": "[\"java.lang.Long\" \"java.lang.Double\" \"java.math.BigInteger\" \"java.math.BigDecimal\" \"java.lang.Number\" \"java.lang.Class\"]"
+  },
+  {
+    "source": "[(= 'java.lang.Long `Long) (= 'clojure.lang.BigInt `clojure.lang.BigInt)]",
+    "expected": "[true true]"
+  },
+  {
+    "source": "[(= 'java.lang.Class `Class) (= 'java.math.BigInteger `BigInteger)]",
+    "expected": "[true true]"
+  },
+  {
+    "source": "(mapv ifn? [(fn [] nil) :k 'k [] {} #{} 1 1.0 1N 1/3 nil java.lang.Long])",
+    "expected": "[true true true true true true false false false false false false]"
+  },
+  {
+    "source": "[(instance? clojure.lang.BigInt (bigint 0)) (instance? clojure.lang.BigInt (bigint 0.0)) (instance? clojure.lang.BigInt (inc' 9223372036854775807)) (instance? clojure.lang.BigInt (dec' -9223372036854775808))]",
+    "expected": "[true true true true]"
+  },
+  {
+    "source": "[(= Long Double) (= clojure.lang.BigInt BigInteger) (count #{Long Double clojure.lang.BigInt BigInteger clojure.lang.Ratio Number Class BigDecimal}) (get {Long :long Double :double clojure.lang.BigInt :bigint} (class 1N))]",
+    "expected": "[false false 8 :bigint]"
+  }
+]

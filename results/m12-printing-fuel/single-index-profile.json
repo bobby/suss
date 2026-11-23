@@ -1,0 +1,73 @@
+{
+  "base_head": "dee07958b25be01e9c29669d3279721b1c5d7e89",
+  "reader": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_reader-64630748a15a5de0.rlib",
+  "reader_sha256": "675c4242ff86dfeb916998385a4a98a16cd293a881204ae22db99f32db6c124a",
+  "library": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+  "library_sha256": "7f40aa3722aceec29c8940592a676d897bd6da7db6ae345ee1dfb8e5b9ec45bf",
+  "probe_sha256": "e4395f4cd40a32b11e064b3e5f786ccd4aae7d7ca23eb70789c496c3f4b42fb4",
+  "commands": [
+    {
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+        "--extern",
+        "suss_reader=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/libsuss_reader-64630748a15a5de0.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe"
+      ],
+      "exit_code": 0,
+      "seconds": 0.506782054901123,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "1000000000"
+      ],
+      "exit_code": 0,
+      "seconds": 21.99122667312622,
+      "stdout": "Runtime count=4096 budget=1000000000 consumed=99552024\nRuntime count=0 budget=1000000000 consumed=17105\nRuntime count=1 budget=1000000000 consumed=42496\nRuntime count=16 budget=1000000000 consumed=409186\nRuntime count=512 budget=1000000000 consumed=12534402\nRuntime count=4096 budget=1000000000 consumed=100148866\nMacro count=4096 budget=1000000000 consumed=99552024\nMacro count=0 budget=1000000000 consumed=17105\nMacro count=1 budget=1000000000 consumed=42496\nMacro count=16 budget=1000000000 consumed=409186\nMacro count=512 budget=1000000000 consumed=12534402\nMacro count=4096 budget=1000000000 consumed=100148866\n",
+      "stderr": "Running as unit: run-p1283690-i89358347.scope; invocation ID: 75bf97aa47444aa2a70bbd138a492270\n"
+    },
+    {
+      "command": [
+        "systemd-run",
+        "--user",
+        "--scope",
+        "-p",
+        "MemoryMax=3G",
+        "--",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-source/results/m12-printing-fuel/probe",
+        "100000000"
+      ],
+      "exit_code": 0,
+      "seconds": 26.62545394897461,
+      "stdout": "Runtime count=4096 budget=100000000 consumed=99552024\nRuntime count=0 budget=100000000 consumed=17105\nRuntime count=1 budget=100000000 consumed=42496\nRuntime count=16 budget=100000000 consumed=409186\nRuntime count=512 budget=100000000 consumed=12534402\nRuntime count=4096 budget=100000000 ERROR Runtime trap: error while executing at wasm backtrace:\n    0:  0x2a3cf - <unknown>!<wasm function 601>\n    1:  0xd60bd - <unknown>!<wasm function 271>\n    2:  0x20138 - <unknown>!<wasm function 509>\n    3: 0x1906dd - <unknown>!<wasm function 1514>\n    4: 0x1961e3 - <unknown>!<wasm function 1541>\n    5: 0x192113 - <unknown>!<wasm function 1518>\n    6: 0x193507 - <unknown>!<wasm function 1522>\n    7: 0x1937e7 - <unknown>!<wasm function 1523>: wasm trap: all fuel consumed by WebAssembly\nMacro count=4096 budget=100000000 consumed=99552024\nMacro count=0 budget=100000000 consumed=17105\nMacro count=1 budget=100000000 consumed=42496\nMacro count=16 budget=100000000 consumed=409186\nMacro count=512 budget=100000000 consumed=12534402\nMacro count=4096 budget=100000000 ERROR Runtime trap: error while executing at wasm backtrace:\n    0:  0x2a3cf - <unknown>!<wasm function 601>\n    1:  0xd5067 - <unknown>!<wasm function 271>\n    2:  0x20138 - <unknown>!<wasm function 509>\n    3: 0x18f687 - <unknown>!<wasm function 1514>\n    4: 0x19518d - <unknown>!<wasm function 1541>\n    5: 0x1910bd - <unknown>!<wasm function 1518>\n    6: 0x1924b1 - <unknown>!<wasm function 1522>\n    7: 0x192791 - <unknown>!<wasm function 1523>: wasm trap: all fuel consumed by WebAssembly\n",
+      "stderr": "Running as unit: run-p1284458-i89354616.scope; invocation ID: ae201a5a6e354213a1b13eaadbc54573\n"
+    }
+  ],
+  "production_inputs": {
+    "docs/compatibility/patches/printing-quote-string.json": "bffa28200c66e18847c26fb89152deebe2abb9228d89418e71cd629ead0786e1",
+    "runtime/core-import/suss/core.sus": "6704786e3d86d08d24cb6b74b6ed111f8e0fb1f2f0e42582b0ca44ec60be298e",
+    "runtime/core-import/manifest.json": "f3c8d511c4fa351ec0ab0b1ee7366856fb8ed34915e88301f2bff63b5c47f16b"
+  },
+  "executable_sha256": "1d0da21a3f15d59a93ea21c6a111a57b8d110931839d0759112d48e9e7550ace",
+  "complete": true
+}

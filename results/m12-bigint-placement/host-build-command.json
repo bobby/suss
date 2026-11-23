@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "build",
+    "--locked",
+    "--profile",
+    "test",
+    "-p",
+    "suss-compile",
+    "--example",
+    "bigint_placement"
+  ],
+  "exit_code": 0,
+  "seconds": 104.37941718101501
+}

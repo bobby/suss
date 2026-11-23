@@ -32,6 +32,7 @@ pub(super) struct Helper {
     pub data: DataSection,
     pub parse: u32,
     pub format: u32,
+    pub multiply: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     pub scratch_base: i32,
@@ -43,6 +44,7 @@ pub(super) struct Helper {
 pub(super) struct Info {
     parse: u32,
     format: u32,
+    pub multiply: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     scratch_base: i32,
@@ -52,6 +54,7 @@ impl Helper {
         Info {
             parse: self.parse,
             format: self.format,
+            multiply: self.multiply,
             stack_global: self.stack_global,
             stack_top: self.stack_top,
             scratch_base: self.scratch_base,
@@ -71,6 +74,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
         data: DataSection::new(),
         parse: u32::MAX,
         format: u32::MAX,
+        multiply: u32::MAX,
         stack_global: u32::MAX,
         stack_top: 0,
         scratch_base: 0,
@@ -143,12 +147,14 @@ fn helper_from(bytes: &[u8]) -> Helper {
                 for export in reader {
                     let export = export.unwrap();
                     match export.name {
-                        "suss_parse_number" | "suss_format_number" => {
+                        "suss_parse_number" | "suss_format_number" | "suss_bigint_multiply" => {
                             assert_eq!(export.kind, wasmparser::ExternalKind::Func);
                             if export.name == "suss_parse_number" {
                                 result.parse = export.index;
-                            } else {
+                            } else if export.name == "suss_format_number" {
                                 result.format = export.index;
+                            } else {
+                                result.multiply = export.index;
                             }
                         }
                         "memory" => {
@@ -198,6 +204,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
     }
     assert_ne!(result.parse, u32::MAX);
     assert_ne!(result.format, u32::MAX);
+    assert_ne!(result.multiply, u32::MAX);
     assert_ne!(result.stack_global, u32::MAX);
     assert!(result.stack_top > 0 && result.stack_top < result.scratch_base);
     for (function, params, results) in [
@@ -211,12 +218,64 @@ fn helper_from(bytes: &[u8]) -> Helper {
             vec![wasmparser::ValType::F64, wasmparser::ValType::I32],
             vec![wasmparser::ValType::I32],
         ),
+        (result.multiply, vec![wasmparser::ValType::I32; 5], vec![wasmparser::ValType::I32]),
     ] {
         let ty = &types[functions[function as usize] as usize];
         assert_eq!(ty.params(), params);
         assert_eq!(ty.results(), results);
     }
     result
+}
+
+/// Shared capacity check for non-reentrant numeric scratch users.
+pub(super) fn reserve_scratch(b: &mut Builder, helper: Info) {
+    use Instruction::*;
+    let allocation = error("Numeric conversion scratch allocation failed", 5);
+    // The helper has no allocator. The input/output region begins beyond its
+    // initial memory, stack and immutable data, and grows only to a high-water
+    // capacity. Bounds are checked before arithmetic and memory.grow.
+    let mut reserve = check(
+        &[
+            LocalGet(0),
+            I64Const(4294967296 - i64::from(helper.scratch_base)),
+            I64GtU,
+        ],
+        &allocation,
+    );
+    reserve.extend([
+        LocalGet(0),
+        I64Const(i64::from(helper.scratch_base)),
+        I64Add,
+        I64Const(65535),
+        I64Add,
+        I64Const(16),
+        I64ShrU,
+        LocalSet(1),
+        LocalGet(1),
+        MemorySize(0),
+        I64ExtendI32U,
+        I64GtU,
+        If(BlockType::Empty),
+        LocalGet(1),
+        MemorySize(0),
+        I64ExtendI32U,
+        I64Sub,
+        I32WrapI64,
+        MemoryGrow(0),
+        I32Const(-1),
+        I32Eq,
+        If(BlockType::Empty),
+    ]);
+    reserve.extend_from_slice(&allocation);
+    reserve.extend([End, End, I32Const(helper.scratch_base)]);
+    b.function_with_locals(
+        "numeric-reserve",
+        &[ValType::I64],
+        &[ValType::I32],
+        &[(1, ValType::I64)],
+        &reserve,
+    );
+
 }
 
 /// Coercing arithmetic on two numbers is Clojure's, longs and overflow
@@ -299,6 +358,67 @@ pub(super) fn intrinsics(
     let string = HeapType::Concrete(STRING);
     let unsupported = unsupported_object_error();
     let allocation = error("Numeric conversion scratch allocation failed", 5);
+    let mut concat = check(
+        &[
+            LocalGet(0),
+            RefTestNonNull(string),
+            LocalGet(1),
+            RefTestNonNull(string),
+            I32And,
+            I32Eqz,
+        ],
+        &error("String concatenation requires string operands", 4),
+    );
+    concat.extend([
+        LocalGet(0),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalTee(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalTee(3),
+        I32Add,
+        LocalSet(4),
+    ]);
+    concat.extend(check(&[LocalGet(4), LocalGet(2), I32LtU], &allocation));
+    concat.extend([
+        LocalGet(4),
+        ArrayNewDefault(STRING),
+        LocalSet(5),
+        LocalGet(5),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(0),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(2),
+        ArrayCopy {
+            array_type_index_dst: STRING,
+            array_type_index_src: STRING,
+        },
+        LocalGet(5),
+        RefCastNonNull(string),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(3),
+        ArrayCopy {
+            array_type_index_dst: STRING,
+            array_type_index_src: STRING,
+        },
+        LocalGet(5),
+    ]);
+    let concat = b.function_with_locals(
+        "string-concat",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(3, ValType::I32), (1, VALUE)],
+        &concat,
+    );
+
+    ratios::string(b);
     let byte = MemArg {
         offset: 0,
         align: 0,
@@ -310,50 +430,7 @@ pub(super) fn intrinsics(
         memory_index: 0,
     };
 
-    // The helper has no allocator. The input/output region begins beyond its
-    // initial memory, stack and immutable data, and grows only to a high-water
-    // capacity. Bounds are checked before arithmetic and memory.grow.
-    let mut reserve = check(
-        &[
-            LocalGet(0),
-            I64Const(4294967296 - i64::from(helper.scratch_base)),
-            I64GtU,
-        ],
-        &allocation,
-    );
-    reserve.extend([
-        LocalGet(0),
-        I64Const(i64::from(helper.scratch_base)),
-        I64Add,
-        I64Const(65535),
-        I64Add,
-        I64Const(16),
-        I64ShrU,
-        LocalSet(1),
-        LocalGet(1),
-        MemorySize(0),
-        I64ExtendI32U,
-        I64GtU,
-        If(BlockType::Empty),
-        LocalGet(1),
-        MemorySize(0),
-        I64ExtendI32U,
-        I64Sub,
-        I32WrapI64,
-        MemoryGrow(0),
-        I32Const(-1),
-        I32Eq,
-        If(BlockType::Empty),
-    ]);
-    reserve.extend_from_slice(&allocation);
-    reserve.extend([End, End, I32Const(helper.scratch_base)]);
-    let reserve = b.function_with_locals(
-        "numeric-reserve",
-        &[ValType::I64],
-        &[ValType::I32],
-        &[(1, ValType::I64)],
-        &reserve,
-    );
+    let reserve = b.names["numeric-reserve"];
 
     let mut convert = vec![
         LocalGet(0),
@@ -458,6 +535,10 @@ pub(super) fn intrinsics(
         Return,
         End,
     ];
+    to_string.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["bigint-string"]), End]);
+    to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["ratio-string"]), End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),
@@ -569,65 +650,6 @@ pub(super) fn intrinsics(
     ];
     b.function_with_locals("property-key", &[VALUE], &[VALUE], &[(1, ValType::F64)], &key);
 
-    let mut concat = check(
-        &[
-            LocalGet(0),
-            RefTestNonNull(string),
-            LocalGet(1),
-            RefTestNonNull(string),
-            I32And,
-            I32Eqz,
-        ],
-        &error("String concatenation requires string operands", 4),
-    );
-    concat.extend([
-        LocalGet(0),
-        RefCastNonNull(string),
-        ArrayLen,
-        LocalTee(2),
-        LocalGet(1),
-        RefCastNonNull(string),
-        ArrayLen,
-        LocalTee(3),
-        I32Add,
-        LocalSet(4),
-    ]);
-    concat.extend(check(&[LocalGet(4), LocalGet(2), I32LtU], &allocation));
-    concat.extend([
-        LocalGet(4),
-        ArrayNewDefault(STRING),
-        LocalSet(5),
-        LocalGet(5),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(0),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(2),
-        ArrayCopy {
-            array_type_index_dst: STRING,
-            array_type_index_src: STRING,
-        },
-        LocalGet(5),
-        RefCastNonNull(string),
-        LocalGet(2),
-        LocalGet(1),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(3),
-        ArrayCopy {
-            array_type_index_dst: STRING,
-            array_type_index_src: STRING,
-        },
-        LocalGet(5),
-    ]);
-    let concat = b.function_with_locals(
-        "string-concat",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(3, ValType::I32), (1, VALUE)],
-        &concat,
-    );
 
     let mut add = vec![];
     coercions::primitive(&mut add, coercion_types, 0, 0);

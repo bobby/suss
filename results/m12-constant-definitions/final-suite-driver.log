@@ -1,0 +1,4 @@
+{'label': 'suite-build', 'command': ['cargo', 'test', '-p', 'suss-compile', '--locked', '--test', 'clojure_test_suite', '--no-run', '--message-format=json'], 'exit_code': 0, 'seconds': 160.29242086410522}
+{'label': 'suite-run', 'command': ['/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_test_suite-684b122543cdeb29', 'clojure_test_suite_matches_reviewed_baseline', '--exact', '--nocapture', '--test-threads=2'], 'exit_code': 101, 'seconds': 509.8026623725891}
+{'label': 'suite-lock', 'command': ['python3', 'scripts/clojure_test_suite.py'], 'exit_code': 0, 'seconds': 0.18255305290222168}
+suite receipt complete True

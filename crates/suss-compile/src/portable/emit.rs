@@ -226,6 +226,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // Whether a variadic fn here builds a rest seq (#466).
     let mut rest_site_used = false;
     let mut throws = !futures.is_empty();
+    let mut descriptor_call_guard = false;
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
@@ -234,7 +235,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 // A hinted array access throws for a wrong hint (#389).
-                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. });
+                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_) | Nominal::CheckNumericCallee, .. });
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -249,7 +250,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Literal(Literal::Number(_)) => {
                         names.insert("number-box");
                     }
+                    Operation::Literal(Literal::Ratio { .. }) => { names.insert("bigint-new"); names.insert("ratio-literal"); }
                     Operation::Literal(Literal::String(_)) => {}
+                    Operation::Literal(Literal::BigInt { big_integer, .. }) => { names.insert("bigint-new"); if *big_integer { names.insert("integer-biginteger"); } }
                     Operation::GlobalCell(global) => {
                         globals.insert(global.clone());
                     }
@@ -318,7 +321,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -385,6 +388,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ApplyFixed => { names.insert("apply-fixed"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
+                        Nominal::NumericClass(_) => { names.insert("numeric-class-value"); }
+                        Nominal::CheckNumericCallee => { descriptor_call_guard = true; }
                         Nominal::TypeName => { names.insert("class-value-name"); }
                         Nominal::DisplayLeaf => { names.insert("value-display-text"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
@@ -495,7 +500,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("object-descriptor");
                         }
                         Nominal::MethodGet => {
-                            names.insert("protocol-method-get");
+                            names.insert("protocol-class-method-get");
                         }
                         Nominal::NativeMethodGet => {
                             names.insert("protocol-native-kind");
@@ -847,7 +852,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-number-negative" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
-            "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
+            "protocol-marker-set" | "protocol-method-get" | "protocol-class-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "builtin-extension-guard"
             | "builtin-construct-guard"
@@ -883,6 +888,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "ratio-new" | "ratio-literal" => (vec![VALUE, VALUE], vec![VALUE]),
+            "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
+                nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
+            }), ValType::I32], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
@@ -897,7 +906,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
@@ -917,6 +926,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            "numeric-class-value" => (vec![ValType::I32], vec![VALUE]),
             "instance-site-test" => (
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![ValType::I32],
@@ -1033,6 +1043,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
     let epoch_global = globals.len() as u32 + 3 + imported_link_globals;
     let imported_link_globals = imported_link_globals + u32::from(epoch_used);
+    let not_callable_global = descriptor_call_guard.then_some(globals.len() as u32 + 3 + imported_link_globals);
+    if descriptor_call_guard {
+        imports.import("suss.runtime", runtime_abi::NOT_CALLABLE_DESCRIPTOR_EXPORT,
+            EntityType::Global(GlobalType {
+                val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::DESCRIPTOR) }),
+                mutable: false, shared: false,
+            }));
+    }
+    let imported_link_globals = imported_link_globals + u32::from(descriptor_call_guard);
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -1133,6 +1152,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 Operation::Literal(Literal::String(units)) => {
                     literal_list.insert(units.clone());
                 }
+                Operation::Nominal { operation: Nominal::CheckNumericCallee, .. } => {
+                    literal_list.insert("Not callable".encode_utf16().collect());
+                }
                 Operation::MakeClosure { body, .. } => literal_list.extend(body.display_name.clone()),
                 Operation::MakeGeneralClosure { body, .. } => literal_list.extend(body.display_name.clone()),
                 _ => {}
@@ -1186,7 +1208,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global, not_callable_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1552,6 +1574,7 @@ struct Context<'a> {
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
+    not_callable_global: Option<u32>,
     primitive: &'a primitive::Types,
     primitive_sites: &'a std::collections::HashMap<(usize, u32), u32>,
 }
@@ -2563,6 +2586,25 @@ fn emit_function(
                     };
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::BigInt { negative, limbs, big_integer }) => {
+                    function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                    for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                        array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "BigInt literal exceeds Wasm array length".into() })? });
+                    function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                    if *big_integer { function.instruction(&Call(index("integer-biginteger"))); }
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Literal(Literal::Ratio { negative, numerator, denominator }) => {
+                    for (negative, limbs) in [(*negative, numerator), (false, denominator)] {
+                        function.instruction(&I32Const(if negative {-1} else {1}));
+                        for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                        function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                            array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Ratio literal exceeds Wasm array length".into() })? });
+                        function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                    }
+                    function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -3207,6 +3249,22 @@ fn emit_function(
                         // The runtime predicates' own tests, inline: never a mutable
                         // public cell, and no closure call on core's hot paths (#286).
                         // Arguments are already evaluated once in source order.
+                        Nominal::IsBigInteger => {
+                            let value = arguments[0].0 as u32 + offset;
+                            function.instruction(&LocalGet(value)).instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(value)).instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                                .instruction(&StructGet { struct_type_index: runtime_abi::BIGINT, field_index: 3 })
+                                .instruction(&Else).instruction(&I32Const(0)).instruction(&End);
+                        }
+                        Nominal::IsRatio => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::RATIO)));
+                        }
+                        Nominal::IsBigInt => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)));
+                        }
                         Nominal::IsNumber => {
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
@@ -3245,7 +3303,7 @@ fn emit_function(
                             let (descriptor, key) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
                             protocol_site_lookup(&mut function, cache, epoch_global,
                                 &[LocalGet(descriptor)], &[LocalGet(descriptor), LocalGet(key),
-                                    Call(index("protocol-method-get"))]);
+                                    Call(index("protocol-class-method-get"))]);
                         }
                         Nominal::NativeMethodGet => {
                             // Inline cache (#445): the same protocol fn and
@@ -4040,6 +4098,27 @@ fn emit_function(
                                 .instruction(&Call(index("source-construct-from-plan")))
                                 .instruction(&End);
                         }
+                        Nominal::CheckNumericCallee => {
+                            let callee = arguments[0].0 as u32 + offset;
+                            // Descriptors are never closures or callable objects.
+                            // Reject them before arguments, without changing the
+                            // call site's entry-cache-only convention (ADR-0004).
+                            let message: Vec<_> = "Not callable".encode_utf16().collect();
+                            function.instruction(&LocalGet(callee))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR)))
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&GlobalGet(context.not_callable_global.expect("collected error descriptor")))
+                                .instruction(&GlobalGet(literals[&message]))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                .instruction(&I32Const(0)).instruction(&RefI31)
+                                .instruction(&StructNew(runtime_abi::LANGUAGE_ERROR))
+                                .instruction(&Throw(0)).instruction(&End)
+                                .instruction(&LocalGet(callee));
+                        }
+                        Nominal::NumericClass(kind) => {
+                            function.instruction(&I32Const(i32::from(*kind))).instruction(&Call(index("numeric-class-value")));
+                        }
                         Nominal::Instance => {
                             // The site's cached test (#378). An i31 is no
                             // instance, which is answered inline once the site
@@ -4418,7 +4497,7 @@ fn emit_function(
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
                                 Nominal::ObjectDescriptor => "object-descriptor",
-                                Nominal::MethodGet => "protocol-method-get",
+                                Nominal::MethodGet => "protocol-class-method-get",
                                 Nominal::NativeSatisfies => "protocol-native-satisfies",
                                 _ => "protocol-marker-satisfies",
                             })));

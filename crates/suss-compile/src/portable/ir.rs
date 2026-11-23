@@ -196,6 +196,7 @@ struct Lowerer<'a> {
     bindings: HashMap<BindingId, ValueId>,
     recursive: HashMap<BindingId, (ValueId, usize)>,
     callables: HashMap<ValueId, super::primitive::Shape>,
+    closures: HashSet<ValueId>,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 }
@@ -216,6 +217,7 @@ impl<'a> Lowerer<'a> {
             bindings: HashMap::new(),
             recursive: HashMap::new(),
             callables: HashMap::new(),
+            closures: HashSet::new(),
             targets: HashMap::new(),
             meter,
         };
@@ -309,6 +311,10 @@ impl<'a> Lowerer<'a> {
     fn emit(&mut self, operation: Operation, ty: Type, span: Range<usize>) -> Result<ValueId, Diagnostic> {
         self.charge(1usize.saturating_add(operands(&operation).len()), &span)?;
         let result = self.value(ty, span.clone())?;
+        if matches!(&operation, Operation::MakeClosure { .. } | Operation::MakeGeneralClosure { .. }) {
+            self.charge(1, &span)?;
+            self.closures.insert(result);
+        }
         let signatures: Vec<_> = match &operation {
             Operation::MakeClosure { body, .. } => body.primitive.iter().map(|signature| (false, signature)).collect(),
             Operation::MakeGeneralClosure { body, .. } => body.methods.iter().filter(|method| !method.variadic).filter_map(|method|
@@ -493,6 +499,7 @@ impl<'a> Lowerer<'a> {
                 initializer,
                 once,
                 linked,
+                constant,
                 ..
             } => {
                 if let Some(initializer) = initializer {
@@ -530,6 +537,7 @@ impl<'a> Lowerer<'a> {
                                 hir.span.clone(),
                             )?;
                             self.write_link(linked, value, &hir.span)?;
+                            self.write_link(constant, value, &hir.span)?;
                             self.function.blocks[self.current].terminator = Terminator::Jump {
                                 target: join,
                                 arguments: vec![value],
@@ -549,6 +557,7 @@ impl<'a> Lowerer<'a> {
                             hir.span.clone(),
                         )?;
                         self.write_link(linked, written, &hir.span)?;
+                        self.write_link(constant, written, &hir.span)?;
                         written
                     }
                 } else {
@@ -575,6 +584,14 @@ impl<'a> Lowerer<'a> {
             Expression::Call { callee, arguments } => {
                 let mut primitive = super::primitive::call_shape(hir, callee, &mut *self.meter)?;
                 let mut operands = vec![operand!(callee)];
+                // JVM casts a Class callee to IFn before evaluating arguments.
+                // Keep the original SSA callee so primitive/call-shape facts survive.
+                if !self.closures.contains(&operands[0]) {
+                    self.emit(Operation::Nominal {
+                        operation: Nominal::CheckNumericCallee,
+                        arguments: vec![operands[0]],
+                    }, Type::Value, callee.span.clone())?;
+                }
                 for argument in arguments {
                     operands.push(operand!(argument));
                 }
@@ -1410,7 +1427,7 @@ fn loop_safe(operation: &Operation) -> bool {
             use super::hir::Nominal as N;
             matches!(
                 operation,
-                N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array

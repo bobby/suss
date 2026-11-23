@@ -29,8 +29,19 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
             Kind::Long(n) => Value::Long(*n),
-            // Tooling data has no exact numbers until #338: the literal's text
-            // under EXACT_NUMBER_TAG, as a lone surrogate is kept.
+            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Integer { big: true, .. }) => {
+                let crate::forms::ExactValue::Integer { value, .. } = &number.value else { unreachable!() };
+                Value::BigInt(value.clone())
+            }
+            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Integer { big: false, .. }) => {
+                let crate::forms::ExactValue::Integer { value, .. } = &number.value else { unreachable!() };
+                Value::BigInteger(value.clone())
+            }
+            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Ratio { .. }) => {
+                let crate::forms::ExactValue::Ratio { numerator, denominator } = &number.value else { unreachable!() };
+                Value::Ratio(num_rational::BigRational::new(numerator.clone(), denominator.clone()))
+            }
+            // Decimal still lacks a native tooling value; retain its carrier.
             Kind::Exact(number) => Value::Tagged(
                 Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
                 Box::new(Value::String(number.text.clone())),
@@ -113,6 +124,9 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::Bool(b) => form(Kind::Bool(*b)),
             Value::Number(n) => form(Kind::Number(*n)),
             Value::Long(n) => form(Kind::Long(*n)),
+            Value::BigInt(n) => form(Kind::Exact(crate::forms::ExactNumber::bigint(num_traits::Signed::is_negative(n), n.to_u32_digits().1))),
+            Value::BigInteger(n) => form(Kind::Exact(crate::forms::ExactNumber::integer(num_traits::Signed::is_negative(n), n.to_u32_digits().1, false))),
+            Value::Ratio(n) => form(Kind::Exact(crate::forms::ExactNumber::ratio(num_traits::Signed::is_negative(n), n.numer().to_u32_digits().1, n.denom().to_u32_digits().1))),
             Value::String(s) => form(Kind::String(s.encode_utf16().collect())),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),
             Value::Symbol(s) => form(Kind::Symbol(s.clone())),
@@ -129,6 +143,12 @@ pub fn value_to_form(value: &Value) -> Form {
                     form(Kind::String(
                         units.iter().map(|u| match u { Value::Long(n) => *n as u16, _ => 0 }).collect(),
                     ))
+                }
+                (Some("suss"), EXACT_NUMBER_TAG, Value::String(text)) => {
+                    match crate::forms::number(text) {
+                        Ok(crate::forms::NumberToken::Exact(number)) => form(Kind::Exact(number)),
+                        _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
+                    }
                 }
                 _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
             },
@@ -175,6 +195,21 @@ fn write_form(form: &Form, out: &mut String) -> Result<(), Error> {
             Kind::Vector(forms) => items("[", forms, ']', out),
             Kind::Set(forms) => items("#{", forms, '}', out),
             Kind::Map(forms) => items("{", forms, '}', out),
+            Kind::Exact(number) => {
+                if let crate::forms::ExactValue::Integer { value, big: false } = &number.value {
+                    out.push_str("#suss/biginteger ");
+                    return super::write(out, &Value::String(value.to_string()));
+                }
+                // The transport tag is tooling data; emitted source uses the
+                // validated numeric token, retaining spelling and category.
+                match crate::forms::number(&number.text) {
+                    Ok(crate::forms::NumberToken::Exact(parsed)) if parsed.value == number.value => {
+                        out.push_str(&number.text);
+                        Ok(())
+                    }
+                    _ => Err(Error::new("Invalid exact-number source token")),
+                }
+            }
             Kind::Tagged { tag, form } => {
                 out.push('#');
                 out.push_str(&super::print(&Value::Symbol(tag.clone()))?);
@@ -315,6 +350,21 @@ mod tests {
             assert_eq!(print(&value).unwrap(), print(&expected.unwrap()).unwrap(), "{source}");
             assert_eq!(form_to_value(&value_to_form(&value)).unwrap(), value, "{source}");
         }
+    }
+
+    #[test]
+    fn exact_number_tooling_data_emits_numeric_source_tokens() {
+        for source in ["1N", "-18446744073709551617N", "1/3", "2/4", "1.50M", "^{:tag number} [1N 1/3 1.50M]"] {
+            let form = read(source);
+            let value = form_to_value(&form).unwrap();
+            let restored = value_to_form(&value);
+            let emitted = print_form(&restored).unwrap();
+            assert!(!emitted.contains("#suss/exact-number"), "{source}: {emitted}");
+            assert_eq!(form_to_value(&read(&emitted)).unwrap(), value, "{source}");
+        }
+        let invalid = Value::Tagged(Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
+            Box::new(Value::String("1N) (unexpected)".into())));
+        assert!(matches!(value_to_form(&invalid).kind, Kind::Tagged { .. }));
     }
 
     #[test]

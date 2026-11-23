@@ -1,0 +1,11 @@
+{
+  "inputs": {
+    "crates/suss-compile/tests/conformance.rs": "8934db5bc53212ce9e39e270d3b7449b3092d5590a7d1e4f03e2a0d6a0a3e657",
+    "crates/suss-compile/tests/portable_expression_conformance.rs": "c56f6357b4666e7f0a51cc5d1de9d3949543a23f8c78bb7d9e1217da3f6516e0",
+    "crates/suss-compile/tests/support/portable_decode.rs": "c2000e7c4dbcca2f17b0db388abecfbd13e5f70a154936ab2e49f84dfaf0fa46",
+    "crates/suss-compile/tests/support/portable_compare.rs": "10c9049d75ab1a7284eeb1b35c447a58e9a491c03c7d3b56cc794cc9e4bae1fa",
+    "reference/cljs-tests/core.sus": "ade6eccaf7aa6be2b133019dd5894c93988cbfda17945867bf4dadc40e99fbe8",
+    "docs/compatibility/cases.json": "67a9b8b0c9cb3964c4f2b4eb2a8398e1ace57ebdb7583dd33d68a8d55ba94e07"
+  },
+  "limitation": "These binaries precede the test-only minimal numeric-anchor helper repair. Production numeric code and corpus inputs are unchanged by that repair. The command remains live; terminal results are separate."
+}

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "suss-cli",
+    "--test",
+    "numeric_operand_types",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "scope": "MemoryMax=4G",
+  "build_jobs": 2,
+  "target": "m12-decimal-target",
+  "toolchain": "stable",
+  "source_sha256": "8d0709a33fc832191c398f1d86c3b246f924f04b82e837677a532e5d2d88ce41",
+  "log_sha256": "50ab09a79d7adc445c21e25aad77e98f2663b1cb2e45cfcd3f263aa7ffa8a15e"
+}

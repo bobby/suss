@@ -74,7 +74,7 @@
  {:name "div-one-arg"
   :category :arithmetic
   :expr "(/ 2)"
-  :expected 0.5}
+  :expected 1/2}
 
  {:name "div-two-args"
   :category :arithmetic

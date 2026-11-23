@@ -1,0 +1,6 @@
+{
+  "source": "(defprotocol NumericClassProtocol (numeric-class-kind [x]))\n(extend-type java.lang.Long NumericClassProtocol (numeric-class-kind [x] :long))\n(extend-type java.lang.Double NumericClassProtocol (numeric-class-kind [x] :double))\n(extend-type clojure.lang.BigInt NumericClassProtocol (numeric-class-kind [x] :bigint))\n(extend-type java.math.BigInteger NumericClassProtocol (numeric-class-kind [x] :biginteger))\n(extend-type clojure.lang.Ratio NumericClassProtocol (numeric-class-kind [x] :ratio))\n\n(prn (mapv numeric-class-kind [1 1.0 1N (biginteger 1) 1/2 2 2.0 2N (biginteger 2) 2/3]))\n(prn [(satisfies? NumericClassProtocol 1) (satisfies? NumericClassProtocol 1.0) (satisfies? NumericClassProtocol 1N) (satisfies? NumericClassProtocol (biginteger 1)) (satisfies? NumericClassProtocol 1/3) (satisfies? NumericClassProtocol nil)])\n(prn (let [f (fn [x] (numeric-class-kind x))] [(f 1) (f 1.0) (f 1N) (f (biginteger 1)) (f 1/3) (f 2) (f 2.0)]))",
+  "exit_code": 0,
+  "stdout": "NumericClassProtocol\n[:long :double :bigint :biginteger :ratio :long :double :bigint :biginteger :ratio]\n[true true true true true false]\n[:long :double :bigint :biginteger :ratio :long :double]\n",
+  "stderr": ""
+}

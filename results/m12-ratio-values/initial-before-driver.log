@@ -1,0 +1,6 @@
+Running as unit: run-p734611-i88794866.scope; invocation ID: 49313fe149924ed4bcdf530b7233d92f
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/results/m12-ratio-values/run-before.py", line 17, in <module>
+    assert record['commands'][2]['exit_code']!=0 and 'Unsupported numeric literal' in record['commands'][2]['stderr']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

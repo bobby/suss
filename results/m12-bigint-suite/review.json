@@ -1,0 +1,5025 @@
+{
+  "reference_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "counts": {
+    "pass": 2386,
+    "guest-judged": 54,
+    "fail": 356,
+    "not-executed": 4143,
+    "skipped": 0,
+    "namespaces-failed": 124
+  },
+  "changes": [
+    {
+      "id": "clojure.core-test.compare/test-compare#3",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.compare/test-compare#3",
+        "test": "clojure.core-test.compare/test-compare",
+        "ordinal": 3,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(pos? (compare (first [0 -100N]) (second [0 -100N])))",
+        "line": 8,
+        "column": 23,
+        "contexts": [
+          "numeric-types"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "pos?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          }
+        ],
+        "ordinal": 3,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.compare/test-compare",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.counted-qmark/test-counted?#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.counted-qmark/test-counted?#9",
+        "test": "clojure.core-test.counted-qmark/test-counted?",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(not (counted? 1N))",
+        "line": 22,
+        "column": 16,
+        "contexts": [
+          "negative tests"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "not",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.counted-qmark/test-counted?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.even-qmark/test-even?#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.even-qmark/test-even?#10",
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (even? -120N) true)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.even-qmark/test-even?#7",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.even-qmark/test-even?#7",
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (even? 123N) false)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.even-qmark/test-even?#8",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.even-qmark/test-even?#8",
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (even? 122N) true)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.even-qmark/test-even?#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.even-qmark/test-even?#9",
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (even? -121N) false)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.even-qmark/test-even?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt-eq/test->=#10",
+        "test": "clojure.core-test.gt-eq/test->=",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (>= -1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt-eq/test->=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#21",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt-eq/test->=#21",
+        "test": "clojure.core-test.gt-eq/test->=",
+        "ordinal": 21,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (>= 1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 21,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt-eq/test->=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#22",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt-eq/test->=#22",
+        "test": "clojure.core-test.gt-eq/test->=",
+        "ordinal": 22,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (>= 0N -1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 22,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt-eq/test->=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt-eq/test->=#9",
+        "test": "clojure.core-test.gt-eq/test->=",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (>= 0N 1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt-eq/test->=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt/test->#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt/test->#10",
+        "test": "clojure.core-test.gt/test->",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (> 0N -1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt/test->",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt/test->#19",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt/test->#19",
+        "test": "clojure.core-test.gt/test->",
+        "ordinal": 19,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (> 0N 1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 19,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt/test->",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt/test->#20",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt/test->#20",
+        "test": "clojure.core-test.gt/test->",
+        "ordinal": 20,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (> -1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 20,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt/test->",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.gt/test->#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.gt/test->#9",
+        "test": "clojure.core-test.gt/test->",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (> 1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.gt/test->",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.ident-qmark/test-ident?#7",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.ident-qmark/test-ident?#7",
+        "test": "clojure.core-test.ident-qmark/test-ident?",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (ident? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.ident-qmark/test-ident?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.keyword-qmark/test-keyword?#7",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.keyword-qmark/test-keyword?#7",
+        "test": "clojure.core-test.keyword-qmark/test-keyword?",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (keyword? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.keyword-qmark/test-keyword?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.list-qmark/test-list?#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.list-qmark/test-list?#10",
+        "test": "clojure.core-test.list-qmark/test-list?",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (list? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.list-qmark/test-list?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt-eq/test-<=#10",
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (<= -1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#19",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt-eq/test-<=#19",
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "ordinal": 19,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (<= 1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 19,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#20",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt-eq/test-<=#20",
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "ordinal": 20,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (<= 0N -1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 20,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt-eq/test-<=#9",
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (<= 0N 1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt-eq/test-<=",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt/test-<#10",
+        "test": "clojure.core-test.lt/test-<",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (< -1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt/test-<",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#19",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt/test-<#19",
+        "test": "clojure.core-test.lt/test-<",
+        "ordinal": 19,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (< 1N 0N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 19,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt/test-<",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#20",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt/test-<#20",
+        "test": "clojure.core-test.lt/test-<",
+        "ordinal": 20,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (< 0N -1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 20,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt/test-<",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.lt/test-<#9",
+        "test": "clojure.core-test.lt/test-<",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= true (< 0N 1N))",
+        "line": 20,
+        "column": 27,
+        "contexts": [
+          "arity 2"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.lt/test-<",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.map-qmark/test-map?#12",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.map-qmark/test-map?#12",
+        "test": "clojure.core-test.map-qmark/test-map?",
+        "ordinal": 12,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (map? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 12,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.map-qmark/test-map?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.max/test-max#2",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.max/test-max#2",
+        "test": "clojure.core-test.max/test-max",
+        "ordinal": 2,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2N (max 1N 2N) (max 2N 1N))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ],
+        "ordinal": 2,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.max/test-max",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.max/test-max#3",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.max/test-max#3",
+        "test": "clojure.core-test.max/test-max",
+        "ordinal": 3,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2 (max 1N 2) (max 2 1N))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "long",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "long",
+            "value": "2"
+          }
+        ],
+        "ordinal": 3,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.max/test-max",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.max/test-max#4",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.max/test-max#4",
+        "test": "clojure.core-test.max/test-max",
+        "ordinal": 4,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2N (max 1 2N) (max 2N 1))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ],
+        "ordinal": 4,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.max/test-max",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.min/test-min#2",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.min/test-min#2",
+        "test": "clojure.core-test.min/test-min",
+        "ordinal": 2,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1N (min 1N 2N) (min 2N 1N))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ],
+        "ordinal": 2,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.min/test-min",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.min/test-min#3",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.min/test-min#3",
+        "test": "clojure.core-test.min/test-min",
+        "ordinal": 3,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1N (min 1N 2) (min 2 1N))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ],
+        "ordinal": 3,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.min/test-min",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.min/test-min#4",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.min/test-min#4",
+        "test": "clojure.core-test.min/test-min",
+        "ordinal": 4,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1 (min 1 2N) (min 2N 1))",
+        "line": 7,
+        "column": 25,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "long",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "long",
+            "value": "1"
+          }
+        ],
+        "ordinal": 4,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.min/test-min",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.odd-qmark/test-odd?#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.odd-qmark/test-odd?#10",
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (odd? -120N) false)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.odd-qmark/test-odd?#7",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.odd-qmark/test-odd?#7",
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (odd? 123N) true)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.odd-qmark/test-odd?#8",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.odd-qmark/test-odd?#8",
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (odd? 122N) false)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.odd-qmark/test-odd?#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.odd-qmark/test-odd?#9",
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (odd? -121N) true)",
+        "line": 8,
+        "column": 20,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": true
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.odd-qmark/test-odd?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.partition/test-partition#4",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.partition/test-partition#4",
+        "test": "clojure.core-test.partition/test-partition",
+        "ordinal": 4,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (quote ((0 1) (2 3) (4 5) (6 7) (8 9))) (partition 2N (range 10)))",
+        "line": 23,
+        "column": 11,
+        "contexts": [
+          "arity 2 - (partition n coll)"
+        ],
+        "operands": [
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "6"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "7"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "8"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "9"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "6"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "7"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "8"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "9"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "6"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "7"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "8"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "9"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "seq"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "6"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "7"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "8"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "9"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "seq"
+          }
+        ],
+        "ordinal": 4,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.partition/test-partition",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.partition/test-partition#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.partition/test-partition#9",
+        "test": "clojure.core-test.partition/test-partition",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= (quote ((0 1) (1 2) (2 3) (3 4) (4 5))) (partition 2 1N (range 6)))",
+        "line": 40,
+        "column": 11,
+        "contexts": [
+          "arity 3 - (partition n step coll)"
+        ],
+        "operands": [
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "seq",
+            "items": [
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  }
+                ]
+              },
+              {
+                "tag": "seq",
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "seq"
+          },
+          {
+            "items": [
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "0"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  }
+                ],
+                "tag": "seq"
+              },
+              {
+                "items": [
+                  {
+                    "tag": "long",
+                    "value": "4"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "5"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ],
+            "tag": "seq"
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.partition/test-partition",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#10",
+        "test": "clojure.core-test.qualified-ident-qmark/test-qualified-ident?",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (qualified-ident? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.qualified-ident-qmark/test-qualified-ident?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#9",
+        "test": "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (qualified-keyword? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?#8",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?#8",
+        "test": "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (qualified-symbol? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.reversible-qmark/test-reversible?#11",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.reversible-qmark/test-reversible?#11",
+        "test": "clojure.core-test.reversible-qmark/test-reversible?",
+        "ordinal": 11,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (reversible? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.reversible-qmark/test-reversible?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.seq-qmark/test-seq?#13",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.seq-qmark/test-seq?#13",
+        "test": "clojure.core-test.seq-qmark/test-seq?",
+        "ordinal": 13,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (seq? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 13,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.seq-qmark/test-seq?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.seqable-qmark/test-seqable?#12",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.seqable-qmark/test-seqable?#12",
+        "test": "clojure.core-test.seqable-qmark/test-seqable?",
+        "ordinal": 12,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (seqable? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 12,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.seqable-qmark/test-seqable?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.set-qmark/test-set?#12",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.set-qmark/test-set?#12",
+        "test": "clojure.core-test.set-qmark/test-set?",
+        "ordinal": 12,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (set? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 12,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.set-qmark/test-set?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.simple-ident-qmark/test-simple-ident?#10",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.simple-ident-qmark/test-simple-ident?#10",
+        "test": "clojure.core-test.simple-ident-qmark/test-simple-ident?",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (simple-ident? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.simple-ident-qmark/test-simple-ident?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.simple-keyword-qmark/test-simple-keyword?#9",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.simple-keyword-qmark/test-simple-keyword?#9",
+        "test": "clojure.core-test.simple-keyword-qmark/test-simple-keyword?",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (simple-keyword? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.simple-keyword-qmark/test-simple-keyword?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#8",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#8",
+        "test": "clojure.core-test.simple-symbol-qmark/test-simple-symbol?",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (simple-symbol? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.simple-symbol-qmark/test-simple-symbol?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#10",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#10",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 10,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1 (/ 2 2N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#11",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#11",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 11,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 3 (/ 15 5N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "tag": "bigint",
+            "value": "3"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#119",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#119",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 119,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= ##Inf (/ ##Inf 1N))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "7ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "7ff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "7ff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "7ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 119,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#12",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#12",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 12,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 5 (/ 15 3N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "tag": "bigint",
+            "value": "5"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 12,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#120",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#120",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 120,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= ##-Inf (/ ##-Inf 1N))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "fff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "fff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "fff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "fff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 120,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#121",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#121",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 121,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 0.0 (/ 1N ##Inf))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 121,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#122",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#122",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 122,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 0.0 (/ 1N ##-Inf))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "8000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "8000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 122,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#123",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#123",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 123,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 0.0 (/ -1N ##Inf))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "8000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "8000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 123,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#124",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#124",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 124,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 0.0 (/ -1N ##-Inf))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "0000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "0000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 124,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#125",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#125",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 125,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= ##Inf (/ ##Inf 0N))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "7ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "7ff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "7ff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "7ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 125,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#126",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#126",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 126,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= ##-Inf (/ ##-Inf 0N))",
+        "line": 167,
+        "column": 30,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "fff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "fff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "fff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "fff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 126,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#13",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#13",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 13,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2 (/ 2N 1))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 13,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#14",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#14",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 14,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1 (/ 2N 2))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 14,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#149",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#149",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 149,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(NaN? (/ ##NaN 0N))",
+        "line": 212,
+        "column": 21,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "7ff8000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "NaN?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "7ff8000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 149,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#15",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#15",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 15,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 3 (/ 15N 5))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "tag": "bigint",
+            "value": "3"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 15,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#150",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#150",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 150,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(NaN? (/ 0N ##NaN))",
+        "line": 212,
+        "column": 21,
+        "contexts": [
+          "inf-nan"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "7ff8000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "NaN?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "7ff8000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 150,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#16",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#16",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 16,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 5 (/ 15N 3))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "tag": "bigint",
+            "value": "5"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 16,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#5",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#5",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 5,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2 (/ 2N 1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 5,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#57",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#57",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 57,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2.0 (/ 2N 1.0))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 57,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#58",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#58",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 58,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1.0 (/ 2N 2.0))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 58,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#59",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#59",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 59,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 3.0 (/ 15N 5.0))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 59,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#6",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#6",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 6,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1 (/ 2N 2N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "1"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 6,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#60",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#60",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 60,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 5.0 (/ 15N 3.0))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 60,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#61",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#61",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 61,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 7.5 (/ 15N 2.0))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "401e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401e000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "401e000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "401e000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 61,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#62",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#62",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 62,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2.0 (/ 2.0 1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4000000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 62,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#63",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#63",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 63,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1.0 (/ 2.0 2N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "3ff0000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 63,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#64",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#64",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 64,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 3.0 (/ 15.0 5N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4008000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 64,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#65",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#65",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 65,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 5.0 (/ 15.0 3N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "4014000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 65,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#66",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#66",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 66,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 7.5 (/ 15.0 2N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "f64",
+            "bits": "401e000000000000"
+          },
+          {
+            "tag": "f64",
+            "bits": "401e000000000000"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "bits": "401e000000000000",
+            "tag": "f64"
+          },
+          {
+            "bits": "401e000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 66,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#7",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#7",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 3 (/ 15N 5N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "tag": "bigint",
+            "value": "3"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "3"
+          },
+          {
+            "bits": "4008000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#8",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#8",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 8,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 5 (/ 15N 3N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "tag": "bigint",
+            "value": "5"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "5"
+          },
+          {
+            "bits": "4014000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 8,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#83",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#83",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 83,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= -1N (/ 1N -1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "-1"
+          },
+          {
+            "tag": "bigint",
+            "value": "-1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "-1"
+          },
+          {
+            "bits": "bff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 83,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#84",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#84",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 84,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= -1N (/ -1N 1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "-1"
+          },
+          {
+            "tag": "bigint",
+            "value": "-1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "-1"
+          },
+          {
+            "bits": "bff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 84,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#85",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#85",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 85,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 1N (/ -1N -1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "bits": "3ff0000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 85,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#9",
+      "before": "kind:error",
+      "after": "verdict:fail",
+      "rationale": "Known exact-division gap: BigInt operands execute but the result is still double. Preserve the failing verdict; Ratio/exact division remains required.",
+      "primary": {
+        "id": "clojure.core-test.slash/test-slash#9",
+        "test": "clojure.core-test.slash/test-slash",
+        "ordinal": 9,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= 2 (/ 2 1N))",
+        "line": 8,
+        "column": 27,
+        "contexts": [
+          "common"
+        ],
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "tag": "bigint",
+            "value": "2"
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "long",
+            "value": "2"
+          },
+          {
+            "bits": "4000000000000000",
+            "tag": "f64"
+          }
+        ],
+        "ordinal": 9,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.slash/test-slash",
+        "verdict": "fail"
+      }
+    },
+    {
+      "id": "clojure.core-test.str/test-str#17",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.str/test-str#17",
+        "test": "clojure.core-test.str/test-str",
+        "ordinal": 17,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= \"0\" (str 0N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              48
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              48
+            ]
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              48
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              48
+            ]
+          }
+        ],
+        "ordinal": 17,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.str/test-str",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.str/test-str#18",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.str/test-str#18",
+        "test": "clojure.core-test.str/test-str",
+        "ordinal": 18,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= \"1\" (str 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              49
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              49
+            ]
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              49
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              49
+            ]
+          }
+        ],
+        "ordinal": 18,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.str/test-str",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.str/test-str#19",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.str/test-str#19",
+        "test": "clojure.core-test.str/test-str",
+        "ordinal": 19,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= \"-1\" (str -1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              45,
+              49
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              45,
+              49
+            ]
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "string",
+            "units": [
+              45,
+              49
+            ]
+          },
+          {
+            "tag": "string",
+            "units": [
+              45,
+              49
+            ]
+          }
+        ],
+        "ordinal": 19,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.str/test-str",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.symbol-qmark/test-symbol?#7",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.symbol-qmark/test-symbol?#7",
+        "test": "clojure.core-test.symbol-qmark/test-symbol?",
+        "ordinal": 7,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (symbol? 0N))",
+        "line": 7,
+        "column": 22,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.symbol-qmark/test-symbol?",
+        "verdict": "pass"
+      }
+    },
+    {
+      "id": "clojure.core-test.vector-qmark/test-vector?#11",
+      "before": "kind:error",
+      "after": null,
+      "rationale": "Host independently matches the full primary observation and verdict; no guest-only or opaque success.",
+      "primary": {
+        "id": "clojure.core-test.vector-qmark/test-vector?#11",
+        "test": "clojure.core-test.vector-qmark/test-vector?",
+        "ordinal": 11,
+        "kind": "predicate",
+        "verdict": "pass",
+        "deterministic": true,
+        "form": "(= false (vector? 1N))",
+        "line": 7,
+        "column": 23,
+        "contexts": [],
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ]
+      },
+      "observed": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": false
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.vector-qmark/test-vector?",
+        "verdict": "pass"
+      }
+    }
+  ],
+  "unchanged_namespaces_tests_and_skips": true,
+  "new_opaque_or_guest_only_passes": 0
+}

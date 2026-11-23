@@ -1,0 +1,21 @@
+Running as unit: run-p1885025-i89953342.scope; invocation ID: 75fa1661bf154c93b45db1454575fa64
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.88s
+     Running tests/clojure_exact_inline.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_exact_inline-1e2f5887bae5ca82)
+
+running 2 tests
+test exact_operands_match_jvm_on_raw_and_boxed_paths ... ok
+test aot_executes_raw_and_boxed_exact_operand_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.95s
+
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_numeric_classes-934e6d9b058bb0e3)
+
+running 4 tests
+test aot_executes_numeric_classes ... ok
+test numeric_class_extensions_update_sites_after_gc ... ok
+test numeric_classes_match_in_runtime_and_macro ... ok
+test numeric_class_protocols_follow_receiver_classes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.43s
+

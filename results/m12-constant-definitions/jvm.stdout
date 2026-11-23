@@ -1,0 +1,67 @@
+#'user/frozen-long
+#'user/read-frozen-long
+#'user/frozen-long
+[9223372036854775807 7]
+#'user/frozen-double
+#'user/read-frozen-double
+#'user/frozen-double
+[-0.0 1.5]
+#'user/frozen-bigint
+#'user/read-frozen-bigint
+#'user/frozen-bigint
+[9223372036854775808123N 0]
+#'user/frozen-ratio
+#'user/read-frozen-ratio
+#'user/frozen-ratio
+[22/7 0]
+#'user/frozen-text
+#'user/read-frozen-text
+#'user/frozen-text
+["hello" "later"]
+#'user/frozen-nil
+#'user/read-frozen-nil
+#'user/frozen-nil
+[nil true]
+#'user/frozen-bool
+#'user/read-frozen-bool
+#'user/frozen-bool
+[false true]
+#'user/removed-const
+#'user/old-reader
+#'user/removed-const
+#'user/live-reader
+#'user/removed-const
+[1 3 3]
+#'user/live-false
+#'user/read-live-false
+#'user/live-false
+[2 2]
+#'user/live-nil
+#'user/read-live-nil
+#'user/live-nil
+[2 2]
+#'user/local-shadow
+[42 42]
+#'user/boundary-long
+#'user/boundary-max
+#'user/boundary-min
+[-9223372036854775808 1.7976931348623157E308 4.9E-324]
+#'user/identity-big
+#'user/identity-ratio
+#'user/identity-text
+[true true true]
+#'user/original-constant
+#'user/aliased-constant
+#'user/original-constant
+[999999999999999999N 0 true]
+#'user/different-constant-a
+#'user/different-constant-b
+[false false]
+#'user/object-constant
+#'user/object-constant-reader
+#'user/object-constant
+[1/3 0]
+#'user/conversion-constant
+#'user/conversion-reader
+#'user/conversion-constant
+[5 5 5.5]

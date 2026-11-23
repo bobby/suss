@@ -15,6 +15,9 @@ pub fn matches(expected: &Edn, actual: &Observation) -> bool {
         (Edn::Number(Number::Integer(integer)), Observation::Long(long)) => {
             integer.to_string() == long.to_string()
         }
+        (Edn::Number(Number::Ratio(expected)), Observation::Ratio(numerator, denominator)) => {
+            expected.numer().to_string()==*numerator && expected.denom().to_string()==*denominator
+        }
         (Edn::String(text), Observation::String(units)) => {
             text.encode_utf16().eq(units.iter().copied())
         }

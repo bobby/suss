@@ -1,0 +1,27 @@
+{
+  "base": "5ee8a0d7",
+  "inputs": {
+    "crates/suss-compile/src/portable/aot.rs": "9b7ce25cd287c33094e50aea5d16945b8981b9ac60bdae1b8073e89b35aab171",
+    "crates/suss-compile/src/portable/aot/lists.rs": "4ce8c6070981fdae8532594ec61765abc70710ac8f329618498a75e6ea6b2cde",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "3351165e410cf556ce1d697f414811ef61c5747055b558c84447c1c5c071ac44",
+    "crates/suss-compile/tests/portable_aot_wit_numbers.rs": "b38d45fc470491a4931f78d9b77c606af833804cdd160842ee0017e3387bd2ac"
+  },
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_aot_wit_numbers",
+    "u64_values_cross_as_longs_or_exact_bigints",
+    "--",
+    "--exact",
+    "--test-threads=2"
+  ],
+  "complete": true,
+  "exit_code": 0,
+  "tests_passed": 1,
+  "log": "focused.log",
+  "qualification": "The later full adapter gates add hash and further unsigned range/async tests; these original hashes describe the focused execution."
+}

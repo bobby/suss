@@ -1,0 +1,12 @@
+capacity,bytes_low,bytes_high,measurement
+2,23.838,23.970,dense GC magnitude array
+3,23.915,23.917,dense GC magnitude array
+5,31.849,31.929,dense GC magnitude array
+9,47.879,48.149,dense GC magnitude array
+16,79.805,80.139,dense GC magnitude array
+33,143.740,144.241,dense GC magnitude array
+64,271.530,271.935,dense GC magnitude array
+129,526.897,529.740,dense GC magnitude array
+256,1036.472,1042.079,dense GC magnitude array
+513,2060.402,2062.692,dense GC magnitude array
+1024,4105.967,4110.063,dense GC magnitude array

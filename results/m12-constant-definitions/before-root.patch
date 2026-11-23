@@ -1,0 +1,167 @@
+diff --git i/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index 2fa229c2..71e3bc26 100644
+--- i/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -1252,6 +1252,7 @@ struct Analyzer<'a> {
+     analysis_contexts: Vec<super::AnalysisContext>,
+     source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
+     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
++    constant_definitions: super::resolve::DeclarationSnapshot,
+     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
+     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
+     callable_keys: BTreeMap<Global, Hir>,
+@@ -1450,6 +1451,7 @@ impl Analyzer<'_> {
+             // forms, not after each nested def. Keep resolution's live catalog
+             // separate so recursive definitions still resolve provisionally.
+             self.namespace_snapshot = Some(self.capture_source_namespace());
++            self.constant_definitions = self.environment.declaration_snapshot();
+         }
+         self.analysis_depth += 1;
+         self.analysis_contexts.push(context);
+@@ -1826,6 +1828,15 @@ impl Analyzer<'_> {
+         if !self.privileged && super::bootstrap::is_core_private(global.name()) && self.privileged_definition(global) {
+             return Err(fail(span, format!("{} is private to suss.core", global.name())));
+         }
++        if let Some(info) = self.constant_definitions.get(global)
++            && Self::constant_metadata(&info.declaration)?
++            && let Some(initializer) = info.initializer.as_deref()
++            && let Expression::Literal(value) = &*initializer.kind
++        {
++            // Read the revision preceding this top-level form, rather than a
++            // provisional definition encountered inside its initializer.
++            return Ok((Expression::Literal(value.clone()), value.ty()));
++        }
+         match binding {
+             ResolvedBinding::Cell(global) => {
+                 let global = self.core_reference_link(&global).unwrap_or(global);
+@@ -1846,6 +1857,13 @@ impl Analyzer<'_> {
+             )),
+         }
+     }
++    fn constant_metadata(name: &Form) -> Result<bool, Diagnostic> {
++        Ok(reader_metadata_pairs(name)?.chunks_exact(2).any(|pair| {
++            matches!(&pair[0].kind, Kind::Keyword(key)
++                if key.namespace.is_none() && key.name == "const")
++                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
++        }))
++    }
+     fn dynamic_metadata(name: &Form) -> bool {
+         name.metadata.iter().any(|metadata| match &metadata.kind {
+             Kind::Map(entries) => entries.chunks(2).any(|pair| {
+@@ -2324,7 +2342,7 @@ impl Analyzer<'_> {
+         for metadata in &args[0].metadata {
+             let unsupported = |form: &Form| {
+                 matches!(&form.kind, Kind::Keyword(key)
+-                if key.namespace.is_none() && matches!(key.name.as_str(), "const" | "macro"))
++                if key.namespace.is_none() && key.name == "macro")
+             };
+             if unsupported(metadata)
+                 || matches!(&metadata.kind, Kind::Map(entries)
+@@ -2354,6 +2372,17 @@ impl Analyzer<'_> {
+                 error.span = args[0].span.clone();
+                 error
+             })?;
++        let constant = Self::constant_metadata(&args[0])?;
++        let prior_constant = self.constant_definitions.get(&global)
++            .map(|info| Self::constant_metadata(&info.declaration))
++            .transpose()?.unwrap_or(false);
++        // Runtime execution of a conditional/nested def is not established by
++        // analyzing it. Until that boundary can publish initialized constant
++        // values, diagnose it instead of freezing an unexecuted initializer.
++        if self.analysis_depth != 1 && (constant || prior_constant) {
++            return Err(fail(args[0].span.clone(),
++                "Nested definitions involving :const are not implemented yet"));
++        }
+         let init = if args.len() == 3 {
+             if !matches!(args[1].kind, Kind::String(_)) {
+                 return Err(fail(
+@@ -2439,6 +2468,10 @@ impl Analyzer<'_> {
+                 .map(Box::new)
+             })
+             .transpose()?;
++        if constant && !initializer.as_deref().is_some_and(|value| matches!(&*value.kind, Expression::Literal(_))) {
++            return Err(fail(args[0].span.clone(),
++                "Only scalar literal :const initializers are implemented yet"));
++        }
+         // A nested initializer can declare this same global. Publish the outer
+         // declaration and its initializer together when its analysis completes.
+         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
+@@ -4609,6 +4642,7 @@ pub(crate) fn prepare_with_origin(
+         source_namespace: None,
+         fragment_links: BTreeSet::new(),
+         namespace_snapshot: None,
++        constant_definitions: Default::default(),
+         source_callables: Vec::new(),
+         source_nodes: Vec::new(),
+         callable_keys: BTreeMap::new(),
+diff --git i/crates/suss-compile/src/portable/resolve.rs w/crates/suss-compile/src/portable/resolve.rs
+index db6f9d3d..9cb0b3e2 100644
+--- i/crates/suss-compile/src/portable/resolve.rs
++++ w/crates/suss-compile/src/portable/resolve.rs
+@@ -265,6 +265,19 @@ impl DefinitionInfo {
+     }
+ }
+ 
++/// Declaration revisions at one top-level form boundary. Per-namespace maps
++/// share their immutable nodes, so nested provisional declarations cannot
++/// change what a constant read sees while the enclosing form is compiled.
++#[derive(Clone, Default)]
++pub(crate) struct DeclarationSnapshot(
++    BTreeMap<(Phase, std::sync::Arc<str>), PersistentMap<Global, std::sync::Arc<DefinitionInfo>>>,
++);
++impl DeclarationSnapshot {
++    pub(crate) fn get(&self, global: &Global) -> Option<&DefinitionInfo> {
++        self.0.get(&(global.phase, global.namespace.clone()))?.get(global).map(std::sync::Arc::as_ref)
++    }
++}
++
+ /// Borrowed phase-specific source scope. Catalog entries do not certify loading.
+ pub struct NamespaceScope<'a> {
+     pub namespace: &'a str,
+@@ -798,6 +811,9 @@ impl Environment {
+         self.namespaces.iter().filter_map(move |(entry_phase, namespace)|
+             (*entry_phase == phase).then_some(namespace.as_str()))
+     }
++    pub(crate) fn declaration_snapshot(&self) -> DeclarationSnapshot {
++        DeclarationSnapshot(self.definitions.clone())
++    }
+     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
+         self.shared_definition_info(global).map(std::sync::Arc::as_ref)
+     }
+diff --git i/docs/roadmap/handoff.md w/docs/roadmap/handoff.md
+index 270861a1..f9b5c1da 100644
+--- i/docs/roadmap/handoff.md
++++ w/docs/roadmap/handoff.md
+@@ -32492,3 +32492,32 @@ and is removed, with its failed receipt retained. The historical unfiltered
+ workspace retry atd7d2919b terminates101 after4190.20 seconds at that old budget
+ failure; later targets are unexecuted. That invocation is not a passing baseline.
+ A new integrated-source full workspace command and final-head CI remain needed.
++
++
++## Scalar constant declaration probes (2026-11-22)
++
++`results/m12-constant-definitions` retains12 fresh JVM Clojure1.12.6
++observations for top-level scalar :const declarations. The before regression
++fails both Runtime/Macro and AOT tests on the original unsupported-attribute
++diagnostic; the changed compiler passes both tests (36 primary observations
++across Runtime/Macro/actual AOT). Separate-fragment readers retain the old
++constant after redefinition, ordinary redefinitions remove the flag, false/nil
++flags stay live, lexical shadows win, and a compile failure publishes no new
++constant. Signed zero, numeric boundaries, BigInt/Ratio, strings, nil and false
++are covered. Commands and frozen-input hashes are in before-runtime.json and
++after-first.json. An initial missing user-bus setup is retained in before.json.
++
++The analyzer snapshots immutable declaration revisions at top-level form
++boundaries instead of substituting provisional nested initializers. Support is
++bounded to scalar literal initializers (and already-resolved scalar constants).
++Computed/collection constants and nested definitions involving constants remain
++explicit diagnostics. Ignoring the metadata would not preserve Clojure behavior.
++The initial do-wrapped oracle probes are retained separately; their live reads
++do not demonstrate an earlier initialized top-level constant.
++
++Run `python3 results/m12-constant-definitions/run-gate.py LABEL` for the focused
++regressions. The unchanged vendored suite and declaration/bootstrap gates must
++be executed on this production change; the earlier green4cf2c6d4 CI and its live
++unfiltered workspace command do not certify it. Numeric class aliases and
++Decimal-dependent assertions require their own observed results. No suite
++failure is changed to success by the constant tests.

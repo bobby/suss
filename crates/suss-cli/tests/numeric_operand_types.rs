@@ -99,7 +99,9 @@ fn numeric_operands_keep_clojure_results() {
         "(= 0 (+))",
         "(= 1 (*))",
         "(= -2 (- 2))",
-        "(= 0.5 (/ 2))",
+        "(= 1/2 (/ 2))",
+        "(false? (= 0.5 (/ 2)))",
+        "(== 0.5 (/ 2))",
         "(= 4 (apply + [4]))",
         "(= 6 (reduce + [1 2 3]))",
         "(= [2 3] (mapv inc [1 2]))",
@@ -136,7 +138,8 @@ fn numeric_operands_keep_clojure_results() {
         "(= 1 (((fn [] +)) 1 0))",
         "(= 2 (let [f /] (f 24 3 4)))",
         "(= 5 (let [f -] (f 10 2 3)))",
-        "(= -0.25 (let [f /] (f -4)))",
+        "(= -1/4 (let [f /] (f -4)))",
+        "(= -0.25 (let [f /] (f -4.0)))",
         // Bit operations take longs, as Clojure's do (#336).
         "(= \"bit operation not supported for a non-number\" (try (bit-or nil 1) (catch :default e (ex-message e))))",
     ];

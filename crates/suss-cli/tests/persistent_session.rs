@@ -1,3 +1,5 @@
+#[path = "../../suss-compile/tests/support/portable_decode.rs"]
+mod exact_observations;
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use suss_compile::portable_session::sentinel_tag;
 
@@ -505,13 +507,17 @@ fn persistent_session_nil_and_false_are_initialized_defonce_bindings() {
 #[test]
 fn persistent_session_arithmetic_function_values_use_universal_invocation() {
     let mut session = Session::new().unwrap();
+    let ratio = session.eval("(let [f /] (f 4))").unwrap();
+    session.collect().unwrap();
+    let mut decoder = exact_observations::Decoder::capture_numeric(&mut session,10000).unwrap();
+    assert_eq!(decoder.decode_session(&mut session,&ratio).unwrap(),
+        exact_observations::Observation::Ratio("1".into(),"4".into()));
     for (source, expected) in [
         ("(let [f +] (f))", 0.0),
         ("(let [f *] (f))", 1.0),
         ("(let [f +] (f 1 2))", 3.0),
         ("(let [f *] (f 2 3 4))", 24.0),
         ("(let [f -] (f 0))", 0.0),
-        ("(let [f /] (f 4))", 0.25),
         ("((if false + *) 2 3)", 6.0),
     ] {
         assert_eq!(

@@ -1,0 +1,17 @@
+Running as unit: run-p738446-i88795339.scope; invocation ID: 12a822d40dde484f9fbf24fc1e59a5d6
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/suss",
+    "run",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-before-84/before.wasm",
+    "--invoke",
+    "literal",
+    "--",
+    "0"
+  ],
+  "exit_code": 1,
+  "seconds": 0.14013004302978516,
+  "stdout": "",
+  "stderr": "Error: Failed to call 'literal': error while executing at wasm backtrace:\n    0:  0x5ec1c - <unknown>!<wasm function 23>\n    1:  0x60925 - <unknown>!<wasm function 13>\n"
+}
+Frozen pre-Ratio compiler returns a rounded double for / and rejects the Ratio literal, as expected.

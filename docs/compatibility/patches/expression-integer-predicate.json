@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "74e5ab5c584965506e3382864c3e43c33d3cf67ce65ce2e881369b23c2fd505f",
-  "replacement": "(def integer?\n\"Returns true if n is an integer.\"\n(fn [n] (suss.bootstrap/long? n)))",
-  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Preserve the pinned parseFloat/parseInt predicate for binary64: finite integral values only, with strict magnitude below1e21 because ECMAScript number-to-string switches to exponent notation at that boundary and parseInt consumes its leading digit. This is the pinned contract, not a JVM or arbitrary-integer test. Coercion/object and mutable host-global interop remain unsupported."
+  "replacement": "(def integer?\n\"Returns true if n is an integer.\"\n(fn [n] (if (suss.bootstrap/bigint? n) true (suss.bootstrap/long? n))))",
+  "rationale": "Original Clojure integer-category adaptation: long, BigInt and BigInteger are integers; doubles are not, even when integral. Private immutable representation tests keep public predicate rebinding independent from dispatch. JVM Clojure1.12.6 is the numeric behavior oracle (ADR-0003, #338). No Java dependency is shipped."
 }

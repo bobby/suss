@@ -1316,3 +1316,147 @@ The focused checks also execute escaped groups after GC, a peer captured by a
 suspended future, and genuine macro binding/source snapshots. Numeric-only
 captures remain raw; recursive group/closure objects still allocate. These
 bounded observations do not establish complete escape or numeric-tower coverage.
+
+
+## Exact integer dispatch evidence
+
+[Integer receipts](../../results/m12-bigint-integers/README.md) record67 fresh
+JVM Clojure1.12.6 cases executed in both phases and actual AOT, plus renamed
+core-var promotion calls. Integers retain exact equality/order/hash and
+BigInteger's plain printing. Promoting arithmetic, checked/unchecked casts,
+runtime readers and signed quotient/remainder use GC-owned magnitudes. Numeric
+map-key equality spans small arrays and larger HAMTs, including public-var
+replacements. Source inlining preserves the oracle's nary evaluation order.
+The source-frozen focused/numeric/ABI/map/bootstrap gates pass156 tests, both
+bootstrap phases reproduce without Java, and import/helper manifests pass.
+These observations cover the retained cases; full Ratio values, exact generic
+division, rationalize, WIT integration and helper crossover remain outside them.
+They do not establish full numeric-tower acceptance or change inventory counts.
+
+
+## Exact Ratio execution evidence
+
+[Ratio receipts](../../results/m12-ratio-values/README.md) record88 fresh primary
+observations exercised in both phases and actual AOT, plus macro argument/result
+and retained-child GC checks. The preliminary five-target command passes41
+tests, including both existing BigInt matrices and runtime reader controls.
+Exact fraction dispatch preserves normalization, numeric categories, BigInteger
+projections and DECIMAL64 rounding on conversion to double. Runtime readers now
+produce Ratio values; Decimal retains its explicit unsupported boundary.
+Combined-source numeric/ABI/map/bootstrap checks, complete numeric-suite
+acceptance, WIT integration and the production helper crossover remain separate
+gates. These bounded observations do not change inventory counts.
+
+
+## Scalar constant declarations
+
+Top-level scalar :const declarations retain their initialized value in a
+compiler-private revision cell. Ordinary redefinitions remain live; existing
+compiled readers retain the preceding constant. Source primitive classes remain
+separate from physical boxing for method-return and local-hint diagnostics.
+`results/m12-constant-definitions` retains primary JVM values/diagnostics,
+Runtime/Macro/AOT checks, original failures and source-qualified suite captures.
+Computed/collection constants and nested definitions involving constants remain
+explicit unsupported diagnostics. These probes do not change inventory counts
+or establish numeric-suite acceptance; newly executed failures remain failures.
+
+The final constant fixture executes19 primary values in Runtime/Macro and
+actual AOT, retaining primitive diagnostics in both phases. The source-qualified
+suite capture adds1202 primary matches and loads29 namespaces; all459 actual
+failures,2712 unexecuted assertions and92 failed namespaces stay explicit in
+the reviewed baseline. Existing loaded namespaces have no changed assertion
+outcomes. That capture predates native numeric class identities below.
+Decimal-dependent assertions and platform narrow-type/character differences
+remain failures.
+
+## Numeric type identities
+
+Long, Double, BigInt, BigInteger and Ratio have canonical, non-callable native
+class values, alongside Number and Class. BigDecimal has a class value only;
+it does not supply Decimal instances in ABI10. The original class/ifn? adapters
+expose actual constructor identity and portable invocation capability. Numeric
+protocol dispatch checks the concrete class and Number inheritance before its
+existing native/default fallback, keeping different receiver classes separate
+in caches. No JVM dependency or general Java interop is introduced.
+
+`results/m12-numeric-classes` retains24 basic fresh JVM cases in Runtime/Macro/
+actual AOT, five protocol cases in those routes and eight extension/GC steps
+in both phases. Twelve required exact-operand behaviors execute on both raw
+long-parameter and boxed paths, with Wasm signature checks and actual AOT.
+The unchanged suite adds25 host matches and seven guest judgments, with zero
+changed assertions in previously loaded namespaces:3739 host/61 guest/459
+failures/2680 unexecuted/90 failed namespaces. BigInt's18 assertions execute;
+four primary opaque-Class recordings remain guest-judged, supplemented by
+independent fresh JVM boolean controls. The primary reference and skips are
+unchanged. That capture predates the native EDN refinement below. Captured protocol
+functions after extension remain a recorded JVM divergence. Inventory counts
+and full namespace/import support are not inferred from these checks.
+
+## Exact native EDN and analyzer data
+
+Native tooling EDN retains BigInt and Ratio values directly and prints their
+canonical numeric tokens. Its structural Value model retains categories;
+runtime numeric equality is unchanged. Reader key identity coalesces Long and
+BigInt, including nested keys, and the printer rejects data that could not read
+back because of duplicate numeric keys or an integral Ratio representation.
+Serde retains supported signed/unsigned128-bit integer bits and explicitly
+rejects unsupported exact representations. Decimal values and their source
+carriers remain separate; existing conversion still recognizes validated
+legacy exact-number tags.
+
+BigInt/Ratio analyzer literals expose const-node val/type data. Numeric class
+references emit dotted class names instead of invalid slash-qualified vars.
+`results/m12-native-edn` records17 fresh JVM EDN cases, five duplicate-key
+controls,78 reader tests,11 final analyzer checks and29 final decoder/hook
+checks, plus numeric Runtime/Macro/AOT matrices and Java/Node-free bootstrap
+reproduction. Every workspace test target compiles. The full vendored capture
+retains4247 raw assertions and exactly the existing3739/61/459/2680 counts and90
+failed namespaces, with zero changed assertion or namespace diagnostics. No
+baseline, primary reference or skip change accompanies the EDN refinement.
+The expanded25-case class matrix adds independent unequal-class and distinct
+class-key controls. Broader interop and captured-protocol limits remain explicit;
+these observations do not reclassify inventory declarations.
+
+
+Thirty isolated controls also replay exact-number forms whose original cast
+tests remain blocked by whole-test count guards. They match fresh vendored JVM
+assertion reports in Runtime/Macro/actual AOT. The separate Float class form
+has no Suss equivalent under ADR-0003; its primary pass and platform limit stay
+explicit. No original count-guarded row is relabeled as a suite pass.
+
+## BigInteger compiler-data carrier
+
+The reserved `#suss/biginteger "decimal"` carrier preserves native BigInteger
+macro constants through canonical EDN and emitted source, within and beyond
+Long range. Compiler selection normalizes it to the existing exact datum;
+ordinary runtime printing stays plain. Native EDN and both shipped readers
+use the same decimal-string contract and preserve configured reader precedence.
+Unknown tags and malformed carriers remain errors. The accepted reader design
+records this additional built-in tag.
+
+`results/m12-promotion-fixes` retains the independent Ratio precision and
+BigInteger reconstruction failures. Exact unchecked-negate and the BigInteger
+abs-category fix pass33 fresh JVM cases in Runtime/Macro/actual AOT. Carrier
+controls add23 cases in those routes.80 reader,50 CLI and88 compiler/ABI checks
+pass, along with bootstrap reproduction and both manifests. The unchanged
+4247-row capture has zero outcome/diagnostic changes and needs no baseline
+rewrite. Inventory counts remain unchanged; the original reader helper adds
+no copied upstream body or Java dependency.
+
+
+Numeric class integration controls in `results/m12-class-integration` derive
+`nth` unsupported-number messages and Class-call evaluation order from fresh
+Clojure1.12.6. Numeric Classes are rejected before call arguments; callee effects
+and explicit `apply` argument effects are retained. Constructor-property
+formatting remains a separate platform adaptation for nonnumeric values.
+The original sorted-tree CLJS corpus is preserved; its scalar set callback's
+numeric diagnostic is checked against the primary `nth` message.
+
+
+The pre-argument Class rejection is emitted inline from a physical descriptor
+check. It reuses the canonical error descriptor and a pooled message while
+allocating a fresh error object. The unchanged calling-convention controls
+still require no argument array or runtime invoke at the call site and only
+the entry-cache lookup helper. `results/m12-class-call-inline` retains the
+original failed CI log, fresh JVM exception identity control and executed
+regressions; runtime globals/shared types/layouts are unchanged.

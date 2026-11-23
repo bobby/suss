@@ -323,7 +323,7 @@ fn functions_and_types_print_while_methods_exist() {
     check_after(
         &[PRINT_METHODS[0], PRINT_METHODS[2], PRINT_METHODS[4]],
         &[
-            ("(pr-str [(type 1) (type []) T])", "[#object[Number] suss.core.PersistentVector user.printing.T]"),
+            ("(pr-str [(type 1) (type []) T])", "[java.lang.Long suss.core.PersistentVector user.printing.T]"),
             ("(apply str (take 11 (pr-str [(T. inc)])))", "[#t #object"),
             ("(do (remove-method print-method :default) (pr-str [inc]))", "[#object[cljs$core$inc]]"),
         ],

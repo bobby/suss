@@ -1,0 +1,648 @@
+{
+  "reference_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "counts": [
+    {
+      "category": "count-guarded",
+      "decimal": false,
+      "count": 31
+    },
+    {
+      "category": "known-failure",
+      "decimal": true,
+      "count": 59
+    }
+  ],
+  "rows": [
+    {
+      "id": "clojure.core-test.byte/test-byte#6",
+      "form": "(= 1 (byte 1N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#7",
+      "form": "(= 0 (byte 0N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#8",
+      "form": "(= -1 (byte -1N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#15",
+      "form": "(= 1 (byte 3/2))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#16",
+      "form": "(= -1 (byte -3/2))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#17",
+      "form": "(= 0 (byte 1/10))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.byte/test-byte#18",
+      "form": "(= 0 (byte -1/10))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.double/test-double#4",
+      "form": "(= (double 1.0) (double 1N))",
+      "reason": "count:15/19",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.double/test-double#5",
+      "form": "(= (double 0.0) (double 0N))",
+      "reason": "count:15/19",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.double/test-double#6",
+      "form": "(= (double -1.0) (double -1N))",
+      "reason": "count:15/19",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.double/test-double#18",
+      "form": "(instance? java.lang.Double (double 0N))",
+      "reason": "count:15/19",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.float/test-float#4",
+      "form": "(= (float 1.0) (float 1N))",
+      "reason": "count:19/23",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.float/test-float#5",
+      "form": "(= (float 0.0) (float 0N))",
+      "reason": "count:19/23",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.float/test-float#6",
+      "form": "(= (float -1.0) (float -1N))",
+      "reason": "count:19/23",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.float/test-float#22",
+      "form": "(instance? java.lang.Float (float 0N))",
+      "reason": "count:19/23",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.gt/test->#37",
+      "form": "(= true (> 1.0M 0N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.gt/test->#38",
+      "form": "(= true (> 0.0M -1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#37",
+      "form": "(= true (>= 1.0M 0N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.gt-eq/test->=#38",
+      "form": "(= true (>= 0.0M -1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.int/test-int#6",
+      "form": "(= 1 (int 1N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#7",
+      "form": "(= 0 (int 0N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#8",
+      "form": "(= -1 (int -1N))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#17",
+      "form": "(= 1 (int 3/2))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#18",
+      "form": "(= -1 (int -3/2))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#19",
+      "form": "(= 0 (int 1/10))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.int/test-int#20",
+      "form": "(= 0 (int -1/10))",
+      "reason": "count:27/28",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.integer-qmark/test-integer?#23",
+      "form": "(= false (integer? 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.integer-qmark/test-integer?#24",
+      "form": "(= false (integer? 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.integer-qmark/test-integer?#25",
+      "form": "(= false (integer? -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.list/test-list#29",
+      "form": "(= (quote (1 2.5 3N 4M)) (list 1 2.5 3N 4M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.long/test-long#6",
+      "form": "(= 1 (long 1N))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#7",
+      "form": "(= 0 (long 0N))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#8",
+      "form": "(= -1 (long -1N))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#17",
+      "form": "(= 1 (long 3/2))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#18",
+      "form": "(= -1 (long -3/2))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#19",
+      "form": "(= 0 (long 1/10))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#20",
+      "form": "(= 0 (long -1/10))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#21",
+      "form": "(p/thrown? (long -9223372036854775809N))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.long/test-long#22",
+      "form": "(p/thrown? (long 9223372036854775808N))",
+      "reason": "count:25/26",
+      "category": "count-guarded",
+      "decimal": false
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#37",
+      "form": "(= true (< 0N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.lt/test-<#38",
+      "form": "(= true (< -1N 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#37",
+      "form": "(= true (<= 0N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.lt-eq/test-<=#38",
+      "form": "(= true (<= -1N 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.ratio-qmark/test-ratio?#17",
+      "form": "(= false (ratio? 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.ratio-qmark/test-ratio?#18",
+      "form": "(= false (ratio? 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.ratio-qmark/test-ratio?#19",
+      "form": "(= false (ratio? -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rational-qmark/test-rational?#9",
+      "form": "(= true (rational? 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rational-qmark/test-rational?#10",
+      "form": "(= true (rational? 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rational-qmark/test-rational?#11",
+      "form": "(= true (rational? -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rationalize/test-rationalize#10",
+      "form": "(let [x' (rationalize 1.0M)] (and (= 1 x') (or (integer? x') (ratio? x'))))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rationalize/test-rationalize#11",
+      "form": "(let [x' (rationalize 0.0M)] (and (= 0 x') (or (integer? x') (ratio? x'))))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rationalize/test-rationalize#15",
+      "form": "(let [x' (rationalize 1.5M)] (and (= 3/2 x') (or (integer? x') (ratio? x'))))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.rationalize/test-rationalize#16",
+      "form": "(let [x' (rationalize 1.1M)] (and (= 11/10 x') (or (integer? x') (ratio? x'))))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#67",
+      "form": "(= 2.0M (/ 2N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#68",
+      "form": "(= 1.0M (/ 2N 2.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#69",
+      "form": "(= 3.0M (/ 15N 5.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#70",
+      "form": "(= 5.0M (/ 15N 3.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#71",
+      "form": "(= 7.5M (/ 15N 2.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#72",
+      "form": "(= 2.0M (/ 2.0M 1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#73",
+      "form": "(= 1.0M (/ 2.0M 2N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#74",
+      "form": "(= 3.0M (/ 15.0M 5N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#75",
+      "form": "(= 5.0M (/ 15.0M 3N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#76",
+      "form": "(= 7.5M (/ 15.0M 2N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#104",
+      "form": "(= 4M (/ 2.0M 1/2))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.slash/test-slash#105",
+      "form": "(= 0.25M (/ 1/2 2.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#104",
+      "form": "(= 0.0M (*' 0N 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#105",
+      "form": "(= 0.0M (*' 1N 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#106",
+      "form": "(= 0.0M (*' 0N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#107",
+      "form": "(= 1.0M (*' 1N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#108",
+      "form": "(= 5.0M (*' 1N 5.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#109",
+      "form": "(= 5.0M (*' 5N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#110",
+      "form": "(= 25.0M (*' 5N 5.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#111",
+      "form": "(= -1.0M (*' 1N -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#112",
+      "form": "(= -1.0M (*' -1N 1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#113",
+      "form": "(= 1.0M (*' -1N -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#114",
+      "form": "(= 0.0M (*' -1N 0.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#115",
+      "form": "(= 0.0M (*' 0N -1.0M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#116",
+      "form": "(= 0.0M (*' 0.0M 0N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#117",
+      "form": "(= 0.0M (*' 1.0M 0N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#118",
+      "form": "(= 0.0M (*' 0.0M 1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#119",
+      "form": "(= 1.0M (*' 1.0M 1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#120",
+      "form": "(= 5.0M (*' 1.0M 5N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#121",
+      "form": "(= 5.0M (*' 5.0M 1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#122",
+      "form": "(= 25.0M (*' 5.0M 5N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#123",
+      "form": "(= -1.0M (*' 1.0M -1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#124",
+      "form": "(= -1.0M (*' -1.0M 1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#125",
+      "form": "(= 1.0M (*' -1.0M -1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#126",
+      "form": "(= 0.0M (*' -1.0M 0N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.star-squote/test-*'#127",
+      "form": "(= 0.0M (*' 0.0M -1N))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    },
+    {
+      "id": "clojure.core-test.vector/test-vector#24",
+      "form": "(= [1 2.5 3N 4M] (vector 1 2.5 3N 4M))",
+      "reason": "kind:error",
+      "category": "known-failure",
+      "decimal": true
+    }
+  ],
+  "required_function_non_decimal_failures": []
+}

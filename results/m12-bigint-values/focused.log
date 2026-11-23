@@ -1,0 +1,50 @@
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 20s
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 3 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... FAILED
+test macro_arguments_and_results_are_real_bigints ... FAILED
+test aot_executes_the_bigint_matrix ... FAILED
+
+failures:
+
+---- bigint_literals_and_signed_arithmetic_execute_in_both_phases stdout ----
+
+thread 'bigint_literals_and_signed_arithmetic_execute_in_both_phases' (361254) panicked at crates/suss-cli/tests/clojure_bigints.rs:23:45:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[40]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 38948: type mismatch: expected (ref $type), found (ref null $type)
+)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- macro_arguments_and_results_are_real_bigints stdout ----
+
+thread 'macro_arguments_and_results_are_real_bigints' (361289) panicked at crates/suss-cli/tests/clojure_bigints.rs:37:44:
+called `Result::unwrap()` on an `Err` value: Host(failed to compile: wasm[0]::function[40]
+
+Caused by:
+    0: WebAssembly translation error
+    1: Invalid input WebAssembly code at offset 38948: type mismatch: expected (ref $type), found (ref null $type)
+)
+
+---- aot_executes_the_bigint_matrix stdout ----
+
+thread 'aot_executes_the_bigint_matrix' (361253) panicked at crates/suss-cli/tests/clojure_bigints.rs:97:5:
+Compilation error: Semantic error: Host error: failed to compile: wasm[0]::function[40]
+
+
+
+failures:
+    aot_executes_the_bigint_matrix
+    bigint_literals_and_signed_arithmetic_execute_in_both_phases
+    macro_arguments_and_results_are_real_bigints
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.47s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_bigints`

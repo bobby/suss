@@ -1,0 +1,19 @@
+[package]
+name = "bigint-helper"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Standalone measurement input (#338), built for wasm32-unknown-unknown with
+# runtime/numeric's toolchain and profile; not shipped.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+strip = true
+lto = true
+codegen-units = 1

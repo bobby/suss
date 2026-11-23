@@ -1,0 +1,64 @@
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 09s
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_bigint_integers-4dcb6def4fe06044)
+
+running 2 tests
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.74s
+
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 4 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test aot_executes_the_bigint_matrix ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.43s
+
+     Running tests/clojure_longs_doubles.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/clojure_longs_doubles-b20af55549af3a5c)
+
+running 14 tests
+test contagion_and_predicates_distinguish_longs_from_doubles ... ok
+test case_matches_numbers_only_within_their_kind ... ok
+test double_contagion_reaches_every_arithmetic_function ... ok
+test counts_narrow_as_clojure_casts_to_long ... ok
+test doubles_print_as_java_does ... ok
+test double_quot_and_rem_truncate_through_a_long ... ok
+test integral_counts_are_longs ... ok
+test integer_division_follows_clojure ... ok
+test long_arithmetic_is_exact_and_checked ... ok
+test long_min_value_quotients_and_ratio_terms_need_bigints ... ok
+test ranges_reach_the_ends_of_the_long_range ... ok
+test reading_keeps_longs_exact_and_distinct_from_doubles ... ok
+test rest_arguments_count_from_long_zero ... ok
+test macro_data_preserves_longs_and_doubles ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.32s
+
+     Running tests/read_string.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-target/debug/deps/read_string-5b8c1f93159a4a82)
+
+running 16 tests
+test anonymous_functions_and_syntax_quote_expand_as_the_compiler_expands_them ... ok
+test both_readers_agree_with_the_compilers_reader_on_the_shared_corpus ... ok
+test components_read_without_a_compiler_or_host_reader ... ok
+test errors_are_catchable_and_carry_their_position ... ok
+test exact_numeric_literals_pass_through_macros ... ok
+test macros_can_read_at_expansion_time ... ok
+test malformed_input_fails_with_the_compilers_message_and_position ... ok
+test exact_numeric_literals_execute_or_preserve_unsupported_boundaries ... ok
+test nesting_depth_is_bounded_and_catchable ... ok
+test printed_data_reads_back_equal ... ok
+test reader_conditionals_need_opts_as_in_clojure ... ok
+test reading_is_charged_to_the_callers_fuel ... ok
+test read_string_follows_clojure ... ok
+test suss_edn_follows_clojure_edn ... ok
+test tags_and_record_literals_follow_clojure ... ok
+test the_repl_and_script_files_read ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.33s
+

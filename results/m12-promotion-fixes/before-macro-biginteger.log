@@ -1,0 +1,27 @@
+Running as unit: run-p1956520-i90026617.scope; invocation ID: 51110daa8de3445cab036c24138093f5
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.05s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 1 test
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... FAILED
+
+failures:
+
+---- macro_biginteger_constants_keep_their_category_in_emitted_source stdout ----
+
+thread 'macro_biginteger_constants_keep_their_category_in_emitted_source' (1956617) panicked at crates/suss-cli/tests/analyzer_edn.rs:12:33:
+/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli/../../target/macro-biginteger.sus: /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli/../../target/macro-biginteger.sus: No reader function for tag suss/exact-number at bytes 93..115
+(ns macrointeger.probe)
+(suss.core/defmacro asbig ([] (suss.core/biginteger 1)))
+(def result #suss/exact-number "1")
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    macro_biginteger_constants_keep_their_category_in_emitted_source
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 1.62s
+
+error: test failed, to rerun pass `-p suss-cli --test analyzer_edn`

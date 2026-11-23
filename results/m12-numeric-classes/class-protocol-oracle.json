@@ -1,0 +1,20 @@
+[
+  {
+    "source": "(defprotocol P (p [x])) (extend-type Class P (p [x] :class)) (prn (mapv p [Long Double Class]))",
+    "stdout": "P\n[:class :class :class]\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "source": "(defprotocol P (p [x])) (extend-type Class P (p [x] :class)) (def old p) (prn (old Long))",
+    "stdout": "P\n#'user/old\n:class\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "source": "(defprotocol P (p [x])) (extend-type Number P (p [x] :number)) (def old p) (prn (old 1)) (extend-type Class P (p [x] :class)) (prn (old Long))",
+    "stdout": "P\n#'user/old\n:number\n",
+    "stderr": "Execution error (IllegalArgumentException) at user/eval143$fn$G (REPL:1).\nNo implementation of method: :p of protocol: #'user/P found for class: java.lang.Class\n\nFull report at:\n/tmp/clojure-1192390019996127804.edn\n",
+    "exit_code": 1
+  }
+]

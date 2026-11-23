@@ -524,6 +524,14 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             method_set = method_function;
         }
     }
+    // Numeric classes inherit portable protocol extensions from Number. Keep
+    // constructor-cache/private-key lookups on the raw descriptor getter.
+    let class_method_get = b.function_with_locals("protocol-class-method-get", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &[
+        LocalGet(0), LocalGet(1), Call(method_get), LocalTee(2), sentinel_value(NIL), RefEq,
+        LocalGet(2), sentinel_value(UNDEFINED), RefEq, I32Or, If(BlockType::Empty),
+        LocalGet(0), Call(b.names["numeric-class-index"]), I32Const(6), I32LtU, If(BlockType::Empty),
+        GlobalGet(numeric_classes::ROOT + 6), LocalGet(1), Call(method_get), Return, End, End, LocalGet(2),
+    ]);
     let constructor = invoke_body(b, &[LocalGet(0), LocalGet(1), Call(object_new)]);
     // Dispatch always consults the live table, including for previously created
     // instances and previously captured dispatchers.
@@ -547,6 +555,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         ("protocol-dispatcher-new", dispatcher, 1),
     ] {
         let mut body = vec![];
+        if name == "constructor-new" {
+            body.extend([LocalGet(0), Call(b.names["numeric-class-index"]), I32Const(0), I32GeS, If(BlockType::Empty)]);
+            error(&mut body);
+            body.push(End);
+        }
         guard(&mut body, 0, DESCRIPTOR);
         get(&mut body, 0, DESCRIPTOR, 1);
         body.push(LocalSet(2));
@@ -586,7 +599,9 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         );
     }
     // closure-environment rejects a non-closure with the same error (#378).
-    let mut body = vec![LocalGet(0), Call(b.names["closure-environment"])];
+    let mut body = vec![LocalGet(0), Call(b.names["numeric-class-index"]), I32Const(0), I32GeS,
+        If(BlockType::Empty), LocalGet(0), Return, End,
+        LocalGet(0), Call(b.names["closure-environment"])];
     body.push(LocalSet(1));
     guard(&mut body, 1, DESCRIPTOR);
     body.push(LocalGet(1));
@@ -635,6 +650,8 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &[VALUE],
         &[ValType::I32],
         &[
+            LocalGet(0), Call(b.names["numeric-class-index"]), I32Const(0), I32GeS,
+            If(BlockType::Empty), I32Const(1), Return, End,
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(4)),
             If(BlockType::Result(ValType::I32)),
@@ -654,7 +671,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         Call(b.names["class-value-is"]),
         If(BlockType::Empty),
         LocalGet(0),
-        Call(b.names["closure-environment"]),
+        Call(b.names["constructor-descriptor"]),
         RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
         StructGet {
             struct_type_index: DESCRIPTOR,
@@ -686,6 +703,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     }
     body.push(sentinel_value(NIL));
     b.function_with_locals("class-value-name", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    numeric_classes::protocol_descriptor_function(b);
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
     body.extend([
@@ -723,14 +741,12 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         I32Const(0),
         Call(protocol_key),
         LocalSet(2),
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(OBJECT)),
-        If(BlockType::Result(ValType::I32)),
+        LocalGet(1), Call(b.names["protocol-value-descriptor"]), LocalTee(3), RefIsNull, I32Eqz,
+        If(BlockType::Result(ValType::I32)), LocalGet(3),
     ]);
-    get(&mut body, 1, OBJECT, 0);
     body.extend([
         LocalGet(2),
-        Call(method_get),
+        Call(class_method_get),
         GlobalGet(SENTINEL_GLOBAL),
         RefEq,
         Else,
@@ -741,30 +757,29 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         "protocol-satisfies",
         &[VALUE, VALUE],
         &[ValType::I32],
-        &[(1, VALUE)],
+        &[(2, VALUE)],
         &body,
     );
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
     body.extend([
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(OBJECT)),
-        If(BlockType::Result(ValType::I32)),
+        LocalGet(1), Call(b.names["protocol-value-descriptor"]), LocalTee(2), RefIsNull, I32Eqz,
+        If(BlockType::Result(ValType::I32)), LocalGet(2),
     ]);
-    get(&mut body, 1, OBJECT, 0);
     body.extend([
         LocalGet(0),
-        Call(method_get),
+        Call(class_method_get),
         GlobalGet(SENTINEL_GLOBAL),
         RefEq,
         Else,
         I32Const(0),
         End,
     ]);
-    b.function(
+    b.function_with_locals(
         "protocol-marker-satisfies",
         &[VALUE, VALUE],
         &[ValType::I32],
+        &[(1, VALUE)],
         &body,
     );
     // The source constructor follows the pin's JS constructor convention: all
@@ -848,7 +863,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &body,
     );
     let native_functions =
-        native_protocols::functions(b, generic_invoke, method_get, object_descriptor);
+        native_protocols::functions(b, generic_invoke, class_method_get, object_descriptor);
     let mut functions = vec![constructor, dispatcher, ordinary_type, source_constructor];
     functions.extend(native_functions);
     functions

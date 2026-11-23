@@ -1,0 +1,8 @@
+{
+  "commands_receipt": "compiled-bench.json",
+  "files": {
+    "target/probe/m12-compiled-bigint-bench/validation.sus": "b38fb2036969c50d8de40aedb4714230c287b91383a6f60ad1eece60cde57a0c",
+    "target/probe/m12-compiled-bigint-bench/validation.wit": "f8535fd9eee3596a49580bc857db4ab57bc1711be9d74be03d881eb000007b27",
+    "target/probe/m12-compiled-bigint-bench/validation.wasm": "04fb240a2976fc8ab1c78cd754c3d44178f33666c5dcd24c6a40c0d42ad80c53"
+  }
+}

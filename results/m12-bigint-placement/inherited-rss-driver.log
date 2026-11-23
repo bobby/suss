@@ -1,0 +1,26 @@
+Running as unit: run-p268667-i88335880.scope; invocation ID: da66667ce40c433e89de491d8a4d47a0
+add 1 {'control': 34.0, 'linear_control': 13.0, 'gc_add': 369.34, 'bridge_add': 512.55, 'linear_add': 114.0}
+mul 1 {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 373.34, 'bridge_mul': 592.55, 'linear_mul': 197.0}
+add 2 {'control': 34.0, 'linear_control': 13.0, 'gc_add': 452.32, 'bridge_add': 624.53, 'linear_add': 134.0}
+mul 2 {'control': 34.0, 'linear_control': 13.0, 'gc_mul': 633.99, 'bridge_mul': 805.31, 'linear_mul': 282.0}
+add 4 {'control': 34.0, 'linear_control': 13.0, 'gc_add': 621.98, 'bridge_add': 852.31, 'linear_add': 174.0}
+mul 4 {'control': 34.0, 'linear_control': 13.01, 'gc_mul': 1544.6, 'bridge_mul': 1323.0, 'linear_mul': 551.03}
+add 8 {'control': 34.0, 'linear_control': 13.01, 'gc_add': 954.69, 'bridge_add': 1301.12, 'linear_add': 254.0}
+mul 8 {'control': 34.05, 'linear_control': 13.02, 'gc_mul': 4955.98, 'bridge_mul': 2778.7, 'linear_mul': 1502.96}
+add 32 {'control': 34.01, 'linear_control': 12.99, 'gc_add': 2983.29, 'bridge_add': 4026.38, 'linear_add': 733.98}
+mul 32 {'control': 33.07, 'linear_control': 14.39, 'gc_mul': 69786.4, 'bridge_mul': 22960.35, 'linear_mul': 18654.07}
+add 128 {'control': 33.97, 'linear_control': 13.09, 'gc_add': 11071.86, 'bridge_add': 14901.81, 'linear_add': 2654.07}
+mul 128 {'control': 25.4, 'linear_control': 9.13, 'gc_mul': 1089489.83, 'bridge_mul': 299557.87, 'linear_mul': 283082.93}
+add 512 {'control': 33.76, 'linear_control': 12.94, 'gc_add': 43456.57, 'bridge_add': 58436.72, 'linear_add': 10333.95}
+mul 512 {'control': 33.3, 'linear_control': 6.9, 'gc_mul': 17333587.3, 'bridge_mul': 4539473.9, 'linear_mul': 4473962.1}
+array 2 [4.404301075268817, 4.492191784087929]
+array 3 [0.07519538421190664, 0.1289063729346971]
+array 5 [7.521978933078352, 7.35059207131201]
+array 9 [21.86428127032893, 22.1050041848466]
+array 16 [55.87505328660325, 54.70317716901509]
+array 33 [109.14658846529814, 109.12656891495601]
+array 64 [231.5751021389089, 230.90713084080062]
+array 129 [459.16942675159237, 459.4370080026131]
+array 256 [935.2157356412274, 929.6727616050354]
+array 513 [2069.2992, 2062.9504]
+array 1024 [4124.4672, 4113.408]

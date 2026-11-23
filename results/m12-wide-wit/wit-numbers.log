@@ -1,0 +1,29 @@
+Running as unit: run-p971140-i89024811.scope; invocation ID: 26dbe592446b49578b602346df306439
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 12.57s
+     Running tests/portable_aot_wit_numbers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-wide-wit-target/debug/deps/portable_aot_wit_numbers-4519ad6066fb8ea7)
+
+running 14 tests
+test aliased_long_types_and_option_and_list_schemas_keep_mixed_flat_positions ... ok
+test async_long_results_use_distinct_completion_indices_and_mixed_parameter_positions ... ok
+test boundary_checks_survive_public_core_redefinition has been running for over 60 seconds
+test exact_numeric_results_convert_at_float_boundaries has been running for over 60 seconds
+test exact_numeric_results_convert_at_float_boundaries ... ok
+test f32_results_from_longs_round_once ... ok
+test floats_cross_as_doubles_and_f32_rounds_when_leaving ... ok
+test boundary_checks_survive_public_core_redefinition ... ok
+test integers_cross_as_longs_at_every_range_boundary ... ok
+test integer_results_reject_other_categories_and_out_of_range_values has been running for over 60 seconds
+test long_options_round_trip_synchronously_and_asynchronously ... ok
+test numeric_lists_leave_from_vectors_and_matching_packed_arrays has been running for over 60 seconds
+test numeric_lists_leave_from_vectors_and_matching_packed_arrays ... ok
+test numeric_lists_round_trip_at_every_element_type_boundary ... ok
+test u64_accepts_bigint_results_through_the_entire_unsigned_range has been running for over 60 seconds
+test u64_accepts_bigint_results_through_the_entire_unsigned_range ... ok
+test u64_bigint_results_are_checked_without_truncation has been running for over 60 seconds
+test u64_bigint_results_are_checked_without_truncation ... ok
+test u64_values_cross_as_longs_or_exact_bigints ... ok
+test integer_results_reject_other_categories_and_out_of_range_values ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 956.18s
+

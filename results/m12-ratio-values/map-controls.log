@@ -1,0 +1,46 @@
+Running as unit: run-p780871-i88844244.scope; invocation ID: 1774c0d2e7774298b120013c7f163782
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.97s
+     Running tests/compiled_macro_hash_maps.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/compiled_macro_hash_maps-46f30530db6e2d1e)
+
+running 8 tests
+test compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases ... ok
+test compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition ... ok
+test compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth ... ok
+test compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values ... ok
+test compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_persistence ... ok
+test compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc ... ok
+test compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles ... ok
+test compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.01s
+
+     Running tests/compiled_macro_maps.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/compiled_macro_maps-3a211d59f7c25474)
+
+running 6 tests
+test compiled_macro_maps_evaluate_ordered_entries_and_stop_on_throw ... ok
+test compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound ... ok
+test compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+test compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover ... ok
+test compiled_macro_maps_transport_actual_entries_and_sequences_after_gc ... ok
+test compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.06s
+
+     Running tests/map_lookups.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/map_lookups-6bb0c2a9eb153e59)
+
+running 2 tests
+test persistent_keyword_updates_keep_snapshots_metadata_and_values_after_gc ... ok
+test lookups_answer_as_clojure_does ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.41s
+
+     Running tests/portable_hash_map_sharing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/portable_hash_map_sharing-3767cb7fa91e588f)
+
+running 3 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.79s
+

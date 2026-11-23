@@ -396,7 +396,7 @@ fn definition_and_namespace_diagnostics_are_located_and_transactional() {
         "(def foreign/value 3)",
         "(def value 1 2)",
         "(defonce value)",
-        "(def ^:const value 1)",
+        "(def ^:const value (+ 1 2))",
         "(ns app (:require missing))",
         "(ns app (:require [cljs.core :as a :as b]))",
         "(ns app (:require [cljs.core :rename {+ sum}]))",

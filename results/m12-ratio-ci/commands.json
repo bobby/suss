@@ -1,0 +1,77 @@
+{
+  "base": "84fece33",
+  "inputs": {
+    "crates/suss-cli/tests/compiled_export_param_hints.rs": "6b58c65b6ff0afe266bec71a91eb6fb5120c992398f306f99ba55cefcad4c72e",
+    "crates/suss-cli/tests/persistent_session.rs": "3f26cc9fedd6af58292a5721125ae0743a57bb040f11bdc0cec5290612d7bf85",
+    "crates/suss-cli/tests/portable_reduce_kv_fallback.rs": "d119085ba58e7d1be9c736b86d06327d446f766426a5fa1f56c0fb480fcc51aa",
+    "crates/suss-cli/tests/portable_reduction_dispatch.rs": "408b127dd35e432d10619df2aba95674305087a46ef811f6628418c5ac313466",
+    "crates/suss-compile/tests/portable_calling_convention.rs": "da6826ee6b406451fb583ad83f0c5eaef2894488f3a463ae456e8f9ee3e433ae",
+    "crates/suss-compile/tests/support/portable_compare.rs": "10c9049d75ab1a7284eeb1b35c447a58e9a491c03c7d3b56cc794cc9e4bae1fa",
+    "crates/suss-compile/tests/support/portable_decode.rs": "f7cf0cccb5173dd8b5b11d3260f45877e168fcc60c0819a5077331c5462df011",
+    "crates/suss-reader/src/forms.rs": "78320c3a1c83e2b3a7b755f02d72d79c678e1c5fafbbdf77e5cdc3223e73c6b5",
+    "docs/compatibility/bootstrap/exact-integers.sus": "0b8a8dd429d1c927402dd001cc0c45578ffd9c4836eff7dd8622a13886b1fdef",
+    "docs/compatibility/cases.json": "67a9b8b0c9cb3964c4f2b4eb2a8398e1ace57ebdb7583dd33d68a8d55ba94e07",
+    "docs/compatibility/core-import.json": "6229993f211cecd63450a6dfa21245e1dbf5dc2ab8912de6ab37f778692281aa",
+    "docs/roadmap/handoff.md": "b2c1a387be1c96f22b3884fcfd0baebc94f736508d1c9141f33a4e98fb00c536",
+    "reference/cljs-tests/core.sus": "ade6eccaf7aa6be2b133019dd5894c93988cbfda17945867bf4dadc40e99fbe8",
+    "runtime/core-import/manifest.json": "4a90d797e48ed036b1b53d1d98257eeac070a0f7ff8b06d928b3eee383394777",
+    "runtime/core-import/suss/core.sus": "082153615a19c1f13bedd0edaf7467a52d86e77190f5890af8c7525b2097c250",
+    "tests/oracle/clojure-test-suite-known-failures.json": "d60fb31d96fd469d88bfe34680b21cb326691e8bbbd21e78f2b13590f6d85885"
+  },
+  "commands": [
+    {
+      "command": "cargo test -p suss-reader --locked -- --test-threads=2",
+      "log": "reader.log",
+      "exit_code": 0,
+      "passed": 74,
+      "existing_ignored": 0
+    },
+    {
+      "command": "cargo test -p suss-cli --locked --test compiled_export_param_hints --test persistent_session --test portable_reduce_kv_fallback --test portable_reduction_dispatch -- --test-threads=2",
+      "log": "cli-controls.log",
+      "exit_code": 0,
+      "passed": 42,
+      "existing_ignored": 0
+    },
+    {
+      "command": "cargo test -p suss-compile --locked --test conformance --test portable_expression_conformance -- --test-threads=2",
+      "log": "legacy-controls.log",
+      "exit_code": 0,
+      "passed": 16,
+      "existing_ignored": 2
+    },
+    {
+      "command": "sh scripts/verify-bootstrap.sh",
+      "log": "bootstrap.log",
+      "exit_code": 0,
+      "passed": 4,
+      "existing_ignored": 0
+    },
+    {
+      "command": "python3 scripts/core_import.py --check",
+      "log": "core-import-check.log",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/numeric_runtime.py --check",
+      "log": "numeric-helper-check.log",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/clojure_test_suite.py overlap",
+      "log": "overlap.log",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 results/m12-ratio-suite/review.py",
+      "log": "review-check.log",
+      "exit_code": 0
+    }
+  ],
+  "complete": true,
+  "qualifications": [
+    "Legacy binaries precede the test-only minimal numeric-anchor helper, whose hashes are retained in legacy-inputs.json; the final full workspace command will verify the integrated head.",
+    "Earlier187-test gates precede restoration of the native tooling diagnostic.",
+    "Full workspace and final-head CI remain independent gates."
+  ]
+}

@@ -392,7 +392,7 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
 }
 
 #[test]
-fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases() {
+fn scalar_types_are_canonical_rooted_and_numeric_classes_are_not_callable() {
     let patch: serde_json::Value = serde_json::from_str(include_str!(
         "../../../docs/compatibility/patches/sorted-type.json"
     ))
@@ -407,11 +407,15 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
             .eval_privileged(patch["replacement"].as_str().unwrap())
             .unwrap();
         session.enter_namespace("user").unwrap();
-        session.eval("(def retained-type cljs.core/type) (def scalar-number-constructor (retained-type 7)) (def scalar-string-constructor (retained-type \"x\")) (def scalar-boolean-constructor (retained-type false)) (deftype ScalarTypeUndefinedProbe []) (def primitive-constructor-trace 0)").unwrap();
+        session.eval("(def retained-type cljs.core/type) (def scalar-number-class (retained-type 7)) (def scalar-double-class (retained-type ##NaN)) (def scalar-string-constructor (retained-type \"x\")) (def scalar-boolean-constructor (retained-type false)) (deftype ScalarTypeUndefinedProbe []) (def primitive-constructor-trace 0)").unwrap();
         for (original, aliases) in [
             (
-                "scalar-number-constructor",
-                ["(retained-type 8)", "(retained-type ##NaN)"],
+                "scalar-number-class",
+                ["(retained-type 8)", "(retained-type -8)"],
+            ),
+            (
+                "scalar-double-class",
+                ["(retained-type ##NaN)", "(retained-type 0.5)"],
             ),
             (
                 "scalar-string-constructor",
@@ -445,12 +449,12 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
         }
         boolean(
             &mut session,
-            "(identical? scalar-number-constructor scalar-string-constructor)",
+            "(identical? scalar-number-class scalar-string-constructor)",
             false,
         );
         boolean(
             &mut session,
-            "(identical? scalar-boolean-constructor scalar-number-constructor)",
+            "(identical? scalar-boolean-constructor scalar-number-class)",
             false,
         );
         boolean(
@@ -468,7 +472,7 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
         boolean(&mut session, "(identical? (cljs.core/type 1) nil)", true);
         boolean(
             &mut session,
-            "(identical? (retained-type 1) scalar-number-constructor)",
+            "(identical? (retained-type 1) scalar-number-class)",
             true,
         );
         boolean(
@@ -476,35 +480,11 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
             "(identical? (retained-type \"x\") scalar-string-constructor)",
             true,
         );
-        // JS Number() has no Clojure counterpart: like Clojure's double, it
-        // always gives a double (ToNumber), even for a long argument.
-        use suss_compile::portable_session::RuntimeNumber::{Double, Long};
-        for (source, expected) in [
-            ("(scalar-number-constructor)", Double(0.0)),
-            ("(scalar-number-constructor nil)", Double(0.0)),
-            ("(scalar-number-constructor true)", Double(1.0)),
-            ("(scalar-number-constructor \"16\")", Double(16.0)),
-            ("(scalar-number-constructor -0.0)", Double(-0.0)),
-            (
-                "(scalar-number-constructor (do (set! primitive-constructor-trace 1) 7) (do (set! primitive-constructor-trace (+ (* primitive-constructor-trace 10) 2)) 9))",
-                Double(7.0),
-            ),
-            ("primitive-constructor-trace", Long(12)),
-        ] {
-            let value = session.eval(source).unwrap();
-            session.collect().unwrap();
-            let actual = session
-                .inspect(&value, |store, value| {
-                    suss_compile::portable_session::runtime_number(store, &value)
-                })
-                .unwrap()
-                .expect("number");
-            match (actual, expected) {
-                (Double(actual), Double(expected)) => {
-                    assert_eq!(actual.to_bits(), expected.to_bits(), "{source}")
-                }
-                (actual, expected) => assert_eq!(actual, expected, "{source}"),
-            }
+        // Clojure numeric Class values are rooted identities, not conversions.
+        boolean(&mut session, "(identical? scalar-number-class scalar-double-class)", false);
+        for class in ["scalar-number-class", "scalar-double-class"] {
+            boolean(&mut session, &format!("(ifn? {class})"), false);
+            boolean(&mut session, &format!("(try ({class}) false (catch :default _ true))"), true);
         }
         for (source, expected) in [
             ("(scalar-string-constructor)", ""),
@@ -561,6 +541,6 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
         ] {
             boolean(&mut session, source, expected);
         }
-        boolean(&mut session, "(identical? (retained-type 1) scalar-number-constructor)", true);
+        boolean(&mut session, "(identical? (retained-type 1) scalar-number-class)", true);
     }
 }

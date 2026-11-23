@@ -1,0 +1,33 @@
+Running as unit: run-p1719874-i89766781.scope; invocation ID: 7163600bd7754dbaa06c53e3a6daebc9
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 32s
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/clojure_numeric_classes-934e6d9b058bb0e3)
+
+running 2 tests
+test aot_executes_numeric_classes ... FAILED
+test numeric_classes_match_in_runtime_and_macro ... FAILED
+
+failures:
+
+---- aot_executes_numeric_classes stdout ----
+
+thread 'aot_executes_numeric_classes' (1725519) panicked at crates/suss-cli/tests/clojure_numeric_classes.rs:48:5:
+Compilation error: Semantic error: While compiling probe.sus: Unresolved Runtime name ifn? at bytes 201..205
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- numeric_classes_match_in_runtime_and_macro stdout ----
+
+thread 'numeric_classes_match_in_runtime_and_macro' (1725520) panicked at crates/suss-cli/tests/clojure_numeric_classes.rs:11:57:
+ (pr-str (let [x 7 c (class x)] [(str c) (pr-str c) (= c (type x)) (instance? java.lang.Long x) (instance? java.lang.Number x) (instance? java.lang.Class c) (fn? c) (ifn? c) (meta c) (get {c :found} c)])): Unresolved Runtime name ifn? at bytes 166..170
+
+
+failures:
+    aot_executes_numeric_classes
+    numeric_classes_match_in_runtime_and_macro
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.64s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_numeric_classes`

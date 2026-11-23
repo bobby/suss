@@ -1,0 +1,72 @@
+Running as unit: run-p1821936-i89895011.scope; invocation ID: 3a8d3cbacf404a599538a2ff3cc9fcdc
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 8.05s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/suss_reader-10c228a0d621537c)
+
+running 31 tests
+test edn::source::tests::forms_convert_to_the_values_they_read_as ... ok
+test edn::source::tests::exact_number_tooling_data_emits_numeric_source_tokens ... ok
+test edn::source::tests::lone_surrogates_are_tagged_utf16 ... ok
+test edn::source::tests::metadata_merges_inner_first_and_round_trips ... ok
+test edn::source::tests::lines_end_at_any_line_terminator ... ok
+test edn::source::tests::printed_forms_keep_entry_order_and_read_back ... ok
+test forms::source_metadata::tests::indexed_positions_match_utf16_at_every_boundary_with_mixed_newlines ... ok
+test edn::source::tests::span_trees_follow_printed_order_with_lines_and_columns ... ok
+test forms::source_snapshot::tests::demand_snapshot_matches_indexed_reader_on_complete_sources_and_root_projection ... ok
+test forms::source_snapshot::tests::snapshot_cancellation_does_not_publish_partial_reader_facts ... ok
+test forms::source_snapshot::tests::unsupported_selection_metadata_and_anonymous_forms_require_explicit_fallback ... ok
+test parser::tests::test_parse_bool ... ok
+test parser::tests::test_parse_keyword ... ok
+test parser::tests::test_parse_list ... ok
+test parser::tests::test_parse_map ... ok
+test parser::tests::test_parse_metadata ... ok
+test parser::tests::test_parse_namespaced_keyword ... ok
+test parser::tests::test_parse_namespaced_symbol ... ok
+test parser::tests::test_parse_nested ... ok
+test parser::tests::test_parse_nil ... ok
+test parser::tests::test_parse_number ... ok
+test parser::tests::test_parse_quote ... ok
+test parser::tests::test_parse_set ... ok
+test parser::tests::test_parse_string ... ok
+test parser::tests::test_parse_symbol ... ok
+test parser::tests::test_parse_symbols_with_bang ... ok
+test parser::tests::test_parse_symbols_with_question_mark ... ok
+test parser::tests::test_parse_var_quote ... ok
+test parser::tests::test_parse_var_quote_namespaced ... ok
+test parser::tests::test_parse_vector ... ok
+test forms::source_metadata::tests::long_ascii_line_uses_constant_space_column_index ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/edn-e4e5deba504b0800)
+
+running 13 tests
+test code_only_syntax_and_unknown_tags_fail_with_spans ... FAILED
+test edn_conformance_with_the_compilers_reader ... ok
+test depth_and_size_are_bounded ... ok
+test integers_must_be_longs ... ok
+test pretty_printing_breaks_wide_collections_only ... ok
+test printing_is_byte_stable_across_processes ... ok
+test printing_is_canonical ... ok
+test read_one_requires_exactly_one_value ... ok
+test review_edge_cases_round_trip_or_fail_clearly ... ok
+test serde_types_round_trip_through_canonical_edn ... ok
+test tag_readers_and_defaults_follow_clojure_edn ... ok
+test unreadable_names_are_refused_rather_than_misprinted ... ok
+test every_printable_value_reads_back_equal_and_reprints_identically ... ok
+
+failures:
+
+---- code_only_syntax_and_unknown_tags_fail_with_spans stdout ----
+
+thread 'code_only_syntax_and_unknown_tags_fail_with_spans' (1822406) panicked at crates/suss-reader/tests/edn.rs:14:23:
+1/2 read as [Ratio(Ratio { numer: 1, denom: 2 })]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    code_only_syntax_and_unknown_tags_fail_with_spans
+
+test result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+error: test failed, to rerun pass `-p suss-reader --test edn`

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(require '[clojure.edn :as edn])\n(prn (edn/read-string \"[#_ {1N :a 2N :b} :kept]\"))\n(prn (edn/read-string \"[#_ #{1N 2N} :kept]\"))\n(prn (edn/read-string \"[#_ {1/2 :a 2/3 :b} :kept]\"))"
+  ],
+  "sources": [
+    "[#_ {1N :a 2N :b} :kept]",
+    "[#_ #{1N 2N} :kept]",
+    "[#_ {1/2 :a 2/3 :b} :kept]"
+  ],
+  "exit_code": 0,
+  "stdout": "[:kept]\n[:kept]\n[:kept]\n",
+  "stderr": ""
+}

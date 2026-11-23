@@ -1,6 +1,6 @@
 //! Original canonical list copy emission. Source storage is owned GC data;
 //! canonical element and nested-string buffers have explicit transfer ownership.
-use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar};
+use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar, HELPERS};
 use crate::runtime_abi;
 use wasm_encoder::{BlockType, Function, HeapType, Instruction, MemArg};
 
@@ -181,7 +181,7 @@ pub(super) fn copy_in(
             End,
             LocalGet(locals.length),
             ArrayNewDefault(runtime_abi::ARGS),
-            Call(10),
+            Call(HELPERS + 4),
             LocalSet(locals.array),
         ],
     );
@@ -198,7 +198,7 @@ pub(super) fn copy_in(
         ListElement::Scalar(ty) => {
             address(body, locals.pointer, locals.index, element);
             body.instruction(&load(ty));
-            lift_scalar(body, &ty, locals.sentinels, locals.wide, locals.scratch, export);
+            lift_scalar(body, &ty, locals.sentinels, locals.wide);
         }
         ListElement::String => {
             address(body, locals.pointer, locals.index, element);
@@ -209,7 +209,7 @@ pub(super) fn copy_in(
             body.instruction(&LocalGet(locals.value));
         }
     }
-    emit(body, &[Call(11), Drop]);
+    emit(body, &[Call(HELPERS + 5), Drop]);
     end(body, locals.index);
     schema(body, root, 0, locals.array, None);
 }
@@ -221,7 +221,7 @@ fn release(body: &mut Function, element: ListElement, locals: &Locals) {
         address(body, locals.pointer, locals.index, element);
         body.instruction(&I32Load(memory(0, 2)));
         address(body, locals.pointer, locals.index, element);
-        emit(body, &[I32Load(memory(4, 2)), I32Const(2), I32Mul, Call(9)]);
+        emit(body, &[I32Load(memory(4, 2)), I32Const(2), I32Mul, Call(HELPERS + 3)]);
         end(body, locals.index);
     }
     emit(
@@ -231,7 +231,7 @@ fn release(body: &mut Function, element: ListElement, locals: &Locals) {
             LocalGet(locals.length),
             I32Const(size(element)),
             I32Mul,
-            Call(9),
+            Call(HELPERS + 3),
         ],
     );
 }
@@ -279,7 +279,7 @@ fn allocate(body: &mut Function, element: ListElement, locals: &Locals) {
             LocalGet(locals.length),
             I32Const(size(element)),
             I32Mul,
-            Call(8),
+            Call(HELPERS + 2),
             LocalSet(locals.output),
         ],
     );

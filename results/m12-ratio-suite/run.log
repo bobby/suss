@@ -1,0 +1,121 @@
+Running as unit: run-p748216-i88784811.scope; invocation ID: 896e20d69da14b74b75f6be41832fd39
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=266 guest-judged=54 namespaces-failed=121 not-executed=4107 pass=2512 skipped=0
+namespaces clojure.core-test.denominator: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.denominator (Some("<root>/clojure/core_test/denominator.cljc")): Unresolved Runtime name denominator at bytes 239..685'}, observed None
+namespaces clojure.core-test.numerator: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.numerator (Some("<root>/clojure/core_test/numerator.cljc")): Unresolved Runtime name numerator at bytes 233..788'}, observed None
+namespaces clojure.core-test.rationalize: expected {'stage': 'namespace', 'diagnostic': 'clojure.core-test.rationalize (Some("<root>/clojure/core_test/rationalize.cljc")): Unresolved Runtime name rationalize at bytes 230..1558'}, observed None
+assertions clojure.core-test.compare/test-compare#8: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#39: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#40: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#41: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#42: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#43: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#44: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#45: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#46: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#47: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#48: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#49: expected 'kind:error', observed None
+assertions clojure.core-test.gt-eq/test->=#50: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#39: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#40: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#41: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#42: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#43: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#44: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#45: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#46: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#47: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#48: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#49: expected 'kind:error', observed None
+assertions clojure.core-test.gt/test->#50: expected 'kind:error', observed None
+assertions clojure.core-test.ident-qmark/test-ident?#13: expected 'kind:error', observed None
+assertions clojure.core-test.keyword-qmark/test-keyword?#13: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#39: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#40: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#41: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#42: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#43: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#44: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#45: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#46: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#47: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#48: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#49: expected 'kind:error', observed None
+assertions clojure.core-test.lt-eq/test-<=#50: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#39: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#40: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#41: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#42: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#43: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#44: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#45: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#46: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#47: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#48: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#49: expected 'kind:error', observed None
+assertions clojure.core-test.lt/test-<#50: expected 'kind:error', observed None
+assertions clojure.core-test.max/test-max#11: expected 'kind:error', observed None
+assertions clojure.core-test.min/test-min#11: expected 'kind:error', observed None
+assertions clojure.core-test.qualified-ident-qmark/test-qualified-ident?#16: expected 'kind:error', observed None
+assertions clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#15: expected 'kind:error', observed None
+assertions clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?#14: expected 'kind:error', observed None
+assertions clojure.core-test.rationalize/test-rationalize#10: expected None, observed 'kind:error'
+assertions clojure.core-test.rationalize/test-rationalize#11: expected None, observed 'kind:error'
+assertions clojure.core-test.rationalize/test-rationalize#15: expected None, observed 'kind:error'
+assertions clojure.core-test.rationalize/test-rationalize#16: expected None, observed 'kind:error'
+assertions clojure.core-test.simple-ident-qmark/test-simple-ident?#16: expected 'kind:error', observed None
+assertions clojure.core-test.simple-keyword-qmark/test-simple-keyword?#15: expected 'kind:error', observed None
+assertions clojure.core-test.simple-symbol-qmark/test-simple-symbol?#14: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#10: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#100: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#101: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#102: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#103: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#106: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#107: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#108: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#11: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#12: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#13: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#14: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#143: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#144: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#145: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#146: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#15: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#159: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#16: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#160: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#5: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#6: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#7: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#8: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#83: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#84: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#85: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#9: expected 'verdict:fail', observed None
+assertions clojure.core-test.slash/test-slash#90: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#92: expected 'kind:error', observed None
+assertions clojure.core-test.slash/test-slash#98: expected 'kind:error', observed None
+assertions clojure.core-test.str/test-str#21: expected 'kind:error', observed None
+assertions clojure.core-test.str/test-str#22: expected 'kind:error', observed None
+assertions clojure.core-test.subvec/test-subvec#14: expected 'kind:error', observed None
+assertions clojure.core-test.symbol-qmark/test-symbol?#13: expected 'kind:error', observed None
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (748225) panicked at crates/suss-compile/tests/clojure_test_suite.rs:617:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 344.98s
+

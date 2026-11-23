@@ -1,0 +1,1948 @@
+﻿2026-11-22T12:25:55.2789810Z Current runner version: '2.338.2'
+2026-11-22T12:25:55.2808701Z ##[group]Runner Image Provisioner
+2026-11-22T12:25:55.2809345Z Hosted Compute Agent
+2026-11-22T12:25:55.2809845Z Version: 20261111.635
+2026-11-22T12:25:55.2810338Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-22T12:25:55.2810891Z Build Date: 2026-11-11T01:49:01Z
+2026-11-22T12:25:55.2811404Z Worker ID: {dcd7c0b9-7a15-48da-9e01-0bbbff7ae5b8}
+2026-11-22T12:25:55.2811930Z Region: us-east-1
+2026-11-22T12:25:55.2812345Z Cloud: AWS
+2026-11-22T12:25:55.2812745Z ##[endgroup]
+2026-11-22T12:25:55.2813760Z ##[group]Operating System
+2026-11-22T12:25:55.2814407Z Ubuntu
+2026-11-22T12:25:55.2814785Z 26.04.1
+2026-11-22T12:25:55.2815193Z LTS
+2026-11-22T12:25:55.2815615Z ##[endgroup]
+2026-11-22T12:25:55.2816025Z ##[group]Runner Image
+2026-11-22T12:25:55.2816481Z Image: ubuntu-26.04
+2026-11-22T12:25:55.2816869Z Version: 20261116.88.1
+2026-11-22T12:25:55.2817829Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.88/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-22T12:25:55.2818922Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.88
+2026-11-22T12:25:55.2819648Z ##[endgroup]
+2026-11-22T12:25:55.2820508Z ##[group]GITHUB_TOKEN Permissions
+2026-11-22T12:25:55.2822205Z Contents: read
+2026-11-22T12:25:55.2822670Z Metadata: read
+2026-11-22T12:25:55.2823127Z Packages: read
+2026-11-22T12:25:55.2823542Z ##[endgroup]
+2026-11-22T12:25:55.2825449Z Secret source: Actions
+2026-11-22T12:25:55.2826168Z Cache mode: write
+2026-11-22T12:25:55.2826772Z Prepare workflow directory
+2026-11-22T12:25:55.3096242Z Prepare all required actions
+2026-11-22T12:25:55.3132499Z Getting action download info
+2026-11-22T12:25:55.4580685Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-22T12:25:56.8450490Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:39008827e6b4319a349e9a42dfc90579dd25f1ca)
+2026-11-22T12:25:56.9262529Z Download action repository 'Swatinem/rust-cache@v2' (SHA:d1527c8f67ef9af357290475d4af4b0fab8f12e0)
+2026-11-22T12:25:57.0539948Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-11-22T12:25:57.4412809Z Complete job name: integration (2)
+2026-11-22T12:25:57.5161597Z ##[group]Run actions/checkout@v4
+2026-11-22T12:25:57.5162726Z with:
+2026-11-22T12:25:57.5163462Z   submodules: true
+2026-11-22T12:25:57.5164522Z   repository: bobby/suss
+2026-11-22T12:25:57.5171209Z   token: ***
+2026-11-22T12:25:57.5171982Z   ssh-strict: true
+2026-11-22T12:25:57.5172779Z   ssh-user: git
+2026-11-22T12:25:57.5173567Z   persist-credentials: true
+2026-11-22T12:25:57.5174579Z   clean: true
+2026-11-22T12:25:57.5175412Z   sparse-checkout-cone-mode: true
+2026-11-22T12:25:57.5176363Z   fetch-depth: 1
+2026-11-22T12:25:57.5177140Z   fetch-tags: false
+2026-11-22T12:25:57.5177934Z   show-progress: true
+2026-11-22T12:25:57.5178731Z   lfs: false
+2026-11-22T12:25:57.5179520Z   set-safe-directory: true
+2026-11-22T12:25:57.5180410Z   allow-unsafe-pr-checkout: false
+2026-11-22T12:25:57.5181514Z env:
+2026-11-22T12:25:57.5182240Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:25:57.5183027Z ##[endgroup]
+2026-11-22T12:25:59.7833117Z Syncing repository: bobby/suss
+2026-11-22T12:25:59.7835294Z ##[group]Getting Git version info
+2026-11-22T12:25:59.7835795Z Working directory is '/home/runner/work/suss/suss'
+2026-11-22T12:25:59.7836495Z [command]/usr/bin/git version
+2026-11-22T12:25:59.7844072Z git version 2.56.1
+2026-11-22T12:25:59.7856669Z ##[endgroup]
+2026-11-22T12:25:59.7867729Z Temporarily overriding HOME='/home/runner/work/_temp/fcaee516-fb89-4ba4-8bc3-3491f9b4fa07' before making global git config changes
+2026-11-22T12:25:59.7868732Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T12:25:59.7871047Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/suss/suss
+2026-11-22T12:25:59.8241939Z Deleting the contents of '/home/runner/work/suss/suss'
+2026-11-22T12:25:59.8245084Z ##[group]Initializing the repository
+2026-11-22T12:25:59.8247520Z [command]/usr/bin/git init /home/runner/work/suss/suss
+2026-11-22T12:25:59.8686378Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-22T12:25:59.8687049Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-22T12:25:59.8687479Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-22T12:25:59.8687838Z hint: call:
+2026-11-22T12:25:59.8688037Z hint:
+2026-11-22T12:25:59.8688300Z hint: 	git config --global init.defaultBranch <name>
+2026-11-22T12:25:59.8688562Z hint:
+2026-11-22T12:25:59.8688828Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-22T12:25:59.8689224Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-22T12:25:59.8689545Z hint:
+2026-11-22T12:25:59.8689742Z hint: 	git branch -m <name>
+2026-11-22T12:25:59.8689955Z hint:
+2026-11-22T12:25:59.8690288Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-22T12:25:59.8708073Z Initialized empty Git repository in /home/runner/work/suss/suss/.git/
+2026-11-22T12:25:59.8716625Z [command]/usr/bin/git remote add origin https://github.com/bobby/suss
+2026-11-22T12:25:59.8773890Z ##[endgroup]
+2026-11-22T12:25:59.8774518Z ##[group]Disabling automatic garbage collection
+2026-11-22T12:25:59.8776553Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-22T12:25:59.8797559Z ##[endgroup]
+2026-11-22T12:25:59.8798057Z ##[group]Setting up auth
+2026-11-22T12:25:59.8803028Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T12:25:59.8824758Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T12:26:00.2373116Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T12:26:00.2399861Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T12:26:00.2578749Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T12:26:00.2602719Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T12:26:00.2774527Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T12:26:00.2799048Z ##[endgroup]
+2026-11-22T12:26:00.2799372Z ##[group]Fetching the repository
+2026-11-22T12:26:00.2805963Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +75c6d7a190411f931eb289b9929f7bb7ef03f939:refs/remotes/pull/499/merge
+2026-11-22T12:26:03.8203810Z From https://github.com/bobby/suss
+2026-11-22T12:26:03.8204480Z  * [new ref]         75c6d7a190411f931eb289b9929f7bb7ef03f939 -> pull/499/merge
+2026-11-22T12:26:03.8207174Z ##[endgroup]
+2026-11-22T12:26:03.8207606Z ##[group]Determining the checkout info
+2026-11-22T12:26:03.8209285Z ##[endgroup]
+2026-11-22T12:26:03.8213282Z [command]/usr/bin/git sparse-checkout disable
+2026-11-22T12:26:03.8263205Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-22T12:26:03.8283690Z ##[group]Checking out the ref
+2026-11-22T12:26:03.8286795Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/499/merge
+2026-11-22T12:26:04.7119885Z Note: switching to 'refs/remotes/pull/499/merge'.
+2026-11-22T12:26:04.7120174Z 
+2026-11-22T12:26:04.7120567Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-22T12:26:04.7121007Z changes and commit them, and you can discard any commits you make in this
+2026-11-22T12:26:04.7121453Z state without impacting any branches by switching back to a branch.
+2026-11-22T12:26:04.7121790Z 
+2026-11-22T12:26:04.7122386Z If you want to create a new branch to retain commits you create, you may
+2026-11-22T12:26:04.7122939Z do so (now or later) by using -c with the switch command. Example:
+2026-11-22T12:26:04.7123268Z 
+2026-11-22T12:26:04.7123758Z   git switch -c <new-branch-name>
+2026-11-22T12:26:04.7126425Z 
+2026-11-22T12:26:04.7127013Z Or undo this operation with:
+2026-11-22T12:26:04.7127235Z 
+2026-11-22T12:26:04.7127343Z   git switch -
+2026-11-22T12:26:04.7127485Z 
+2026-11-22T12:26:04.7127723Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-22T12:26:04.7128049Z 
+2026-11-22T12:26:04.7128384Z HEAD is now at 75c6d7a Merge 84fece33c6ec62e20329e5e803fac616792ba8e5 into 9ebcedab1bd2bc1ed97d1dc2b0eddc30eb5a4ffe
+2026-11-22T12:26:04.7165387Z ##[endgroup]
+2026-11-22T12:26:04.7165831Z ##[group]Setting up auth for fetching submodules
+2026-11-22T12:26:04.7170772Z [command]/usr/bin/git config --global http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-22T12:26:04.7202223Z [command]/usr/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2026-11-22T12:26:04.7224813Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2026-11-22T12:26:04.7246747Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf org-8336@github.com:
+2026-11-22T12:26:04.7264418Z ##[endgroup]
+2026-11-22T12:26:04.7264818Z ##[group]Fetching submodules
+2026-11-22T12:26:04.7267448Z [command]/usr/bin/git submodule sync
+2026-11-22T12:26:04.7456722Z [command]/usr/bin/git -c protocol.version=2 submodule update --init --force --depth=1
+2026-11-22T12:26:04.7639875Z Submodule 'clojurescript' (https://github.com/clojure/clojurescript.git) registered for path 'clojurescript'
+2026-11-22T12:26:04.7669740Z Cloning into '/home/runner/work/suss/suss/clojurescript'...
+2026-11-22T12:26:05.7297815Z From https://github.com/clojure/clojurescript
+2026-11-22T12:26:05.7298238Z  * branch            c4295f303100bbf5afac449242d30bca1126f1a1 -> FETCH_HEAD
+2026-11-22T12:26:05.7542668Z Submodule path 'clojurescript': checked out 'c4295f303100bbf5afac449242d30bca1126f1a1'
+2026-11-22T12:26:05.7551561Z [command]/usr/bin/git submodule foreach git config --local gc.auto 0
+2026-11-22T12:26:05.7736853Z Entering 'clojurescript'
+2026-11-22T12:26:05.7756406Z ##[endgroup]
+2026-11-22T12:26:05.7756726Z ##[group]Persisting credentials for submodules
+2026-11-22T12:26:05.7763184Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'url\.https\:\/\/github\.com\/\.insteadOf' && git config --local --unset-all 'url.https://github.com/.insteadOf' || :"
+2026-11-22T12:26:05.7929663Z Entering 'clojurescript'
+2026-11-22T12:26:05.7971911Z [command]/usr/bin/git submodule foreach sh -c "git config --local 'http.https://github.com/.extraheader' 'AUTHORIZATION: basic ***' && git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-11-22T12:26:05.8140297Z Entering 'clojurescript'
+2026-11-22T12:26:05.8168598Z file:/home/runner/work/suss/suss/.git/modules/clojurescript/config	remote.origin.url
+2026-11-22T12:26:05.8184049Z [command]/usr/bin/git submodule foreach git config --local --add 'url.https://github.com/.insteadOf' 'git@github.com:'
+2026-11-22T12:26:05.8352319Z Entering 'clojurescript'
+2026-11-22T12:26:05.8377040Z [command]/usr/bin/git submodule foreach git config --local --add 'url.https://github.com/.insteadOf' 'org-8336@github.com:'
+2026-11-22T12:26:05.8542292Z Entering 'clojurescript'
+2026-11-22T12:26:05.8564263Z ##[endgroup]
+2026-11-22T12:26:05.8606667Z [command]/usr/bin/git log -1 --format=%H
+2026-11-22T12:26:05.8631017Z 75c6d7a190411f931eb289b9929f7bb7ef03f939
+2026-11-22T12:26:05.8882211Z ##[group]Run dtolnay/rust-toolchain@stable
+2026-11-22T12:26:05.8882432Z with:
+2026-11-22T12:26:05.8882592Z   toolchain: stable
+2026-11-22T12:26:05.8882746Z env:
+2026-11-22T12:26:05.8882893Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:05.8883053Z ##[endgroup]
+2026-11-22T12:26:05.8935934Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-11-22T12:26:05.8979330Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-11-22T12:26:05.8979631Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-11-22T12:26:05.8980010Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-11-22T12:26:05.8980403Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-11-22T12:26:05.8980634Z [36;1m  exit 1[0m
+2026-11-22T12:26:05.8980883Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-11-22T12:26:05.8981178Z [36;1m  if [[ Linux == macOS ]]; then[0m
+2026-11-22T12:26:05.8981596Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:05.8981956Z [36;1m  else[0m
+2026-11-22T12:26:05.8982251Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:05.8982580Z [36;1m  fi[0m
+2026-11-22T12:26:05.8982802Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-11-22T12:26:05.8983178Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:05.8983512Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-11-22T12:26:05.8983882Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:05.8984449Z [36;1melse[0m
+2026-11-22T12:26:05.8984610Z [36;1m  delimiter=EOF[0m
+2026-11-22T12:26:05.8984839Z [36;1m  while [[ $toolchain == *$delimiter* ]]; do delimiter+=_; done[0m
+2026-11-22T12:26:05.8985197Z [36;1m  printf 'toolchain<<%s\n%s\n%s\n' "$delimiter" "$toolchain" "$delimiter" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:05.8985484Z [36;1mfi[0m
+2026-11-22T12:26:05.9007288Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:05.9007566Z env:
+2026-11-22T12:26:05.9007718Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:05.9007886Z   toolchain: stable
+2026-11-22T12:26:05.9008044Z ##[endgroup]
+2026-11-22T12:26:05.9083972Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=14]
+2026-11-22T12:26:05.9087330Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-11-22T12:26:05.9112015Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+2026-11-22T12:26:05.9112361Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2026-11-22T12:26:05.9127877Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:05.9128132Z env:
+2026-11-22T12:26:05.9128286Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:05.9128450Z ##[endgroup]
+2026-11-22T12:26:05.9164758Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=7]
+2026-11-22T12:26:05.9166490Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-11-22T12:26:05.9186827Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-11-22T12:26:05.9187099Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-11-22T12:26:05.9187626Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2026-11-22T12:26:05.9188123Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2026-11-22T12:26:05.9188330Z [36;1mfi[0m
+2026-11-22T12:26:05.9202295Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:05.9202540Z env:
+2026-11-22T12:26:05.9202818Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:05.9203013Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:05.9203250Z ##[endgroup]
+2026-11-22T12:26:05.9236097Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=6]
+2026-11-22T12:26:05.9237725Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-11-22T12:26:05.9242763Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-11-22T12:26:05.9252867Z ##[start-action display=rustup toolchain install stable;id=__dtolnay_rust-toolchain.__run_4]
+2026-11-22T12:26:05.9267854Z ##[group]Run set -f  # split targets and components on commas and whitespace, without glob expansion
+2026-11-22T12:26:05.9268333Z [36;1mset -f  # split targets and components on commas and whitespace, without glob expansion[0m
+2026-11-22T12:26:05.9268642Z [36;1mflags=()[0m
+2026-11-22T12:26:05.9268860Z [36;1mfor t in ${targets//,/ }; do flags+=(--target "$t"); done[0m
+2026-11-22T12:26:05.9269154Z [36;1mfor c in ${components//,/ }; do flags+=(--component "$c"); done[0m
+2026-11-22T12:26:05.9269510Z [36;1mif [[ $toolchain == nightly && -n $components ]]; then flags+=(--allow-downgrade); fi[0m
+2026-11-22T12:26:05.9269815Z [36;1mlog=$(mktemp)[0m
+2026-11-22T12:26:05.9269995Z [36;1mtrap 'rm -f "$log"' EXIT[0m
+2026-11-22T12:26:05.9270196Z [36;1mfor attempt in 1 2 3 4 5; do[0m
+2026-11-22T12:26:05.9270611Z [36;1m  if rustup toolchain install "$toolchain" "${flags[@]}" --profile minimal --no-self-update --force-non-host 2>&1 | tee "$log"; then[0m
+2026-11-22T12:26:05.9271005Z [36;1m    break[0m
+2026-11-22T12:26:05.9271157Z [36;1m  else[0m
+2026-11-22T12:26:05.9271309Z [36;1m    status=$?[0m
+2026-11-22T12:26:05.9271469Z [36;1m  fi[0m
+2026-11-22T12:26:05.9271685Z [36;1m  if [[ $attempt == 5 ]] || ! grep -Fq 'checksum failed for ' "$log" \[0m
+2026-11-22T12:26:05.9272080Z [36;1m      || ! grep -Fq 'this is likely due to an ongoing update of the official release server' "$log"; then[0m
+2026-11-22T12:26:05.9272405Z [36;1m    exit "$status"[0m
+2026-11-22T12:26:05.9272576Z [36;1m  fi[0m
+2026-11-22T12:26:05.9272833Z [36;1m  echo "Retrying rustup toolchain install in 30 seconds (retry $attempt of 4)" >&2[0m
+2026-11-22T12:26:05.9273132Z [36;1m  sleep 30[0m
+2026-11-22T12:26:05.9273286Z [36;1mdone[0m
+2026-11-22T12:26:05.9287345Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:05.9287592Z env:
+2026-11-22T12:26:05.9287747Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:05.9287975Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:05.9288169Z   toolchain: stable
+2026-11-22T12:26:05.9288324Z   targets: 
+2026-11-22T12:26:05.9288479Z   components: 
+2026-11-22T12:26:05.9288645Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-11-22T12:26:05.9288823Z ##[endgroup]
+2026-11-22T12:26:09.5128869Z info: syncing channel updates for stable-x86_64-unknown-linux-gnu
+2026-11-22T12:26:09.6423325Z 
+2026-11-22T12:26:09.6488082Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.100.0 (0ef1bc386 2026-11-09)
+2026-11-22T12:26:09.6488583Z 
+2026-11-22T12:26:09.6521794Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=3726]
+2026-11-22T12:26:09.6527419Z ##[start-action display=rustup default stable;id=__dtolnay_rust-toolchain.__run_5]
+2026-11-22T12:26:09.6541341Z ##[group]Run rustup default "$toolchain" --force-non-host
+2026-11-22T12:26:09.6541653Z [36;1mrustup default "$toolchain" --force-non-host[0m
+2026-11-22T12:26:09.6558545Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.6558794Z env:
+2026-11-22T12:26:09.6558956Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.6559131Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.6559326Z   toolchain: stable
+2026-11-22T12:26:09.6559481Z ##[endgroup]
+2026-11-22T12:26:09.6624742Z info: using existing install for stable-x86_64-unknown-linux-gnu
+2026-11-22T12:26:09.6632815Z info: default toolchain set to stable-x86_64-unknown-linux-gnu
+2026-11-22T12:26:09.6633296Z 
+2026-11-22T12:26:09.6690275Z   stable-x86_64-unknown-linux-gnu unchanged - rustc 1.100.0 (0ef1bc386 2026-11-09)
+2026-11-22T12:26:09.6690526Z 
+2026-11-22T12:26:09.6701230Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=17]
+2026-11-22T12:26:09.6704010Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-11-22T12:26:09.6716746Z ##[group]Run DATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-11-22T12:26:09.6717346Z [36;1mDATE=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-11-22T12:26:09.6717816Z [36;1mHASH=$(rustc +"$toolchain" --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-11-22T12:26:09.6718184Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-11-22T12:26:09.6733692Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.6733934Z env:
+2026-11-22T12:26:09.6734242Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.6734435Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.6734626Z   toolchain: stable
+2026-11-22T12:26:09.6734818Z ##[endgroup]
+2026-11-22T12:26:09.7001110Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=29]
+2026-11-22T12:26:09.7002953Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-11-22T12:26:09.7015513Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-11-22T12:26:09.7015794Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-11-22T12:26:09.7016032Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-11-22T12:26:09.7016241Z [36;1mfi[0m
+2026-11-22T12:26:09.7030987Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.7031297Z env:
+2026-11-22T12:26:09.7031455Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7031654Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7031838Z ##[endgroup]
+2026-11-22T12:26:09.7063704Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=6]
+2026-11-22T12:26:09.7065726Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-11-22T12:26:09.7078257Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-11-22T12:26:09.7078541Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-11-22T12:26:09.7078784Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-11-22T12:26:09.7079010Z [36;1mfi[0m
+2026-11-22T12:26:09.7091626Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.7091876Z env:
+2026-11-22T12:26:09.7092028Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7092200Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7092391Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:09.7092551Z ##[endgroup]
+2026-11-22T12:26:09.7123057Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=5]
+2026-11-22T12:26:09.7125881Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-11-22T12:26:09.7138778Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-11-22T12:26:09.7139170Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-11-22T12:26:09.7139665Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-11-22T12:26:09.7140180Z [36;1m  if rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-11-22T12:26:09.7140594Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-11-22T12:26:09.7140969Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-11-22T12:26:09.7141401Z [36;1m  elif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-11-22T12:26:09.7141798Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-11-22T12:26:09.7142149Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-11-22T12:26:09.7142394Z [36;1m  fi[0m
+2026-11-22T12:26:09.7142543Z [36;1mfi[0m
+2026-11-22T12:26:09.7155455Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.7155695Z env:
+2026-11-22T12:26:09.7155846Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7156027Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7156215Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:09.7156382Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:09.7156555Z   toolchain: stable
+2026-11-22T12:26:09.7156709Z ##[endgroup]
+2026-11-22T12:26:09.7360550Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=23]
+2026-11-22T12:26:09.7363293Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-11-22T12:26:09.7375796Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-11-22T12:26:09.7376327Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-11-22T12:26:09.7376760Z [36;1mif rustc +"$toolchain" --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-11-22T12:26:09.7377155Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-11-22T12:26:09.7377387Z [36;1mfi[0m
+2026-11-22T12:26:09.7390575Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.7390819Z env:
+2026-11-22T12:26:09.7390973Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7391146Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7391333Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:09.7391559Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:09.7391730Z   toolchain: stable
+2026-11-22T12:26:09.7391885Z ##[endgroup]
+2026-11-22T12:26:09.7507907Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=14]
+2026-11-22T12:26:09.7511183Z ##[start-action display=rustc +stable --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-11-22T12:26:09.7525413Z ##[group]Run rustc +"$toolchain" --version --verbose
+2026-11-22T12:26:09.7525726Z [36;1mrustc +"$toolchain" --version --verbose[0m
+2026-11-22T12:26:09.7539342Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-22T12:26:09.7539694Z env:
+2026-11-22T12:26:09.7539906Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7540179Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7540449Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:09.7540692Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:09.7540933Z   toolchain: stable
+2026-11-22T12:26:09.7541147Z ##[endgroup]
+2026-11-22T12:26:09.7646986Z rustc 1.100.0 (0ef1bc386 2026-11-09)
+2026-11-22T12:26:09.7647334Z binary: rustc
+2026-11-22T12:26:09.7647664Z commit-hash: 0ef1bc386059596dada8fb65b50425aab2ea637a
+2026-11-22T12:26:09.7648091Z commit-date: 2026-11-09
+2026-11-22T12:26:09.7648358Z host: x86_64-unknown-linux-gnu
+2026-11-22T12:26:09.7648629Z release: 1.100.0
+2026-11-22T12:26:09.7648851Z LLVM version: 23.1.5
+2026-11-22T12:26:09.7660951Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=14]
+2026-11-22T12:26:09.7751766Z ##[group]Run Swatinem/rust-cache@v2
+2026-11-22T12:26:09.7752054Z with:
+2026-11-22T12:26:09.7752318Z   shared-key: workspace-tests
+2026-11-22T12:26:09.7752595Z   prefix-key: v0-rust
+2026-11-22T12:26:09.7752826Z   add-job-id-key: true
+2026-11-22T12:26:09.7753073Z   add-rust-environment-hash-key: true
+2026-11-22T12:26:09.7753394Z   cache-targets: true
+2026-11-22T12:26:09.7753613Z   cache-all-crates: false
+2026-11-22T12:26:09.7753887Z   cache-workspace-crates: false
+2026-11-22T12:26:09.7754332Z   save-if: true
+2026-11-22T12:26:09.7754618Z   cache-provider: github
+2026-11-22T12:26:09.7754878Z   cache-bin: true
+2026-11-22T12:26:09.7755102Z   lookup-only: false
+2026-11-22T12:26:09.7755341Z   cmd-format: {0}
+2026-11-22T12:26:09.7755555Z env:
+2026-11-22T12:26:09.7755754Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:09.7756054Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:09.7756308Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:09.7756551Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:09.7756858Z ##[endgroup]
+2026-11-22T12:26:12.1153756Z ##[group]Cache Configuration
+2026-11-22T12:26:12.1154664Z Cache Provider:
+2026-11-22T12:26:12.1155624Z     github
+2026-11-22T12:26:12.1156117Z Workspaces:
+2026-11-22T12:26:12.1156447Z     /home/runner/work/suss/suss
+2026-11-22T12:26:12.1156782Z Cache Paths:
+2026-11-22T12:26:12.1157142Z     /home/runner/.cargo/bin
+2026-11-22T12:26:12.1157433Z     /home/runner/.cargo/.crates.toml
+2026-11-22T12:26:12.1157765Z     /home/runner/.cargo/.crates2.json
+2026-11-22T12:26:12.1158153Z     /home/runner/.cargo/registry
+2026-11-22T12:26:12.1158500Z     /home/runner/.cargo/git
+2026-11-22T12:26:12.1158868Z     /home/runner/work/suss/suss/target
+2026-11-22T12:26:12.1159202Z Restore Key:
+2026-11-22T12:26:12.1159548Z     v0-rust-workspace-tests-Linux-x64-e6b53a92
+2026-11-22T12:26:12.1159949Z Cache Key:
+2026-11-22T12:26:12.1160419Z     v0-rust-workspace-tests-Linux-x64-e6b53a92-e49d087a
+2026-11-22T12:26:12.1160901Z .. Prefix:
+2026-11-22T12:26:12.1161295Z   - v0-rust-workspace-tests-Linux-x64
+2026-11-22T12:26:12.1161682Z .. Environment considered:
+2026-11-22T12:26:12.1162013Z   - Rust Versions:
+2026-11-22T12:26:12.1162469Z     - 1.100.0 x86_64-unknown-linux-gnu 0ef1bc386059596dada8fb65b50425aab2ea637a
+2026-11-22T12:26:12.1162972Z   - CARGO_BUILD_JOBS
+2026-11-22T12:26:12.1163275Z   - CARGO_HOME
+2026-11-22T12:26:12.1163547Z   - CARGO_INCREMENTAL
+2026-11-22T12:26:12.1163871Z   - CARGO_TERM_COLOR
+2026-11-22T12:26:12.1164479Z .. Lockfiles considered:
+2026-11-22T12:26:12.1164831Z   - /home/runner/work/suss/suss/.cargo/config.toml
+2026-11-22T12:26:12.1165279Z   - /home/runner/work/suss/suss/Cargo.lock
+2026-11-22T12:26:12.1165668Z   - /home/runner/work/suss/suss/crates/suss-cli/Cargo.toml
+2026-11-22T12:26:12.1166091Z   - /home/runner/work/suss/suss/crates/suss-compile-generator/Cargo.toml
+2026-11-22T12:26:12.1166488Z   - /home/runner/work/suss/suss/crates/suss-compile/Cargo.toml
+2026-11-22T12:26:12.1166832Z   - /home/runner/work/suss/suss/crates/suss-core/Cargo.toml
+2026-11-22T12:26:12.1167202Z   - /home/runner/work/suss/suss/crates/suss-reader/Cargo.toml
+2026-11-22T12:26:12.1167568Z   - /home/runner/work/suss/suss/runtime/numeric/rust-toolchain.toml
+2026-11-22T12:26:12.1168153Z ##[endgroup]
+2026-11-22T12:26:12.1168315Z 
+2026-11-22T12:26:12.1168406Z ... Restoring cache ...
+2026-11-22T12:26:12.1752974Z Cache hit for: v0-rust-workspace-tests-Linux-x64-e6b53a92-e49d087a
+2026-11-22T12:26:13.2192688Z Received 268435456 of 687033941 (39.1%), 255.7 MBs/sec
+2026-11-22T12:26:14.2189280Z Received 603979776 of 687033941 (87.9%), 288.0 MBs/sec
+2026-11-22T12:26:14.4506859Z Received 687033941 of 687033941 (100.0%), 293.6 MBs/sec
+2026-11-22T12:26:14.4507292Z Cache Size: ~655 MB (687033941 B)
+2026-11-22T12:26:14.4587300Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d29f76c3-cb2b-43bf-920e-807a2dade6fc/cache.tzst -P -C /home/runner/work/suss/suss --use-compress-program unzstd
+2026-11-22T12:26:20.1154750Z Cache restored successfully
+2026-11-22T12:26:20.1366954Z Restored from cache key "v0-rust-workspace-tests-Linux-x64-e6b53a92-e49d087a" full match: true.
+2026-11-22T12:26:20.2797389Z ##[group]Run actions/cache/restore@v4
+2026-11-22T12:26:20.2797675Z with:
+2026-11-22T12:26:20.2797941Z   path: target/suss/cache/v1/native-module
+2026-11-22T12:26:20.2798421Z   key: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-45022205852
+2026-11-22T12:26:20.2799315Z   restore-keys: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-
+suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-
+
+2026-11-22T12:26:20.2800038Z   enableCrossOsArchive: false
+2026-11-22T12:26:20.2800374Z   fail-on-cache-miss: false
+2026-11-22T12:26:20.2800651Z   lookup-only: false
+2026-11-22T12:26:20.2800889Z env:
+2026-11-22T12:26:20.2801137Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:20.2801375Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:20.2801616Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:20.2801866Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:20.2802153Z   CACHE_ON_FAILURE: false
+2026-11-22T12:26:20.2802663Z ##[endgroup]
+2026-11-22T12:26:20.3594651Z (node:2764) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T12:26:20.3595553Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T12:26:20.4079706Z Cache hit for restore-key: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-45018993915
+2026-11-22T12:26:20.4152214Z (node:2764) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T12:26:21.1330635Z Received 129209906 of 129209906 (100.0%), 178.6 MBs/sec
+2026-11-22T12:26:21.1331136Z Cache Size: ~123 MB (129209906 B)
+2026-11-22T12:26:21.1430275Z [command]/usr/bin/tar -xf /home/runner/work/_temp/23dc1ac9-0e36-4cda-9615-181d97888565/cache.tzst -P -C /home/runner/work/suss/suss --use-compress-program unzstd
+2026-11-22T12:26:22.2439096Z Cache restored successfully
+2026-11-22T12:26:22.2541032Z Cache restored from key: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-45018993915
+2026-11-22T12:26:22.2666010Z ##[group]Run python3 scripts/ci_test_shards.py --count 8 --index 2
+2026-11-22T12:26:22.2666512Z [36;1mpython3 scripts/ci_test_shards.py --count 8 --index 2[0m
+2026-11-22T12:26:22.2686358Z shell: /usr/bin/bash -e {0}
+2026-11-22T12:26:22.2686628Z env:
+2026-11-22T12:26:22.2686889Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:26:22.2687172Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:26:22.2687440Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:26:22.2687724Z   CARGO_TERM_COLOR: always
+2026-11-22T12:26:22.2687971Z   CACHE_ON_FAILURE: false
+2026-11-22T12:26:22.2688261Z ##[endgroup]
+2026-11-22T12:26:22.3187708Z {"index": 2, "count": 8, "total_targets": 339, "targets": [["suss-cli", "aot_source_preparation"], ["suss-cli", "clojure_bigint_integers"], ["suss-cli", "clojure_longs_doubles"], ["suss-cli", "clojure_primitive_method_types"], ["suss-cli", "collection_printing"], ["suss-cli", "compiled_aot_namespace_command"], ["suss-cli", "compiled_boxed_longs"], ["suss-cli", "compiled_let_destructuring"], ["suss-cli", "compiled_macro_control_source_asts"], ["suss-cli", "compiled_macro_field_reference_asts"], ["suss-cli", "compiled_macro_imports"], ["suss-cli", "compiled_macro_metadata"], ["suss-cli", "compiled_macro_sets"], ["suss-cli", "compiled_namespace_acceptance"], ["suss-cli", "compiled_protocol_sites"], ["suss-cli", "compiled_repl_macros"], ["suss-cli", "construction_sites"], ["suss-cli", "namespace_session"], ["suss-cli", "persistent_session"], ["suss-cli", "portable_array_bulk_copy"], ["suss-cli", "portable_bitwise_hash"], ["suss-cli", "portable_let_star"], ["suss-cli", "portable_murmur_hash"], ["suss-cli", "portable_numeric_hash"], ["suss-cli", "portable_queues"], ["suss-cli", "portable_sorted_tree_nodes"], ["suss-cli", "portable_subvector"], ["suss-cli", "portable_vector_trie"], ["suss-cli", "repl_default_budgets"], ["suss-cli", "user_named_sites"], ["suss-compile", "portable_closures"], ["suss-compile", "portable_constructor_source_analysis"], ["suss-compile", "portable_expression_conformance"], ["suss-compile", "portable_if_let"], ["suss-compile", "portable_record_identity"], ["suss-compile", "portable_resolution"], ["suss-compile", "public_expression_artifacts"], ["suss-compile", "runtime_async_streams"], ["suss-compile", "session_lifecycle_reset_interruption"], ["suss-compile", "shared_runtime"], ["suss-reader", "forms"], ["suss-reader", "portable_dispatch"]]}
+2026-11-22T12:26:22.3194794Z cargo test --workspace --locked --no-fail-fast --test aot_source_preparation --test clojure_bigint_integers --test clojure_longs_doubles --test clojure_primitive_method_types --test collection_printing --test compiled_aot_namespace_command --test compiled_boxed_longs --test compiled_let_destructuring --test compiled_macro_control_source_asts --test compiled_macro_field_reference_asts --test compiled_macro_imports --test compiled_macro_metadata --test compiled_macro_sets --test compiled_namespace_acceptance --test compiled_protocol_sites --test compiled_repl_macros --test construction_sites --test forms --test namespace_session --test persistent_session --test portable_array_bulk_copy --test portable_bitwise_hash --test portable_closures --test portable_constructor_source_analysis --test portable_dispatch --test portable_expression_conformance --test portable_if_let --test portable_let_star --test portable_murmur_hash --test portable_numeric_hash --test portable_queues --test portable_record_identity --test portable_resolution --test portable_sorted_tree_nodes --test portable_subvector --test portable_vector_trie --test public_expression_artifacts --test repl_default_budgets --test runtime_async_streams --test session_lifecycle_reset_interruption --test shared_runtime --test user_named_sites -- --test-threads=2
+2026-11-22T12:26:22.3329725Z [1m[33mwarning[0m[1m: unused field `repository` in `workspace.package`[0m
+2026-11-22T12:26:22.3330264Z   [1m[94m--> [0mCargo.toml:15:1
+2026-11-22T12:26:22.3330533Z    [1m[94m|[0m
+2026-11-22T12:26:22.3331139Z [1m[94m15[0m [1m[94m|[0m repository = "https://github.com/bobby/suss"
+2026-11-22T12:26:22.3331562Z    [1m[94m|[0m [1m[33m^^^^^^^^^^[0m
+2026-11-22T12:26:22.3331866Z    [1m[94m|[0m
+2026-11-22T12:26:22.3336679Z    [1m[94m= [0m[1mnote[0m: `cargo::unused_workspace_package_fields` is set to `warn` by default
+2026-11-22T12:26:22.3337229Z [1m[96mhelp[0m: consider removing the field `workspace.package.repository`
+2026-11-22T12:26:22.3337714Z [1m[33mwarning[0m: workspace (manifest) generated 1 warning
+2026-11-22T12:26:22.9424689Z [1m[92m    Updating[0m crates.io index
+2026-11-22T12:26:24.3541938Z [1m[92m   Compiling[0m suss-core v0.1.0 (/home/runner/work/suss/suss/crates/suss-core)
+2026-11-22T12:26:24.3542827Z [1m[92m   Compiling[0m suss-compile-generator v0.1.0 (/home/runner/work/suss/suss/crates/suss-compile-generator)
+2026-11-22T12:26:28.1020338Z [1m[92m   Compiling[0m suss-reader v0.1.0 (/home/runner/work/suss/suss/crates/suss-reader)
+2026-11-22T12:26:29.2926117Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:29.2926803Z    [1m[94m--> [0mcrates/suss-reader/src/forms.rs:462:5
+2026-11-22T12:26:29.2927514Z     [1m[94m|[0m
+2026-11-22T12:26:29.2927944Z [1m[94m462[0m [1m[94m|[0m     mut form: Form,
+2026-11-22T12:26:29.2928332Z     [1m[94m|[0m     [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:29.2928697Z     [1m[94m|[0m     [1m[94m|[0m
+2026-11-22T12:26:29.2929013Z     [1m[94m|[0m     [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:29.2929360Z     [1m[94m|[0m
+2026-11-22T12:26:29.2929755Z     [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:29.2930034Z 
+2026-11-22T12:26:29.2938765Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:29.2939411Z    [1m[94m--> [0mcrates/suss-reader/src/forms.rs:523:5
+2026-11-22T12:26:29.2939924Z     [1m[94m|[0m
+2026-11-22T12:26:29.2940354Z [1m[94m523[0m [1m[94m|[0m     mut form: Form,
+2026-11-22T12:26:29.2940849Z     [1m[94m|[0m     [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:29.2941317Z     [1m[94m|[0m     [1m[94m|[0m
+2026-11-22T12:26:29.2941788Z     [1m[94m|[0m     [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:29.2942044Z 
+2026-11-22T12:26:30.2390635Z [1m[33mwarning[0m: `suss-reader` (lib) generated 2 warnings (run `cargo fix --lib -p suss-reader` to apply 2 suggestions)
+2026-11-22T12:26:31.4240530Z [1m[33mwarning[0m[1m: unnecessary parentheses around pattern[0m
+2026-11-22T12:26:31.4241373Z     [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/emit.rs:2129:25
+2026-11-22T12:26:31.4242315Z      [1m[94m|[0m
+2026-11-22T12:26:31.4243489Z [1m[94m2129[0m [1m[94m|[0m [1m[94m...[0m   let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation els[1m[94m...[0m
+2026-11-22T12:26:31.4245193Z      [1m[94m|[0m           [1m[33m^[0m                                                                                                [1m[33m^[0m
+2026-11-22T12:26:31.4245745Z      [1m[94m|[0m
+2026-11-22T12:26:31.4246425Z      [1m[94m= [0m[1mnote[0m: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:31.4247035Z [1m[96mhelp[0m: remove these parentheses
+2026-11-22T12:26:31.4247426Z      [1m[94m|[0m
+2026-11-22T12:26:31.4248560Z [1m[94m2129[0m [91m- [0m                    let [91m([0mOperation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }[91m)[0m = &inst.operation else { continue };
+2026-11-22T12:26:31.4250021Z [1m[94m2129[0m [92m+ [0m                    let Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments } = &inst.operation else { continue };
+2026-11-22T12:26:31.4250944Z      [1m[94m|[0m
+2026-11-22T12:26:31.4251122Z 
+2026-11-22T12:26:31.4651904Z [1m[33mwarning[0m[1m: unused imports: `declaration_tag_metered` and `local_tag_metered`[0m
+2026-11-22T12:26:31.4652857Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir.rs:31:30
+2026-11-22T12:26:31.4653259Z    [1m[94m|[0m
+2026-11-22T12:26:31.4653793Z [1m[94m31[0m [1m[94m|[0m pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
+2026-11-22T12:26:31.4654517Z    [1m[94m|[0m                              [1m[33m^^^^^^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.4654874Z    [1m[94m|[0m
+2026-11-22T12:26:31.4655291Z    [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:31.4655540Z 
+2026-11-22T12:26:31.5373141Z [1m[33mwarning[0m[1m: unused imports: `prepare_fragment` and `prepare_selected_fragment`[0m
+2026-11-22T12:26:31.5374308Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/modules.rs:3:50
+2026-11-22T12:26:31.5374891Z   [1m[94m|[0m
+2026-11-22T12:26:31.5375487Z [1m[94m3[0m [1m[94m|[0m     Diagnostic, ExpansionHost, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+2026-11-22T12:26:31.5376414Z   [1m[94m|[0m                                                  [1m[33m^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5376793Z 
+2026-11-22T12:26:31.5383193Z [1m[33mwarning[0m[1m: unused imports: `read_forms_with_source_metadata`, `read_forms`, and `resolve_conditionals`[0m
+2026-11-22T12:26:31.5384352Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:6:17
+2026-11-22T12:26:31.5384910Z   [1m[94m|[0m
+2026-11-22T12:26:31.5385518Z [1m[94m6[0m [1m[94m|[0m     Form, Kind, read_forms, read_forms_with_source_metadata, resolve_conditionals,
+2026-11-22T12:26:31.5386274Z   [1m[94m|[0m                 [1m[33m^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5386671Z 
+2026-11-22T12:26:31.5416534Z [1m[33mwarning[0m[1m: unused import: `Instruction::*`[0m
+2026-11-22T12:26:31.5417299Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/comparisons.rs:7:9
+2026-11-22T12:26:31.5417861Z   [1m[94m|[0m
+2026-11-22T12:26:31.5418327Z [1m[94m7[0m [1m[94m|[0m     use Instruction::*;
+2026-11-22T12:26:31.5418761Z   [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5418992Z 
+2026-11-22T12:26:31.5430638Z [1m[33mwarning[0m[1m: unused import: `Instruction::*`[0m
+2026-11-22T12:26:31.5431388Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/native_object_methods.rs:17:9
+2026-11-22T12:26:31.5432069Z    [1m[94m|[0m
+2026-11-22T12:26:31.5432498Z [1m[94m17[0m [1m[94m|[0m     use Instruction::*;
+2026-11-22T12:26:31.5432974Z    [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5433466Z 
+2026-11-22T12:26:31.5451792Z [1m[33mwarning[0m[1m: unused import: `suss_reader::ParserState`[0m
+2026-11-22T12:26:31.5452747Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/lib.rs:130:5
+2026-11-22T12:26:31.5453564Z     [1m[94m|[0m
+2026-11-22T12:26:31.5455068Z [1m[94m130[0m [1m[94m|[0m use suss_reader::ParserState;
+2026-11-22T12:26:31.5455821Z     [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5456137Z 
+2026-11-22T12:26:31.5456497Z [1m[33mwarning[0m[1m: unused import: `wit_parser::Resolve`[0m
+2026-11-22T12:26:31.5457224Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/lib.rs:131:5
+2026-11-22T12:26:31.5457803Z     [1m[94m|[0m
+2026-11-22T12:26:31.5458256Z [1m[94m131[0m [1m[94m|[0m use wit_parser::Resolve;
+2026-11-22T12:26:31.5458812Z     [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:31.5459073Z 
+2026-11-22T12:26:33.4596464Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:33.4597638Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/emit/captures.rs:95:13
+2026-11-22T12:26:33.4598334Z    [1m[94m|[0m
+2026-11-22T12:26:33.4598892Z [1m[94m95[0m [1m[94m|[0m             _ => {}
+2026-11-22T12:26:33.4599524Z    [1m[94m|[0m             [1m[33m^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:33.4600036Z    [1m[94m|[0m
+2026-11-22T12:26:33.4600693Z [1m[92mnote[0m: multiple earlier patterns match some of the same values
+2026-11-22T12:26:33.4601612Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/emit/captures.rs:95:13
+2026-11-22T12:26:33.4602259Z    [1m[94m|[0m
+2026-11-22T12:26:33.4603130Z [1m[94m87[0m [1m[94m|[0m             Terminator::Return(value) | Terminator::Throw(value) => pending.push(*value),
+2026-11-22T12:26:33.4604258Z    [1m[94m|[0m             [1m[94m----------------------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:33.4605325Z [1m[94m88[0m [1m[94m|[0m             Terminator::Branch { condition, .. } => pending.push(*condition),
+2026-11-22T12:26:33.4606213Z    [1m[94m|[0m             [1m[94m------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:33.4607041Z [1m[94m89[0m [1m[94m|[0m             Terminator::Jump { target, arguments } => {
+2026-11-22T12:26:33.4607837Z    [1m[94m|[0m             [1m[94m--------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:33.4608433Z [1m[94m...[0m
+2026-11-22T12:26:33.4608826Z [1m[94m95[0m [1m[94m|[0m             _ => {}
+2026-11-22T12:26:33.4609431Z    [1m[94m|[0m             [1m[92m^[0m [1m[92mcollectively making this unreachable[0m
+2026-11-22T12:26:33.4610232Z    [1m[94m= [0m[1mnote[0m: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:33.4610679Z 
+2026-11-22T12:26:33.4916586Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:33.4917532Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/emit.rs:910:113
+2026-11-22T12:26:33.4918137Z     [1m[94m|[0m
+2026-11-22T12:26:33.4918599Z [1m[94m876[0m [1m[94m|[0m [1m[94m...[0m     "number-hash"
+2026-11-22T12:26:33.4919241Z     [1m[94m|[0m         [1m[94m-------------[0m [1m[94mmatches all the relevant values[0m
+2026-11-22T12:26:33.4919732Z [1m[94m...[0m
+2026-11-22T12:26:33.4920652Z [1m[94m910[0m [1m[94m|[0m [1m[94m...[0m     | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string[1m[94m...[0m
+2026-11-22T12:26:33.4921666Z     [1m[94m|[0m                                                                                                             [1m[33m^^^^^^^^^^^^^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:33.4922163Z 
+2026-11-22T12:26:34.1288605Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:34.1290083Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir/nominal.rs:915:13
+2026-11-22T12:26:34.1290859Z     [1m[94m|[0m
+2026-11-22T12:26:34.1292271Z [1m[94m915[0m [1m[94m|[0m         let mut synthetic = |stem: &str| -> String {
+2026-11-22T12:26:34.1292947Z     [1m[94m|[0m             [1m[94m----[0m[1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:34.1293588Z     [1m[94m|[0m             [1m[94m|[0m
+2026-11-22T12:26:34.1294283Z     [1m[94m|[0m             [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:34.1294719Z     [1m[94m|[0m
+2026-11-22T12:26:34.1295325Z     [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:34.1295707Z 
+2026-11-22T12:26:34.1807911Z [1m[33mwarning[0m[1m: unused variable: `form`[0m
+2026-11-22T12:26:34.1809040Z     [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir/nominal.rs:1625:9
+2026-11-22T12:26:34.1809787Z      [1m[94m|[0m
+2026-11-22T12:26:34.1810232Z [1m[94m1625[0m [1m[94m|[0m         form: &Form,
+2026-11-22T12:26:34.1811218Z      [1m[94m|[0m         [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_form`[0m
+2026-11-22T12:26:34.1811862Z      [1m[94m|[0m
+2026-11-22T12:26:34.1812466Z      [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:34.1812899Z 
+2026-11-22T12:26:34.2827416Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:34.2828370Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir.rs:761:15
+2026-11-22T12:26:34.2829006Z     [1m[94m|[0m
+2026-11-22T12:26:34.2829662Z [1m[94m759[0m [1m[94m|[0m             | Self::IsRatio
+2026-11-22T12:26:34.2830373Z     [1m[94m|[0m               [1m[94m-------------[0m [1m[94mmatches all the relevant values[0m
+2026-11-22T12:26:34.2831398Z [1m[94m760[0m [1m[94m|[0m             | Self::IsBigInt
+2026-11-22T12:26:34.2832052Z [1m[94m761[0m [1m[94m|[0m             | Self::IsRatio
+2026-11-22T12:26:34.2832666Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:34.2833099Z 
+2026-11-22T12:26:34.9128281Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:34.9129346Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/aot.rs:759:9
+2026-11-22T12:26:34.9129957Z     [1m[94m|[0m
+2026-11-22T12:26:34.9130874Z [1m[94m759[0m [1m[94m|[0m     let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
+2026-11-22T12:26:34.9131622Z     [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^^^^[0m
+2026-11-22T12:26:34.9132113Z     [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:34.9132636Z     [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:34.9132935Z 
+2026-11-22T12:26:35.1919306Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:35.1920387Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/error_constructors.rs:457:9
+2026-11-22T12:26:35.1921354Z     [1m[94m|[0m
+2026-11-22T12:26:35.1921803Z [1m[94m457[0m [1m[94m|[0m     let mut code = vec![
+2026-11-22T12:26:35.1922379Z     [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:35.1922799Z     [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:35.1923221Z     [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:35.1923647Z 
+2026-11-22T12:26:35.3576342Z [1m[33mwarning[0m[1m: unused variable: `fields`[0m
+2026-11-22T12:26:35.3577578Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/native_objects.rs:243:9
+2026-11-22T12:26:35.3578322Z     [1m[94m|[0m
+2026-11-22T12:26:35.3579902Z [1m[94m243[0m [1m[94m|[0m     let fields = b.function_with_locals(
+2026-11-22T12:26:35.3581053Z     [1m[94m|[0m         [1m[33m^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_fields`[0m
+2026-11-22T12:26:35.3582031Z 
+2026-11-22T12:26:35.3609508Z [1m[33mwarning[0m[1m: unused variable: `step`[0m
+2026-11-22T12:26:35.3610591Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/native_objects.rs:526:9
+2026-11-22T12:26:35.3611244Z     [1m[94m|[0m
+2026-11-22T12:26:35.3611672Z [1m[94m526[0m [1m[94m|[0m     let step = b.function(
+2026-11-22T12:26:35.3612348Z     [1m[94m|[0m         [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_step`[0m
+2026-11-22T12:26:35.3612820Z 
+2026-11-22T12:26:35.3748060Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:35.3748963Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/native_protocols.rs:178:9
+2026-11-22T12:26:35.3749679Z     [1m[94m|[0m
+2026-11-22T12:26:35.3750116Z [1m[94m178[0m [1m[94m|[0m     let mut body = vec![
+2026-11-22T12:26:35.3750687Z     [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:35.3751214Z     [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:35.3751928Z     [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:35.3752243Z 
+2026-11-22T12:26:35.4119232Z [1m[33mwarning[0m[1m: unused variable: `unsupported`[0m
+2026-11-22T12:26:35.4120097Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/numeric.rs:300:9
+2026-11-22T12:26:35.4120972Z     [1m[94m|[0m
+2026-11-22T12:26:35.4121506Z [1m[94m300[0m [1m[94m|[0m     let unsupported = unsupported_object_error();
+2026-11-22T12:26:35.4122457Z     [1m[94m|[0m         [1m[33m^^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_unsupported`[0m
+2026-11-22T12:26:35.4123016Z 
+2026-11-22T12:26:35.4983428Z [1m[33mwarning[0m[1m: unused variable: `base`[0m
+2026-11-22T12:26:35.4984404Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/streams.rs:512:30
+2026-11-22T12:26:35.4985367Z     [1m[94m|[0m
+2026-11-22T12:26:35.4985871Z [1m[94m512[0m [1m[94m|[0m fn withdraw(b: &mut Builder, base: u32) -> u32 {
+2026-11-22T12:26:35.4986792Z     [1m[94m|[0m                              [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_base`[0m
+2026-11-22T12:26:35.4987288Z 
+2026-11-22T12:26:35.5871495Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:35.5873109Z     [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi.rs:2136:9
+2026-11-22T12:26:35.5873831Z      [1m[94m|[0m
+2026-11-22T12:26:35.5875230Z [1m[94m2136[0m [1m[94m|[0m     let mut body = vec![
+2026-11-22T12:26:35.5875849Z      [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:35.5876706Z      [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:35.5877222Z      [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:35.5877607Z 
+2026-11-22T12:26:35.6218343Z [1m[33mwarning[0m[1m: field `owner` is never read[0m
+2026-11-22T12:26:35.6219802Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:213:5
+2026-11-22T12:26:35.6220501Z     [1m[94m|[0m
+2026-11-22T12:26:35.6221793Z [1m[94m211[0m [1m[94m|[0m pub struct BuildDir {
+2026-11-22T12:26:35.6222751Z     [1m[94m|[0m            [1m[94m--------[0m [1m[94mfield in this struct[0m
+2026-11-22T12:26:35.6223338Z [1m[94m212[0m [1m[94m|[0m     root: PathBuf,
+2026-11-22T12:26:35.6224240Z [1m[94m213[0m [1m[94m|[0m     owner: OnceLock<Option<u32>>,
+2026-11-22T12:26:35.6224775Z     [1m[94m|[0m     [1m[33m^^^^^[0m
+2026-11-22T12:26:35.6225197Z     [1m[94m|[0m
+2026-11-22T12:26:35.6225819Z     [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:35.6226234Z 
+2026-11-22T12:26:35.6226595Z [1m[33mwarning[0m[1m: methods `read_trusted`, `trusted`, and `owner` are never used[0m
+2026-11-22T12:26:35.6227783Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:281:19
+2026-11-22T12:26:35.6228390Z     [1m[94m|[0m
+2026-11-22T12:26:35.6228849Z [1m[94m216[0m [1m[94m|[0m impl BuildDir {
+2026-11-22T12:26:35.6229438Z     [1m[94m|[0m [1m[94m-------------[0m [1m[94mmethods in this implementation[0m
+2026-11-22T12:26:35.6230110Z [1m[94m...[0m
+2026-11-22T12:26:35.6230861Z [1m[94m281[0m [1m[94m|[0m     pub(crate) fn read_trusted(&self, layer: Layer, key: &[u8; 32]) -> Option<Vec<u8>> {
+2026-11-22T12:26:35.6231556Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6232045Z [1m[94m...[0m
+2026-11-22T12:26:35.6232555Z [1m[94m327[0m [1m[94m|[0m     fn trusted(&self, path: &Path) -> Result<(), String> {
+2026-11-22T12:26:35.6233133Z     [1m[94m|[0m        [1m[33m^^^^^^^[0m
+2026-11-22T12:26:35.6233611Z [1m[94m...[0m
+2026-11-22T12:26:35.6234051Z [1m[94m372[0m [1m[94m|[0m     fn owner(&self) -> Option<u32> {
+2026-11-22T12:26:35.6234843Z     [1m[94m|[0m        [1m[33m^^^^^[0m
+2026-11-22T12:26:35.6235077Z 
+2026-11-22T12:26:35.6235709Z [1m[33mwarning[0m[1m: constant `LIFT_THRESHOLD` is never used[0m
+2026-11-22T12:26:35.6236523Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:919:7
+2026-11-22T12:26:35.6237151Z     [1m[94m|[0m
+2026-11-22T12:26:35.6237628Z [1m[94m919[0m [1m[94m|[0m const LIFT_THRESHOLD: usize = 64 << 10;
+2026-11-22T12:26:35.6238199Z     [1m[94m|[0m       [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6238444Z 
+2026-11-22T12:26:35.6238860Z [1m[33mwarning[0m[1m: function `lift_modules` is never used[0m
+2026-11-22T12:26:35.6239588Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:926:4
+2026-11-22T12:26:35.6240283Z     [1m[94m|[0m
+2026-11-22T12:26:35.6241288Z [1m[94m926[0m [1m[94m|[0m fn lift_modules(bytes: &[u8]) -> Option<(Vec<u8>, Vec<(String, std::ops::Range<usize>)>)> {
+2026-11-22T12:26:35.6241968Z     [1m[94m|[0m    [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6242267Z 
+2026-11-22T12:26:35.6242581Z [1m[33mwarning[0m[1m: function `leb_u32` is never used[0m
+2026-11-22T12:26:35.6243256Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:971:4
+2026-11-22T12:26:35.6243920Z     [1m[94m|[0m
+2026-11-22T12:26:35.6244585Z [1m[94m971[0m [1m[94m|[0m fn leb_u32(bytes: &[u8]) -> Option<(u32, usize)> {
+2026-11-22T12:26:35.6245160Z     [1m[94m|[0m    [1m[33m^^^^^^^[0m
+2026-11-22T12:26:35.6245454Z 
+2026-11-22T12:26:35.6245755Z [1m[33mwarning[0m[1m: function `module_type` is never used[0m
+2026-11-22T12:26:35.6246453Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/build_cache.rs:984:4
+2026-11-22T12:26:35.6247206Z     [1m[94m|[0m
+2026-11-22T12:26:35.6247876Z [1m[94m984[0m [1m[94m|[0m fn module_type(module: &[u8]) -> Option<wasm_encoder::ModuleType> {
+2026-11-22T12:26:35.6248603Z     [1m[94m|[0m    [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6248850Z 
+2026-11-22T12:26:35.6249152Z [1m[33mwarning[0m[1m: function `source_tags` is never used[0m
+2026-11-22T12:26:35.6249954Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir/source_tags.rs:760:15
+2026-11-22T12:26:35.6250595Z     [1m[94m|[0m
+2026-11-22T12:26:35.6251035Z [1m[94m760[0m [1m[94m|[0m pub(super) fn source_tags(
+2026-11-22T12:26:35.6251605Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6251857Z 
+2026-11-22T12:26:35.6252175Z [1m[33mwarning[0m[1m: function `metadata_wrapper_tags` is never used[0m
+2026-11-22T12:26:35.6253135Z     [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/hir/source_tags.rs:1166:15
+2026-11-22T12:26:35.6253817Z      [1m[94m|[0m
+2026-11-22T12:26:35.6254696Z [1m[94m1166[0m [1m[94m|[0m pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
+2026-11-22T12:26:35.6255695Z      [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6255971Z 
+2026-11-22T12:26:35.6256336Z [1m[33mwarning[0m[1m: function `prepare_privileged_input` is never used[0m
+2026-11-22T12:26:35.6257157Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/modules.rs:671:15
+2026-11-22T12:26:35.6257754Z     [1m[94m|[0m
+2026-11-22T12:26:35.6264495Z [1m[94m671[0m [1m[94m|[0m pub(crate) fn prepare_privileged_input<P: AsRef<Path>>(
+2026-11-22T12:26:35.6265429Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6265831Z 
+2026-11-22T12:26:35.6266161Z [1m[33mwarning[0m[1m: method `set_export_param_hints` is never used[0m
+2026-11-22T12:26:35.6266867Z     [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/resolve.rs:1144:19
+2026-11-22T12:26:35.6267406Z      [1m[94m|[0m
+2026-11-22T12:26:35.6267819Z [1m[94m 458[0m [1m[94m|[0m impl Environment {
+2026-11-22T12:26:35.6268398Z      [1m[94m|[0m [1m[94m----------------[0m [1m[94mmethod in this implementation[0m
+2026-11-22T12:26:35.6268989Z [1m[94m...[0m
+2026-11-22T12:26:35.6269898Z [1m[94m1144[0m [1m[94m|[0m     pub(crate) fn set_export_param_hints(&mut self, hints: BTreeMap<(String, String), Vec<Option<bool>>>) {
+2026-11-22T12:26:35.6270646Z      [1m[94m|[0m                   [1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6270942Z 
+2026-11-22T12:26:35.6271220Z [1m[33mwarning[0m[1m: function `input_header` is never used[0m
+2026-11-22T12:26:35.6271859Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/source.rs:352:15
+2026-11-22T12:26:35.6272409Z     [1m[94m|[0m
+2026-11-22T12:26:35.6272804Z [1m[94m352[0m [1m[94m|[0m pub(crate) fn input_header(
+2026-11-22T12:26:35.6273287Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6273539Z 
+2026-11-22T12:26:35.6273831Z [1m[33mwarning[0m[1m: function `dependencies` is never used[0m
+2026-11-22T12:26:35.6274703Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/source.rs:397:15
+2026-11-22T12:26:35.6275258Z     [1m[94m|[0m
+2026-11-22T12:26:35.6275646Z [1m[94m397[0m [1m[94m|[0m pub(crate) fn dependencies(
+2026-11-22T12:26:35.6276105Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6276370Z 
+2026-11-22T12:26:35.6276692Z [1m[33mwarning[0m[1m: function `equal_text_metered` is never used[0m
+2026-11-22T12:26:35.6277377Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin.rs:28:4
+2026-11-22T12:26:35.6277913Z    [1m[94m|[0m
+2026-11-22T12:26:35.6278284Z [1m[94m28[0m [1m[94m|[0m fn equal_text_metered(
+2026-11-22T12:26:35.6278699Z    [1m[94m|[0m    [1m[33m^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6279043Z 
+2026-11-22T12:26:35.6279437Z [1m[33mwarning[0m[1m: methods `symbol_position_metered` and `position_metered` are never used[0m
+2026-11-22T12:26:35.6280292Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin.rs:121:19
+2026-11-22T12:26:35.6280854Z     [1m[94m|[0m
+2026-11-22T12:26:35.6281255Z [1m[94m 48[0m [1m[94m|[0m impl SourceOrigin {
+2026-11-22T12:26:35.6281883Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94mmethods in this implementation[0m
+2026-11-22T12:26:35.6282366Z [1m[94m...[0m
+2026-11-22T12:26:35.6282782Z [1m[94m121[0m [1m[94m|[0m     pub(crate) fn symbol_position_metered(
+2026-11-22T12:26:35.6283348Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6283764Z [1m[94m...[0m
+2026-11-22T12:26:35.6284331Z [1m[94m215[0m [1m[94m|[0m     fn position_metered(
+2026-11-22T12:26:35.6284827Z     [1m[94m|[0m        [1m[33m^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6285094Z 
+2026-11-22T12:26:35.6285312Z [1m[33mwarning[0m[1m: function `same` is never used[0m
+2026-11-22T12:26:35.6286066Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:272:4
+2026-11-22T12:26:35.6286884Z     [1m[94m|[0m
+2026-11-22T12:26:35.6287386Z [1m[94m272[0m [1m[94m|[0m fn same(a: &Form, b: &Form, metadata: bool) -> bool {
+2026-11-22T12:26:35.6287926Z     [1m[94m|[0m    [1m[33m^^^^[0m
+2026-11-22T12:26:35.6288164Z 
+2026-11-22T12:26:35.6288412Z [1m[33mwarning[0m[1m: constant `TRAVERSAL_BOUND` is never used[0m
+2026-11-22T12:26:35.6289181Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:319:7
+2026-11-22T12:26:35.6289638Z     [1m[94m|[0m
+2026-11-22T12:26:35.6290000Z [1m[94m319[0m [1m[94m|[0m const TRAVERSAL_BOUND: usize = 1_048_576;
+2026-11-22T12:26:35.6290365Z     [1m[94m|[0m       [1m[33m^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6290551Z 
+2026-11-22T12:26:35.6290778Z [1m[33mwarning[0m[1m: associated items `new` and `find` are never used[0m
+2026-11-22T12:26:35.6291315Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:335:8
+2026-11-22T12:26:35.6291724Z     [1m[94m|[0m
+2026-11-22T12:26:35.6292035Z [1m[94m334[0m [1m[94m|[0m impl IndexedForms {
+2026-11-22T12:26:35.6292532Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94massociated items in this implementation[0m
+2026-11-22T12:26:35.6293039Z [1m[94m335[0m [1m[94m|[0m     fn new(forms: Vec<Form>) -> Self {
+2026-11-22T12:26:35.6293431Z     [1m[94m|[0m        [1m[33m^^^[0m
+2026-11-22T12:26:35.6293775Z [1m[94m...[0m
+2026-11-22T12:26:35.6294287Z [1m[94m340[0m [1m[94m|[0m     fn find(
+2026-11-22T12:26:35.6294706Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:35.6294983Z 
+2026-11-22T12:26:35.6295284Z [1m[33mwarning[0m[1m: fields `truncated` and `limit` are never read[0m
+2026-11-22T12:26:35.6296031Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:385:5
+2026-11-22T12:26:35.6296656Z     [1m[94m|[0m
+2026-11-22T12:26:35.6297000Z [1m[94m382[0m [1m[94m|[0m struct FormIndex {
+2026-11-22T12:26:35.6297493Z     [1m[94m|[0m        [1m[94m---------[0m [1m[94mfields in this struct[0m
+2026-11-22T12:26:35.6298124Z [1m[94m...[0m
+2026-11-22T12:26:35.6298478Z [1m[94m385[0m [1m[94m|[0m     truncated: bool,
+2026-11-22T12:26:35.6298946Z     [1m[94m|[0m     [1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:35.6299374Z [1m[94m386[0m [1m[94m|[0m     limit: usize,
+2026-11-22T12:26:35.6300007Z     [1m[94m|[0m     [1m[33m^^^^^[0m
+2026-11-22T12:26:35.6300360Z     [1m[94m|[0m
+2026-11-22T12:26:35.6301089Z     [1m[94m= [0m[1mnote[0m: `FormIndex` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+2026-11-22T12:26:35.6301596Z 
+2026-11-22T12:26:35.6301941Z [1m[33mwarning[0m[1m: associated items `new`, `form`, and `find` are never used[0m
+2026-11-22T12:26:35.6302765Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:390:8
+2026-11-22T12:26:35.6303375Z     [1m[94m|[0m
+2026-11-22T12:26:35.6303728Z [1m[94m389[0m [1m[94m|[0m impl FormIndex {
+2026-11-22T12:26:35.6304555Z     [1m[94m|[0m [1m[94m--------------[0m [1m[94massociated items in this implementation[0m
+2026-11-22T12:26:35.6305213Z [1m[94m390[0m [1m[94m|[0m     fn new(forms: &[Form], limit: usize) -> Self {
+2026-11-22T12:26:35.6305764Z     [1m[94m|[0m        [1m[33m^^^[0m
+2026-11-22T12:26:35.6306127Z [1m[94m...[0m
+2026-11-22T12:26:35.6306610Z [1m[94m471[0m [1m[94m|[0m     fn form<'a>(&self, forms: &'a [Form], mut rank: usize) -> &'a Form {
+2026-11-22T12:26:35.6307138Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:35.6307512Z [1m[94m...[0m
+2026-11-22T12:26:35.6307885Z [1m[94m535[0m [1m[94m|[0m     fn find<'a>(
+2026-11-22T12:26:35.6308287Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:35.6308521Z 
+2026-11-22T12:26:35.6308886Z [1m[33mwarning[0m[1m: methods `macro_form_root_metadata_metered` and `reader_tree` are never used[0m
+2026-11-22T12:26:35.6309907Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:674:19
+2026-11-22T12:26:35.6310497Z     [1m[94m|[0m
+2026-11-22T12:26:35.6310903Z [1m[94m639[0m [1m[94m|[0m impl SourceOrigin {
+2026-11-22T12:26:35.6311453Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94mmethods in this implementation[0m
+2026-11-22T12:26:35.6311943Z [1m[94m...[0m
+2026-11-22T12:26:35.6312413Z [1m[94m674[0m [1m[94m|[0m     pub(crate) fn macro_form_root_metadata_metered(
+2026-11-22T12:26:35.6312956Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6313433Z [1m[94m...[0m
+2026-11-22T12:26:35.6313971Z [1m[94m735[0m [1m[94m|[0m     pub(crate) fn reader_tree(&self, form: &Form) -> Result<Form, Diagnostic> {
+2026-11-22T12:26:35.6314820Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6315098Z 
+2026-11-22T12:26:35.6315378Z [1m[33mwarning[0m[1m: function `has_template` is never used[0m
+2026-11-22T12:26:35.6316110Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/syntax_quote.rs:475:15
+2026-11-22T12:26:35.6316729Z     [1m[94m|[0m
+2026-11-22T12:26:35.6317416Z [1m[94m475[0m [1m[94m|[0m pub(crate) fn has_template(form: &Form) -> Result<bool, Diagnostic> {
+2026-11-22T12:26:35.6318100Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6318344Z 
+2026-11-22T12:26:35.6318629Z [1m[33mwarning[0m[1m: function `lower_generated` is never used[0m
+2026-11-22T12:26:35.6319393Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable/syntax_quote.rs:504:15
+2026-11-22T12:26:35.6319967Z     [1m[94m|[0m
+2026-11-22T12:26:35.6320584Z [1m[94m504[0m [1m[94m|[0m pub(crate) fn lower_generated(form: &Form) -> Result<Form, Diagnostic> {
+2026-11-22T12:26:35.6321228Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6321507Z 
+2026-11-22T12:26:35.6321781Z [1m[33mwarning[0m[1m: function `invalid_length` is never used[0m
+2026-11-22T12:26:35.6322538Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/runtime_abi/range_errors.rs:35:15
+2026-11-22T12:26:35.6323108Z    [1m[94m|[0m
+2026-11-22T12:26:35.6323669Z [1m[94m35[0m [1m[94m|[0m pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
+2026-11-22T12:26:35.6324405Z    [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6324670Z 
+2026-11-22T12:26:35.6324964Z [1m[33mwarning[0m[1m: constant `DOSEQ` is never used[0m
+2026-11-22T12:26:35.6325629Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:16:18
+2026-11-22T12:26:35.6326176Z    [1m[94m|[0m
+2026-11-22T12:26:35.6326652Z [1m[94m16[0m [1m[94m|[0m pub(crate) const DOSEQ: &str = r#"
+2026-11-22T12:26:35.6327116Z    [1m[94m|[0m                  [1m[33m^^^^^[0m
+2026-11-22T12:26:35.6327374Z 
+2026-11-22T12:26:35.6327660Z [1m[33mwarning[0m[1m: constant `THREAD_LAST` is never used[0m
+2026-11-22T12:26:35.6328318Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:62:18
+2026-11-22T12:26:35.6328878Z    [1m[94m|[0m
+2026-11-22T12:26:35.6329338Z [1m[94m62[0m [1m[94m|[0m pub(crate) const THREAD_LAST: &str = r#"
+2026-11-22T12:26:35.6329822Z    [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6330123Z 
+2026-11-22T12:26:35.6330378Z [1m[33mwarning[0m[1m: constant `DEFMULTI` is never used[0m
+2026-11-22T12:26:35.6331056Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:86:18
+2026-11-22T12:26:35.6331679Z    [1m[94m|[0m
+2026-11-22T12:26:35.6332074Z [1m[94m86[0m [1m[94m|[0m pub(crate) const DEFMULTI: &str = r##"
+2026-11-22T12:26:35.6332564Z    [1m[94m|[0m                  [1m[33m^^^^^^^^[0m
+2026-11-22T12:26:35.6332835Z 
+2026-11-22T12:26:35.6333093Z [1m[33mwarning[0m[1m: constant `DEFMETHOD` is never used[0m
+2026-11-22T12:26:35.6333909Z    [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:151:18
+2026-11-22T12:26:35.6334675Z     [1m[94m|[0m
+2026-11-22T12:26:35.6335096Z [1m[94m151[0m [1m[94m|[0m pub(crate) const DEFMETHOD: &str = r#"
+2026-11-22T12:26:35.6335594Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:35.6335853Z 
+2026-11-22T12:26:35.6336129Z [1m[33mwarning[0m[1m: constant `SOURCE` is never used[0m
+2026-11-22T12:26:35.6336765Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_when_let.rs:12:18
+2026-11-22T12:26:35.6337340Z    [1m[94m|[0m
+2026-11-22T12:26:35.6337724Z [1m[94m12[0m [1m[94m|[0m pub(crate) const SOURCE: &str = r#"
+2026-11-22T12:26:35.6338209Z    [1m[94m|[0m                  [1m[33m^^^^^^[0m
+2026-11-22T12:26:35.6338488Z 
+2026-11-22T12:26:35.6338733Z [1m[33mwarning[0m[1m: constant `SOURCE` is never used[0m
+2026-11-22T12:26:35.6339412Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_record_emitter.rs:6:18
+2026-11-22T12:26:35.6340259Z   [1m[94m|[0m
+2026-11-22T12:26:35.6340667Z [1m[94m6[0m [1m[94m|[0m pub(crate) const SOURCE: &str = r####"
+2026-11-22T12:26:35.6341319Z   [1m[94m|[0m                  [1m[33m^^^^^^[0m
+2026-11-22T12:26:35.6341549Z 
+2026-11-22T12:26:35.6341790Z [1m[33mwarning[0m[1m: constant `SOURCE` is never used[0m
+2026-11-22T12:26:35.6342503Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_record_protocol_facts.rs:6:18
+2026-11-22T12:26:35.6343116Z   [1m[94m|[0m
+2026-11-22T12:26:35.6343520Z [1m[94m6[0m [1m[94m|[0m pub(crate) const SOURCE: &str = r####"
+2026-11-22T12:26:35.6344041Z   [1m[94m|[0m                  [1m[33m^^^^^^[0m
+2026-11-22T12:26:35.6344417Z 
+2026-11-22T12:26:35.6344687Z [1m[33mwarning[0m[1m: constant `SOURCE` is never used[0m
+2026-11-22T12:26:35.6345399Z  [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_record_public.rs:6:18
+2026-11-22T12:26:35.6345944Z   [1m[94m|[0m
+2026-11-22T12:26:35.6346396Z [1m[94m6[0m [1m[94m|[0m pub(crate) const SOURCE: &str = r####"
+2026-11-22T12:26:35.6346895Z   [1m[94m|[0m                  [1m[33m^^^^^^[0m
+2026-11-22T12:26:35.6347116Z 
+2026-11-22T12:26:35.6347410Z [1m[33mwarning[0m[1m: constant `MACRO_SOURCE` is never used[0m
+2026-11-22T12:26:35.6348137Z   [1m[94m--> [0mcrates/suss-compile-generator/../suss-compile/src/portable_record_public.rs:30:18
+2026-11-22T12:26:35.6348701Z    [1m[94m|[0m
+2026-11-22T12:26:35.6349443Z [1m[94m30[0m [1m[94m|[0m pub(crate) const MACRO_SOURCE: &str = r####"(defmacro ^{:suss/compiler-catalog :record-bindings} defrecord [rsym fields & impls]
+2026-11-22T12:26:35.6350218Z    [1m[94m|[0m                  [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:35.6350508Z 
+2026-11-22T12:26:40.4380023Z [1m[33mwarning[0m: `suss-reader` (lib) generated 2 warnings (2 duplicates)
+2026-11-22T12:26:41.6306558Z [1m[33mwarning[0m: `suss-compile-generator` (lib) generated 53 warnings (run `cargo fix --lib -p suss-compile-generator` to apply 18 suggestions)
+2026-11-22T12:26:41.6307742Z [1m[92m   Compiling[0m suss-compile v0.1.0 (/home/runner/work/suss/suss/crates/suss-compile)
+2026-11-22T12:26:45.6806723Z [1m[33mwarning[0m[1m: unnecessary parentheses around pattern[0m
+2026-11-22T12:26:45.6807256Z     [1m[94m--> [0mcrates/suss-compile/src/portable/emit.rs:2129:25
+2026-11-22T12:26:45.6807611Z      [1m[94m|[0m
+2026-11-22T12:26:45.6808405Z [1m[94m2129[0m [1m[94m|[0m [1m[94m...[0m   let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation els[1m[94m...[0m
+2026-11-22T12:26:45.6809184Z      [1m[94m|[0m           [1m[33m^[0m                                                                                                [1m[33m^[0m
+2026-11-22T12:26:45.6809589Z      [1m[94m|[0m
+2026-11-22T12:26:45.6809992Z      [1m[94m= [0m[1mnote[0m: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:45.6810656Z [1m[96mhelp[0m: remove these parentheses
+2026-11-22T12:26:45.6810999Z      [1m[94m|[0m
+2026-11-22T12:26:45.6811666Z [1m[94m2129[0m [91m- [0m                    let [91m([0mOperation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }[91m)[0m = &inst.operation else { continue };
+2026-11-22T12:26:45.6812629Z [1m[94m2129[0m [92m+ [0m                    let Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments } = &inst.operation else { continue };
+2026-11-22T12:26:45.6813162Z      [1m[94m|[0m
+2026-11-22T12:26:45.6813378Z 
+2026-11-22T12:26:45.6832873Z [1m[33mwarning[0m[1m: unused imports: `declaration_tag_metered` and `local_tag_metered`[0m
+2026-11-22T12:26:45.6833453Z   [1m[94m--> [0mcrates/suss-compile/src/portable/hir.rs:31:30
+2026-11-22T12:26:45.6833896Z    [1m[94m|[0m
+2026-11-22T12:26:45.6834623Z [1m[94m31[0m [1m[94m|[0m pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
+2026-11-22T12:26:45.6835178Z    [1m[94m|[0m                              [1m[33m^^^^^^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6835750Z    [1m[94m|[0m
+2026-11-22T12:26:45.6836124Z    [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:45.6836400Z 
+2026-11-22T12:26:45.6850170Z [1m[33mwarning[0m[1m: unused imports: `prepare_fragment` and `prepare_selected_fragment`[0m
+2026-11-22T12:26:45.6850654Z  [1m[94m--> [0mcrates/suss-compile/src/portable/modules.rs:3:50
+2026-11-22T12:26:45.6851016Z   [1m[94m|[0m
+2026-11-22T12:26:45.6851514Z [1m[94m3[0m [1m[94m|[0m     Diagnostic, ExpansionHost, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+2026-11-22T12:26:45.6852091Z   [1m[94m|[0m                                                  [1m[33m^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6852359Z 
+2026-11-22T12:26:45.6856802Z [1m[33mwarning[0m[1m: unused imports: `read_forms_with_source_metadata`, `read_forms`, and `resolve_conditionals`[0m
+2026-11-22T12:26:45.6857352Z  [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:6:17
+2026-11-22T12:26:45.6857758Z   [1m[94m|[0m
+2026-11-22T12:26:45.6858140Z [1m[94m6[0m [1m[94m|[0m     Form, Kind, read_forms, read_forms_with_source_metadata, resolve_conditionals,
+2026-11-22T12:26:45.6858689Z   [1m[94m|[0m                 [1m[33m^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6858956Z 
+2026-11-22T12:26:45.6879818Z [1m[33mwarning[0m[1m: unused import: `Instruction::*`[0m
+2026-11-22T12:26:45.6880317Z  [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/comparisons.rs:7:9
+2026-11-22T12:26:45.6880713Z   [1m[94m|[0m
+2026-11-22T12:26:45.6881035Z [1m[94m7[0m [1m[94m|[0m     use Instruction::*;
+2026-11-22T12:26:45.6881417Z   [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6889279Z 
+2026-11-22T12:26:45.6889515Z [1m[33mwarning[0m[1m: unused import: `Instruction::*`[0m
+2026-11-22T12:26:45.6889989Z   [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/native_object_methods.rs:17:9
+2026-11-22T12:26:45.6890377Z    [1m[94m|[0m
+2026-11-22T12:26:45.6890693Z [1m[94m17[0m [1m[94m|[0m     use Instruction::*;
+2026-11-22T12:26:45.6891045Z    [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6891206Z 
+2026-11-22T12:26:45.6924030Z [1m[33mwarning[0m[1m: unused import: `read_forms`[0m
+2026-11-22T12:26:45.6924609Z  [1m[94m--> [0mcrates/suss-compile/src/portable_macros.rs:9:38
+2026-11-22T12:26:45.6924922Z   [1m[94m|[0m
+2026-11-22T12:26:45.6925412Z [1m[94m9[0m [1m[94m|[0m use suss_reader::forms::{Form, Kind, read_forms};
+2026-11-22T12:26:45.6925910Z   [1m[94m|[0m                                      [1m[33m^^^^^^^^^^[0m
+2026-11-22T12:26:45.6926166Z 
+2026-11-22T12:26:45.6933958Z [1m[33mwarning[0m[1m: unused import: `suss_reader::ParserState`[0m
+2026-11-22T12:26:45.6934605Z    [1m[94m--> [0mcrates/suss-compile/src/lib.rs:130:5
+2026-11-22T12:26:45.6934966Z     [1m[94m|[0m
+2026-11-22T12:26:45.6935333Z [1m[94m130[0m [1m[94m|[0m use suss_reader::ParserState;
+2026-11-22T12:26:45.6935712Z     [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:45.6935952Z 
+2026-11-22T12:26:47.7336007Z [1m[33mwarning[0m[1m: use of deprecated method `std::sync::atomic::Atomic::<usize>::fetch_update`: renamed to `try_update` for consistency[0m
+2026-11-22T12:26:47.7336693Z    [1m[94m--> [0mcrates/suss-compile/src/portable_session.rs:242:10
+2026-11-22T12:26:47.7337144Z     [1m[94m|[0m
+2026-11-22T12:26:47.7337696Z [1m[94m242[0m [1m[94m|[0m         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+2026-11-22T12:26:47.7338139Z     [1m[94m|[0m          [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:47.7338497Z     [1m[94m|[0m
+2026-11-22T12:26:47.7338867Z     [1m[94m= [0m[1mnote[0m: `#[warn(deprecated)]` on by default
+2026-11-22T12:26:47.7339264Z [1m[96mhelp[0m: replace the use of the deprecated method
+2026-11-22T12:26:47.7339603Z     [1m[94m|[0m
+2026-11-22T12:26:47.7340308Z [1m[94m242[0m [91m- [0m        .[91mfetch_update[0m(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+2026-11-22T12:26:47.7340973Z [1m[94m242[0m [92m+ [0m        .[92mtry_update[0m(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+2026-11-22T12:26:47.7341390Z     [1m[94m|[0m
+2026-11-22T12:26:47.7341560Z 
+2026-11-22T12:26:47.7439471Z [1m[33mwarning[0m[1m: use of deprecated method `std::sync::atomic::Atomic::<u64>::fetch_update`: renamed to `try_update` for consistency[0m
+2026-11-22T12:26:47.7440103Z    [1m[94m--> [0mcrates/suss-compile/src/portable_session.rs:689:14
+2026-11-22T12:26:47.7440678Z     [1m[94m|[0m
+2026-11-22T12:26:47.7441168Z [1m[94m689[0m [1m[94m|[0m             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-11-22T12:26:47.7441630Z     [1m[94m|[0m              [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:47.7441965Z     [1m[94m|[0m
+2026-11-22T12:26:47.7442267Z [1m[96mhelp[0m: replace the use of the deprecated method
+2026-11-22T12:26:47.7442603Z     [1m[94m|[0m
+2026-11-22T12:26:47.7443061Z [1m[94m689[0m [91m- [0m            .[91mfetch_update[0m(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-11-22T12:26:47.7443638Z [1m[94m689[0m [92m+ [0m            .[92mtry_update[0m(Ordering::Relaxed, Ordering::Relaxed, |next| {
+2026-11-22T12:26:47.7444033Z     [1m[94m|[0m
+2026-11-22T12:26:47.7444331Z 
+2026-11-22T12:26:47.9626107Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:47.9627522Z   [1m[94m--> [0mcrates/suss-compile/src/portable/emit/captures.rs:95:13
+2026-11-22T12:26:47.9628035Z    [1m[94m|[0m
+2026-11-22T12:26:47.9628443Z [1m[94m95[0m [1m[94m|[0m             _ => {}
+2026-11-22T12:26:47.9629084Z    [1m[94m|[0m             [1m[33m^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:47.9629541Z    [1m[94m|[0m
+2026-11-22T12:26:47.9630069Z [1m[92mnote[0m: multiple earlier patterns match some of the same values
+2026-11-22T12:26:47.9630752Z   [1m[94m--> [0mcrates/suss-compile/src/portable/emit/captures.rs:95:13
+2026-11-22T12:26:47.9631249Z    [1m[94m|[0m
+2026-11-22T12:26:47.9632138Z [1m[94m87[0m [1m[94m|[0m             Terminator::Return(value) | Terminator::Throw(value) => pending.push(*value),
+2026-11-22T12:26:47.9633003Z    [1m[94m|[0m             [1m[94m----------------------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:47.9633952Z [1m[94m88[0m [1m[94m|[0m             Terminator::Branch { condition, .. } => pending.push(*condition),
+2026-11-22T12:26:47.9634922Z    [1m[94m|[0m             [1m[94m------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:47.9636104Z [1m[94m89[0m [1m[94m|[0m             Terminator::Jump { target, arguments } => {
+2026-11-22T12:26:47.9636811Z    [1m[94m|[0m             [1m[94m--------------------------------------[0m [1m[94mmatches some of the same values[0m
+2026-11-22T12:26:47.9637423Z [1m[94m...[0m
+2026-11-22T12:26:47.9637787Z [1m[94m95[0m [1m[94m|[0m             _ => {}
+2026-11-22T12:26:47.9638288Z    [1m[94m|[0m             [1m[92m^[0m [1m[92mcollectively making this unreachable[0m
+2026-11-22T12:26:47.9639034Z    [1m[94m= [0m[1mnote[0m: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:47.9639432Z 
+2026-11-22T12:26:48.0102633Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:48.0103373Z    [1m[94m--> [0mcrates/suss-compile/src/portable/emit.rs:910:113
+2026-11-22T12:26:48.0103834Z     [1m[94m|[0m
+2026-11-22T12:26:48.0104482Z [1m[94m876[0m [1m[94m|[0m [1m[94m...[0m     "number-hash"
+2026-11-22T12:26:48.0105044Z     [1m[94m|[0m         [1m[94m-------------[0m [1m[94mmatches all the relevant values[0m
+2026-11-22T12:26:48.0105594Z [1m[94m...[0m
+2026-11-22T12:26:48.0106780Z [1m[94m910[0m [1m[94m|[0m [1m[94m...[0m     | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string[1m[94m...[0m
+2026-11-22T12:26:48.0108002Z     [1m[94m|[0m                                                                                                             [1m[33m^^^^^^^^^^^^^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:48.0108507Z 
+2026-11-22T12:26:48.5122683Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:48.5123585Z    [1m[94m--> [0mcrates/suss-compile/src/portable/hir/nominal.rs:915:13
+2026-11-22T12:26:48.5124302Z     [1m[94m|[0m
+2026-11-22T12:26:48.5124918Z [1m[94m915[0m [1m[94m|[0m         let mut synthetic = |stem: &str| -> String {
+2026-11-22T12:26:48.5125567Z     [1m[94m|[0m             [1m[94m----[0m[1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:48.5126173Z     [1m[94m|[0m             [1m[94m|[0m
+2026-11-22T12:26:48.5126675Z     [1m[94m|[0m             [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:48.5127115Z     [1m[94m|[0m
+2026-11-22T12:26:48.5127686Z     [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:48.5128019Z 
+2026-11-22T12:26:48.5341135Z [1m[33mwarning[0m[1m: unused variable: `form`[0m
+2026-11-22T12:26:48.5342098Z     [1m[94m--> [0mcrates/suss-compile/src/portable/hir/nominal.rs:1625:9
+2026-11-22T12:26:48.5342679Z      [1m[94m|[0m
+2026-11-22T12:26:48.5343115Z [1m[94m1625[0m [1m[94m|[0m         form: &Form,
+2026-11-22T12:26:48.5343880Z      [1m[94m|[0m         [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_form`[0m
+2026-11-22T12:26:48.5344750Z      [1m[94m|[0m
+2026-11-22T12:26:48.5345383Z      [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:48.5345818Z 
+2026-11-22T12:26:48.6253900Z [1m[33mwarning[0m[1m: unreachable pattern[0m
+2026-11-22T12:26:48.6254643Z    [1m[94m--> [0mcrates/suss-compile/src/portable/hir.rs:761:15
+2026-11-22T12:26:48.6255187Z     [1m[94m|[0m
+2026-11-22T12:26:48.6255696Z [1m[94m759[0m [1m[94m|[0m             | Self::IsRatio
+2026-11-22T12:26:48.6256213Z     [1m[94m|[0m               [1m[94m-------------[0m [1m[94mmatches all the relevant values[0m
+2026-11-22T12:26:48.6256659Z [1m[94m760[0m [1m[94m|[0m             | Self::IsBigInt
+2026-11-22T12:26:48.6257023Z [1m[94m761[0m [1m[94m|[0m             | Self::IsRatio
+2026-11-22T12:26:48.6257481Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^[0m [1m[33mno value can reach this[0m
+2026-11-22T12:26:48.6257733Z 
+2026-11-22T12:26:49.4837700Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:49.4838267Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/error_constructors.rs:457:9
+2026-11-22T12:26:49.4839020Z     [1m[94m|[0m
+2026-11-22T12:26:49.4839326Z [1m[94m457[0m [1m[94m|[0m     let mut code = vec![
+2026-11-22T12:26:49.4839782Z     [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:49.4840216Z     [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:49.4840593Z     [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:49.4840820Z 
+2026-11-22T12:26:49.6442422Z [1m[33mwarning[0m[1m: unused variable: `fields`[0m
+2026-11-22T12:26:49.6443140Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/native_objects.rs:243:9
+2026-11-22T12:26:49.6443629Z     [1m[94m|[0m
+2026-11-22T12:26:49.6443961Z [1m[94m243[0m [1m[94m|[0m     let fields = b.function_with_locals(
+2026-11-22T12:26:49.6444716Z     [1m[94m|[0m         [1m[33m^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_fields`[0m
+2026-11-22T12:26:49.6445066Z 
+2026-11-22T12:26:49.6471871Z [1m[33mwarning[0m[1m: unused variable: `step`[0m
+2026-11-22T12:26:49.6472352Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/native_objects.rs:526:9
+2026-11-22T12:26:49.6472723Z     [1m[94m|[0m
+2026-11-22T12:26:49.6473224Z [1m[94m526[0m [1m[94m|[0m     let step = b.function(
+2026-11-22T12:26:49.6473759Z     [1m[94m|[0m         [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_step`[0m
+2026-11-22T12:26:49.6474030Z 
+2026-11-22T12:26:49.6606555Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:49.6607203Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/native_protocols.rs:178:9
+2026-11-22T12:26:49.6607579Z     [1m[94m|[0m
+2026-11-22T12:26:49.6607923Z [1m[94m178[0m [1m[94m|[0m     let mut body = vec![
+2026-11-22T12:26:49.6608337Z     [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:49.6608670Z     [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:49.6609044Z     [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:49.6947166Z 
+2026-11-22T12:26:49.6947844Z [1m[33mwarning[0m[1m: unused variable: `unsupported`[0m
+2026-11-22T12:26:49.6948511Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/numeric.rs:300:9
+2026-11-22T12:26:49.6948899Z     [1m[94m|[0m
+2026-11-22T12:26:49.6949270Z [1m[94m300[0m [1m[94m|[0m     let unsupported = unsupported_object_error();
+2026-11-22T12:26:49.6949847Z     [1m[94m|[0m         [1m[33m^^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_unsupported`[0m
+2026-11-22T12:26:49.6950157Z 
+2026-11-22T12:26:49.7724690Z [1m[33mwarning[0m[1m: unused variable: `base`[0m
+2026-11-22T12:26:49.7725313Z    [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/streams.rs:512:30
+2026-11-22T12:26:49.7725667Z     [1m[94m|[0m
+2026-11-22T12:26:49.7726094Z [1m[94m512[0m [1m[94m|[0m fn withdraw(b: &mut Builder, base: u32) -> u32 {
+2026-11-22T12:26:49.7726643Z     [1m[94m|[0m                              [1m[33m^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_base`[0m
+2026-11-22T12:26:49.7726995Z 
+2026-11-22T12:26:49.8579745Z [1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+2026-11-22T12:26:49.8580430Z     [1m[94m--> [0mcrates/suss-compile/src/runtime_abi.rs:2136:9
+2026-11-22T12:26:49.8580796Z      [1m[94m|[0m
+2026-11-22T12:26:49.8581145Z [1m[94m2136[0m [1m[94m|[0m     let mut body = vec![
+2026-11-22T12:26:49.8581530Z      [1m[94m|[0m         [1m[94m----[0m[1m[33m^^^^[0m
+2026-11-22T12:26:49.8581864Z      [1m[94m|[0m         [1m[94m|[0m
+2026-11-22T12:26:49.8582210Z      [1m[94m|[0m         [1m[94mhelp: remove this `mut`[0m
+2026-11-22T12:26:49.8582424Z 
+2026-11-22T12:26:50.1713165Z [1m[33mwarning[0m[1m: unused variable: `depth`[0m
+2026-11-22T12:26:50.1713702Z     [1m[94m--> [0mcrates/suss-compile/src/portable_macro_graph.rs:2984:39
+2026-11-22T12:26:50.1714490Z      [1m[94m|[0m
+2026-11-22T12:26:50.1715185Z [1m[94m2984[0m [1m[94m|[0m     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+2026-11-22T12:26:50.1715827Z      [1m[94m|[0m                                       [1m[33m^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_depth`[0m
+2026-11-22T12:26:50.1716166Z 
+2026-11-22T12:26:50.4013051Z [1m[33mwarning[0m[1m: function `source_tags` is never used[0m
+2026-11-22T12:26:50.4014851Z    [1m[94m--> [0mcrates/suss-compile/src/portable/hir/source_tags.rs:760:15
+2026-11-22T12:26:50.4015631Z     [1m[94m|[0m
+2026-11-22T12:26:50.4016186Z [1m[94m760[0m [1m[94m|[0m pub(super) fn source_tags(
+2026-11-22T12:26:50.4016703Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4017173Z     [1m[94m|[0m
+2026-11-22T12:26:50.4017748Z     [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:26:50.4018129Z 
+2026-11-22T12:26:50.4018432Z [1m[33mwarning[0m[1m: function `metadata_wrapper_tags` is never used[0m
+2026-11-22T12:26:50.4019128Z     [1m[94m--> [0mcrates/suss-compile/src/portable/hir/source_tags.rs:1166:15
+2026-11-22T12:26:50.4019585Z      [1m[94m|[0m
+2026-11-22T12:26:50.4020302Z [1m[94m1166[0m [1m[94m|[0m pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
+2026-11-22T12:26:50.4020978Z      [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4021269Z 
+2026-11-22T12:26:50.4021516Z [1m[33mwarning[0m[1m: function `input_header` is never used[0m
+2026-11-22T12:26:50.4022110Z    [1m[94m--> [0mcrates/suss-compile/src/portable/source.rs:352:15
+2026-11-22T12:26:50.4022579Z     [1m[94m|[0m
+2026-11-22T12:26:50.4023012Z [1m[94m352[0m [1m[94m|[0m pub(crate) fn input_header(
+2026-11-22T12:26:50.4023460Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4023781Z 
+2026-11-22T12:26:50.4024032Z [1m[33mwarning[0m[1m: function `dependencies` is never used[0m
+2026-11-22T12:26:50.4024858Z    [1m[94m--> [0mcrates/suss-compile/src/portable/source.rs:397:15
+2026-11-22T12:26:50.4025316Z     [1m[94m|[0m
+2026-11-22T12:26:50.4025756Z [1m[94m397[0m [1m[94m|[0m pub(crate) fn dependencies(
+2026-11-22T12:26:50.4026241Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4026514Z 
+2026-11-22T12:26:50.4026709Z [1m[33mwarning[0m[1m: function `same` is never used[0m
+2026-11-22T12:26:50.4027252Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:272:4
+2026-11-22T12:26:50.4027750Z     [1m[94m|[0m
+2026-11-22T12:26:50.4028245Z [1m[94m272[0m [1m[94m|[0m fn same(a: &Form, b: &Form, metadata: bool) -> bool {
+2026-11-22T12:26:50.4028742Z     [1m[94m|[0m    [1m[33m^^^^[0m
+2026-11-22T12:26:50.4028961Z 
+2026-11-22T12:26:50.4029201Z [1m[33mwarning[0m[1m: constant `TRAVERSAL_BOUND` is never used[0m
+2026-11-22T12:26:50.4029825Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:319:7
+2026-11-22T12:26:50.4030344Z     [1m[94m|[0m
+2026-11-22T12:26:50.4030773Z [1m[94m319[0m [1m[94m|[0m const TRAVERSAL_BOUND: usize = 1_048_576;
+2026-11-22T12:26:50.4031299Z     [1m[94m|[0m       [1m[33m^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4031551Z 
+2026-11-22T12:26:50.4031846Z [1m[33mwarning[0m[1m: associated items `new` and `find` are never used[0m
+2026-11-22T12:26:50.4032485Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:335:8
+2026-11-22T12:26:50.4032988Z     [1m[94m|[0m
+2026-11-22T12:26:50.4033389Z [1m[94m334[0m [1m[94m|[0m impl IndexedForms {
+2026-11-22T12:26:50.4033993Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94massociated items in this implementation[0m
+2026-11-22T12:26:50.4034847Z [1m[94m335[0m [1m[94m|[0m     fn new(forms: Vec<Form>) -> Self {
+2026-11-22T12:26:50.4035374Z     [1m[94m|[0m        [1m[33m^^^[0m
+2026-11-22T12:26:50.4035730Z [1m[94m...[0m
+2026-11-22T12:26:50.4036106Z [1m[94m340[0m [1m[94m|[0m     fn find(
+2026-11-22T12:26:50.4036691Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:50.4036935Z 
+2026-11-22T12:26:50.4037263Z [1m[33mwarning[0m[1m: fields `truncated` and `limit` are never read[0m
+2026-11-22T12:26:50.4037916Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:385:5
+2026-11-22T12:26:50.4038395Z     [1m[94m|[0m
+2026-11-22T12:26:50.4039012Z [1m[94m382[0m [1m[94m|[0m struct FormIndex {
+2026-11-22T12:26:50.4039504Z     [1m[94m|[0m        [1m[94m---------[0m [1m[94mfields in this struct[0m
+2026-11-22T12:26:50.4039998Z [1m[94m...[0m
+2026-11-22T12:26:50.4040450Z [1m[94m385[0m [1m[94m|[0m     truncated: bool,
+2026-11-22T12:26:50.4040847Z     [1m[94m|[0m     [1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:50.4041318Z [1m[94m386[0m [1m[94m|[0m     limit: usize,
+2026-11-22T12:26:50.4041726Z     [1m[94m|[0m     [1m[33m^^^^^[0m
+2026-11-22T12:26:50.4042160Z     [1m[94m|[0m
+2026-11-22T12:26:50.4042847Z     [1m[94m= [0m[1mnote[0m: `FormIndex` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+2026-11-22T12:26:50.4043375Z 
+2026-11-22T12:26:50.4043908Z [1m[33mwarning[0m[1m: associated items `new`, `form`, and `find` are never used[0m
+2026-11-22T12:26:50.4044775Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:390:8
+2026-11-22T12:26:50.4045262Z     [1m[94m|[0m
+2026-11-22T12:26:50.4045679Z [1m[94m389[0m [1m[94m|[0m impl FormIndex {
+2026-11-22T12:26:50.4046260Z     [1m[94m|[0m [1m[94m--------------[0m [1m[94massociated items in this implementation[0m
+2026-11-22T12:26:50.4046964Z [1m[94m390[0m [1m[94m|[0m     fn new(forms: &[Form], limit: usize) -> Self {
+2026-11-22T12:26:50.4047457Z     [1m[94m|[0m        [1m[33m^^^[0m
+2026-11-22T12:26:50.4047826Z [1m[94m...[0m
+2026-11-22T12:26:50.4048375Z [1m[94m471[0m [1m[94m|[0m     fn form<'a>(&self, forms: &'a [Form], mut rank: usize) -> &'a Form {
+2026-11-22T12:26:50.4048909Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:50.4049349Z [1m[94m...[0m
+2026-11-22T12:26:50.4049712Z [1m[94m535[0m [1m[94m|[0m     fn find<'a>(
+2026-11-22T12:26:50.4050123Z     [1m[94m|[0m        [1m[33m^^^^[0m
+2026-11-22T12:26:50.4050354Z 
+2026-11-22T12:26:50.4050624Z [1m[33mwarning[0m[1m: method `reader_tree` is never used[0m
+2026-11-22T12:26:50.4051222Z    [1m[94m--> [0mcrates/suss-compile/src/portable/origin/form_metadata.rs:735:19
+2026-11-22T12:26:50.4051780Z     [1m[94m|[0m
+2026-11-22T12:26:50.4052122Z [1m[94m639[0m [1m[94m|[0m impl SourceOrigin {
+2026-11-22T12:26:50.4052707Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94mmethod in this implementation[0m
+2026-11-22T12:26:50.4053219Z [1m[94m...[0m
+2026-11-22T12:26:50.4053773Z [1m[94m735[0m [1m[94m|[0m     pub(crate) fn reader_tree(&self, form: &Form) -> Result<Form, Diagnostic> {
+2026-11-22T12:26:50.4054661Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4054907Z 
+2026-11-22T12:26:50.4055169Z [1m[33mwarning[0m[1m: function `has_template` is never used[0m
+2026-11-22T12:26:50.4055760Z    [1m[94m--> [0mcrates/suss-compile/src/portable/syntax_quote.rs:475:15
+2026-11-22T12:26:50.4056206Z     [1m[94m|[0m
+2026-11-22T12:26:50.4056724Z [1m[94m475[0m [1m[94m|[0m pub(crate) fn has_template(form: &Form) -> Result<bool, Diagnostic> {
+2026-11-22T12:26:50.4057317Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4057590Z 
+2026-11-22T12:26:50.4057859Z [1m[33mwarning[0m[1m: function `lower_generated` is never used[0m
+2026-11-22T12:26:50.4058464Z    [1m[94m--> [0mcrates/suss-compile/src/portable/syntax_quote.rs:504:15
+2026-11-22T12:26:50.4058911Z     [1m[94m|[0m
+2026-11-22T12:26:50.4059437Z [1m[94m504[0m [1m[94m|[0m pub(crate) fn lower_generated(form: &Form) -> Result<Form, Diagnostic> {
+2026-11-22T12:26:50.4060046Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4060526Z 
+2026-11-22T12:26:50.4060839Z [1m[33mwarning[0m[1m: function `invalid_length` is never used[0m
+2026-11-22T12:26:50.4061397Z   [1m[94m--> [0mcrates/suss-compile/src/runtime_abi/range_errors.rs:35:15
+2026-11-22T12:26:50.4061895Z    [1m[94m|[0m
+2026-11-22T12:26:50.4062412Z [1m[94m35[0m [1m[94m|[0m pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
+2026-11-22T12:26:50.4062995Z    [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4063272Z 
+2026-11-22T12:26:50.4063574Z [1m[33mwarning[0m[1m: function `compile_inputs_typed` is never used[0m
+2026-11-22T12:26:50.4064313Z    [1m[94m--> [0mcrates/suss-compile/src/portable_aot.rs:264:15
+2026-11-22T12:26:50.4064823Z     [1m[94m|[0m
+2026-11-22T12:26:50.4065263Z [1m[94m264[0m [1m[94m|[0m pub(crate) fn compile_inputs_typed(
+2026-11-22T12:26:50.4065767Z     [1m[94m|[0m               [1m[33m^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4066057Z 
+2026-11-22T12:26:50.4066346Z [1m[33mwarning[0m[1m: function `prepare_inputs` is never used[0m
+2026-11-22T12:26:50.4066941Z    [1m[94m--> [0mcrates/suss-compile/src/portable_aot.rs:496:4
+2026-11-22T12:26:50.4067410Z     [1m[94m|[0m
+2026-11-22T12:26:50.4067895Z [1m[94m496[0m [1m[94m|[0m fn prepare_inputs(
+2026-11-22T12:26:50.4068381Z     [1m[94m|[0m    [1m[33m^^^^^^^^^^^^^^[0m
+2026-11-22T12:26:50.4068639Z 
+2026-11-22T12:26:50.4068918Z [1m[33mwarning[0m[1m: function `prepare` is never used[0m
+2026-11-22T12:26:50.4069508Z   [1m[94m--> [0mcrates/suss-compile/src/portable_expression.rs:59:15
+2026-11-22T12:26:50.4070003Z    [1m[94m|[0m
+2026-11-22T12:26:50.4070390Z [1m[94m59[0m [1m[94m|[0m pub(crate) fn prepare(
+2026-11-22T12:26:50.4070857Z    [1m[94m|[0m               [1m[33m^^^^^^^[0m
+2026-11-22T12:26:50.4071121Z 
+2026-11-22T12:26:50.4071385Z [1m[33mwarning[0m[1m: field `undefined` is never read[0m
+2026-11-22T12:26:50.4071959Z     [1m[94m--> [0mcrates/suss-compile/src/portable_macro_data.rs:1205:5
+2026-11-22T12:26:50.4072460Z      [1m[94m|[0m
+2026-11-22T12:26:50.4072823Z [1m[94m1196[0m [1m[94m|[0m struct Budget {
+2026-11-22T12:26:50.4073328Z      [1m[94m|[0m        [1m[94m------[0m [1m[94mfield in this struct[0m
+2026-11-22T12:26:50.4073835Z [1m[94m...[0m
+2026-11-22T12:26:50.4074423Z [1m[94m1205[0m [1m[94m|[0m     undefined: Option<Val>,
+2026-11-22T12:26:50.4074889Z      [1m[94m|[0m     [1m[33m^^^^^^^^^[0m
+2026-11-22T12:26:50.4075134Z 
+2026-11-22T12:26:50.4075382Z [1m[33mwarning[0m[1m: method `val` is never used[0m
+2026-11-22T12:26:50.4075919Z    [1m[94m--> [0mcrates/suss-compile/src/portable_session.rs:169:19
+2026-11-22T12:26:50.4076405Z     [1m[94m|[0m
+2026-11-22T12:26:50.4076764Z [1m[94m155[0m [1m[94m|[0m impl SessionValue {
+2026-11-22T12:26:50.4077377Z     [1m[94m|[0m [1m[94m-----------------[0m [1m[94mmethod in this implementation[0m
+2026-11-22T12:26:50.4077883Z [1m[94m...[0m
+2026-11-22T12:26:50.4078696Z [1m[94m169[0m [1m[94m|[0m     pub(crate) fn val(&self, store: &mut wasmtime::StoreContextMut<'_, ()>) -> Val {
+2026-11-22T12:26:50.4079345Z     [1m[94m|[0m                   [1m[33m^^^[0m
+2026-11-22T12:26:50.4079607Z 
+2026-11-22T12:26:53.3016707Z [1m[92m   Compiling[0m suss-cli v0.1.0 (/home/runner/work/suss/suss/crates/suss-cli)
+2026-11-22T12:27:27.5392799Z [1m[33mwarning[0m: `suss-compile` (lib) generated 41 warnings (run `cargo fix --lib -p suss-compile` to apply 20 suggestions)
+2026-11-22T12:27:27.9871021Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9872351Z   [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:83:13
+2026-11-22T12:27:27.9873181Z    [1m[94m|[0m
+2026-11-22T12:27:27.9874621Z [1m[94m83[0m [1m[94m|[0m     effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9875462Z    [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9876284Z    [1m[94m|[0m
+2026-11-22T12:27:27.9876765Z    [1m[94m= [0m[1mnote[0m: `#[warn(deprecated)]` on by default
+2026-11-22T12:27:27.9877103Z 
+2026-11-22T12:27:27.9877980Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9879021Z   [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:88:15
+2026-11-22T12:27:27.9879581Z    [1m[94m|[0m
+2026-11-22T12:27:27.9880096Z [1m[94m88[0m [1m[94m|[0m     calculate.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9880759Z    [1m[94m|[0m               [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9881052Z 
+2026-11-22T12:27:27.9881838Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9882812Z   [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:90:13
+2026-11-22T12:27:27.9883370Z    [1m[94m|[0m
+2026-11-22T12:27:27.9883845Z [1m[94m90[0m [1m[94m|[0m     effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9884842Z    [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9885095Z 
+2026-11-22T12:27:27.9886567Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9887557Z   [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:93:15
+2026-11-22T12:27:27.9888045Z    [1m[94m|[0m
+2026-11-22T12:27:27.9888520Z [1m[94m93[0m [1m[94m|[0m     calculate.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9889075Z    [1m[94m|[0m               [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9889389Z 
+2026-11-22T12:27:27.9890126Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9891106Z   [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:95:13
+2026-11-22T12:27:27.9891618Z    [1m[94m|[0m
+2026-11-22T12:27:27.9892110Z [1m[94m95[0m [1m[94m|[0m     effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9892656Z    [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9892937Z 
+2026-11-22T12:27:27.9906284Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9907361Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:153:9
+2026-11-22T12:27:27.9908044Z     [1m[94m|[0m
+2026-11-22T12:27:27.9908578Z [1m[94m153[0m [1m[94m|[0m     run.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9909150Z     [1m[94m|[0m         [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9909500Z 
+2026-11-22T12:27:27.9958571Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9959852Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:267:18
+2026-11-22T12:27:27.9960570Z     [1m[94m|[0m
+2026-11-22T12:27:27.9961146Z [1m[94m267[0m [1m[94m|[0m         function.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9961852Z     [1m[94m|[0m                  [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9962155Z 
+2026-11-22T12:27:27.9979842Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9981113Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:324:17
+2026-11-22T12:27:27.9981661Z     [1m[94m|[0m
+2026-11-22T12:27:27.9982257Z [1m[94m324[0m [1m[94m|[0m         effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9983113Z     [1m[94m|[0m                 [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9983415Z 
+2026-11-22T12:27:27.9984781Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9985871Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:326:19
+2026-11-22T12:27:27.9986398Z     [1m[94m|[0m
+2026-11-22T12:27:27.9987451Z [1m[94m326[0m [1m[94m|[0m         calculate.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9988296Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9988587Z 
+2026-11-22T12:27:27.9989412Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9990472Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:331:17
+2026-11-22T12:27:27.9991039Z     [1m[94m|[0m
+2026-11-22T12:27:27.9991551Z [1m[94m331[0m [1m[94m|[0m         effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9992354Z     [1m[94m|[0m                 [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9992643Z 
+2026-11-22T12:27:27.9993377Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9994709Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:334:19
+2026-11-22T12:27:27.9995213Z     [1m[94m|[0m
+2026-11-22T12:27:27.9995751Z [1m[94m334[0m [1m[94m|[0m         calculate.post_return(&mut store).unwrap();
+2026-11-22T12:27:27.9996363Z     [1m[94m|[0m                   [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:27.9996657Z 
+2026-11-22T12:27:27.9997394Z [1m[33mwarning[0m[1m: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect[0m
+2026-11-22T12:27:27.9998430Z    [1m[94m--> [0mcrates/suss-cli/tests/aot_source_preparation.rs:339:17
+2026-11-22T12:27:27.9998955Z     [1m[94m|[0m
+2026-11-22T12:27:27.9999495Z [1m[94m339[0m [1m[94m|[0m         effects.post_return(&mut store).unwrap();
+2026-11-22T12:27:28.0000066Z     [1m[94m|[0m                 [1m[33m^^^^^^^^^^^[0m
+2026-11-22T12:27:28.0000455Z 
+2026-11-22T12:27:29.9454654Z [1m[33mwarning[0m: `suss-cli` (test "aot_source_preparation") generated 12 warnings
+2026-11-22T12:27:32.4205694Z [1m[33mwarning[0m[1m: unused import: `AsContextMut`[0m
+2026-11-22T12:27:32.4206675Z  [1m[94m--> [0mcrates/suss-cli/tests/compiled_namespace_acceptance.rs:9:16
+2026-11-22T12:27:32.4207239Z   [1m[94m|[0m
+2026-11-22T12:27:32.4209961Z [1m[94m9[0m [1m[94m|[0m use wasmtime::{AsContextMut, Config, Engine, Store};
+2026-11-22T12:27:32.4210553Z   [1m[94m|[0m                [1m[33m^^^^^^^^^^^^[0m
+2026-11-22T12:27:32.4210993Z   [1m[94m|[0m
+2026-11-22T12:27:32.4211573Z   [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:27:32.4211995Z 
+2026-11-22T12:27:36.0127184Z [1m[33mwarning[0m: `suss-cli` (test "compiled_namespace_acceptance") generated 1 warning (run `cargo fix --test "compiled_namespace_acceptance" -p suss-cli` to apply 1 suggestion)
+2026-11-22T12:27:46.5147657Z [1m[33mwarning[0m[1m: unexpected `cfg` condition value: `component`[0m
+2026-11-22T12:27:46.5148378Z    [1m[94m--> [0mcrates/suss-cli/src/main.rs:752:25
+2026-11-22T12:27:46.5148773Z     [1m[94m|[0m
+2026-11-22T12:27:46.5149379Z [1m[94m752[0m [1m[94m|[0m #[cfg(all(unix, not(all(feature = "component", target_family = "wasm"))))]
+2026-11-22T12:27:46.5149989Z     [1m[94m|[0m                         [1m[33m^^^^^^^^^^^^^^^^^^^^^[0m
+2026-11-22T12:27:46.5150481Z     [1m[94m|[0m
+2026-11-22T12:27:46.5150940Z     [1m[94m= [0m[1mnote[0m: expected values for `feature` are: `default`
+2026-11-22T12:27:46.5151929Z     [1m[94m= [0m[1mhelp[0m: consider adding `component` as a feature in `Cargo.toml`
+2026-11-22T12:27:46.5152870Z     [1m[94m= [0m[1mnote[0m: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+2026-11-22T12:27:46.5153806Z     [1m[94m= [0m[1mnote[0m: `#[warn(unexpected_cfgs)]` on by default
+2026-11-22T12:27:46.5154429Z 
+2026-11-22T12:27:46.5154747Z [1m[33mwarning[0m[1m: unused import: `Path`[0m
+2026-11-22T12:27:46.5155242Z    [1m[94m--> [0mcrates/suss-cli/src/main.rs:213:25
+2026-11-22T12:27:46.5155695Z     [1m[94m|[0m
+2026-11-22T12:27:46.5156321Z [1m[94m213[0m [1m[94m|[0m         use std::path::{Path, PathBuf};
+2026-11-22T12:27:46.5156958Z     [1m[94m|[0m                         [1m[33m^^^^[0m
+2026-11-22T12:27:46.5157378Z     [1m[94m|[0m
+2026-11-22T12:27:46.5157906Z     [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+2026-11-22T12:27:46.5158353Z 
+2026-11-22T12:27:46.5158587Z [1m[33mwarning[0m[1m: unused import: `Component`[0m
+2026-11-22T12:27:46.5159038Z    [1m[94m--> [0mcrates/suss-cli/src/main.rs:480:31
+2026-11-22T12:27:46.5159624Z     [1m[94m|[0m
+2026-11-22T12:27:46.5160163Z [1m[94m480[0m [1m[94m|[0m     use wasmtime::component::{Component, Linker, ResourceTable, Val};
+2026-11-22T12:27:46.5160879Z     [1m[94m|[0m                               [1m[33m^^^^^^^^^[0m
+2026-11-22T12:27:46.5161172Z 
+2026-11-22T12:28:03.5131198Z [1m[33mwarning[0m: `suss-cli` (bin "suss") generated 3 warnings (run `cargo fix --bin "suss" -p suss-cli` to apply 2 suggestions)
+2026-11-22T12:28:03.5144281Z [1m[92m    Finished[0m `test` profile [optimized] target(s) in 1m 41s
+2026-11-22T12:28:03.5713739Z [1m[92m     Running[0m tests/aot_source_preparation.rs (target/debug/build/suss-cli/68a02223d586d81b/out/aot_source_preparation-68a02223d586d81b)
+2026-11-22T12:28:03.5728515Z 
+2026-11-22T12:28:03.5729067Z running 6 tests
+2026-11-22T12:28:29.9144493Z test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings ... ok
+2026-11-22T12:28:29.9416358Z test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+2026-11-22T12:28:46.2385775Z test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+2026-11-22T12:28:58.0605824Z test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+2026-11-22T12:29:11.2432120Z test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+2026-11-22T12:29:11.2510973Z test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+2026-11-22T12:29:11.2511461Z 
+2026-11-22T12:29:11.2511763Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 67.68s
+2026-11-22T12:29:11.2512138Z 
+2026-11-22T12:29:11.3457533Z [1m[92m     Running[0m tests/clojure_bigint_integers.rs (target/debug/build/suss-cli/848a0e3164d7c3d3/out/clojure_bigint_integers-848a0e3164d7c3d3)
+2026-11-22T12:29:11.3471223Z 
+2026-11-22T12:29:11.3471378Z running 3 tests
+2026-11-22T12:29:24.9437028Z test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+2026-11-22T12:29:25.0905710Z test renamed_promoting_core_vars_keep_their_inline_operations ... ok
+2026-11-22T12:29:26.5433195Z test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+2026-11-22T12:29:26.5433488Z 
+2026-11-22T12:29:26.5433853Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.20s
+2026-11-22T12:29:26.5434321Z 
+2026-11-22T12:29:26.6024731Z [1m[92m     Running[0m tests/clojure_longs_doubles.rs (target/debug/build/suss-cli/f7566799d3d884ad/out/clojure_longs_doubles-f7566799d3d884ad)
+2026-11-22T12:29:26.6037544Z 
+2026-11-22T12:29:26.6037927Z running 14 tests
+2026-11-22T12:29:27.8815778Z test contagion_and_predicates_distinguish_longs_from_doubles ... ok
+2026-11-22T12:29:27.9075958Z test case_matches_numbers_only_within_their_kind ... ok
+2026-11-22T12:29:27.9720609Z test double_contagion_reaches_every_arithmetic_function ... ok
+2026-11-22T12:29:28.1535456Z test counts_narrow_as_clojure_casts_to_long ... ok
+2026-11-22T12:29:28.2142465Z test doubles_print_as_java_does ... ok
+2026-11-22T12:29:28.2201636Z test double_quot_and_rem_truncate_through_a_long ... ok
+2026-11-22T12:29:28.2969739Z test integral_counts_are_longs ... ok
+2026-11-22T12:29:28.6234474Z test integer_division_follows_clojure ... ok
+2026-11-22T12:29:28.7341412Z test long_arithmetic_is_exact_and_checked ... ok
+2026-11-22T12:29:28.8200199Z test long_min_value_quotients_and_ratio_terms_are_exact ... ok
+2026-11-22T12:29:28.8824588Z test ranges_reach_the_ends_of_the_long_range ... ok
+2026-11-22T12:29:28.9885739Z test reading_keeps_longs_exact_and_distinct_from_doubles ... ok
+2026-11-22T12:29:29.0581786Z test rest_arguments_count_from_long_zero ... ok
+2026-11-22T12:29:29.5396141Z test macro_data_preserves_longs_and_doubles ... ok
+2026-11-22T12:29:29.5396530Z 
+2026-11-22T12:29:29.5396986Z test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.94s
+2026-11-22T12:29:29.5397453Z 
+2026-11-22T12:29:29.5704266Z [1m[92m     Running[0m tests/clojure_primitive_method_types.rs (target/debug/build/suss-cli/00455338fd8f2007/out/clojure_primitive_method_types-00455338fd8f2007)
+2026-11-22T12:29:29.5717189Z 
+2026-11-22T12:29:29.5717363Z running 4 tests
+2026-11-22T12:29:32.8026318Z test aot_preserves_primitive_method_types ... ok
+2026-11-22T12:29:34.0287436Z test primitive_method_diagnostics_use_lexical_source_types ... ok
+2026-11-22T12:29:34.5822037Z test runtime_and_macro_preserve_primitive_method_types ... ok
+2026-11-22T12:29:50.6595229Z test aot_rejects_invalid_primitive_method_types ... ok
+2026-11-22T12:29:50.6595617Z 
+2026-11-22T12:29:50.6595853Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.09s
+2026-11-22T12:29:50.6596145Z 
+2026-11-22T12:29:50.6823294Z [1m[92m     Running[0m tests/collection_printing.rs (target/debug/build/suss-cli/6cb206581c3b1525/out/collection_printing-6cb206581c3b1525)
+2026-11-22T12:29:50.6837705Z 
+2026-11-22T12:29:50.6837920Z running 3 tests
+2026-11-22T12:29:53.4595797Z test print_str_and_str_print_collections_without_quoting ... ok
+2026-11-22T12:29:54.6163204Z test str_of_a_record_is_its_label_and_hash_as_clojure_records_inherit ... ok
+2026-11-22T12:29:55.2119025Z test pr_str_and_prn_str_print_every_shipped_type ... ok
+2026-11-22T12:29:55.2119308Z 
+2026-11-22T12:29:55.2119623Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.53s
+2026-11-22T12:29:55.2119882Z 
+2026-11-22T12:29:55.2405103Z [1m[92m     Running[0m tests/compiled_aot_namespace_command.rs (target/debug/build/suss-cli/a3f796bef3651418/out/compiled_aot_namespace_command-a3f796bef3651418)
+2026-11-22T12:29:55.2417715Z 
+2026-11-22T12:29:55.2463093Z running 4 tests
+2026-11-22T12:29:55.2463774Z test namespace_command_rejects_missing_wit_and_project_options_before_routing ... ok
+2026-11-22T12:29:55.2750781Z test namespace_command_rejects_wrong_missing_or_ambiguous_source_without_replacing_output ... ok
+2026-11-22T12:30:12.8503705Z test namespace_command_defers_runtime_throw_until_component_instantiation ... ok
+2026-11-22T12:30:12.8525208Z test namespace_command_uses_default_root_compiled_macros_and_runtime_dependencies ... ok
+2026-11-22T12:30:12.8525632Z 
+2026-11-22T12:30:12.8534934Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.61s
+2026-11-22T12:30:12.8535373Z 
+2026-11-22T12:30:12.9385132Z [1m[92m     Running[0m tests/compiled_boxed_longs.rs (target/debug/build/suss-cli/d32e85e01d78c323/out/compiled_boxed_longs-d32e85e01d78c323)
+2026-11-22T12:30:12.9398261Z 
+2026-11-22T12:30:12.9398460Z running 1 test
+2026-11-22T12:30:16.3308375Z test boxed_long_arithmetic_matches_the_repl ... ok
+2026-11-22T12:30:16.3308654Z 
+2026-11-22T12:30:16.3308864Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.39s
+2026-11-22T12:30:16.3309463Z 
+2026-11-22T12:30:16.3456587Z [1m[92m     Running[0m tests/compiled_let_destructuring.rs (target/debug/build/suss-cli/bc5236ca9ff6d1a1/out/compiled_let_destructuring-bc5236ca9ff6d1a1)
+2026-11-22T12:30:16.3470386Z 
+2026-11-22T12:30:16.3470536Z running 4 tests
+2026-11-22T12:30:18.6310237Z test let_patterns_preserve_order_once_defaults_scope_and_hygiene ... ok
+2026-11-22T12:30:18.6712692Z test let_patterns_preserve_outer_initializer_scope_and_tail_recur ... ok
+2026-11-22T12:30:18.7625530Z test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+2026-11-22T12:30:18.7665322Z test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+2026-11-22T12:30:18.7665679Z 
+2026-11-22T12:30:18.7666091Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.42s
+2026-11-22T12:30:18.7666435Z 
+2026-11-22T12:30:18.7955371Z [1m[92m     Running[0m tests/compiled_macro_control_source_asts.rs (target/debug/build/suss-cli/8a7268dccea0a242/out/compiled_macro_control_source_asts-8a7268dccea0a242)
+2026-11-22T12:30:18.7968744Z 
+2026-11-22T12:30:18.7968949Z running 5 tests
+2026-11-22T12:30:18.7978138Z test catch_alpha_view_rejects_inconsistent_or_non_private_payload_names ... ok
+2026-11-22T12:30:29.3520455Z test function_metadata_keeps_wrapper_and_inner_method_edges ... ok
+2026-11-22T12:30:38.3994959Z test control_source_nodes_match_genuine_primary_children_and_forms_after_gc ... ok
+2026-11-22T12:30:39.9490487Z test function_name_asts_match_primary_identity_presence_and_shadow_after_gc ... ok
+2026-11-22T12:30:41.1432139Z test method_recurrence_flags_survive_gc_in_both_caller_phases ... ok
+2026-11-22T12:30:41.1432570Z 
+2026-11-22T12:30:41.1432790Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.35s
+2026-11-22T12:30:41.1433073Z 
+2026-11-22T12:30:41.2973239Z [1m[92m     Running[0m tests/compiled_macro_field_reference_asts.rs (target/debug/build/suss-cli/2b954700eb42c966/out/compiled_macro_field_reference_asts-2b954700eb42c966)
+2026-11-22T12:30:41.2987248Z 
+2026-11-22T12:30:41.2987643Z running 1 test
+2026-11-22T12:30:44.1709983Z test field_reference_asts_match_pinned_flags_tags_positions_and_identity ... ok
+2026-11-22T12:30:44.1714780Z 
+2026-11-22T12:30:44.1715248Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.87s
+2026-11-22T12:30:44.1715577Z 
+2026-11-22T12:30:44.1988929Z [1m[92m     Running[0m tests/compiled_macro_imports.rs (target/debug/build/suss-cli/9f06ee3a3a06402a/out/compiled_macro_imports-9f06ee3a3a06402a)
+2026-11-22T12:30:44.1997859Z 
+2026-11-22T12:30:44.1998086Z running 5 tests
+2026-11-22T12:30:45.8303001Z test namespace_session_compiled_macro_aliases_are_separate_and_lexical_locals_win ... ok
+2026-11-22T12:30:45.8901738Z test namespace_session_compiled_macro_imports_execute_phase_dependencies_and_aliases ... ok
+2026-11-22T12:30:47.5873734Z test namespace_session_compiled_macro_source_definitions_resolve_core_and_execute_once ... ok
+2026-11-22T12:30:47.8684030Z test namespace_session_compiled_macro_imports_preserve_caller_and_runtime_on_failure ... ok
+2026-11-22T12:30:49.2231490Z test namespace_session_macro_bodies_expand_ordinary_phase_aliases_and_refers ... ok
+2026-11-22T12:30:49.2231882Z 
+2026-11-22T12:30:49.2232188Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.02s
+2026-11-22T12:30:49.2232632Z 
+2026-11-22T12:30:49.2233335Z [1m[92m     Running[0m tests/compiled_macro_metadata.rs (target/debug/build/suss-cli/ac82633c52ae209a/out/compiled_macro_metadata-ac82633c52ae209a)
+2026-11-22T12:30:49.2246675Z 
+2026-11-22T12:30:49.2246937Z running 10 tests
+2026-11-22T12:30:49.9496363Z test compiled_macro_metadata_captures_with_meta_before_literal_entry_effects ... ok
+2026-11-22T12:30:50.0180799Z test compiled_macro_metadata_desugars_and_merges_prefixes_with_outer_precedence ... ok
+2026-11-22T12:30:50.5558665Z test compiled_macro_metadata_keeps_distinct_duplicate_map_syntax_keys ... ok
+2026-11-22T12:30:50.6279838Z test compiled_macro_metadata_evaluates_ordinary_literal_expressions_after_reader_merging ... ok
+2026-11-22T12:30:50.8994889Z test compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_invalid_data ... ok
+2026-11-22T12:30:51.2412598Z test compiled_macro_metadata_merges_data_before_constructing_discarded_values ... ok
+2026-11-22T12:30:51.7180568Z test compiled_macro_metadata_transports_actual_maps_on_nested_syntax_after_gc ... ok
+2026-11-22T12:30:52.3744841Z test compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_boundaries ... ok
+2026-11-22T12:30:52.4379367Z test compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_after_gc ... ok
+2026-11-22T12:30:53.5004638Z test compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases ... ok
+2026-11-22T12:30:53.5005067Z 
+2026-11-22T12:30:53.5005272Z test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.28s
+2026-11-22T12:30:53.5005588Z 
+2026-11-22T12:30:53.5257354Z [1m[92m     Running[0m tests/compiled_macro_sets.rs (target/debug/build/suss-cli/7cda6de2d61542ca/out/compiled_macro_sets-7cda6de2d61542ca)
+2026-11-22T12:30:53.5270528Z 
+2026-11-22T12:30:53.5271040Z running 8 tests
+2026-11-22T12:30:54.7839982Z test compiled_large_set_literals_use_the_canonical_hamt_backing_map ... ok
+2026-11-22T12:30:55.2298260Z test compiled_macro_key_sequences_ignore_values_and_keep_their_own_metadata ... ok
+2026-11-22T12:30:55.3668096Z test compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc ... ok
+2026-11-22T12:30:55.6759042Z test compiled_macro_sets_transport_canonical_small_and_hamt_values_after_gc ... ok
+2026-11-22T12:30:55.8443397Z test compiled_set_literals_preserve_textual_effect_order_and_stop_at_throw ... ok
+2026-11-22T12:30:56.1472195Z test compiled_set_transients_reject_all_operations_after_persistence ... ok
+2026-11-22T12:30:56.6336050Z test compiled_sets_keep_canonical_lookup_metadata_and_persistent_versions_in_both_phases ... ok
+2026-11-22T12:30:56.6395742Z test compiled_quoted_sets_keep_symbols_nested_syntax_metadata_and_factory_boundaries ... ok
+2026-11-22T12:30:56.6396091Z 
+2026-11-22T12:30:56.6396347Z test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.11s
+2026-11-22T12:30:56.6396684Z 
+2026-11-22T12:30:56.6646376Z [1m[92m     Running[0m tests/compiled_namespace_acceptance.rs (target/debug/build/suss-cli/e834ce75ebed77cc/out/compiled_namespace_acceptance-e834ce75ebed77cc)
+2026-11-22T12:30:56.6657799Z 
+2026-11-22T12:30:56.6657912Z running 1 test
+2026-11-22T12:31:09.3923951Z test namespace_session_aliases_refers_renames_exclusions_and_phases_agree_in_repl_and_aot ... ok
+2026-11-22T12:31:09.3924579Z 
+2026-11-22T12:31:09.3924965Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.73s
+2026-11-22T12:31:09.3925318Z 
+2026-11-22T12:31:09.4390380Z [1m[92m     Running[0m tests/compiled_protocol_sites.rs (target/debug/build/suss-cli/f1a2659f759a7382/out/compiled_protocol_sites-f1a2659f759a7382)
+2026-11-22T12:31:09.4404018Z 
+2026-11-22T12:31:09.4404274Z running 1 test
+2026-11-22T12:31:13.2444482Z test protocol_call_sites_match_the_dispatcher ... ok
+2026-11-22T12:31:13.2444846Z 
+2026-11-22T12:31:13.2445215Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.80s
+2026-11-22T12:31:13.2445473Z 
+2026-11-22T12:31:13.2601307Z [1m[92m     Running[0m tests/compiled_repl_macros.rs (target/debug/build/suss-cli/6e3a807a48a8eabf/out/compiled_repl_macros-6e3a807a48a8eabf)
+2026-11-22T12:31:13.2615294Z 
+2026-11-22T12:31:13.2615838Z running 6 tests
+2026-11-22T12:31:14.8703877Z test namespace_session_command_compiled_macro_definitions_respect_exclusions_and_aliases ... ok
+2026-11-22T12:31:14.8835740Z test namespace_session_command_compiled_macros_expand_load_and_reload ... ok
+2026-11-22T12:31:16.4836600Z test persistent_session_command_compiled_macro_core_aliases_conditionals_and_shadowing ... ok
+2026-11-22T12:31:16.5219112Z test persistent_session_command_compiled_macros_keep_effects_and_old_expansions ... ok
+2026-11-22T12:31:18.4018093Z test session_lifecycle_compiled_macro_reset_failure_preserves_both_phase_stores ... ok
+2026-11-22T12:31:18.4804672Z test persistent_session_command_compiled_macros_namespace_errors_and_reset ... ok
+2026-11-22T12:31:18.4805219Z 
+2026-11-22T12:31:18.4806182Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.22s
+2026-11-22T12:31:18.4806761Z 
+2026-11-22T12:31:18.5007532Z [1m[92m     Running[0m tests/construction_sites.rs (target/debug/build/suss-cli/8dea3f8b24eba4cd/out/construction_sites-8dea3f8b24eba4cd)
+2026-11-22T12:31:18.5020987Z 
+2026-11-22T12:31:18.5021219Z running 1 test
+2026-11-22T12:31:19.9975422Z test construction_sites_answer_as_before ... ok
+2026-11-22T12:31:19.9976001Z 
+2026-11-22T12:31:19.9976548Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.49s
+2026-11-22T12:31:19.9977106Z 
+2026-11-22T12:31:20.0159823Z [1m[92m     Running[0m tests/namespace_session.rs (target/debug/build/suss-cli/2324c4a43d54c125/out/namespace_session-2324c4a43d54c125)
+2026-11-22T12:31:20.0172753Z 
+2026-11-22T12:31:20.0173071Z running 5 tests
+2026-11-22T12:31:20.0515659Z test namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependencies_provided ... ok
+2026-11-22T12:31:20.0834839Z test namespace_session_reload_all_visits_only_reachable_dependencies_in_require_order ... ok
+2026-11-22T12:31:20.1237537Z test namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failure ... ok
+2026-11-22T12:31:20.7722785Z test namespace_session_shipped_core_loads_from_supplied_source_roots ... ok
+2026-11-22T12:31:21.6385436Z test namespace_session_command_loads_once_and_keeps_live_globals_and_old_captures ... ok
+2026-11-22T12:31:21.6414775Z 
+2026-11-22T12:31:21.6415181Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+2026-11-22T12:31:21.6415540Z 
+2026-11-22T12:31:21.6512389Z [1m[92m     Running[0m tests/persistent_session.rs (target/debug/build/suss-cli/230fdc7a854ad235/out/persistent_session-230fdc7a854ad235)
+2026-11-22T12:31:21.6526002Z 
+2026-11-22T12:31:21.6526357Z running 33 tests
+2026-11-22T12:31:21.7272073Z test multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments ... ok
+2026-11-22T12:31:21.7424999Z test named_function_identity_and_multiple_dispatch_survive_gc_and_rebinding ... ok
+2026-11-22T12:31:21.7638425Z test nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker ... ok
+2026-11-22T12:31:21.7941794Z test nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_the_pin ... ok
+2026-11-22T12:31:21.7954481Z test nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order ... ok
+2026-11-22T12:31:21.8305041Z test nominal_protocol_extensions_update_existing_objects_across_fragments ... ok
+2026-11-22T12:31:21.8567186Z test nominal_protocol_membership_and_method_keys_survive_redeclaration ... ok
+2026-11-22T12:31:21.8865012Z test nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captures ... ok
+2026-11-22T12:31:21.8884824Z test nominal_review_grouped_extension_and_protocol_expression_operands ... ok
+2026-11-22T12:31:21.9261420Z test nominal_undefined_constructor_results_preserve_truthiness_and_reject_arithmetic ... ok
+2026-11-22T12:31:21.9305215Z test nominal_same_layout_types_keep_distinct_identity_through_aliases_and_gc ... ok
+2026-11-22T12:31:21.9448855Z test nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bindings ... ok
+2026-11-22T12:31:21.9733635Z test persistent_session_arithmetic_function_values_use_universal_invocation ... FAILED
+2026-11-22T12:31:21.9749997Z test persistent_session_arithmetic_checks_live_cells_and_evaluates_operands_once ... ok
+2026-11-22T12:31:21.9909660Z test persistent_session_arithmetic_values_evaluate_callee_and_arguments_once ... ok
+2026-11-22T12:31:21.9995835Z test persistent_session_catalog_scopes_cannot_skip_loading_and_core_alias_is_canonical ... ok
+2026-11-22T12:31:22.0041551Z test persistent_session_arithmetic_values_share_cells_and_keep_old_functions ... ok
+2026-11-22T12:31:22.0102386Z test persistent_session_compile_failure_is_atomic_and_language_failure_recovers ... ok
+2026-11-22T12:31:22.0209790Z test persistent_session_diamond_effects_follow_reverse_require_order ... ok
+2026-11-22T12:31:22.0244756Z test persistent_session_failed_module_retries_without_replaying_successful_dependencies ... ok
+2026-11-22T12:31:22.0310873Z test persistent_session_foreign_values_are_rejected_before_runtime_use ... ok
+2026-11-22T12:31:22.0434311Z test persistent_session_input_dependencies_compile_atomically_and_initialize_once ... ok
+2026-11-22T12:31:22.0445522Z test persistent_session_initializers_execute_once_and_defonce_skips_effects ... ok
+2026-11-22T12:31:22.0755070Z test persistent_session_loop_and_function_recur_replace_bindings_in_parallel ... ok
+2026-11-22T12:31:22.1149870Z test persistent_session_nil_and_false_are_initialized_defonce_bindings ... ok
+2026-11-22T12:31:22.1204039Z test persistent_session_named_and_multiple_fixed_signatures_preserve_captures_and_recur ... ok
+2026-11-22T12:31:22.1585194Z test persistent_session_unary_arithmetic_returns_numbers_and_rejects_other_operands ... ok
+2026-11-22T12:31:22.1691092Z test persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc ... ok
+2026-11-22T12:31:22.1715169Z test recurrence_fuel_traps_and_compile_errors_leave_the_session_usable ... ok
+2026-11-22T12:31:22.1868230Z test session_lifecycle_fuel_trap_is_distinct_and_the_next_input_recovers ... ok
+2026-11-22T12:31:22.2006312Z test recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types ... ok
+2026-11-22T12:31:22.2057680Z test session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots ... ok
+2026-11-22T12:31:22.2263105Z test session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset ... ok
+2026-11-22T12:31:22.2264768Z 
+2026-11-22T12:31:22.2265141Z failures:
+2026-11-22T12:31:22.2265437Z 
+2026-11-22T12:31:22.2265694Z ---- persistent_session_arithmetic_function_values_use_universal_invocation stdout ----
+2026-11-22T12:31:22.2266115Z 
+2026-11-22T12:31:22.2266552Z thread 'persistent_session_arithmetic_function_values_use_universal_invocation' (4395) panicked at crates/suss-cli/tests/persistent_session.rs:25:14:
+2026-11-22T12:31:22.2267169Z expected a runtime number
+2026-11-22T12:31:22.2267581Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-22T12:31:22.2267841Z 
+2026-11-22T12:31:22.2267844Z 
+2026-11-22T12:31:22.2267966Z failures:
+2026-11-22T12:31:22.2268314Z     persistent_session_arithmetic_function_values_use_universal_invocation
+2026-11-22T12:31:22.2268556Z 
+2026-11-22T12:31:22.2268815Z test result: FAILED. 32 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+2026-11-22T12:31:22.2269116Z 
+2026-11-22T12:31:22.2286369Z [1m[91merror[0m: test failed, to rerun pass `-p suss-cli --test persistent_session`
+2026-11-22T12:31:22.2287278Z [1m[92m     Running[0m tests/portable_array_bulk_copy.rs (target/debug/build/suss-cli/5bf00b1008a76167/out/portable_array_bulk_copy-5bf00b1008a76167)
+2026-11-22T12:31:22.2300134Z 
+2026-11-22T12:31:22.2300281Z running 4 tests
+2026-11-22T12:31:23.6539266Z test copies_keep_primitive_fallbacks_argument_order_and_element_identity ... ok
+2026-11-22T12:31:23.6833970Z test copies_preserve_each_sequential_overlap_direction_after_gc ... ok
+2026-11-22T12:31:23.9583191Z test copy_fallback_preserves_partial_writes_and_zero_length_behavior ... ok
+2026-11-22T12:31:23.9650983Z test native_copy_admits_valid_ranges_and_declines_without_writing ... ok
+2026-11-22T12:31:23.9651283Z 
+2026-11-22T12:31:23.9651573Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s
+2026-11-22T12:31:23.9651871Z 
+2026-11-22T12:31:23.9890843Z [1m[92m     Running[0m tests/portable_bitwise_hash.rs (target/debug/build/suss-cli/2f3721ef1a6e25bd/out/portable_bitwise_hash-2f3721ef1a6e25bd)
+2026-11-22T12:31:23.9904707Z 
+2026-11-22T12:31:23.9905019Z running 6 tests
+2026-11-22T12:31:24.0222123Z test bitwise_alias_exclusion_and_both_compilation_phases_are_explicit ... ok
+2026-11-22T12:31:24.0321780Z test bitwise_bad_arities_fail_with_spans_and_no_partial_publication ... ok
+2026-11-22T12:31:24.0506881Z test bitwise_macro_folds_preserve_throw_order_and_computed_calls_evaluate_all_args ... ok
+2026-11-22T12:31:24.0849848Z test captured_variadic_bitwise_body_keeps_core_reducer_under_user_redefinition ... ok
+2026-11-22T12:31:24.1130373Z test variadic_bitwise_reducers_ignore_user_redefinition_and_recover_after_gc ... ok
+2026-11-22T12:31:31.9906391Z test bitwise_hash_match_independently_decoded_primary_observations_after_gc ... ok
+2026-11-22T12:31:31.9914706Z 
+2026-11-22T12:31:31.9915032Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.00s
+2026-11-22T12:31:31.9915532Z 
+2026-11-22T12:31:32.0353830Z [1m[92m     Running[0m tests/portable_let_star.rs (target/debug/build/suss-cli/aca0b6ca71d7463f/out/portable_let_star-aca0b6ca71d7463f)
+2026-11-22T12:31:32.0367748Z 
+2026-11-22T12:31:32.0367942Z running 1 test
+2026-11-22T12:31:34.7452819Z test primitive_let_star_executes_directly_and_from_compiled_macros_in_both_phases ... ok
+2026-11-22T12:31:34.7453200Z 
+2026-11-22T12:31:34.7453431Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.71s
+2026-11-22T12:31:34.7453848Z 
+2026-11-22T12:31:34.7682627Z [1m[92m     Running[0m tests/portable_murmur_hash.rs (target/debug/build/suss-cli/f66396945ea54341/out/portable_murmur_hash-f66396945ea54341)
+2026-11-22T12:31:34.7695753Z 
+2026-11-22T12:31:34.7695918Z running 5 tests
+2026-11-22T12:31:35.7018859Z test retained_murmur_functions_observe_live_globals_and_old_values_survive_gc ... ok
+2026-11-22T12:31:35.7417341Z test threading_aliases_exclusions_and_phase_are_explicit ... ok
+2026-11-22T12:31:36.2654480Z test threading_expansion_limits_are_located_atomic_and_recover ... ok
+2026-11-22T12:31:36.2807462Z test threading_invalid_bindings_and_arities_recover_without_publication ... ok
+2026-11-22T12:31:36.6205260Z test murmur_hash_match_independently_decoded_primary_observations_after_gc ... ok
+2026-11-22T12:31:36.6205664Z 
+2026-11-22T12:31:36.6205896Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+2026-11-22T12:31:36.6206168Z 
+2026-11-22T12:31:36.6476356Z [1m[92m     Running[0m tests/portable_numeric_hash.rs (target/debug/build/suss-cli/503937810527782c/out/portable_numeric_hash-503937810527782c)
+2026-11-22T12:31:36.6490034Z 
+2026-11-22T12:31:36.6490289Z running 3 tests
+2026-11-22T12:31:37.5517856Z test numeric_hash_aliases_and_private_adapters_validate_in_both_phases ... ok
+2026-11-22T12:31:37.6183656Z test numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc ... ok
+2026-11-22T12:31:38.8190269Z test numeric_hash_match_independently_decoded_primary_observations_after_gc ... ok
+2026-11-22T12:31:38.8194530Z 
+2026-11-22T12:31:38.8194903Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+2026-11-22T12:31:38.8195251Z 
+2026-11-22T12:31:38.8438964Z [1m[92m     Running[0m tests/portable_queues.rs (target/debug/build/suss-cli/8b5b98f394c1b003/out/portable_queues-8b5b98f394c1b003)
+2026-11-22T12:31:38.8452385Z 
+2026-11-22T12:31:38.8452528Z running 3 tests
+2026-11-22T12:31:40.3845277Z test queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract ... ok
+2026-11-22T12:31:40.8905843Z test queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc ... ok
+2026-11-22T12:31:41.0930747Z test persistent_queues_match_pinned_fifo_and_value_contract_in_both_phases ... ok
+2026-11-22T12:31:41.0931154Z 
+2026-11-22T12:31:41.0931521Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.25s
+2026-11-22T12:31:41.0931819Z 
+2026-11-22T12:31:41.1189683Z [1m[92m     Running[0m tests/portable_sorted_tree_nodes.rs (target/debug/build/suss-cli/d36f1c2e9476408e/out/portable_sorted_tree_nodes-d36f1c2e9476408e)
+2026-11-22T12:31:41.1202406Z 
+2026-11-22T12:31:41.1202561Z running 7 tests
+2026-11-22T12:31:57.6960714Z test direct_nominal_protocol_call_captures_live_method_before_argument_effects ... ok
+2026-11-22T12:31:59.5106215Z test hyphenated_object_methods_preserve_receiver_lookup_and_argument_order ... ok
+2026-11-22T12:32:00.2008943Z test complete_tree_nodes_match_ordered_pinned_value_and_effect_cases_after_gc ... ok
+2026-11-22T12:32:01.4835589Z test nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc ... ok
+2026-11-22T12:32:03.1790966Z test this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throws ... ok
+2026-11-22T12:32:04.1137179Z test raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observations ... ok
+2026-11-22T12:32:04.8676416Z test tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order ... ok
+2026-11-22T12:32:04.8676875Z 
+2026-11-22T12:32:04.8677185Z test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.75s
+2026-11-22T12:32:04.8677579Z 
+2026-11-22T12:32:04.9391789Z [1m[92m     Running[0m tests/portable_subvector.rs (target/debug/build/suss-cli/79d604d981ac190f/out/portable_subvector-79d604d981ac190f)
+2026-11-22T12:32:04.9405261Z 
+2026-11-22T12:32:04.9405746Z running 3 tests
+2026-11-22T12:32:06.6100550Z test subvector_bounds_are_typed_errors_and_recover_in_both_phases ... ok
+2026-11-22T12:32:07.2061118Z test subvector_retains_actual_backing_and_rooted_contents_across_gc ... ok
+2026-11-22T12:32:07.4097406Z test public_subvectors_match_pinned_facts_in_both_phases ... ok
+2026-11-22T12:32:07.4104579Z 
+2026-11-22T12:32:07.4105048Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.47s
+2026-11-22T12:32:07.4105309Z 
+2026-11-22T12:32:07.4355142Z [1m[92m     Running[0m tests/portable_vector_trie.rs (target/debug/build/suss-cli/234e744223c6c85e/out/portable_vector_trie-234e744223c6c85e)
+2026-11-22T12:32:07.4368792Z 
+2026-11-22T12:32:07.4369593Z running 5 tests
+2026-11-22T12:32:08.3166373Z test throwing_live_clone_prevents_source_parent_mutation_and_recovers ... ok
+2026-11-22T12:32:08.3265772Z test association_copies_only_selected_path_across_fragments_and_gc ... ok
+2026-11-22T12:32:09.0319410Z test vector_node_clone_owns_outer_array_and_preserves_edit_and_child ... ok
+2026-11-22T12:32:09.0405062Z test throwing_outer_pop_clone_preserves_original_recursive_path_after_gc ... ok
+2026-11-22T12:32:10.0325721Z test vector_trie_matches_independently_decoded_primary_values ... ok
+2026-11-22T12:32:10.0326092Z 
+2026-11-22T12:32:10.0326394Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.59s
+2026-11-22T12:32:10.0326897Z 
+2026-11-22T12:32:10.0557662Z [1m[92m     Running[0m tests/repl_default_budgets.rs (target/debug/build/suss-cli/b79406cec0f80a87/out/repl_default_budgets-b79406cec0f80a87)
+2026-11-22T12:32:10.0565956Z 
+2026-11-22T12:32:10.0566113Z running 3 tests
+2026-11-22T12:32:11.8314324Z test default_repl_budgets_run_records_protocols_and_large_collections ... ok
+2026-11-22T12:32:13.3899072Z test unbounded_budgets_report_real_errors ... ok
+2026-11-22T12:32:16.2483902Z test explicit_repl_budgets_name_the_exhausted_budget_and_its_flag ... ok
+2026-11-22T12:32:16.2484515Z 
+2026-11-22T12:32:16.2484733Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.19s
+2026-11-22T12:32:16.2485025Z 
+2026-11-22T12:32:16.2485786Z [1m[92m     Running[0m tests/user_named_sites.rs (target/debug/build/suss-cli/d94e426cf306e9b0/out/user_named_sites-d94e426cf306e9b0)
+2026-11-22T12:32:16.2500512Z 
+2026-11-22T12:32:16.2501082Z running 1 test
+2026-11-22T12:32:17.9086110Z test user_sites_answer_as_before ... ok
+2026-11-22T12:32:17.9086805Z 
+2026-11-22T12:32:17.9087124Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.66s
+2026-11-22T12:32:17.9087558Z 
+2026-11-22T12:32:17.9312960Z [1m[92m     Running[0m tests/portable_closures.rs (target/debug/build/suss-compile/65d3ac20de19db40/out/portable_closures-65d3ac20de19db40)
+2026-11-22T12:32:17.9326476Z 
+2026-11-22T12:32:17.9326627Z running 14 tests
+2026-11-22T12:32:19.2025911Z test calls_evaluate_computed_callee_then_each_argument_exactly_once ... ok
+2026-11-22T12:32:20.4711625Z test bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions ... ok
+2026-11-22T12:32:21.9520712Z test captures_use_lexical_identity_and_retain_parameter_metadata ... ok
+2026-11-22T12:32:22.6657370Z test dynamic_arity_errors_are_language_exceptions_and_store_remains_usable ... ok
+2026-11-22T12:32:22.6669141Z test malformed_public_closure_arity_does_not_allocate_unbounded_entry_metadata ... ok
+2026-11-22T12:32:22.6678372Z test multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets ... ok
+2026-11-22T12:32:23.2348154Z test invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps ... ok
+2026-11-22T12:32:24.4959687Z test non_callable_errors_happen_after_argument_effects ... ok
+2026-11-22T12:32:25.7497616Z test old_closure_values_and_live_global_calls_survive_rebinding_and_gc ... ok
+2026-11-22T12:32:27.0401555Z test source_closures_capture_values_and_execute_universal_calls ... ok
+2026-11-22T12:32:27.0422527Z test source_wrong_arity_and_missing_rest_class_are_located_diagnostics ... ok
+2026-11-22T12:32:27.0424556Z test verified_variadic_entries_require_class_and_valid_persistent_rest_shape ... ok
+2026-11-22T12:32:27.0425448Z test verifier_rejects_malformed_closure_shapes_calls_and_capture_facts ... ok
+2026-11-22T12:32:31.5962829Z test nested_closures_parameters_shadowing_and_computed_callees_execute ... ok
+2026-11-22T12:32:31.5963221Z 
+2026-11-22T12:32:31.5963530Z test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.66s
+2026-11-22T12:32:31.5963875Z 
+2026-11-22T12:32:31.6070663Z [1m[92m     Running[0m tests/portable_constructor_source_analysis.rs (target/debug/build/suss-compile/a00f76cbc6bb5229/out/portable_constructor_source_analysis-a00f76cbc6bb5229)
+2026-11-22T12:32:31.6081257Z 
+2026-11-22T12:32:31.6081389Z running 5 tests
+2026-11-22T12:32:31.6097891Z test constructor_shorthand_retains_expanded_new_form_and_real_type_declaration ... ok
+2026-11-22T12:32:31.6098752Z test constructor_source_children_share_once_analyzed_callee_and_arguments ... ok
+2026-11-22T12:32:31.6110661Z test invocation_class_has_no_reference_result_tag ... ok
+2026-11-22T12:32:31.6133892Z test current_type_metadata_replaces_an_older_declared_definition ... ok
+2026-11-22T12:32:31.6147040Z test nonprimitive_js_hints_are_source_tag_data_not_fabricated_constructor_names ... ok
+2026-11-22T12:32:31.6147451Z 
+2026-11-22T12:32:31.6147849Z test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+2026-11-22T12:32:31.6148237Z 
+2026-11-22T12:32:31.6150028Z [1m[92m     Running[0m tests/portable_expression_conformance.rs (target/debug/build/suss-compile/5e41136a95dd6b94/out/portable_expression_conformance-5e41136a95dd6b94)
+2026-11-22T12:32:31.6162692Z 
+2026-11-22T12:32:31.6162925Z running 6 tests
+2026-11-22T12:32:33.8098842Z test corpus_runner_records_actual_exception_payload_and_source_failure ... ok
+2026-11-22T12:32:33.8099826Z test failure_stages_preserve_validation_compile_and_runtime_distinctions ... ok
+2026-11-22T12:32:33.8102018Z test lossless_comparison_rejects_rounding_signed_zero_opaque_values_and_duplicate_reuse ... ok
+2026-11-22T12:32:33.9564233Z test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+2026-11-22T12:32:34.0339367Z test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+2026-11-22T12:33:31.6166740Z test compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values has been running for over 60 seconds
+2026-11-22T12:34:05.9070163Z test compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values ... FAILED
+2026-11-22T12:34:05.9070640Z 
+2026-11-22T12:34:05.9070752Z failures:
+2026-11-22T12:34:05.9071123Z 
+2026-11-22T12:34:05.9071365Z ---- compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values stdout ----
+2026-11-22T12:34:05.9071903Z OBSERVED core/div-one-arg: value: expected Number(Float(0.5)); actual Ratio("1", "2")
+2026-11-22T12:34:05.9072331Z 201 cases: 200 passing, 1 failing, 0 skipped
+2026-11-22T12:34:05.9072524Z 
+2026-11-22T12:34:05.9072925Z thread 'compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values' (4563) panicked at crates/suss-compile/tests/portable_expression_conformance.rs:261:5:
+2026-11-22T12:34:05.9073557Z compiled expression replacement has outstanding failures: {
+2026-11-22T12:34:05.9073872Z     "core/div-one-arg": (
+2026-11-22T12:34:05.9074323Z         "value",
+2026-11-22T12:34:05.9074602Z         "expected Number(Float(0.5)); actual Ratio(\"1\", \"2\")",
+2026-11-22T12:34:05.9074939Z     ),
+2026-11-22T12:34:05.9075180Z }
+2026-11-22T12:34:05.9075495Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-22T12:34:05.9075753Z 
+2026-11-22T12:34:05.9075756Z 
+2026-11-22T12:34:05.9075888Z failures:
+2026-11-22T12:34:05.9076206Z     compiled_expression_corpus_retains_all_reviewed_inputs_and_observes_actual_values
+2026-11-22T12:34:05.9076582Z 
+2026-11-22T12:34:05.9076789Z test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 94.29s
+2026-11-22T12:34:05.9077082Z 
+2026-11-22T12:34:05.9339393Z [1m[91merror[0m: test failed, to rerun pass `-p suss-compile --test portable_expression_conformance`
+2026-11-22T12:34:05.9340452Z [1m[92m     Running[0m tests/portable_if_let.rs (target/debug/build/suss-compile/52a39a02555799cc/out/portable_if_let-52a39a02555799cc)
+2026-11-22T12:34:05.9350788Z 
+2026-11-22T12:34:05.9351046Z running 1 test
+2026-11-22T12:34:05.9356389Z test if_let_keeps_reader_metadata_and_distinct_scoped_binding_identities ... ok
+2026-11-22T12:34:05.9356740Z 
+2026-11-22T12:34:05.9357044Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-11-22T12:34:05.9357419Z 
+2026-11-22T12:34:05.9360436Z [1m[92m     Running[0m tests/portable_record_identity.rs (target/debug/build/suss-compile/ecc1dff16e1e56bb/out/portable_record_identity-ecc1dff16e1e56bb)
+2026-11-22T12:34:05.9373219Z 
+2026-11-22T12:34:05.9373422Z running 3 tests
+2026-11-22T12:34:06.6278700Z test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+2026-11-22T12:34:06.6313429Z test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+2026-11-22T12:34:07.3830364Z test record_descriptor_identity_ignores_constructor_override_and_preserves_order_after_gc ... ok
+2026-11-22T12:34:07.3830803Z 
+2026-11-22T12:34:07.3831026Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+2026-11-22T12:34:07.3831315Z 
+2026-11-22T12:34:07.4108778Z [1m[92m     Running[0m tests/portable_resolution.rs (target/debug/build/suss-compile/7e3385c943a8bde4/out/portable_resolution-7e3385c943a8bde4)
+2026-11-22T12:34:07.4122148Z 
+2026-11-22T12:34:07.4122361Z running 14 tests
+2026-11-22T12:34:09.3225850Z test namespace_arithmetic_values_materialize_canonical_phase_cells ... ok
+2026-11-22T12:34:09.9979409Z test namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval ... ok
+2026-11-22T12:34:10.0015434Z test namespace_configuration_and_compile_failures_do_not_change_resolution ... ok
+2026-11-22T12:34:11.2616065Z test namespace_core_aliases_import_one_canonical_live_cell ... ok
+2026-11-22T12:34:12.5117100Z test namespace_global_reads_preserve_once_only_source_order_and_short_circuit ... ok
+2026-11-22T12:34:13.8170115Z test namespace_globals_lower_into_shared_binding_reads ... ok
+2026-11-22T12:34:13.8170622Z test namespace_aliases_refers_exclusions_and_shadowing_share_resolution ... ok
+2026-11-22T12:34:13.8180697Z test namespace_scopes_persist_independently_when_reentered ... ok
+2026-11-22T12:34:13.8215977Z test namespace_sources_reject_extension_and_root_ambiguity ... ok
+2026-11-22T12:34:15.3547691Z test namespace_phases_resolve_and_execute_distinct_cells ... ok
+2026-11-22T12:34:15.3556938Z test source_core_require_records_identity_without_weakening_core_alias_guards ... ok
+2026-11-22T12:34:15.3560021Z test namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise ... ok
+2026-11-22T12:34:15.3573137Z test source_namespace_snapshots_share_unchanged_declarations_and_keep_old_revisions ... ok
+2026-11-22T12:34:16.6368156Z test source_requires_retain_library_identity_without_aliases_in_each_phase ... ok
+2026-11-22T12:34:16.6394712Z 
+2026-11-22T12:34:16.6395062Z test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.22s
+2026-11-22T12:34:16.6395466Z 
+2026-11-22T12:34:16.6462621Z [1m[92m     Running[0m tests/public_expression_artifacts.rs (target/debug/build/suss-compile/1ff90e850af5d894/out/public_expression_artifacts-1ff90e850af5d894)
+2026-11-22T12:34:16.6476395Z 
+2026-11-22T12:34:16.6476594Z running 11 tests
+2026-11-22T12:34:18.2107259Z test cached_runtime_initializer_is_deferred_and_exception_payload_survives ... ok
+2026-11-22T12:34:18.2319545Z test artifact_language_exception_remains_inspectable_and_prompt_recovers ... ok
+2026-11-22T12:34:18.5584349Z test empty_macro_session_rejects_runtime_bundle_before_core_callback ... ok
+2026-11-22T12:34:18.9807724Z test exception_info_observation_reads_nominal_storage_and_rejects_impostors ... ok
+2026-11-22T12:34:19.4103668Z test populated_session_rejects_bundle_before_initialization ... ok
+2026-11-22T12:34:19.4940239Z test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+2026-11-22T12:34:19.5714313Z test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+2026-11-22T12:34:20.0440937Z test prepared_dependencies_execute_once_even_after_source_disappears ... ok
+2026-11-22T12:34:20.8554606Z test compiled_macro_artifact_retains_runtime_state_and_roots ... ok
+2026-11-22T12:34:21.2386352Z test resetting_core_observer_invalidates_pending_artifact_execution ... ok
+2026-11-22T12:34:22.0805909Z test public_expression_compile_fuel_preserves_none_zero_roots_and_recovery ... ok
+2026-11-22T12:34:22.0806334Z 
+2026-11-22T12:34:22.0806796Z test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.43s
+2026-11-22T12:34:22.0807180Z 
+2026-11-22T12:34:22.1099403Z [1m[92m     Running[0m tests/runtime_async_streams.rs (target/debug/build/suss-compile/aee01aee3bd78239/out/runtime_async_streams-aee01aee3bd78239)
+2026-11-22T12:34:22.1113387Z 
+2026-11-22T12:34:22.1114844Z running 9 tests
+2026-11-22T12:34:27.6343977Z test interrupted_read_journal_is_recovered_before_new_close_mutates_snapshot ... ok
+2026-11-22T12:34:27.6387396Z test production_runtime_stream_exports_validate_before_any_source_execution ... ok
+2026-11-22T12:34:28.1831608Z test stream_active_owner_fuel_sweep_recovers_orphan_without_duplicate_acceptance ... ok
+2026-11-22T12:34:28.2590501Z test stream_consumed_cancel_latch_withdraws_preexisting_operation_before_consumption ... ok
+2026-11-22T12:34:28.3357987Z test stream_operation_created_after_cancel_dispatch_finishes_awaited_finally ... ok
+2026-11-22T12:34:28.3632113Z test stream_private_future_source_settlement_guards_preserve_pending_and_reset_roots ... ok
+2026-11-22T12:34:28.6992709Z test stream_service_fuel_sweep_retains_live_owner_and_delivers_eof_once ... ok
+2026-11-22T12:34:28.7837070Z test stream_trapped_owner_orphan_withdraws_write_without_running_finally_or_accepting_data ... ok
+2026-11-22T12:34:29.4643877Z test later_published_write_receipt_survives_earlier_read_service_or_retirement ... ok
+2026-11-22T12:34:29.4644420Z 
+2026-11-22T12:34:29.4644681Z test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.35s
+2026-11-22T12:34:29.4644946Z 
+2026-11-22T12:34:29.4692507Z [1m[92m     Running[0m tests/session_lifecycle_reset_interruption.rs (target/debug/build/suss-compile/3b24677c1e2cd6ad/out/session_lifecycle_reset_interruption-3b24677c1e2cd6ad)
+2026-11-22T12:34:29.4706097Z 
+2026-11-22T12:34:29.4706205Z running 1 test
+2026-11-22T12:34:29.4969508Z test session_lifecycle_reset_interrupt_after_host_hook_preserves_pending_root_and_retries_once ... ok
+2026-11-22T12:34:29.4969961Z 
+2026-11-22T12:34:29.4970178Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+2026-11-22T12:34:29.4970433Z 
+2026-11-22T12:34:29.4976745Z [1m[92m     Running[0m tests/shared_runtime.rs (target/debug/build/suss-compile/20d00d818f59019b/out/shared_runtime-20d00d818f59019b)
+2026-11-22T12:34:29.4988430Z 
+2026-11-22T12:34:29.4988880Z running 3 tests
+2026-11-22T12:34:29.5015395Z test incompatible_fragment_abi_is_rejected_before_start_effects ... ok
+2026-11-22T12:34:29.5040953Z test same_abi_label_with_incompatible_recursive_layout_fails_linking ... ok
+2026-11-22T12:34:29.5044715Z test fragments_share_closures_roots_and_nominal_descriptors ... ok
+2026-11-22T12:34:29.5044992Z 
+2026-11-22T12:34:29.5045250Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+2026-11-22T12:34:29.5045641Z 
+2026-11-22T12:34:29.5049685Z [1m[92m     Running[0m tests/forms.rs (target/debug/build/suss-reader/210a7a4ce1b6de75/out/forms-210a7a4ce1b6de75)
+2026-11-22T12:34:29.5061121Z 
+2026-11-22T12:34:29.5061264Z running 22 tests
+2026-11-22T12:34:29.5063482Z test apostrophes_continue_tokens_but_quote_at_form_start ... ok
+2026-11-22T12:34:29.5063906Z test auto_resolved_keywords_await_namespace_resolution ... ok
+2026-11-22T12:34:29.5065247Z test byte_spans_exclude_padding_and_locate_nested_forms ... ok
+2026-11-22T12:34:29.5076903Z test conditional_clause_pairing_follows_deferred_prefix_selection ... ok
+2026-11-22T12:34:29.5077511Z test conditional_resolution_uses_first_portable_feature_in_source_order ... ok
+2026-11-22T12:34:29.5077917Z test every_clojure_numeric_literal_reads ... ok
+2026-11-22T12:34:29.5137600Z test deep_reader_clone_selection_and_cleanup_are_stack_safe ... ok
+2026-11-22T12:34:29.5138327Z test malformed_forms_fail_with_located_diagnostics_and_bounded_nesting ... ok
+2026-11-22T12:34:29.5139224Z test metadata_is_retained_on_target_with_order_and_original_spans ... ok
+2026-11-22T12:34:29.5139789Z test metadata_targets_are_checked_after_conditional_selection ... ok
+2026-11-22T12:34:29.5140312Z test ordinary_numbers_read_as_longs_or_doubles_and_keep_float_zero_sign ... ok
+2026-11-22T12:34:29.5140996Z test queue_literals_read_as_tagged_vectors_after_selection ... ok
+2026-11-22T12:34:29.5141573Z test quote_discard_collections_and_terminating_character_literals ... ok
+2026-11-22T12:34:29.5142195Z test reader_and_selection_share_a_supplied_budget_and_recover_after_errors ... ok
+2026-11-22T12:34:29.5142935Z test reader_cancellation_preserves_callback_error_and_next_read_recovers ... ok
+2026-11-22T12:34:29.5143517Z test reader_features_are_suss_and_default ... ok
+2026-11-22T12:34:29.5144260Z test reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth ... ok
+2026-11-22T12:34:29.5150378Z test source_metadata_meter_preserves_locations_and_checks_work ... ok
+2026-11-22T12:34:29.5150938Z test tagged_literals_fail_as_clojure_does_without_a_reader ... ok
+2026-11-22T12:34:29.5151475Z test unselected_branches_check_numeric_syntax ... ok
+2026-11-22T12:34:29.5152016Z test utf16_literals_preserve_lone_surrogates_and_astral_units ... ok
+2026-11-22T12:34:29.5382696Z test large_anonymous_indices_are_metered_before_generated_slot_allocation ... ok
+2026-11-22T12:34:29.5383049Z 
+2026-11-22T12:34:29.5383315Z test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+2026-11-22T12:34:29.5383656Z 
+2026-11-22T12:34:29.5388204Z [1m[92m     Running[0m tests/portable_dispatch.rs (target/debug/build/suss-reader/687e726cb5918c9a/out/portable_dispatch-687e726cb5918c9a)
+2026-11-22T12:34:29.5395589Z 
+2026-11-22T12:34:29.5395684Z running 8 tests
+2026-11-22T12:34:29.5397538Z test anonymous_literals_have_distinct_names_and_consistent_references ... ok
+2026-11-22T12:34:29.5398298Z test anonymous_indexing_metadata_matches_pinned_generated_and_real_nodes ... ok
+2026-11-22T12:34:29.5398789Z test closed_inner_queue_errors_do_not_consume_outer_siblings ... ok
+2026-11-22T12:34:29.5399223Z test metadata_on_splice_follows_first_retained_logical_form ... ok
+2026-11-22T12:34:29.5399634Z test logical_index_discard_requests_following_raw_forms ... ok
+2026-11-22T12:34:29.5400011Z test pinned_logical_argument_indices_match ... ok
+2026-11-22T12:34:29.5400406Z test pinned_reader_edges_match ... ok
+2026-11-22T12:34:29.5401162Z test pinned_reader_shapes_match ... ok
+2026-11-22T12:34:29.5401355Z 
+2026-11-22T12:34:29.5401587Z test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-11-22T12:34:29.5401840Z 
+2026-11-22T12:34:29.5407291Z [1m[91merror[0m: 2 targets failed:
+2026-11-22T12:34:29.5407608Z     `-p suss-cli --test persistent_session`
+2026-11-22T12:34:29.5407971Z     `-p suss-compile --test portable_expression_conformance`
+2026-11-22T12:34:29.7999484Z Traceback (most recent call last):
+2026-11-22T12:34:29.8000725Z   File "/home/runner/work/suss/suss/scripts/ci_test_shards.py", line 67, in <module>
+2026-11-22T12:34:29.8001195Z     main()
+2026-11-22T12:34:29.8001481Z     ~~~~^^
+2026-11-22T12:34:29.8002382Z   File "/home/runner/work/suss/suss/scripts/ci_test_shards.py", line 63, in main
+2026-11-22T12:34:29.8003327Z     subprocess.run(command, check=True)
+2026-11-22T12:34:29.8003921Z     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+2026-11-22T12:34:29.8004773Z   File "/usr/lib/python3.14/subprocess.py", line 578, in run
+2026-11-22T12:34:29.8005610Z     raise CalledProcessError(retcode, process.args,
+2026-11-22T12:34:29.8006375Z                              output=stdout, stderr=stderr)
+2026-11-22T12:34:29.8014722Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'aot_source_preparation', '--test', 'clojure_bigint_integers', '--test', 'clojure_longs_doubles', '--test', 'clojure_primitive_method_types', '--test', 'collection_printing', '--test', 'compiled_aot_namespace_command', '--test', 'compiled_boxed_longs', '--test', 'compiled_let_destructuring', '--test', 'compiled_macro_control_source_asts', '--test', 'compiled_macro_field_reference_asts', '--test', 'compiled_macro_imports', '--test', 'compiled_macro_metadata', '--test', 'compiled_macro_sets', '--test', 'compiled_namespace_acceptance', '--test', 'compiled_protocol_sites', '--test', 'compiled_repl_macros', '--test', 'construction_sites', '--test', 'forms', '--test', 'namespace_session', '--test', 'persistent_session', '--test', 'portable_array_bulk_copy', '--test', 'portable_bitwise_hash', '--test', 'portable_closures', '--test', 'portable_constructor_source_analysis', '--test', 'portable_dispatch', '--test', 'portable_expression_conformance', '--test', 'portable_if_let', '--test', 'portable_let_star', '--test', 'portable_murmur_hash', '--test', 'portable_numeric_hash', '--test', 'portable_queues', '--test', 'portable_record_identity', '--test', 'portable_resolution', '--test', 'portable_sorted_tree_nodes', '--test', 'portable_subvector', '--test', 'portable_vector_trie', '--test', 'public_expression_artifacts', '--test', 'repl_default_budgets', '--test', 'runtime_async_streams', '--test', 'session_lifecycle_reset_interruption', '--test', 'shared_runtime', '--test', 'user_named_sites', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-11-22T12:34:29.8166469Z ##[error]Process completed with exit code 1.
+2026-11-22T12:34:29.8203726Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-22T12:34:29.8204677Z [36;1mfind target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true[0m
+2026-11-22T12:34:29.8222499Z shell: /usr/bin/bash -e {0}
+2026-11-22T12:34:29.8222716Z env:
+2026-11-22T12:34:29.8222883Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:34:29.8223073Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:34:29.8223284Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:34:29.8223464Z   CARGO_TERM_COLOR: always
+2026-11-22T12:34:29.8223774Z   CACHE_ON_FAILURE: false
+2026-11-22T12:34:29.8223964Z ##[endgroup]
+2026-11-22T12:34:32.8526924Z ##[group]Run actions/cache/save@v4
+2026-11-22T12:34:32.8527161Z with:
+2026-11-22T12:34:32.8527340Z   path: target/suss/cache/v1/native-module
+2026-11-22T12:34:32.8527778Z   key: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-45022205852
+2026-11-22T12:34:32.8528206Z   enableCrossOsArchive: false
+2026-11-22T12:34:32.8528400Z env:
+2026-11-22T12:34:32.8528586Z   CARGO_BUILD_JOBS: 2
+2026-11-22T12:34:32.8528771Z   CARGO_HOME: /home/runner/.cargo
+2026-11-22T12:34:32.8528974Z   CARGO_INCREMENTAL: 0
+2026-11-22T12:34:32.8529162Z   CARGO_TERM_COLOR: always
+2026-11-22T12:34:32.8529354Z   CACHE_ON_FAILURE: false
+2026-11-22T12:34:32.8529584Z ##[endgroup]
+2026-11-22T12:34:32.9297772Z (node:4720) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-22T12:34:32.9298448Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-22T12:34:32.9435147Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/suss/suss --files-from manifest.txt --use-compress-program zstdmt
+2026-11-22T12:34:34.3087196Z (node:4720) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-22T12:34:35.3011610Z Sent 103251176 of 170360040 (60.6%), 98.5 MBs/sec
+2026-11-22T12:34:35.3259850Z Sent 170360040 of 170360040 (100.0%), 158.5 MBs/sec
+2026-11-22T12:34:35.4145598Z Cache saved with key: suss-native-v1-Linux-4326a6edbc8454ccef37ae108967860ff499becea2aabf54311fa9c6181284bf-shard2-45022205852
+2026-11-22T12:34:35.4306389Z Post job cleanup.
+2026-11-22T12:34:35.4954576Z [command]/usr/bin/git version
+2026-11-22T12:34:35.4988283Z git version 2.56.1
+2026-11-22T12:34:35.5018129Z Temporarily overriding HOME='/home/runner/work/_temp/91df6006-7fb6-4725-985a-b9982374393e' before making global git config changes
+2026-11-22T12:34:35.5018729Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-22T12:34:35.5022567Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/suss/suss
+2026-11-22T12:34:35.5053616Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-22T12:34:35.5078388Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-22T12:34:35.5258218Z Entering 'clojurescript'
+2026-11-22T12:34:35.5299095Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-22T12:34:35.5323527Z http.https://github.com/.extraheader
+2026-11-22T12:34:35.5333520Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-22T12:34:35.5350672Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-22T12:34:35.5532100Z Entering 'clojurescript'
+2026-11-22T12:34:35.5549288Z http.https://github.com/.extraheader
+2026-11-22T12:34:35.5604975Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T12:34:35.5606844Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-22T12:34:35.5776249Z Entering 'clojurescript'
+2026-11-22T12:34:35.5789891Z file:/home/runner/work/suss/suss/.git/modules/clojurescript/config	remote.origin.url
+2026-11-22T12:34:35.5812652Z [command]/usr/bin/git config --file /home/runner/work/suss/suss/.git/modules/clojurescript/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-22T12:34:35.5931470Z Cleaning up orphan processes
+2026-11-22T12:34:35.6155755Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache/restore@v4, actions/cache/save@v4, actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

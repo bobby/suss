@@ -1,0 +1,102 @@
+Running as unit: run-p2044475-i90070992.scope; invocation ID: 41c4c42ba3b14b9996f868c9dcef83f4
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-unchecked-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 27s
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/clojure_numeric_classes-934e6d9b058bb0e3)
+
+running 5 tests
+test count_guarded_suite_forms_have_independent_exact_numeric_controls ... ok
+test numeric_class_extensions_update_sites_after_gc ... ok
+test numeric_class_protocols_follow_receiver_classes ... ok
+test aot_executes_numeric_classes ... ok
+test numeric_classes_match_in_runtime_and_macro ... FAILED
+
+failures:
+
+---- numeric_classes_match_in_runtime_and_macro stdout ----
+
+thread 'numeric_classes_match_in_runtime_and_macro' (2048718) panicked at crates/suss-cli/tests/clojure_numeric_classes.rs:34:29:
+ (pr-str (do (defmulti ty type) (try (ty 1) (catch :default e (ex-message e))))): Unresolved Runtime name defmulti at bytes 14..22
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    numeric_classes_match_in_runtime_and_macro
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.97s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_numeric_classes`
+     Running tests/core_comparator_foundations.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/core_comparator_foundations-933c52357e1ea456)
+
+running 3 tests
+test private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases ... ok
+test scalar_types_are_canonical_rooted_and_numeric_classes_are_not_callable ... ok
+test staged_type_returns_retained_nominal_constructors_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.06s
+
+     Running tests/portable_sorted_tree_collections.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/portable_sorted_tree_collections-14194cca8e5e7960)
+
+running 5 tests
+test additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_order ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc ... ok
+test complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_values ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 49.78s
+
+     Running tests/printer_options.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/printer_options-f103779534134059)
+
+running 18 tests
+test components_print_with_options_and_no_hidden_imports ... ok
+test flush_on_newline_is_a_dynamic_option ... ok
+test every_printer_and_str_observe_the_options ... ok
+test functions_and_types_print_while_methods_exist ... ok
+test print_dup_methods_print_under_print_dup ... ok
+test print_dup_falls_back_to_print_method_for_core_types ... ok
+test print_length_bounds_how_much_of_a_lazy_seq_is_realized ... ok
+test print_dup_prints_everything_and_records_positionally ... ok
+test print_length_limits_every_collection ... ok
+test print_level_hides_deep_collections ... ok
+test print_meta_output_reads_back_with_equal_metadata ... ok
+test print_method_defaults_and_removal_follow_clojure ... ok
+test print_meta_prints_metadata_readably ... ok
+test print_method_dispatches_on_a_keyword_type ... ok
+test print_method_observes_length_and_level ... ok
+test print_method_prints_user_types_and_records ... ok
+test print_readably_and_namespace_maps_follow_clojure ... ok
+test user_printers_observe_the_options ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.84s
+
+     Running tests/core_state.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-target/debug/deps/core_state-91fbdcf1d5f13637)
+
+running 21 tests
+test atom_options_follow_setup_reference ... ok
+test auto_resolved_keywords_use_the_current_namespace_and_its_aliases ... ok
+test compare_and_set_compares_identity_and_validates_first ... ok
+test defmulti_defines_once_and_methods_can_be_removed ... ok
+test delays_run_once_and_cache_exceptions ... ok
+test defmulti_options_and_type_dispatch_follow_clojure ... ok
+test derive_builds_clojure_hierarchies ... ok
+test derive_errors_are_clojures ... ok
+test multimethod_errors_are_clojures ... ok
+test doseq_follows_clojures_bindings_and_chunking ... ok
+test multimethod_preferences_and_hierarchies_follow_clojures_multifn ... ok
+test multimethods_dispatch_through_hierarchies_and_defaults ... ok
+test non_atom_references_use_the_protocols ... ok
+test sequence_helpers_and_ident_predicates_follow_clojure ... ok
+test swap_and_reset_variants_return_clojure_values ... ok
+test swap_retries_when_its_function_changes_the_atom ... ok
+test thread_last_inserts_each_form_last ... ok
+test the_global_hierarchy_backs_the_two_argument_forms ... ok
+test volatiles_are_unwatched_mutable_references ... ok
+test validators_reject_before_any_change ... ok
+test watches_run_in_hash_order_with_each_change ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.42s
+
+error: 1 target failed:
+    `-p suss-cli --test clojure_numeric_classes`

@@ -1,0 +1,20 @@
+Running as unit: run-p583623-i88635937.scope; invocation ID: 08d669fd14d1490197d83f71f43eddfd
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-compile-generator)
+error: expected `{`, found `;`
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:3779:45
+     |
+3779 |         let promoting = if inline_core("+'"); && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+     |                                             ^ expected `{`
+     |
+note: the `if` expression is missing a block after this condition
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:3779:28
+     |
+3779 |         let promoting = if inline_core("+'"); && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+     |                            ^^^^^^^^^^^^^^^^^
+help: remove this semicolon
+     |
+3779 -         let promoting = if inline_core("+'"); && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+3779 +         let promoting = if inline_core("+'") && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
+     |
+
+error: could not compile `suss-compile-generator` (lib) due to 1 previous error

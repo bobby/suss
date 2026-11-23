@@ -1,0 +1,13 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(prn [(= Long Double) (= clojure.lang.BigInt BigInteger) (count #{Long Double clojure.lang.BigInt BigInteger clojure.lang.Ratio Number Class BigDecimal}) (get {Long :long Double :double clojure.lang.BigInt :bigint} (class 1N))])"
+  ],
+  "exit_code": 0,
+  "stdout": "[false false 8 :bigint]\n",
+  "stderr": ""
+}

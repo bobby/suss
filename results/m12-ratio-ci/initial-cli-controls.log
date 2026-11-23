@@ -1,0 +1,67 @@
+Running as unit: run-p815241-i88883554.scope; invocation ID: 67d9f2f08e594d02ac376a2dd3953175
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 45s
+     Running tests/compiled_export_param_hints.rs (../m12-ratio-target/debug/deps/compiled_export_param_hints-9215289a24183820)
+
+running 1 test
+test wit_export_numeric_parameters_are_primitive ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.29s
+
+     Running tests/persistent_session.rs (../m12-ratio-target/debug/deps/persistent_session-67d6ce8c9309bbea)
+
+running 35 tests
+test exact_observations::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test exact_observations::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments ... ok
+test named_function_identity_and_multiple_dispatch_survive_gc_and_rebinding ... ok
+test nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker ... ok
+test nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_the_pin ... ok
+test nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluation_order ... ok
+test nominal_protocol_extensions_update_existing_objects_across_fragments ... ok
+test nominal_protocol_membership_and_method_keys_survive_redeclaration ... ok
+test nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captures ... ok
+test nominal_review_grouped_extension_and_protocol_expression_operands ... ok
+test nominal_same_layout_types_keep_distinct_identity_through_aliases_and_gc ... ok
+test nominal_undefined_constructor_results_preserve_truthiness_and_reject_arithmetic ... ok
+test nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bindings ... ok
+test persistent_session_arithmetic_function_values_use_universal_invocation ... FAILED
+test persistent_session_arithmetic_values_evaluate_callee_and_arguments_once ... ok
+test persistent_session_arithmetic_checks_live_cells_and_evaluates_operands_once ... ok
+test persistent_session_catalog_scopes_cannot_skip_loading_and_core_alias_is_canonical ... ok
+test persistent_session_compile_failure_is_atomic_and_language_failure_recovers ... ok
+test persistent_session_arithmetic_values_share_cells_and_keep_old_functions ... ok
+test persistent_session_failed_module_retries_without_replaying_successful_dependencies ... ok
+test persistent_session_diamond_effects_follow_reverse_require_order ... ok
+test persistent_session_foreign_values_are_rejected_before_runtime_use ... ok
+test persistent_session_initializers_execute_once_and_defonce_skips_effects ... ok
+test persistent_session_input_dependencies_compile_atomically_and_initialize_once ... ok
+test persistent_session_loop_and_function_recur_replace_bindings_in_parallel ... ok
+test persistent_session_nil_and_false_are_initialized_defonce_bindings ... ok
+test persistent_session_named_and_multiple_fixed_signatures_preserve_captures_and_recur ... ok
+test persistent_session_unary_arithmetic_returns_numbers_and_rejects_other_operands ... ok
+test persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc ... ok
+test recurrence_fuel_traps_and_compile_errors_leave_the_session_usable ... ok
+test session_lifecycle_fuel_trap_is_distinct_and_the_next_input_recovers ... ok
+test recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types ... ok
+test session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots ... ok
+test session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset ... ok
+
+failures:
+
+---- persistent_session_arithmetic_function_values_use_universal_invocation stdout ----
+
+thread 'persistent_session_arithmetic_function_values_use_universal_invocation' (828815) panicked at crates/suss-cli/tests/persistent_session.rs:512:80:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 5..22, message: "Unresolved Runtime name suss.core/Keyword" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    persistent_session_arithmetic_function_values_use_universal_invocation
+
+test result: FAILED. 34 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.61s
+
+error: test failed, to rerun pass `-p suss-cli --test persistent_session`

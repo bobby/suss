@@ -1,4 +1,4 @@
-//! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
+//! Shared GC ABI v10. Longs, doubles and BigInts have distinct representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
 pub(crate) use bitwise::CAST_RAW_EXPORTS;
@@ -24,6 +24,8 @@ mod exception_info;
 mod exceptions;
 mod identity_hash;
 mod longs;
+mod bigints;
+mod ratios;
 mod maps;
 mod chunks;
 mod transient_vectors;
@@ -49,8 +51,9 @@ mod streams;
 mod string_methods;
 mod string_char_at;
 mod type_values;
+pub(crate) mod numeric_classes;
 
-pub const VERSION: u32 = 7;
+pub const VERSION: u32 = 10;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -97,7 +100,7 @@ pub fn boolean_in(first: u32) -> [Instruction<'static>; 5] {
     ]
 }
 /// `[] -> [i32]`: whether a local holds a number, a long or a double.
-pub fn number_test(local: u32) -> [Instruction<'static>; 8] {
+pub fn number_test(local: u32) -> Vec<Instruction<'static>> {
     longs::number_test(local)
 }
 /// `[] -> [f64]`: the number in `local` as a double; traps unless it is one.
@@ -207,6 +210,9 @@ pub(crate) const CELL_DYNAMIC: i32 = 2;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
+pub(crate) const LANGUAGE_ERROR: u32 = 8;
+/// Existing canonical error descriptor; readonly for inline noncallable throws.
+pub(crate) const NOT_CALLABLE_DESCRIPTOR_EXPORT: &str = "not-callable-descriptor";
 pub const SENTINEL: u32 = 10;
 pub const LONG: u32 = 11;
 /// Packed primitive array storage, one type per element type, in
@@ -233,7 +239,10 @@ pub const UNIVERSAL: u32 = SPREAD + 1;
 /// `{descriptor, slot (-1 for a method), method, epoch, second descriptor,
 /// second epoch, second method, function owner, owner epoch, owner value}`.
 pub const NAMED_SITE: u32 = UNIVERSAL + 1;
-pub const TYPE_COUNT: u32 = NAMED_SITE + 1;
+/// ABI 8: immutable sign, GC-owned u32 limbs, normalized used length.
+pub const BIGINT: u32 = NAMED_SITE + 1;
+pub const RATIO: u32 = BIGINT + 1;
+pub const TYPE_COUNT: u32 = RATIO + 1;
 /// `NAMED_SITE` fields.
 pub(crate) const SITE_DESCRIPTOR: u32 = 0;
 pub(crate) const SITE_SLOT: u32 = 1;
@@ -604,7 +613,11 @@ fn instance_site_test(b: &mut Builder) {
     };
     let object = || [LocalGet(2), RefCastNonNull(HeapType::Concrete(OBJECT))];
     let (constructor, descriptor, prototype) = (SITE_DESCRIPTOR, SITE_METHOD, SITE_DESCRIPTOR_2);
-    let mut code = vec![LocalGet(1)];
+    // Native classes bypass the source-object cache: its warm i31 path is
+    // always negative, whereas Long and Number contain i31 values.
+    let mut code = vec![LocalGet(1), LocalGet(2), Call(b.names["numeric-class-instance"]),
+        LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty), LocalGet(4), Return, End,
+        LocalGet(1)];
     code.extend(site(constructor));
     code.push(RefEq);
     code.extend(site(SITE_EPOCH));
@@ -845,6 +858,8 @@ pub fn prelude() -> TypeSection {
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
         mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
     ]));
+    group.push(structure(vec![field(ValType::I32, false), field(reference(PACKED_STORAGE + 2), false), field(ValType::I32, false), field(ValType::I32, false)]));
+    group.push(structure(vec![field(reference(BIGINT), false), field(reference(BIGINT), false)]));
     debug_assert_eq!(group.len() as u32, TYPE_COUNT);
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
@@ -1512,7 +1527,15 @@ fn build_module() -> Vec<u8> {
         &[VALUE],
         &[LocalGet(0), StructNew(NUMBER)],
     );
+    bigints::representation(&mut b);
+    let ratio_double_type = ratios::declare(&mut b);
     longs::intrinsics(&mut b);
+    numeric::reserve_scratch(&mut b, numeric_info);
+    bigints::arithmetic(&mut b, numeric_info);
+    bigints::integer_functions(&mut b);
+    bigints::division(&mut b);
+    bigints::string(&mut b);
+    ratios::functions(&mut b);
     longs::arithmetic(&mut b);
     longs::string(&mut b);
     longs::append(&mut b);
@@ -1875,11 +1898,13 @@ fn build_module() -> Vec<u8> {
     let prototype_types = owned_prototypes::declare(&mut b);
     error_constructors::canonical_test_function(&mut b);
     numeric::intrinsics(&mut b, numeric_info, coercion_types);
+    let ratio_double = ratios::late_functions(&mut b);
     let primitives = numeric_operands::intrinsics(&mut b);
     extrema::intrinsics(&mut b);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
+    numeric_classes::functions(&mut b);
     // Casts come before arrays, as packed primitive arrays convert with them.
     let bitwise_functions = bitwise::functions(&mut b);
     packed_arrays::functions(&mut b);
@@ -1890,6 +1915,7 @@ fn build_module() -> Vec<u8> {
     transient_vectors::functions(&mut b);
     transient_maps::functions(&mut b);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
+    numeric_classes::instance_function(&mut b);
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
     // callee is bound through IFn's `-invoke` key for its signature arity,
     // which core registers as it declares IFn, as the call site's own
@@ -2252,6 +2278,8 @@ fn build_module() -> Vec<u8> {
             ]),
         );
     }
+    // Add an export of the existing root, without adding or relocating globals.
+    b.exports.export(NOT_CALLABLE_DESCRIPTOR_EXPORT, ExportKind::Global, 2);
     globals.global(
         GlobalType {
             val_type: ValType::I32,
@@ -2538,6 +2566,7 @@ fn build_module() -> Vec<u8> {
     );
     r#async::append_descriptor(&mut globals);
     streams::append_globals(&mut globals, r#async::STREAM_GLOBAL_BASE);
+    numeric_classes::append_globals(&mut globals);
     type_values::append_globals(&mut globals);
     primitive_constructors::append_globals(&mut globals);
     range_errors::append_globals(&mut globals);
@@ -2662,6 +2691,7 @@ fn build_module() -> Vec<u8> {
         GlobalType { val_type: VALUE, mutable: true, shared: false },
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
+    ratios::append_global(&mut globals, ratio_double_type, ratio_double);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

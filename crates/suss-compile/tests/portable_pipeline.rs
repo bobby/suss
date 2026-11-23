@@ -1,10 +1,12 @@
 mod support;
+#[path = "support/portable_decode.rs"]
+mod portable_decode;
 use suss_compile::{
     portable,
     portable_session::{RuntimeNumber, runtime_number, sentinel_tag},
     runtime_abi,
 };
-use wasmtime::{Instance, Linker, Module, Store, Val};
+use wasmtime::{AsContextMut, Instance, Linker, Module, Store, Val};
 
 fn execute(source: &str) -> (Store<()>, Val) {
     try_execute(source).unwrap_or_else(|error| panic!("{source}: {error:?}"))
@@ -331,8 +333,6 @@ fn numeric_calls_and_truthiness_execute_with_portable_bits() {
         ("(+ 9007199254740992 1)", Long(9007199254740993)),
         ("(- 0)", Long(0)),
         ("(+ -0.0)", Double(-0.0)),
-        // Clojure's result is the ratio 1/4 (#338).
-        ("(/ 4)", Double(0.25)),
         ("(/ 4.0)", Double(0.25)),
         ("(+)", Long(0)),
         ("(*)", Long(1)),
@@ -352,6 +352,10 @@ fn numeric_calls_and_truthiness_execute_with_portable_bits() {
             (found, expected) => assert_eq!(found, expected, "{source}"),
         }
     }
+    // Decode the normalized exact pair, never its binary64 approximation.
+    let (mut store, value) = execute("(/ 4)");
+    assert_eq!(tagged(&mut store, &value),
+        serde_json::json!({"tag":"ratio","numerator":"1","denominator":"4"}));
     // Integer division by zero throws in Clojure; double division doesn't.
     assert!(throws_language_exception("(/ 0 0)"));
     assert!(throws_language_exception("(/ 1 0)"));
@@ -689,7 +693,24 @@ fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
         Some(RuntimeNumber::Long(value)) => {
             return serde_json::json!({"tag":"long","value":value.to_string()});
         }
-        None => assert!(reference.as_struct(&*store).unwrap().is_none(), "unknown GC object layout"),
+        None if reference.as_struct(&*store).unwrap().is_some() => {
+            // Capture the canonical shared numeric types in this same engine.
+            // The observer then reads actual GC limbs without guest arithmetic,
+            // printing or normalization; unknown layouts still fail.
+            static MODULE: std::sync::OnceLock<Module> = std::sync::OnceLock::new();
+            let module = MODULE.get_or_init(|| Module::new(&support::engine(), runtime_abi::module()).unwrap());
+            let runtime = Instance::new(&mut *store, module, &[]).unwrap();
+            let mut decoder = portable_decode::Decoder::capture_runtime_numeric(
+                &mut store.as_context_mut(), &runtime, 1_000_000,
+            ).unwrap();
+            return match decoder.decode(&mut store.as_context_mut(), value).unwrap() {
+                portable_decode::Observation::BigInt(value) => serde_json::json!({"tag":"bigint","value":value}),
+                portable_decode::Observation::Ratio(numerator, denominator) =>
+                    serde_json::json!({"tag":"ratio","numerator":numerator,"denominator":denominator}),
+                other => panic!("unknown numeric GC object layout: {other:?}"),
+            };
+        }
+        None => {},
     }
     let array = reference
         .as_array(&*store)
@@ -706,6 +727,19 @@ fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
         .collect::<Vec<_>>();
     serde_json::json!({"tag":"string","units":units})
 }
+#[test]
+fn compiled_exact_numbers_match_primary_clojure_storage_observations() {
+    let cases: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../results/m12-ratio-pipeline/cases.json"
+    )).unwrap();
+    assert_eq!(cases.as_array().unwrap().len(), 12);
+    for case in cases.as_array().unwrap() {
+        let source = case["source"].as_str().unwrap();
+        let (mut store, value) = execute(source);
+        assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
+    }
+}
+
 #[test]
 fn compiled_source_cases_match_the_pinned_compiler_observations() {
     let corpus: serde_json::Value =
@@ -751,6 +785,7 @@ fn clojure_override(id: &str) -> Option<serde_json::Value> {
     let string = |text: &str| serde_json::json!({"tag":"string","units":text.encode_utf16().collect::<Vec<_>>()});
     Some(match id {
         "rounding" => serde_json::json!({"tag":"long","value":"9007199254740993"}),
+        "unary-divide" => serde_json::json!({"tag":"ratio","numerator":"1","denominator":"4"}),
         "negative-zero" => serde_json::json!({"tag":"long","value":"0"}),
         "predicate-identical-signed-zero" => serde_json::json!({"tag":"bool","value":false}),
         "number-to-string-2" => string("-0.0"),
