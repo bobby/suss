@@ -124,6 +124,7 @@ fn raw(value: Observation) -> Value {
             assert_eq!(number as i64, value, "long beyond binary64 transport");
             json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
         }
+        Observation::Uuid { most, least } => json!({"tag":"uuid", "most":most.to_string(), "least":least.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
         Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator,denominator) => json!({"tag":"ratio", "numerator":numerator,"denominator":denominator}),
