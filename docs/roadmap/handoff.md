@@ -1,3 +1,18 @@
+## Checked min-key comparison capture (2026-11-23)
+
+`run-min-key.py after-shipped-min-key` returns101 after524.158s with unchanged
+inputs: both decoder adversarial tests pass, but the Runtime/Macro matrix and
+actual AOT reject the import because nonnumeric String/vector keys incorrectly
+produce candidates instead of throwing. The receipt retains those failures.
+Shipped core comparison macros intentionally retain coercion for the pinned
+ClojureScript internals. The Clojure import now captures the existing checked
+numeric comparison function values as lexical `<` and `<=` bindings around its
+unchanged complete arity bodies. Historical prototype adaptations/receipts are
+retained unchanged; min-key-shipped.sus and its separate exact patch/provenance
+record describe this additional adaptation. No primary expectations, source
+body assertions, budgets or compiler comparisons change. New native validation
+is required before this repair is called passing.
+
 ## Shipped min-key regression and complete-form import (2026-11-23)
 
 `run-min-key.py before-shipped-min-key

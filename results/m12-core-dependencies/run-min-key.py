@@ -6,7 +6,7 @@ OUT.mkdir(exist_ok=True);assert not (OUT/'command.json').exists()
 command=['cargo','test','--workspace','--locked','--test','clojure_min_key',*sys.argv[2:],'--','--test-threads=2']
 paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')
 inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and not p.startswith('results/') and (ROOT/p).is_file()}
-for name in ['cases.json','probe-cases.json','upstream-min-key.clj','min-key-adapted.sus','min-key.patch','adaptation.json','probe-equivalence-command.json']:
+for name in ['cases.json','probe-cases.json','upstream-min-key.clj','min-key-adapted.sus','min-key.patch','adaptation.json','min-key-shipped.sus','min-key-shipped.patch','min-key-shipped-adaptation.json','probe-equivalence-command.json']:
  p=BASE/name;inputs[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
 env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-suite-platform-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
 record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'command':command,'inputs':inputs,'complete':False}
