@@ -1,0 +1,6 @@
+{
+  "java_exit_code": 0,
+  "driver_exit_code": 1,
+  "observed_flag_data": "[true nil nil]",
+  "reason": "The initial driver assumed :dynamic metadata was true. The actual Clojure Var is dynamic through its runtime flag; that metadata key is absent. Preserve the actual result rather than replacing it with success. The follow-up queries Var.isDynamic directly."
+}

@@ -1,0 +1,24 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-followup-source/results/m12-assert/oracle.clj",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-followup-source/results/m12-assert/compile-time.edn"
+  ],
+  "exit_code": 0,
+  "seconds": 4.412985801696777,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "upstream": "Clojure 1.12.6",
+  "entry": "clojure/core.clj",
+  "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "original_sha256": "7303fba10a70b9a5bcd3aa5e02e292d50a72bf8c10623b14d68a6703a9167aec",
+  "source_sha256": "66fb6b4de512b2ac0a41cd94dd923b4f56c6dcff05a505fd9569cddfbbee979c",
+  "stdout_sha256": "e11cbed3d7ad35d2fdb08db27d884c55073349a922c10495745a85006e9fa085"
+}

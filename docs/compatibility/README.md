@@ -1,3 +1,12 @@
+The complete Clojure assert form has a compiled source adaptation in
+[assert provenance](bootstrap/clojure-assert.json). Its original arities,
+compile-time flag checks, branches and message expressions are retained;
+two constructor calls use the existing catchable portable Error adapter.
+Java AssertionError class identity is not provided by that adapter. Fresh
+JVM expectations and authored native controls cover messages, effects,
+fresh errors, lexical shadowing and compiler-phase disabling. Native
+execution requires its own receipts; source/provenance is not a pass claim.
+
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate
 values and key-effect traces. All49 ordered assertions of the unchanged vendored

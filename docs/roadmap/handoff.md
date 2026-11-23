@@ -1,3 +1,30 @@
+## Compiled assert dependency and original body counterexamples (2026-11-23)
+
+run-before-bodies.py links the unchanged original body targets against frozen
+ea924dec producer libraries without writing their Cargo target. Build returns0;
+both native body targets fail101 after86.320s. Actual captured namespace diagnostics
+name unresolved assert in some-fn and unresolved rand-int in constantly. Neither
+namespace executes any assertion. Source/library hashes remain unchanged. This
+is a native immutable-library witness, not a Cargo pass or31/16 passing controls.
+
+The complete Clojure1.12.6 assert macro is installed through the existing compiled
+macro path. Two constructor expressions use the existing portable Error adapter;
+the original branches, doc/metadata, arities and messages remain retained with
+an exact patch/EPL provenance. Java AssertionError class identity is outside this
+adapter and is not counted as a compatibility match. Its dynamic Macro-phase
+*assert* Var starts true and is read before operand analysis. A Runtime binding
+does not retroactively disable expansion. New native tests require actual
+Runtime/Macro/AOT results and disabled-flag/arity behavior; no native pass is
+claimed before execution.
+
+Fresh JVM evidence records19 message/control-flow/effect/capture observations
+and [true true nil] for the default flag, Var.isDynamic and disabled expansion.
+The initial driver incorrectly expected :dynamic metadata to be true; the
+actual [true nil nil] result, Java0/driver1 and original inputs are retained.
+The corrected query uses the actual Var runtime flag, without altering the
+observed initial result. Rand-int remains a real whole-body dependency; it must
+use actual randomness rather than a constant or skipped original assertion.
+
 ## min-key bootstrap reproduction (2026-11-23)
 
 run-bootstrap-min-key.py returns0 on a16df2ac after227.037s, with inputs unchanged.

@@ -1,0 +1,19 @@
+{
+  "native_head": "9d47659d44164f211cb5bc95d98aca15b3b098e2",
+  "build_exit_code": 0,
+  "native_body_exit_code": 101,
+  "source_and_libraries_unchanged": true,
+  "gaps": {
+    "some_fn": {
+      "missing_binding": "assert",
+      "actual_diagnostic": "clojure.core-test.some-fn (Some(\"<root>/clojure/core_test/some_fn.cljc\")): Unresolved Runtime name assert at bytes 237..1324",
+      "assertions_executed": 0
+    },
+    "constantly": {
+      "missing_binding": "rand-int",
+      "actual_diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unresolved Runtime name rand-int at bytes 240..1477",
+      "assertions_executed": 0
+    }
+  },
+  "qualification": "Both entire original namespaces fail to load; zero assertion observations are counted as passing. This immutable-library probe is not a Cargo pass."
+}

@@ -1,0 +1,20 @@
+--- clojure.core/assert
++++ suss.core/assert
+@@ -1,3 +1,6 @@
++
++;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
++;; See runtime/core-import/epl-v10.html.
+ (defmacro assert
+   "Evaluates expression x and throws an AssertionError with optional
+   message if x does not evaluate to logical true.
+@@ -8,8 +11,8 @@
+   ([x]
+      (when *assert*
+        `(when-not ~x
+-          (throw (new AssertionError (str "Assert failed: " (pr-str '~x)))))))
++          (throw (suss.bootstrap/error (str "Assert failed: " (pr-str '~x)))))))
+   ([x message]
+      (when *assert*
+        `(when-not ~x
+-          (throw (new AssertionError (str "Assert failed: " ~message "\n" (pr-str '~x))))))))
++          (throw (suss.bootstrap/error (str "Assert failed: " ~message "\n" (pr-str '~x))))))))

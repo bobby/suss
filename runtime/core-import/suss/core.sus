@@ -12641,3 +12641,6 @@ reduces them without incurring seq initialization"
          ([x y z & args] (or (spn x y z)
                              (some #(some % args) ps))))))))
 ;; END Clojure some-fn
+
+;; Compiler-phase assert reads its own core Var before source analysis.
+(def ^:dynamic *assert* true)
