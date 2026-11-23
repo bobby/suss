@@ -1,0 +1,18 @@
+{
+  "change": "Advance only four existing namespace diagnostics beyond UUID literal reading; retain all assertion/test failures, skip mismatches and counts",
+  "old_sha256": "9c39a63520e28595bdf483e28d294ff4b417b41a02470b501be760acff97a4da",
+  "new_sha256": "81d1203abb26c6a2eebfb5a073a68439e72f0ede55e7b12dc7fa1f07dc990aa2",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "counts": {
+    "pass": 4842,
+    "guest-judged": 75,
+    "fail": 86,
+    "not-executed": 1936,
+    "skipped": 0,
+    "namespaces-failed": 72
+  },
+  "host_comparison_exit_code": 0,
+  "original_capture_rust_exit_code": 101,
+  "edn_assertions_executed": 0,
+  "qualification": "The original Rust drift failure remains intact. This separate host audit records diagnostic changes, not compatibility successes or a native rerun. EDN still requires a Macro-phase harness host-service contract."
+}

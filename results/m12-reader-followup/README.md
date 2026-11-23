@@ -1,3 +1,28 @@
+## Audited UUID diagnostic changes (2026-11-23)
+
+`run-suite.py full-suite-after-inline-source-macros` completes on5ee039cf,
+inputs unchanged: build/lock return0; native comparison returns101 after313.487s.
+The full5002-row capture preserves all4917 strict prior passes and4932 separately
+comparable prior rows. Counts remain4842 host matches,75 guest judgments,
+86 failures,1936 unexecuted, zero skips and72 failed namespaces.
+
+`audit-suite.py` finds only four namespace diagnostic changes: identity advances
+from UUID to unsupported instants; parse-uuid/uuid? reach missing parse-uuid;
+EDN reaches its Runtime-only harness observation service while preparing Macro
+imports. Its297 assertions remain unexecuted. The isolated Macro session does
+not inherit Runtime host capabilities. No host callback, fabricated observation,
+vendored-body rewrite or expanded phase authority is introduced to bypass this.
+Decimal operands remain194 pass/6 unexecuted; BigInt/Ratio214 pass/15 unexecuted.
+
+`write-reviewed-reader-baseline.py` checks the source-frozen receipt, unchanged
+primary SHA, exact preserved pass/count/skip results and all four diagnostics
+before updating only those existing namespace entries. Assertion/test failures
+and comparator rules stay unchanged. The separate host comparator returns0;
+the original native101 remains retained, not relabeled a native pass. Compressed
+raw receipts/logs/capture retain their byte hashes in archives.json. Current
+workspace and final-head CI results must be reported separately. The EDN phase
+host-service dependency remains an acceptance limitation on GitHub.
+
 ## Compiled namespace-local declarations and rollback (2026-11-23)
 
 `run-inline-gates.py inline-source-origin-and-cache-work` passes67 tests with

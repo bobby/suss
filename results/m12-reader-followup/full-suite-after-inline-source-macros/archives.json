@@ -1,0 +1,26 @@
+[
+  {
+    "path": "suite-commands.json",
+    "bytes": 498172,
+    "sha256": "aaec8c012bb2e55c081c50e3ba2045bbb41979d822333f68d1877b470b96af49",
+    "archive_sha256": "ce45705d1cf69cb82fe89326b13931bb4aa0ef0e75b7532bf4fe7705dfe29b46"
+  },
+  {
+    "path": "suite-build.log",
+    "bytes": 274013,
+    "sha256": "ed0c7c7ebf900aa4f2639ab92a267b07a9cb314ea6d256957eea5c452d8e37a0",
+    "archive_sha256": "02cce9237654da14ecccd575f10cc830ab4f0b273a9600ea7febfc8811811f66"
+  },
+  {
+    "path": "suite-run.log",
+    "bytes": 2628,
+    "sha256": "99b602529f343dc1a1846632575d681a811f642874691bc89e2d04b1e411cdb8",
+    "archive_sha256": "627deb7b87b264034a3162e95e2ada29ef2ce2919bb1a5537b7c9969c3e2655e"
+  },
+  {
+    "path": "suite-capture/suite-observations.json",
+    "bytes": 4965678,
+    "sha256": "d98ab8264fa2b1fe1e15db90f95ac145e26f49c12ae1a88087943a1ed4ab92c7",
+    "archive_sha256": "b0cd7492b549109a8e03fc1103163cb72f1925ff5338a71bdf6a9df71fb23072"
+  }
+]

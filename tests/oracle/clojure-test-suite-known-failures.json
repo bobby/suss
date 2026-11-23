@@ -76,7 +76,7 @@
   },
   "clojure.core-test.identity": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag uuid at bytes 627..671"
+   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag inst at bytes 680..717"
   },
   "clojure.core-test.ifn-qmark": {
    "stage": "namespace",
@@ -143,8 +143,8 @@
    "diagnostic": "clojure.core-test.parse-long (Some(\"<root>/clojure/core_test/parse_long.cljc\")): Unresolved Runtime name parse-long at bytes 256..2069"
   },
   "clojure.core-test.parse-uuid": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): No reader function for tag uuid at bytes 1114..1158"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unresolved Runtime name parse-uuid at bytes 259..2057"
   },
   "clojure.core-test.pop-bang": {
    "stage": "namespace",
@@ -227,8 +227,8 @@
    "diagnostic": "clojure.core-test.taps (Some(\"<root>/clojure/core_test/taps.cljc\")): Unresolved Runtime name clojure.lang.IPending at bytes 222..3465"
   },
   "clojure.core-test.uuid-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): No reader function for tag uuid at bytes 345..389"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unresolved Runtime name parse-uuid at bytes 231..1206"
   },
   "clojure.core-test.var-qmark": {
    "stage": "namespace",
@@ -247,8 +247,8 @@
    "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478"
   },
   "clojure.edn-test.read-string": {
-   "stage": "read",
-   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
+   "stage": "namespace",
+   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): Compiled local macro declaration failed: suss.harness.observation (Some(\"<root>/suss/harness/test.cljc\")): No source for namespace suss.harness.observation at bytes 381..405 at bytes 440..543"
   },
   "clojure.string-test.blank-qmark": {
    "stage": "namespace",
