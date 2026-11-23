@@ -1,3 +1,24 @@
+## Audited complete min-key capture and scoped baseline (2026-11-23)
+
+run-suite.py full-suite-after-shipped-min-key records5,357 actual rows on a374b92d,
+source inputs unchanged. The native comparison exits101 solely because min-key
+now loads and all49 assertions execute; its before-baseline discrepancy remains
+byte-exact. The complete capture has5,172 host matches/81 guest judgments/105
+failures/1,581 unexecuted/zero skips/69 failed namespaces. Both prior pass sets
+(4,917 baseline matches, including75 existing guest judgments, and4,932
+individually comparable rows) are preserved; the existing
+EDN297-row capture and19 reader failures remain unchanged.
+
+audit-suite.py and review-min-key-baseline.py verify the whole capture. The latter
+removes exactly the min-key namespace-load failure, with every other baseline
+entry, primary value, count and skip rule unchanged. Fresh host comparison returns0;
+the five adversarial baseline guard tests still pass after the write. Host
+comparison is not a fresh native/full workspace pass. BigInt/Ratio operands now
+have226/229 actual host matches (seven newly executed min-key rows), with two eval
+rows and one constantly/some-fn row still unexecuted. Decimal remains199/200 with
+its eval row unexecuted. Bootstrap and the exact two-thread workspace baseline
+require new frozen receipts on this reviewed baseline.
+
 ## Shipped min-key primary execution (2026-11-23)
 
 `python3 results/m12-core-dependencies/test_min_key_baseline.py` passes five

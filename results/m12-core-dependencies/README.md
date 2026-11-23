@@ -28,3 +28,13 @@ function values lexically; all complete upstream arity bodies are retained.
 The historical local-definition adaptation/prototype receipts remain untouched.
 Full capture/audit, baseline, workspace, bootstrap, CI and independent review
 remain separate gates; these focused results do not close the numeric issues.
+
+The full a374b92d capture contains5,357 actual rows and preserves both previous
+pass sets, with all49 min-key rows matching on the host. Its original native101
+receipt records the unexpected successful namespace load against the old baseline.
+The guarded baseline update removes only that load failure; unchanged host
+comparison then returns0. BigInt/Ratio has226/229 host matches; Decimal199/200.
+No unrelated failure or unknown row is replaced with success. Complete raw
+capture/audit/baseline-write evidence is archived in
+../m12-reader-followup/full-suite-after-shipped-min-key. Broader gates remain
+separate from this comparison.

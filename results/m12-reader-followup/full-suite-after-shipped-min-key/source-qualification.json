@@ -1,0 +1,19 @@
+{
+  "native_head": "a374b92dfc16b8a7a4fc45993bccb10f58ce2965",
+  "native_complete": true,
+  "native_inputs_unchanged_at_completion": true,
+  "subsequent_changes": [
+    {
+      "path": "docs/roadmap/handoff.md",
+      "native_input_sha256": "65a6afdeae359932e6434b733b57883b4b07cda648572d646d85e14b032ca4c5",
+      "later_input_sha256": "43b5658774b11a4f2cd88cb2d61bcec997943a319908c12c391a96a1d334a88e"
+    },
+    {
+      "path": "tests/oracle/clojure-test-suite-known-failures.json",
+      "native_input_sha256": "88ccd83c7614da545c1c44b1c4ed090ac2c2e85ba9ad02e5b0d7290992b73f33",
+      "later_input_sha256": "ffc011e8aee7bb7439955a551c25ed75f83f7799092eba1305f1956de27435d0"
+    }
+  ],
+  "all_other_recorded_inputs_match": true,
+  "qualification": "After the frozen full capture, two documentation files describe results and the reviewed baseline removes exactly the observed min-key load failure. Production/harness/primary/count/skip inputs remain unchanged. Original native101 and later host comparison0 are separate results."
+}
