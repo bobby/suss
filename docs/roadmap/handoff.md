@@ -1,3 +1,22 @@
+## MathContext setup provenance repair (2026-11-23)
+
+The c9d1c6e3 foundation job fails before bootstrap execution: original Suss
+MathContext setup had been appended to the licensed sequence initializer file,
+which must contain exactly its retained upstream forms. Restore that file
+byte-for-byte to f36cc934 and prepend the same setup to exact-integers.sus, the
+original Suss bootstrap source. Update both source hashes and regenerate imports.
+Every generated source form is identical and remains in the same order; source
+placement/comments and manifests differ. The source-equivalence proof does not
+replace fresh artifact execution.
+
+The eight sequence provenance tests pass, retaining the complete-notice,
+extra-form and malformed-target checks. All15 commands in the failing foundation
+step pass, including364 Python tests and every inventory/manifest/provenance lock
+check. Results and the original CI failure are in results/m12-decimal-provenance.
+The unfiltered workspace run on c9d1c6e3 remains isolated and unchanged. Fresh
+bootstrap execution and final-head CI still require evidence, and semantic
+acceptance gaps remain on the open issues.
+
 ## Full Decimal arithmetic capture and conversion boundaries (2026-11-23)
 
 The complete unfiltered vendored capture at45a20341 records4585 actual assertions

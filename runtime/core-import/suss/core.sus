@@ -9980,13 +9980,11 @@ reduces them without incurring seq initialization"
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
-
-
-
 ;; Original native MathContext integration. The getter uses the same dynamic
 ;; Var lookup as source code; Runtime and Macro instances own separate roots.
 (def ^:dynamic *math-context* nil)
 (suss.bootstrap/decimal-context-getter-install (fn [] *math-context*))
+
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
