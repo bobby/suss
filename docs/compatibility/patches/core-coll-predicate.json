@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ae9060b545bf339a8785633f8400f35220e8bbb6dc8934ecd496cee814a8dc07",
+  "replacement": "(def coll?\n  \"Returns true if x satisfies ICollection\"\n  (fn [x]\n  (if (nil? x)\n    false\n    (satisfies? ICollection x))))",
+  "rationale": "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline."
+}

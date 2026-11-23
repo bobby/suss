@@ -1,0 +1,11 @@
+Running as unit: run-p3487932-i91536244.scope; invocation ID: 1ec8b3bf9fbd4e03b105cd8c25e9e9fd
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.83s
+     Running tests/clojure_core_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_core_predicates-1cc73ef5437d9730)
+
+running 2 tests
+test aot_executes_core_predicate_controls ... ok
+test core_predicates_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.78s
+

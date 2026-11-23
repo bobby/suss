@@ -1,0 +1,28 @@
+{
+  "review": "Exact7 newly executed failures retained,5 unknown sorted operands now independently decode,10 namespaces load and1 advances to missing sort-by. All previous passes and primary/count/skip/comparison decisions unchanged.",
+  "old_sha256": "3d9a138c07cdfac6c2da78ad12846439ffb6a2c6a0fc8db414bd51751c71d14a",
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "compare",
+        "--observations",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/results/m12-predicate-followup/suite-after-sort/suite-capture/suite-observations.json",
+        "--write"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "compare",
+        "--observations",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/results/m12-predicate-followup/suite-after-sort/suite-capture/suite-observations.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "new_sha256": "27a3a2122586ad65180f61af75426dffdea89bf1bdae353226a7fc7167408d10"
+}

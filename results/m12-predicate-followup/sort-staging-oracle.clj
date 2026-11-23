@@ -1,0 +1,8 @@
+(assert (= "1.12.6" (clojure-version)))
+(println (pr-str (pr-str (try (compare 2/3 1.0M) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (compare 1.0M 2/3) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (< 2/3 1.0M) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (> 1.0M 2/3) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (with-precision 2 (compare 2/3 1.0M)) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (do (def sort-trace []) (let [r (sort (fn [a b] (def sort-trace (conj sort-trace [a b])) (compare a b)) [3 1N 2/3 0.5 1.0M])] [(vec r) sort-trace])) (catch Throwable e [:error (.getMessage e)])))))
+(println (pr-str (pr-str (try (do (def sort-trace []) (let [r (sort (fn [a b] (def sort-trace (conj sort-trace [a b])) (if (< a b) false 0)) [3 1 2])] [(vec r) sort-trace])) (catch Throwable e [:error (.getMessage e)])))))

@@ -1,0 +1,1659 @@
+Running as unit: run-p3325858-i91394915.scope; invocation ID: e87f15ca19aa4b5ebff997006a4ffd43
+    Finished `test` profile [optimized] target(s) in 0.33s
+     Running tests/clojure_core_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_core_predicates-1cc73ef5437d9730)
+
+running 1 test
+test core_predicates_follow_primary_controls ... FAILED
+
+failures:
+
+---- core_predicates_follow_primary_controls stdout ----
+
+thread 'core_predicates_follow_primary_controls' (3325871) panicked at crates/suss-cli/tests/clojure_core_predicates.rs:50:5:
+Runtime case0: (pos-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case1: (pos-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case2: (pos-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case3: (pos-int? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case4: (pos-int? 1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case5: (pos-int? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case6: (pos-int? 9223372036854775807)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case7: (pos-int? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case8: (pos-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case9: (pos-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case10: (pos-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case11: (pos-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case12: (pos-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case13: (pos-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case14: (pos-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case15: (pos-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case16: (pos-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case17: (pos-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case18: (pos-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case19: (pos-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case20: (pos-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case21: (pos-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case22: (pos-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case23: (pos-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case24: (pos-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case25: (pos-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case26: (pos-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case27: (pos-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case28: (pos-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case29: (pos-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case30: (pos-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case31: (pos-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case32: (pos-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case33: (pos-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case34: (pos-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case35: (pos-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case36: (pos-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case37: (pos-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case38: (pos-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case39: (pos-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case40: (pos-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case41: (neg-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case42: (neg-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case43: (neg-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case44: (neg-int? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case45: (neg-int? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case46: (neg-int? -1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case47: (neg-int? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case48: (neg-int? -9223372036854775808)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case49: (neg-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case50: (neg-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case51: (neg-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case52: (neg-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case53: (neg-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case54: (neg-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case55: (neg-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case56: (neg-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case57: (neg-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case58: (neg-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case59: (neg-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case60: (neg-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case61: (neg-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case62: (neg-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case63: (neg-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case64: (neg-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case65: (neg-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case66: (neg-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case67: (neg-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case68: (neg-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case69: (neg-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case70: (neg-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case71: (neg-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case72: (neg-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case73: (neg-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case74: (neg-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case75: (neg-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case76: (neg-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case77: (neg-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case78: (neg-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case79: (neg-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case80: (neg-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case81: (neg-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case82: (nat-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case83: (nat-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case84: (nat-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case85: (nat-int? 0)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case86: (nat-int? 1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case87: (nat-int? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case88: (nat-int? 9223372036854775807)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case89: (nat-int? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case90: (nat-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case91: (nat-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case92: (nat-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case93: (nat-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case94: (nat-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case95: (nat-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case96: (nat-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case97: (nat-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case98: (nat-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case99: (nat-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case100: (nat-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case101: (nat-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case102: (nat-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case103: (nat-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case104: (nat-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case105: (nat-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case106: (nat-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case107: (nat-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case108: (nat-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case109: (nat-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case110: (nat-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case111: (nat-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case112: (nat-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case113: (nat-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case114: (nat-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case115: (nat-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case116: (nat-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case117: (nat-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case118: (nat-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case119: (nat-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case120: (nat-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case121: (nat-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case122: (nat-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case123: (coll? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case124: (coll? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case125: (coll? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case126: (coll? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case127: (coll? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case128: (coll? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case129: (coll? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case130: (coll? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case131: (coll? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case132: (coll? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case133: (coll? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case134: (coll? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case135: (coll? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case136: (coll? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case137: (coll? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case138: (coll? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case139: (coll? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case140: (coll? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case141: (coll? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case142: (coll? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case143: (coll? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case144: (coll? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case145: (coll? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case146: (coll? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case147: (coll? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case148: (coll? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case149: (coll? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case150: (coll? [])
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case151: (coll? [1])
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case152: (coll? {})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case153: (coll? {:a 1})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case154: (coll? '())
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case155: (coll? '(1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case156: (coll? #{})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case157: (coll? #{1})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case158: (coll? (seq [1]))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case159: (coll? (range 2))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case160: (coll? (sorted-map :a 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case161: (coll? (sorted-set 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case162: (coll? (first {:a 1}))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case163: (coll? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name coll?\" })")
+Runtime case164: (sorted? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case165: (sorted? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case166: (sorted? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case167: (sorted? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case168: (sorted? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case169: (sorted? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case170: (sorted? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case171: (sorted? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case172: (sorted? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case173: (sorted? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case174: (sorted? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case175: (sorted? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case176: (sorted? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case177: (sorted? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case178: (sorted? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case179: (sorted? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case180: (sorted? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case181: (sorted? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case182: (sorted? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case183: (sorted? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case184: (sorted? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case185: (sorted? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case186: (sorted? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case187: (sorted? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case188: (sorted? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case189: (sorted? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case190: (sorted? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case191: (sorted? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case192: (sorted? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case193: (sorted? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case194: (sorted? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case195: (sorted? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case196: (sorted? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case197: (sorted? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case198: (sorted? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case199: (sorted? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case200: (sorted? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case201: (sorted? (sorted-map :a 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case202: (sorted? (sorted-set 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case203: (sorted? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case204: (sorted? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case205: (char? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case206: (char? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case207: (char? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case208: (char? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case209: (char? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case210: (char? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case211: (char? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case212: (char? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case213: (char? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case214: (char? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case215: (char? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case216: (char? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case217: (char? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case218: (char? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case219: (char? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case220: (char? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case221: (char? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case222: (char? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case223: (char? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case224: (char? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case225: (char? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case226: (char? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case227: (char? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case228: (char? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case229: (char? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case230: (char? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case231: (char? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case232: (char? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case233: (char? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case234: (char? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case235: (char? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case236: (char? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case237: (char? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case238: (char? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case239: (char? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case240: (char? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case241: (char? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case242: (char? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case243: (char? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case244: (char? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case245: (char? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case246: (char? \a)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case247: (char? \space)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case248: (char? \newline)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case249: (char? \u0000)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case250: (char? (char 55296))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case251: (char? \uFFFF)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case252: (char? "")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case253: (char? "ab")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case254: (char? "😀")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Runtime name char?\" })")
+Runtime case255: (let [f pos-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case256: (apply pos-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case257: (do (def predicate-effects []) (let [r (pos-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Runtime name pos-int?\" })")
+Runtime case258: (let [f neg-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case259: (apply neg-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case260: (do (def predicate-effects []) (let [r (neg-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Runtime name neg-int?\" })")
+Runtime case261: (let [f nat-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case262: (apply nat-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case263: (do (def predicate-effects []) (let [r (nat-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Runtime name nat-int?\" })")
+Runtime case264: (let [f coll?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..26, message: \"Unresolved Runtime name coll?\" })")
+Runtime case265: (apply coll? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..25, message: \"Unresolved Runtime name coll?\" })")
+Runtime case266: (do (def predicate-effects []) (let [r (coll? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..58, message: \"Unresolved Runtime name coll?\" })")
+Runtime case267: (let [f sorted?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..28, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case268: (apply sorted? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..27, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case269: (do (def predicate-effects []) (let [r (sorted? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..60, message: \"Unresolved Runtime name sorted?\" })")
+Runtime case270: (let [f char?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..26, message: \"Unresolved Runtime name char?\" })")
+Runtime case271: (apply char? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..25, message: \"Unresolved Runtime name char?\" })")
+Runtime case272: (do (def predicate-effects []) (let [r (char? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..58, message: \"Unresolved Runtime name char?\" })")
+Macro case0: (pos-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case1: (pos-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case2: (pos-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case3: (pos-int? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case4: (pos-int? 1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case5: (pos-int? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case6: (pos-int? 9223372036854775807)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case7: (pos-int? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case8: (pos-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case9: (pos-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case10: (pos-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case11: (pos-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case12: (pos-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case13: (pos-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case14: (pos-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case15: (pos-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case16: (pos-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case17: (pos-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case18: (pos-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case19: (pos-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case20: (pos-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case21: (pos-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case22: (pos-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case23: (pos-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case24: (pos-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case25: (pos-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case26: (pos-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case27: (pos-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case28: (pos-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case29: (pos-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case30: (pos-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case31: (pos-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case32: (pos-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case33: (pos-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case34: (pos-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case35: (pos-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case36: (pos-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case37: (pos-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case38: (pos-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case39: (pos-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case40: (pos-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name pos-int?\" })")
+Macro case41: (neg-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case42: (neg-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case43: (neg-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case44: (neg-int? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case45: (neg-int? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case46: (neg-int? -1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case47: (neg-int? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case48: (neg-int? -9223372036854775808)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case49: (neg-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case50: (neg-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case51: (neg-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case52: (neg-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case53: (neg-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case54: (neg-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case55: (neg-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case56: (neg-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case57: (neg-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case58: (neg-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case59: (neg-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case60: (neg-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case61: (neg-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case62: (neg-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case63: (neg-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case64: (neg-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case65: (neg-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case66: (neg-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case67: (neg-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case68: (neg-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case69: (neg-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case70: (neg-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case71: (neg-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case72: (neg-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case73: (neg-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case74: (neg-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case75: (neg-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case76: (neg-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case77: (neg-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case78: (neg-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case79: (neg-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case80: (neg-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case81: (neg-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name neg-int?\" })")
+Macro case82: (nat-int? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case83: (nat-int? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case84: (nat-int? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case85: (nat-int? 0)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case86: (nat-int? 1)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case87: (nat-int? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case88: (nat-int? 9223372036854775807)
+expected true
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case89: (nat-int? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case90: (nat-int? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case91: (nat-int? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case92: (nat-int? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case93: (nat-int? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case94: (nat-int? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case95: (nat-int? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case96: (nat-int? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case97: (nat-int? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case98: (nat-int? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case99: (nat-int? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case100: (nat-int? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case101: (nat-int? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case102: (nat-int? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case103: (nat-int? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case104: (nat-int? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case105: (nat-int? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case106: (nat-int? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case107: (nat-int? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case108: (nat-int? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case109: (nat-int? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case110: (nat-int? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case111: (nat-int? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case112: (nat-int? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case113: (nat-int? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case114: (nat-int? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case115: (nat-int? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case116: (nat-int? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case117: (nat-int? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case118: (nat-int? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case119: (nat-int? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case120: (nat-int? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case121: (nat-int? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case122: (nat-int? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..22, message: \"Unresolved Macro name nat-int?\" })")
+Macro case123: (coll? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case124: (coll? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case125: (coll? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case126: (coll? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case127: (coll? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case128: (coll? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case129: (coll? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case130: (coll? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case131: (coll? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case132: (coll? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case133: (coll? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case134: (coll? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case135: (coll? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case136: (coll? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case137: (coll? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case138: (coll? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case139: (coll? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case140: (coll? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case141: (coll? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case142: (coll? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case143: (coll? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case144: (coll? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case145: (coll? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case146: (coll? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case147: (coll? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case148: (coll? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case149: (coll? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case150: (coll? [])
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case151: (coll? [1])
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case152: (coll? {})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case153: (coll? {:a 1})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case154: (coll? '())
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case155: (coll? '(1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case156: (coll? #{})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case157: (coll? #{1})
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case158: (coll? (seq [1]))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case159: (coll? (range 2))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case160: (coll? (sorted-map :a 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case161: (coll? (sorted-set 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case162: (coll? (first {:a 1}))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case163: (coll? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name coll?\" })")
+Macro case164: (sorted? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case165: (sorted? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case166: (sorted? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case167: (sorted? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case168: (sorted? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case169: (sorted? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case170: (sorted? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case171: (sorted? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case172: (sorted? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case173: (sorted? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case174: (sorted? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case175: (sorted? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case176: (sorted? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case177: (sorted? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case178: (sorted? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case179: (sorted? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case180: (sorted? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case181: (sorted? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case182: (sorted? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case183: (sorted? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case184: (sorted? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case185: (sorted? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case186: (sorted? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case187: (sorted? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case188: (sorted? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case189: (sorted? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case190: (sorted? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case191: (sorted? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case192: (sorted? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case193: (sorted? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case194: (sorted? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case195: (sorted? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case196: (sorted? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case197: (sorted? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case198: (sorted? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case199: (sorted? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case200: (sorted? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case201: (sorted? (sorted-map :a 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case202: (sorted? (sorted-set 1))
+expected true
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case203: (sorted? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case204: (sorted? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..21, message: \"Unresolved Macro name sorted?\" })")
+Macro case205: (char? nil)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case206: (char? false)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case207: (char? true)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case208: (char? 0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case209: (char? 1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case210: (char? -1)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case211: (char? 9223372036854775807)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case212: (char? -9223372036854775808)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case213: (char? 0N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case214: (char? 1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case215: (char? -1N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case216: (char? (biginteger 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case217: (char? (biginteger -1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case218: (char? 1267650600228229401496703205376N)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case219: (char? 0.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case220: (char? 1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case221: (char? -1.0)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case222: (char? 0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case223: (char? 1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case224: (char? -1.0M)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case225: (char? 1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case226: (char? -1/3)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case227: (char? ##NaN)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case228: (char? ##Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case229: (char? ##-Inf)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case230: (char? :x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case231: (char? 'x)
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case232: (char? [])
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case233: (char? [1])
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case234: (char? {})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case235: (char? {:a 1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case236: (char? '())
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case237: (char? '(1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case238: (char? #{})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case239: (char? #{1})
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case240: (char? (seq [1]))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case241: (char? (range 2))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case242: (char? (sorted-map :a 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case243: (char? (sorted-set 1))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case244: (char? (first {:a 1}))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case245: (char? (fn [x] x))
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case246: (char? \a)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case247: (char? \space)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case248: (char? \newline)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case249: (char? \u0000)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case250: (char? (char 55296))
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case251: (char? \uFFFF)
+expected true
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case252: (char? "")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case253: (char? "ab")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case254: (char? "😀")
+expected false
+actual Err("Compile(Diagnostic { span: 14..19, message: \"Unresolved Macro name char?\" })")
+Macro case255: (let [f pos-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Macro name pos-int?\" })")
+Macro case256: (apply pos-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Macro name pos-int?\" })")
+Macro case257: (do (def predicate-effects []) (let [r (pos-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Macro name pos-int?\" })")
+Macro case258: (let [f neg-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Macro name neg-int?\" })")
+Macro case259: (apply neg-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Macro name neg-int?\" })")
+Macro case260: (do (def predicate-effects []) (let [r (neg-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Macro name neg-int?\" })")
+Macro case261: (let [f nat-int?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..29, message: \"Unresolved Macro name nat-int?\" })")
+Macro case262: (apply nat-int? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..28, message: \"Unresolved Macro name nat-int?\" })")
+Macro case263: (do (def predicate-effects []) (let [r (nat-int? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..61, message: \"Unresolved Macro name nat-int?\" })")
+Macro case264: (let [f coll?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..26, message: \"Unresolved Macro name coll?\" })")
+Macro case265: (apply coll? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..25, message: \"Unresolved Macro name coll?\" })")
+Macro case266: (do (def predicate-effects []) (let [r (coll? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..58, message: \"Unresolved Macro name coll?\" })")
+Macro case267: (let [f sorted?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..28, message: \"Unresolved Macro name sorted?\" })")
+Macro case268: (apply sorted? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..27, message: \"Unresolved Macro name sorted?\" })")
+Macro case269: (do (def predicate-effects []) (let [r (sorted? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..60, message: \"Unresolved Macro name sorted?\" })")
+Macro case270: (let [f char?] (f 1M))
+expected false
+actual Err("Compile(Diagnostic { span: 21..26, message: \"Unresolved Macro name char?\" })")
+Macro case271: (apply char? [1M])
+expected false
+actual Err("Compile(Diagnostic { span: 20..25, message: \"Unresolved Macro name char?\" })")
+Macro case272: (do (def predicate-effects []) (let [r (char? (do (def predicate-effects (conj predicate-effects :arg)) 1M))] [r predicate-effects]))
+expected [false [:arg]]
+actual Err("Compile(Diagnostic { span: 53..58, message: \"Unresolved Macro name char?\" })")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    core_predicates_follow_primary_controls
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.72s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_core_predicates`

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9c45e7c73ff03baa17285883086ed57e51f96b2767ac01c4e568aa57cc0dcaaf",
+  "replacement": "(def ^boolean neg-int?\n  \"Return true if x satisfies int? and is negative.\"\n  (fn [x] (if (suss.bootstrap/long? x) (neg? x) false)))",
+  "rationale": "Original Clojure numeric-category adaptation under ADR-0003. Preserve the public docstring, one-argument function and sign predicate. Fixed-width integers are canonical Long values; BigInt/BigInteger, Ratio, Decimal and Double return false even when integral. Replace the JavaScript integer?/goog.math wrapper representation dispatch with the immutable private Long representation test, retaining short-circuit sign evaluation. Fresh JVM Clojure1.12.6 controls are the behavior oracle; no Java dependency is shipped."
+}

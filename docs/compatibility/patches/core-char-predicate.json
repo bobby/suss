@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "ffd3e98e51d12e5ff812b87a18d85f1d9434eb1abfc224080b0d3a1d7f702a4a",
+  "replacement": "(def char?\n  \"Returns true if x is a JavaScript string of length one.\"\n  (fn [x]\n  (and (string? x) (== 1 (.-length x)))))",
+  "rationale": "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline. The accepted design represents character literals as one-unit UTF-16 strings; preserve its one-unit string test, including lone surrogates. JVM Character identity and the distinction between a one-unit String and Character are not fabricated; the two vendored String judgments remain explicit platform differences."
+}

@@ -1,0 +1,60 @@
+Compiled from "AFunction.java"
+public abstract class clojure.lang.AFunction extends clojure.lang.AFn implements clojure.lang.IObj,java.util.Comparator,clojure.lang.Fn,java.io.Serializable {
+  public volatile clojure.lang.MethodImplCache __methodImplCache;
+
+  public clojure.lang.AFunction();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method clojure/lang/AFn."<init>":()V
+       4: return
+
+  public clojure.lang.IPersistentMap meta();
+    Code:
+       0: aconst_null
+       1: areturn
+
+  public clojure.lang.IObj withMeta(clojure.lang.IPersistentMap);
+    Code:
+       0: aload_1
+       1: ifnonnull     6
+       4: aload_0
+       5: areturn
+       6: new           #2                  // class clojure/lang/AFunction$1
+       9: dup
+      10: aload_0
+      11: aload_1
+      12: invokespecial #3                  // Method clojure/lang/AFunction$1."<init>":(Lclojure/lang/AFunction;Lclojure/lang/IPersistentMap;)V
+      15: areturn
+
+  public int compare(java.lang.Object, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokevirtual #4                  // Method invoke:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       6: astore_3
+       7: aload_3
+       8: instanceof    #5                  // class java/lang/Boolean
+      11: ifeq          41
+      14: aload_3
+      15: invokestatic  #6                  // Method clojure/lang/RT.booleanCast:(Ljava/lang/Object;)Z
+      18: ifeq          23
+      21: iconst_m1
+      22: ireturn
+      23: aload_0
+      24: aload_2
+      25: aload_1
+      26: invokevirtual #4                  // Method invoke:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      29: invokestatic  #6                  // Method clojure/lang/RT.booleanCast:(Ljava/lang/Object;)Z
+      32: ifeq          39
+      35: iconst_1
+      36: goto          40
+      39: iconst_0
+      40: ireturn
+      41: aload_3
+      42: checkcast     #7                  // class java/lang/Number
+      45: astore        4
+      47: aload         4
+      49: invokevirtual #8                  // Method java/lang/Number.intValue:()I
+      52: ireturn
+}

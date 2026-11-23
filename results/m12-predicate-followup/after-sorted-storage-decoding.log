@@ -1,0 +1,10 @@
+Running as unit: run-p3464330-i91515671.scope; invocation ID: aa381b38213b4a5d99f09ccc8b6ecd66
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 14.20s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_test_suite-a012f065a4b1ac2c)
+
+running 1 test
+test pinned_core_predicate_bodies_match_primary_numeric_and_collection_values ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 16.57s
+

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "systemd-run",
+    "--user",
+    "--scope",
+    "-p",
+    "MemoryMax=3G",
+    "--",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(char? (first \"\\uD800\"))"
+  ],
+  "executable_sha256": "af4ff3e3c0bacd9a8047574ff2eca2163b97dcfd0ac3bd7ffc83be327b58e975",
+  "source_head": "0436ab300980d8f883398585095aa2a9758151f0",
+  "seconds": 32.226176500320435,
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "Running as unit: run-p3339515-i91404293.scope; invocation ID: 0ac5b2198d114145847c09c8673504fa\nError: Unresolved Runtime name char? at bytes 1..6\n"
+}

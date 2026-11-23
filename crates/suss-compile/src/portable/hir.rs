@@ -272,6 +272,8 @@ pub enum Bitwise {
     Imul,
     /// Private Clojure numeric casts: the operand and a `CASTS` index (#336).
     Cast,
+    /// Private Java Number.intValue conversion for Clojure comparators.
+    IntValue,
     /// Private scalar binary64 storage adapters; never public bitwise macros.
     F64Coerce,
     F64Word0,
@@ -423,6 +425,7 @@ impl Bitwise {
             Self::Int32Unsigned => "int32-unsigned-bit-shift-right",
             Self::Imul => "int32-imul",
             Self::Cast => "number-cast",
+            Self::IntValue => "number-int-value",
             Self::F64Coerce => "primitive-f64-coerce",
             Self::F64Word0 => "primitive-f64-word0",
             Self::F64Word4 => "primitive-f64-word4",
@@ -495,6 +498,7 @@ impl Bitwise {
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
+            | Self::IntValue
             | Self::HashNumber
             | Self::PackedTest
             | Self::ObjectsTest
@@ -3646,6 +3650,7 @@ impl Analyzer<'_> {
                 "hash-number" => Some(Bitwise::HashNumber),
                 "equiv" => Some(Bitwise::Equiv),
                 "cast" => Some(Bitwise::Cast),
+                "int-value" => Some(Bitwise::IntValue),
                 "packed-array" => Some(Bitwise::PackedNew),
                 "packed-store" => Some(Bitwise::PackedStore),
                 "packed-array?" => Some(Bitwise::PackedTest),

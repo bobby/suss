@@ -1,0 +1,32 @@
+Running as unit: run-p3340599-i91385748.scope; invocation ID: 4478fd1ee55f4beda058f3a4a0276559
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 4m 03s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_test_suite-684b122543cdeb29)
+
+running 1 test
+test pinned_core_predicate_bodies_match_primary_numeric_and_collection_values ... FAILED
+
+failures:
+
+---- pinned_core_predicate_bodies_match_primary_numeric_and_collection_values stdout ----
+
+thread 'pinned_core_predicate_bodies_match_primary_numeric_and_collection_values' (3354142) panicked at crates/suss-compile/tests/clojure_test_suite.rs:1101:5:
+{"counts": {"pass": 148, "guest-judged": 0, "fail": 2, "not-executed": 23, "skipped": 0, "namespaces-failed": 1}, "failures": {"schema": 1, "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f", "namespaces": {"clojure.core-test.sorted-qmark": {"stage": "namespace", "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sort at bytes 242..1286"}}, "tests": {}, "assertions": {"clojure.core-test.char-qmark/test-char?#33": "verdict:fail", "clojure.core-test.char-qmark/test-char?#34": "verdict:fail"}, "skip-mismatches": []}, "expected_count": 173, "actual_count": 150, "all_ids_match": false}
+
+Traceback (most recent call last):
+  File "<string>", line 19, in <module>
+    assert len(expected)==173 and actual==expected
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    pinned_core_predicate_bodies_match_primary_numeric_and_collection_values
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 11.06s
+
+error: test failed, to rerun pass `-p suss-compile --test clojure_test_suite`

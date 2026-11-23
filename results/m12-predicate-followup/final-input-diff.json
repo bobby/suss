@@ -1,0 +1,17 @@
+{
+  "capture_complete": true,
+  "capture_inputs_unchanged": true,
+  "changes_after_capture": [
+    {
+      "path": "docs/roadmap/handoff.md",
+      "captured_sha256": "5a0650860f740013f195c5885339fd7173c10fd0b04d22d0778f6a26cf788052",
+      "current_sha256": "16b0f00a511e8480087ae2404b81db30675092d7195f1536231f557cc244c343"
+    },
+    {
+      "path": "tests/oracle/clojure-test-suite-known-failures.json",
+      "captured_sha256": "3d9a138c07cdfac6c2da78ad12846439ffb6a2c6a0fc8db414bd51751c71d14a",
+      "current_sha256": "27a3a2122586ad65180f61af75426dffdea89bf1bdae353226a7fc7167408d10"
+    }
+  ],
+  "only_documentation_and_audited_baseline_changed": true
+}

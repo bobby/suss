@@ -9616,6 +9616,171 @@ reduces them without incurring seq initialization"
 (def prefers
   "Given a multimethod, returns a map of preferred value -> set of other values"
   (fn [multifn] (-prefers multifn)))
+
+(def char?
+  "Returns true if x is a JavaScript string of length one."
+  (fn [x]
+  (and (string? x) (== 1 (.-length x)))))
+
+(def coll?
+  "Returns true if x satisfies ICollection"
+  (fn [x]
+  (if (nil? x)
+    false
+    (satisfies? ICollection x))))
+
+(def sorted?
+  "Returns true if coll satisfies ISorted"
+  (fn [x] (satisfies? ISorted x)))
+
+(def pos-int?
+  "Return true if x satisfies int? and is positive."
+  (fn [x] (if (suss.bootstrap/long? x) (pos? x) false)))
+
+(def ^boolean neg-int?
+  "Return true if x satisfies int? and is negative."
+  (fn [x] (if (suss.bootstrap/long? x) (neg? x) false)))
+
+(def nat-int?
+  "Return true if x satisfies int? and is a natural integer value."
+  (fn [x] (if (suss.bootstrap/long? x) (not (neg? x)) false)))
+
+(def sort
+  "Returns a sorted sequence of the items in coll. Comp can be
+   boolean-valued comparison function, or a -/0/+ valued comparator.
+   Comp defaults to compare."
+  (fn
+    ([coll] (sort compare coll))
+    ([comp coll]
+     (if (seq coll)
+       (let [a (if (suss.bootstrap/object-array? coll) coll (to-array coll))
+             n (alength a)
+             scratch (suss.bootstrap/packed-array 6 n)
+             runs (suss.bootstrap/packed-array 6 128)
+             cmp (fn [x y]
+                   (let [r (comp x y)]
+                     (if (suss.bootstrap/boolean? r)
+                       (if r -1 (if (comp y x) 1 0))
+                       (suss.bootstrap/int-value r))))]
+         ;; Original adaptive stable merge sort. Natural runs retain numeric
+         ;; comparison staging; binary insertion preserves equal-element order.
+         ;; A bounded run stack merges adjacent runs with balanced lengths.
+         (letfn [(reverse-run! [lo hi]
+                   (loop [i lo j (cljs.core/dec hi)]
+                     (if (cljs.core/< i j)
+                       (let [x (aget a i)]
+                         (aset a i (aget a j)) (aset a j x)
+                         (recur (cljs.core/inc i) (cljs.core/dec j)))
+                       nil)))
+                 (count-run! [lo hi]
+                   (let [second (cljs.core/inc lo)]
+                     (if (cljs.core/>= second hi)
+                       1
+                       (let [descending (cljs.core/< (cmp (aget a second) (aget a lo)) 0)
+                             end (loop [i (cljs.core/inc second)]
+                                   (if (cljs.core/< i hi)
+                                     (let [c (cmp (aget a i) (aget a (cljs.core/dec i)))]
+                                       (if (if descending (cljs.core/< c 0) (cljs.core/>= c 0))
+                                         (recur (cljs.core/inc i)) i))
+                                     i))]
+                         (if descending (reverse-run! lo end) nil)
+                         (cljs.core/- end lo)))))
+                 (binary-sort! [lo hi start]
+                   (loop [i start]
+                     (if (cljs.core/< i hi)
+                       (let [pivot (aget a i)
+                             at (loop [left lo right i]
+                                  (if (cljs.core/< left right)
+                                    (let [mid (cljs.core/bit-shift-right (cljs.core/+ left right) 1)]
+                                      (if (cljs.core/< (cmp pivot (aget a mid)) 0)
+                                        (recur left mid) (recur (cljs.core/inc mid) right)))
+                                    left))]
+                         (loop [k i]
+                           (if (cljs.core/> k at)
+                             (do (aset a k (aget a (cljs.core/dec k)))
+                                 (recur (cljs.core/dec k)))
+                             nil))
+                         (aset a at pivot)
+                         (recur (cljs.core/inc i)))
+                       nil)))
+                 (run-base [i] (aget runs (cljs.core/* i 2)))
+                 (run-length [i] (aget runs (cljs.core/inc (cljs.core/* i 2))))
+                 (merge-at! [size at]
+                   (let [lo (run-base at)
+                         mid (run-base (cljs.core/inc at))
+                         hi (cljs.core/+ mid (run-length (cljs.core/inc at)))
+                         length (cljs.core/+ (run-length at) (run-length (cljs.core/inc at)))]
+                     (loop [i lo j mid k lo]
+                       (if (cljs.core/< k hi)
+                         (if (or (cljs.core/>= j hi)
+                                 (and (cljs.core/< i mid)
+                                      (cljs.core/>= (cmp (aget a j) (aget a i)) 0)))
+                           (do (aset scratch k (aget a i))
+                               (recur (cljs.core/inc i) j (cljs.core/inc k)))
+                           (do (aset scratch k (aget a j))
+                               (recur i (cljs.core/inc j) (cljs.core/inc k))))
+                         nil))
+                     (loop [i lo]
+                       (if (cljs.core/< i hi)
+                         (do (aset a i (aget scratch i)) (recur (cljs.core/inc i))) nil))
+                     (aset runs (cljs.core/inc (cljs.core/* at 2)) length)
+                     (loop [i (cljs.core/inc at)]
+                       (if (cljs.core/< i (cljs.core/dec size))
+                         (do (aset runs (cljs.core/* i 2) (run-base (cljs.core/inc i)))
+                             (aset runs (cljs.core/inc (cljs.core/* i 2)) (run-length (cljs.core/inc i)))
+                             (recur (cljs.core/inc i)))
+                         nil))
+                     (cljs.core/dec size)))
+                 (collapse! [count]
+                   (loop [size count]
+                     (if (cljs.core/> size 1)
+                       (let [at (cljs.core/- size 2)]
+                         (cond
+                           (or (and (cljs.core/> at 0)
+                                    (cljs.core/<= (run-length (cljs.core/dec at))
+                                                 (cljs.core/+ (run-length at) (run-length (cljs.core/inc at)))))
+                               (and (cljs.core/> at 1)
+                                    (cljs.core/<= (run-length (cljs.core/- at 2))
+                                                 (cljs.core/+ (run-length (cljs.core/dec at)) (run-length at)))))
+                           (let [at (if (cljs.core/< (run-length (cljs.core/dec at))
+                                                    (run-length (cljs.core/inc at)))
+                                      (cljs.core/dec at) at)]
+                             (recur (merge-at! size at)))
+                           (cljs.core/<= (run-length at) (run-length (cljs.core/inc at)))
+                           (recur (merge-at! size at))
+                           :else size))
+                       size)))
+                 (finish! [count]
+                   (loop [size count]
+                     (if (cljs.core/> size 1)
+                       (let [at (cljs.core/- size 2)
+                             at (if (and (cljs.core/> at 0)
+                                         (cljs.core/< (run-length (cljs.core/dec at))
+                                                      (run-length (cljs.core/inc at))))
+                                  (cljs.core/dec at) at)]
+                         (recur (merge-at! size at)))
+                       nil)))]
+           (if (cljs.core/< n 32)
+             (let [run (count-run! 0 n)] (binary-sort! 0 n run))
+             (let [minimum (loop [work n carry 0]
+                             (if (cljs.core/>= work 32)
+                               (recur (cljs.core/bit-shift-right work 1)
+                                      (cljs.core/bit-or carry (cljs.core/bit-and work 1)))
+                               (cljs.core/+ work carry)))]
+               (loop [lo 0 size 0]
+                 (if (cljs.core/< lo n)
+                   (let [run (count-run! lo n)
+                         remaining (cljs.core/- n lo)
+                         forced (if (cljs.core/< remaining minimum) remaining minimum)
+                         length (if (cljs.core/< run forced)
+                                  (do (binary-sort! lo (cljs.core/+ lo forced) (cljs.core/+ lo run)) forced)
+                                  run)]
+                     (aset runs (cljs.core/* size 2) lo)
+                     (aset runs (cljs.core/inc (cljs.core/* size 2)) length)
+                     (recur (cljs.core/+ lo length) (collapse! (cljs.core/inc size))))
+                   (finish! size))))))
+         (with-meta (seq a) (meta coll)))
+       ()))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

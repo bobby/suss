@@ -1,0 +1,46 @@
+Running as unit: run-p3405389-i91466064.scope; invocation ID: 2a17107f934a43f196fe9a4f224e2c1a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 25s
+     Running tests/clojure_stable_sort.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_stable_sort-91c5407931d98242)
+
+running 2 tests
+test stable_sort_follows_primary_controls ... FAILED
+test aot_executes_stable_sort_controls has been running for over 60 seconds
+test aot_executes_stable_sort_controls ... FAILED
+
+failures:
+
+---- stable_sort_follows_primary_controls stdout ----
+
+thread 'stable_sort_follows_primary_controls' (3418683) panicked at crates/suss-cli/tests/clojure_stable_sort.rs:50:5:
+Runtime case6: (sort [3 1N 2/3 0.5 1.0M])
+expected (0.5 2/3 1N 1.0M 3)
+actual Ok("[:error \"Non-terminating decimal expansion; no exact representable decimal result.\"]")
+Runtime case43: (sort (fn [a b] (if (< a b) false 0)) [3 1 2])
+expected (3 1 2)
+actual Ok("(3 2 1)")
+Macro case6: (sort [3 1N 2/3 0.5 1.0M])
+expected (0.5 2/3 1N 1.0M 3)
+actual Ok("[:error \"Non-terminating decimal expansion; no exact representable decimal result.\"]")
+Macro case43: (sort (fn [a b] (if (< a b) false 0)) [3 1 2])
+expected (3 1 2)
+actual Ok("(3 2 1)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_executes_stable_sort_controls stdout ----
+
+thread 'aot_executes_stable_sort_controls' (3418682) panicked at crates/suss-cli/tests/clojure_stable_sort.rs:119:5:
+assertion `left == right` failed: AOT failed primary control: Some(("(sort [3 1N 2/3 0.5 1.0M])", "(0.5 2/3 1N 1.0M 3)"))
+  left: 7
+ right: 0
+
+
+failures:
+    aot_executes_stable_sort_controls
+    stable_sort_follows_primary_controls
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 62.12s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_stable_sort`

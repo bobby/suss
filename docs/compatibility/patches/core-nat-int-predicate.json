@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "51c06283738756c7b5b4da6593f5d68dcc7db59ed28d90c8d9cb567c6295318c",
+  "replacement": "(def nat-int?\n  \"Return true if x satisfies int? and is a natural integer value.\"\n  (fn [x] (if (suss.bootstrap/long? x) (not (neg? x)) false)))",
+  "rationale": "Original Clojure numeric-category adaptation under ADR-0003. Preserve the public docstring, one-argument function and sign predicate. Fixed-width integers are canonical Long values; BigInt/BigInteger, Ratio, Decimal and Double return false even when integral. Replace the JavaScript integer?/goog.math wrapper representation dispatch with the immutable private Long representation test, retaining short-circuit sign evaluation. Fresh JVM Clojure1.12.6 controls are the behavior oracle; no Java dependency is shipped."
+}

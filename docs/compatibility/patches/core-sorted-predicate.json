@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "3158ea760bece141900073897d0e0bb0c843ed31f8c57e874b3e43aa526c2159",
+  "replacement": "(def sorted?\n  \"Returns true if coll satisfies ISorted\"\n  (fn [x] (satisfies? ISorted x)))",
+  "rationale": "Preserve the complete pinned docstring and body; expand defn into def/fn for the existing compiled core pipeline."
+}

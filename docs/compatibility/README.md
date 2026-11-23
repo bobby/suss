@@ -1,5 +1,14 @@
 # ClojureScript compatibility evidence
 
+[Numeric dependency probes](../../results/m12-predicate-followup/README.md) retain
+six reviewed core predicate ports, an original adaptive stable sort over fixed
+WasmGC arrays,65 JVM sort controls in both phases/actual AOT, and independent
+canonical tree-map/set field decoding. The unchanged complete predicate-body
+regression executes173 assertions:171 host matches plus two explicit String/char
+platform differences under the accepted UTF-16 representation. All28 decoder
+tests and the unchanged numeric allocation/AOT bounds pass. These observations
+do not establish complete BigDecimal acceptance or all Java Comparator interop.
+
 For current original M3 acceptance and lifecycle evidence, see the
 [M3 acceptance record](../roadmap/acceptance-m3.md). The dated prerequisite
 notes below describe their inspected snapshots; older absence/pending statements

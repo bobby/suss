@@ -1,0 +1,3 @@
+{
+  "reason": "The first test began while oracle fixture generation was still completing, so cases.json was absent from its initial input map. Its actual missing-name failures are retained, but a second pre-change run captures the finished fixture SHA and is the qualified regression-before evidence."
+}

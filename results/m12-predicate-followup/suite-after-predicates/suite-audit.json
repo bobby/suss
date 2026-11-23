@@ -1,0 +1,980 @@
+{
+  "base": "0436ab300980d8f883398585095aa2a9758151f0",
+  "capture_sha256": "9ceda6d7a07d1c62073b7a1d7f9c25f72f673c3e4c2993bfcc9afb4f993f314b",
+  "changed_record_counts": {
+    "assertions": 11,
+    "namespaces": 9,
+    "tests": 0
+  },
+  "changes": {
+    "assertions": [
+      {
+        "actual": {
+          "head": "sorted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 10,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.assoc/test-assoc",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#10",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 15,
+          "contexts": [
+            "maps",
+            "maps - sorted type preservation"
+          ],
+          "deterministic": true,
+          "form": "(sorted? (assoc (sorted-map) :a 1 :b 2))",
+          "id": "clojure.core-test.assoc/test-assoc#10",
+          "kind": "predicate",
+          "line": 24,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 10,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "sorted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 11,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.assoc/test-assoc",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#11",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 15,
+          "contexts": [
+            "maps",
+            "maps - sorted type preservation"
+          ],
+          "deterministic": true,
+          "form": "(sorted? (assoc (sorted-map :a 1 :b 2) :b 3))",
+          "id": "clojure.core-test.assoc/test-assoc#11",
+          "kind": "predicate",
+          "line": 25,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "3"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 11,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 31,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#31",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c]))",
+          "id": "clojure.core-test.assoc/test-assoc#31",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 31,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 32,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#32",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c 3 :d]))",
+          "id": "clojure.core-test.assoc/test-assoc#32",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 32,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 34,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#34",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc [1] [0 1 1]))",
+          "id": "clojure.core-test.assoc/test-assoc#34",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 34,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "p/thrown?",
+          "kind": "thrown",
+          "ordinal": 35,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": false,
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.assoc/test-assoc#35",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 37,
+          "contexts": [
+            "bad shape",
+            "bad shape - odd number of args"
+          ],
+          "deterministic": true,
+          "form": "(p/thrown? (apply assoc [1] [0 1 1 2 2]))",
+          "id": "clojure.core-test.assoc/test-assoc#35",
+          "kind": "thrown",
+          "line": 75,
+          "ordinal": 35,
+          "test": "clojure.core-test.assoc/test-assoc",
+          "threw": true,
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": true
+            }
+          ],
+          "ordinal": 33,
+          "result": {
+            "tag": "bool",
+            "value": false
+          },
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.char-qmark/test-char?#33",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 23,
+          "contexts": [],
+          "deterministic": true,
+          "form": "(= false (char? \"0\"))",
+          "id": "clojure.core-test.char-qmark/test-char?#33",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": false
+            }
+          ],
+          "ordinal": 33,
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": true
+            }
+          ],
+          "ordinal": 34,
+          "result": {
+            "tag": "bool",
+            "value": false
+          },
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "fail"
+        },
+        "id": "clojure.core-test.char-qmark/test-char?#34",
+        "new": "verdict:fail",
+        "old": null,
+        "primary": {
+          "column": 23,
+          "contexts": [],
+          "deterministic": true,
+          "form": "(= false (char? \"1\"))",
+          "id": "clojure.core-test.char-qmark/test-char?#34",
+          "kind": "predicate",
+          "line": 8,
+          "operands": [
+            {
+              "tag": "bool",
+              "value": false
+            },
+            {
+              "tag": "bool",
+              "value": false
+            }
+          ],
+          "ordinal": 34,
+          "test": "clojure.core-test.char-qmark/test-char?",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "sorted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 11,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.disj/test-disj",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.disj/test-disj#11",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 13,
+          "contexts": [
+            "sorted preservation"
+          ],
+          "deterministic": true,
+          "form": "(sorted? (disj (sorted-set 1 2 3) 1 2 3))",
+          "id": "clojure.core-test.disj/test-disj#11",
+          "kind": "predicate",
+          "line": 21,
+          "operands": [
+            {
+              "items": [],
+              "tag": "set"
+            }
+          ],
+          "ordinal": 11,
+          "test": "clojure.core-test.disj/test-disj",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "sorted?",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 12,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.dissoc/test-dissoc#12",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 13,
+          "contexts": [
+            "sorted preservation"
+          ],
+          "deterministic": true,
+          "form": "(sorted? (dissoc (sorted-map :a 1 :b 2) :a))",
+          "id": "clojure.core-test.dissoc/test-dissoc#12",
+          "kind": "predicate",
+          "line": 31,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 12,
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        }
+      },
+      {
+        "actual": {
+          "head": "=",
+          "kind": "predicate",
+          "operands": [
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            },
+            {
+              "reason": "Host error: Unsupported ABI2 value layout",
+              "tag": "opaque"
+            }
+          ],
+          "ordinal": 17,
+          "result": {
+            "tag": "bool",
+            "value": true
+          },
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        },
+        "id": "clojure.core-test.dissoc/test-dissoc#17",
+        "new": "observation:undecodable",
+        "old": null,
+        "primary": {
+          "column": 32,
+          "contexts": [
+            "records"
+          ],
+          "deterministic": true,
+          "form": "(= r (apply dissoc r [:d]))",
+          "id": "clojure.core-test.dissoc/test-dissoc#17",
+          "kind": "predicate",
+          "line": 42,
+          "operands": [
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              ],
+              "tag": "map"
+            },
+            {
+              "entries": [
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "1"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        98
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "long",
+                    "value": "2"
+                  }
+                ],
+                [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        99
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "tag": "nil"
+                  }
+                ]
+              ],
+              "tag": "map"
+            }
+          ],
+          "ordinal": 17,
+          "test": "clojure.core-test.dissoc/test-dissoc",
+          "verdict": "pass"
+        }
+      }
+    ],
+    "namespaces": [
+      {
+        "id": "clojure.core-test.assoc",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.assoc (Some(\"<root>/clojure/core_test/assoc.cljc\")): Unresolved Runtime name sorted? at bytes 235..4147",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.char-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unresolved Runtime name char? at bytes 268..1615",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.coll-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Unresolved Runtime name coll? at bytes 229..965",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.disj",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.disj (Some(\"<root>/clojure/core_test/disj.cljc\")): Unresolved Runtime name sorted? at bytes 234..1560",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.dissoc",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.dissoc (Some(\"<root>/clojure/core_test/dissoc.cljc\")): Unresolved Runtime name sorted? at bytes 304..2018",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.neg-int-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unresolved Runtime name neg-int? at bytes 271..1611",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.pos-int-qmark",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unresolved Runtime name pos-int? at bytes 271..1687",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.some",
+        "new": null,
+        "old": {
+          "diagnostic": "clojure.core-test.some (Some(\"<root>/clojure/core_test/some.cljc\")): Unresolved Runtime name char? at bytes 234..2444",
+          "stage": "namespace"
+        }
+      },
+      {
+        "id": "clojure.core-test.sorted-qmark",
+        "new": {
+          "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sort at bytes 242..1286",
+          "stage": "namespace"
+        },
+        "old": {
+          "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sorted? at bytes 242..1286",
+          "stage": "namespace"
+        }
+      }
+    ],
+    "tests": []
+  },
+  "counts": {
+    "fail": 95,
+    "guest-judged": 75,
+    "namespaces-failed": 75,
+    "not-executed": 2044,
+    "pass": 4725,
+    "skipped": 0
+  },
+  "decimal_value_observations": {
+    "not-executed": 6,
+    "pass": 194
+  },
+  "newly_executed_failures": [
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 34,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc [1] [0 1 1]))",
+      "id": "clojure.core-test.assoc/test-assoc#34",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 33,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.char-qmark/test-char?",
+        "verdict": "fail"
+      },
+      "form": "(= false (char? \"0\"))",
+      "id": "clojure.core-test.char-qmark/test-char?#33",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 32,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c 3 :d]))",
+      "id": "clojure.core-test.assoc/test-assoc#32",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bool",
+            "value": false
+          },
+          {
+            "tag": "bool",
+            "value": true
+          }
+        ],
+        "ordinal": 34,
+        "result": {
+          "tag": "bool",
+          "value": false
+        },
+        "test": "clojure.core-test.char-qmark/test-char?",
+        "verdict": "fail"
+      },
+      "form": "(= false (char? \"1\"))",
+      "id": "clojure.core-test.char-qmark/test-char?#34",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 35,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc [1] [0 1 1 2 2]))",
+      "id": "clojure.core-test.assoc/test-assoc#35",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "sorted?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 12,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.dissoc/test-dissoc",
+        "verdict": "pass"
+      },
+      "form": "(sorted? (dissoc (sorted-map :a 1 :b 2) :a))",
+      "id": "clojure.core-test.dissoc/test-dissoc#12",
+      "reason": "observation:undecodable"
+    },
+    {
+      "actual": {
+        "head": "p/thrown?",
+        "kind": "thrown",
+        "ordinal": 31,
+        "test": "clojure.core-test.assoc/test-assoc",
+        "threw": false,
+        "verdict": "fail"
+      },
+      "form": "(p/thrown? (apply assoc {:a 1} [:b 2 :c]))",
+      "id": "clojure.core-test.assoc/test-assoc#31",
+      "reason": "verdict:fail"
+    },
+    {
+      "actual": {
+        "head": "sorted?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.disj/test-disj",
+        "verdict": "pass"
+      },
+      "form": "(sorted? (disj (sorted-set 1 2 3) 1 2 3))",
+      "id": "clojure.core-test.disj/test-disj#11",
+      "reason": "observation:undecodable"
+    },
+    {
+      "actual": {
+        "head": "sorted?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 10,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.assoc/test-assoc",
+        "verdict": "pass"
+      },
+      "form": "(sorted? (assoc (sorted-map) :a 1 :b 2))",
+      "id": "clojure.core-test.assoc/test-assoc#10",
+      "reason": "observation:undecodable"
+    },
+    {
+      "actual": {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          },
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 17,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.dissoc/test-dissoc",
+        "verdict": "pass"
+      },
+      "form": "(= r (apply dissoc r [:d]))",
+      "id": "clojure.core-test.dissoc/test-dissoc#17",
+      "reason": "observation:undecodable"
+    },
+    {
+      "actual": {
+        "head": "sorted?",
+        "kind": "predicate",
+        "operands": [
+          {
+            "reason": "Host error: Unsupported ABI2 value layout",
+            "tag": "opaque"
+          }
+        ],
+        "ordinal": 11,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "test": "clojure.core-test.assoc/test-assoc",
+        "verdict": "pass"
+      },
+      "form": "(sorted? (assoc (sorted-map :a 1 :b 2) :b 3))",
+      "id": "clojure.core-test.assoc/test-assoc#11",
+      "reason": "observation:undecodable"
+    }
+  ],
+  "old_counts": {
+    "fail": 84,
+    "guest-judged": 75,
+    "namespaces-failed": 83,
+    "not-executed": 2314,
+    "pass": 4466,
+    "skipped": 0
+  },
+  "other_new_failures": [],
+  "previously_passing_regressions": [],
+  "primary_and_count_skip_guards_unchanged": true,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "prior_passes_preserved": 4556,
+  "raw_assertions": 4894,
+  "unresolved_candidates_by_namespace": {
+    "clojure.core-test.case": 4,
+    "clojure.core-test.eq": 2,
+    "clojure.core-test.eval": 1,
+    "clojure.core-test.not-eq": 2,
+    "clojure.core-test.num": 1,
+    "clojure.core-test.sorted-qmark": 1,
+    "clojure.edn-test.read-string": 5
+  },
+  "unresolved_decimal_source_candidates": 16
+}

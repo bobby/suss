@@ -39,6 +39,7 @@ mod native_objects;
 mod native_protocols;
 mod nominal;
 mod numeric;
+mod numeric_cast_errors;
 mod packed_arrays;
 mod numeric_hash;
 mod numeric_operands;

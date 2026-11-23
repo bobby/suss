@@ -1,0 +1,38 @@
+Running as unit: run-p3328038-i91398470.scope; invocation ID: b19d9a605f2e412aaee1255f15084f3a
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 08s
+     Running tests/clojure_core_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/clojure_core_predicates-1cc73ef5437d9730)
+
+running 2 tests
+test aot_executes_core_predicate_controls ... FAILED
+test core_predicates_follow_primary_controls ... FAILED
+
+failures:
+
+---- aot_executes_core_predicate_controls stdout ----
+
+thread 'aot_executes_core_predicate_controls' (3335138) panicked at crates/suss-cli/tests/clojure_core_predicates.rs:100:5:
+Compilation error: Semantic error: While compiling probe.sus: Unresolved Runtime name char at bytes 25772..25776
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- core_predicates_follow_primary_controls stdout ----
+
+thread 'core_predicates_follow_primary_controls' (3335139) panicked at crates/suss-cli/tests/clojure_core_predicates.rs:50:5:
+Runtime case250: (char? (char 55296))
+expected true
+actual Err("Compile(Diagnostic { span: 21..25, message: \"Unresolved Runtime name char\" })")
+Macro case250: (char? (char 55296))
+expected true
+actual Err("Compile(Diagnostic { span: 21..25, message: \"Unresolved Macro name char\" })")
+
+
+failures:
+    aot_executes_core_predicate_controls
+    core_predicates_follow_primary_controls
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.26s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_core_predicates`

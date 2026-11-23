@@ -1,0 +1,37 @@
+Running as unit: run-p3460604-i91515112.scope; invocation ID: b4ac0b28ef5342d2a1751fbc318aa2ff
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 6.94s
+     Running tests/portable_value_decoder.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-predicate-followup-target/debug/deps/portable_value_decoder-bdff15d92878dc0e)
+
+running 28 tests
+test canonical_identifiers_reject_malformed_namespaces_names_and_excessive_nesting ... ok
+test bigint_decoder_reads_exact_storage_after_gc_without_guest_printers ... ok
+test captured_decoder_rejects_foreign_and_reset_sessions_before_descriptor_access ... ok
+test chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values ... ok
+test decimal_decoder_rejects_mutable_owners_and_malformed_exact_coefficients ... ok
+test decoder_bounds_are_checked_before_string_traversal ... ok
+test decoder_rejects_unknown_sentinels_nulls_and_unboxed_values ... ok
+test collection_decoder_rejects_nominal_impostors_malformed_counts_and_missing_backing ... ok
+test indexed_sequences_and_map_entries_decode_actual_storage_after_gc ... ok
+test identifier_decoder_retains_canonical_identity_through_gc_and_redefinition ... ok
+test indexed_sequences_reject_invalid_offsets_and_storage ... ok
+test map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries ... ok
+test map_set_decoder_rejects_invalid_counts_flags_and_node_storage ... ok
+test persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_calls ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test scalar_decoder_preserves_bits_and_language_sentinels_after_gc ... ok
+test ratio_decoder_reads_actual_exact_children_after_gc ... ok
+test scalar_decoder_rejects_mutable_number_impostor ... ok
+test set_decoder_preserves_nested_elements_and_nil_through_gc ... ok
+test sorted_collection_decoder_rejects_count_layout_and_budget_errors ... ok
+test string_decoder_preserves_utf16_including_astral_and_lone_surrogates ... ok
+test string_decoder_rejects_immutable_utf16_array_impostor ... ok
+test unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors ... ok
+test vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc ... ok
+test vector_decoder_rejects_count_exceeding_trie_capacity ... ok
+test sorted_collection_decoder_preserves_exact_fields_after_gc_without_guest_comparison ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.57s
+
