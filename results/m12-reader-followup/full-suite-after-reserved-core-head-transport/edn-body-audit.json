@@ -1,0 +1,175 @@
+{
+  "capture_sha256": "10c7e6f5adf409eef8d162ed5fa5327f37a890bbfc8ef0849966d8f2e55380dd",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "edn_assertions": 297,
+  "ordered_ids_match": true,
+  "outcomes": {
+    "host-match": 272,
+    "observation:value": 1,
+    "kind:error": 17,
+    "guest-judged": 6,
+    "verdict:fail": 1
+  },
+  "explicit_remaining_failures": [
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#69",
+      "form": "(clojure.core/= :/ (clojure.edn/read-string \":/\"))",
+      "reason": "observation:value",
+      "source-head": "cljs.core/=",
+      "head": "clojure.core/="
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#95",
+      "form": "(clojure.core/= (symbol \"foo/bar/baz\") (clojure.edn/read-string \"foo/bar/baz\"))",
+      "reason": "kind:error",
+      "source-head": "cljs.core/=",
+      "head": "clojure.core/=",
+      "message": "Invalid symbol"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#96",
+      "form": "(clojure.core/= (keyword \"foo/bar/baz\") (clojure.edn/read-string \":foo/bar/baz\"))",
+      "reason": "kind:error",
+      "source-head": "cljs.core/=",
+      "head": "clojure.core/=",
+      "message": "Invalid keyword"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#188",
+      "form": "(clojure.core/= {:foo/bar 1, :foo/baz {:buzz 2}} (clojure.edn/read-string \"#:foo{:bar 1 :baz {:buzz 2}}\"))",
+      "reason": "kind:error",
+      "source-head": "cljs.core/=",
+      "head": "clojure.core/=",
+      "message": "Unsupported reader dispatch"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#202",
+      "form": "(= 1262311321001 (-> \"#inst \\\"2010-01-01T01:01:01.001-01:01\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#203",
+      "form": "(= 1284056289009 (-> \"#inst \\\"2010-09-09T09:09:09.009-09:09\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#204",
+      "form": "(= 1286742010010 (-> \"#inst \\\"2010-10-10T10:10:10.010-10:10\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#205",
+      "form": "(= 1293926339999 (-> \"#inst \\\"2010-12-31T23:59:59.999-23:59\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#206",
+      "form": "(= 1289585655666 (-> \"#inst \\\"2010-11-12T18:14:15.666Z\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#207",
+      "form": "(= 1289585655666 (-> \"#inst \\\"2010-11-12T18:14:15.666-00:00\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#208",
+      "form": "(= 1289585655666 (-> \"#inst \\\"2010-11-12T18:14:15.666+00:00\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#209",
+      "form": "(= 1289585655666 (-> \"#inst \\\"2010-11-12T13:14:15.666-05:00\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#210",
+      "form": "(= 1289585655666 (-> \"#inst \\\"2010-11-12T23:14:15.666+05:00\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#211",
+      "form": "(= 1289567655000 (-> \"#inst \\\"2010-11-12T13:14:15Z\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#212",
+      "form": "(= 482196050520 (-> \"#inst \\\"1985-04-12T23:20:50.52Z\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#213",
+      "form": "(= 1770076800000 (-> \"#inst \\\"2026-02-03\\\"\" edn/read-string epoch-millis))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#249",
+      "form": "(clojure.core/= 3 (clojure.edn/read-string \";foo\\r3\\n5\"))",
+      "reason": "verdict:fail",
+      "source-head": "cljs.core/=",
+      "head": "clojure.core/="
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#266",
+      "form": "(= nil (edn/read-string \"#_ #inst \\\"2010-11-12T13:14:15.666-05:00\\\"\"))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    },
+    {
+      "id": "clojure.edn-test.read-string/test-read-string#267",
+      "form": "(= #{1} (edn/read-string \"#{#_ #inst \\\"2010-11-12T13:14:15.666-05:00\\\" 1}\"))",
+      "reason": "kind:error",
+      "source-head": "=",
+      "head": "=",
+      "message": "No reader function for tag inst"
+    }
+  ],
+  "counts": {
+    "pass": 5123,
+    "guest-judged": 81,
+    "fail": 105,
+    "not-executed": 1630,
+    "skipped": 0,
+    "namespaces-failed": 70
+  },
+  "baseline_written": false,
+  "qualification": "New native execution with unchanged primary/comparator/body/count/skip rules; original Rust baseline-drift exit101 retained. Unsupported or incorrect reader values remain failures."
+}

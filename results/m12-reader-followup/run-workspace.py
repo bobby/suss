@@ -6,7 +6,7 @@ subprocess.run(['git','diff','--quiet'],cwd=ROOT,check=True);subprocess.run(['gi
 paths=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0');inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and (ROOT/p).is_file()}
 core='clojurescript/src/main/cljs/cljs/core.cljs';inputs[core]=hashlib.sha256((ROOT/core).read_bytes()).hexdigest()
 command=['cargo','test','--workspace','--locked','--','--test-threads=2'];scope=f'suss-m12-reader-baseline-{os.getpid()}.scope'
-env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-suite-platform-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
+env=os.environ|{'CARGO_TARGET_DIR':os.environ.get('SUSS_WORKSPACE_TARGET',str(ROOT.parent/'m12-suite-platform-target')),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
 record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'command':command,'scope':scope,'inputs':inputs,'harness_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'rustc':subprocess.check_output(['rustc','--version'],cwd=ROOT,env=env,text=True).strip(),'complete':False}
 def save():(OUT/'command.json').write_text(json.dumps(record,indent=2)+'\n')
 save();started=time.time()

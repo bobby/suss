@@ -311,3 +311,28 @@ compiler forms, native EDN, Runtime/Macro values, readers, public functions,
 macro transport, retained-value/GC checks, AOT and affected suite execution still
 need integration. No issue acceptance, workspace or CI pass follows from these
 three focused tests. Original BigDecimal and suite baselines remain unchanged.
+## Complete char and EDN captures (2026-11-23)
+
+`run-suite.py full-suite-after-reserved-core-head-transport` completes onbc2694b9,
+recorded inputs unchanged:build/lock return0; native comparison returns101 after
+544.732s. `audit-suite.py`, `audit-edn-body.py` and the character auditor pass.
+The5308 raw observations preserve4917 strict prior passes and4932 separately
+comparable rows:5123 host matches,81 guest judgments,105 failures,
+1630 unexecuted, zero skips and70 failed namespaces. All nine original char
+assertions match. All297 EDN assertions execute in order:272 host matches,
+six guest judgments and19 explicit reader failures. Decimal199/200 and
+BigInt/Ratio219/229 match; remaining numeric observations are unexecuted.
+
+Only the reserved cljs.core/suss.core assertion-head namespaces use the JVM
+clojure.core transport spelling; every raw source-head is retained. Both actual
+bindings and compiled syntax quote are covered by the two focused regressions,
+including rejection of arbitrary user heads, wrong operators/verdicts/operands.
+Runtime snapshots, primary values, comparator, vendored bodies and count/skip
+rules are unchanged. The isolated Macro observer always raises on capture.
+
+`write-reviewed-char-reader-baseline.py` removes only the two executed namespace
+load failures and adds exactly the19 observed reader failures. The separate host
+comparison passes; the retained native101 is never relabeled as a native rerun
+or workspace pass. Larger raw files have deterministic gzip archives and byte
+hashes in the capture's archives.json; decompress those files at their recorded
+relative paths before rerunning the auditors from a fresh checkout.

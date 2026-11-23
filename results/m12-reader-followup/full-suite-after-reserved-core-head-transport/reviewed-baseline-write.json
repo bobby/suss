@@ -1,0 +1,20 @@
+{
+  "old_sha256": "81d1203abb26c6a2eebfb5a073a68439e72f0ede55e7b12dc7fa1f07dc990aa2",
+  "new_sha256": "88ccd83c7614da545c1c44b1c4ed090ac2c2e85ba9ad02e5b0d7290992b73f33",
+  "capture_sha256": "10c7e6f5adf409eef8d162ed5fa5327f37a890bbfc8ef0849966d8f2e55380dd",
+  "counts": {
+    "pass": 5123,
+    "guest-judged": 81,
+    "fail": 105,
+    "not-executed": 1630,
+    "skipped": 0,
+    "namespaces-failed": 70
+  },
+  "char_host_matches": 9,
+  "edn_assertions": 297,
+  "reader_failures_retained": 19,
+  "host_comparison_exit_code": 0,
+  "original_native_capture_exit_code": 101,
+  "change": "Remove only char and EDN namespace-load failures after actual complete execution; add exactly the 19 independently observed reader failures. Preserve all unrelated failures and every primary/comparator/count/skip rule.",
+  "qualification": "This baseline write and host comparison are not a native rerun or a full workspace pass."
+}

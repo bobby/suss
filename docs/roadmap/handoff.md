@@ -1,3 +1,27 @@
+## Audited char and EDN execution (2026-11-23)
+
+`run-suite.py full-suite-after-reserved-core-head-transport` completes onbc2694b9,
+inputs unchanged. Build/lock pass; the original native comparison returns101
+after544.732s. All three independent auditors pass:5308 raw observations,
+5123 host matches,81 guest judgments,105 failures,1630 unexecuted, zero skips
+and70 failed namespaces. All4917 strict prior passes and4932 separately
+comparable prior rows remain preserved. All nine original char assertions match.
+EDN executes all297 ordered assertions:272 host matches, six guest judgments
+and19 actual reader failures, including invalid symbol/keyword/dispatch handling,
+unsupported instants, malformed slash keyword storage and CR comment termination.
+The raw capture keeps141 reserved-alias source heads separately from their
+canonical transport spelling. No primary, comparator, vendored body or count/
+skip rule changes. Decimal has199 matches/one unexecuted eval assertion;
+BigInt/Ratio has219 matches/ten unexecuted assertions.
+
+`write-reviewed-char-reader-baseline.py` checks both complete bodies, exact
+remaining reader failures, unchanged prior passes and the captured source before
+removing only char/EDN namespace-load failures and adding precisely those19
+reader failures. All unrelated baseline entries remain identical. Its separate
+host comparison passes; the original native101 remains retained and is not a
+native rerun or workspace pass. Compressed archives preserve original byte hashes.
+Full workspace/final-head CI and promotion review retain their GitHub evidence.
+
 ## Complete char body and reserved-core assertion metadata (2026-11-23)
 
 `run-test.py after-exact-number-carriers --test clojure_char

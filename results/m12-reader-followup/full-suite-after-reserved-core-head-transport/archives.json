@@ -1,0 +1,50 @@
+[
+  {
+    "raw": "suite-audit.json",
+    "archive": "suite-audit.json.gz",
+    "raw_sha256": "9d29ac5571766daa5d9ae55df08f8a37953a4059f6f7bcbec479f62c5753f42f",
+    "raw_bytes": 125074,
+    "archive_sha256": "176a6cb39552dd6f7ab1f825cb0febf07fd8ae47a1d77d9717b7dd3d9bef899a",
+    "archive_bytes": 4306
+  },
+  {
+    "raw": "suite-build.log",
+    "archive": "suite-build.log.gz",
+    "raw_sha256": "76c255eff161fa2236fe6be0d02c9b0bab572d2f7fdb0a2ef69c39c77c1f6c40",
+    "raw_bytes": 272987,
+    "archive_sha256": "9e39e64d4c91d36b750d98ceb4b6d0ebec58ba9855603e5f86bdab461a7212e0",
+    "archive_bytes": 16818
+  },
+  {
+    "raw": "suite-capture/suite-observations.json",
+    "archive": "suite-capture/suite-observations.json.gz",
+    "raw_sha256": "10c7e6f5adf409eef8d162ed5fa5327f37a890bbfc8ef0849966d8f2e55380dd",
+    "raw_bytes": 5359588,
+    "archive_sha256": "2c852006ee2de3c04895636f63bc5d551b956c12ad6ac4d604d45862fe30cd52",
+    "archive_bytes": 128048
+  },
+  {
+    "raw": "suite-commands.json",
+    "archive": "suite-commands.json.gz",
+    "raw_sha256": "5ddfe5300b9688ade84c74b8702008d854cd502106e67c415a3caaef53bdb2e7",
+    "raw_bytes": 498760,
+    "archive_sha256": "1aa4280a8b52fc82045d05db645ef5cd8a8e8288cb33e66fd893c34abc81bbd6",
+    "archive_bytes": 183898
+  },
+  {
+    "raw": "suite-lock.log",
+    "archive": "suite-lock.log.gz",
+    "raw_sha256": "0314393c6b564b58a6fd313609bce641ecf7cf0ce333e5665307230afda4eb1f",
+    "raw_bytes": 175,
+    "archive_sha256": "7b1760f0c7b1ea69e983ad4c75c2a9b01309d4629ed2b76e52122e0c9a498ef3",
+    "archive_bytes": 162
+  },
+  {
+    "raw": "suite-run.log",
+    "archive": "suite-run.log.gz",
+    "raw_sha256": "944fd5d8e76195bf5862d8221ed69054c862719840266c9ebff49a2e4f315e27",
+    "raw_bytes": 3383,
+    "archive_sha256": "e4fa2ab501d2acf5f9c7137e65508e553283753381f9c55971aff258147c3ce8",
+    "archive_bytes": 866
+  }
+]
