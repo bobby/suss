@@ -1,3 +1,43 @@
+## Source namespace macro dependency and fresh core probes (2026-11-23)
+
+`run-suite.py full-suite-after-clojure-edn-namespace` finishes on c42b75bf,
+recorded inputs unchanged: build and lock checks return0; native suite returns101
+after754.263s. The reader namespace now loads, exposing `Unresolved Runtime name
+defmacro` at bytes441..449 in the unchanged vendored EDN namespace. Its local
+`are-read-as`/`are-thrown` declarations therefore prevent all297 EDN assertions
+from executing. The audit again preserves4917 strict prior passes and4932
+individually comparable prior rows; primary values/count/skip rules and the
+reviewed baseline remain unchanged. Counts are4842 host matches,75 guest
+judgments,86 failures,1936 unexecuted, zero skips and72 failed namespaces.
+Decimal operand observations remain194 pass/6 unexecuted; BigInt/Ratio operands
+remain214 pass/15 unexecuted. This is a failing full-suite comparison.
+
+The independent `inline_module_macros` source-module regression fails before
+the repair with the same unresolved Runtime `defmacro`, at bytes54..62 in its
+own source namespace. `run-test.py before-inline-source-module-macros --test
+inline_module_macros source_namespace_local_macros_use_phase_imports_and_expand_following_forms`
+records terminal101 after32.099s with inputs unchanged. Runtime loading fails;
+the later Macro iteration is not executed. The test requires real compiled
+transformers, phase imports and independent Decimal/UUID storage after GC.
+Namespace loading needs the same declaration/staging discipline as the compiled
+script path; no test-only macro interpretation or vendored-body rewrite is used.
+
+`results/m12-core-dependencies/oracle.py` records396 fresh JVM Clojure1.12.6
+controls for min-key and some-fn. Full upstream forms, EPL notice, source/JAR
+hashes and def/fn adaptation patches are retained. Key functions execute once;
+min-key uses < for the first pair and <= thereafter, preserving ties/NaN. The
+some-fn controls cover1..5 predicates,0..6 arguments, every hit position,
+short-circuiting, returned truthy values and exact predicate/argument traces.
+`run-prototype-repl.py` executes396/396 matching rows through the actual CLI,
+with each request at an explicit ordinary10M compilation allowance, executable
+hash unchanged. These are local definitions, not a production-core, Macro or
+AOT pass. Six pure map-indexed fixture constructors are materialized because
+that helper is unported; separate fresh JVM execution verifies all396 values
+identical to the untouched primary controls. No function under test changes.
+Earlier prototype failures (missing println, batch analysis fuel, unavailable
+map-indexed and an unsupported -e compilation option) remain terminal receipts
+with zero observed controls, never passes. No production budget is changed.
+
 ## UUID full-suite capture and EDN namespace dependency (2026-11-23)
 
 `python3 results/m12-reader-followup/run-suite.py full-suite-after-uuid-and-offset-repair`

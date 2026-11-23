@@ -1,0 +1,93 @@
+[
+  {
+    "raw": "oracle.clj",
+    "archive": "oracle.clj.gz",
+    "raw_sha256": "0ab7a38af82b3fafce077b501427f52466c0ae2d1e370c3a489e536a2b0b3009",
+    "raw_bytes": 97351,
+    "archive_sha256": "20c777f7b039cb19ea372666db67e7c189f2878b0f2d2777e6249e5d3f8ad2b9"
+  },
+  {
+    "raw": "probe-equivalence.clj",
+    "archive": "probe-equivalence.clj.gz",
+    "raw_sha256": "9c923ca620c4fd9fb1cde554651b969519449c11653fe365f9036e347b5345d9",
+    "raw_bytes": 97343,
+    "archive_sha256": "652f135bb49ce23367d7ef411b7d78c503f7f4ec6ff62c6da916fb9bb179f156"
+  },
+  {
+    "raw": "prototype-adapted-expression/command.json",
+    "archive": "prototype-adapted-expression/command.json.gz",
+    "raw_sha256": "44f90717ee0349787e3bfaa2f65fbe88d84e3679f7268ab2b24846c3fe6adcf9",
+    "raw_bytes": 168934,
+    "archive_sha256": "5c886d23123be3b12aa426990439aa83a84ffefd20b5b81359f12a151156ee90"
+  },
+  {
+    "raw": "prototype-adapted-expression/probe.sus",
+    "archive": "prototype-adapted-expression/probe.sus.gz",
+    "raw_sha256": "e419da8931ec63f42885fde1150ec9c9e5587b45077d25e32addefab65b6f7cd",
+    "raw_bytes": 94218,
+    "archive_sha256": "39ab75e2680d20e1388246f014bb96a8d75670dc3400f37d84d3cde21a117fd8"
+  },
+  {
+    "raw": "prototype-explicit-compilation-diagnostic/command.json",
+    "archive": "prototype-explicit-compilation-diagnostic/command.json.gz",
+    "raw_sha256": "601e572d54909f9be2d7b3930cf79946f7b96470e44816a6d0680515b8731bb3",
+    "raw_bytes": 169068,
+    "archive_sha256": "6a26057bc96a3a43af55bcbad009829282a449d9e485606fe57551a108d3c915"
+  },
+  {
+    "raw": "prototype-explicit-compilation-diagnostic/probe.sus",
+    "archive": "prototype-explicit-compilation-diagnostic/probe.sus.gz",
+    "raw_sha256": "96fa1aeb50098d23f451057b552c0f758dabbe732db54ea9d52a11bc74ba7640",
+    "raw_bytes": 94210,
+    "archive_sha256": "4d3bdc8b648979ef8b9b2ea4b90a446819fc413f9e30e677ea215942c18d648b"
+  },
+  {
+    "raw": "prototype-expression/command.json",
+    "archive": "prototype-expression/command.json.gz",
+    "raw_sha256": "6ce0f2a3fddab26772fd1060b476b91bc336e395cef0f6476b1925cc0a36e528",
+    "raw_bytes": 168728,
+    "archive_sha256": "9140957ece5f8f9f6d2a3c0c58e734185c9c6a373f47de987422e55bff6e08a5"
+  },
+  {
+    "raw": "prototype-expression/probe.sus",
+    "archive": "prototype-expression/probe.sus.gz",
+    "raw_sha256": "5a064761ac699638126c4c4c8ac8ae493dfca4b8b80f7611e1f6da487f0ef636",
+    "raw_bytes": 94014,
+    "archive_sha256": "b44ea36b423422a80ec8766b012e5f61db9c3581efe5ad7a879f8cf484c2bb45"
+  },
+  {
+    "raw": "prototype-materialized-fixtures/command.json",
+    "archive": "prototype-materialized-fixtures/command.json.gz",
+    "raw_sha256": "5e43305bf3d1cd2afa69452fccdfbd31d8ee8e790bf4d62eaf1d9f8f7e79d19b",
+    "raw_bytes": 168926,
+    "archive_sha256": "fa1176faafb2d96f0a43ff5babf0bd88ed739b1672ad6333ae5c9018ac7faaf5"
+  },
+  {
+    "raw": "prototype-materialized-fixtures/probe.sus",
+    "archive": "prototype-materialized-fixtures/probe.sus.gz",
+    "raw_sha256": "96fa1aeb50098d23f451057b552c0f758dabbe732db54ea9d52a11bc74ba7640",
+    "raw_bytes": 94210,
+    "archive_sha256": "4d3bdc8b648979ef8b9b2ea4b90a446819fc413f9e30e677ea215942c18d648b"
+  },
+  {
+    "raw": "prototype-repl/stdin.sus",
+    "archive": "prototype-repl/stdin.sus.gz",
+    "raw_sha256": "c98e46b579ae10a0495636e24c832eb6e18c2d5e485b1e22c882e65ab71948f5",
+    "raw_bytes": 92041,
+    "archive_sha256": "6f627fd9ad590de0c77aa5354daa31c14654f00ebdbfed5e183ff4cd1ca8c60d"
+  },
+  {
+    "raw": "prototype-script/command.json",
+    "archive": "prototype-script/command.json.gz",
+    "raw_sha256": "5251e3ec648543f7f468b46796d0ef9e96fc9faf23d3a8911d9512649cea772e",
+    "raw_bytes": 73218,
+    "archive_sha256": "1cb30d3d42f477928f13a698319352b2cfe9450ca6ac5aaabfe4642d4797c9bb"
+  },
+  {
+    "raw": "prototype-script/probe.sus",
+    "archive": "prototype-script/probe.sus.gz",
+    "raw_sha256": "866d29cc9473ffda1bda754cb7f5a55b3a139b9bf4e6b63aca96f2444cf5fc38",
+    "raw_bytes": 96014,
+    "archive_sha256": "fb273ca7c999f6ff646580d9e558e4cd6b61c5138e95c533b0d5b79d85ef0229"
+  }
+]

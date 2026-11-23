@@ -64,6 +64,14 @@
     "archive_bytes": 120513
   },
   {
+    "raw": "before-inline-source-module-macros/commands.json",
+    "archive": "before-inline-source-module-macros/commands.json.gz",
+    "raw_sha256": "769a62e47a6038ba369990098cf655971202153e47083487ef4a3b228b7c1424",
+    "raw_bytes": 497189,
+    "archive_sha256": "d9274eacfe56ec996db9f3ccc0c1b660d29811b524e06b47031bf38019a708a2",
+    "archive_bytes": 183237
+  },
+  {
     "raw": "ci-45175714660/integration-0.log",
     "archive": "ci-45175714660/integration-0.log.gz",
     "raw_sha256": "cfc16c2320641f35d1d72f94ec447f48e083b3ce8200fe823875afacc3cd6551",
@@ -166,6 +174,30 @@
     "raw_bytes": 497067,
     "archive_sha256": "7f4e0c0b66718295557cd571b80a4263133299ba72a1c6004e2cfa8c12925c04",
     "archive_bytes": 183107
+  },
+  {
+    "raw": "full-suite-after-clojure-edn-namespace/suite-build.log",
+    "archive": "full-suite-after-clojure-edn-namespace/suite-build.log.gz",
+    "raw_sha256": "fb8d980634877f8056e05b823e25a73fdb81eccfa8d07592cac4ca20edce213e",
+    "raw_bytes": 273628,
+    "archive_sha256": "f0202767f7d057f0d932bf049d61c7bd9db33bdc6aca360731b206dd4111aea6",
+    "archive_bytes": 16822
+  },
+  {
+    "raw": "full-suite-after-clojure-edn-namespace/suite-capture/suite-observations.json",
+    "archive": "full-suite-after-clojure-edn-namespace/suite-capture/suite-observations.json.gz",
+    "raw_sha256": "9d924a92330ae1ceb4f8da02685bf75f62ad7f0987a9dc6a798c0488c0027ff9",
+    "raw_bytes": 4965535,
+    "archive_sha256": "70c5230274eee4af0a05d80f50197952f4f2021fd62ac2f089c5e59f0785401e",
+    "archive_bytes": 120519
+  },
+  {
+    "raw": "full-suite-after-clojure-edn-namespace/suite-commands.json",
+    "archive": "full-suite-after-clojure-edn-namespace/suite-commands.json.gz",
+    "raw_sha256": "e2015a6dafed0f86a2357c77dd5defc231bc0507c16c5ece06eccd495f7b278f",
+    "raw_bytes": 497937,
+    "archive_sha256": "eaed6b3432fc38236d0602da39030346ae25d607020ecef40dcf502c1b38943a",
+    "archive_bytes": 183505
   },
   {
     "raw": "full-suite-after-uuid-and-offset-repair/suite-build.log",

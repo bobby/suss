@@ -1,0 +1,1982 @@
+[
+  {
+    "name": "some-fn-1-pred-0-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f )] [value @trace])",
+    "expected": "[nil []]"
+  },
+  {
+    "name": "some-fn-1-pred-1-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[false [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-1-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-2-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[false [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-2-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-2-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-3-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[false [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-1-pred-3-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-3-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-3-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-1-pred-4-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-1-pred-4-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-4-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-4-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-1-pred-4-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-1-pred-5-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [0 3] [0 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-1-pred-6-arg-hit-(0, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 5) [:hit 0 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 5] [[0 0] [0 1] [0 2] [0 3] [0 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-2-pred-0-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f )] [value @trace])",
+    "expected": "[nil []]"
+  },
+  {
+    "name": "some-fn-2-pred-1-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[nil [[0 0] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-1-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-1-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-2-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-2-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-2-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-2-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-2-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-3-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-4-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-5-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4] [0 5] [1 5]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(0, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 5) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4]]]"
+  },
+  {
+    "name": "some-fn-2-pred-6-arg-hit-(1, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 5) [:hit 1 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [0 3] [1 3] [0 4] [1 4] [0 5] [1 5]]]"
+  },
+  {
+    "name": "some-fn-3-pred-0-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f )] [value @trace])",
+    "expected": "[nil []]"
+  },
+  {
+    "name": "some-fn-3-pred-1-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[false [[0 0] [1 0] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-1-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-1-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-1-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [1 0] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[false [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [1 0] [1 1] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-2-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[false [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-3-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-4-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-5-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4] [0 5] [1 5] [2 5]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(0, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 5) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(1, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 5) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4] [0 5] [1 5]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4]]]"
+  },
+  {
+    "name": "some-fn-3-pred-6-arg-hit-(2, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 5) [:hit 2 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [0 3] [1 3] [2 3] [0 4] [1 4] [2 4] [0 5] [1 5] [2 5]]]"
+  },
+  {
+    "name": "some-fn-4-pred-0-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f )] [value @trace])",
+    "expected": "[nil []]"
+  },
+  {
+    "name": "some-fn-4-pred-1-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[nil [[0 0] [1 0] [2 0] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-1-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-1-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-1-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [1 0] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-1-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [1 0] [2 0] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [1 0] [1 1] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-2-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-3-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [1 3] [2 3] [3 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-4-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [1 3] [2 3] [3 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4] [2 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-5-arg-hit-(3, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 4) [:hit 3 x] nil))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(0, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 5) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(1, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 5) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(2, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 5) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 4) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4]]]"
+  },
+  {
+    "name": "some-fn-4-pred-6-arg-hit-(3, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 5) [:hit 3 x] nil))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-0-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f )] [value @trace])",
+    "expected": "[nil []]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[nil [[0 0] [1 0] [2 0] [3 0] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [1 0] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [1 0] [2 0] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-1-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [1 0] [2 0] [3 0] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [1 0] [1 1] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-2-arg-hit-(4, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 1) [:hit 4 x] false))) value (f 0 1)] [value @trace])",
+    "expected": "[[:hit 4 1] [[0 0] [0 1] [1 0] [1 1] [2 0] [2 1] [3 0] [3 1] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(4, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 1) [:hit 4 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 4 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-3-arg-hit-(4, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 2) [:hit 4 x] false))) value (f 0 1 2)] [value @trace])",
+    "expected": "[[:hit 4 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [1 3] [2 3] [3 3] [4 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [1 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [1 3] [2 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [1 3] [2 3] [3 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(4, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 1) [:hit 4 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 4 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(4, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 2) [:hit 4 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 4 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-4-arg-hit-(4, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 3) [:hit 4 x] false))) value (f 0 1 2 3)] [value @trace])",
+    "expected": "[[:hit 4 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [1 3] [2 3] [3 3] [4 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4] [4 3] [4 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(3, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 4) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 3 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(4, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 1) [:hit 4 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 4 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(4, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 2) [:hit 4 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 4 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(4, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 3) [:hit 4 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 4 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4] [4 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-5-arg-hit-(4, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 4) [:hit 4 x] false))) value (f 0 1 2 3 4)] [value @trace])",
+    "expected": "[[:hit 4 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [1 3] [1 4] [2 3] [2 4] [3 3] [3 4] [4 3] [4 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-None",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[nil [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5] [4 3] [4 4] [4 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 0) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 0] [[0 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 1) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 1] [[0 0] [0 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 2) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 2] [[0 0] [0 1] [0 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 3) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 4) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(0, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) (if (= x 5) [:hit 0 x] false)) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 0 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 0) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 0] [[0 0] [0 1] [0 2] [1 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 1) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 1] [[0 0] [0 1] [0 2] [1 0] [1 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 2) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 3) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 4) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(1, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) (if (= x 5) [:hit 1 x] nil)) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 1 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 0) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 1) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 2) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 3) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 4) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(2, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) (if (= x 5) [:hit 2 x] false)) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 2 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 0) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 1) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 2) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 3) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 4) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(3, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) (if (= x 5) [:hit 3 x] nil)) (fn [x] (swap! trace conj [4 x]) false)) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 3 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 0)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 0) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 0] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 1)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 1) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 1] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 2)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 2) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 2] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 3)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 3) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 3] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5] [4 3]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 4)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 4) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 4] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5] [4 3] [4 4]]]"
+  },
+  {
+    "name": "some-fn-5-pred-6-arg-hit-(4, 5)",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj [0 x]) false) (fn [x] (swap! trace conj [1 x]) nil) (fn [x] (swap! trace conj [2 x]) false) (fn [x] (swap! trace conj [3 x]) nil) (fn [x] (swap! trace conj [4 x]) (if (= x 5) [:hit 4 x] false))) value (f 0 1 2 3 4 5)] [value @trace])",
+    "expected": "[[:hit 4 5] [[0 0] [0 1] [0 2] [1 0] [1 1] [1 2] [2 0] [2 1] [2 2] [3 0] [3 1] [3 2] [4 0] [4 1] [4 2] [0 3] [0 4] [0 5] [1 3] [1 4] [1 5] [2 3] [2 4] [2 5] [3 3] [3 4] [3 5] [4 3] [4 4] [4 5]]]"
+  },
+  {
+    "name": "some-fn-truthiness-0",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) 0))] [(f 1 2 3 4) @trace])",
+    "expected": "[0 [1]]"
+  },
+  {
+    "name": "some-fn-truthiness-\"\"",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) \"\"))] [(f 1 2 3 4) @trace])",
+    "expected": "[\"\" [1]]"
+  },
+  {
+    "name": "some-fn-truthiness-[]",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) []))] [(f 1 2 3 4) @trace])",
+    "expected": "[[] [1]]"
+  },
+  {
+    "name": "some-fn-truthiness-{}",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) {}))] [(f 1 2 3 4) @trace])",
+    "expected": "[{} [1]]"
+  },
+  {
+    "name": "some-fn-truthiness-:ok",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) :ok))] [(f 1 2 3 4) @trace])",
+    "expected": "[:ok [1]]"
+  },
+  {
+    "name": "some-fn-truthiness-false",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) false))] [(f 1 2 3 4) @trace])",
+    "expected": "[nil [1 2 3 4]]"
+  },
+  {
+    "name": "some-fn-truthiness-nil",
+    "expression": "(let [trace (atom []) f (some-fn (fn [x] (swap! trace conj x) nil))] [(f 1 2 3 4) @trace])",
+    "expected": "[nil [1 2 3 4]]"
+  },
+  {
+    "name": "some-fn-shape-357",
+    "expression": "(try (some-fn) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "some-fn-shape-358",
+    "expression": "(try ((some-fn \"bad\")) (catch Throwable e :throws))",
+    "expected": "nil"
+  },
+  {
+    "name": "some-fn-shape-359",
+    "expression": "(try ((some-fn \"bad\") nil) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "some-fn-shape-360",
+    "expression": "(try ((some-fn 42) nil) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "some-fn-shape-361",
+    "expression": "(try ((some-fn #{1 2} #{3 4}) 5 3 7) (catch Throwable e :throws))",
+    "expected": "3"
+  },
+  {
+    "name": "some-fn-shape-362",
+    "expression": "(try (fn? (some-fn :x)) (catch Throwable e :throws))",
+    "expected": "true"
+  },
+  {
+    "name": "some-fn-shape-363",
+    "expression": "(try ((some-fn :x) {:x 0}) (catch Throwable e :throws))",
+    "expected": "0"
+  },
+  {
+    "name": "min-key-values-364",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1\" []]"
+  },
+  {
+    "name": "min-key-values-365",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1 2])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1\" [\"1\" \"2\"]]"
+  },
+  {
+    "name": "min-key-values-366",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [2 1 3])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1\" [\"2\" \"1\" \"3\"]]"
+  },
+  {
+    "name": "min-key-values-367",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1N 2N])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1N\" [\"1N\" \"2N\"]]"
+  },
+  {
+    "name": "min-key-values-368",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [2N 1N 3N])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1N\" [\"2N\" \"1N\" \"3N\"]]"
+  },
+  {
+    "name": "min-key-values-369",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1/2 1N 1.0])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1/2\" [\"1/2\" \"1N\" \"1.0\"]]"
+  },
+  {
+    "name": "min-key-values-370",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1.25M 1.2500M 2M])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1.2500M\" [\"1.25M\" \"1.2500M\" \"2M\"]]"
+  },
+  {
+    "name": "min-key-values-371",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [9007199254740993N 9007199254740992N 9007199254740994N])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"9007199254740992N\" [\"9007199254740993N\" \"9007199254740992N\" \"9007199254740994N\"]]"
+  },
+  {
+    "name": "min-key-values-372",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [##NaN 1])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1\" [\"##NaN\" \"1\"]]"
+  },
+  {
+    "name": "min-key-values-373",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1 ##NaN])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##NaN\" [\"1\" \"##NaN\"]]"
+  },
+  {
+    "name": "min-key-values-374",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [##-Inf 1 ##NaN])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##-Inf\" [\"##-Inf\" \"1\" \"##NaN\"]]"
+  },
+  {
+    "name": "min-key-values-375",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [##-Inf ##NaN 1])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##NaN\" [\"##-Inf\" \"##NaN\" \"1\"]]"
+  },
+  {
+    "name": "min-key-values-376",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1 ##-Inf ##NaN])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##-Inf\" [\"1\" \"##-Inf\" \"##NaN\"]]"
+  },
+  {
+    "name": "min-key-values-377",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1 ##NaN ##-Inf])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##NaN\" [\"1\" \"##NaN\" \"##-Inf\"]]"
+  },
+  {
+    "name": "min-key-values-378",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [##NaN ##-Inf 1])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##-Inf\" [\"##NaN\" \"##-Inf\" \"1\"]]"
+  },
+  {
+    "name": "min-key-values-379",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [##NaN 1 ##-Inf])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"##-Inf\" [\"##NaN\" \"1\" \"##-Inf\"]]"
+  },
+  {
+    "name": "min-key-values-380",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [0.0 -0.0])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"-0.0\" [\"0.0\" \"-0.0\"]]"
+  },
+  {
+    "name": "min-key-values-381",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [-0.0 0.0])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"0.0\" [\"-0.0\" \"0.0\"]]"
+  },
+  {
+    "name": "min-key-values-382",
+    "expression": "(let [trace (atom []) value (apply min-key (fn [x] (swap! trace conj x) x) [1.0 1N 1M 1])] [(pr-str value) (mapv pr-str @trace)])",
+    "expected": "[\"1\" [\"1.0\" \"1N\" \"1M\" \"1\"]]"
+  },
+  {
+    "name": "min-key-key-effects-383",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [1]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[0 []]"
+  },
+  {
+    "name": "min-key-key-effects-384",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [1 2]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[0 [0 1]]"
+  },
+  {
+    "name": "min-key-key-effects-385",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [2 1 3]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[1 [0 1 2]]"
+  },
+  {
+    "name": "min-key-key-effects-386",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [1 1 1 1]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[3 [0 1 2 3]]"
+  },
+  {
+    "name": "min-key-key-effects-387",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [2 1 1 3 1]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[4 [0 1 2 3 4]]"
+  },
+  {
+    "name": "min-key-key-effects-388",
+    "expression": "(let [trace (atom []) xs (map-indexed (fn [i k] {:id i :k k}) [3 2 1 0 -1]) value (apply min-key (fn [x] (swap! trace conj (:id x)) (:k x)) xs)] [(:id value) @trace])",
+    "expected": "[4 [0 1 2 3 4]]"
+  },
+  {
+    "name": "min-key-shape-389",
+    "expression": "(try (apply min-key []) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "min-key-shape-390",
+    "expression": "(try (apply min-key [identity]) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "min-key-shape-391",
+    "expression": "(try (apply min-key [nil 1]) (catch Throwable e :throws))",
+    "expected": "1"
+  },
+  {
+    "name": "min-key-shape-392",
+    "expression": "(try (apply min-key [nil 1 2]) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "min-key-shape-393",
+    "expression": "(try (apply min-key [identity \"x\" \"y\"]) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "min-key-shape-394",
+    "expression": "(try (apply min-key [identity [] []]) (catch Throwable e :throws))",
+    "expected": ":throws"
+  },
+  {
+    "name": "min-key-key-exception-order",
+    "expression": "(let [trace (atom []) result (try (min-key (fn [x] (swap! trace conj x) (if (= x 2) (throw (ex-info \"stop\" {})) x)) 1 2 3 4) (catch Throwable e :throws))] [result @trace])",
+    "expected": "[:throws [1 2]]"
+  }
+]
