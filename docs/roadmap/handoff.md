@@ -1,3 +1,32 @@
+## Compiled UUID integration controls (2026-11-23)
+
+`run-source.py after-uuid-duplicate-format-and-macro-registration` passes all85
+reader-crate tests and all8 compiled integration tests, with every recorded input
+unchanged. The172 original UUID expression controls,235 runtime parser/error
+controls and12 signed-boundary/collection/quotation controls execute against fresh
+JVM Clojure1.12.6 results in both Runtime and Macro. Actual CLI AOT compiles and
+executes the184 expression/boundary controls. Canonical128-bit fields survive GC
+in both phases with public equality/hash/printing disabled; malformed/foreign
+storage remains rejected by the independent decoder. Field/prototype sealing and
+private helper guards pass too.
+
+The source reader retains a typed UUID scalar; quotes, source emission, native
+EDN, macro data, raw source keys and analyzer graphs preserve signed halves.
+Original core code selects explicit64-bit operations without changing the32-bit
+operations used by existing ClojureScript ports. The full positive signed-long
+parser range is retained. UUID duplicate diagnostics use canonical `str`, matching
+the JVM. Whole upstream class forms, adaptation patch, predicate source, EPL
+notice and exact block hashes are retained by `provenance.py --check` and
+`docs/compatibility/bootstrap/clojure-uuid.json`.
+
+Earlier compilation, fixture,32-bit truncation, parser-boundary and duplicate
+message failures remain in their separate terminal receipts and logs. None is
+counted as a pass. New focused integration evidence does not establish the
+complete affected EDN body, unchanged full-suite comparison, record/AOT budgets,
+full workspace baseline, final-head CI or independent promotion review. Those
+checks still need execution. Regex, instants and real runtime eval remain separate
+numeric-suite dependencies; complete BigDecimal acceptance is unchanged.
+
 ## Native tooling EDN UUID observations (2026-11-23)
 
 `run-focused.py native-edn-uuid-after-source-projection` passes all four focused

@@ -401,6 +401,7 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                 | Kind::Bool(_)
                 | Kind::Number(_)
                 | Kind::Long(_)
+                | Kind::Uuid(_)
                 | Kind::Exact(_)
                 | Kind::String(_)
                 | Kind::Keyword(_) => data(span, clone_kind_metered(form, &mut *self.meter)?),

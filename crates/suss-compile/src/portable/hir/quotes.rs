@@ -167,6 +167,7 @@ impl Analyzer<'_> {
             Kind::Number(value) => Ok(self.literal_form(form, Literal::Number(*value))),
             Kind::Long(value) => Ok(self.literal_form(form, Literal::Long(*value))),
             // Quoted data can't hold it either until #338.
+            Kind::Uuid(value) => self.uuid_literal(form, *value),
             Kind::Exact(number) => self.exact_literal(form, number),
             Kind::String(value) => Ok(self.literal_form(form, Literal::String(value.clone()))),
             Kind::Vector(items) => {
@@ -519,6 +520,7 @@ fn reader_key_equal_inner(
         (Kind::Number(a), Kind::Number(b)) => a == b,
         (Kind::Long(a), Kind::Long(b)) => a == b,
         (Kind::Exact(a), Kind::Exact(b)) => a == b,
+        (Kind::Uuid(a), Kind::Uuid(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => a == b,
         (Kind::Symbol(a), Kind::Symbol(b)) => a == b,
         (Kind::Keyword(a), Kind::Keyword(b)) => a == b,

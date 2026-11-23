@@ -1,3 +1,9 @@
+UUID values now have [compiled integration evidence](../../results/m12-reader-followup/README.md)
+for canonical128-bit storage, readers, macro/source transport, signed comparison,
+hashing, GC and actual AOT. [Source provenance](bootstrap/clojure-uuid.json) retains
+the complete class adaptation and licenses. Focused results do not establish a
+complete EDN/suite, workspace, CI or issue-acceptance pass.
+
 # ClojureScript compatibility evidence
 
 The compiler-owned [case source macro](bootstrap/clojure-case.json) executes all72

@@ -1,0 +1,57 @@
+Running as unit: run-p4122962-i92189016.scope; invocation ID: feefe51cb28548fc9efc1c66bb39a18e
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 38s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 8 tests
+test actual_aot_executes_uuid_values_readers_and_signed_boundaries ... FAILED
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test retained_uuid_storage_is_nominal_exact_and_independent_after_gc ... FAILED
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary ... ok
+test signed_boundaries_keys_and_quotation_follow_primary ... FAILED
+test uuid_fields_and_private_width_adapters_remain_sealed ... ok
+test uuid_values_and_readers_follow_primary_in_both_phases ... ok
+
+failures:
+
+---- actual_aot_executes_uuid_values_readers_and_signed_boundaries stdout ----
+
+thread 'actual_aot_executes_uuid_values_readers_and_signed_boundaries' (4128333) panicked at crates/suss-cli/tests/clojure_uuid.rs:194:5:
+assertion `left == right` failed: AOT failed primary control: Some(("(try (read-string \"#{#uuid \\\"1-2-3-4-5\\\" #uuid \\\"00000001-0002-0003-0004-000000000005\\\"}\") (catch Throwable e [:error (ex-message e)]))", "[:error \"Duplicate key: 00000001-0002-0003-0004-000000000005\"]"))
+  left: 182
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- retained_uuid_storage_is_nominal_exact_and_independent_after_gc stdout ----
+
+thread 'retained_uuid_storage_is_nominal_exact_and_independent_after_gc' (4129515) panicked at crates/suss-cli/tests/clojure_uuid.rs:93:86:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1..9, message: "Unresolved Runtime name defmacro" })
+
+---- signed_boundaries_keys_and_quotation_follow_primary stdout ----
+
+thread 'signed_boundaries_keys_and_quotation_follow_primary' (4129630) panicked at crates/suss-cli/tests/clojure_uuid.rs:53:5:
+Runtime case9: (try (read-string "#{#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"}") (catch Throwable e [:error (ex-message e)]))
+expected [:error "Duplicate key: 00000001-0002-0003-0004-000000000005"]
+actual Ok("[:error \"Duplicate key: #uuid \\\"00000001-0002-0003-0004-000000000005\\\"\"]")
+Runtime case10: (try (read-string "{#uuid \"1-2-3-4-5\" 1 #uuid \"00000001-0002-0003-0004-000000000005\" 2}") (catch Throwable e [:error (ex-message e)]))
+expected [:error "Duplicate key: 00000001-0002-0003-0004-000000000005"]
+actual Ok("[:error \"Duplicate key: #uuid \\\"00000001-0002-0003-0004-000000000005\\\"\"]")
+Macro case9: (try (read-string "#{#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"}") (catch Throwable e [:error (ex-message e)]))
+expected [:error "Duplicate key: 00000001-0002-0003-0004-000000000005"]
+actual Ok("[:error \"Duplicate key: #uuid \\\"00000001-0002-0003-0004-000000000005\\\"\"]")
+Macro case10: (try (read-string "{#uuid \"1-2-3-4-5\" 1 #uuid \"00000001-0002-0003-0004-000000000005\" 2}") (catch Throwable e [:error (ex-message e)]))
+expected [:error "Duplicate key: 00000001-0002-0003-0004-000000000005"]
+actual Ok("[:error \"Duplicate key: #uuid \\\"00000001-0002-0003-0004-000000000005\\\"\"]")
+
+
+failures:
+    actual_aot_executes_uuid_values_readers_and_signed_boundaries
+    retained_uuid_storage_is_nominal_exact_and_independent_after_gc
+    signed_boundaries_keys_and_quotation_follow_primary
+
+test result: FAILED. 5 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 58.04s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_uuid`

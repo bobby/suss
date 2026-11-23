@@ -1,0 +1,35 @@
+{
+  "upstream_scaffold": {
+    "revision": "c4295f303100bbf5afac449242d30bca1126f1a1",
+    "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+    "source_sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+    "id": "runtime:UUID:11699",
+    "line": 11699,
+    "end_line": 11725,
+    "form_sha256": "504777bbf3558e2f7efb6b0cdaf72b95684698493272518c24ff5fd272b1a605"
+  },
+  "primary": {
+    "version": "org.clojure/clojure 1.12.6",
+    "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "core_source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "uuid_source_sha256": "a5e1c7ca6eca5f441e7d30f46dc4dad71a3b549ff228d7d64644f0c435177dff",
+    "predicate_sha256": "a9eb10d818aa6cc9794c7a91a7d133ce93cc247bcf95bb68dee90e13b1b83c27",
+    "uuid_source_retained": "results/m12-reader-followup/clojure-uuid-primary.clj",
+    "evidence": "results/m12-reader-followup"
+  },
+  "license": {
+    "upstream": "EPL-1.0",
+    "path": "runtime/core-import/epl-v10.html",
+    "notice": "docs/compatibility/uuid/NOTICE"
+  },
+  "adaptation": "Canonical nominal category and two immutable signed Long halves replace CLJS string storage and mutable cached hashing. Original UTF-16 parser, canonical formatter, Java-compatible bit hash and signed comparison follow executed JVM controls, not CLJS identity or caching. The type retains the Object, equality, hashing, comparison and printing protocol structure. No Java implementation or Java runtime dependency is shipped.",
+  "block_sha256": "1db6c3dfd6c79ef5d74dc12b393daacadc1078a72666ead27f696a11e9651dc1",
+  "adapted_class_sha256": "2da88826e441299876cde1a544c5ec0aab720adf55f37170c22d2c7d288bf9bb",
+  "files": {
+    "docs/compatibility/uuid/upstream-UUID.cljs": "522e0088c73bc0c9c063c814894e27e6b980634909f9baf7b9076838b087173f",
+    "docs/compatibility/uuid/UUID.patch": "9b9520a4156410abac2f2d392d25e808d231b225e81c38f62d6046b6fd56161f",
+    "docs/compatibility/uuid/upstream-uuid-predicate.clj": "68d4f952e2d9d18450d335a9ed178ce8e29ac5a9617a9b548bdef0b829b094f9",
+    "docs/compatibility/uuid/NOTICE": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df"
+  },
+  "limits": "UUID integration only. Regex, instants, runtime eval and complete BigDecimal/suite acceptance retain their own evidence and limitations. Public parse-uuid/random-uuid APIs are not assessed by this adaptation."
+}

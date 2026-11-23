@@ -1,0 +1,27 @@
+Running as unit: run-p4110402-i92169920.scope; invocation ID: 767df03fdb6544558ca74a06e22052b1
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+error: unknown start of token: \
+  --> crates/suss-cli/tests/clojure_uuid.rs:97:45
+   |
+97 |                         (read-string "#uuid \"1-2-3-4-5\"")])
+   |                                             ^
+
+error: unexpected closing delimiter: `)`
+  --> crates/suss-cli/tests/clojure_uuid.rs:98:19
+   |
+87 | fn retained_uuid_storage_is_nominal_exact_and_independent_after_gc() {
+   |                                                                      - the nearest open delimiter
+88 |     use portable_decode::{Decoder, Observation};
+89 |     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+   |                                                                                      - the nearest open delimiter
+...
+97 |                         (read-string "#uuid \"1-2-3-4-5\"")])
+   |                                                            -- missing open `(` for this delimiter
+   |                                                            |
+   |                                                            missing open `[` for this delimiter
+98 |           retained)"#, &mut macros).unwrap();
+   |                   ^ unexpected closing delimiter
+
+error: could not compile `suss-cli` (test "clojure_uuid") due to 2 previous errors

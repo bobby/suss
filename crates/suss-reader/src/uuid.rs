@@ -138,6 +138,21 @@ mod tests {
         error_units: Option<Vec<u16>>,
     }
     #[test]
+    fn selected_source_tags_preserve_uuid_bits_and_reject_invalid_data_without_evaluation() {
+        use crate::forms::{self, Kind};
+        let read = |source| forms::resolve_conditionals(forms::read_forms(source).unwrap());
+        let forms = read("#uuid ;comment\n #_skip \"+1-+2-+3-+4-+5\"").unwrap();
+        assert!(matches!(&forms[0].kind, Kind::Uuid(bits) if bits.most == 0x100020003 && bits.least == 0x4000000000005));
+        let projected = crate::edn::source::form_to_value(&forms[0]).unwrap();
+        assert_eq!(crate::edn::source::form_to_value(&crate::edn::source::value_to_form(&projected)).unwrap(), projected);
+        assert_eq!(crate::edn::source::print_form(&forms[0]).unwrap(), "#uuid \"00000001-0002-0003-0004-000000000005\"");
+        for source in ["#uuid 0", "#uuid (throw :oops)", "#uuid \"broken\""] {
+            assert!(read(source).is_err(), "{source}");
+        }
+        let forms = read("#?(:clj #uuid 0 :suss #uuid \"1-2-3-4-5\")").unwrap();
+        assert!(matches!(forms[0].kind, Kind::Uuid(_)));
+    }
+    #[test]
     fn parser_matches_fresh_primary_bits_hashes_canonical_text_and_lossless_errors() {
         let rows: Vec<Primary> = crate::edn::from_str(include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),

@@ -1,0 +1,62 @@
+[
+  {
+    "expression": "[(= #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\") (compare #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\") (compare #uuid \"7fffffff-ffff-ffff-0000-000000000000\" #uuid \"7fffffff-ffff-fffe-0000-000000000000\") (count (sorted-set #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\"))]",
+    "jvm_expression": "[(= #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\") (compare #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\") (compare #uuid \"7fffffff-ffff-ffff-0000-000000000000\" #uuid \"7fffffff-ffff-fffe-0000-000000000000\") (count (sorted-set #uuid \"7fffffff-ffff-fffe-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-0000-000000000000\"))]",
+    "expected": "[false -1 1 2]"
+  },
+  {
+    "expression": "[(= #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\") (compare #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\") (compare #uuid \"80000000-0000-0001-0000-000000000000\" #uuid \"80000000-0000-0000-0000-000000000000\") (count (sorted-set #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\"))]",
+    "jvm_expression": "[(= #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\") (compare #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\") (compare #uuid \"80000000-0000-0001-0000-000000000000\" #uuid \"80000000-0000-0000-0000-000000000000\") (count (sorted-set #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"80000000-0000-0001-0000-000000000000\"))]",
+    "expected": "[false -1 1 2]"
+  },
+  {
+    "expression": "[(= #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\") (compare #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\") (compare #uuid \"00000000-0000-0000-7fff-ffffffffffff\" #uuid \"00000000-0000-0000-7fff-fffffffffffe\") (count (sorted-set #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\"))]",
+    "jvm_expression": "[(= #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\") (compare #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\") (compare #uuid \"00000000-0000-0000-7fff-ffffffffffff\" #uuid \"00000000-0000-0000-7fff-fffffffffffe\") (count (sorted-set #uuid \"00000000-0000-0000-7fff-fffffffffffe\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\"))]",
+    "expected": "[false -1 1 2]"
+  },
+  {
+    "expression": "[(= #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\") (compare #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\") (compare #uuid \"00000000-0000-0000-8000-000000000001\" #uuid \"00000000-0000-0000-8000-000000000000\") (count (sorted-set #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\"))]",
+    "jvm_expression": "[(= #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\") (compare #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\") (compare #uuid \"00000000-0000-0000-8000-000000000001\" #uuid \"00000000-0000-0000-8000-000000000000\") (count (sorted-set #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-8000-000000000001\"))]",
+    "expected": "[false -1 1 2]"
+  },
+  {
+    "expression": "[(= #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\") (compare #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\") (compare #uuid \"00200000-0000-0001-0000-000000000000\" #uuid \"00200000-0000-0000-0000-000000000000\") (count (sorted-set #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\"))]",
+    "jvm_expression": "[(= #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\") (compare #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\") (compare #uuid \"00200000-0000-0001-0000-000000000000\" #uuid \"00200000-0000-0000-0000-000000000000\") (count (sorted-set #uuid \"00200000-0000-0000-0000-000000000000\" #uuid \"00200000-0000-0001-0000-000000000000\"))]",
+    "expected": "[false -1 1 2]"
+  },
+  {
+    "expression": "(let [x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")] [(identical? x x) (identical? x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")) (= x #uuid \"00000001-0002-0003-0004-000000000005\") (hash x)])",
+    "jvm_expression": "(let [x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")] [(identical? x x) (identical? x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")) (= x #uuid \"00000001-0002-0003-0004-000000000005\") (hash x)])",
+    "expected": "[true false true 393223]"
+  },
+  {
+    "expression": "(let [{x #uuid \"1-2-3-4-5\" :as m} {#uuid \"00000001-0002-0003-0004-000000000005\" 42}] [x (count m)])",
+    "jvm_expression": "(let [{x #uuid \"1-2-3-4-5\" :as m} {#uuid \"00000001-0002-0003-0004-000000000005\" 42}] [x (count m)])",
+    "expected": "[42 1]"
+  },
+  {
+    "expression": "(uuid? `#uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(uuid? `#uuid \"1-2-3-4-5\")",
+    "expected": "true"
+  },
+  {
+    "expression": "[(get {#uuid \"1-2-3-4-5\" 9} #uuid \"00000001-0002-0003-0004-000000000005\") (count (set [#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"])) (case #uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\" :hit :miss)]",
+    "jvm_expression": "[(get {#uuid \"1-2-3-4-5\" 9} #uuid \"00000001-0002-0003-0004-000000000005\") (count (set [#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"])) (case #uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\" :hit :miss)]",
+    "expected": "[9 1 :hit]"
+  },
+  {
+    "expression": "(try (read-string \"#{#uuid \\\"1-2-3-4-5\\\" #uuid \\\"00000001-0002-0003-0004-000000000005\\\"}\") (catch Throwable e [:error (ex-message e)]))",
+    "jvm_expression": "(try (read-string \"#{#uuid \\\"1-2-3-4-5\\\" #uuid \\\"00000001-0002-0003-0004-000000000005\\\"}\") (catch Throwable e [:error (ex-message e)]))",
+    "expected": "[:error \"Duplicate key: 00000001-0002-0003-0004-000000000005\"]"
+  },
+  {
+    "expression": "(try (read-string \"{#uuid \\\"1-2-3-4-5\\\" 1 #uuid \\\"00000001-0002-0003-0004-000000000005\\\" 2}\") (catch Throwable e [:error (ex-message e)]))",
+    "jvm_expression": "(try (read-string \"{#uuid \\\"1-2-3-4-5\\\" 1 #uuid \\\"00000001-0002-0003-0004-000000000005\\\" 2}\") (catch Throwable e [:error (ex-message e)]))",
+    "expected": "[:error \"Duplicate key: 00000001-0002-0003-0004-000000000005\"]"
+  },
+  {
+    "expression": "(mapv uuid? [nil true 0 0.0 0N 0M 1/3 :uuid 'uuid \"uuid\" [] {} #{}])",
+    "jvm_expression": "(mapv uuid? [nil true 0 0.0 0N 0M 1/3 :uuid 'uuid \"uuid\" [] {} #{}])",
+    "expected": "[false false false false false false false false false false false false false]"
+  }
+]

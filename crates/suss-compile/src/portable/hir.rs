@@ -1343,6 +1343,21 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
+    /// Construct a nominal UUID through the captured, compiler-owned core cell.
+    fn uuid_literal(&mut self, form: &Form, value: suss_reader::uuid::Uuid) -> Result<Hir, Diagnostic> {
+        let binding = self.environment.resolve(self.phase,
+            &suss_reader::Symbol::namespaced("suss.core", "uuid-from-parts"), form.span.clone())?;
+        let global = self.environment.existing_core_link(binding.global())
+            .ok_or_else(|| fail(form.span.clone(), "UUID literal requires shipped core"))?;
+        let callee = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Global(global)) };
+        let arguments = [value.most, value.least].into_iter().map(|part| Hir {
+            source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+            kind: std::sync::Arc::new(Expression::Literal(Literal::Long(part))),
+        }).collect();
+        Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) })
+    }
     /// Exact literals retain their integer fields and Decimal's signed scale.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
         if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
@@ -1751,6 +1766,7 @@ impl Analyzer<'_> {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::Long(value) => Expression::Literal(Literal::Long(*value)),
+            Kind::Uuid(value) => return self.uuid_literal(form, *value),
             Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
@@ -3480,6 +3496,20 @@ impl Analyzer<'_> {
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));
+            }
+            let long_bits = match symbol.name.as_str() {
+                "long-bit-and" => Some(Bitwise::And),
+                "long-bit-or" => Some(Bitwise::Or),
+                "long-bit-xor" => Some(Bitwise::Xor),
+                "long-bit-shift-left" => Some(Bitwise::Left),
+                "long-unsigned-bit-shift-right" => Some(Bitwise::Unsigned),
+                _ => None,
+            };
+            if let Some(operation) = long_bits {
+                if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                    return Err(fail(form.span.clone(), "Private long bit adapters require compiled core"));
+                }
+                return self.selected_bitwise_form(form, args, operation);
             }
             if matches!(symbol.name.as_str(), "long-add" | "long-less" | "chunk-index-add") {
                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {

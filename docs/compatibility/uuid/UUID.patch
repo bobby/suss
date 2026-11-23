@@ -1,0 +1,43 @@
+--- cljs.core/UUID
++++ suss.core/UUID
+@@ -1,27 +1,19 @@
+-(deftype UUID [uuid ^:mutable __hash]
+-  IUUID
+-
++(deftype UUID [most least]
+   Object
+-  (toString [_] uuid)
+-  (equiv [this other]
+-    (-equiv this other))
+-
++  (toString [this] (uuid-text most least))
+   IEquiv
+-  (-equiv [_ other]
+-    (and (implements? IUUID other) (identical? uuid (.-uuid other))))
+-
+-  IPrintWithWriter
+-  (-pr-writer [_ writer _]
+-    (-write writer (str_ "#uuid \"" uuid "\"")))
+-
++  (-equiv [this other]
++    (if (instance? UUID other)
++      (if (== most (.-most other)) (== least (.-least other)) false)
++      false))
+   IHash
+-  (-hash [this]
+-    (when (nil? __hash)
+-      (set! __hash (hash uuid)))
+-    __hash)
+-
++  (-hash [this] (uuid-hash-code most least))
+   IComparable
+   (-compare [this other]
+     (if (instance? UUID other)
+-      (garray/defaultCompare uuid (.-uuid other))
+-      (throw (js/Error. (str_ "Cannot compare " this " to " other))))))
++      (let [a (.-most other) b (.-least other)]
++        (cond (< most a) -1 (> most a) 1 (< least b) -1 (> least b) 1 :else 0))
++      (throw (suss.bootstrap/error "Cannot compare UUID to a value of another type"))))
++  IPrintWithWriter
++  (-pr-writer [this writer opts]
++    (-write writer (str "#uuid \"" (uuid-text most least) "\""))))

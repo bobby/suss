@@ -48,7 +48,8 @@ pub(crate) fn resolve_auto_keywords(
             | Kind::Bool(_)
             | Kind::Number(_)
             | Kind::Long(_)
-            | Kind::Exact(_)
+            | Kind::Uuid(_)
+                | Kind::Exact(_)
             | Kind::String(_)
             | Kind::Symbol(_)
             | Kind::Keyword(_) => {}

@@ -540,7 +540,10 @@ fn failure(span: Range<usize>, message: impl Into<String>) -> Error {
     }
 }
 fn duplicate(span: Range<usize>, key: &Value) -> Error {
-    let printed = print(key).unwrap_or_else(|_| format!("{key:?}"));
+    let printed = match key {
+        Value::Uuid(value) => value.to_string(),
+        _ => print(key).unwrap_or_else(|_| format!("{key:?}")),
+    };
     failure(span, format!("Duplicate key: {printed}"))
 }
 

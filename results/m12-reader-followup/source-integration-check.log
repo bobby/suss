@@ -1,0 +1,38 @@
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+error[E0433]: cannot find type `Arc` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:1353:19
+     |
+1353 |             kind: Arc::new(Expression::Global(global)) };
+     |                   ^^^ use of undeclared type `Arc`
+     |
+help: consider importing this struct
+     |
+   5 + use std::sync::Arc;
+     |
+
+error[E0433]: cannot find type `Arc` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:1356:19
+     |
+1356 |             kind: Arc::new(Expression::Literal(Literal::Long(part))),
+     |                   ^^^ use of undeclared type `Arc`
+     |
+help: consider importing this struct
+     |
+   5 + use std::sync::Arc;
+     |
+
+error[E0433]: cannot find type `Arc` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:1359:19
+     |
+1359 |             kind: Arc::new(Expression::Call { callee: Box::new(callee), arguments }) })
+     |                   ^^^ use of undeclared type `Arc`
+     |
+help: consider importing this struct
+     |
+   5 + use std::sync::Arc;
+     |
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `suss-compile-generator` (lib) due to 3 previous errors

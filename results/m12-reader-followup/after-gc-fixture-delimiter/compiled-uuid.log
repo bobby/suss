@@ -1,0 +1,35 @@
+Running as unit: run-p4117507-i92167738.scope; invocation ID: 0b37fb1f76e1478391856d6d92ae31e1
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 42.36s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 5 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test retained_uuid_storage_is_nominal_exact_and_independent_after_gc ... FAILED
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary ... FAILED
+test uuid_values_and_readers_follow_primary_in_both_phases ... ok
+
+failures:
+
+---- retained_uuid_storage_is_nominal_exact_and_independent_after_gc stdout ----
+
+thread 'retained_uuid_storage_is_nominal_exact_and_independent_after_gc' (4119484) panicked at crates/suss-cli/tests/clojure_uuid.rs:98:38:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..23, message: "Unresolved Runtime name defmacro" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary stdout ----
+
+thread 'all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary' (4119094) panicked at crates/suss-cli/tests/clojure_uuid.rs:79:13:
+assertion `left == right` failed: parser case26: (try (let [u (suss.edn/read-string "#uuid \"\\u0037\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u0066\\u002d\\u0030\\u002d\\u0030\\u002d\\u0030\\u002d\\u0030\"")] [(str u) (hash u)]) (catch :default e [:error (ex-message e)]))
+  left: [91, 58, 101, 114, 114, 111, 114, 32, 34, 69, 114, 114, 111, 114, 32, 97, 116, 32, 105, 110, 100, 101, 120, 32, 49, 53, 32, 105, 110, 58, 32, 92, 34, 55, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 92, 34, 34, 93]
+ right: [91, 34, 102, 102, 102, 102, 102, 102, 102, 102, 45, 48, 48, 48, 48, 45, 48, 48, 48, 48, 45, 48, 48, 48, 48, 45, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 34, 32, 45, 49, 93]
+
+
+failures:
+    all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary
+    retained_uuid_storage_is_nominal_exact_and_independent_after_gc
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 41.28s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_uuid`

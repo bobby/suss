@@ -10150,6 +10150,107 @@ reduces them without incurring seq initialization"
 (def ^:dynamic *math-context* nil)
 (suss.bootstrap/decimal-context-getter-install (fn [] *math-context*))
 
+;; BEGIN UUID values and tagged-reader parser
+;; Copyright (c) Rich Hickey. All rights reserved.
+;; The use and distribution terms for this software are covered by the
+;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;; which can be found in runtime/core-import/epl-v10.html.
+;; By using this software in any fashion, you agree to be bound by its terms.
+;; Do not remove this notice or any other from this software.
+;; Protocol scaffolding follows pinned cljs.core/UUID. Storage, parsing,
+;; hashing and comparison are original adaptations to actual JVM Clojure UUID
+;; behavior; no mutable hash cache or Java dependency is retained.
+(def ^:private uuid-text
+  (fn [most least]
+    (letfn [(part [word width]
+              (loop [word word left width result ""]
+                (if (zero? left) result
+                  (let [digit (suss.bootstrap/long-bit-and word 15)]
+                    (recur (suss.bootstrap/long-unsigned-bit-shift-right word 4) (dec left)
+                      (suss.bootstrap/concat-string
+                        (suss.bootstrap/string-slice "0123456789abcdef" digit (inc digit)) result))))))]
+      (str (part (suss.bootstrap/long-unsigned-bit-shift-right most 32) 8) "-"
+           (part (suss.bootstrap/long-unsigned-bit-shift-right most 16) 4) "-" (part most 4) "-"
+           (part (suss.bootstrap/long-unsigned-bit-shift-right least 48) 4) "-" (part least 12)))))
+(def ^:private uuid-hash-code
+  (fn [most least]
+    (let [bits (suss.bootstrap/long-bit-xor most least)]
+      (suss.bootstrap/int-value (suss.bootstrap/long-bit-xor bits (suss.bootstrap/long-unsigned-bit-shift-right bits 32))))))
+(deftype UUID [most least]
+  Object
+  (toString [this] (uuid-text most least))
+  IEquiv
+  (-equiv [this other]
+    (if (instance? UUID other)
+      (if (== most (.-most other)) (== least (.-least other)) false)
+      false))
+  IHash
+  (-hash [this] (uuid-hash-code most least))
+  IComparable
+  (-compare [this other]
+    (if (instance? UUID other)
+      (let [a (.-most other) b (.-least other)]
+        (cond (< most a) -1 (> most a) 1 (< least b) -1 (> least b) 1 :else 0))
+      (throw (suss.bootstrap/error "Cannot compare UUID to a value of another type"))))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (-write writer (str "#uuid \"" (uuid-text most least) "\""))))
+(def ^:private uuid-from-parts (fn [most least] (UUID. most least)))
+(def ^{:doc "Return true if x is a UUID." :added "1.9"} uuid?
+  (fn [x] (instance? UUID x)))
+(def ^:private uuid-read
+  (let [starts [48 1632 1776 1984 2406 2534 2662 2790 2918 3046 3174 3302 3430
+                3558 3664 3792 3872 4160 4240 6112 6160 6470 6608 6784 6800 6992
+                7088 7232 7248 42528 43216 43264 43472 43504 43600 44016 65296]]
+    (letfn [(digit [u]
+              (cond
+                (and (<= 48 u) (<= u 57)) (- u 48)
+                (and (<= 65 u) (<= u 70)) (- u 55)
+                (and (<= 97 u) (<= u 102)) (- u 87)
+                (and (<= 65313 u) (<= u 65318)) (- u 65303)
+                (and (<= 65345 u) (<= u 65350)) (- u 65335)
+                :else (loop [i 0]
+                        (if (< i 37)
+                          (let [n (- u (nth starts i))]
+                            (if (and (<= 0 n) (< n 10)) n (recur (inc i))))
+                          -1))))
+            (bad-at [s from to index]
+              (throw (suss.bootstrap/error
+                (str "Error at index " index " in: \""
+                  (suss.bootstrap/string-slice s from to) "\""))))
+            (group [s from to]
+              (if (== from to) (throw (suss.bootstrap/error "")) nil)
+              (let [begin (if (== (.charCodeAt s from) 43) (inc from) from)]
+                (if (== begin to) (bad-at s from to (- begin from)) nil)
+                (loop [i begin value 0]
+                  (if (< i to)
+                    (let [d (digit (.charCodeAt s i))]
+                      (if (or (< d 0) (> value 576460752303423487))
+                        (bad-at s from to (- i from))
+                        (recur (inc i) (suss.bootstrap/long-bit-or (suss.bootstrap/long-bit-shift-left value 4) d))))
+                    value))))]
+      (fn [s]
+        (if (suss.bootstrap/string? s) nil
+          (throw (suss.bootstrap/error "#uuid data reader expected string")))
+        (let [n (.-length s)]
+          (if (> n 36) (throw (suss.bootstrap/error "UUID string too large")) nil)
+          (let [dashes (loop [i 0 result []]
+                         (if (< i n)
+                           (recur (inc i) (if (== (.charCodeAt s i) 45) (conj result i) result))
+                           result))]
+            (if (== (count dashes) 4) nil
+              (throw (suss.bootstrap/error (str "Invalid UUID string: " s))))
+            (let [a (nth dashes 0) b (nth dashes 1) c (nth dashes 2) d (nth dashes 3)
+                  p (group s 0 a) q (group s (inc a) b) r (group s (inc b) c)
+                  t (group s (inc c) d) u (group s (inc d) n)
+                  most (suss.bootstrap/long-bit-or (suss.bootstrap/long-bit-shift-left (suss.bootstrap/long-bit-and p 4294967295) 32)
+                               (suss.bootstrap/long-bit-shift-left (suss.bootstrap/long-bit-and q 65535) 16) (suss.bootstrap/long-bit-and r 65535))
+                  least (suss.bootstrap/long-bit-or (suss.bootstrap/long-bit-shift-left (suss.bootstrap/long-bit-and t 65535) 48)
+                                (suss.bootstrap/long-bit-and u 281474976710655))]
+              (UUID. most least))))))))
+;; END UUID values and tagged-reader parser
+
+
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
@@ -11045,7 +11146,7 @@ reduces them without incurring seq initialization"
   (fn [st start close]
     (reader-fail st start (str "Unclosed collection; expected " (suss.bootstrap/string-from-unit close)) true)))
 (def ^:private reader-duplicate
-  (fn [st at key] (reader-fail st at (str "Duplicate key: " (pr-str key)) false)))
+  (fn [st at key] (reader-fail st at (str "Duplicate key: " (if (instance? UUID key) (str key) (pr-str key))) false)))
 (def ^:private reader-add-unique
   (fn [st items value at]
     (let [size (count items) items (conj! items value)]
@@ -11169,6 +11270,12 @@ reduces them without incurring seq initialization"
       (reader-fail st start "Queue literal expects a vector for its elements." false))))
 (def ^:private reader-queue-tag?
   (fn [tag] (if (nil? (.-ns tag)) (= (.-name tag) "queue") false)))
+(def ^:private reader-uuid-tag?
+  (fn [tag] (if (nil? (.-ns tag)) (= (.-name tag) "uuid") false)))
+(def ^:private reader-uuid
+  (fn [st start value]
+    (try (uuid-read value)
+      (catch :default e (reader-fail st start (ex-message e) false)))))
 (def ^:private reader-biginteger-tag?
   (fn [tag] (if (= (.-ns tag) "suss") (= (.-name tag) "biginteger") false)))
 ;; Original typed source/data carrier. Ordinary BigInteger printing stays plain;
@@ -11203,6 +11310,7 @@ reduces them without incurring seq initialization"
               (some? reader) (reader value)
               (reader-queue-tag? tag) (reader-queue st start value)
               (reader-biginteger-tag? tag) (reader-biginteger st start value)
+              (reader-uuid-tag? tag) (reader-uuid st start value)
               (some? (aget st 7)) ((aget st 7) tag value)
               :else (reader-fail st start (str "No reader function for tag " tag) false)))
           (if (if (< 0 (aget st 10)) true (keyword-identical? (aget st 4) :preserve))
@@ -11214,6 +11322,7 @@ reduces them without incurring seq initialization"
                   (some? reader) (reader value)
                   (reader-queue-tag? tag) (reader-queue st start value)
                   (reader-biginteger-tag? tag) (reader-biginteger st start value)
+              (reader-uuid-tag? tag) (reader-uuid st start value)
                   (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
                   :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
 
@@ -12455,4 +12564,5 @@ reduces them without incurring seq initialization"
           (if xs
             (recur (next xs) (cljs.core/int (+ (* h 31) (case-hash-code (first xs)))))
             h))
+      (instance? UUID x) (uuid-hash-code (.-most x) (.-least x))
       :else (cljs.core/int (suss.bootstrap/identity-uid x)))))
