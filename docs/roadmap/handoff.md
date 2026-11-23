@@ -200,7 +200,6 @@ No original test is filtered or newly ignored. Remaining Decimal suite gaps
 retain their explicit failed/unexecuted observations; this command does not
 establish complete BigDecimal acceptance.
 
-
 ## Narrow scalar suite profile probes (2026-11-23)
 
 `results/m12-suite-platform/run-focused.py before-platform-branches

@@ -1,0 +1,10 @@
+{
+  "before": "666022bc",
+  "rebased_commit": "19b350ee4862f51d1fbdbe29e3fd04d100cec159",
+  "new_parent": "7d3392056f8c8b75353c7421491c46288b5838b2",
+  "checked_non_results_inputs": 3877,
+  "changed_paths": [
+    "docs/roadmap/handoff.md"
+  ],
+  "qualification": "Only the predecessor handoff evidence was added; every compiler/runtime/test/fixture input is byte-identical. Existing command receipts retain their original commits and full input hashes."
+}
