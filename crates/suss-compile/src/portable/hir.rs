@@ -317,6 +317,8 @@ pub enum Bitwise {
     ParseLong,
     /// Private Clojure `hasheq` of a number, for core's `hash` (#336).
     HashNumber,
+    /// Private Java hashCode for case dispatch; deliberately distinct from hasheq.
+    CaseNumberHash,
     /// Private Clojure `=` of scalars: numbers equal only within a category
     /// (#336).
     Equiv,
@@ -466,6 +468,7 @@ impl Bitwise {
             Self::RangeCount => "number-range-count",
             Self::ParseLong => "number-parse-long",
             Self::HashNumber => "number-hash",
+            Self::CaseNumberHash => "case-number-hash",
             Self::Equiv => "number-equiv",
             Self::PackedNew => "packed-array-new",
             Self::PackedStore => "packed-array-store",
@@ -500,6 +503,7 @@ impl Bitwise {
             | Self::ToLong
             | Self::IntValue
             | Self::HashNumber
+            | Self::CaseNumberHash
             | Self::PackedTest
             | Self::ObjectsTest
             | Self::VectorType
@@ -3648,6 +3652,7 @@ impl Analyzer<'_> {
                 "range-count" => Some(Bitwise::RangeCount),
                 "parse-long" => Some(Bitwise::ParseLong),
                 "hash-number" => Some(Bitwise::HashNumber),
+                "case-number-hash" => Some(Bitwise::CaseNumberHash),
                 "equiv" => Some(Bitwise::Equiv),
                 "cast" => Some(Bitwise::Cast),
                 "int-value" => Some(Bitwise::IntValue),
@@ -3665,6 +3670,25 @@ impl Analyzer<'_> {
             if let Some(operation) = operation {
                 return self.bitwise_form(form, args, operation);
             }
+        }
+        if symbol.namespace.as_deref() == Some("suss.bootstrap")
+            && matches!(symbol.name.as_str(), "case-hash-code" | "case-equiv")
+        {
+            let (name, arity) = if symbol.name == "case-equiv" { ("=", 2) } else { ("case-hash-code", 1) };
+            if args.len() != arity {
+                return Err(fail(form.span.clone(), "Wrong private case helper arity"));
+            }
+            // A compiler-authored call to shipped core's fixed definition,
+            // never a user-resolvable cell or the live public equality var.
+            let binding = self.environment.resolve(self.phase,
+                &suss_reader::Symbol::namespaced("suss.core", name), form.span.clone())?;
+            let global = self.environment.existing_core_link(binding.global())
+                .ok_or_else(|| fail(form.span.clone(), "Private case helper requires shipped core"))?;
+            let callee = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Global(global)) };
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Value, kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) });
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "nil?" {
             if args.len() != 1 {

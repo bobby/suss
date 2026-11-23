@@ -1,0 +1,74 @@
+[
+  {
+    "raw": "after-composite-case-hash.json",
+    "archive": "after-composite-case-hash.json.gz",
+    "raw_sha256": "04a3f9d63b3aeb420c6024a36428d858f633452023676cbc9ceddc4e549bb1db",
+    "raw_bytes": 496085,
+    "archive_sha256": "9bc59634906d32044396933e080ae9c90de853368f25e25681a6a4ec03ae1995",
+    "archive_bytes": 182813
+  },
+  {
+    "raw": "after-numeric-case-hash.json",
+    "archive": "after-numeric-case-hash.json.gz",
+    "raw_sha256": "c6f480286ea53787738869707502862147e07c6f7f9fa12631ae53e9df74ce0e",
+    "raw_bytes": 495996,
+    "archive_sha256": "4450cf200d7db1f832627aa7db15d295753771da07d8da8854b3ba40ed808758",
+    "archive_bytes": 182779
+  },
+  {
+    "raw": "before-case-dispatch.json",
+    "archive": "before-case-dispatch.json.gz",
+    "raw_sha256": "acc21b82280b06a24ba47682ccb2323baad5610e00262366df5c4de1182a6c95",
+    "raw_bytes": 495696,
+    "archive_sha256": "9c4842a7ba263de98def65ddc84699fda0f4435300bbff1fb52fe4d2de2f3647",
+    "archive_bytes": 182639
+  },
+  {
+    "raw": "before-numeric-case-hash.json",
+    "archive": "before-numeric-case-hash.json.gz",
+    "raw_sha256": "c38fc2ffdf3b434cd1b051404beecddb0d24857c4a86557f9f7898fcce5edd0e",
+    "raw_bytes": 495872,
+    "archive_sha256": "18f4032bd52ca489100920b1c1edebe2e97646ee138fd3cf9cbabafae59c47a5",
+    "archive_bytes": 182716
+  },
+  {
+    "raw": "bootstrap-gates/commands.json",
+    "archive": "bootstrap-gates/commands.json.gz",
+    "raw_sha256": "a6e7adebf1abf443950a6e22af3918da6f44aeff33e157cca926b570f3ce60af",
+    "raw_bytes": 496103,
+    "archive_sha256": "f42ddacfb284a7677e31f0916d35b81a28202a3ac13c8c49bc100f77395580f1",
+    "archive_bytes": 182831
+  },
+  {
+    "raw": "hash-gates/commands.json",
+    "archive": "hash-gates/commands.json.gz",
+    "raw_sha256": "c18e1820f77c62fb16c95222e42fed6cca0fc0cb0085d3290d5dd2e9fba2f7b1",
+    "raw_bytes": 496298,
+    "archive_sha256": "de0b8d02478e4c9599f92373af7d988828a07875a62ffd889bc8f75ba6823c83",
+    "archive_bytes": 182916
+  },
+  {
+    "raw": "hash-gates-after-test-type-fix/commands.json",
+    "archive": "hash-gates-after-test-type-fix/commands.json.gz",
+    "raw_sha256": "ce876bef9051561b67facc8a2935938f3f9fdb5ea24c59d71c6d9a1ef81de643",
+    "raw_bytes": 497589,
+    "archive_sha256": "5d4ab5f9ba0342555c63ae578180f66ba1efe0492971874218a394cc30d1dabc",
+    "archive_bytes": 183118
+  },
+  {
+    "raw": "java-math-BigDecimal-bytecode.log",
+    "archive": "java-math-BigDecimal-bytecode.log.gz",
+    "raw_sha256": "a34ff9af2c9f78461cb3d0025308a2ea6cc48e4fcbf408bff8378572cb550823",
+    "raw_bytes": 377269,
+    "archive_sha256": "817f6c3b6b862f893dd948e8426449a6d97025986bfc81e175b8db0c7a53d42a",
+    "archive_bytes": 49694
+  },
+  {
+    "raw": "java-math-BigInteger-bytecode.log",
+    "archive": "java-math-BigInteger-bytecode.log.gz",
+    "raw_sha256": "b11e7888fb33fbcd6cf904e9430b487e3c3d9246e0e63e53d7c55db1cefd829c",
+    "raw_bytes": 335319,
+    "archive_sha256": "2d02020a7b6f527e74cbfdd5fea23d94ea6ff5492cdebcb22035b3358ce027e6",
+    "archive_bytes": 47945
+  }
+]

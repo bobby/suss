@@ -1,0 +1,22 @@
+Running as unit: run-p3622914-i91680659.scope; invocation ID: 56a103190c854061b88fcefd9461ba94
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+error[E0308]: mismatched types
+   --> crates/suss-compile/tests/portable_value_decoder.rs:959:67
+    |
+959 |                 Observation::Vector(vec![Observation::Long(hash), expected.clone(), Observation::Bool(true)]),
+    |                                                                   ^^^^^^^^^^^^^^^^ expected `Observation`, found `&Observation`
+    |
+note: `Observation` does not implement `Clone`, so `&Observation` was cloned instead
+   --> crates/suss-compile/tests/portable_value_decoder.rs:959:67
+    |
+959 |                 Observation::Vector(vec![Observation::Long(hash), expected.clone(), Observation::Bool(true)]),
+    |                                                                   ^^^^^^^^
+help: consider annotating `Observation` with `#[derive(Clone)]`
+   --> crates/suss-compile/tests/support/portable_decode.rs:16:1
+    |
+ 16 + #[derive(Clone)]
+ 17 | pub enum Observation {
+    |
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `suss-compile` (test "portable_value_decoder") due to 1 previous error

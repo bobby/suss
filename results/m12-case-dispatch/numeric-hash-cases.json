@@ -1,0 +1,458 @@
+[
+  [
+    "(suss.bootstrap/case-number-hash -9223372036854775808)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -9223372036854775808N)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -9223372036854775808))",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -4294967297)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -4294967297N)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -4294967297))",
+    "-32"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -4294967296)",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -4294967296N)",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -4294967296))",
+    "-31"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -2147483649)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -2147483649N)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -2147483649))",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -2147483648)",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -2147483648N)",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -2147483648))",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1073741825)",
+    "1073741824"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1073741825N)",
+    "1073741824"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -1073741825))",
+    "-1073741825"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1N)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -1))",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0N)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 0))",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1N)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 1))",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1073741823)",
+    "1073741823"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1073741823N)",
+    "1073741823"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 1073741823))",
+    "1073741823"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1073741824)",
+    "1073741824"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1073741824N)",
+    "1073741824"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 1073741824))",
+    "1073741824"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 2147483647)",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 2147483647N)",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 2147483647))",
+    "2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 2147483648)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 2147483648N)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 2147483648))",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 4294967295)",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 4294967295N)",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 4294967295))",
+    "-1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 4294967296)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 4294967296N)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 4294967296))",
+    "31"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 9223372036854775807)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 9223372036854775807N)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 9223372036854775807))",
+    "2147483616"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -12554203470773361527671578846415332832241604377075488129025N)",
+    "-1775009285"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -12554203470773361527671578846415332832241604377075488129025N))",
+    "-1775009285"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -79228162514264337593543950335N)",
+    "993"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -79228162514264337593543950335N))",
+    "993"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -18446744073709551616N)",
+    "-961"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger -18446744073709551616N))",
+    "-961"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 9223372036854775808N)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 9223372036854775808N))",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 18446744073709551616N)",
+    "961"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 18446744073709551616N))",
+    "961"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 18446744078004518913N)",
+    "993"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 18446744078004518913N))",
+    "993"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 170141183460469231731687303715884105727N)",
+    "2147452864"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 170141183460469231731687303715884105727N))",
+    "2147452864"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 12554203470773361527671578846415332832241604377075488129025N)",
+    "1775009285"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (biginteger 12554203470773361527671578846415332832241604377075488129025N))",
+    "1775009285"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0.0)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -0.0)",
+    "-2147483648"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1.0)",
+    "1072693248"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1.0)",
+    "-1074790400"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0.5)",
+    "1071644672"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -0.5)",
+    "-1075838976"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1.25)",
+    "1072955392"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 3.141592653589793)",
+    "340593891"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 4.9E-324)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -4.9E-324)",
+    "-2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1.7976931348623157E308)",
+    "-2146435072"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash ##NaN)",
+    "2146959360"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash (/ 0.0 0.0))",
+    "2146959360"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash ##Inf)",
+    "2146435072"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash ##-Inf)",
+    "-1048576"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0M)",
+    "0"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0.0M)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0.00M)",
+    "2"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0E+7M)",
+    "-7"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0E-8M)",
+    "8"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1M)",
+    "31"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1.0M)",
+    "311"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1.00M)",
+    "3102"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1E+7M)",
+    "24"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1E-8M)",
+    "39"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1M)",
+    "-31"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1.0M)",
+    "-309"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1.00M)",
+    "-3098"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1E+7M)",
+    "-38"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1E-8M)",
+    "-23"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890M)",
+    "-748148569"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890.0M)",
+    "1113277928"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890.00M)",
+    "-1747326265"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890E+7M)",
+    "-748148576"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890E-8M)",
+    "-748148561"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890M)",
+    "748148569"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890.0M)",
+    "-1113277926"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890.00M)",
+    "1747326269"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890E+7M)",
+    "748148562"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890E-8M)",
+    "748148577"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 0E+2147483647M)",
+    "-2147483647"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1E+2147483647M)",
+    "-2147483616"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1E-2147483647M)",
+    "-2147483618"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1E-2147483647M)",
+    "2147483616"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1/2)",
+    "3"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -1/2)",
+    "-3"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 2/3)",
+    "1"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 123456789012345678901234567890/7)",
+    "273642573"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash -123456789012345678901234567890/7)",
+    "-273642573"
+  ],
+  [
+    "(suss.bootstrap/case-number-hash 1/123456789012345678901234567891)",
+    "1915528827"
+  ]
+]

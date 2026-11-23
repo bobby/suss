@@ -1,0 +1,105 @@
+{
+  "jar": "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "license": "EPL-1.0",
+  "commands": [
+    {
+      "class": "clojure.lang.Compiler$CaseExpr",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.Compiler$CaseExpr"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/Compiler-CaseExpr-bytecode.log",
+      "sha256": "46dedee3ea761ffe38054fe33d9299ffda58004da011cae2f424c95f77a073f8"
+    },
+    {
+      "class": "clojure.lang.Symbol",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.Symbol"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/Symbol-bytecode.log",
+      "sha256": "f211e2ee0f5813980bcd5e881c0ae8acd6eb5eb5745c7840a34b8f490440c889"
+    },
+    {
+      "class": "clojure.lang.Keyword",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.Keyword"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/Keyword-bytecode.log",
+      "sha256": "212f18afa6d9d26cb398f40ffa97188b0feeaaeafe1f0fb616aeaa7441d44aec"
+    },
+    {
+      "class": "clojure.lang.BigInt",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.BigInt"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/BigInt-bytecode.log",
+      "sha256": "fce708fe08efcbe44a2a60b2afea286a9f37b30a1e774d6dc628802a8b61fa45"
+    },
+    {
+      "class": "clojure.lang.APersistentVector",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.APersistentVector"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/APersistentVector-bytecode.log",
+      "sha256": "5c5a9431dc03f2df7e62b4412ed1121b444e87775978bb3a8bfb5d57c4d4ed84"
+    },
+    {
+      "class": "clojure.lang.APersistentMap",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.APersistentMap"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/APersistentMap-bytecode.log",
+      "sha256": "28b3f63644b22502f896f7cc73db85f4583518529a191ebb0e5c7095f1e1480d"
+    },
+    {
+      "class": "clojure.lang.APersistentSet",
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.APersistentSet"
+      ],
+      "exit_code": 0,
+      "path": "results/m12-case-dispatch/APersistentSet-bytecode.log",
+      "sha256": "3ea8056e0d4c922746de4846f60bac232f6a9a336130e18f316d2209c3c7c59f"
+    }
+  ]
+}

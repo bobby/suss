@@ -42,6 +42,7 @@ mod numeric;
 mod numeric_cast_errors;
 mod packed_arrays;
 mod numeric_hash;
+mod case_hash;
 mod numeric_operands;
 mod object_descriptors;
 mod object_methods;
@@ -1549,6 +1550,7 @@ fn build_module() -> Vec<u8> {
     longs::append(&mut b);
     longs::string_hash(&mut b);
     longs::functions(&mut b);
+    case_hash::intrinsics(&mut b);
     longs::boxed_subtractions(&mut b);
     longs::parse(&mut b);
     b.function(

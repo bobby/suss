@@ -1,0 +1,41 @@
+{
+  "upstream": "org.clojure/clojure 1.12.6",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "source": "clojure/core.clj",
+  "source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "forms": [
+    {
+      "name": "shift-mask",
+      "sha256": "502d34ba8c7ccda903da1fe88cc8bff3f6885ee71c2a73d4b32d52bd7ab3cda2"
+    },
+    {
+      "name": "case-map",
+      "sha256": "0e0ad146efc15aba38190e9355c30813df2c77ea5a8d0ad00b1475d177f67fd0"
+    },
+    {
+      "name": "prep-ints",
+      "sha256": "5fd777a189451bce63b41f97984289cdd3eea2c6a4db76f308b9c8d4b7c22f61"
+    },
+    {
+      "name": "merge-hash-collisions",
+      "sha256": "63e0df088743fb1a9a274de499e6395e7dc01463bff8f47e0ebe395f99c14bfd"
+    },
+    {
+      "name": "prep-hashes",
+      "sha256": "5aa0377f8e557ab61d810d9980090105954febf73337c40ac49ff1a18c02fcfe"
+    },
+    {
+      "name": "case",
+      "sha256": "d75fdeb3f13c8b8ec12468c12fec2b3febdb913f8ef35fd763fdb1a7ea21254f"
+    }
+  ],
+  "upstream_license": "EPL-1.0",
+  "license_path": "runtime/core-import/LICENSE",
+  "implementation": "Original Suss hashCode adapters, written from fresh primary controls and pinned method bytecode; existing signed-magnitude and Ratio helpers are reused without changes. No upstream Java implementation is shipped.",
+  "files": {
+    "crates/suss-compile/src/runtime_abi/case_hash.rs": "cc9c3fa58cc973a1d113b6171c66ce7b7b7f0948376ad70fbadb5d04f394ca4a",
+    "docs/compatibility/bootstrap/exact-integers.sus": "b3b8db54ef28a2dfdb90f08727931382936c135f25f7fd47d888e37393fd561e"
+  },
+  "primary_evidence": "results/m12-case-dispatch",
+  "limits": "Private hashing and core-equivalence adapters only. Compiler case dispatch/quotation/duplicate/default behavior remains unchanged; the original93-control before run still establishes its failures. Identity fallback is not certification of arbitrary Java-object hashCode interop."
+}

@@ -1,0 +1,463 @@
+Compiled from "BigInt.java"
+public final class clojure.lang.BigInt extends java.lang.Number implements clojure.lang.IHashEq {
+  private static final long serialVersionUID;
+
+  public final long lpart;
+
+  public final java.math.BigInteger bipart;
+
+  public static final clojure.lang.BigInt ZERO;
+
+  public static final clojure.lang.BigInt ONE;
+
+  public int hashCode();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     21
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: aload_0
+      12: getfield      #2                  // Field lpart:J
+      15: bipush        32
+      17: lushr
+      18: lxor
+      19: l2i
+      20: ireturn
+      21: aload_0
+      22: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      25: invokevirtual #3                  // Method java/math/BigInteger.hashCode:()I
+      28: ireturn
+
+  public int hasheq();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     15
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: invokestatic  #4                  // Method clojure/lang/Murmur3.hashLong:(J)I
+      14: ireturn
+      15: aload_0
+      16: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      19: invokevirtual #3                  // Method java/math/BigInteger.hashCode:()I
+      22: ireturn
+
+  public boolean equals(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: if_acmpne     7
+       5: iconst_1
+       6: ireturn
+       7: aload_1
+       8: instanceof    #5                  // class clojure/lang/BigInt
+      11: ifeq          78
+      14: aload_1
+      15: checkcast     #5                  // class clojure/lang/BigInt
+      18: astore_2
+      19: aload_0
+      20: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      23: ifnonnull     51
+      26: aload_2
+      27: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      30: ifnonnull     49
+      33: aload_0
+      34: getfield      #2                  // Field lpart:J
+      37: aload_2
+      38: getfield      #2                  // Field lpart:J
+      41: lcmp
+      42: ifne          49
+      45: iconst_1
+      46: goto          50
+      49: iconst_0
+      50: ireturn
+      51: aload_2
+      52: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      55: ifnull        76
+      58: aload_0
+      59: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      62: aload_2
+      63: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      66: invokevirtual #6                  // Method java/math/BigInteger.equals:(Ljava/lang/Object;)Z
+      69: ifeq          76
+      72: iconst_1
+      73: goto          77
+      76: iconst_0
+      77: ireturn
+      78: iconst_0
+      79: ireturn
+
+  private clojure.lang.BigInt(long, java.math.BigInteger);
+    Code:
+       0: aload_0
+       1: invokespecial #7                  // Method java/lang/Number."<init>":()V
+       4: aload_0
+       5: lload_1
+       6: putfield      #2                  // Field lpart:J
+       9: aload_0
+      10: aload_3
+      11: putfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      14: return
+
+  public static clojure.lang.BigInt fromBigInteger(java.math.BigInteger);
+    Code:
+       0: aload_0
+       1: invokevirtual #8                  // Method java/math/BigInteger.bitLength:()I
+       4: bipush        64
+       6: if_icmpge     22
+       9: new           #5                  // class clojure/lang/BigInt
+      12: dup
+      13: aload_0
+      14: invokevirtual #9                  // Method java/math/BigInteger.longValue:()J
+      17: aconst_null
+      18: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+      21: areturn
+      22: new           #5                  // class clojure/lang/BigInt
+      25: dup
+      26: lconst_0
+      27: aload_0
+      28: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+      31: areturn
+
+  public static clojure.lang.BigInt fromLong(long);
+    Code:
+       0: new           #5                  // class clojure/lang/BigInt
+       3: dup
+       4: lload_0
+       5: aconst_null
+       6: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+       9: areturn
+
+  public java.math.BigInteger toBigInteger();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     15
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: invokestatic  #11                 // Method java/math/BigInteger.valueOf:(J)Ljava/math/BigInteger;
+      14: areturn
+      15: aload_0
+      16: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      19: areturn
+
+  public java.math.BigDecimal toBigDecimal();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     15
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: invokestatic  #12                 // Method java/math/BigDecimal.valueOf:(J)Ljava/math/BigDecimal;
+      14: areturn
+      15: new           #13                 // class java/math/BigDecimal
+      18: dup
+      19: aload_0
+      20: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      23: invokespecial #14                 // Method java/math/BigDecimal."<init>":(Ljava/math/BigInteger;)V
+      26: areturn
+
+  public int intValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     13
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: l2i
+      12: ireturn
+      13: aload_0
+      14: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      17: invokevirtual #15                 // Method java/math/BigInteger.intValue:()I
+      20: ireturn
+
+  public long longValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     12
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: lreturn
+      12: aload_0
+      13: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      16: invokevirtual #9                  // Method java/math/BigInteger.longValue:()J
+      19: lreturn
+
+  public float floatValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     13
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: l2f
+      12: freturn
+      13: aload_0
+      14: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      17: invokevirtual #16                 // Method java/math/BigInteger.floatValue:()F
+      20: freturn
+
+  public double doubleValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     13
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: l2d
+      12: dreturn
+      13: aload_0
+      14: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      17: invokevirtual #17                 // Method java/math/BigInteger.doubleValue:()D
+      20: dreturn
+
+  public byte byteValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     14
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: l2i
+      12: i2b
+      13: ireturn
+      14: aload_0
+      15: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      18: invokevirtual #18                 // Method java/math/BigInteger.byteValue:()B
+      21: ireturn
+
+  public short shortValue();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     14
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: l2i
+      12: i2s
+      13: ireturn
+      14: aload_0
+      15: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      18: invokevirtual #19                 // Method java/math/BigInteger.shortValue:()S
+      21: ireturn
+
+  public static clojure.lang.BigInt valueOf(long);
+    Code:
+       0: new           #5                  // class clojure/lang/BigInt
+       3: dup
+       4: lload_0
+       5: aconst_null
+       6: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+       9: areturn
+
+  public java.lang.String toString();
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     15
+       7: aload_0
+       8: getfield      #2                  // Field lpart:J
+      11: invokestatic  #20                 // Method java/lang/String.valueOf:(J)Ljava/lang/String;
+      14: areturn
+      15: aload_0
+      16: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      19: invokevirtual #21                 // Method java/math/BigInteger.toString:()Ljava/lang/String;
+      22: areturn
+
+  public int bitLength();
+    Code:
+       0: aload_0
+       1: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+       4: invokevirtual #8                  // Method java/math/BigInteger.bitLength:()I
+       7: ireturn
+
+  public clojure.lang.BigInt add(clojure.lang.BigInt);
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     51
+       7: aload_1
+       8: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      11: ifnonnull     51
+      14: aload_0
+      15: getfield      #2                  // Field lpart:J
+      18: aload_1
+      19: getfield      #2                  // Field lpart:J
+      22: ladd
+      23: lstore_2
+      24: lload_2
+      25: aload_0
+      26: getfield      #2                  // Field lpart:J
+      29: lxor
+      30: lconst_0
+      31: lcmp
+      32: ifge          46
+      35: lload_2
+      36: aload_1
+      37: getfield      #2                  // Field lpart:J
+      40: lxor
+      41: lconst_0
+      42: lcmp
+      43: iflt          51
+      46: lload_2
+      47: invokestatic  #23                 // Method valueOf:(J)Lclojure/lang/BigInt;
+      50: areturn
+      51: aload_0
+      52: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      55: aload_1
+      56: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      59: invokevirtual #24                 // Method java/math/BigInteger.add:(Ljava/math/BigInteger;)Ljava/math/BigInteger;
+      62: invokestatic  #25                 // Method fromBigInteger:(Ljava/math/BigInteger;)Lclojure/lang/BigInt;
+      65: areturn
+
+  public clojure.lang.BigInt multiply(clojure.lang.BigInt);
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     63
+       7: aload_1
+       8: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      11: ifnonnull     63
+      14: aload_0
+      15: getfield      #2                  // Field lpart:J
+      18: aload_1
+      19: getfield      #2                  // Field lpart:J
+      22: lmul
+      23: lstore_2
+      24: aload_1
+      25: getfield      #2                  // Field lpart:J
+      28: lconst_0
+      29: lcmp
+      30: ifeq          58
+      33: lload_2
+      34: aload_1
+      35: getfield      #2                  // Field lpart:J
+      38: ldiv
+      39: aload_0
+      40: getfield      #2                  // Field lpart:J
+      43: lcmp
+      44: ifne          63
+      47: aload_0
+      48: getfield      #2                  // Field lpart:J
+      51: ldc2_w        #27                 // long -9223372036854775808l
+      54: lcmp
+      55: ifeq          63
+      58: lload_2
+      59: invokestatic  #23                 // Method valueOf:(J)Lclojure/lang/BigInt;
+      62: areturn
+      63: aload_0
+      64: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      67: aload_1
+      68: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      71: invokevirtual #29                 // Method java/math/BigInteger.multiply:(Ljava/math/BigInteger;)Ljava/math/BigInteger;
+      74: invokestatic  #25                 // Method fromBigInteger:(Ljava/math/BigInteger;)Lclojure/lang/BigInt;
+      77: areturn
+
+  public clojure.lang.BigInt quotient(clojure.lang.BigInt);
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     60
+       7: aload_1
+       8: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      11: ifnonnull     60
+      14: aload_0
+      15: getfield      #2                  // Field lpart:J
+      18: ldc2_w        #27                 // long -9223372036854775808l
+      21: lcmp
+      22: ifne          47
+      25: aload_1
+      26: getfield      #2                  // Field lpart:J
+      29: ldc2_w        #30                 // long -1l
+      32: lcmp
+      33: ifne          47
+      36: aload_0
+      37: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      40: invokevirtual #32                 // Method java/math/BigInteger.negate:()Ljava/math/BigInteger;
+      43: invokestatic  #25                 // Method fromBigInteger:(Ljava/math/BigInteger;)Lclojure/lang/BigInt;
+      46: areturn
+      47: aload_0
+      48: getfield      #2                  // Field lpart:J
+      51: aload_1
+      52: getfield      #2                  // Field lpart:J
+      55: ldiv
+      56: invokestatic  #23                 // Method valueOf:(J)Lclojure/lang/BigInt;
+      59: areturn
+      60: aload_0
+      61: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      64: aload_1
+      65: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      68: invokevirtual #33                 // Method java/math/BigInteger.divide:(Ljava/math/BigInteger;)Ljava/math/BigInteger;
+      71: invokestatic  #25                 // Method fromBigInteger:(Ljava/math/BigInteger;)Lclojure/lang/BigInt;
+      74: areturn
+
+  public clojure.lang.BigInt remainder(clojure.lang.BigInt);
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     27
+       7: aload_1
+       8: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      11: ifnonnull     27
+      14: aload_0
+      15: getfield      #2                  // Field lpart:J
+      18: aload_1
+      19: getfield      #2                  // Field lpart:J
+      22: lrem
+      23: invokestatic  #23                 // Method valueOf:(J)Lclojure/lang/BigInt;
+      26: areturn
+      27: aload_0
+      28: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      31: aload_1
+      32: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      35: invokevirtual #34                 // Method java/math/BigInteger.remainder:(Ljava/math/BigInteger;)Ljava/math/BigInteger;
+      38: invokestatic  #25                 // Method fromBigInteger:(Ljava/math/BigInteger;)Lclojure/lang/BigInt;
+      41: areturn
+
+  public boolean lt(clojure.lang.BigInt);
+    Code:
+       0: aload_0
+       1: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+       4: ifnonnull     32
+       7: aload_1
+       8: getfield      #1                  // Field bipart:Ljava/math/BigInteger;
+      11: ifnonnull     32
+      14: aload_0
+      15: getfield      #2                  // Field lpart:J
+      18: aload_1
+      19: getfield      #2                  // Field lpart:J
+      22: lcmp
+      23: ifge          30
+      26: iconst_1
+      27: goto          31
+      30: iconst_0
+      31: ireturn
+      32: aload_0
+      33: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      36: aload_1
+      37: invokevirtual #22                 // Method toBigInteger:()Ljava/math/BigInteger;
+      40: invokevirtual #35                 // Method java/math/BigInteger.compareTo:(Ljava/math/BigInteger;)I
+      43: ifge          50
+      46: iconst_1
+      47: goto          51
+      50: iconst_0
+      51: ireturn
+
+  static {};
+    Code:
+       0: new           #5                  // class clojure/lang/BigInt
+       3: dup
+       4: lconst_0
+       5: aconst_null
+       6: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+       9: putstatic     #36                 // Field ZERO:Lclojure/lang/BigInt;
+      12: new           #5                  // class clojure/lang/BigInt
+      15: dup
+      16: lconst_1
+      17: aconst_null
+      18: invokespecial #10                 // Method "<init>":(JLjava/math/BigInteger;)V
+      21: putstatic     #37                 // Field ONE:Lclojure/lang/BigInt;
+      24: return
+}

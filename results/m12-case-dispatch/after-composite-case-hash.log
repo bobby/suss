@@ -1,0 +1,15 @@
+Running as unit: run-p3608363-i91685182.scope; invocation ID: cd5016118723418b85f1e215b7281043
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 42s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 4 tests
+test aot_executes_numeric_case_hash_controls ... ok
+test aot_executes_composite_case_hash_controls ... ok
+test composite_case_hash_follows_primary_hash_code ... ok
+test numeric_case_hash_follows_primary_hash_code ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 70.09s
+

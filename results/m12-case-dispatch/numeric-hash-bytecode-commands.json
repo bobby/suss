@@ -1,0 +1,85 @@
+{
+  "jar": "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "license": "EPL-1.0 for Clojure classes; OpenJDK runtime method bytecode retained as development implementation reference only; no Java code is shipped",
+  "commands": [
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "java.math.BigInteger"
+      ],
+      "exit_code": 0,
+      "file": "java-math-BigInteger-bytecode.log",
+      "sha256": "b11e7888fb33fbcd6cf904e9430b487e3c3d9246e0e63e53d7c55db1cefd829c"
+    },
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "java.math.BigDecimal"
+      ],
+      "exit_code": 0,
+      "file": "java-math-BigDecimal-bytecode.log",
+      "sha256": "a34ff9af2c9f78461cb3d0025308a2ea6cc48e4fcbf408bff8378572cb550823"
+    },
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "java.lang.Long"
+      ],
+      "exit_code": 0,
+      "file": "java-lang-Long-bytecode.log",
+      "sha256": "af732434e7ea075e66b6bb24d1219b025c74ca121edcc61c820c5dd7e3e0d4bf"
+    },
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "java.lang.Double"
+      ],
+      "exit_code": 0,
+      "file": "java-lang-Double-bytecode.log",
+      "sha256": "db83c082cd8f3c5a36fcd7eece261c7a82e0c1aa8b09f66af32274b764e1c5d9"
+    },
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.Ratio"
+      ],
+      "exit_code": 0,
+      "file": "clojure-lang-Ratio-bytecode.log",
+      "sha256": "94bdf5eb57d2e1c92d71e1268b18627503a50a9e369dd8eadc86621260952c0d"
+    },
+    {
+      "command": [
+        "javap",
+        "-c",
+        "-p",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+        "clojure.lang.Util"
+      ],
+      "exit_code": 0,
+      "file": "clojure-lang-Util-bytecode.log",
+      "sha256": "239b1cd958b02c051d7748ee447865a3c9457b1aeaa57514bd4c3685b91f8ed2"
+    }
+  ]
+}

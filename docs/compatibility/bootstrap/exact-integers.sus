@@ -2260,3 +2260,52 @@
           (if (suss.bootstrap/number? x)
             (suss.bootstrap/as-decimal x)
             (throw (suss.bootstrap/error "bigdec requires a number or decimal string"))))))))
+
+;; Original Suss adapters for Clojure case's Util.hash (Java hashCode).
+;; Distinct from public hash/hasheq: Decimal scale and Double signed zero
+;; contribute to these hashes. Pinned primary controls/provenance are retained
+;; in results/m12-case-dispatch. Metadata does not contribute. Every recursive
+;; core call is linked to its own immutable shipped definition.
+(def ^:private case-string-hash-code
+  (fn [s]
+    (loop [i 0 h 0]
+      (if (< i (.-length s))
+        (recur (inc i) (cljs.core/int (+ (* h 31) (.charCodeAt s i))))
+        h))))
+(def ^:private case-symbol-hash-code
+  (fn [x]
+    (let [h (case-string-hash-code (name x))
+          ns (namespace x)
+          nh (if (nil? ns) 0 (case-string-hash-code ns))]
+      (cljs.core/bit-xor h
+        (cljs.core/int (+ nh -1640531527 (cljs.core/bit-shift-left h 6)
+                          (cljs.core/bit-shift-right h 2)))))))
+(def ^:private case-hash-code
+  (fn [x]
+    (cond
+      (suss.bootstrap/nil? x) 0
+      (suss.bootstrap/number? x) (suss.bootstrap/case-number-hash x)
+      (suss.bootstrap/boolean? x) (if x 1231 1237)
+      (suss.bootstrap/string? x) (case-string-hash-code x)
+      (suss.bootstrap/keyword? x)
+        (cljs.core/int (+ (case-symbol-hash-code x) -1640531527))
+      (symbol? x) (case-symbol-hash-code x)
+      (map? x)
+        (loop [xs (seq x) h 0]
+          (if xs
+            (let [entry (first xs)]
+              (recur (next xs)
+                (cljs.core/int (+ h (cljs.core/bit-xor
+                  (case-hash-code (key entry)) (case-hash-code (val entry)))))))
+            h))
+      (set? x)
+        (loop [xs (seq x) h 0]
+          (if xs
+            (recur (next xs) (cljs.core/int (+ h (case-hash-code (first xs)))))
+            h))
+      (sequential? x)
+        (loop [xs (seq x) h 1]
+          (if xs
+            (recur (next xs) (cljs.core/int (+ (* h 31) (case-hash-code (first xs)))))
+            h))
+      :else (cljs.core/int (suss.bootstrap/identity-uid x)))))

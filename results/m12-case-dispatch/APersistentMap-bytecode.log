@@ -1,0 +1,402 @@
+Compiled from "APersistentMap.java"
+public abstract class clojure.lang.APersistentMap extends clojure.lang.AFn implements clojure.lang.IPersistentMap,java.util.Map,java.lang.Iterable,java.io.Serializable,clojure.lang.MapEquivalence,clojure.lang.IHashEq {
+  private static final long serialVersionUID;
+
+  int _hash;
+
+  int _hasheq;
+
+  static final clojure.lang.IFn MAKE_ENTRY;
+
+  static final clojure.lang.IFn MAKE_KEY;
+
+  static final clojure.lang.IFn MAKE_VAL;
+
+  public clojure.lang.APersistentMap();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method clojure/lang/AFn."<init>":()V
+       4: return
+
+  public java.lang.String toString();
+    Code:
+       0: aload_0
+       1: invokestatic  #2                  // Method clojure/lang/RT.printString:(Ljava/lang/Object;)Ljava/lang/String;
+       4: areturn
+
+  public clojure.lang.IPersistentCollection cons(java.lang.Object);
+    Code:
+       0: aload_1
+       1: instanceof    #3                  // class java/util/Map$Entry
+       4: ifeq          29
+       7: aload_1
+       8: checkcast     #3                  // class java/util/Map$Entry
+      11: astore_2
+      12: aload_0
+      13: aload_2
+      14: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      19: aload_2
+      20: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      25: invokevirtual #6                  // Method assoc:(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IPersistentMap;
+      28: areturn
+      29: aload_1
+      30: instanceof    #7                  // class clojure/lang/IPersistentVector
+      33: ifeq          80
+      36: aload_1
+      37: checkcast     #7                  // class clojure/lang/IPersistentVector
+      40: astore_2
+      41: aload_2
+      42: invokeinterface #8,  1            // InterfaceMethod clojure/lang/IPersistentVector.count:()I
+      47: iconst_2
+      48: if_icmpeq     61
+      51: new           #9                  // class java/lang/IllegalArgumentException
+      54: dup
+      55: ldc           #10                 // String Vector arg to map conj must be a pair
+      57: invokespecial #11                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      60: athrow
+      61: aload_0
+      62: aload_2
+      63: iconst_0
+      64: invokeinterface #12,  2           // InterfaceMethod clojure/lang/IPersistentVector.nth:(I)Ljava/lang/Object;
+      69: aload_2
+      70: iconst_1
+      71: invokeinterface #12,  2           // InterfaceMethod clojure/lang/IPersistentVector.nth:(I)Ljava/lang/Object;
+      76: invokevirtual #6                  // Method assoc:(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IPersistentMap;
+      79: areturn
+      80: aload_0
+      81: astore_2
+      82: aload_1
+      83: invokestatic  #13                 // Method clojure/lang/RT.seq:(Ljava/lang/Object;)Lclojure/lang/ISeq;
+      86: astore_3
+      87: aload_3
+      88: ifnull        133
+      91: aload_3
+      92: invokeinterface #14,  1           // InterfaceMethod clojure/lang/ISeq.first:()Ljava/lang/Object;
+      97: checkcast     #3                  // class java/util/Map$Entry
+     100: astore        4
+     102: aload_2
+     103: aload         4
+     105: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+     110: aload         4
+     112: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+     117: invokeinterface #15,  3           // InterfaceMethod clojure/lang/IPersistentMap.assoc:(Ljava/lang/Object;Ljava/lang/Object;)Lclojure/lang/IPersistentMap;
+     122: astore_2
+     123: aload_3
+     124: invokeinterface #16,  1           // InterfaceMethod clojure/lang/ISeq.next:()Lclojure/lang/ISeq;
+     129: astore_3
+     130: goto          87
+     133: aload_2
+     134: areturn
+
+  public boolean equals(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokestatic  #17                 // Method mapEquals:(Lclojure/lang/IPersistentMap;Ljava/lang/Object;)Z
+       5: ireturn
+
+  public static boolean mapEquals(clojure.lang.IPersistentMap, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: if_acmpne     7
+       5: iconst_1
+       6: ireturn
+       7: aload_1
+       8: instanceof    #18                 // class java/util/Map
+      11: ifne          16
+      14: iconst_0
+      15: ireturn
+      16: aload_1
+      17: checkcast     #18                 // class java/util/Map
+      20: astore_2
+      21: aload_2
+      22: invokeinterface #19,  1           // InterfaceMethod java/util/Map.size:()I
+      27: aload_0
+      28: invokeinterface #20,  1           // InterfaceMethod clojure/lang/IPersistentMap.count:()I
+      33: if_icmpeq     38
+      36: iconst_0
+      37: ireturn
+      38: aload_0
+      39: invokeinterface #21,  1           // InterfaceMethod clojure/lang/IPersistentMap.seq:()Lclojure/lang/ISeq;
+      44: astore_3
+      45: aload_3
+      46: ifnull        118
+      49: aload_3
+      50: invokeinterface #14,  1           // InterfaceMethod clojure/lang/ISeq.first:()Ljava/lang/Object;
+      55: checkcast     #3                  // class java/util/Map$Entry
+      58: astore        4
+      60: aload_2
+      61: aload         4
+      63: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      68: invokeinterface #22,  2           // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      73: istore        5
+      75: iload         5
+      77: ifeq          106
+      80: aload         4
+      82: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      87: aload_2
+      88: aload         4
+      90: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      95: invokeinterface #23,  2           // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     100: invokestatic  #24                 // Method clojure/lang/Util.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     103: ifne          108
+     106: iconst_0
+     107: ireturn
+     108: aload_3
+     109: invokeinterface #16,  1           // InterfaceMethod clojure/lang/ISeq.next:()Lclojure/lang/ISeq;
+     114: astore_3
+     115: goto          45
+     118: iconst_1
+     119: ireturn
+
+  public boolean equiv(java.lang.Object);
+    Code:
+       0: aload_1
+       1: instanceof    #18                 // class java/util/Map
+       4: ifne          9
+       7: iconst_0
+       8: ireturn
+       9: aload_1
+      10: instanceof    #25                 // class clojure/lang/IPersistentMap
+      13: ifeq          25
+      16: aload_1
+      17: instanceof    #26                 // class clojure/lang/MapEquivalence
+      20: ifne          25
+      23: iconst_0
+      24: ireturn
+      25: aload_1
+      26: checkcast     #18                 // class java/util/Map
+      29: astore_2
+      30: aload_2
+      31: invokeinterface #19,  1           // InterfaceMethod java/util/Map.size:()I
+      36: aload_0
+      37: invokevirtual #27                 // Method size:()I
+      40: if_icmpeq     45
+      43: iconst_0
+      44: ireturn
+      45: aload_0
+      46: invokevirtual #28                 // Method seq:()Lclojure/lang/ISeq;
+      49: astore_3
+      50: aload_3
+      51: ifnull        123
+      54: aload_3
+      55: invokeinterface #14,  1           // InterfaceMethod clojure/lang/ISeq.first:()Ljava/lang/Object;
+      60: checkcast     #3                  // class java/util/Map$Entry
+      63: astore        4
+      65: aload_2
+      66: aload         4
+      68: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      73: invokeinterface #22,  2           // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      78: istore        5
+      80: iload         5
+      82: ifeq          111
+      85: aload         4
+      87: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      92: aload_2
+      93: aload         4
+      95: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+     100: invokeinterface #23,  2           // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     105: invokestatic  #29                 // Method clojure/lang/Util.equiv:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     108: ifne          113
+     111: iconst_0
+     112: ireturn
+     113: aload_3
+     114: invokeinterface #16,  1           // InterfaceMethod clojure/lang/ISeq.next:()Lclojure/lang/ISeq;
+     119: astore_3
+     120: goto          50
+     123: iconst_1
+     124: ireturn
+
+  public int hashCode();
+    Code:
+       0: aload_0
+       1: getfield      #30                 // Field _hash:I
+       4: istore_1
+       5: iload_1
+       6: ifne          19
+       9: aload_0
+      10: aload_0
+      11: invokestatic  #31                 // Method mapHash:(Lclojure/lang/IPersistentMap;)I
+      14: dup
+      15: istore_1
+      16: putfield      #30                 // Field _hash:I
+      19: iload_1
+      20: ireturn
+
+  public static int mapHash(clojure.lang.IPersistentMap);
+    Code:
+       0: iconst_0
+       1: istore_1
+       2: aload_0
+       3: invokeinterface #21,  1           // InterfaceMethod clojure/lang/IPersistentMap.seq:()Lclojure/lang/ISeq;
+       8: astore_2
+       9: aload_2
+      10: ifnull        81
+      13: aload_2
+      14: invokeinterface #14,  1           // InterfaceMethod clojure/lang/ISeq.first:()Ljava/lang/Object;
+      19: checkcast     #3                  // class java/util/Map$Entry
+      22: astore_3
+      23: iload_1
+      24: aload_3
+      25: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      30: ifnonnull     37
+      33: iconst_0
+      34: goto          46
+      37: aload_3
+      38: invokeinterface #4,  1            // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+      43: invokevirtual #32                 // Method java/lang/Object.hashCode:()I
+      46: aload_3
+      47: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      52: ifnonnull     59
+      55: iconst_0
+      56: goto          68
+      59: aload_3
+      60: invokeinterface #5,  1            // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+      65: invokevirtual #32                 // Method java/lang/Object.hashCode:()I
+      68: ixor
+      69: iadd
+      70: istore_1
+      71: aload_2
+      72: invokeinterface #16,  1           // InterfaceMethod clojure/lang/ISeq.next:()Lclojure/lang/ISeq;
+      77: astore_2
+      78: goto          9
+      81: iload_1
+      82: ireturn
+
+  public int hasheq();
+    Code:
+       0: aload_0
+       1: getfield      #33                 // Field _hasheq:I
+       4: istore_1
+       5: iload_1
+       6: ifne          19
+       9: aload_0
+      10: aload_0
+      11: invokestatic  #34                 // Method clojure/lang/Murmur3.hashUnordered:(Ljava/lang/Iterable;)I
+      14: dup
+      15: istore_1
+      16: putfield      #33                 // Field _hasheq:I
+      19: iload_1
+      20: ireturn
+
+  public static int mapHasheq(clojure.lang.IPersistentMap);
+    Code:
+       0: aload_0
+       1: invokestatic  #34                 // Method clojure/lang/Murmur3.hashUnordered:(Ljava/lang/Iterable;)I
+       4: ireturn
+
+  public java.lang.Object invoke(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #35                 // Method valAt:(Ljava/lang/Object;)Ljava/lang/Object;
+       5: areturn
+
+  public java.lang.Object invoke(java.lang.Object, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokevirtual #36                 // Method valAt:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       6: areturn
+
+  public void clear();
+    Code:
+       0: new           #37                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #38                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public boolean containsValue(java.lang.Object);
+    Code:
+       0: aload_0
+       1: invokevirtual #39                 // Method values:()Ljava/util/Collection;
+       4: aload_1
+       5: invokeinterface #40,  2           // InterfaceMethod java/util/Collection.contains:(Ljava/lang/Object;)Z
+      10: ireturn
+
+  public java.util.Set entrySet();
+    Code:
+       0: new           #41                 // class clojure/lang/APersistentMap$4
+       3: dup
+       4: aload_0
+       5: invokespecial #42                 // Method clojure/lang/APersistentMap$4."<init>":(Lclojure/lang/APersistentMap;)V
+       8: areturn
+
+  public java.lang.Object get(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #35                 // Method valAt:(Ljava/lang/Object;)Ljava/lang/Object;
+       5: areturn
+
+  public boolean isEmpty();
+    Code:
+       0: aload_0
+       1: invokevirtual #43                 // Method count:()I
+       4: ifne          11
+       7: iconst_1
+       8: goto          12
+      11: iconst_0
+      12: ireturn
+
+  public java.util.Set keySet();
+    Code:
+       0: new           #44                 // class clojure/lang/APersistentMap$5
+       3: dup
+       4: aload_0
+       5: invokespecial #45                 // Method clojure/lang/APersistentMap$5."<init>":(Lclojure/lang/APersistentMap;)V
+       8: areturn
+
+  public java.lang.Object put(java.lang.Object, java.lang.Object);
+    Code:
+       0: new           #37                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #38                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public void putAll(java.util.Map);
+    Code:
+       0: new           #37                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #38                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public java.lang.Object remove(java.lang.Object);
+    Code:
+       0: new           #37                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #38                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public int size();
+    Code:
+       0: aload_0
+       1: invokevirtual #43                 // Method count:()I
+       4: ireturn
+
+  public java.util.Collection values();
+    Code:
+       0: new           #46                 // class clojure/lang/APersistentMap$6
+       3: dup
+       4: aload_0
+       5: invokespecial #47                 // Method clojure/lang/APersistentMap$6."<init>":(Lclojure/lang/APersistentMap;)V
+       8: areturn
+
+  static {};
+    Code:
+       0: new           #48                 // class clojure/lang/APersistentMap$1
+       3: dup
+       4: invokespecial #49                 // Method clojure/lang/APersistentMap$1."<init>":()V
+       7: putstatic     #50                 // Field MAKE_ENTRY:Lclojure/lang/IFn;
+      10: new           #51                 // class clojure/lang/APersistentMap$2
+      13: dup
+      14: invokespecial #52                 // Method clojure/lang/APersistentMap$2."<init>":()V
+      17: putstatic     #53                 // Field MAKE_KEY:Lclojure/lang/IFn;
+      20: new           #54                 // class clojure/lang/APersistentMap$3
+      23: dup
+      24: invokespecial #55                 // Method clojure/lang/APersistentMap$3."<init>":()V
+      27: putstatic     #56                 // Field MAKE_VAL:Lclojure/lang/IFn;
+      30: return
+}

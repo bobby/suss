@@ -1,0 +1,572 @@
+[
+  {
+    "jvm": "(clojure.lang.Util/hash -9223372036854775808)",
+    "suss": "(suss.bootstrap/case-number-hash -9223372036854775808)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -9223372036854775808N)",
+    "suss": "(suss.bootstrap/case-number-hash -9223372036854775808N)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -9223372036854775808))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -9223372036854775808))",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -4294967297)",
+    "suss": "(suss.bootstrap/case-number-hash -4294967297)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -4294967297N)",
+    "suss": "(suss.bootstrap/case-number-hash -4294967297N)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -4294967297))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -4294967297))",
+    "expected": "-32"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -4294967296)",
+    "suss": "(suss.bootstrap/case-number-hash -4294967296)",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -4294967296N)",
+    "suss": "(suss.bootstrap/case-number-hash -4294967296N)",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -4294967296))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -4294967296))",
+    "expected": "-31"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -2147483649)",
+    "suss": "(suss.bootstrap/case-number-hash -2147483649)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -2147483649N)",
+    "suss": "(suss.bootstrap/case-number-hash -2147483649N)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -2147483649))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -2147483649))",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -2147483648)",
+    "suss": "(suss.bootstrap/case-number-hash -2147483648)",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -2147483648N)",
+    "suss": "(suss.bootstrap/case-number-hash -2147483648N)",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -2147483648))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -2147483648))",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1073741825)",
+    "suss": "(suss.bootstrap/case-number-hash -1073741825)",
+    "expected": "1073741824"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1073741825N)",
+    "suss": "(suss.bootstrap/case-number-hash -1073741825N)",
+    "expected": "1073741824"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -1073741825))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -1073741825))",
+    "expected": "-1073741825"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1)",
+    "suss": "(suss.bootstrap/case-number-hash -1)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1N)",
+    "suss": "(suss.bootstrap/case-number-hash -1N)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -1))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -1))",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0)",
+    "suss": "(suss.bootstrap/case-number-hash 0)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0N)",
+    "suss": "(suss.bootstrap/case-number-hash 0N)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 0))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 0))",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1)",
+    "suss": "(suss.bootstrap/case-number-hash 1)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1N)",
+    "suss": "(suss.bootstrap/case-number-hash 1N)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 1))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 1))",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1073741823)",
+    "suss": "(suss.bootstrap/case-number-hash 1073741823)",
+    "expected": "1073741823"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1073741823N)",
+    "suss": "(suss.bootstrap/case-number-hash 1073741823N)",
+    "expected": "1073741823"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 1073741823))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 1073741823))",
+    "expected": "1073741823"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1073741824)",
+    "suss": "(suss.bootstrap/case-number-hash 1073741824)",
+    "expected": "1073741824"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1073741824N)",
+    "suss": "(suss.bootstrap/case-number-hash 1073741824N)",
+    "expected": "1073741824"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 1073741824))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 1073741824))",
+    "expected": "1073741824"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 2147483647)",
+    "suss": "(suss.bootstrap/case-number-hash 2147483647)",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 2147483647N)",
+    "suss": "(suss.bootstrap/case-number-hash 2147483647N)",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 2147483647))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 2147483647))",
+    "expected": "2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 2147483648)",
+    "suss": "(suss.bootstrap/case-number-hash 2147483648)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 2147483648N)",
+    "suss": "(suss.bootstrap/case-number-hash 2147483648N)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 2147483648))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 2147483648))",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 4294967295)",
+    "suss": "(suss.bootstrap/case-number-hash 4294967295)",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 4294967295N)",
+    "suss": "(suss.bootstrap/case-number-hash 4294967295N)",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 4294967295))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 4294967295))",
+    "expected": "-1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 4294967296)",
+    "suss": "(suss.bootstrap/case-number-hash 4294967296)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 4294967296N)",
+    "suss": "(suss.bootstrap/case-number-hash 4294967296N)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 4294967296))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 4294967296))",
+    "expected": "31"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 9223372036854775807)",
+    "suss": "(suss.bootstrap/case-number-hash 9223372036854775807)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 9223372036854775807N)",
+    "suss": "(suss.bootstrap/case-number-hash 9223372036854775807N)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 9223372036854775807))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 9223372036854775807))",
+    "expected": "2147483616"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -12554203470773361527671578846415332832241604377075488129025N)",
+    "suss": "(suss.bootstrap/case-number-hash -12554203470773361527671578846415332832241604377075488129025N)",
+    "expected": "-1775009285"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -12554203470773361527671578846415332832241604377075488129025N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -12554203470773361527671578846415332832241604377075488129025N))",
+    "expected": "-1775009285"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -79228162514264337593543950335N)",
+    "suss": "(suss.bootstrap/case-number-hash -79228162514264337593543950335N)",
+    "expected": "993"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -79228162514264337593543950335N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -79228162514264337593543950335N))",
+    "expected": "993"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -18446744073709551616N)",
+    "suss": "(suss.bootstrap/case-number-hash -18446744073709551616N)",
+    "expected": "-961"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger -18446744073709551616N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger -18446744073709551616N))",
+    "expected": "-961"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 9223372036854775808N)",
+    "suss": "(suss.bootstrap/case-number-hash 9223372036854775808N)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 9223372036854775808N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 9223372036854775808N))",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 18446744073709551616N)",
+    "suss": "(suss.bootstrap/case-number-hash 18446744073709551616N)",
+    "expected": "961"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 18446744073709551616N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 18446744073709551616N))",
+    "expected": "961"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 18446744078004518913N)",
+    "suss": "(suss.bootstrap/case-number-hash 18446744078004518913N)",
+    "expected": "993"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 18446744078004518913N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 18446744078004518913N))",
+    "expected": "993"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 170141183460469231731687303715884105727N)",
+    "suss": "(suss.bootstrap/case-number-hash 170141183460469231731687303715884105727N)",
+    "expected": "2147452864"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 170141183460469231731687303715884105727N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 170141183460469231731687303715884105727N))",
+    "expected": "2147452864"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 12554203470773361527671578846415332832241604377075488129025N)",
+    "suss": "(suss.bootstrap/case-number-hash 12554203470773361527671578846415332832241604377075488129025N)",
+    "expected": "1775009285"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (biginteger 12554203470773361527671578846415332832241604377075488129025N))",
+    "suss": "(suss.bootstrap/case-number-hash (biginteger 12554203470773361527671578846415332832241604377075488129025N))",
+    "expected": "1775009285"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0.0)",
+    "suss": "(suss.bootstrap/case-number-hash 0.0)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -0.0)",
+    "suss": "(suss.bootstrap/case-number-hash -0.0)",
+    "expected": "-2147483648"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1.0)",
+    "suss": "(suss.bootstrap/case-number-hash 1.0)",
+    "expected": "1072693248"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1.0)",
+    "suss": "(suss.bootstrap/case-number-hash -1.0)",
+    "expected": "-1074790400"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0.5)",
+    "suss": "(suss.bootstrap/case-number-hash 0.5)",
+    "expected": "1071644672"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -0.5)",
+    "suss": "(suss.bootstrap/case-number-hash -0.5)",
+    "expected": "-1075838976"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1.25)",
+    "suss": "(suss.bootstrap/case-number-hash 1.25)",
+    "expected": "1072955392"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 3.141592653589793)",
+    "suss": "(suss.bootstrap/case-number-hash 3.141592653589793)",
+    "expected": "340593891"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 4.9E-324)",
+    "suss": "(suss.bootstrap/case-number-hash 4.9E-324)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -4.9E-324)",
+    "suss": "(suss.bootstrap/case-number-hash -4.9E-324)",
+    "expected": "-2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1.7976931348623157E308)",
+    "suss": "(suss.bootstrap/case-number-hash 1.7976931348623157E308)",
+    "expected": "-2146435072"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash ##NaN)",
+    "suss": "(suss.bootstrap/case-number-hash ##NaN)",
+    "expected": "2146959360"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash (/ 0.0 0.0))",
+    "suss": "(suss.bootstrap/case-number-hash (/ 0.0 0.0))",
+    "expected": "2146959360"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash ##Inf)",
+    "suss": "(suss.bootstrap/case-number-hash ##Inf)",
+    "expected": "2146435072"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash ##-Inf)",
+    "suss": "(suss.bootstrap/case-number-hash ##-Inf)",
+    "expected": "-1048576"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0M)",
+    "suss": "(suss.bootstrap/case-number-hash 0M)",
+    "expected": "0"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0.0M)",
+    "suss": "(suss.bootstrap/case-number-hash 0.0M)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0.00M)",
+    "suss": "(suss.bootstrap/case-number-hash 0.00M)",
+    "expected": "2"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0E+7M)",
+    "suss": "(suss.bootstrap/case-number-hash 0E+7M)",
+    "expected": "-7"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0E-8M)",
+    "suss": "(suss.bootstrap/case-number-hash 0E-8M)",
+    "expected": "8"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1M)",
+    "suss": "(suss.bootstrap/case-number-hash 1M)",
+    "expected": "31"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1.0M)",
+    "suss": "(suss.bootstrap/case-number-hash 1.0M)",
+    "expected": "311"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1.00M)",
+    "suss": "(suss.bootstrap/case-number-hash 1.00M)",
+    "expected": "3102"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1E+7M)",
+    "suss": "(suss.bootstrap/case-number-hash 1E+7M)",
+    "expected": "24"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1E-8M)",
+    "suss": "(suss.bootstrap/case-number-hash 1E-8M)",
+    "expected": "39"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1M)",
+    "suss": "(suss.bootstrap/case-number-hash -1M)",
+    "expected": "-31"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1.0M)",
+    "suss": "(suss.bootstrap/case-number-hash -1.0M)",
+    "expected": "-309"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1.00M)",
+    "suss": "(suss.bootstrap/case-number-hash -1.00M)",
+    "expected": "-3098"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1E+7M)",
+    "suss": "(suss.bootstrap/case-number-hash -1E+7M)",
+    "expected": "-38"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1E-8M)",
+    "suss": "(suss.bootstrap/case-number-hash -1E-8M)",
+    "expected": "-23"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890M)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890M)",
+    "expected": "-748148569"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890.0M)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890.0M)",
+    "expected": "1113277928"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890.00M)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890.00M)",
+    "expected": "-1747326265"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890E+7M)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890E+7M)",
+    "expected": "-748148576"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890E-8M)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890E-8M)",
+    "expected": "-748148561"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890M)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890M)",
+    "expected": "748148569"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890.0M)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890.0M)",
+    "expected": "-1113277926"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890.00M)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890.00M)",
+    "expected": "1747326269"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890E+7M)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890E+7M)",
+    "expected": "748148562"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890E-8M)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890E-8M)",
+    "expected": "748148577"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 0E+2147483647M)",
+    "suss": "(suss.bootstrap/case-number-hash 0E+2147483647M)",
+    "expected": "-2147483647"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1E+2147483647M)",
+    "suss": "(suss.bootstrap/case-number-hash 1E+2147483647M)",
+    "expected": "-2147483616"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1E-2147483647M)",
+    "suss": "(suss.bootstrap/case-number-hash 1E-2147483647M)",
+    "expected": "-2147483618"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1E-2147483647M)",
+    "suss": "(suss.bootstrap/case-number-hash -1E-2147483647M)",
+    "expected": "2147483616"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1/2)",
+    "suss": "(suss.bootstrap/case-number-hash 1/2)",
+    "expected": "3"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -1/2)",
+    "suss": "(suss.bootstrap/case-number-hash -1/2)",
+    "expected": "-3"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 2/3)",
+    "suss": "(suss.bootstrap/case-number-hash 2/3)",
+    "expected": "1"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 123456789012345678901234567890/7)",
+    "suss": "(suss.bootstrap/case-number-hash 123456789012345678901234567890/7)",
+    "expected": "273642573"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash -123456789012345678901234567890/7)",
+    "suss": "(suss.bootstrap/case-number-hash -123456789012345678901234567890/7)",
+    "expected": "-273642573"
+  },
+  {
+    "jvm": "(clojure.lang.Util/hash 1/123456789012345678901234567891)",
+    "suss": "(suss.bootstrap/case-number-hash 1/123456789012345678901234567891)",
+    "expected": "1915528827"
+  }
+]

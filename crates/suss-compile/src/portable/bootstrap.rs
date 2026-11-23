@@ -93,6 +93,7 @@ fn error(message: impl Into<String>) -> Diagnostic {
 /// core macro expansions refer to them from user code, as in ClojureScript;
 /// direct linking already keeps their internal arguments out of user hands.
 const CORE_PRIVATE: &[&str] = &[
+    "case-hash-code", "case-string-hash-code", "case-symbol-hash-code",
     "array-for", "unchecked-array-for", "unchecked-editable-array-for", "first-array-for-longvec",
     "pv-fresh-node", "pv-aget", "pv-aset", "pv-clone-node", "new-path", "push-tail", "pop-tail", "do-assoc",
     "tv-ensure-editable", "tv-editable-root", "tv-editable-tail", "tv-push-tail", "tv-pop-tail",

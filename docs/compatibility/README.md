@@ -1,5 +1,13 @@
 # ClojureScript compatibility evidence
 
+Private case hashing now has203 fresh JVM Util.hash controls executing in both
+phases and actual AOT, plus independent retained-field checks after GC. This
+keeps Java hashCode distinct from ordinary Clojure hasheq, including Decimal
+scale, BigInteger carrier hashes and signed zero. See
+[case-hash provenance](bootstrap/clojure-case-hash.json) and
+[recorded commands and limits](../../results/m12-case-dispatch/README.md).
+These helpers do not establish full case dispatch or complete BigDecimal acceptance.
+
 [Numeric dependency probes](../../results/m12-predicate-followup/README.md) retain
 six reviewed core predicate ports, an original adaptive stable sort over fixed
 WasmGC arrays,65 JVM sort controls in both phases/actual AOT, and independent

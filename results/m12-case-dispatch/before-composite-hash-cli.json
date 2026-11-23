@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(suss.bootstrap/case-hash-code [1M])"
+  ],
+  "exit_code": 1,
+  "seconds": 28.065413236618042,
+  "binary_sha256": "a91bcd1c352a7459034387579c332c90a73ce3e7a94e10b699d89a15eb9bc3e7",
+  "binary_unchanged": true,
+  "scope": "Frozen executable from passing numeric-case-hash run; compiled collection helper is not installed in this binary. This probes one unresolved helper, not all89 composite controls."
+}

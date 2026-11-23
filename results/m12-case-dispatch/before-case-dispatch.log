@@ -1,0 +1,280 @@
+Running as unit: run-p3560123-i91614473.scope; invocation ID: 05ab71584dce41d582c3395ff17d133c
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 23s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 2 tests
+test aot_executes_case_dispatch_controls ... FAILED
+test case_dispatch_follows_primary_controls ... FAILED
+
+failures:
+
+---- aot_executes_case_dispatch_controls stdout ----
+
+thread 'aot_executes_case_dispatch_controls' (3568672) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:100:5:
+Compilation error: Semantic error: While compiling probe.sus: case bootstrap requires scalar literal constants at bytes 4391..4395
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- case_dispatch_follows_primary_controls stdout ----
+
+thread 'case_dispatch_follows_primary_controls' (3568673) panicked at crates/suss-cli/tests/clojure_case_dispatch.rs:50:5:
+Runtime case39: (case 'name name :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 25..29, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case40: (case 'app/name app/name :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 29..37, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case41: (case 'quote 'foo :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 26..27, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case42: (case 'foo 'foo :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..25, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case43: (case '(a b) ((a b)) :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 27..32, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case44: (case '(a b) [a b] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 26..31, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case45: (case ['a 'b] ((a b)) :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 28..33, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case46: (case [1N] [1] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..27, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case47: (case {:a 1N :b 2} {:b 2 :a 1} :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 32..43, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case48: (case #{1N 2} #{2 1} :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 27..33, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case49: (case [1.00M] [1.0M] :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 27..33, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case50: (case {:a 1.00M} {:a 1.0M} :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 30..39, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case51: (case #{1.00M} #{1.0M} :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 28..35, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case52: (case ^:m [1M] [1M] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 28..32, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case53: (case [1M] ^:m [1M] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..32, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case54: (case [{:a #{1M}}] [{:a #{1M}}] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 32..44, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case58: (case (biginteger 1000000000000N) 1000000000000 :hit :miss)
+expected :miss
+actual Ok(":hit")
+Runtime case60: (case (biginteger -1) -1 :hit nil :nil :miss)
+expected :miss
+actual Ok(":hit")
+Runtime case67: (case [1] [1] :hit)
+expected :hit
+actual Err("Compile(Diagnostic { span: 13..32, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case68: (case :a :a :hit)
+expected :hit
+actual Err("Compile(Diagnostic { span: 13..30, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case70: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case true false :no true :yes :default))
+expected :yes
+actual Ok("[:error \"eq-called\"]")
+Runtime case71: (with-redefs [keyword? (fn [x] false)] (case :hit :hit :yes :default))
+expected :yes
+actual Ok(":default")
+Runtime case73: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case [1] [1] :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 84..87, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case74: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case {:a [1M]} {:a [1M]} :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 90..99, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case75: (with-redefs [hash (fn [a] (throw (ex-info "hash-called" {})))] (case [1M] [1M] :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 88..92, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case76: (with-redefs [str (fn [& xs] "replacement")] (try (case :x) (catch Throwable e (ex-message e))))
+expected "replacement"
+actual Err("Compile(Diagnostic { span: 63..72, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case77: (do (def case-effects []) (let [r (case (do (def case-effects (conj case-effects :selector)) [1N]) [1] (do (def case-effects (conj case-effects :chosen)) :hit) (do (def case-effects (conj case-effects :default)) :miss))] [r case-effects]))
+expected [:hit [:selector :chosen]]
+actual Err("Compile(Diagnostic { span: 112..115, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case78: (let [f (fn [x] (case x [1M] :hit :miss))] (f [1M]))
+expected :hit
+actual Err("Compile(Diagnostic { span: 37..41, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case80: (let [v :captured f (fn [x] (case x [1M] (fn [] v) (fn [] :miss)))] ((f [1M])))
+expected :captured
+actual Err("Compile(Diagnostic { span: 49..53, message: \"case bootstrap requires scalar literal constants\" })")
+Runtime case81: (case nil)
+expected [:error "No matching clause: "]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case82: (case false)
+expected [:error "No matching clause: false"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case83: (case true)
+expected [:error "No matching clause: true"]
+actual Err("Compile(Diagnostic { span: 13..24, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case84: (case 1)
+expected [:error "No matching clause: 1"]
+actual Err("Compile(Diagnostic { span: 13..21, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case85: (case 1.50M)
+expected [:error "No matching clause: 1.50"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case86: (case 1/3)
+expected [:error "No matching clause: 1/3"]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case87: (case [1 2])
+expected [:error "No matching clause: [1 2]"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case88: (case {:a 1})
+expected [:error "No matching clause: {:a 1}"]
+actual Err("Compile(Diagnostic { span: 13..26, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case89: (case #{1 2})
+expected [:error "No matching clause: #{1 2}"]
+actual Err("Compile(Diagnostic { span: 13..26, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case90: (case "x")
+expected [:error "No matching clause: x"]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case91: (case 'name)
+expected [:error "No matching clause: name"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Runtime case92: (case ##NaN)
+expected [:error "No matching clause: NaN"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case39: (case 'name name :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 25..29, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case40: (case 'app/name app/name :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 29..37, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case41: (case 'quote 'foo :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 26..27, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case42: (case 'foo 'foo :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..25, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case43: (case '(a b) ((a b)) :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 27..32, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case44: (case '(a b) [a b] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 26..31, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case45: (case ['a 'b] ((a b)) :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 28..33, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case46: (case [1N] [1] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..27, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case47: (case {:a 1N :b 2} {:b 2 :a 1} :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 32..43, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case48: (case #{1N 2} #{2 1} :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 27..33, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case49: (case [1.00M] [1.0M] :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 27..33, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case50: (case {:a 1.00M} {:a 1.0M} :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 30..39, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case51: (case #{1.00M} #{1.0M} :hit :miss)
+expected :miss
+actual Err("Compile(Diagnostic { span: 28..35, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case52: (case ^:m [1M] [1M] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 28..32, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case53: (case [1M] ^:m [1M] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 24..32, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case54: (case [{:a #{1M}}] [{:a #{1M}}] :hit :miss)
+expected :hit
+actual Err("Compile(Diagnostic { span: 32..44, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case58: (case (biginteger 1000000000000N) 1000000000000 :hit :miss)
+expected :miss
+actual Ok(":hit")
+Macro case60: (case (biginteger -1) -1 :hit nil :nil :miss)
+expected :miss
+actual Ok(":hit")
+Macro case67: (case [1] [1] :hit)
+expected :hit
+actual Err("Compile(Diagnostic { span: 13..32, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case68: (case :a :a :hit)
+expected :hit
+actual Err("Compile(Diagnostic { span: 13..30, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case70: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case true false :no true :yes :default))
+expected :yes
+actual Ok("[:error \"eq-called\"]")
+Macro case71: (with-redefs [keyword? (fn [x] false)] (case :hit :hit :yes :default))
+expected :yes
+actual Ok(":default")
+Macro case73: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case [1] [1] :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 84..87, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case74: (with-redefs [= (fn [a b] (throw (ex-info "eq-called" {})))] (case {:a [1M]} {:a [1M]} :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 90..99, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case75: (with-redefs [hash (fn [a] (throw (ex-info "hash-called" {})))] (case [1M] [1M] :hit :miss))
+expected :hit
+actual Err("Compile(Diagnostic { span: 88..92, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case76: (with-redefs [str (fn [& xs] "replacement")] (try (case :x) (catch Throwable e (ex-message e))))
+expected "replacement"
+actual Err("Compile(Diagnostic { span: 63..72, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case77: (do (def case-effects []) (let [r (case (do (def case-effects (conj case-effects :selector)) [1N]) [1] (do (def case-effects (conj case-effects :chosen)) :hit) (do (def case-effects (conj case-effects :default)) :miss))] [r case-effects]))
+expected [:hit [:selector :chosen]]
+actual Err("Compile(Diagnostic { span: 112..115, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case78: (let [f (fn [x] (case x [1M] :hit :miss))] (f [1M]))
+expected :hit
+actual Err("Compile(Diagnostic { span: 37..41, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case80: (let [v :captured f (fn [x] (case x [1M] (fn [] v) (fn [] :miss)))] ((f [1M])))
+expected :captured
+actual Err("Compile(Diagnostic { span: 49..53, message: \"case bootstrap requires scalar literal constants\" })")
+Macro case81: (case nil)
+expected [:error "No matching clause: "]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case82: (case false)
+expected [:error "No matching clause: false"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case83: (case true)
+expected [:error "No matching clause: true"]
+actual Err("Compile(Diagnostic { span: 13..24, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case84: (case 1)
+expected [:error "No matching clause: 1"]
+actual Err("Compile(Diagnostic { span: 13..21, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case85: (case 1.50M)
+expected [:error "No matching clause: 1.50"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case86: (case 1/3)
+expected [:error "No matching clause: 1/3"]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case87: (case [1 2])
+expected [:error "No matching clause: [1 2]"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case88: (case {:a 1})
+expected [:error "No matching clause: {:a 1}"]
+actual Err("Compile(Diagnostic { span: 13..26, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case89: (case #{1 2})
+expected [:error "No matching clause: #{1 2}"]
+actual Err("Compile(Diagnostic { span: 13..26, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case90: (case "x")
+expected [:error "No matching clause: x"]
+actual Err("Compile(Diagnostic { span: 13..23, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case91: (case 'name)
+expected [:error "No matching clause: name"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+Macro case92: (case ##NaN)
+expected [:error "No matching clause: NaN"]
+actual Err("Compile(Diagnostic { span: 13..25, message: \"case bootstrap requires an expression and explicit default\" })")
+
+
+failures:
+    aot_executes_case_dispatch_controls
+    case_dispatch_follows_primary_controls
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 53.80s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_case_dispatch`
