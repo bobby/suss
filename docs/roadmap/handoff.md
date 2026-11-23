@@ -1,3 +1,19 @@
+## Native tooling EDN UUID observations (2026-11-23)
+
+`run-focused.py native-edn-uuid-after-source-projection` passes all four focused
+UUID tests. Native EDN now retains typed128-bit values, canonical printing/key
+duplicate checks, configured-reader precedence, builtin-before-default behavior
+and lossless source-data projection. Serde rejects unsupported UUID conversion
+rather than silently turning it into a string. Original missing match-arm
+compilation failure is retained in `native-edn-uuid-gates`.
+
+`run-reader.py native-edn-all-reader-gates` passes all84 reader-crate tests with
+zero failures/ignored tests and recorded inputs unchanged. This is native tooling
+EDN evidence only. Source reader selection, compiled Runtime/Macro UUID values,
+public predicates/functions, macro transport, retained-value/GC and actual AOT
+still require integration. Earlier native-parser-only results retain their own
+source snapshots; none establishes complete UUID or BigDecimal acceptance.
+
 ## UUID parser and reader dependency probes (2026-11-23)
 
 `results/m12-reader-followup/oracle.py` records204 fresh JVM expression controls;

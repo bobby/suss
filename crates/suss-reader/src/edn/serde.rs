@@ -358,6 +358,7 @@ impl<'de> de::Deserializer<'de> for Deserializer {
                 else { Err(Error::new("BigInt exceeds Serde's 128-bit integer range")) }
             }
             Value::Ratio(_) => Err(Error::new("Serde has no exact ratio representation")),
+            Value::Uuid(_) => Err(Error::new("Serde has no UUID representation; retain its typed EDN value")),
             Value::String(s) => visitor.visit_string(s),
             Value::Keyword(Keyword { namespace, name: n }) | Value::Symbol(Symbol { namespace, name: n }) => {
                 visitor.visit_string(name(namespace, n))

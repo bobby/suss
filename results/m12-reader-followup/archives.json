@@ -1,5 +1,20 @@
 [
   {
+    "raw": "native-edn-all-reader-gates/command.json",
+    "archive": "native-edn-all-reader-gates/command.json.gz",
+    "raw_sha256": "03593ac388103d347b3e22fde5a18329c40b49025268b0955476b3c4631e8587"
+  },
+  {
+    "raw": "native-edn-uuid-after-source-projection/command.json",
+    "archive": "native-edn-uuid-after-source-projection/command.json.gz",
+    "raw_sha256": "9488727278c89ed4d80393c62d26388ee426c797f3c9e2f2ac6b9e4b54175743"
+  },
+  {
+    "raw": "native-edn-uuid-gates/command.json",
+    "archive": "native-edn-uuid-gates/command.json.gz",
+    "raw_sha256": "245ffbae5852d23dd896be04b535c13109191539fffe4c60378387cd62614855"
+  },
+  {
     "raw": "uuid-parser-gates/command.json",
     "archive": "uuid-parser-gates/command.json.gz",
     "raw_sha256": "4da486e49fe3c3ee861f71fe36b3a085651353d621005bac55ff9ab727e9d3f5"

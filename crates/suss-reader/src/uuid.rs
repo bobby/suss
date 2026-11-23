@@ -193,4 +193,78 @@ mod tests {
                 < parse("00000000-0000-0000-7fff-ffffffffffff")
         );
     }
+    #[test]
+    fn native_edn_preserves_uuid_values_canonical_keys_and_reader_precedence() {
+        use crate::{
+            Symbol,
+            edn::{self, Options, Value},
+        };
+        use std::collections::BTreeMap;
+        let canonical = "#uuid \"00000001-0002-0003-0004-000000000005\"";
+        let value = edn::read_one("#uuid \"1-2-3-4-5\"", &Options::default()).unwrap();
+        let Value::Uuid(bits) = &value else {
+            panic!("typed UUID data")
+        };
+        assert_eq!([bits.most, bits.least], [0x100020003, 0x4000000000005]);
+        assert_eq!(edn::print(&value).unwrap(), canonical);
+        let projected = edn::source::value_to_form(&value);
+        assert_eq!(edn::source::form_to_value(&projected).unwrap(), value);
+        assert_eq!(
+            edn::read_one(canonical, &Options::default()).unwrap(),
+            value
+        );
+        assert_eq!(
+            edn::read_one(
+                "#uuid  ;comment\n #_skip \"+1-+2-+3-+4-+5\"",
+                &Options::default()
+            )
+            .unwrap(),
+            value
+        );
+        for source in [
+            "#{#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"}",
+            "{#uuid \"1-2-3-4-5\" 1 #uuid \"00000001-0002-0003-0004-000000000005\" 2}",
+        ] {
+            assert!(
+                edn::read_one(source, &Options::default()).is_err(),
+                "canonical duplicate: {source}"
+            );
+        }
+        assert!(edn::read_one("^:tag #uuid \"1-2-3-4-5\"", &Options::default()).is_err());
+        assert!(
+            edn::print(&Value::Meta(
+                Box::new(value.clone()),
+                BTreeMap::from([(Value::keyword("tag"), Value::Bool(true))])
+            ))
+            .is_err()
+        );
+        let mut options = Options::preserving_tags();
+        options.readers.insert(
+            Symbol::new("uuid"),
+            Box::new(|_| Ok(Value::keyword("override"))),
+        );
+        assert_eq!(
+            edn::read_one("#uuid 0", &options).unwrap(),
+            Value::keyword("override")
+        );
+        options.readers.clear();
+        options.default = Some(Box::new(|_, _| Ok(Value::keyword("default"))));
+        assert_eq!(edn::read_one(canonical, &options).unwrap(), value);
+        assert_eq!(
+            edn::read_one("#other \"x\"", &options).unwrap(),
+            Value::keyword("default")
+        );
+        assert_eq!(
+            edn::read_one("#uuid 0", &Options::default())
+                .unwrap_err()
+                .message,
+            "#uuid data reader expected string"
+        );
+        assert!(
+            edn::from_value::<String>(value)
+                .unwrap_err()
+                .message
+                .contains("UUID")
+        );
+    }
 }
