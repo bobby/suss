@@ -1,0 +1,58 @@
+[
+  {
+    "raw": "suite-commands.json",
+    "archive": "suite-commands.json.gz",
+    "raw_sha256": "53c9bfd79b3075b0190121a68c71a64ae962774cb4d782c9c8a77664f2456cef",
+    "archive_sha256": "058a5047a37896c7646607202a0a8ba264673bd610933dd6e76b421d9fa15483",
+    "raw_bytes": 499137,
+    "archive_bytes": 184053
+  },
+  {
+    "raw": "suite-build.log",
+    "archive": "suite-build.log.gz",
+    "raw_sha256": "975d3e20d3198a07f4c87816c9b9ee4d678864a94e6a7e90e0a1022da38ab632",
+    "archive_sha256": "72aaab6aeb8b98ee8eedea902cb10395c58c4f5317ac170135048fcd0570a91f",
+    "raw_bytes": 273446,
+    "archive_bytes": 16806
+  },
+  {
+    "raw": "suite-run.log",
+    "archive": "suite-run.log.gz",
+    "raw_sha256": "55c8bab6c03fa516ada9cd7346265edd61fa42a555bcee565d489ffa90b45428",
+    "archive_sha256": "6950c2f774c8947009371bdba4592baee76a9b46adf6fc8ce59b099260d14cb0",
+    "raw_bytes": 1132,
+    "archive_bytes": 633
+  },
+  {
+    "raw": "suite-lock.log",
+    "archive": "suite-lock.log.gz",
+    "raw_sha256": "add70e059befbc9e32ef6e40b4ec51f7919d639ce4cb437e3f5b6bffaf67fe97",
+    "archive_sha256": "32d7a184119ab06b22a1477026a102d56f91ffc6cc72e0ae74f5350219273293",
+    "raw_bytes": 176,
+    "archive_bytes": 160
+  },
+  {
+    "raw": "suite-capture/suite-observations.json",
+    "archive": "suite-capture/suite-observations.json.gz",
+    "raw_sha256": "c68e4bfd102b7492b68dcbbded2e498f708594889e31756ad3950c503efd4ecc",
+    "archive_sha256": "9ceea371c4f7ab8514f2f9e1c5434dc5bd6762a8111eb685cea770f16b5261a2",
+    "raw_bytes": 5380099,
+    "archive_bytes": 128472
+  },
+  {
+    "raw": "suite-audit.json",
+    "archive": "suite-audit.json.gz",
+    "raw_sha256": "4034318e0e22db0a352b646ff80dba416853b261506f2e289b797fe4db9dee5c",
+    "archive_sha256": "035a25965cb16e9e56ecbc267d347b02170528c6b524e5ee7fe6e7aac14d37e8",
+    "raw_bytes": 122347,
+    "archive_bytes": 4215
+  },
+  {
+    "raw": "proposed-known-failures.json",
+    "archive": "proposed-known-failures.json.gz",
+    "raw_sha256": "36a099f6e7cc41b12596c88d53dd39889ca8f747e429ccafb219372f987c849a",
+    "archive_sha256": "6206b7b3827ea9ef1fe6170cf38a1b162d489cc034054ec1cb114b9be055d6e7",
+    "raw_bytes": 22705,
+    "archive_bytes": 2654
+  }
+]

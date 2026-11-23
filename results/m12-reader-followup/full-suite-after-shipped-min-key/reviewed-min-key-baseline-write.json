@@ -1,0 +1,16 @@
+{
+  "old_sha256": "88ccd83c7614da545c1c44b1c4ed090ac2c2e85ba9ad02e5b0d7290992b73f33",
+  "new_sha256": "ffc011e8aee7bb7439955a551c25ed75f83f7799092eba1305f1956de27435d0",
+  "capture_sha256": "c68e4bfd102b7492b68dcbbded2e498f708594889e31756ad3950c503efd4ecc",
+  "counts": {
+    "pass": 5172,
+    "guest-judged": 81,
+    "fail": 105,
+    "not-executed": 1581,
+    "skipped": 0,
+    "namespaces-failed": 69
+  },
+  "min_key_host_matches": 49,
+  "original_native_capture_exit_code": 101,
+  "qualification": "Only min-key's load failure is removed after actual complete execution; all other failures and primary/count/skip rules are preserved. Host comparison is not a native rerun or workspace pass."
+}
