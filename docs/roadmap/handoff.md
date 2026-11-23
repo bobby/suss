@@ -1,3 +1,11 @@
+## min-key bootstrap reproduction (2026-11-23)
+
+run-bootstrap-min-key.py returns0 on a16df2ac after227.037s, with inputs unchanged.
+Java and Node are absent from PATH. Runtime/Macro Wasm and EDN images reproduce
+byte-for-byte; compiled identity verification and all four original execution
+tests pass. The archived receipt/log identify the exact reviewed-baseline source.
+The exact workspace baseline remains a separate fresh execution.
+
 ## Audited complete min-key capture and scoped baseline (2026-11-23)
 
 run-suite.py full-suite-after-shipped-min-key records5,357 actual rows on a374b92d,

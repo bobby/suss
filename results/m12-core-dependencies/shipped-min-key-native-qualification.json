@@ -15,7 +15,7 @@
         {
           "path": "docs/roadmap/handoff.md",
           "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
-          "later_input_sha256": "43b5658774b11a4f2cd88cb2d61bcec997943a319908c12c391a96a1d334a88e"
+          "later_input_sha256": "1b20e8be14865fe68f62b4c67ba21bc77dbb115c901e69607957c5fcab638f8c"
         }
       ],
       "all_other_recorded_native_inputs_match": true,
@@ -41,7 +41,7 @@
         {
           "path": "docs/roadmap/handoff.md",
           "native_input_sha256": "f9383aaef64e62744aed88ae513143dcc09ab831d07d8ce5d05c7345ae914209",
-          "later_input_sha256": "43b5658774b11a4f2cd88cb2d61bcec997943a319908c12c391a96a1d334a88e"
+          "later_input_sha256": "1b20e8be14865fe68f62b4c67ba21bc77dbb115c901e69607957c5fcab638f8c"
         }
       ],
       "all_other_recorded_native_inputs_match": true,

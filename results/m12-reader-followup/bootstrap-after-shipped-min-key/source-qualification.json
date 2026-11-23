@@ -1,0 +1,14 @@
+{
+  "native_head": "a16df2ace8c95771a9f8ebca8a7a7f6201afcf45",
+  "native_exit_code": 0,
+  "native_inputs_unchanged_at_completion": true,
+  "subsequent_changes": [
+    {
+      "path": "docs/roadmap/handoff.md",
+      "native_input_sha256": "43b5658774b11a4f2cd88cb2d61bcec997943a319908c12c391a96a1d334a88e",
+      "later_input_sha256": "1b20e8be14865fe68f62b4c67ba21bc77dbb115c901e69607957c5fcab638f8c"
+    }
+  ],
+  "all_other_recorded_inputs_match": true,
+  "qualification": "Only the listed result documentation follows the frozen bootstrap run; compiler/core/tests/fixtures and reviewed baseline match."
+}
