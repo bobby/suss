@@ -1,0 +1,46 @@
+Running as unit: run-p3924446-i91974315.scope; invocation ID: cacac28c4e15456886ff708e2c31f0e5
+   Compiling find-msvc-tools v0.1.5
+   Compiling shlex v1.3.0
+   Compiling cc v1.2.50
+   Compiling memchr v2.7.6
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling object v0.32.2
+   Compiling unicode-ident v1.0.26
+   Compiling proc-macro2 v1.0.103
+   Compiling ar_archive_writer v0.2.0
+   Compiling quote v1.0.42
+   Compiling psm v0.1.28
+   Compiling libc v0.2.191
+   Compiling num-integer v0.1.46
+   Compiling stacker v0.1.22
+   Compiling serde_core v1.0.228
+   Compiling num-bigint v0.4.6
+   Compiling syn v2.0.111
+   Compiling serde v1.0.228
+   Compiling yansi v1.0.1
+   Compiling foldhash v0.1.5
+   Compiling equivalent v1.0.2
+   Compiling allocator-api2 v0.2.21
+   Compiling chumsky v1.0.0-alpha.8
+   Compiling cfg-if v1.0.4
+   Compiling hashbrown v0.15.5
+   Compiling serde_derive v1.0.228
+   Compiling num-rational v0.4.2
+   Compiling unicode-width v0.1.14
+   Compiling diff v0.1.13
+   Compiling unicode-segmentation v1.12.0
+   Compiling pretty_assertions v1.4.1
+   Compiling ariadne v0.4.1
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-core)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 1m 49s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-target/debug/deps/suss_reader-10c228a0d621537c)
+
+running 3 tests
+test uuid::tests::ordering_compares_each_signed_half_without_subtraction_overflow ... ok
+test uuid::tests::every_utf16_hex_digit_matches_the_executed_jvm_scan ... ok
+test uuid::tests::parser_matches_fresh_primary_bits_hashes_canonical_text_and_lossless_errors ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 0.02s
+

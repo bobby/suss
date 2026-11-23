@@ -1,3 +1,20 @@
+## UUID parser and reader dependency probes (2026-11-23)
+
+`results/m12-reader-followup/oracle.py` records204 fresh JVM expression controls;
+`run-before.py` reproduces13 pre-repair source/AOT reader failures with a copied,
+hash-pinned2254f70c CLI. UUID and regex literal failures remain explicit.
+
+`oracle-uuid-parser.py` records235 actual UUID parser inputs (179 accepted,
+56 rejected), exact signed halves/hash/canonical text and lossless UTF-16 error
+units. It also scans every65536 UTF-16 unit with JVM Character.digit(char,16).
+The initial oversized JVM fixture method fails and is retained; reading the same
+inputs from EDN succeeds without dropping cases. `run-focused.py uuid-parser-gates`
+passes three Rust tests with all inputs unchanged. These establish a native,
+immutable128-bit parser/data helper only. Source/native EDN/runtime readers,
+compiled transport, public nominal values, GC, AOT and suite integration remain
+unimplemented by this checkpoint; no acceptance or full-workspace pass is claimed.
+See `results/m12-reader-followup/README.md` for exact commands and limitations.
+
 ## Case baseline terminal evidence (2026-11-23)
 
 `cargo test --workspace --locked -- --test-threads=2` terminates0 on
@@ -54,6 +71,7 @@ Primary data, failure baseline and original budget/size tests stay byte-identica
 The repaired unfiltered workspace run, final-head CI and independent promotion
 review remain separate required evidence. Commands and scope qualifications are in
 `results/m12-case-budget`; no full BigDecimal acceptance follows from these fixes.
+
 
 ## Compiled case and component provenance evidence (2026-11-23)
 

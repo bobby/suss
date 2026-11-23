@@ -1,0 +1,1022 @@
+[
+  {
+    "name": "uuid-valid-0-str",
+    "expression": "(str #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(str #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-pr-str",
+    "expression": "(pr-str #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(pr-str #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-hash",
+    "expression": "(hash #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(hash #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-uuid?",
+    "expression": "(uuid? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(uuid? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-number?",
+    "expression": "(number? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(number? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-integer?",
+    "expression": "(integer? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(integer? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-0-decimal?",
+    "expression": "(decimal? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+    "jvm_expression": "(decimal? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-0",
+    "expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))",
+    "jvm_expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-0",
+    "expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (suss.edn/read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))",
+    "jvm_expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (clojure.edn/read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-1-str",
+    "expression": "(str #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(str #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-pr-str",
+    "expression": "(pr-str #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(pr-str #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-hash",
+    "expression": "(hash #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(hash #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-uuid?",
+    "expression": "(uuid? #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(uuid? #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-number?",
+    "expression": "(number? #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(number? #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-integer?",
+    "expression": "(integer? #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(integer? #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-1-decimal?",
+    "expression": "(decimal? #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(decimal? #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-1",
+    "expression": "(= #uuid \"00000000-0000-0000-0000-000000000000\" (read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"))",
+    "jvm_expression": "(= #uuid \"00000000-0000-0000-0000-000000000000\" (read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-1",
+    "expression": "(= #uuid \"00000000-0000-0000-0000-000000000000\" (suss.edn/read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"))",
+    "jvm_expression": "(= #uuid \"00000000-0000-0000-0000-000000000000\" (clojure.edn/read-string \"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-2-str",
+    "expression": "(str #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(str #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-pr-str",
+    "expression": "(pr-str #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(pr-str #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-hash",
+    "expression": "(hash #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(hash #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-uuid?",
+    "expression": "(uuid? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(uuid? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-number?",
+    "expression": "(number? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(number? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-integer?",
+    "expression": "(integer? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(integer? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-2-decimal?",
+    "expression": "(decimal? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(decimal? #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-2",
+    "expression": "(= #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" (read-string \"#uuid \\\"ffffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))",
+    "jvm_expression": "(= #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" (read-string \"#uuid \\\"ffffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-2",
+    "expression": "(= #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" (suss.edn/read-string \"#uuid \\\"ffffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))",
+    "jvm_expression": "(= #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" (clojure.edn/read-string \"#uuid \\\"ffffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-3-str",
+    "expression": "(str #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(str #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-pr-str",
+    "expression": "(pr-str #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(pr-str #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-hash",
+    "expression": "(hash #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(hash #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-uuid?",
+    "expression": "(uuid? #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(uuid? #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-number?",
+    "expression": "(number? #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(number? #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-integer?",
+    "expression": "(integer? #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(integer? #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-valid-3-decimal?",
+    "expression": "(decimal? #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(decimal? #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-3",
+    "expression": "(= #uuid \"80000000-0000-0000-0000-000000000000\" (read-string \"#uuid \\\"80000000-0000-0000-0000-000000000000\\\"\"))",
+    "jvm_expression": "(= #uuid \"80000000-0000-0000-0000-000000000000\" (read-string \"#uuid \\\"80000000-0000-0000-0000-000000000000\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-3",
+    "expression": "(= #uuid \"80000000-0000-0000-0000-000000000000\" (suss.edn/read-string \"#uuid \\\"80000000-0000-0000-0000-000000000000\\\"\"))",
+    "jvm_expression": "(= #uuid \"80000000-0000-0000-0000-000000000000\" (clojure.edn/read-string \"#uuid \\\"80000000-0000-0000-0000-000000000000\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-4-str",
+    "expression": "(str #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(str #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-pr-str",
+    "expression": "(pr-str #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(pr-str #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-hash",
+    "expression": "(hash #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(hash #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-uuid?",
+    "expression": "(uuid? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(uuid? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-number?",
+    "expression": "(number? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(number? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-integer?",
+    "expression": "(integer? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(integer? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-valid-4-decimal?",
+    "expression": "(decimal? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(decimal? #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-4",
+    "expression": "(= #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\" (read-string \"#uuid \\\"7fffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))",
+    "jvm_expression": "(= #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\" (read-string \"#uuid \\\"7fffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-4",
+    "expression": "(= #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\" (suss.edn/read-string \"#uuid \\\"7fffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))",
+    "jvm_expression": "(= #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\" (clojure.edn/read-string \"#uuid \\\"7fffffff-ffff-ffff-ffff-ffffffffffff\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-5-str",
+    "expression": "(str #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(str #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-pr-str",
+    "expression": "(pr-str #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(pr-str #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-hash",
+    "expression": "(hash #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(hash #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-uuid?",
+    "expression": "(uuid? #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(uuid? #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-number?",
+    "expression": "(number? #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(number? #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-integer?",
+    "expression": "(integer? #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(integer? #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-valid-5-decimal?",
+    "expression": "(decimal? #uuid \"1-1-1-1-1\")",
+    "jvm_expression": "(decimal? #uuid \"1-1-1-1-1\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-5",
+    "expression": "(= #uuid \"1-1-1-1-1\" (read-string \"#uuid \\\"1-1-1-1-1\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-1-1-1-1\" (read-string \"#uuid \\\"1-1-1-1-1\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-5",
+    "expression": "(= #uuid \"1-1-1-1-1\" (suss.edn/read-string \"#uuid \\\"1-1-1-1-1\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-1-1-1-1\" (clojure.edn/read-string \"#uuid \\\"1-1-1-1-1\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-6-str",
+    "expression": "(str #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(str #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-pr-str",
+    "expression": "(pr-str #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(pr-str #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-hash",
+    "expression": "(hash #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(hash #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-uuid?",
+    "expression": "(uuid? #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(uuid? #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-number?",
+    "expression": "(number? #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(number? #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-integer?",
+    "expression": "(integer? #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(integer? #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-6-decimal?",
+    "expression": "(decimal? #uuid \"1-2-3-4-5\")",
+    "jvm_expression": "(decimal? #uuid \"1-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-6",
+    "expression": "(= #uuid \"1-2-3-4-5\" (read-string \"#uuid \\\"1-2-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-4-5\" (read-string \"#uuid \\\"1-2-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-6",
+    "expression": "(= #uuid \"1-2-3-4-5\" (suss.edn/read-string \"#uuid \\\"1-2-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-4-5\" (clojure.edn/read-string \"#uuid \\\"1-2-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-7-str",
+    "expression": "(str #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(str #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-pr-str",
+    "expression": "(pr-str #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(pr-str #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-hash",
+    "expression": "(hash #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(hash #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-uuid?",
+    "expression": "(uuid? #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(uuid? #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-number?",
+    "expression": "(number? #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(number? #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-integer?",
+    "expression": "(integer? #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(integer? #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-valid-7-decimal?",
+    "expression": "(decimal? #uuid \"550E8400-E29B-41D4-A716-446655440000\")",
+    "jvm_expression": "(decimal? #uuid \"550E8400-E29B-41D4-A716-446655440000\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-7",
+    "expression": "(= #uuid \"550E8400-E29B-41D4-A716-446655440000\" (read-string \"#uuid \\\"550E8400-E29B-41D4-A716-446655440000\\\"\"))",
+    "jvm_expression": "(= #uuid \"550E8400-E29B-41D4-A716-446655440000\" (read-string \"#uuid \\\"550E8400-E29B-41D4-A716-446655440000\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-7",
+    "expression": "(= #uuid \"550E8400-E29B-41D4-A716-446655440000\" (suss.edn/read-string \"#uuid \\\"550E8400-E29B-41D4-A716-446655440000\\\"\"))",
+    "jvm_expression": "(= #uuid \"550E8400-E29B-41D4-A716-446655440000\" (clojure.edn/read-string \"#uuid \\\"550E8400-E29B-41D4-A716-446655440000\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-8-str",
+    "expression": "(str #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(str #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-pr-str",
+    "expression": "(pr-str #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(pr-str #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-hash",
+    "expression": "(hash #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(hash #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-uuid?",
+    "expression": "(uuid? #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(uuid? #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-number?",
+    "expression": "(number? #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(number? #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-integer?",
+    "expression": "(integer? #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(integer? #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-valid-8-decimal?",
+    "expression": "(decimal? #uuid \"+1-+2-+3-+4-+5\")",
+    "jvm_expression": "(decimal? #uuid \"+1-+2-+3-+4-+5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-8",
+    "expression": "(= #uuid \"+1-+2-+3-+4-+5\" (read-string \"#uuid \\\"+1-+2-+3-+4-+5\\\"\"))",
+    "jvm_expression": "(= #uuid \"+1-+2-+3-+4-+5\" (read-string \"#uuid \\\"+1-+2-+3-+4-+5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-8",
+    "expression": "(= #uuid \"+1-+2-+3-+4-+5\" (suss.edn/read-string \"#uuid \\\"+1-+2-+3-+4-+5\\\"\"))",
+    "jvm_expression": "(= #uuid \"+1-+2-+3-+4-+5\" (clojure.edn/read-string \"#uuid \\\"+1-+2-+3-+4-+5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-9-str",
+    "expression": "(str #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(str #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-pr-str",
+    "expression": "(pr-str #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(pr-str #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-hash",
+    "expression": "(hash #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(hash #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-uuid?",
+    "expression": "(uuid? #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(uuid? #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-number?",
+    "expression": "(number? #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(number? #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-integer?",
+    "expression": "(integer? #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(integer? #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-9-decimal?",
+    "expression": "(decimal? #uuid \"000000001-2-3-4-5\")",
+    "jvm_expression": "(decimal? #uuid \"000000001-2-3-4-5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-9",
+    "expression": "(= #uuid \"000000001-2-3-4-5\" (read-string \"#uuid \\\"000000001-2-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"000000001-2-3-4-5\" (read-string \"#uuid \\\"000000001-2-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-9",
+    "expression": "(= #uuid \"000000001-2-3-4-5\" (suss.edn/read-string \"#uuid \\\"000000001-2-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"000000001-2-3-4-5\" (clojure.edn/read-string \"#uuid \\\"000000001-2-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-10-str",
+    "expression": "(str #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(str #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-pr-str",
+    "expression": "(pr-str #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(pr-str #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-hash",
+    "expression": "(hash #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(hash #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-uuid?",
+    "expression": "(uuid? #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(uuid? #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-number?",
+    "expression": "(number? #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(number? #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-integer?",
+    "expression": "(integer? #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(integer? #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-valid-10-decimal?",
+    "expression": "(decimal? #uuid \"1-00002-3-4-5\")",
+    "jvm_expression": "(decimal? #uuid \"1-00002-3-4-5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-10",
+    "expression": "(= #uuid \"1-00002-3-4-5\" (read-string \"#uuid \\\"1-00002-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-00002-3-4-5\" (read-string \"#uuid \\\"1-00002-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-10",
+    "expression": "(= #uuid \"1-00002-3-4-5\" (suss.edn/read-string \"#uuid \\\"1-00002-3-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-00002-3-4-5\" (clojure.edn/read-string \"#uuid \\\"1-00002-3-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-11-str",
+    "expression": "(str #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(str #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-pr-str",
+    "expression": "(pr-str #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(pr-str #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-hash",
+    "expression": "(hash #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(hash #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-uuid?",
+    "expression": "(uuid? #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(uuid? #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-number?",
+    "expression": "(number? #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(number? #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-integer?",
+    "expression": "(integer? #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(integer? #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-valid-11-decimal?",
+    "expression": "(decimal? #uuid \"1-2-00003-4-5\")",
+    "jvm_expression": "(decimal? #uuid \"1-2-00003-4-5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-11",
+    "expression": "(= #uuid \"1-2-00003-4-5\" (read-string \"#uuid \\\"1-2-00003-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-00003-4-5\" (read-string \"#uuid \\\"1-2-00003-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-11",
+    "expression": "(= #uuid \"1-2-00003-4-5\" (suss.edn/read-string \"#uuid \\\"1-2-00003-4-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-00003-4-5\" (clojure.edn/read-string \"#uuid \\\"1-2-00003-4-5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-12-str",
+    "expression": "(str #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(str #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-pr-str",
+    "expression": "(pr-str #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(pr-str #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-hash",
+    "expression": "(hash #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(hash #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-uuid?",
+    "expression": "(uuid? #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(uuid? #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-number?",
+    "expression": "(number? #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(number? #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-integer?",
+    "expression": "(integer? #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(integer? #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-valid-12-decimal?",
+    "expression": "(decimal? #uuid \"1-2-3-00004-5\")",
+    "jvm_expression": "(decimal? #uuid \"1-2-3-00004-5\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-12",
+    "expression": "(= #uuid \"1-2-3-00004-5\" (read-string \"#uuid \\\"1-2-3-00004-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-00004-5\" (read-string \"#uuid \\\"1-2-3-00004-5\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-12",
+    "expression": "(= #uuid \"1-2-3-00004-5\" (suss.edn/read-string \"#uuid \\\"1-2-3-00004-5\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-00004-5\" (clojure.edn/read-string \"#uuid \\\"1-2-3-00004-5\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-13-str",
+    "expression": "(str #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(str #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-pr-str",
+    "expression": "(pr-str #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(pr-str #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-hash",
+    "expression": "(hash #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(hash #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-uuid?",
+    "expression": "(uuid? #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(uuid? #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-number?",
+    "expression": "(number? #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(number? #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-integer?",
+    "expression": "(integer? #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(integer? #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-valid-13-decimal?",
+    "expression": "(decimal? #uuid \"1-2-3-4-0000000000005\")",
+    "jvm_expression": "(decimal? #uuid \"1-2-3-4-0000000000005\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-13",
+    "expression": "(= #uuid \"1-2-3-4-0000000000005\" (read-string \"#uuid \\\"1-2-3-4-0000000000005\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-4-0000000000005\" (read-string \"#uuid \\\"1-2-3-4-0000000000005\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-13",
+    "expression": "(= #uuid \"1-2-3-4-0000000000005\" (suss.edn/read-string \"#uuid \\\"1-2-3-4-0000000000005\\\"\"))",
+    "jvm_expression": "(= #uuid \"1-2-3-4-0000000000005\" (clojure.edn/read-string \"#uuid \\\"1-2-3-4-0000000000005\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-14-str",
+    "expression": "(str #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(str #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-pr-str",
+    "expression": "(pr-str #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(pr-str #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-hash",
+    "expression": "(hash #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(hash #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-uuid?",
+    "expression": "(uuid? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(uuid? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-number?",
+    "expression": "(number? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(number? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-integer?",
+    "expression": "(integer? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(integer? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-valid-14-decimal?",
+    "expression": "(decimal? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")",
+    "jvm_expression": "(decimal? #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-14",
+    "expression": "(= #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\" (read-string \"#uuid \\\"\\\\uff11-\\\\uff12-\\\\uff13-\\\\uff14-\\\\uff15\\\"\"))",
+    "jvm_expression": "(= #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\" (read-string \"#uuid \\\"\\\\uff11-\\\\uff12-\\\\uff13-\\\\uff14-\\\\uff15\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-14",
+    "expression": "(= #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\" (suss.edn/read-string \"#uuid \\\"\\\\uff11-\\\\uff12-\\\\uff13-\\\\uff14-\\\\uff15\\\"\"))",
+    "jvm_expression": "(= #uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\" (clojure.edn/read-string \"#uuid \\\"\\\\uff11-\\\\uff12-\\\\uff13-\\\\uff14-\\\\uff15\\\"\"))"
+  },
+  {
+    "name": "uuid-valid-15-str",
+    "expression": "(str #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(str #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-pr-str",
+    "expression": "(pr-str #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(pr-str #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-hash",
+    "expression": "(hash #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(hash #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-uuid?",
+    "expression": "(uuid? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(uuid? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-number?",
+    "expression": "(number? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(number? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-integer?",
+    "expression": "(integer? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(integer? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-valid-15-decimal?",
+    "expression": "(decimal? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")",
+    "jvm_expression": "(decimal? #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\")"
+  },
+  {
+    "name": "uuid-source-vs-runtime-15",
+    "expression": "(= #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\" (read-string \"#uuid \\\"\\\\u0661-\\\\u0662-\\\\u0663-\\\\u0664-\\\\u0665\\\"\"))",
+    "jvm_expression": "(= #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\" (read-string \"#uuid \\\"\\\\u0661-\\\\u0662-\\\\u0663-\\\\u0664-\\\\u0665\\\"\"))"
+  },
+  {
+    "name": "uuid-edn-vs-source-15",
+    "expression": "(= #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\" (suss.edn/read-string \"#uuid \\\"\\\\u0661-\\\\u0662-\\\\u0663-\\\\u0664-\\\\u0665\\\"\"))",
+    "jvm_expression": "(= #uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\" (clojure.edn/read-string \"#uuid \\\"\\\\u0661-\\\\u0662-\\\\u0663-\\\\u0664-\\\\u0665\\\"\"))"
+  },
+  {
+    "name": "uuid-invalid-0",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-1",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"not-a-uuid\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"not-a-uuid\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-2",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-3",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4-5-6\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4-5-6\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-4",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"-1-2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"-1-2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-5",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1--2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1--2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-6",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4-\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4-\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-7",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4-g\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4-g\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-8",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"0x1-2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"0x1-2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-9",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"12345678901234567-2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"12345678901234567-2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-10",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"0000000000000000000000000001-2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"0000000000000000000000000001-2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-11",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\" 1-2-3-4-5\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\" 1-2-3-4-5\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-12",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4-5 \\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4-5 \\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-invalid-13",
+    "expression": "(try (suss.edn/read-string \"#uuid \\\"1-2-3-4-\\\\uff27\\\"\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid \\\"1-2-3-4-\\\\uff27\\\"\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-nonstring-0",
+    "expression": "(try (suss.edn/read-string \"#uuid nil\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid nil\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-nonstring-1",
+    "expression": "(try (suss.edn/read-string \"#uuid 0\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid 0\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-nonstring-2",
+    "expression": "(try (suss.edn/read-string \"#uuid :x\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid :x\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-nonstring-3",
+    "expression": "(try (suss.edn/read-string \"#uuid [1]\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid [1]\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-nonstring-4",
+    "expression": "(try (suss.edn/read-string \"#uuid ()\") (catch :default e :error))",
+    "jvm_expression": "(try (clojure.edn/read-string \"#uuid ()\") (catch Throwable e :error))"
+  },
+  {
+    "name": "uuid-equal-distinct",
+    "expression": "[ (= #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\") (identical? #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\")]",
+    "jvm_expression": "[ (= #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\") (identical? #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\")]"
+  },
+  {
+    "name": "uuid-key-and-set",
+    "expression": "[(get {#uuid \"550e8400-e29b-41d4-a716-446655440000\" 42} #uuid \"550e8400-e29b-41d4-a716-446655440000\") (count #{#uuid \"550e8400-e29b-41d4-a716-446655440000\"})]",
+    "jvm_expression": "[(get {#uuid \"550e8400-e29b-41d4-a716-446655440000\" 42} #uuid \"550e8400-e29b-41d4-a716-446655440000\") (count #{#uuid \"550e8400-e29b-41d4-a716-446655440000\"})]"
+  },
+  {
+    "name": "uuid-case-value",
+    "expression": "(case #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\" :hit :miss)",
+    "jvm_expression": "(case #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"550e8400-e29b-41d4-a716-446655440000\" :hit :miss)"
+  },
+  {
+    "name": "uuid-reader-override",
+    "expression": "(suss.edn/read-string {:readers {'uuid (fn [x] [:override x])}} \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\")",
+    "jvm_expression": "(clojure.edn/read-string {:readers {'uuid (fn [x] [:override x])}} \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\")"
+  },
+  {
+    "name": "uuid-reader-default",
+    "expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (suss.edn/read-string {:default (fn [tag x] :default)} \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))",
+    "jvm_expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (clojure.edn/read-string {:default (fn [tag x] :default)} \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))"
+  },
+  {
+    "name": "uuid-signed-compare-168",
+    "expression": "(compare #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"00000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(compare #uuid \"550e8400-e29b-41d4-a716-446655440000\" #uuid \"00000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-signed-compare-169",
+    "expression": "(compare #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")",
+    "jvm_expression": "(compare #uuid \"80000000-0000-0000-0000-000000000000\" #uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\")"
+  },
+  {
+    "name": "uuid-signed-compare-170",
+    "expression": "(compare #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" #uuid \"80000000-0000-0000-0000-000000000000\")",
+    "jvm_expression": "(compare #uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\" #uuid \"80000000-0000-0000-0000-000000000000\")"
+  },
+  {
+    "name": "uuid-signed-compare-171",
+    "expression": "(compare #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\")",
+    "jvm_expression": "(compare #uuid \"00000000-0000-0000-8000-000000000000\" #uuid \"00000000-0000-0000-7fff-ffffffffffff\")"
+  },
+  {
+    "name": "regex-str-0",
+    "expression": "(str #\"my regex\")",
+    "jvm_expression": "(str #\"my regex\")"
+  },
+  {
+    "name": "regex-pr-str-0",
+    "expression": "(pr-str #\"my regex\")",
+    "jvm_expression": "(pr-str #\"my regex\")"
+  },
+  {
+    "name": "regex-self-0",
+    "expression": "(let [r #\"my regex\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"my regex\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-0",
+    "expression": "(= #\"my regex\" #\"my regex\")",
+    "jvm_expression": "(= #\"my regex\" #\"my regex\")"
+  },
+  {
+    "name": "regex-str-1",
+    "expression": "(str #\"\")",
+    "jvm_expression": "(str #\"\")"
+  },
+  {
+    "name": "regex-pr-str-1",
+    "expression": "(pr-str #\"\")",
+    "jvm_expression": "(pr-str #\"\")"
+  },
+  {
+    "name": "regex-self-1",
+    "expression": "(let [r #\"\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-1",
+    "expression": "(= #\"\" #\"\")",
+    "jvm_expression": "(= #\"\" #\"\")"
+  },
+  {
+    "name": "regex-str-2",
+    "expression": "(str #\"\\d+\")",
+    "jvm_expression": "(str #\"\\d+\")"
+  },
+  {
+    "name": "regex-pr-str-2",
+    "expression": "(pr-str #\"\\d+\")",
+    "jvm_expression": "(pr-str #\"\\d+\")"
+  },
+  {
+    "name": "regex-self-2",
+    "expression": "(let [r #\"\\d+\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"\\d+\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-2",
+    "expression": "(= #\"\\d+\" #\"\\d+\")",
+    "jvm_expression": "(= #\"\\d+\" #\"\\d+\")"
+  },
+  {
+    "name": "regex-str-3",
+    "expression": "(str #\"a\\\"b\")",
+    "jvm_expression": "(str #\"a\\\"b\")"
+  },
+  {
+    "name": "regex-pr-str-3",
+    "expression": "(pr-str #\"a\\\"b\")",
+    "jvm_expression": "(pr-str #\"a\\\"b\")"
+  },
+  {
+    "name": "regex-self-3",
+    "expression": "(let [r #\"a\\\"b\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"a\\\"b\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-3",
+    "expression": "(= #\"a\\\"b\" #\"a\\\"b\")",
+    "jvm_expression": "(= #\"a\\\"b\" #\"a\\\"b\")"
+  },
+  {
+    "name": "regex-str-4",
+    "expression": "(str #\"(?i)a\")",
+    "jvm_expression": "(str #\"(?i)a\")"
+  },
+  {
+    "name": "regex-pr-str-4",
+    "expression": "(pr-str #\"(?i)a\")",
+    "jvm_expression": "(pr-str #\"(?i)a\")"
+  },
+  {
+    "name": "regex-self-4",
+    "expression": "(let [r #\"(?i)a\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"(?i)a\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-4",
+    "expression": "(= #\"(?i)a\" #\"(?i)a\")",
+    "jvm_expression": "(= #\"(?i)a\" #\"(?i)a\")"
+  },
+  {
+    "name": "regex-str-5",
+    "expression": "(str #\"[a-z&&[^bc]]\")",
+    "jvm_expression": "(str #\"[a-z&&[^bc]]\")"
+  },
+  {
+    "name": "regex-pr-str-5",
+    "expression": "(pr-str #\"[a-z&&[^bc]]\")",
+    "jvm_expression": "(pr-str #\"[a-z&&[^bc]]\")"
+  },
+  {
+    "name": "regex-self-5",
+    "expression": "(let [r #\"[a-z&&[^bc]]\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"[a-z&&[^bc]]\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-5",
+    "expression": "(= #\"[a-z&&[^bc]]\" #\"[a-z&&[^bc]]\")",
+    "jvm_expression": "(= #\"[a-z&&[^bc]]\" #\"[a-z&&[^bc]]\")"
+  },
+  {
+    "name": "regex-str-6",
+    "expression": "(str #\"(?<=a)b\")",
+    "jvm_expression": "(str #\"(?<=a)b\")"
+  },
+  {
+    "name": "regex-pr-str-6",
+    "expression": "(pr-str #\"(?<=a)b\")",
+    "jvm_expression": "(pr-str #\"(?<=a)b\")"
+  },
+  {
+    "name": "regex-self-6",
+    "expression": "(let [r #\"(?<=a)b\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"(?<=a)b\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-6",
+    "expression": "(= #\"(?<=a)b\" #\"(?<=a)b\")",
+    "jvm_expression": "(= #\"(?<=a)b\" #\"(?<=a)b\")"
+  },
+  {
+    "name": "regex-str-7",
+    "expression": "(str #\"(a)\\1\")",
+    "jvm_expression": "(str #\"(a)\\1\")"
+  },
+  {
+    "name": "regex-pr-str-7",
+    "expression": "(pr-str #\"(a)\\1\")",
+    "jvm_expression": "(pr-str #\"(a)\\1\")"
+  },
+  {
+    "name": "regex-self-7",
+    "expression": "(let [r #\"(a)\\1\"] [(= r r) (identical? r r) (number? r)])",
+    "jvm_expression": "(let [r #\"(a)\\1\"] [(= r r) (identical? r r) (number? r)])"
+  },
+  {
+    "name": "regex-distinct-7",
+    "expression": "(= #\"(a)\\1\" #\"(a)\\1\")",
+    "jvm_expression": "(= #\"(a)\\1\" #\"(a)\\1\")"
+  }
+]

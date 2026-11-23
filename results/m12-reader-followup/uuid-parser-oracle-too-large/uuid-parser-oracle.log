@@ -1,0 +1,5 @@
+Syntax error (IndexOutOfBoundsException) compiling fn* at (results/m12-reader-followup/uuid-parser-oracle.clj:2:1).
+Method code too large!
+
+Full report at:
+/tmp/clojure-13269988423564905805.edn

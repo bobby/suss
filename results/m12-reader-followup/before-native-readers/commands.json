@@ -1,0 +1,208 @@
+{
+  "source_head": "2254f70cb62c04741f84dce6ce7724866c3f77a8",
+  "executable_sha256": "969bbcd27acb249c24c2d52ed43be6727c7f1e3685a508883fca39fdd3effff3",
+  "commands": [
+    {
+      "label": "uuid-valid-0-str",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(str #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(str #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 44.40914487838745,
+      "stdout_sha256": "c433aaf088b60a79adfcf1f9e514faf48b616d9fa1032e32efcb0be8b3339da5",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-pr-str",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(pr-str #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(pr-str #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 3.0496585369110107,
+      "stdout_sha256": "1d4487918e6eeed237e9431b567439c5e88174505c07f01d437dc2d6811f6fd0",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-hash",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(hash #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(hash #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 2.9279916286468506,
+      "stdout_sha256": "a8ff8d97f4054a520ef5c9ce85a1376e103a402000ddc0e3bf81c62b46747ecb",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-uuid?",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(uuid? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(uuid? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 3.314178466796875,
+      "stdout_sha256": "5b93607b5e5264c16f59c69ceb6ea9fc7dd714e63ddfe5c9ad09e705d5711d49",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-number?",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(number? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(number? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 3.2566614151000977,
+      "stdout_sha256": "3bac617fb5aa29a248502947bebc4f7b1606ae4e0f2517c1b43fc4953297f761",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-integer?",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(integer? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(integer? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 3.2768068313598633,
+      "stdout_sha256": "55086bdc76958932abd191d1a7861e65d0674a3a7b529a9557a5c3012ef65633",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-valid-0-decimal?",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(decimal? #uuid \"550e8400-e29b-41d4-a716-446655440000\")"
+      ],
+      "expression": "(decimal? #uuid \"550e8400-e29b-41d4-a716-446655440000\")",
+      "exit_code": 1,
+      "seconds": 3.031801223754883,
+      "stdout_sha256": "6ff409001e2da1b242eb3bc704c4598805765cc3309888b968bfb229f5067580",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-source-vs-runtime-0",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))"
+      ],
+      "expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))",
+      "exit_code": 1,
+      "seconds": 2.9982943534851074,
+      "stdout_sha256": "5d6fa9594cf277a901a91f4e9c99cb9f3374b0e073ee776264c486152b98fc84",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-edn-vs-source-0",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (suss.edn/read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))"
+      ],
+      "expression": "(= #uuid \"550e8400-e29b-41d4-a716-446655440000\" (suss.edn/read-string \"#uuid \\\"550e8400-e29b-41d4-a716-446655440000\\\"\"))",
+      "exit_code": 1,
+      "seconds": 2.514479637145996,
+      "stdout_sha256": "bbcdd804d16b1e7e6252bde962d7b2d8accce04a16a2f43fcda86f0a88cebf07",
+      "executable_unchanged": true
+    },
+    {
+      "label": "regex-str-0",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(str #\"my regex\")"
+      ],
+      "expression": "(str #\"my regex\")",
+      "exit_code": 1,
+      "seconds": 2.4942381381988525,
+      "stdout_sha256": "43e195a711a3dba75005ae2d3220df804b404a65ec1e29e04d7124ae1d8aa7a3",
+      "executable_unchanged": true
+    },
+    {
+      "label": "regex-self-0",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(let [r #\"my regex\"] [(= r r) (identical? r r) (number? r)])"
+      ],
+      "expression": "(let [r #\"my regex\"] [(= r r) (identical? r r) (number? r)])",
+      "exit_code": 1,
+      "seconds": 3.0347723960876465,
+      "stdout_sha256": "e9833bc0a95419469d3d76a99bcf52e9fc4786bb93b3b9d507891114dfa7a614",
+      "executable_unchanged": true
+    },
+    {
+      "label": "regex-distinct-0",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "-e",
+        "(= #\"my regex\" #\"my regex\")"
+      ],
+      "expression": "(= #\"my regex\" #\"my regex\")",
+      "exit_code": 1,
+      "seconds": 2.9318349361419678,
+      "stdout_sha256": "87a751c14dc2c94bc5dbc3f37cfe2be06cd7df47539b04b7c27bb5954fb0a002",
+      "executable_unchanged": true
+    },
+    {
+      "label": "uuid-aot",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/suss-before-reader",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/target/probe/reader-before-build",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/before-native-readers/uuid.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/before-native-readers/probe.wit",
+        "--export",
+        "check=check",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/before-native-readers/uuid.wasm"
+      ],
+      "expression": null,
+      "exit_code": 1,
+      "seconds": 0.020746469497680664,
+      "stdout_sha256": "cf5418e1d6dd698493de73228cf811fadb63a944531b6103d9efd1e1d3b5506f",
+      "executable_unchanged": true
+    }
+  ],
+  "complete": true
+}
