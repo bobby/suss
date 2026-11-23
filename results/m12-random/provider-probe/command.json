@@ -1,0 +1,45 @@
+{
+  "source_sha256": "5bdd5ff52fd9fa8f965606b646e220f1f3d0be8a5489df7ca4dfcd76d0d6406c",
+  "libraries": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasmtime-7fad23f82b6a71a9.rlib": "f9fe822630277f7fd34d8b5e2308664b0822d468e55365123334f1f19cf7f132",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasmtime_wasi-01a0ec264e5d2711.rlib": "8cf6230d0b18c02566e5fc365b83675ca4bcb28faac34ead6990ac42c1eab59e",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib": "e6d2657ac393d6142d50528c3b1e0b65280c3faa781481181e3a7e2712cb1d9e",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwat-b5ecd55b0d173bea.rlib": "98ceb557e750b317d58004898abde9e03811b4eba131cea88f0438041fc9599d"
+  },
+  "commands": [
+    {
+      "label": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-assert-followup-source/results/m12-random/provider-probe/main.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-random-provider-probe/probe",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasmtime-7fad23f82b6a71a9.rlib",
+        "--extern",
+        "wasmtime_wasi=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasmtime_wasi-01a0ec264e5d2711.rlib",
+        "--extern",
+        "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+        "--extern",
+        "wat=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libwat-b5ecd55b0d173bea.rlib"
+      ],
+      "exit_code": 0,
+      "seconds": 11.097822666168213
+    },
+    {
+      "label": "run",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-random-provider-probe/probe"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04886126518249512
+    }
+  ],
+  "complete": true,
+  "qualification": "Standalone feasibility fixture only: typed nullable callback installation, scalar conversion, explicit standard wasi:random/random@0.3.1 import and actual provider calls. It neither modifies the production runtime nor establishes public rand/error/size/ABI compatibility.",
+  "libraries_unchanged": true,
+  "source_unchanged": true
+}

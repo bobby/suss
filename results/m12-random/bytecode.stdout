@@ -1,0 +1,70 @@
+Compiled from "core.clj"
+public final class clojure.core$rand extends clojure.lang.AFunction {
+  public clojure.core$rand();
+    Code:
+       0: aload_0
+       1: invokespecial #9                  // Method clojure/lang/AFunction."<init>":()V
+       4: return
+
+  public static java.lang.Object invokeStatic(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: astore_0
+       3: invokestatic  #14                 // Method invokeStatic:()Ljava/lang/Object;
+       6: invokestatic  #20                 // Method clojure/lang/Numbers.multiply:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Number;
+       9: areturn
+
+  public java.lang.Object invoke(java.lang.Object);
+    Code:
+       0: aload_1
+       1: aconst_null
+       2: astore_1
+       3: invokestatic  #25                 // Method invokeStatic:(Ljava/lang/Object;)Ljava/lang/Object;
+       6: areturn
+
+  public static java.lang.Object invokeStatic();
+    Code:
+       0: invokestatic  #31                 // Method java/lang/Math.random:()D
+       3: invokestatic  #37                 // Method java/lang/Double.valueOf:(D)Ljava/lang/Double;
+       6: areturn
+
+  public java.lang.Object invoke();
+    Code:
+       0: invokestatic  #14                 // Method invokeStatic:()Ljava/lang/Object;
+       3: areturn
+
+  public static {};
+    Code:
+       0: return
+}
+Compiled from "core.clj"
+public final class clojure.core$rand_int extends clojure.lang.AFunction {
+  public clojure.core$rand_int();
+    Code:
+       0: aload_0
+       1: invokespecial #9                  // Method clojure/lang/AFunction."<init>":()V
+       4: return
+
+  public static java.lang.Object invokeStatic(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: astore_0
+       3: invokestatic  #15                 // Method clojure/core$rand.invokeStatic:(Ljava/lang/Object;)Ljava/lang/Object;
+       6: invokestatic  #21                 // Method clojure/lang/RT.intCast:(Ljava/lang/Object;)I
+       9: invokestatic  #27                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      12: areturn
+
+  public java.lang.Object invoke(java.lang.Object);
+    Code:
+       0: aload_1
+       1: aconst_null
+       2: astore_1
+       3: invokestatic  #31                 // Method invokeStatic:(Ljava/lang/Object;)Ljava/lang/Object;
+       6: areturn
+
+  public static {};
+    Code:
+       0: return
+}

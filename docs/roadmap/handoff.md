@@ -1,3 +1,15 @@
+## Execution-time random capability candidate (2026-11-23)
+
+The private runtime now has a typed entropy callback outside the pinned ABI
+prelude, native sessions install OS entropy, and explicit selected-world standard
+random imports use the shared resolved WIT encoder. AOT installation precedes
+source initializers in ordinary and optimized assembly; pure worlds keep their
+import contract and missing entropy throws a catchable language error. The public
+Clojure rand/rand-int forms retain checked numeric function values rather than
+core legacy coercing macros. Exact source patches/EPL and126 primary deterministic
+transformations are retained under results/m12-random. Fresh native execution is
+required; feasibility and fixture recordings are not production pass claims.
+
 ## Validation recorder recovery (2026-11-23)
 
 A workspace/tool transition detached the outside-scope Python recorders.

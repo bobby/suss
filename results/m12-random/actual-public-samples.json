@@ -1,0 +1,258 @@
+{
+  "calls": [
+    {
+      "operation": "rand",
+      "bound": "0",
+      "expression": "(try (let [x (rand 0)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0.0\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "1",
+      "expression": "(try (let [x (rand 1)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0.2513623246105894\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "-1",
+      "expression": "(try (let [x (rand -1)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"-0.1775230842069162\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "5",
+      "expression": "(try (let [x (rand 5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"3.1015876307430763\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "-5",
+      "expression": "(try (let [x (rand -5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"-3.550427794614067\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "5.5",
+      "expression": "(try (let [x (rand 5.5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"3.454738061397607\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "-5.5",
+      "expression": "(try (let [x (rand -5.5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"-3.3300239371296096\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "##NaN",
+      "expression": "(try (let [x (rand ##NaN)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"##NaN\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "##Inf",
+      "expression": "(try (let [x (rand ##Inf)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"##Inf\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "##-Inf",
+      "expression": "(try (let [x (rand ##-Inf)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"##-Inf\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "2147483648",
+      "expression": "(try (let [x (rand 2147483648)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"1.4302197919450345E9\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "4294967296",
+      "expression": "(try (let [x (rand 4294967296)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"1.0829184301854362E9\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "1N",
+      "expression": "(try (let [x (rand 1N)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0.8297065369886609\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "1/3",
+      "expression": "(try (let [x (rand 1/3)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0.10878208292936882\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "1.25M",
+      "expression": "(try (let [x (rand 1.25M)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0.2540168235765554\" \"java.lang.Double\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "nil",
+      "expression": "(try (let [x (rand nil)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.NullPointerException\" \"Cannot invoke \\\"Object.getClass()\\\" because \\\"x\\\" is null\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "true",
+      "expression": "(try (let [x (rand true)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "\"5\"",
+      "expression": "(try (let [x (rand \"5\")] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": ":bad",
+      "expression": "(try (let [x (rand :bad)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "[]",
+      "expression": "(try (let [x (rand [])] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand",
+      "bound": "{}",
+      "expression": "(try (let [x (rand {})] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "0",
+      "expression": "(try (let [x (rand-int 0)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "1",
+      "expression": "(try (let [x (rand-int 1)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "-1",
+      "expression": "(try (let [x (rand-int -1)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "5",
+      "expression": "(try (let [x (rand-int 5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"4\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "-5",
+      "expression": "(try (let [x (rand-int -5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"-3\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "5.5",
+      "expression": "(try (let [x (rand-int 5.5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "-5.5",
+      "expression": "(try (let [x (rand-int -5.5)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "##NaN",
+      "expression": "(try (let [x (rand-int ##NaN)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "##Inf",
+      "expression": "(try (let [x (rand-int ##Inf)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.IllegalArgumentException\" \"Value out of range for long: Infinity\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "##-Inf",
+      "expression": "(try (let [x (rand-int ##-Inf)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.IllegalArgumentException\" \"Value out of range for long: -Infinity\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "2147483648",
+      "expression": "(try (let [x (rand-int 2147483648)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"3862980\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "4294967296",
+      "expression": "(try (let [x (rand-int 4294967296)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ArithmeticException\" \"integer overflow\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "1N",
+      "expression": "(try (let [x (rand-int 1N)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "1/3",
+      "expression": "(try (let [x (rand-int 1/3)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "1.25M",
+      "expression": "(try (let [x (rand-int 1.25M)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:value \"0\" \"java.lang.Integer\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "nil",
+      "expression": "(try (let [x (rand-int nil)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.NullPointerException\" \"Cannot invoke \\\"Object.getClass()\\\" because \\\"x\\\" is null\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "true",
+      "expression": "(try (let [x (rand-int true)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class java.lang.Boolean cannot be cast to class java.lang.Number (java.lang.Boolean and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "\"5\"",
+      "expression": "(try (let [x (rand-int \"5\")] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": ":bad",
+      "expression": "(try (let [x (rand-int :bad)] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.Keyword cannot be cast to class java.lang.Number (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "[]",
+      "expression": "(try (let [x (rand-int [])] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.PersistentVector cannot be cast to class java.lang.Number (clojure.lang.PersistentVector is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    },
+    {
+      "operation": "rand-int",
+      "bound": "{}",
+      "expression": "(try (let [x (rand-int {})] [:value (pr-str x) (.getName (class x))]) (catch Throwable e [:error (.getName (class e)) (ex-message e)]))",
+      "actual_primary_sample": "[:error \"java.lang.ClassCastException\" \"class clojure.lang.PersistentArrayMap cannot be cast to class java.lang.Number (clojure.lang.PersistentArrayMap is in unnamed module of loader 'app'; java.lang.Number is in module java.base of loader 'bootstrap')\"]"
+    }
+  ],
+  "rand_stream": "[0.06943180098189983 0.37041086739046236 0.5291750729160161 0.9642593927442489 0.3338639840469657 0.4050824740021929 0.11872970216726919 0.3284225910390739 0.3695126637523687 0.13885870275892986 0.7504389117885872 0.1901468621029433 0.09871328806795143 0.7015302814240244 0.529565452060038 0.2655420375827027]",
+  "qualification": "Nondeterministic primary observations only; not exact native expected samples."
+}

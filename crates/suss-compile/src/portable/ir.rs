@@ -1417,10 +1417,10 @@ fn loop_safe(operation: &Operation) -> bool {
         | Operation::GlobalCell(_)
         | Operation::GlobalBound(_)
         | Operation::NilTest(_)
-        | Operation::Bitwise { .. }
         | Operation::Array { .. }
         | Operation::MakeClosure { .. }
         | Operation::MakeGeneralClosure { .. } => true,
+        Operation::Bitwise { operation, .. } => *operation != super::hir::Bitwise::RandomDouble,
         Operation::Comparison { operation, .. } => !matches!(operation, C::Less | C::LessEqual | C::Greater | C::GreaterEqual),
         Operation::Arithmetic { coercing, .. } => !coercing,
         Operation::Nominal { operation, .. } => {

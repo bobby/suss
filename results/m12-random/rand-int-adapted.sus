@@ -1,0 +1,6 @@
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+(def ^{:doc "Returns a random integer between 0 (inclusive) and n (exclusive)."
+       :added "1.0" :static true} rand-int
+  (let [int int]
+    (fn [n] (int (rand n)))))

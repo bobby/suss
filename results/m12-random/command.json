@@ -1,0 +1,20 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-assert-followup-source/results/m12-random/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 5.156006813049316,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "34de1666ba83c7cc1e355d062ab23a9c3434822e435bd468c43ba18639d6a78f",
+  "stdout_sha256": "e95d9e7b98b3befb3bba021f017219314675923d56873e3ce5c9ceeb7ad5a86a",
+  "qualification": "126 exact expectations isolate the multiplication and int-cast steps of the retained primary rand/rand-int source using controlled draws. JVM bytecode directly invokes static rand implementations, so with-redefs is not a draw-control mechanism. The42 real public calls and16-draw stream are nondeterministic observations, not native exact-value goldens. Native public rand/provider behavior requires separate execution."
+}

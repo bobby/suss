@@ -1,0 +1,884 @@
+[
+  {
+    "operation": "rand",
+    "bound": "0",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 0 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "0",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 0 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "0",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 0 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "0",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 0 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "0",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 0 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "0",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 0 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 1 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 1 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 1 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.5\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 1 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 1 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.9999999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 1 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-1",
+    "draw": "0.0",
+    "expression": "(try (let [x (* -1 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-1",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* -1 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-1",
+    "draw": "0.5",
+    "expression": "(try (let [x (* -1 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-0.5\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-1",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* -1 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-1",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* -1 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-0.9999999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-1",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* -1 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 5 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 5 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 5 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2.5\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 5 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 5 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"4.999999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 5 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"4\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5",
+    "draw": "0.0",
+    "expression": "(try (let [x (* -5 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* -5 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5",
+    "draw": "0.5",
+    "expression": "(try (let [x (* -5 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-2.5\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* -5 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-2\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* -5 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-4.999999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* -5 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-4\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5.5",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 5.5 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5.5",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 5.5 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5.5",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 5.5 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2.75\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5.5",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 5.5 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "5.5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 5.5 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"5.499999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "5.5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 5.5 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"5\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5.5",
+    "draw": "0.0",
+    "expression": "(try (let [x (* -5.5 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5.5",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* -5.5 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5.5",
+    "draw": "0.5",
+    "expression": "(try (let [x (* -5.5 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-2.75\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5.5",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* -5.5 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-2\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "-5.5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* -5.5 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-5.499999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "-5.5",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* -5.5 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"-5\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##NaN",
+    "draw": "0.0",
+    "expression": "(try (let [x (* ##NaN 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##NaN\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##NaN",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* ##NaN 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##NaN",
+    "draw": "0.5",
+    "expression": "(try (let [x (* ##NaN 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##NaN\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##NaN",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* ##NaN 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##NaN",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* ##NaN 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##NaN\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##NaN",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* ##NaN 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##Inf",
+    "draw": "0.0",
+    "expression": "(try (let [x (* ##Inf 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##NaN\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##Inf",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* ##Inf 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##Inf",
+    "draw": "0.5",
+    "expression": "(try (let [x (* ##Inf 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##Inf\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##Inf",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* ##Inf 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##Inf",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* ##Inf 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##Inf\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##Inf",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* ##Inf 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##-Inf",
+    "draw": "0.0",
+    "expression": "(try (let [x (* ##-Inf 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##NaN\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##-Inf",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* ##-Inf 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##-Inf",
+    "draw": "0.5",
+    "expression": "(try (let [x (* ##-Inf 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##-Inf\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##-Inf",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* ##-Inf 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "##-Inf",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* ##-Inf 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"##-Inf\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "##-Inf",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* ##-Inf 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "2147483648",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 2147483648 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "2147483648",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 2147483648 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "2147483648",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 2147483648 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"1.073741824E9\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "2147483648",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 2147483648 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"1073741824\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "2147483648",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 2147483648 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2.1474836479999998E9\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "2147483648",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 2147483648 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "4294967296",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 4294967296 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "4294967296",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 4294967296 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "4294967296",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 4294967296 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"2.147483648E9\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "4294967296",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 4294967296 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "4294967296",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 4294967296 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"4.2949672959999995E9\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "4294967296",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 4294967296 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1N",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 1N 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1N",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 1N 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1N",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 1N 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.5\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1N",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 1N 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1N",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 1N 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.9999999999999999\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1N",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 1N 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1/3",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 1/3 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1/3",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 1/3 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1/3",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 1/3 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.16666666666666666\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1/3",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 1/3 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1/3",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 1/3 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.33333333333333326\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1/3",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 1/3 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1.25M",
+    "draw": "0.0",
+    "expression": "(try (let [x (* 1.25M 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.0\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1.25M",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* 1.25M 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1.25M",
+    "draw": "0.5",
+    "expression": "(try (let [x (* 1.25M 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0.625\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1.25M",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* 1.25M 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"0\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "1.25M",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* 1.25M 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"1.2499999999999998\" :double]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "1.25M",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* 1.25M 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:value \"1\" :integer]"
+  },
+  {
+    "operation": "rand",
+    "bound": "nil",
+    "draw": "0.0",
+    "expression": "(try (let [x (* nil 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "nil",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* nil 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "nil",
+    "draw": "0.5",
+    "expression": "(try (let [x (* nil 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "nil",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* nil 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "nil",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* nil 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "nil",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* nil 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "true",
+    "draw": "0.0",
+    "expression": "(try (let [x (* true 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "true",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* true 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "true",
+    "draw": "0.5",
+    "expression": "(try (let [x (* true 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "true",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* true 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "true",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* true 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "true",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* true 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "\"5\"",
+    "draw": "0.0",
+    "expression": "(try (let [x (* \"5\" 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "\"5\"",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* \"5\" 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "\"5\"",
+    "draw": "0.5",
+    "expression": "(try (let [x (* \"5\" 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "\"5\"",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* \"5\" 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "\"5\"",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* \"5\" 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "\"5\"",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* \"5\" 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": ":bad",
+    "draw": "0.0",
+    "expression": "(try (let [x (* :bad 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": ":bad",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* :bad 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": ":bad",
+    "draw": "0.5",
+    "expression": "(try (let [x (* :bad 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": ":bad",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* :bad 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": ":bad",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* :bad 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": ":bad",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* :bad 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "[]",
+    "draw": "0.0",
+    "expression": "(try (let [x (* [] 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "[]",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* [] 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "[]",
+    "draw": "0.5",
+    "expression": "(try (let [x (* [] 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "[]",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* [] 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "[]",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* [] 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "[]",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* [] 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "{}",
+    "draw": "0.0",
+    "expression": "(try (let [x (* {} 0.0)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "{}",
+    "draw": "0.0",
+    "expression": "(try (let [x (int (* {} 0.0))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "{}",
+    "draw": "0.5",
+    "expression": "(try (let [x (* {} 0.5)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "{}",
+    "draw": "0.5",
+    "expression": "(try (let [x (int (* {} 0.5))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand",
+    "bound": "{}",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (* {} 0.9999999999999999)] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  },
+  {
+    "operation": "rand-int",
+    "bound": "{}",
+    "draw": "0.9999999999999999",
+    "expression": "(try (let [x (int (* {} 0.9999999999999999))] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch Throwable e [:error]))",
+    "expected": "[:error]"
+  }
+]

@@ -2497,3 +2497,23 @@
 
 ;; Compiler-phase assert reads its own core Var before source analysis.
 (def ^:dynamic *assert* true)
+
+;; BEGIN Clojure rand
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+(def ^{:doc "Returns a random floating point number between 0 (inclusive) and
+  n (default 1) (exclusive)." :added "1.0" :static true} rand
+  (let [* *]
+    (fn
+      ([] (suss.bootstrap/random-double))
+      ([n] (* n (rand))))))
+;; END Clojure rand
+
+;; BEGIN Clojure rand-int
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+(def ^{:doc "Returns a random integer between 0 (inclusive) and n (exclusive)."
+       :added "1.0" :static true} rand-int
+  (let [int int]
+    (fn [n] (int (rand n)))))
+;; END Clojure rand-int

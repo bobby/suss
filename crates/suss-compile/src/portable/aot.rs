@@ -13,6 +13,7 @@ mod lists;
 mod optimize;
 mod strings;
 mod provenance;
+mod random;
 
 /// Recover complete verified-input manifests retained by the assembler. These
 /// describe source inputs, not a signature of an optimizer's rewritten output.
@@ -350,7 +351,8 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         .values()
         .any(|item| match item {
             WorldItem::Type { id, .. } => boundary(resolve, Type::Id(*id)).is_err(),
-            WorldItem::Function(_) | WorldItem::Interface { .. } => true,
+            WorldItem::Interface { id, .. } => !random::Capability::supported(resolve, *id),
+            WorldItem::Function(_) => true,
         })
 }
 
@@ -358,6 +360,7 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
 /// Source mappings, code generation and artifact validation have separate errors.
 pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
     let selected = &resolve.worlds[world];
+    random::Capability::selected(resolve, world)?;
     if has_unsupported_imports(resolve, world) {
         return Err(error(
             "Portable AOT imported WIT adapters remain unimplemented",
@@ -769,6 +772,43 @@ pub fn component_with(
         fragment_links.push(modules);
     }
     let mut component = Component::new();
+    let randomness = random::Capability::selected(resolve, world)?;
+    let random_count = u32::from(randomness.is_some());
+    let mut resolved_types = super::command::shape::Types::new(resolve);
+    let random_type = randomness.as_ref()
+        .map(|capability| capability.encode(resolve, &mut resolved_types)).transpose()?;
+    let mut types = resolved_types.section;
+    let mut function_types = Vec::new();
+    let mut result_types = Vec::new();
+    for export in &exports {
+        let params = export
+            .params
+            .iter()
+            .map(|(name, ty)| (name.as_str(), ty.component(&mut types)))
+            .collect::<Vec<_>>();
+        let result = export.result.map(|ty| ty.component(&mut types));
+        function_types.push(types.len());
+        result_types.push(result);
+        types
+            .function()
+            .async_(export.asynchronous)
+            .params(params)
+            .result(result);
+    }
+    component.section(&types);
+    if let (Some(capability), Some(ty)) = (&randomness, random_type) {
+        let mut imports = ComponentImportSection::new();
+        imports.import(&capability.name, ComponentTypeRef::Instance(ty));
+        component.section(&imports);
+        let mut aliases = ComponentAliasSection::new();
+        aliases.alias(Alias::InstanceExport {
+            instance: 0, kind: ComponentExportKind::Func, name: "get-random-u64",
+        });
+        component.section(&aliases);
+        let mut lower = CanonicalFunctionSection::new();
+        lower.lower(0, std::iter::empty::<CanonicalOption>());
+        component.section(&lower);
+    }
     let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
         .chain(std::iter::once(("suss.bindings.runtime".to_owned(), bindings.wasm)))
         .chain(fragments.iter().enumerate().map(|(index, fragment)| {
@@ -792,6 +832,10 @@ pub fn component_with(
                     })?;
                 }
             }
+            if randomness.is_some() {
+                // wasm-merge preserves this instantiation/start order.
+                modules.insert(1, ("suss.random.wire".to_owned(), random::wire()));
+            }
             modules = vec![("suss.aot".to_owned(), optimize::merge(&modules)?)];
         }
         #[cfg(not(suss_host))]
@@ -803,7 +847,12 @@ pub fn component_with(
     // module stands for all of the first group.
     let separate = modules.len() > 1;
     let adapter_module = modules.len() as u32 - 1;
-    let memory_module = adapter_module + 1;
+    let wire_module = if separate && randomness.is_some() {
+        let index = modules.len() as u32;
+        modules.push(("suss.random.wire".to_owned(), random::wire()));
+        Some(index)
+    } else { None };
+    let memory_module = modules.len() as u32;
     let bridge_module = memory_module + u32::from(has_memory);
     for (_, module) in &modules {
         component.section(&RawSection {
@@ -827,34 +876,50 @@ pub fn component_with(
     }
     let mut instances = InstanceSection::new();
     let mut args = vec![];
+    if randomness.is_some() {
+        instances.export_items([("word", ExportKind::Func, 0)]);
+    }
+    // Imported provider instance, followed by the runtime and its installer.
+    let runtime_instance = random_count;
+    let bindings_instance = 1 + 2 * random_count;
+    let fragment_instance = 2 + 2 * random_count;
     if separate {
         instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
-        instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(0))]);
+        if let Some(wire) = wire_module {
+            instances.instantiate(wire, [
+                ("suss.random", ModuleArg::Instance(0)),
+                ("suss.runtime", ModuleArg::Instance(runtime_instance)),
+            ]);
+        }
+        instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(runtime_instance))]);
         for (index, links) in fragment_links.iter().enumerate() {
             let mut args = vec![
-                ("suss.runtime".to_owned(), ModuleArg::Instance(0)),
-                ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)),
+                ("suss.runtime".to_owned(), ModuleArg::Instance(runtime_instance)),
+                ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(bindings_instance)),
             ];
             args.extend(links.iter().map(|(module, definer)| {
-                (module.clone(), ModuleArg::Instance(2 + *definer as u32))
+                (module.clone(), ModuleArg::Instance(fragment_instance + *definer as u32))
             }));
             instances.instantiate(2 + index as u32, args);
         }
         if load_count != 0 {
             let load = 2 + fragments.len() as u32;
-            instances.instantiate(load, initialization.arguments(0, 1, 2));
-            args.push((super::initialization::MODULE.to_owned(), ModuleArg::Instance(load)));
+            instances.instantiate(load, initialization.arguments(runtime_instance, bindings_instance, fragment_instance));
+            args.push((super::initialization::MODULE.to_owned(), ModuleArg::Instance(fragment_instance + fragments.len() as u32)));
         }
-        args.push(("suss.runtime".to_owned(), ModuleArg::Instance(0)));
-        args.push(("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)));
+        args.push(("suss.runtime".to_owned(), ModuleArg::Instance(runtime_instance)));
+        args.push(("suss.bindings.runtime".to_owned(), ModuleArg::Instance(bindings_instance)));
         args.extend((0..fragments.len()).map(|index| {
             (
                 format!("suss.fragment.{index}"),
-                ModuleArg::Instance(2 + index as u32),
+                ModuleArg::Instance(fragment_instance + index as u32),
             )
         }));
     }
-    let first_own = if separate { 2 + fragments.len() as u32 + load_count } else { 0 };
+    if !separate && randomness.is_some() {
+        args.push(("suss.random".to_owned(), ModuleArg::Instance(0)));
+    }
+    let first_own = if separate { fragment_instance + fragments.len() as u32 + load_count } else { random_count };
     if has_memory {
         instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
         args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
@@ -862,25 +927,6 @@ pub fn component_with(
     let adapter_instance = first_own + u32::from(has_memory);
     instances.instantiate(adapter_module, args);
     component.section(&instances);
-    let mut types = ComponentTypeSection::new();
-    let mut function_types = Vec::new();
-    let mut result_types = Vec::new();
-    for export in &exports {
-        let params = export
-            .params
-            .iter()
-            .map(|(name, ty)| (name.as_str(), ty.component(&mut types)))
-            .collect::<Vec<_>>();
-        let result = export.result.map(|ty| ty.component(&mut types));
-        function_types.push(types.len());
-        result_types.push(result);
-        types
-            .function()
-            .async_(export.asynchronous)
-            .params(params)
-            .result(result);
-    }
-    component.section(&types);
     // Memory must be aliased before canonical task-return uses Unicode results.
     // Alias realloc first so its core function index is stable across sync/async.
     let mut memory_aliases = ComponentAliasSection::new();
@@ -905,7 +951,7 @@ pub fn component_with(
     if !memory_aliases.is_empty() {
         component.section(&memory_aliases);
     }
-    let completion_base = u32::from(has_memory);
+    let completion_base = random_count + u32::from(has_memory);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
@@ -990,7 +1036,7 @@ pub fn component_with(
         if export.params.iter().any(|(_, ty)| ty.uses_memory())
             || export.result.is_some_and(Boundary::uses_memory)
         {
-            options.extend([CanonicalOption::Memory(0), CanonicalOption::Realloc(0)]);
+            options.extend([CanonicalOption::Memory(0), CanonicalOption::Realloc(random_count)]);
             if string_boundary {
                 options.push(CanonicalOption::UTF16);
             }
@@ -1017,17 +1063,17 @@ pub fn component_with(
     for export in public_exports {
         match export {
             PublicExport::Function { name, index } => {
-                public.export(&name, ComponentExportKind::Func, index, None);
+                public.export(&name, ComponentExportKind::Func, random_count + index, None);
             }
             PublicExport::Interface {
                 name,
                 implements,
                 functions,
             } => {
-                let index = exported_instances.len();
+                let index = random_count + exported_instances.len();
                 exported_instances.export_items(
                     functions.iter().map(|(name, function)| {
-                        (name.as_str(), ComponentExportKind::Func, *function)
+                        (name.as_str(), ComponentExportKind::Func, random_count + *function)
                     }),
                 );
                 public.export(

@@ -1,0 +1,57 @@
+{
+  "primary": {
+    "upstream": "Clojure1.12.6",
+    "jars": {
+      "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+      "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+      "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+    },
+    "entry": "clojure/core.clj",
+    "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "complete_forms": {
+      "rand": "04cc68b36b437707c437f68ea29c1602a2441aa6f35323482f0d6ebfc1f8defb",
+      "rand-int": "d1c971fef1597da11ed85cd5a6279ff7f4c252cab3f5b204d76acff52ec90930"
+    },
+    "bytecode_command": [
+      "javap",
+      "-classpath",
+      "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+      "-c",
+      "clojure.core$rand",
+      "clojure.core$rand_int"
+    ],
+    "bytecode_exit_code": 0,
+    "bytecode_seconds": 1.1032476425170898,
+    "qualification": "Primary source/bytecode inspection only, not a native implementation or passing random-provider test."
+  },
+  "forms": {
+    "rand": {
+      "original_sha256": "04cc68b36b437707c437f68ea29c1602a2441aa6f35323482f0d6ebfc1f8defb",
+      "adapted_sha256": "93c69dcbdb1edef525e64987cf16d5d371b057cf1852d704a14415e5b511b5bd",
+      "patch_sha256": "9c22dd179c28d5970b9948e3d1934418285915de4493b2af3215195151b4a3dc"
+    },
+    "rand-int": {
+      "original_sha256": "d1c971fef1597da11ed85cd5a6279ff7f4c252cab3f5b204d76acff52ec90930",
+      "adapted_sha256": "3c102031bc5d0b12fb8936aaf32f918e900ba896a7e41dc3861f3c2d222fc149",
+      "patch_sha256": "004fe140917cc7db179052601a91efed39062e4f6af98afb2c8a86c52bf205f2"
+    }
+  },
+  "license": {
+    "id": "EPL-1.0",
+    "text": "runtime/core-import/epl-v10.html"
+  },
+  "adaptation": "Retain both public arities, doc/metadata and multiply-then-checked-int steps. Replace Math.random with a private execution-time entropy intrinsic. Lexically capture the existing checked multiplication/int function values so core legacy coercing macros do not change the primary Object overloads. Standard random imports are selected explicitly from the resolved world and encoded with the generic WIT type encoder. Native sessions install OS entropy. No constant or compilation-time seed fallback.",
+  "controlled_primary_transformations": 126,
+  "qualification": "The primary rows isolate the deterministic transformations at fixed draws, not JVM random-stream goldens. Provider feasibility is separate from production/public API acceptance; fresh native receipts are required.",
+  "files": {
+    "docs/compatibility/bootstrap/exact-integers.sus": "38e96c5694e328c565e4406a3de4f88aafe9de59d5ee76ba5809af772a0aa2e2",
+    "docs/compatibility/core-import.json": "3ab0f93e33b0b40061ec90f4722315b99fdd4443df8568dbc0ca5c59ac720936",
+    "runtime/core-import/suss/core.sus": "7aad2a8fc9762c07ac28efff905e50b351082ea41e80860dabc6472305210d8e",
+    "runtime/core-import/manifest.json": "94cdeacc65e243e592142bd46eae0c7be9adcac3cf5470eaf75ee5464c8c336b",
+    "crates/suss-compile/src/runtime_abi/random.rs": "477224805d5dec5de5bbb3a270840e1e1aed10f7b324aedb887c55bd0d25b20f",
+    "crates/suss-compile/src/portable/aot/random.rs": "a6908de9fc818415860130f933fc34f270481ed66ce012aa28a400be602155f5",
+    "crates/suss-compile/src/portable_session/random_tests.rs": "ca5ed23b18c28bd6a8c1fb716e0c87a5d109e783fdc00c3ec51b6461e80ee620",
+    "crates/suss-compile/tests/runtime_random.rs": "b2bcff02357ed62c1f5aee91ca10e447f0df40beca73b8761cc7027372d36477",
+    "crates/suss-compile/tests/portable_random.rs": "c78872bfb489f3a083fc9a07d678e6196f33981fd498a4e99df19672e2addd35"
+  }
+}

@@ -28,6 +28,8 @@ pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 mod observation;
+#[cfg(test)]
+mod random_tests;
 
 fn input_error(error: portable::modules::InputDiagnostic) -> SessionError {
     match error {
@@ -701,6 +703,18 @@ impl Session {
             &crate::portable_module_cache::compile(&engine, &runtime_bytes)?,
             &[],
         )?;
+        // Each session uses fresh operating-system entropy at execution time.
+        // Failure propagates as a host error; no seed or constant substitutes it.
+        let random = Func::wrap(&mut store, || -> wasmtime::Result<i64> {
+            let mut bytes = [0; 8];
+            getrandom::fill(&mut bytes)
+                .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+            Ok(i64::from_ne_bytes(bytes))
+        });
+        runtime
+            .get_func(&mut store, "random-source-install")
+            .ok_or_else(|| wasmtime::Error::msg("Missing random capability installer"))?
+            .call(&mut store, &[Val::FuncRef(Some(random))], &mut [])?;
         let numeric_memory = runtime
             .get_memory(&mut store, "numeric-scratch-memory")
             .ok_or_else(|| wasmtime::Error::msg("Missing numeric scratch memory"))?;

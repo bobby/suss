@@ -1,0 +1,25 @@
+{
+  "upstream": "Clojure1.12.6",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "entry": "clojure/core.clj",
+  "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "complete_forms": {
+    "rand": "04cc68b36b437707c437f68ea29c1602a2441aa6f35323482f0d6ebfc1f8defb",
+    "rand-int": "d1c971fef1597da11ed85cd5a6279ff7f4c252cab3f5b204d76acff52ec90930"
+  },
+  "bytecode_command": [
+    "javap",
+    "-classpath",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "-c",
+    "clojure.core$rand",
+    "clojure.core$rand_int"
+  ],
+  "bytecode_exit_code": 0,
+  "bytecode_seconds": 1.1032476425170898,
+  "qualification": "Primary source/bytecode inspection only, not a native implementation or passing random-provider test."
+}
