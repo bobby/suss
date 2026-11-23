@@ -52,7 +52,8 @@ SUITES = {
 SUSS_PATCHES = ('0003-clojure-numeric-operand-suss-branches.patch',
                 '0004-atom-clojure-references-suss-branches.patch',
                 '0005-hierarchy-type-tags-suss-branches.patch',
-                '0006-clojure-jvm-rules-suss-branches.patch')
+                '0006-clojure-jvm-rules-suss-branches.patch',
+                '0007-narrow-cast-suss-representations.patch')
 PORTABILITY = 'clojure.core-test.portability'
 # The oracle runs the suite this many times; assertions whose observations
 # differ between runs are nondeterministic and keep only their kind and verdict.

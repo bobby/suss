@@ -1584,3 +1584,22 @@ to the preceding capture:4326/63/208/2342/84. No primary, source-routing, count,
 skip, comparator or baseline change is made. Full workspace execution and
 independent final-head review/CI still require evidence; remaining suite gaps
 are retained rather than relabeled as successful.
+
+### Narrow cast suite profile
+
+Patch `0007-narrow-cast-suss-representations.patch` adds actual scalar-class
+assertions to the generated Suss suite, following ADR-0003: checked byte/short/
+int/long results are Long; float/double results are Double. It adds the same four
+short-range exception assertions as JVM Clojure. Vendored/JVM branches and all
+numeric value assertions remain intact. It does not claim JVM narrow scalar
+classes exist. The six full bodies execute152 assertions with zero failures,
+missing IDs or skips:140 host comparisons and12 explicit primary-opaque Class
+judgments. The latter12 additionally decode as Boolean true in the focused
+regression; they are not relabeled as host-value matches.
+
+The full capture in `results/m12-suite-platform` removes exactly124 count
+failures and one short namespace load failure, with zero previous-pass
+regressions and unchanged primary, count/skip/value-comparison guards. Counts
+are4466/75/84/2314/83 over4624 actual observations;26 Decimal source-form
+candidates and six unexecuted Decimal operands remain. This is suite-profile
+coverage evidence; compiler/runtime source is unchanged from a12b2796.

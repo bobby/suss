@@ -1,3 +1,34 @@
+## Narrow scalar suite profile probes (2026-11-23)
+
+`results/m12-suite-platform/run-focused.py before-platform-branches
+pinned_narrow_cast_platform_assertions_match_primary_counts_and_values` records
+124 count failures and28 unexecuted short assertions. Five cast namespaces
+omit their JVM-only class checks; short's inner class conditional has no Suss
+selection, causing invalid instance? arity. Patch0007 supplies genuine Suss
+Long/Double class assertions under ADR-0003 and the same four short-range
+failures as Clojure. All original numeric assertions, JVM branches and vendored
+bytes are preserved. No narrow JVM class is fabricated in the runtime.
+
+`after-explicit-class-observations` passes all152 assertions and ordered IDs,
+with140 host comparisons and12 primary-opaque Class judgments. The focused
+regression additionally checks independently decoded Boolean true for every
+class assertion. Its initial all-host assumption failed despite zero suite
+failures; original logs/observations are retained. This correction preserves
+the primary's limitation and does not count opaque Class data as host matches.
+The36 strict suite comparator/lock unit tests pass.
+
+`run-suite.py suite-after-platform` records expected baseline drift;
+`audit-suite.py --write` verifies exactly124 count failures resolve and the short
+namespace newly loads, then writes/checks the faithful baseline. Counts are
+4466 host /75 guest /84 failure /2314 unexecuted /83 failed namespaces,4624 raw
+observations, zero previous-pass regressions. Primary/JVM source, all comparator,
+count/skip and namespace-routing decisions are unchanged; only the reviewed
+source-patch registration differs.26 unresolved Decimal source-form candidates
+and six unexecuted Decimal operands among200 remain. Compiler/runtime code is
+unchanged from a12b2796; its separate full workspace run and CI retain their
+own head-qualified evidence. No full workspace or issue acceptance pass is
+inferred from this focused suite work.
+
 ## MathContext overload and raw cast diagnostic probes (2026-11-23)
 
 The complete8b70a31f CI has seven passing integration partitions and one failure:

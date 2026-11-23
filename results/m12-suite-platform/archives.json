@@ -1,0 +1,51 @@
+[
+  {
+    "raw": "after-explicit-class-observations.json",
+    "archive": "after-explicit-class-observations.json.gz",
+    "raw_sha256": "2efc41abf35ad1ecbcb37fde678cddbfd88a83b54ec1f4e022dc2b3d4f25f2c4",
+    "raw_bytes": 493219,
+    "archive_sha256": "97c9677a2a5bc78c32fa463fb48ee6b4c421161026fe56b505527d58259fc900"
+  },
+  {
+    "raw": "after-platform-branches.json",
+    "archive": "after-platform-branches.json.gz",
+    "raw_sha256": "1ba7f9f385546cf93398364dc4424530618069f1ac33839c1945b0b0da5cad94",
+    "raw_bytes": 493222,
+    "archive_sha256": "072f984c0914f754aeefb81aeaf59f76dbd519c57a1747e04e68fa75c89125bc"
+  },
+  {
+    "raw": "before-platform-branches.json",
+    "archive": "before-platform-branches.json.gz",
+    "raw_sha256": "efd8ab730854d71006cd9bd16fa82318c7a51c69ebe2b90ae13c199b01309609",
+    "raw_bytes": 493069,
+    "archive_sha256": "027407a446970d9b943c86447fe5a677625c0af03896c093a6cb088c3a7d79a8"
+  },
+  {
+    "raw": "suite-after-platform/suite-audit.json",
+    "archive": "suite-after-platform/suite-audit.json.gz",
+    "raw_sha256": "af612a43138db4735e8356268216ae3e5f13a3441d28590aaaa97f2c8d9fd07f",
+    "raw_bytes": 133765,
+    "archive_sha256": "f66e1560d5a4731279f96909fe86b9ac45a24ef5829330d84195b222d57cbf07"
+  },
+  {
+    "raw": "suite-after-platform/suite-build.log",
+    "archive": "suite-after-platform/suite-build.log.gz",
+    "raw_sha256": "a3628ba9e8957d08059ca37ebbeae3ce1987996670db8ec423b309cf3239745c",
+    "raw_bytes": 269269,
+    "archive_sha256": "0ac7582d2a8255d97d37117431aa36d54138a961da0f174ade52c8976bc422da"
+  },
+  {
+    "raw": "suite-after-platform/suite-capture/suite-observations.json",
+    "archive": "suite-after-platform/suite-capture/suite-observations.json.gz",
+    "raw_sha256": "f7eca86882895d77dac441848b910a4ffa0b0d43905724230301060e362e848a",
+    "raw_bytes": 4723671,
+    "archive_sha256": "c099e6e9ae9fc5b8ee0bb81c14d5ea8b47cc2c170afa590c0390108e2a0471fc"
+  },
+  {
+    "raw": "suite-after-platform/suite-commands.json",
+    "archive": "suite-after-platform/suite-commands.json.gz",
+    "raw_sha256": "c4c8b74ffc0daa8cf08d310a36a964c6dc31df3cc4fa81712ae7a0698663a5fa",
+    "raw_bytes": 493984,
+    "archive_sha256": "369095eb59d085ab601c2149b06c07293f1df01467398db6af6a751a4ea53f1d"
+  }
+]

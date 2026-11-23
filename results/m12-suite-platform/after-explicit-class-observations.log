@@ -1,0 +1,10 @@
+Running as unit: run-p3253971-i91314720.scope; invocation ID: e86a28b25ec44addaf8094720dba9006
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 8.44s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_test_suite-684b122543cdeb29)
+
+running 1 test
+test pinned_narrow_cast_platform_assertions_match_primary_counts_and_values ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 11.22s
+

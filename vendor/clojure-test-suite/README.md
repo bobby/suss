@@ -17,6 +17,8 @@ files in `patches/`, applied only to generated copies:
 | `0003-clojure-numeric-operand-suss-branches.patch` | Suss harness | `:suss` branches for Clojure's non-number operand assertions where the suite writes them as `:clj` or not at all (#286). |
 | `0004-atom-clojure-references-suss-branches.patch` | Suss harness | `:suss` branches for Clojure's atom option assertions (#30). |
 | `0005-hierarchy-type-tags-suss-branches.patch` | Suss harness | `:suss` branches naming a core type where the hierarchy tests name a host class (#30). |
+| `0006-clojure-jvm-rules-suss-branches.patch` | Suss harness | JVM rules Suss follows: Long/MIN_VALUE abs, record/merge/juxt failures, NaN identity, EDN overflow and portable catch forms (#334). |
+| `0007-narrow-cast-suss-representations.patch` | Suss harness | Actual Long/Double scalar-class assertions under ADR-0003; the same four short-range failures as JVM Clojure. Numeric value assertions and JVM branches remain intact. |
 
 The JVM Clojure oracle (#334) runs the suite unpatched.
 

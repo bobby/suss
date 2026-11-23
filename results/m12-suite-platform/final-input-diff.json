@@ -1,0 +1,48 @@
+{
+  "after-explicit-class-observations.json": {
+    "docs/compatibility/README.md": {
+      "before": "1614478cde3502ce3de6d4a3b895726159f630fcf65835aaf20e7ef3942e97cb",
+      "after": "ce556a11de07696674f7e42c994b44945a98705a2dc524d017041824245e9b41"
+    },
+    "docs/compatibility/clojure-test-suite.md": {
+      "before": "53f6ad816ef50af4621a3d3d31c81366ee64ee56d4c8e3ede550772ee5fd3af1",
+      "after": "def08c8f9dcd8caf4b58b4f1288c2d865b0ec218f19a5d87dbf116c867e83843"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "f519e35e67533e9979b069339f41b266c7e95ab14cb098669a4f88414ec81843",
+      "after": "ad84e97a255b56ad9434710bd0b4cfae2a4d2f994b45955678d9fce604253846"
+    },
+    "tests/oracle/clojure-test-suite-known-failures.json": {
+      "before": "7d805e6652ccd82993bc102720102cc8805759fb11a25a8a48b05106702ac7ff",
+      "after": "3d9a138c07cdfac6c2da78ad12846439ffb6a2c6a0fc8db414bd51751c71d14a"
+    },
+    "vendor/clojure-test-suite/README.md": {
+      "before": "e1b606bf39d5460d511a50c64ecd7b19843fcfad75be02321f018970617fa730",
+      "after": "09997d2cc987670fa0da1cb131c7be576d0616018b45ca16945ad834a0251234"
+    }
+  },
+  "suite-after-platform/suite-commands.json": {
+    "docs/compatibility/README.md": {
+      "before": "1614478cde3502ce3de6d4a3b895726159f630fcf65835aaf20e7ef3942e97cb",
+      "after": "ce556a11de07696674f7e42c994b44945a98705a2dc524d017041824245e9b41"
+    },
+    "docs/compatibility/clojure-test-suite.md": {
+      "before": "53f6ad816ef50af4621a3d3d31c81366ee64ee56d4c8e3ede550772ee5fd3af1",
+      "after": "def08c8f9dcd8caf4b58b4f1288c2d865b0ec218f19a5d87dbf116c867e83843"
+    },
+    "docs/roadmap/handoff.md": {
+      "before": "f519e35e67533e9979b069339f41b266c7e95ab14cb098669a4f88414ec81843",
+      "after": "ad84e97a255b56ad9434710bd0b4cfae2a4d2f994b45955678d9fce604253846"
+    },
+    "tests/oracle/clojure-test-suite-known-failures.json": {
+      "before": "7d805e6652ccd82993bc102720102cc8805759fb11a25a8a48b05106702ac7ff",
+      "after": "3d9a138c07cdfac6c2da78ad12846439ffb6a2c6a0fc8db414bd51751c71d14a"
+    },
+    "vendor/clojure-test-suite/README.md": {
+      "before": "e1b606bf39d5460d511a50c64ecd7b19843fcfad75be02321f018970617fa730",
+      "after": "09997d2cc987670fa0da1cb131c7be576d0616018b45ca16945ad834a0251234"
+    }
+  },
+  "compiler_runtime_changed": false,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7"
+}

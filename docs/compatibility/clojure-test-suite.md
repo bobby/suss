@@ -19,9 +19,14 @@ Suss reads the suite as it reads any source: it selects the first `:suss` or
 branches state Clojure's behavior; `:cljs`, `:cljr`, `:lpy` and the others mark
 where other platforms differ. JVM Clojure selects `:clj` branches, so at the
 suite's 33 `:clj` sites the two run different assertions. About half of those
-check JVM classes, such as `(instance? java.lang.Long (long 0))`, and stay
-host-specific. Where one states a rule Suss follows, patch `0006` (and `0003` and
-`0004` for operand checks and atoms) adds a `:suss` branch with the same assertion.
+check JVM classes and remain platform-specific. Patch `0007` adds meaningful
+Suss assertions for the six scalar cast families: byte/short/int/long results
+are Long, and float/double results are Double (ADR-0003). It does not introduce
+JVM narrow scalar classes or claim those classes exist in Suss. The original
+JVM branches remain untouched; short's four strict range failures are also
+selected for Suss. Where another site states a rule Suss follows, patch `0006`
+(and `0003` and `0004` for operand checks and atoms) adds a `:suss` branch with
+the same assertion.
 These are worth offering upstream as `:default` branches:
 
 | File | Rule |
@@ -88,7 +93,7 @@ true in Suss today and false in Clojure, fails.
 `scripts/test-clojure-test-suite.sh` (the issue's acceptance command) runs the
 offline checks and `cargo test -p suss-compile --test clojure_test_suite`. The
 harness builds its source tree with `clojure_test_suite.py suss-sources`: the
-vendored tests, the Suss-only patches `0003`–`0005` (`:suss` branches for
+vendored tests, the Suss-only patches `0003`–`0007` (`:suss` branches for
 Clojure assertions that the suite writes as `:clj`, and core types where it
 names host classes) and the harness namespaces in
 [`tests/clojure-test-suite/suss`](../../tests/clojure-test-suite/suss). It loads
@@ -338,3 +343,24 @@ are unchanged. This printing profile has 13 loaded namespaces, 101 host-decided
 passes, 235 namespace failures, 5,733 assertions not executed and 20 unchanged
 skip mismatches; no Suss skip or guest-judged assertion is counted as a pass.
 These counts describe this bounded profile, not M3 or portable core completion.
+
+## Scalar cast platform assertions
+
+The six complete cast test bodies execute152 assertions with the primary
+ordinal/count guards unchanged.140 have host-compared primary observations.
+For the12 `instance?` assertions, clojure.test reports an actual Class value;
+the primary encoder records it as opaque, so the main comparator retains its
+explicit guest-judgment category. The focused regression additionally requires
+all12 Suss results to decode independently as Boolean true. This does not turn
+opaque JVM Class observations into host-value matches.
+
+`results/m12-suite-platform` retains the initial124 count failures and28
+unexecuted short assertions, the first focused test's incorrect all-host
+assumption, and the corrected passing regression. The complete new capture
+records4624 observations:4466 host matches,75 guest judgments,84 failures,2314
+unexecuted assertions and83 failed namespaces. Only124 count-failure entries
+and the short namespace load failure disappear; no previously passing
+assertion regresses. The primary, vendored bytes, count/skip/comparison and
+namespace-routing code remain unchanged; only one reviewed Suss source patch
+is registered.26 Decimal-related source-form candidates still fail or remain
+unexecuted; six of200 Decimal-operand assertions remain unexecuted.
