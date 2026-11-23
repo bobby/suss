@@ -11,7 +11,7 @@ command=['cargo','test','--workspace','--locked',*sys.argv[2:],'--','--test-thre
 record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'inputs':inputs,'command':command,'complete':False}
 def save():(OUT/'commands.json').write_text(json.dumps(record,indent=2)+'\n')
 save();start=time.time()
-env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-suite-platform-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
+env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-case-followup-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
 with (OUT/'run.log').open('w') as log:
  p=subprocess.run(['systemd-run','--user','--scope','-p','MemoryMax=3G','--',*command],cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
 record.update(complete=True,exit_code=p.returncode,seconds=time.time()-start,inputs_unchanged=all((ROOT/f).is_file() and hashlib.sha256((ROOT/f).read_bytes()).hexdigest()==h for f,h in inputs.items()))

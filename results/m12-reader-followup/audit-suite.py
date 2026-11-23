@@ -17,7 +17,19 @@ for path in ['scripts/clojure_test_suite.py','tests/oracle/clojure-test-suite-su
  if (ROOT/path).exists():assert (ROOT/path).read_bytes()==original(path),path
 path='crates/suss-compile/tests/clojure_test_suite.rs';old_test=original(path).decode()
 projection='        Observation::Uuid { most, least } => json!({"tag":"uuid", "most":most.to_string(), "least":least.to_string()}),\n'
-assert (ROOT/path).read_text()==old_test.replace('        Observation::BigInt(value)',projection+'        Observation::BigInt(value)',1),'only typed UUID observation support may differ'
+expected_test=old_test.replace('        Observation::BigInt(value)',projection+'        Observation::BigInt(value)',1)
+setup='''        // Local transformers import this namespace in the isolated Macro phase.
+        // Provide that dependency explicitly, without sharing Runtime's Store,
+        // decoder, snapshots or token stream. Assertions execute only in Runtime;
+        // an accidental expansion-time capture is a hard failure, never a token.
+        macros.install_observation_hook(|_, _| Err(wasmtime::Error::msg(
+            "Assertion snapshots require Runtime test execution",
+        ))).unwrap();
+'''
+anchor='        macros.set_operation_fuel(OPERATION_FUEL);\n'
+assert expected_test.count(anchor)==1
+expected_test=expected_test.replace(anchor,anchor+setup,1)
+assert (ROOT/path).read_text()==expected_test,'only typed UUID projection and explicit fail-closed Macro service setup may differ'
 previous_bytes=gzip.decompress(original('results/m12-case-dispatch/suite-after-manifest-refresh/suite-capture/suite-observations.json.gz'))
 previous=json.loads(previous_bytes);reference=json.loads(primary)
 old_baseline=original('tests/oracle/clojure-test-suite-known-failures.json');old=json.loads(old_baseline)
@@ -72,7 +84,8 @@ report={'base':BASE,'primary_sha256':sha(primary),'previous_capture_sha256':sha(
  'previously_passing_regressions':regressions,'raw_comparison_regressions':raw_regressions,
  'newly_executed_failures':newly_executed,'other_new_failures':other_new,
  'numeric_subsets':subsets,'edn':{'primary_assertions':len(edn_rows),'captured_assertions':sum(r['test'].split('/')[0]==edn for r in actual.values()),'outcomes':dict(collections.Counter(outcome(row,actual,new) for row in edn_rows))},
- 'primary_and_count_skip_guards_unchanged':True,'baseline_written':False}
+ 'primary_and_count_skip_guards_unchanged':True,'baseline_written':False,
+ 'harness_setup_change':'Explicit isolated Macro observer always raises; Runtime decoder/snapshots/tokens and every suite body/routing/comparison remain unchanged'}
 for name,value in [('suite-audit.json',report),('proposed-known-failures.json',new)]:
  path=OUT/name;assert not path.exists(),path;path.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n')
 (OUT/'reviewed-before-known-failures.json.gz').write_bytes(gzip.compress(old_baseline,mtime=0))

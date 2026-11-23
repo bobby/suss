@@ -1,3 +1,32 @@
+## Explicit Macro harness capability and char dependency (2026-11-23)
+
+The harness now explicitly installs a separate Macro observer which always
+raises on capture. It shares no Runtime decoder, snapshots, callbacks or token
+stream. `run-test.py explicit-macro-hook-errors --test session_observation_hook`
+passes4 tests, inputs unchanged, including failed capture propagating as an
+expansion error with zero Runtime effects.
+
+`run-suite.py full-suite-after-phase-local-observer` completes on the recorded
+58328f5b patch, all recorded inputs unchanged. Build/lock return0; native suite
+comparison returns101 after400.877s. Only EDN's existing diagnostic changes,
+from absent Macro host service to unresolved Runtime char. All297 EDN assertions
+remain unexecuted. The audit preserves4917 strict prior passes and4932 separately
+comparable prior rows, unchanged counts/skip rules and all assertion/test outcomes.
+No baseline is written. The audit permits exactly the typed UUID projection and
+seven-line explicit Macro service setup; source bodies, routing, Runtime snapshot
+capture and comparison remain byte-identical to the parent.
+
+`results/m12-character-coercion/oracle.py` records94 fresh JVM1.12.6 controls:
+direct/source-primitive char differs from first-class/apply/Object conversion for
+fractional doubles and NaN. Full upstream char source, JAR/source hashes and
+development RT bytecode are retained with EPL provenance. The earlier oracle
+attempt has exit1 and66 partial rows because a surrogate character literal is
+invalid JVM source; it is not a passing run. Surrogate controls instead construct
+the unit numerically. `run-test.py before-char-coercion --test clojure_char`
+terminates101 after61.272s, inputs unchanged, at unresolved char. No missing
+result is counted as passing; the accepted one-unit String/Character platform
+identification remains explicit in three controls.
+
 ## Analyzer import setup and phase-local observation services (2026-11-23)
 
 The required unfiltered workspace baseline on3797c2b8 terminates101 after777.907s,

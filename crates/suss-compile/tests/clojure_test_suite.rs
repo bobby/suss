@@ -351,6 +351,13 @@ impl Harness {
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(OPERATION_FUEL);
+        // Local transformers import this namespace in the isolated Macro phase.
+        // Provide that dependency explicitly, without sharing Runtime's Store,
+        // decoder, snapshots or token stream. Assertions execute only in Runtime;
+        // an accidental expansion-time capture is a hard failure, never a token.
+        macros.install_observation_hook(|_, _| Err(wasmtime::Error::msg(
+            "Assertion snapshots require Runtime test execution",
+        ))).unwrap();
         session
             .load_namespace_with_macros(HARNESS, &mut macros)
             .unwrap();

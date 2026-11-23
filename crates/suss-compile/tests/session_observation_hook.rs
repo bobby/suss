@@ -114,3 +114,19 @@ fn namespace_local_macros_require_an_explicit_isolated_observer() {
     assert_eq!(*runtime_values.lock().unwrap(), vec![52]);
     assert_eq!(*macro_values.lock().unwrap(), vec![41]);
 }
+
+#[test]
+fn failed_macro_observation_is_an_expansion_failure_without_runtime_effects() {
+    use suss_compile::portable_macros::CompiledMacros;
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.install_observation_hook(|_, _| Err(wasmtime::Error::msg(
+        "Macro assertion capture is unsupported",
+    ))).unwrap();
+    macros.define("(defmacro observe [] (suss.harness.observation/capture 17))").unwrap();
+    session.eval("(def effects (atom 0))").unwrap();
+    let error = session.eval_with_macros("(do (swap! effects inc) (observe))", &mut macros).unwrap_err();
+    assert!(format!("{error:?}").contains("Macro assertion capture is unsupported"), "{error:?}");
+    let value = session.eval("@effects").unwrap();
+    assert_eq!(session.inspect(&value, |mut store, value| Ok(observed_number(&mut store, value))).unwrap(), 0);
+}
