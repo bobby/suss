@@ -31,9 +31,10 @@ assert expected_test.count(anchor)==1
 expected_test=expected_test.replace(anchor,anchor+setup,1)
 expected_test=expected_test.replace('mod compilation_fuel;\n','mod compilation_fuel;\n#[path = "support/assertion_head_transport.rs"]\nmod assertion_head_transport;\n',1)
 expected_test=expected_test.replace('mod assertion_head_transport;\n','mod assertion_head_transport;\n#[path = "support/pinned_min_key_body.rs"]\nmod pinned_min_key_body;\n',1)
+expected_test=expected_test.replace('mod pinned_min_key_body;\n','mod pinned_min_key_body;\n#[path = "support/pinned_some_fn_bodies.rs"]\nmod pinned_some_fn_bodies;\n',1)
 expected_test=expected_test.replace('            let head = name(&fields[3]);','            let source_head = name(&fields[3]);\n            let head = source_head.as_deref().map(assertion_head_transport::canonical);',1)
 expected_test=expected_test.replace('"verdict":verdict,"head":head','"verdict":verdict,"head":head,"source-head":source_head',1)
-assert (ROOT/path).read_text()==expected_test,'only typed UUID projection, explicit Macro service, raw-preserving core-head transport and focused min-key test module inclusion may differ'
+assert (ROOT/path).read_text()==expected_test,'only typed UUID projection, explicit Macro service, raw-preserving core-head transport and focused min-key/some-fn/constantly test module inclusion may differ'
 previous_bytes=gzip.decompress(original('results/m12-case-dispatch/suite-after-manifest-refresh/suite-capture/suite-observations.json.gz'))
 previous=json.loads(previous_bytes);reference=json.loads(primary)
 old_baseline=original('tests/oracle/clojure-test-suite-known-failures.json');old=json.loads(old_baseline)

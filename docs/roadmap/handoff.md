@@ -1,3 +1,25 @@
+## some-fn shipped-binding and assertion dependency probes (2026-11-23)
+
+run-some-fn-before.py retains two actual immutable native CLI counterexamples
+on a374b92d. (some-fn identity) exits1 with an unresolved some-fn binding after
+87.425s; compiling the short-circuit assertion predicate exits1 with an unresolved
+assert binding after80.531s. Input and executable hashes remain unchanged. The
+copied CLI is qualified against every recorded9d501d71 input: only the two listed
+documentation files differ, with production/tests/fixtures identical. These are
+failing CLI evaluations, not Cargo passes. Byte-exact receipts/diagnostics and
+explicit missing-binding review are archived under before-shipped-some-fn.
+
+some-fn-effects/oracle.py records eight fresh Clojure1.12.6 controls for predicate
+construction, argument effects/throws, short-circuiting and retained captures.
+They supplement the unchanged364 prior primary controls. New native regressions
+exercise all372 in Runtime/Macro/actual AOT and retain a constructed closure over
+GC/public constructor redefinition; they require execution before any pass claim.
+The whole-body targets preserve all16 some-fn and31 constantly assertions, including
+the Ratio row. Two existing primary constantly judgments (opaque closure and
+randomized form) remain explicitly separate from its29 host comparisons. The
+real assert dependency is retained; no body/expectation/count/skip substitution
+is allowed. An explicit free target is required before starting these jobs.
+
 ## Shipped min-key primary execution (2026-11-23)
 
 `python3 results/m12-core-dependencies/test_min_key_baseline.py` passes five

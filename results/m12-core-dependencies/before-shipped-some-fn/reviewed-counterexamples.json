@@ -1,0 +1,13 @@
+{
+  "binary_source_head": "9d501d71028841854afcc8b1835767cc48d4c449",
+  "native_source_head": "a374b92dfc16b8a7a4fc45993bccb10f58ce2965",
+  "binary_sha256": "46746885959613b3883933346db572ce0cf37b5a62fd087814d90ccd25ca3774",
+  "all_inputs_unchanged": true,
+  "some_fn_native_exit_code": 1,
+  "assert_native_exit_code": 1,
+  "actual_missing_bindings": [
+    "some-fn",
+    "assert"
+  ],
+  "qualification": "Two actual native counterexamples, not Cargo tests or successful language evaluations. Both stderr diagnostics explicitly name the missing binding; no initialisation/transport failure is substituted."
+}
