@@ -1,0 +1,42 @@
+{
+  "primary": {
+    "upstream": "Clojure 1.12.6",
+    "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "entry": "clojure/core.clj",
+    "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "complete_form_sha256": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8"
+  },
+  "adaptation": {
+    "name": "min-key",
+    "source_sha256": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
+    "adapted_sha256": "1c5750d36d8f83a9f11881b79d02e79d13a5c7b9c51b7b31d27da2d6cb3799c6",
+    "patch_sha256": "ce2e470cf13e33da5dabc9ab79e8b1df3180678ffe111f3c56e285fdb4e7309e",
+    "rationale": "Replace defn expansion with def/fn for bootstrap importing; preserve complete arities, documentation and attribute metadata. All arity bodies and nested named functions are byte-preserved."
+  },
+  "license": {
+    "id": "EPL-1.0",
+    "notice": "results/m12-core-dependencies/NOTICE",
+    "text": "runtime/core-import/epl-v10.html"
+  },
+  "controls": {
+    "primary_min_key_controls": 32,
+    "pure_fixture_materializations": 6,
+    "qualification": "Only pure map-indexed candidate-map constructors are materialized; fresh JVM execution checks all396 combined probe values against untouched primary controls. No min-key/key-function body changes."
+  },
+  "files": {
+    "docs/compatibility/bootstrap/exact-integers.sus": "9414a5b9e8f0789db5601eef6bf3b0899ca605b8928feb5659a8da1df2d5bb1f",
+    "docs/compatibility/core-import.json": "2d4b2e7b7ef8b9790eebcc8520c40ae141fc3037d55a6cd5144b1753ec90003e",
+    "runtime/core-import/manifest.json": "caba4aab2395e15b98617e0f3b29a819820071fca755c0b1b506c6ef21963b6d",
+    "runtime/core-import/suss/core.sus": "d308253fbf39cdc6712d1f36af49e6bb52cff8e92828d50df73af9bca1508e45",
+    "crates/suss-cli/tests/clojure_min_key.rs": "94d5062874a9d8a05ca9abd561ee1292eb4083c2bde779f0923f0bb078718029",
+    "crates/suss-compile/tests/support/pinned_min_key_body.rs": "45d603fcb9c750f4480ce9a7d0a5a5a9934d0dc0f73e98d1722e8bdde5df5b49",
+    "results/m12-core-dependencies/upstream-min-key.clj": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
+    "results/m12-core-dependencies/min-key-adapted.sus": "1c5750d36d8f83a9f11881b79d02e79d13a5c7b9c51b7b31d27da2d6cb3799c6",
+    "results/m12-core-dependencies/min-key.patch": "ce2e470cf13e33da5dabc9ab79e8b1df3180678ffe111f3c56e285fdb4e7309e",
+    "results/m12-core-dependencies/NOTICE": "ba733882d29b8d6d4401c575c871111acd7d9eb2b3d1a0ba3632c479e72ff6d3",
+    "results/m12-core-dependencies/cases.json": "c21a78287a08f38f051b4d610fdfe0c62aa49c9d277566d98ef0cd94461edfeb",
+    "results/m12-core-dependencies/probe-cases.json": "4cb2f71bf0b09848499c54f17d06488897414d8e4fb9a5e491572826d7f23d28",
+    "results/m12-core-dependencies/probe-equivalence-command.json": "a37b1933345c77483ddace358e87b9cd8bee4bf140b77881124cfcf07727b471"
+  },
+  "limits": "min-key only. some-fn, map-indexed and real compiled eval keep their separate gaps. Fixtures/provenance do not establish passing native or complete numeric acceptance."
+}

@@ -16,6 +16,8 @@ mod portable_decode;
 mod compilation_fuel;
 #[path = "support/assertion_head_transport.rs"]
 mod assertion_head_transport;
+#[path = "support/pinned_min_key_body.rs"]
+mod pinned_min_key_body;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
