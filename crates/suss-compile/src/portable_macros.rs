@@ -1656,8 +1656,8 @@ mod assert_compilation_tests {
             // observe current Macro state rather than replaying a cached result.
             let problem = target.eval_with_macros(repeated_source, &mut macros).unwrap();
             let observed = bridge.read(&mut target, &problem, 0..0).unwrap();
-            assert!(matches!(observed.kind, Kind::String(units)
-                if String::from_utf16(&units).unwrap() == "Assert failed: false"));
+            assert!(matches!(observed.kind, Kind::String(ref units)
+                if String::from_utf16(units).unwrap() == "Assert failed: false"));
         }
     }
 }

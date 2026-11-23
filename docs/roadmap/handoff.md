@@ -1,3 +1,9 @@
+The first assert focused gate on51cf8942 returns101 after138.454s, inputs unchanged,
+before executing language tests: the regression moved String units from a Form
+that implements Drop (E0509). The pattern now borrows those units. The original
+failed build/receipt is archived; it is not a semantic counterexample or native
+pass. Fresh execution is required after this test-code correction.
+
 ## Compiled assert dependency and original body counterexamples (2026-11-23)
 
 run-before-bodies.py links the unchanged original body targets against frozen
