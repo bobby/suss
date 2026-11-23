@@ -55,3 +55,20 @@ its retained manifests match all13 input fields. Independent pinned JVM EDN
 reading expands the actual section and compares all five original input records,
 including both user macro versions and the case macro identity. Source hashes,
 raw component hash, original failed probes and commands are retained separately.
+
+
+## Eager construction and source tooling
+
+The source macro constructs finite dispatch lists eagerly, retaining the same
+quoted constants and caller expressions. This avoids forcing intermediate lazy
+syntax sequences during native macro transport. The original four-million record
+compilation budget and one-million namespace-membership bound remain unchanged;
+actual costs are retained with the [CI repair evidence](../../results/m12-case-budget/README.md).
+
+`emit-form` reconstructs letfn* bindings from structured letfn nodes. Source
+methods retain the original body before executable parameter conversions; the
+actual HIR still performs those casts. Complete core round trips in both phases
+and focused mutual-recursion, multiple-arity, capture and typed-parameter tests
+cover the boundary. Fresh JVM traces also qualify corrections to the former
+linear-equality case tests; real collisions, exception data/GC, rollback and
+recovery stay tested. Final workspace/CI results have their own receipts.

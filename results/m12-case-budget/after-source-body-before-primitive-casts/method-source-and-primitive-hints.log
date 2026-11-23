@@ -1,0 +1,46 @@
+Running as unit: run-p3998388-i92071408.scope; invocation ID: 2ad64269f95b4da4a951e35301e0f04c
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.67s
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.55s
+
+     Running tests/compiled_macro_function_scopes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_macro_function_scopes-bfda9236ecf199e8)
+
+running 2 tests
+test function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_origins ... ok
+test genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s
+
+     Running tests/compiled_macro_source_environment.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_macro_source_environment-455fb3527780a682)
+
+running 3 tests
+test compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution ... ok
+test compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog ... ok
+test compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.37s
+
+     Running tests/compiled_native_entrypoints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_native_entrypoints-9e06f30bab455c97)
+
+running 10 tests
+test canonical_display_preserves_gc_data_numeric_spelling_and_utf16_without_growth ... ok
+test display_traversal_bound_reports_failure_and_recovers ... ok
+test canonical_display_ignores_metadata_that_is_not_macro_data ... ok
+test eval_command_gives_compiled_macros_actual_lexical_environment ... ok
+test file_command_preserves_original_macro_call_positions_and_filename ... ok
+test eval_and_file_commands_keep_compiled_macro_phases_and_initializer_effects ... ok
+test review_script_compile_failure_preserves_macro_bindings ... ok
+test review_failed_script_preserves_completed_macro_dependencies_and_effects ... ok
+test script_compile_failure_preserves_existing_runtime_bindings ... ok
+test scripts_do_not_display_discarded_lazy_values ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.19s
+

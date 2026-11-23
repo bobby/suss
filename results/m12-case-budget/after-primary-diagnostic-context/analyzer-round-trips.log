@@ -1,0 +1,37 @@
+Running as unit: run-p3982208-i92053837.scope; invocation ID: 8e98313a337f4fe3a0207605240c24b9
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.56s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 14 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints ... FAILED
+test cli_prints_documents_that_suss_reads ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+
+failures:
+
+---- letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints stdout ----
+
+thread 'letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints' (3982986) panicked at crates/suss-cli/tests/analyzer_edn.rs:10:45:
+called `Result::unwrap()` on an `Err` value: "Cannot emit a form for op Keyword { namespace: Some(\"suss\"), name: \"lowered\" }"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints
+
+test result: FAILED. 13 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.28s
+
+error: test failed, to rerun pass `-p suss-cli --test analyzer_edn`

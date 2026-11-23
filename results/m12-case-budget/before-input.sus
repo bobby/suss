@@ -1,0 +1,4 @@
+(defrecord R [a b])
+(defrecord S [x])
+(deftype T [v])
+(+ (:a (->R 3 4)) (:x (map->S {:x 5})) (.-v (T. 9)))

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "compiled_when_let",
+    "--",
+    "--test-threads=2"
+  ],
+  "target": "../m12-case-followup-target",
+  "memory_max": "3G",
+  "exit_code": 0,
+  "log_sha256": "a42af0adc34f523e6cca0054bff76d26cbfda54a19aaf79c5d41b7fc4d4dedc6",
+  "test_source_sha256": "1df467f62d35324d6ec8b5289dd09e16ca7bef83a9aae7dd4e2362e94b4e6369",
+  "primary_sha256": "fa73c4d12662027db7cef320f07566c9735f6eb4acb0772ef31feb7f092f4ea3",
+  "qualification": "Test-source-only change after the ten-group pass. The five native tests pass; production inputs remain byte-identical."
+}

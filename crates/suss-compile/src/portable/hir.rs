@@ -3148,6 +3148,9 @@ impl Analyzer<'_> {
         if exported.is_none() {
             self.pending_param_hints = pending;
         }
+        // Tooling and macro source facts describe the caller's body, not the
+        // storage-only parameter conversions inserted around executable HIR.
+        let source_body = std::sync::Arc::new(inner_body.clone());
         let inner_body = if casts.is_empty() {
             inner_body
         } else {
@@ -3175,7 +3178,7 @@ impl Analyzer<'_> {
             parameters: parameters.clone(),
             variadic: rest_parameter.is_some(),
             recurs: recurred.then_some(true),
-            body: std::sync::Arc::new(inner_body.clone()),
+            body: source_body,
         };
         self.target = outer_target;
         let body = Box::new(Hir {

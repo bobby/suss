@@ -1,0 +1,24 @@
+Running as unit: run-p3981905-i92050152.scope; invocation ID: 414c438ad0b74d24b1a1ac9a1b9f8835
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.38s
+     Running tests/portable_case.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_case-45bf1260c522a7af)
+
+running 8 tests
+test empty_case_group_has_exact_located_boundary_without_publication ... ok
+test case_errors_and_namespace_guards_keep_effects_and_recover_after_gc ... ok
+test generic_case_throw_restores_equality_and_bounds_are_located ... ok
+test genuine_collision_equality_throw_retains_prefix_and_restores_live_binding ... ok
+test keyword_case_groups_follow_pinned_dispatch_and_preserve_selector_effects ... ok
+test scalar_case_evaluates_selector_once_and_only_selected_result ... ok
+test scalar_case_matches_independently_decoded_pinned_observations ... ok
+test generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guards ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.30s
+
+     Running tests/portable_case.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_case-fad19bd02c60da8c)
+
+running 1 test
+test scalar_case_fragments_execute_in_runtime_and_macro_phase ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.84s
+

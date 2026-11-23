@@ -70,35 +70,41 @@
         (if (empty? tests)
           (throw (ex-info "Wrong number of args (0) passed to: clojure.core/max" {}))
           nil)
+        ;; Build the finite dispatch tree eagerly. Syntax-quoted intermediate
+        ;; trees otherwise retain many lazy concatenations which the native
+        ;; macro bridge must force individually, consuming caller fuel even for
+        ;; the two-keyword cases emitted by defrecord. Quoted constants and
+        ;; caller result expressions remain the same data, never evaluated.
         (letfn [(collision [entries]
                   (let [pred (gensym "case_pred__")
                         body (reduce
                                (fn [body entry]
-                                 `(if (~pred ~(list 'quote (first entry)) ~ge)
-                                    ~(second entry) ~body))
+                                 (list 'if (list pred (list 'quote (first entry)) ge)
+                                   (second entry) body))
                                default (reverse entries))]
-                    `(let [~pred suss.core/=] ~body)))
+                    (list 'let (vector pred 'suss.core/=) body)))
                 (checked [entries]
                   (if (= (count entries) 1)
                     (let [entry (first entries) test (list 'quote (first entry))]
-                      `(if (~(if keywords? 'suss.bootstrap/case-identical 'suss.bootstrap/case-equiv)
-                             ~ge ~test)
-                         ~(second entry) ~default))
+                      (list 'if
+                        (list (if keywords? 'suss.bootstrap/case-identical 'suss.bootstrap/case-equiv)
+                          ge test)
+                        (second entry) default))
                     (collision entries)))
                 (tree [lo hi]
                   (if (= (inc lo) hi)
                     (let [entry (nth ordered lo)]
-                      `(if (suss.bootstrap/case-hash= ~gh ~(key entry))
-                         ~(checked (val entry)) ~default))
+                      (list 'if (list 'suss.bootstrap/case-hash= gh (key entry))
+                        (checked (val entry)) default))
                     (let [mid (quot (+ lo hi) 2)
                           pivot (key (nth ordered mid))]
-                      `(if (suss.bootstrap/case-hash< ~gh ~pivot)
-                         ~(tree lo mid) ~(tree mid hi)))))]
-          `(let [~ge ~e]
-             ~(if ints?
-                `(if (suss.bootstrap/number? ~ge)
-                   (let [~gh (suss.bootstrap/int-value ~ge)]
-                     ~(tree 0 (count ordered)))
-                   ~default)
-                `(let [~gh (suss.bootstrap/case-hash-code ~ge)]
-                   ~(tree 0 (count ordered))))))))))
+                      (list 'if (list 'suss.bootstrap/case-hash< gh pivot)
+                        (tree lo mid) (tree mid hi)))))]
+          (list 'let (vector ge e)
+            (if ints?
+              (list 'if (list 'suss.bootstrap/number? ge)
+                (list 'let (vector gh (list 'suss.bootstrap/int-value ge))
+                  (tree 0 (count ordered)))
+                default)
+              (list 'let (vector gh (list 'suss.bootstrap/case-hash-code ge))
+                (tree 0 (count ordered))))))))))

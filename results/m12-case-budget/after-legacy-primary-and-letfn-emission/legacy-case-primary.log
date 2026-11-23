@@ -1,0 +1,34 @@
+Running as unit: run-p3970985-i92031842.scope; invocation ID: e3aba1efcc004c6e8f4ee87b301cbce6
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 10s
+     Running tests/portable_case.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/portable_case-45bf1260c522a7af)
+
+running 8 tests
+test empty_case_group_has_exact_located_boundary_without_publication ... ok
+test case_errors_and_namespace_guards_keep_effects_and_recover_after_gc ... ok
+test generic_case_throw_restores_equality_and_bounds_are_located ... ok
+test genuine_collision_equality_throw_retains_prefix_and_restores_live_binding ... ok
+test generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guards ... FAILED
+test scalar_case_evaluates_selector_once_and_only_selected_result ... ok
+test keyword_case_groups_follow_pinned_dispatch_and_preserve_selector_effects ... ok
+test scalar_case_matches_independently_decoded_pinned_observations ... ok
+
+failures:
+
+---- generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guards stdout ----
+
+thread 'generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guards' (3975240) panicked at crates/suss-cli/tests/portable_case.rs:355:13:
+assertion `left == right` failed
+  left: "Compiled macro expansion failed during compiled macro invocation: Duplicate case test constant: :late at bytes 26..95"
+ right: "Duplicate case test constant: :late"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guards
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.85s
+
+error: test failed, to rerun pass `-p suss-cli --test portable_case`

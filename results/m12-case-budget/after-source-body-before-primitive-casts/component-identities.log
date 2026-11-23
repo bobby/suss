@@ -1,0 +1,12 @@
+Running as unit: run-p4002697-i92044409.scope; invocation ID: 565e43d9fe6847e7a12ef99d848e38fc
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.32s
+     Running tests/compiled_artifact_identities.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/compiled_artifact_identities-ee978ef8e56b8e53)
+
+running 3 tests
+test source_artifact_identity_keeps_external_macro_provenance_unknown ... ok
+test source_artifact_identity_records_actual_macro_versions_and_rejects_prior_graph ... ok
+test aot_component_source_index_preserves_all_input_fields_and_macro_versions ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.75s
+

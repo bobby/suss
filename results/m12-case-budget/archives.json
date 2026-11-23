@@ -1,0 +1,106 @@
+[
+  {
+    "raw": "after-eager-case-tree/commands.json",
+    "archive": "after-eager-case-tree/commands.json.gz",
+    "raw_sha256": "eac98ea9f298352c31281e37630352589f9211d88894443e0f2f5c426b342a7d",
+    "raw_bytes": 498342,
+    "archive_sha256": "9971ffc39eb51e499db4db0f4f377f54c26906c9b3759546cd18ab84ffbbac82",
+    "archive_bytes": 183150
+  },
+  {
+    "raw": "after-legacy-primary-and-letfn-emission/commands.json",
+    "archive": "after-legacy-primary-and-letfn-emission/commands.json.gz",
+    "raw_sha256": "992329d844296e247b3593219d80f951a5e53d0efd68ea0a56e6252eced6deaf",
+    "raw_bytes": 507440,
+    "archive_sha256": "8051c70e6dc837cbbddf77423bca9c554222c6be0fd88f11489e56afed01c9e0",
+    "archive_bytes": 187229
+  },
+  {
+    "raw": "after-primary-diagnostic-context/commands.json",
+    "archive": "after-primary-diagnostic-context/commands.json.gz",
+    "raw_sha256": "6231a31246bee6c525ff96b0f1b0231271430ff18081ffa1cf557c2eecd27623",
+    "raw_bytes": 507815,
+    "archive_sha256": "e82981f6bfb3d590eb14aee751f5682b971eec499578d0f79c9b1cc457ed7e4f",
+    "archive_bytes": 187289
+  },
+  {
+    "raw": "after-source-body-before-primitive-casts/commands.json",
+    "archive": "after-source-body-before-primitive-casts/commands.json.gz",
+    "raw_sha256": "d1cf366a55bdd387c19b057d5ee651e1e8e28872adc9ecd0251c405010331d20",
+    "raw_bytes": 510832,
+    "archive_sha256": "ee55c9f748a9c9e93438181527629d4a2d683067eeeb5dbc65da6add2dbe6f62",
+    "archive_bytes": 187764
+  },
+  {
+    "raw": "before.stderr",
+    "archive": "before.stderr.gz",
+    "raw_sha256": "cbc15a83ce80a1c9cc4e62658f4867a044e23cfc8c6cc91ac4f4adb4e7e5433d",
+    "raw_bytes": 54402,
+    "archive_sha256": "897fd1da75bfbfbce3fbb553f7b82b8a415c18b4a31ce3de9f64eb4c7ad9ca88",
+    "archive_bytes": 6348
+  },
+  {
+    "raw": "ci-45158952814-shard0.log",
+    "archive": "ci-45158952814-shard0.log.gz",
+    "raw_sha256": "c920439963f7a9448f5e542f4c65936e574a85286529431728da18ae589a7b9b",
+    "raw_bytes": 171693,
+    "archive_sha256": "c725e11d54d6c226e874ab948d71c166f5663f45947e4da1cc656a25aa8876df",
+    "archive_bytes": 34880
+  },
+  {
+    "raw": "ci-45158952814-shard1.log",
+    "archive": "ci-45158952814-shard1.log.gz",
+    "raw_sha256": "5c3cbcf9a3a0fd1e46bedd02d3243e56eeb98a5abaf3ec7ea4a8f3b750de5ed8",
+    "raw_bytes": 171732,
+    "archive_sha256": "32bcd5cf0c95ff78b7e294cbef2a24b7843e64a2d23d01cd1e26c9fbd4446702",
+    "archive_bytes": 35112
+  },
+  {
+    "raw": "ci-45158952814-shard3.log",
+    "archive": "ci-45158952814-shard3.log.gz",
+    "raw_sha256": "25480a1c46375c9d4b06452b76c80606b8476af9a03bdf11828910625a38adb9",
+    "raw_bytes": 248789,
+    "archive_sha256": "384b3f1c416c7d9441f6776f21f50248964c62a9ee102fb16d8dc05dba6a909c",
+    "archive_bytes": 46650
+  },
+  {
+    "raw": "ci-45158952814-shard5.log",
+    "archive": "ci-45158952814-shard5.log.gz",
+    "raw_sha256": "96131786f185630e3f9fc0fb8de770c4f7f595bec85d97006c450615977aee90",
+    "raw_bytes": 172778,
+    "archive_sha256": "bbe008543a36d73edf8cfd1833fc5988248ff123afa754eed46e9c893794f756",
+    "archive_bytes": 35551
+  },
+  {
+    "raw": "eager-case-reader.log",
+    "archive": "eager-case-reader.log.gz",
+    "raw_sha256": "48c70e68b5dbdd285aa066c63fa4112d35c8861bc129bb1a06595a384b92f357",
+    "raw_bytes": 44363,
+    "archive_sha256": "66122a14d505d66ae92850b3d14c3c171fd52858e4475d7ddf07e99c8bc745b7",
+    "archive_bytes": 7683
+  },
+  {
+    "raw": "foundation/foundation.json",
+    "archive": "foundation/foundation.json.gz",
+    "raw_sha256": "99a5557e9b242f04aed25a2e0ce1b025487e6c1813db6dcb65577f20cafc384f",
+    "raw_bytes": 498464,
+    "archive_sha256": "da48bffc5c5848f7cc90d4e45572abeed92ef961ad0bfdc66ecb494c6bcb2a20",
+    "archive_bytes": 183152
+  },
+  {
+    "raw": "foundation-after-when-let-provenance/foundation.json",
+    "archive": "foundation-after-when-let-provenance/foundation.json.gz",
+    "raw_sha256": "6118e91797fe689de08d3bacef21996af6f63765035eb2da2c6968ddf13a7a34",
+    "raw_bytes": 498465,
+    "archive_sha256": "f4938458cc3f7ba9c0c43d25e9eb41c12fc5d9c5c26e5473cd7e458f6ce63f65",
+    "archive_bytes": 183154
+  },
+  {
+    "raw": "interrupted-workspace-2254/command.json",
+    "archive": "interrupted-workspace-2254/command.json.gz",
+    "raw_sha256": "ecc949dbe250c5790a650085a3c6951af6cdadb21047962a017473ae39f0ba2d",
+    "raw_bytes": 496099,
+    "archive_sha256": "6e154de4eaae6e04f1adf07f36d0928895e172ea7e89a4f44e0240cfbf8cd148",
+    "archive_bytes": 182776
+  }
+]

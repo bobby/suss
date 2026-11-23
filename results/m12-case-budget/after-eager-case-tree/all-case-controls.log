@@ -1,0 +1,22 @@
+Running as unit: run-p3950924-i92017498.scope; invocation ID: 3754f431e33849b885e8a439e1dfb914
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.10s
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 13 tests
+test aot_case_default_formatter_matches_primary_str_calls ... ok
+test aot_case_collision_callbacks_match_primary_controls ... ok
+test aot_executes_composite_case_hash_controls ... ok
+test aot_executes_case_dispatch_controls ... ok
+test aot_executes_numeric_case_hash_controls ... ok
+test case_collision_callbacks_match_primary_controls ... ok
+test case_default_formatter_matches_primary_str_calls ... ok
+test case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct ... ok
+test compiler_owned_case_does_not_grant_private_core_access_to_user_macros_or_results ... ok
+test case_dispatch_follows_primary_controls ... ok
+test macro_diagnostics_keep_native_messages_after_public_accessor_rebinding_and_recover ... ok
+test composite_case_hash_follows_primary_hash_code ... ok
+test numeric_case_hash_follows_primary_hash_code ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.46s
+

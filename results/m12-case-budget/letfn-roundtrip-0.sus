@@ -1,0 +1,1 @@
+(let [offset 7] (letfn [(left [^long n] (if (zero? n) offset (right (dec n)))) (right [n] (left n))] (left 4)))

@@ -9,8 +9,8 @@
   "license": "EPL-1.0",
   "license_path": "runtime/core-import/LICENSE",
   "adapted_macro": "docs/compatibility/bootstrap/case.sus",
-  "adapted_macro_sha256": "cd9ef14981bfabb832cbca71e9822a6e37f2d0a49620ab724ce6587097033173",
-  "adaptation": "Preserve quotation/grouping, duplicate equality, selector-once evaluation, integer and keyword modes, live collision predicate capture and default staging. Replace JVM case*/Util.hash with original immutable hash adapters and balanced literal-hash branches in existing verified control flow. Compiler-owned definitions use privileged origins; public define and caller results stay unprivileged.",
+  "adapted_macro_sha256": "9d913b6597ce81a5e93f2eec9a2e8eb37afb5ba9c1fe4f8478dd6ede38f13c11",
+  "adaptation": "Preserve quotation/grouping, duplicate equality, selector-once evaluation, integer and keyword modes, live collision predicate capture and default staging. Replace JVM case*/Util.hash with original immutable hash adapters and balanced literal-hash branches in existing verified control flow. Compiler-owned definitions use privileged origins; public define and caller results stay unprivileged. Construct the finite dispatch tree eagerly, retaining all checks and caller forms while avoiding lazy syntax concatenation during macro transport.",
   "evidence": "results/m12-case-dispatch",
   "oracle_modes": "Session/Macro use ordinary JVM compilation; actual CLI AOT uses freshly executed -Dclojure.compiler.direct-linking=true controls. Exactly one original93-case expectation differs: str rebinding in the default formatter. Both outputs and original failures are retained."
 }

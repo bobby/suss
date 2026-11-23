@@ -1,0 +1,9 @@
+{
+  "head": "2254f70cb62c04741f84dce6ce7724866c3f77a8",
+  "scope": "run-p3880212-i91944234.scope",
+  "invocation_id": "8a5c31b7431340ed9ef8272758679dd0",
+  "reason": "The unchanged required record-budget test fails deterministically on this source: CI shard3 and a copied hash-pinned actual CLI reproduction both exhaust four million compilation fuel. The unrepaired baseline cannot pass. Interrupt this exact owned scope; preserve its terminal result as interrupted, never passing.",
+  "ci_job": "https://github.com/bobby/suss/actions/runs/45158952814/job/137639049502",
+  "local_reproduction_receipt_sha256": "4e2693b43e918ac33ddb69722fdb91cae8d765fa6d3207d4673dc8fce3126a7d",
+  "source_inputs_unchanged_at_interruption": true
+}

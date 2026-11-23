@@ -1,5 +1,13 @@
 # ClojureScript compatibility evidence
 
+The compiler-owned [case source macro](bootstrap/clojure-case.json) executes all72
+vendored case assertions against the unchanged JVM primary, with private hashCode
+adapters and bounded literal-hash dispatch. The [integration repairs](../../results/m12-case-budget/README.md)
+retain fresh collision/diagnostic controls, unchanged record and AOT limits,
+complete source tooling round trips and Java/Node-free bootstrap evidence.
+Focused results do not establish a full workspace/final-head CI pass or complete
+BigDecimal acceptance; those gates retain their separate receipts.
+
 Private case hashing now has203 fresh JVM Util.hash controls executing in both
 phases and actual AOT, plus independent retained-field checks after GC. This
 keeps Java hashCode distinct from ordinary Clojure hasheq, including Decimal

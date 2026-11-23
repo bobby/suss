@@ -460,3 +460,15 @@ fn emitted_macro_biginteger_source_executes_as_an_aot_component() {
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
     assert_eq!(String::from_utf8_lossy(&result.stdout).trim(), "1");
 }
+
+
+#[test]
+fn letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints() {
+    let path = root().join("target/letfn-round-trip.sus");
+    for source in [
+        "(let [offset 7] (letfn [(left [^long n] (if (zero? n) offset (right (dec n)))) (right [n] (left n))] (left 4)))",
+        "(letfn [(left ([] (right 0)) ([n] (right n 1))) (right ([n] n) ([n & more] (left)))] (left))",
+    ] {
+        assert_round_trip(source, &path, &[]);
+    }
+}

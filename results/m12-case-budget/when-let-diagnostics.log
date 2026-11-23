@@ -1,0 +1,14 @@
+Running as unit: run-p4011364-i92065118.scope; invocation ID: ff1649b46f8347e682bbe196c7609c0d
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.20s
+     Running tests/compiled_when_let.rs (../m12-case-followup-target/debug/deps/compiled_when_let-d7f26083101638fa)
+
+running 5 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test when_let_preserves_truthiness_once_only_initialization_scope_and_body_order ... ok
+test when_let_invalid_bindings_reject_in_compiled_expansion_and_allow_subsequent_work ... ok
+test when_let_respects_core_aliases_exclusion_and_lexical_runtime_and_macro_shadowing ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.83s
+

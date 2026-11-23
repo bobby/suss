@@ -1,0 +1,182 @@
+{
+  "source_head": "2254f70cb62c04741f84dce6ce7724866c3f77a8",
+  "groups": [
+    {
+      "label": "legacy-case-primary",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_case",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "analyzer-round-trips",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "analyzer_edn",
+        "--test",
+        "analyzer_edn_core",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "method-source-and-primitive-hints",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_macro_function_scopes",
+        "--test",
+        "compiled_macro_source_environment",
+        "--test",
+        "compiled_native_entrypoints",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "record-budget",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_record_default_budget",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "all-case-controls",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_case_dispatch",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "full-case-body",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "pinned_case_body_matches_all_primary_assertions",
+        "--",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "independent-gc-and-privacy",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_value_decoder",
+        "--test",
+        "builtin_internals_sealed",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "component-identities",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_artifact_identities",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "aot-size",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_namespaces",
+        "aot_namespace_frame_size_is_bounded_per_form",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    },
+    {
+      "label": "no-java-bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "exit_code": 0,
+      "inputs_unchanged": true
+    }
+  ],
+  "reported_test_executions": 106,
+  "separate_when_let_test_executions": 5,
+  "changed_input_paths_after_ten_group_pass": [
+    "crates/suss-cli/tests/compiled_when_let.rs"
+  ],
+  "production_inputs_unchanged": true,
+  "limits": {
+    "record_compile_fuel": 4000000,
+    "record_membership_fuel_upper_bound": 1000000,
+    "actual_record_membership_fuel": [
+      963185,
+      975395
+    ],
+    "aot_bytes_per_form_upper_bound": 3900,
+    "aot_split_form_extra_bytes_upper_bound": 128
+  },
+  "qualification": "Focused evidence, not an unfiltered workspace or final-head CI result. Golden JVM traces replace unsupported sequential-equality assumptions; actual collision throws, duplicate rollback, effects, GC and recovery remain tested."
+}

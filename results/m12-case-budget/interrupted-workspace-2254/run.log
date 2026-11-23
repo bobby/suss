@@ -1,0 +1,313 @@
+Running as unit: run-p3880212-i91944234.scope; invocation ID: 8a5c31b7431340ed9ef8272758679dd0
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-cli)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 12m 00s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_cli-da7923a4a246c80e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss-96b3da8dcb632a45)
+
+running 36 tests
+test args::tests::aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries ... ok
+test args::tests::aot_compile_fuel_defaults_and_all_modes_are_explicit ... ok
+test args::tests::repl_budget_values_preserve_unsigned_boundaries ... ok
+test args::tests::repl_compile_fuel_is_independent_of_flag_order ... ok
+test args::tests::repl_budget_values_reject_missing_invalid_negative_and_overflow ... ok
+test args::tests::repl_fuel_defaults_and_legacy_aliases_are_unchanged ... ok
+test args::tests::repl_repeated_budget_flags_only_replace_their_own_option ... ok
+test native_repl_host::tests::cancellation_mutation_interrupt_clears_stale_observation_and_stops_input ... ok
+test native_repl_host::tests::failed_first_native_inspection_retains_the_entire_drained_batch_for_retry ... ok
+test native_repl_host::tests::failed_task_report_is_queued_once_without_writing_over_input ... ok
+test native_repl_host::tests::interrupted_endpoint_getter_retains_entire_batch_before_cancellation ... ok
+test native_repl_host::tests::interrupted_reset_second_preflight_preserves_reset_intent ... ok
+test native_repl_host::tests::interrupted_retirement_getter_holds_cleanup_until_real_input ... ok
+test native_repl_host::tests::interrupted_submission_tracking_retains_result_without_replaying_effect ... ok
+test native_repl_host::tests::interrupted_zero_counts_keep_real_nil_root_and_report_input_once ... ok
+test native_repl_host::tests::cancellation_preflight_interrupt_preserves_intent_and_buffered_source ... ok
+test native_repl_host::tests::no_dispatch_idle_path_still_reports_completed_source_failures ... ok
+test native_repl_host::tests::invalid_callable_path_is_rejected_without_executing_source_effects ... ok
+test native_repl_host::tests::noninterrupt_postsubmission_tracking_failure_terminates_before_next_source ... ok
+test native_repl_host::tests::ordinary_submission_compile_and_language_errors_keep_prompt_usable ... ok
+test native_repl_host::tests::ownerless_mutation_interrupt_never_reuses_idle_or_recovery_proof ... ok
+test native_repl_host::tests::partial_interrupted_tracking_preserves_existing_and_new_roots ... ok
+test native_repl_host::tests::pending_fifo_idle_proof_skips_dispatch_and_defers_signal_until_cleanup ... ok
+test native_repl_host::tests::pending_stream_and_fifo_idle_proof_preserves_cancellation_cleanup ... ok
+test repl_fuel_tests::repl_limits_default_to_unbounded_with_legacy_and_independent_compile_options ... ok
+test native_repl_host::tests::recovered_fuel_trap_reports_original_once_and_keeps_source_prompt_usable ... ok
+test session_event_loop::tests::count_observation_noninterrupt_failure_remains_fatal ... ok
+test session_event_loop::tests::deferred_observation_does_not_swallow_cancellation_mutation_failure ... ok
+test session_event_loop::tests::multiline_interrupt_cleanup_reset_and_eof_share_one_owner ... ok
+test session_event_loop::tests::observation_interrupt_waits_for_input_and_cleanup_before_buffered_source ... ok
+test session_event_loop::tests::recovered_async_error_reports_original_and_keeps_prompt_usable ... ok
+test session_event_loop::tests::retirement_observation_interrupt_preserves_reset_intent ... ok
+test session_event_loop::tests::unrecovered_async_error_quarantines_before_next_input ... ok
+test terminal_input::tests::partial_utf8_pipe_lines_eof_and_fd_flags_are_preserved ... ok
+test terminal_input::tests::unicode_cursor_history_and_interrupt_preserve_edit_boundaries ... ok
+test repl_fuel_tests::repl_reset_preserves_distinct_finite_operation_budgets ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.76s
+
+     Running unittests src/bin/suss-bootstrap.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/suss_bootstrap-036b14dfd5b72ed3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 13 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test cli_prints_documents_that_suss_reads ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 38.34s
+
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/aot_source_preparation-ee0e2def41547983)
+
+running 6 tests
+test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings ... ok
+test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 78.64s
+
+     Running tests/apply_fixed_arity.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/apply_fixed_arity-bbefa3ea42ebf0ac)
+
+running 12 tests
+test apply_callback_registration_is_private_and_publishes_atomically ... ok
+test apply_checks_non_null_callees_before_normalizing_the_tail ... ok
+test apply_over_seqs_answers_as_before ... ok
+test apply_sequence_callbacks_follow_clojure_1_12_6 ... ok
+test fixed_apply_reaches_an_error_in_the_unbounded_remainder ... ok
+test callable_apply_preserves_meta_var_and_multifn_traversal_after_gc ... ok
+test list_wrapper_retains_original_and_helper_captures_across_cache_changes ... ok
+test numeric_apply_respects_chunk_end_boundaries ... ok
+test native_apply_families_keep_their_own_lazy_error_boundaries ... ok
+test primitive_var_calls_and_variadic_rests_coexist_after_redefinition ... ok
+test numeric_apply_stops_realizing_at_the_conversion_error ... ok
+test wide_apply_reports_jvm_twenty_one_argument_errors_after_dispatch ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.71s
+
+     Running tests/build_cache.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/build_cache-80df111942018220)
+
+running 7 tests
+test a_failed_build_keeps_its_completed_units_for_the_next_build ... ok
+test a_new_program_reuses_the_lifted_runtime_and_core_image ... ok
+test build_directory_precedence_and_clean ... ok
+test concurrent_writers_publish_usable_entries ... ok
+test corrupt_and_untrusted_entries_are_misses_that_rebuild has been running for over 60 seconds
+test corrupt_and_untrusted_entries_are_misses_that_rebuild ... ok
+test warm_builds_reuse_identical_outputs_until_an_input_changes has been running for over 60 seconds
+test warm_builds_reuse_identical_outputs_until_an_input_changes ... ok
+test warm_processes_reuse_native_code_instead_of_compiling ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 190.84s
+
+     Running tests/builtin_construction_sealed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/builtin_construction_sealed-3ad224016bad0972)
+
+running 5 tests
+test caller_owned_arrays_follow_clojure ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test builtin_internals_cannot_be_forged_by_construction ... ok
+test public_constructions_keep_working ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.10s
+
+     Running tests/builtin_internals_sealed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/builtin_internals_sealed-b82f2888bf411b77)
+
+running 7 tests
+test core_internal_calls_are_direct_linked_against_user_redefinition ... ok
+test core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test builtin_classes_resist_aliased_extension_and_node_singletons_stay_private ... ok
+test user_type_fields_keep_ordinary_access ... ok
+test user_code_cannot_reach_builtin_internals_in_either_phase ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.39s
+
+     Running tests/builtin_protocol_aliasing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/builtin_protocol_aliasing-9b283937a13ae498)
+
+running 6 tests
+test aliased_core_protocol_vars_do_not_receive_native_markers ... ok
+test native_extensions_follow_protocol_redefinition ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test user_redefinition_of_a_core_protocol_does_not_replace_core_tables ... ok
+test aliased_core_method_vars_do_not_receive_native_extensions ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.03s
+
+     Running tests/builtin_protocols_closed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/builtin_protocols_closed-3f267793148131cc)
+
+running 4 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test core_protocols_of_builtin_types_are_closed_in_both_phases ... ok
+test user_protocols_and_user_types_stay_open ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.94s
+
+     Running tests/captured_fn_calls.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/captured_fn_calls-390529da2b47a75e)
+
+running 2 tests
+test captured_fns_answer_in_the_repl ... ok
+test captured_fns_answer_in_a_direct_linked_build ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.98s
+
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_bigint_integers-4dcb6def4fe06044)
+
+running 3 tests
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+test renamed_promoting_core_vars_keep_their_inline_operations ... ok
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.29s
+
+     Running tests/clojure_biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_biginteger_carrier-3ecbd5bdc4fbade0)
+
+running 2 tests
+test aot_executes_typed_biginteger_carrier_without_host_reader ... ok
+test bigint_carrier_preserves_category_in_source_runtime_macro_and_edn ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.67s
+
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_bigints-c28010ae60e36744)
+
+running 4 tests
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test aot_executes_the_bigint_matrix ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.57s
+
+     Running tests/clojure_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_calling_convention-b17c96b388b3c7a9)
+
+running 3 tests
+test arity_errors_are_clojures_for_every_entry ... ok
+test entries_adapters_and_spread_take_every_argument_count ... ok
+test values_that_arent_closures_are_called_out_of_line ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_case_dispatch-49ce3f59640731ee)
+
+running 13 tests
+test aot_case_default_formatter_matches_primary_str_calls ... ok
+test aot_case_collision_callbacks_match_primary_controls ... ok
+test aot_executes_composite_case_hash_controls ... ok
+test aot_executes_case_dispatch_controls ... ok
+test aot_executes_numeric_case_hash_controls ... ok
+test case_collision_callbacks_match_primary_controls ... ok
+test case_default_formatter_matches_primary_str_calls ... ok
+test case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct ... ok
+test compiler_owned_case_does_not_grant_private_core_access_to_user_macros_or_results ... ok
+test case_dispatch_follows_primary_controls ... ok
+test macro_diagnostics_keep_native_messages_after_public_accessor_rebinding_and_recover ... ok
+test composite_case_hash_follows_primary_hash_code ... ok
+test numeric_case_hash_follows_primary_hash_code ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.65s
+
+     Running tests/clojure_chunk_effects.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_chunk_effects-207d98267dffaea9)
+
+running 15 tests
+test bounded_chunk_index_add_keeps_checked_conversions_and_source_fallback ... ok
+test chunk_buffer_matches_jvm_returns_and_failed_store_order ... ok
+test chunk_long_arithmetic_keeps_checked_overflow_and_wide_results ... ok
+test chunk_adapters_are_private_and_registration_is_atomic ... ok
+test chunk_sum_keeps_custom_reducers_redefinitions_and_reduced_demand ... ok
+test chunk_storage_views_decline_unsupported_windows_and_keep_aliases_after_gc ... ok
+test chunk_sum_preserves_wide_values_mixed_numbers_and_prefix_overflow ... ok
+test chunk_views_read_future_elements_after_callbacks_and_keep_reduced_demand ... ok
+test chunked_filter_keeps_the_value_read_before_its_predicate ... ok
+test custom_chunks_keep_their_indexed_protocol_effects ... ok
+test invalid_chunk_windows_keep_callbacks_before_the_first_bad_read ... ok
+test native_chunk_admission_keeps_nil_end_bounds_and_decline_effects ... ok
+test native_chunk_roots_and_shallow_elements_survive_gc ... ok
+test private_chunk_sum_declines_without_calls_or_mutation_and_keeps_operand_order ... ok
+test ordinary_source_core_keeps_generic_chunks_without_native_layout_access ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 24.20s
+
+     Running tests/clojure_constant_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_constant_definitions-08d09ab8ad9806b3)
+
+running 2 tests
+test literal_constants_freeze_readers_in_runtime_and_macro ... ok
+test aot_executes_literal_constants ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.43s
+
+     Running tests/clojure_core_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_core_predicates-1cc73ef5437d9730)
+
+running 2 tests
+test aot_executes_core_predicate_controls ... ok
+test core_predicates_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.87s
+
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_decimal_arithmetic-ff4c4c57fed0be55)
+
+running 11 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test subtraction_source_facts_survive_captures_loops_methods_and_macro_transport ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.86s
+
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_decimal_constructors-38693a500596975e)
+
+running 2 tests
+test aot_executes_math_context_constructor_overloads ... ok
+test math_context_constructor_overloads_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.92s
+
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_decimal_conversions-9f767c9a96c1c938)
+
+running 7 tests
+test aot_executes_exact_decimal_conversion_paths ... ok
+test direct_float_rounding_matches_primary_bits_and_preserves_decimal_storage_after_gc ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test pure_decimal_coercions_and_comparisons_ignore_unused_math_context ... ok
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... ok
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions has been running for over 60 seconds
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 71.84s
+
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_decimal_values-add4c687fb247971)
+
+running 2 tests
+test aot_executes_decimal_values_readers_and_classes ... ok
