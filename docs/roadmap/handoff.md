@@ -1,3 +1,26 @@
+## Shipped min-key regression and complete-form import (2026-11-23)
+
+`run-min-key.py before-shipped-min-key
+ shipped_min_key_records_primary_values_and_key_effects_in_both_phases` terminates
+101 on809a0190 after403.599s, inputs unchanged. The first actual shipped-core
+control fails at `Unresolved Runtime name min-key` (bytes35..42); no missing value
+is counted as passing. The test independently decodes retained values/key traces
+after GC; a separate bounded actual-AOT route returns data for host comparison.
+
+The complete Clojure1.12.6 min-key form is imported through the existing bootstrap
+loader, with doc/attribute metadata and every arity body preserved by the retained
+defn-to-def/fn patch. The first pair uses<; subsequent candidates use<= and keep
+their cached key. Provenance verifies the pinned JAR/source, complete original
+form, exact adaptation, EPL notice and generated core bytes. The32 primary controls
+keep six already independently JVM-verified pure fixture materializations for
+unported map-indexed; min-key/key bodies and expected values are unchanged.
+
+The focused complete-body module requires all49 original ordered min-key assertions,
+no missing/skipped/guest-judged outcomes and unchanged primary/comparator/count
+rules. Its separate Rust module inclusion is precisely allowed by the suite audit;
+no vendored source or Runtime harness logic changes. Imported bytes alone do not
+establish native/AOT/full-suite or broader numeric acceptance.
+
 ## Executed review repairs and explicit raw-helper inventory (2026-11-23)
 
 `run-review-repair-gates.py after-review-repairs-clean-project-cache` passes all
