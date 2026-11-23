@@ -1,0 +1,48 @@
+{
+  "primary": {
+    "upstream": "Clojure 1.12.6",
+    "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "entry": "clojure/core.clj",
+    "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "complete_form_sha256": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398"
+  },
+  "adaptation": {
+    "name": "some-fn",
+    "source_sha256": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398",
+    "adapted_sha256": "d265383241e3244618f0ca3175fa286ee5754fa06afe9b80cb8d0fa5ee70b1ed",
+    "patch_sha256": "b5e4137a003710f4273da7a81dd023c2ec6d7b72602707babb02a43a1b7f3261",
+    "rationale": "Replace defn expansion with def/fn for bootstrap importing; preserve complete arities, documentation and attribute metadata. All arity bodies and nested named functions are byte-preserved."
+  },
+  "license": {
+    "id": "EPL-1.0",
+    "notice": "results/m12-core-dependencies/NOTICE",
+    "text": "runtime/core-import/epl-v10.html"
+  },
+  "controls": {
+    "primary_some_fn_controls": 364,
+    "pure_fixture_materializations": 0,
+    "qualification": "All364 some-fn primary expressions and expected values are unchanged; no local replacement is injected."
+  },
+  "supplemental_controls": {
+    "count": 8,
+    "fixture_sha256": "53b133bd2e3f779e3a87a650caaac46d6dee4cc319f0618407411e07ec3bca84",
+    "command_sha256": "71d57f206a7d67705e73aeafee8ab45694f6c01f89112d10ecf2b32e9437b823"
+  },
+  "files": {
+    "docs/compatibility/bootstrap/exact-integers.sus": "48960f0b78e6a8813d79bc543ea13113245fca995b97b73244df3a0177ab0ed4",
+    "docs/compatibility/core-import.json": "6802b262c26f64d9fff5cbfba561a363b3ab87a752105b924a7ad571c9f78d82",
+    "runtime/core-import/manifest.json": "54d2214cd6e0559766494b1503e08dc8f71f83e801eba8e9584f827a0e0ff939",
+    "runtime/core-import/suss/core.sus": "ba2285e99d273c4dd35fd689681cee2a41e59e5960a9a8cc87229eb5bff65315",
+    "crates/suss-cli/tests/clojure_some_fn.rs": "46ebb3f0cc5a5775ba6fe6b1b2af7a378e2e32d7145b50f6ebfbd5f75835eb4e",
+    "crates/suss-compile/tests/support/pinned_some_fn_bodies.rs": "fc71261ada05370cd86842523eb4bf6b9e340b9e95d9668ae938824cad6fc3cc",
+    "results/m12-core-dependencies/upstream-some-fn.clj": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398",
+    "results/m12-core-dependencies/some-fn-adapted.sus": "d265383241e3244618f0ca3175fa286ee5754fa06afe9b80cb8d0fa5ee70b1ed",
+    "results/m12-core-dependencies/some-fn.patch": "b5e4137a003710f4273da7a81dd023c2ec6d7b72602707babb02a43a1b7f3261",
+    "results/m12-core-dependencies/adaptation.json": "fab54b650f7ef765c4a4fe280e680354884db9ee7c093050597078cb9e9ec56b",
+    "results/m12-core-dependencies/NOTICE": "ba733882d29b8d6d4401c575c871111acd7d9eb2b3d1a0ba3632c479e72ff6d3",
+    "results/m12-core-dependencies/cases.json": "c21a78287a08f38f051b4d610fdfe0c62aa49c9d277566d98ef0cd94461edfeb",
+    "results/m12-core-dependencies/probe-cases.json": "4cb2f71bf0b09848499c54f17d06488897414d8e4fb9a5e491572826d7f23d28",
+    "results/m12-core-dependencies/probe-equivalence-command.json": "a37b1933345c77483ddace358e87b9cd8bee4bf140b77881124cfcf07727b471"
+  },
+  "limits": "some-fn import only. The assert macro dependency, map-indexed and real compiled eval require separate evidence. Fixtures/provenance do not establish a native, full-body, workspace or numeric acceptance pass."
+}

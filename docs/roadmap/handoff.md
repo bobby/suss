@@ -1,3 +1,19 @@
+## Complete Clojure some-fn import (2026-11-23)
+
+The complete byte-preserved some-fn-adapted.sus form is appended through the
+existing core loader, with original documentation, metadata, arities and named
+closures. The pinned JAR/entry/whole-form hashes, exact retained defn-to-def/fn
+patch, EPL notice and all364 untouched primary expressions are verified by
+some-fn-provenance.py. Eight supplemental construction/argument/capture controls
+retain their fresh JVM source, output and JAR hashes. The generated515 files and
+conservative whole-core provenance for char/min-key are refreshed; this does not
+claim new native passes for those functions.
+
+The imported form and authored native regressions still require execution.
+No existing live target is reused for this candidate. The original assertion
+dependency remains a real failure and must be resolved before the whole16-row
+some-fn body can satisfy its guard; the original body is unchanged.
+
 ## some-fn shipped-binding and assertion dependency probes (2026-11-23)
 
 run-some-fn-before.py retains two actual immutable native CLI counterexamples
