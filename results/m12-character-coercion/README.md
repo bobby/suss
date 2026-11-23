@@ -25,12 +25,18 @@ as actual JVM differences, never counted primary matches. Source provenance,
 original core form/EPL notice, pinned JAR hashes and bit-pattern controls are
 retained with the compatibility record.
 
-The32 extra BigInteger/large-Ratio/large-Decimal/context controls match the
-actual CLI, executable unchanged. Their focused Macro/AOT check and the full
-char/EDN capture are separate evidence. The char-body auditor rejects the real
-pre-repair capture with missing observations; its positive gate requires all
-nine original ordered assertions with unchanged source/primary/count rules.
+The32 extra BigInteger/large-Ratio/large-Decimal/context controls pass in
+Runtime, Macro and actual CLI AOT (`after-exact-number-carriers`,237.363s,
+inputs unchanged). Combined with the earlier matrix this is401 controls per
+route:397 primary matches and four explicit platform differences.
+`full-suite-after-character-coercion` captures all nine original ordered char
+assertions as independent host matches, unchanged source/primary/count rules.
+The char-body auditor rejects the real pre-repair capture with missing
+observations. The complete native suite still terminates101: broader reader
+failures and assertion-head transport differences are retained in its raw capture.
 The char test file alone factors existing helpers and adds those extra32 cases
 after the103-test snapshot; recorded producer and prior fixture bytes match.
-Full char-source workspace/final-head CI/review evidence remains separate.
+All15 foundation checks and Java/Node-free double bootstrap reproduction pass
+with recorded inputs unchanged. Full char-source workspace/final-head CI/review
+evidence remains separate.
 

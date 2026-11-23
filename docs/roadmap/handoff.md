@@ -1,3 +1,37 @@
+## Complete char body and reserved-core assertion metadata (2026-11-23)
+
+`run-test.py after-exact-number-carriers --test clojure_char
+ exact_number_carriers_and_context_keep_character_coercion_in_all_routes`
+passes, inputs unchanged, on133722c6:32 additional exact-number/context controls
+execute in Runtime, isolated Macro and actual CLI AOT. Combined with the369
+earlier controls, each route has397 primary matches and four explicitly counted
+platform differences. The production char implementation matches the103-test
+snapshot; only the character test helper factoring/additional controls differ.
+
+`run-suite.py full-suite-after-character-coercion` terminates101, inputs unchanged:
+5308 raw observations,4991 host matches,77 guest judgments,241 failures,
+1630 unexecuted, zero skips and70 failed namespaces. Both prior-pass audits
+preserve4917 strict and4932 separately comparable rows. The complete unchanged
+vendored char body has all nine ordered assertions independently matching the
+pinned primary; `audit-char-body.py` passes. EDN executes all297 assertions.
+Its failures include core alias head spelling, malformed slash keyword fields,
+CR comment handling and unsupported reader constructs; no baseline is rewritten
+by this capture or audit.
+
+The assertion transport now spells only reserved cljs.core/suss.core heads as
+clojure.core and separately retains every raw source-head. Production resolution
+maps these aliases to core and forbids redirecting them. `run-head-transport.py
+ reserved-core-head-transport-module` passes two regressions with unchanged
+inputs: an actual source-local macro, direct alias calls, identical core bindings,
+independent operands, and rejection of a user head, wrong operator, verdict or
+operand. The original comparator, primary, vendored bodies and count/skip rules
+are unchanged. The first test incorrectly used REPL eval for a module-local
+declaration; that terminal101 receipt is retained separately.
+
+All15 foundation checks (364 Python tests) and Java/Node-free double bootstrap
+reproduction pass on133722c6 with recorded inputs unchanged. These are separate
+from full workspace/final-head CI and review evidence on GitHub.
+
 ## Character coercion source overloads and diagnostics (2026-11-23)
 
 `run-gates.py character-float-format-and-legacy-guards` passes103 tests in five

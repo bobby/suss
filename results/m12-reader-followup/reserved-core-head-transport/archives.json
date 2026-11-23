@@ -1,0 +1,10 @@
+[
+  {
+    "raw": "command.json",
+    "archive": "command.json.gz",
+    "raw_sha256": "d58be7161fffa11167661b2f375fa15375be9b534e77a6515a52fa688a182eaf",
+    "raw_bytes": 497875,
+    "archive_sha256": "5320322186ca123571dfbbb0519eb93b90a60a3480146464eb711fb5eabf08b3",
+    "archive_bytes": 183538
+  }
+]

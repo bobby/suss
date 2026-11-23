@@ -1,0 +1,22 @@
+Running as unit: run-p684466-i92947511.scope; invocation ID: ecea70d2b7794367b2b3811e788c56a2
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3m 07s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_test_suite-684b122543cdeb29)
+
+running 2 tests
+test assertion_head_transport::assertion_head_transport_keeps_user_heads_distinct ... ok
+
+thread 'assertion_head_transport::assertion_head_transport_executes_local_macro_and_preserves_comparison_guards' (692909) panicked at crates/suss-compile/tests/support/assertion_head_transport.rs:53:9:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 142..150, message: "Unresolved Runtime name defmacro" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test assertion_head_transport::assertion_head_transport_executes_local_macro_and_preserves_comparison_guards ... FAILED
+
+failures:
+
+failures:
+    assertion_head_transport::assertion_head_transport_executes_local_macro_and_preserves_comparison_guards
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 8.01s
+
+error: test failed, to rerun pass `-p suss-compile --test clojure_test_suite`

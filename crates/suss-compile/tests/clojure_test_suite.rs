@@ -14,6 +14,8 @@
 mod portable_decode;
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
+#[path = "support/assertion_head_transport.rs"]
+mod assertion_head_transport;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -434,9 +436,10 @@ impl Harness {
             let kind = name(&fields[0]).expect("assertion kind");
             let verdict = name(&fields[1]).expect("assertion verdict");
             let snapshot = count(&fields[2]).expect("assertion snapshot index");
-            let head = name(&fields[3]);
+            let source_head = name(&fields[3]);
+            let head = source_head.as_deref().map(assertion_head_transport::canonical);
             let payload = self.snapshots.lock().unwrap().get(snapshot).cloned().expect("assertion snapshot exists");
-            let mut entry = json!({"test":test,"ordinal":index+1,"kind":kind,"verdict":verdict,"head":head});
+            let mut entry = json!({"test":test,"ordinal":index+1,"kind":kind,"verdict":verdict,"head":head,"source-head":source_head});
             match kind.as_str() {
                 "predicate" => { entry["result"]=payload[0].clone(); entry["operands"]=json!(payload[1..]); }
                 "value" => entry["value"]=payload[0].clone(),

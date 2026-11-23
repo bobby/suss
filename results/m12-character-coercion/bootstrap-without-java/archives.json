@@ -1,0 +1,14 @@
+[
+  {
+    "path": "command.json",
+    "bytes": 497584,
+    "sha256": "32d9d539ebb86dae765b56840fed507f76067d34949d13b2becdee5baf325afc",
+    "archive_sha256": "4f7d05cc9eeb39336022747aa0615ed146bb29e114383e6b908facbd1a5390a9"
+  },
+  {
+    "path": "run.log",
+    "bytes": 1568,
+    "sha256": "a505564befedf6ce019a0e673646fb2520b7aaac14e71a3c2391ac7e9685bd34",
+    "archive_sha256": "0f0da819e90acfd6191f759dc0bb02677ffc800e3c0d5e07fee83eeb935f398b"
+  }
+]

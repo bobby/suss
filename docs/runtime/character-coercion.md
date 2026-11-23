@@ -35,6 +35,8 @@ source/fixture inputs unchanged. It covers369 controls in Runtime, Macro and
 real CLI AOT:365 primary matches and four explicit platform differences in
 each route, plus effect order, independent retained storage after GC and the
 original numeric, source/module, record and size guards. The32 additional
-exact-number controls match the actual CLI; their focused Macro/AOT checks and
-the complete char/EDN body audits retain separate receipts. GitHub issues hold
+exact-number controls pass in Runtime, Macro and actual CLI AOT, making401
+controls per route (397 primary matches and four platform differences). All nine
+original ordered vendored char assertions also match the unchanged primary.
+Broader EDN failures remain explicit in the complete capture. GitHub issues hold
 acceptance, full-workspace, final-head CI and review state.

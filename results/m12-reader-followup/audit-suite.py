@@ -29,12 +29,22 @@ setup='''        // Local transformers import this namespace in the isolated Mac
 anchor='        macros.set_operation_fuel(OPERATION_FUEL);\n'
 assert expected_test.count(anchor)==1
 expected_test=expected_test.replace(anchor,anchor+setup,1)
-assert (ROOT/path).read_text()==expected_test,'only typed UUID projection and explicit fail-closed Macro service setup may differ'
+expected_test=expected_test.replace('mod compilation_fuel;\n','mod compilation_fuel;\n#[path = "support/assertion_head_transport.rs"]\nmod assertion_head_transport;\n',1)
+expected_test=expected_test.replace('            let head = name(&fields[3]);','            let source_head = name(&fields[3]);\n            let head = source_head.as_deref().map(assertion_head_transport::canonical);',1)
+expected_test=expected_test.replace('"verdict":verdict,"head":head','"verdict":verdict,"head":head,"source-head":source_head',1)
+assert (ROOT/path).read_text()==expected_test,'only typed UUID projection, explicit Macro service and raw-preserving core-head transport may differ'
 previous_bytes=gzip.decompress(original('results/m12-case-dispatch/suite-after-manifest-refresh/suite-capture/suite-observations.json.gz'))
 previous=json.loads(previous_bytes);reference=json.loads(primary)
 old_baseline=original('tests/oracle/clojure-test-suite-known-failures.json');old=json.loads(old_baseline)
 old_counts,measured=suite.compare(reference,previous);assert measured==old
 observed_bytes=(OUT/'suite-capture/suite-observations.json').read_bytes();observed=json.loads(observed_bytes)
+transported=[]
+for row in observed['assertions']:
+ raw=row['source-head'];canonical=raw
+ if raw is not None and raw.partition('/')[0] in ['cljs.core','suss.core'] and '/' in raw:
+  canonical='clojure.core/'+raw.partition('/')[2]
+ assert row['head']==canonical,(row['test'],row['ordinal'],raw,row['head'])
+ if canonical!=raw:transported.append({'test':row['test'],'ordinal':row['ordinal'],'source-head':raw,'head':canonical})
 counts,new=suite.compare(reference,observed)
 assert new['skip-mismatches']==old['skip-mismatches'],'skip rules/outcomes changed'
 assert [(r['namespace']) for r in observed['namespaces']]==reference['namespaces'],'namespace coverage changed'
@@ -85,9 +95,10 @@ report={'base':BASE,'primary_sha256':sha(primary),'previous_capture_sha256':sha(
  'newly_executed_failures':newly_executed,'other_new_failures':other_new,
  'numeric_subsets':subsets,'edn':{'primary_assertions':len(edn_rows),'captured_assertions':sum(r['test'].split('/')[0]==edn for r in actual.values()),'outcomes':dict(collections.Counter(outcome(row,actual,new) for row in edn_rows))},
  'primary_and_count_skip_guards_unchanged':True,'baseline_written':False,
- 'harness_setup_change':'Explicit isolated Macro observer always raises; Runtime decoder/snapshots/tokens and every suite body/routing/comparison remain unchanged'}
+ 'core_alias_head_transport':transported,
+ 'harness_setup_change':'Explicit isolated Macro observer always raises; reserved core head spellings use clojure.core with raw source-head retained; Runtime decoder/snapshots/tokens and every suite body/routing/comparison remain unchanged'}
 for name,value in [('suite-audit.json',report),('proposed-known-failures.json',new)]:
  path=OUT/name;assert not path.exists(),path;path.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n')
 (OUT/'reviewed-before-known-failures.json.gz').write_bytes(gzip.compress(old_baseline,mtime=0))
-print({k:v for k,v in report.items() if k not in ['changes','numeric_subsets','newly_executed_failures','other_new_failures']})
+print({k:v for k,v in report.items() if k not in ['changes','numeric_subsets','newly_executed_failures','other_new_failures','core_alias_head_transport']})
 print('numeric outcomes:',{k:v['outcomes'] for k,v in subsets.items()})
