@@ -22,6 +22,8 @@ commands=[
  ("public-core-storage-both-phases",["cargo","test","--workspace","--locked","--lib","random_tests","--","--nocapture","--test-threads=2"]),
  ("public-runtime-macro-actual-aot",["cargo","test","--workspace","--locked","--test","clojure_random","--","--nocapture","--test-threads=2"]),
  ("original-some-fn-and-constantly-bodies",["cargo","test","--workspace","--locked","--test","clojure_test_suite","pinned_some_fn_bodies","--","--nocapture","--test-threads=2"])]
+if sys.argv[2:] == ["--public-and-bodies"]:commands=commands[1:]
+else:assert len(sys.argv)==2,"Unknown public gate selection"
 save();exit_code=0
 for label,command in commands:
  start=time.time()

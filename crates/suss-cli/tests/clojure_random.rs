@@ -129,11 +129,11 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
                      x (if (= operation "rand") (rand bound) (rand-int bound))]
                  [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)])
                (catch :default e [:error])))
-        (defn ^:export result [operation text] (pr-str (report operation text)))
+        (defn ^:export sample-report [operation text] (pr-str (report operation text)))
         (defn ^:export rand-value [text] (rand (read-string text)))
         (defn ^:export rand-int-value [text] (rand-int (read-string text)))"#;
     let wit = format!(
-        "{}\nworld controls {{ import random; export result: func(operation: string, text: string) -> string; export rand-value: func(text: string) -> f64; export rand-int-value: func(text: string) -> s64; }}",
+        "{}\nworld controls {{ import random; export sample-report: func(operation: string, text: string) -> string; export rand-value: func(text: string) -> f64; export rand-int-value: func(text: string) -> s64; }}",
         include_str!("../../../vendor/wasi/wasi-wit-0.3.1/cli/deps/random.wit")
     );
     let bytes = suss_compile::Compiler::new().compile(source, &wit).unwrap();
@@ -168,22 +168,24 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
             },
         )
         .unwrap();
-    let mut store = Store::new(&engine, ());
-    store
-        .set_fuel(suss_compile::portable::DEFAULT_OPERATION_FUEL)
-        .unwrap();
-    let instance = linker.instantiate(&mut store, &compiled).unwrap();
-    assert_eq!(draws.load(Ordering::SeqCst), 0);
-    let result = instance
-        .get_typed_func::<(String, String), (String,)>(&mut store, "result")
-        .unwrap();
-    let rand_value = instance
-        .get_typed_func::<(String,), (f64,)>(&mut store, "rand-value")
-        .unwrap();
-    let rand_int_value = instance
-        .get_typed_func::<(String,), (i64,)>(&mut store, "rand-int-value")
-        .unwrap();
     for (index, row) in rows.iter().enumerate() {
+        // An intentionally uncaught primary error traps the scalar export.
+        // A fresh instance per row keeps that trap from poisoning later calls.
+        let mut store = Store::new(&engine, ());
+        store
+            .set_fuel(suss_compile::portable::DEFAULT_OPERATION_FUEL)
+            .unwrap();
+        let instance = linker.instantiate(&mut store, &compiled).unwrap();
+        assert_eq!(draws.load(Ordering::SeqCst), 2 * index);
+        let result = instance
+            .get_typed_func::<(String, String), (String,)>(&mut store, "sample-report")
+            .unwrap();
+        let rand_value = instance
+            .get_typed_func::<(String,), (f64,)>(&mut store, "rand-value")
+            .unwrap();
+        let rand_int_value = instance
+            .get_typed_func::<(String,), (i64,)>(&mut store, "rand-int-value")
+            .unwrap();
         word.store(
             match row["draw"].as_str().unwrap() {
                 "0.0" => 0,
@@ -205,6 +207,7 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
                 ),
             )
             .unwrap();
+        result.post_return(&mut store).unwrap();
         let actual = suss_reader::edn::read_one(&actual, &Default::default()).unwrap();
         let expected =
             suss_reader::edn::read_one(row["expected"].as_str().unwrap(), &Default::default())
@@ -217,13 +220,15 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
         let bound = (row["bound"].as_str().unwrap().to_owned(),);
         let wanted = expected_numeric(row);
         let raw = if row["operation"] == "rand" {
-            rand_value
-                .call(&mut store, bound)
-                .map(|(value,)| Observation::Number(value.to_bits()))
+            rand_value.call(&mut store, bound).map(|(value,)| {
+                rand_value.post_return(&mut store).unwrap();
+                Observation::Number(value.to_bits())
+            })
         } else {
-            rand_int_value
-                .call(&mut store, bound)
-                .map(|(value,)| Observation::Long(value))
+            rand_int_value.call(&mut store, bound).map(|(value,)| {
+                rand_int_value.post_return(&mut store).unwrap();
+                Observation::Long(value)
+            })
         };
         if matches!(wanted, Observation::Keyword(_, _)) {
             assert!(
