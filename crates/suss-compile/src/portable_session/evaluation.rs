@@ -269,6 +269,21 @@ impl Evaluation {
         };
         let bridge = self.bridge(&mut view)?;
         let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
+        // Clojure evaluates a scalar literal to the actual argument object.
+        // Preserve its caller-owned root rather than reconstructing equal data.
+        if matches!(
+            &form.kind,
+            suss_reader::forms::Kind::Nil
+                | suss_reader::forms::Kind::Bool(_)
+                | suss_reader::forms::Kind::Long(_)
+                | suss_reader::forms::Kind::Number(_)
+                | suss_reader::forms::Kind::Exact(_)
+                | suss_reader::forms::Kind::String(_)
+                | suss_reader::forms::Kind::Keyword(_)
+                | suss_reader::forms::Kind::Uuid(_)
+        ) {
+            return Ok(value);
+        }
         let namespace_access = registry_lock(&self.namespace)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;

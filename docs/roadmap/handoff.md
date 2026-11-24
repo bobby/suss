@@ -35014,3 +35014,27 @@ the existing compiled path; validate the exact regression, complete public and
 capability controls and definition/stream targets before a new broader capture,
 exact workspace baseline, independent review and final-head CI. No promotion or
 completion is inferred from the earlier passing scopes.
+
+
+### Scalar-root regression reproduced before the correction (2026-11-24)
+
+At3c45cf69 the new exact regression returns actual101, with unchanged source/HEAD,
+for the same four Runtime identity observations. The test body reports12 scalar
+results with BigInt/Ratio/Decimal/UUID false against the independent twelve-true
+primary vector. It fails semantically after successful compilation, not from a
+resource cap or unavailable dependency. Frozen receipts and logs are retained.
+
+The native callback now returns the caller-owned actual root for admitted scalar
+literal kinds after ordinary bounded decoding. It retains the existing compiled
+path for symbolic/executable/collection form data and the authenticated constant
+path for Functions/Vars. Source arithmetic, numeric kernels, persistent encodings,
+core/provenance, AOT capability imports and existing suite judgments do not change.
+The native regression also binds its expected output to the actual primary stdout
+and exact oracle expression, keeps the original object through GC in both phases,
+and executes the identity control inside a real isolated compiled macro.
+
+Run `scalar-identity-after-root-preservation --scalar-identity-only`, freezing
+source and HEAD through all terminal receipts. It first tests the exact regression,
+then complete public/capability and original definition/stream targets. Fresh
+broader/native capture, exact workspace baseline, independent promotion review and
+passing final-head CI remain required. No promotion or merge is claimed.

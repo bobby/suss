@@ -1224,6 +1224,11 @@ fn eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry() {
     let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
     let primary = expected(&forms[0]);
     let expression = row["expression"].as_str().unwrap();
+    assert_eq!(row["expected"].as_str().unwrap().trim(), include_str!(
+        "../../../results/m12-eval/scalar-identity-primary/primary.stdout.log"
+    ).trim());
+    assert!(include_str!("../../../results/m12-eval/scalar-identity-primary/oracle.clj")
+        .ends_with(&format!("(prn {expression})\n")));
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
         let value = session.eval(expression).unwrap();
