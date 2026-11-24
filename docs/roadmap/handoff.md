@@ -34512,3 +34512,25 @@ Publication is source-equivalent to the tested head for executable compiler,
 core and tests; added evidence/handoff/verifier files are not a new full baseline.
 The remaining macro-declaration finding still precedes broader capture, exact
 workspace validation, bootstrap reproduction and independent promotion review.
+
+### Native macro declaration preparation (2026-11-24)
+
+The next source experiment separates macro declaration preparation from binding
+publication. The actual Macro body is analyzed once; the caller compiles only
+the declaration prefix and a private constant containing a native closure.
+That closure retains the actual old Macro function root and its owning service,
+uses the existing universal closure ABI and transfers only supported form data.
+No new runtime import or public handle is introduced. A cancellation relay uses
+engine/flag handles, never Store pointers, and joins before the exclusive Macro
+lease returns. Source and evaluated declarations share preparation/publication.
+
+Fresh Clojure primary controls are retained at
+`results/m12-eval/macro-declaration-primary/` (22 observations), including raw
+function return data, captured roots/redefinition, expansion count, ordinary def
+replacement, namespace aliases, implicit parameters, exact numeric data, failures,
+metadata and arities. `cargo check --workspace --locked` completed on the dirty
+source experiment; that development check is not native acceptance evidence.
+Run `macro-declaration-first-native --macro-declaration-only` with the external
+durable launcher and freeze source/HEAD until its terminal receipt. Runtime
+ordinary def replacement and namespace/alias publication require explicit
+validation; no passing declaration acceptance is claimed by this source change.

@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib,json,zipfile
 ROOT=Path(__file__).resolve().parents[2];BASE=Path(__file__).resolve().parent
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
-for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary',11),('namespace-primary',15),('review-corrections-primary',14),('var-implementation-primary',2)]:
+for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary',11),('namespace-primary',15),('review-corrections-primary',14),('var-implementation-primary',2),('macro-declaration-primary',22)]:
  p=BASE/name;command=json.loads((p/'command.json').read_text());rows=json.loads((p/'cases.json').read_text())
  assert command['exit_code']==0 and command['controls']==count==len(rows)
  if 'legacy_corpus_sha256' in command:

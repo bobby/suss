@@ -2419,9 +2419,10 @@ impl Analyzer<'_> {
                 matches!(&form.kind, Kind::Keyword(key)
                 if key.namespace.is_none() && key.name == "macro")
             };
-            if unsupported(metadata)
+            if !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition())
+                && (unsupported(metadata)
                 || matches!(&metadata.kind, Kind::Map(entries)
-                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0])))
+                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0]))))
             {
                 return Err(fail(
                     args[0].span.clone(),

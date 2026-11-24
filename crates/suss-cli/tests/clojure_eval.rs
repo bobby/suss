@@ -782,3 +782,72 @@ fn reentrant_macro_eval_keeps_its_own_nested_constants() {
         ])
     );
 }
+
+#[test]
+fn evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/macro-declaration-primary/cases.json"
+    ))
+    .unwrap();
+    let definitions: Vec<String> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/macro-declaration-primary/macros.json"
+    ))
+    .unwrap();
+    assert_eq!(rows.len(), 22);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(&definitions[0]).unwrap();
+        session
+            .eval_with_macros("(declaration-init)", &mut macros)
+            .unwrap();
+        for definition in &definitions[1..] {
+            macros.define(definition).unwrap();
+        }
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let source = row["expression"]
+                .as_str()
+                .unwrap()
+                .replace("(catch Exception ", "(catch :default ")
+                .replace("(catch Throwable ", "(catch :default ")
+                .replace("(Exception. ", "(suss.core/Error. ");
+            let value = session
+                .eval_with_macros(&source, &mut macros)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(40_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} {:?}",
+                row["name"],
+                session.phase()
+            );
+            eprintln!(
+                "macro-declaration-primary-match {:?} {}",
+                session.phase(),
+                row["name"]
+            );
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} after GC",
+                row["name"]
+            );
+        }
+    }
+}

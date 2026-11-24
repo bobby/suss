@@ -45,6 +45,7 @@ impl MacroService {
         snapshot: &crate::portable_session::CompilationSnapshot,
         form: Form,
         fuel: u64,
+        interrupt: Arc<std::sync::atomic::AtomicBool>,
     ) -> Result<
         (
             Result<PreparedEvaluation, SessionError>,
@@ -53,12 +54,11 @@ impl MacroService {
         SessionError,
     > {
         let mut lease = self.lease();
-        let previous = lease.host().session.options().fuel_per_operation;
-        let allowance = previous.min(fuel);
-        lease.saved_fuel = Some(previous);
+        let allowance = lease.limit_fuel(fuel);
         let host = lease.host();
         host.set_operation_fuel(allowance);
         let _budget = host.session.operation_budget_scope()?;
+        let _relay = super::native_invocation::InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
         let result = host.prepare_native_evaluation(snapshot, form);
         let remaining = host.session.operation_fuel_remaining()?;
         Ok((result, allowance.saturating_sub(remaining)))
@@ -68,6 +68,13 @@ impl MacroService {
     }
 }
 impl MacroLease {
+    pub(super) fn limit_fuel(&mut self, fuel: u64) -> u64 {
+        let previous = self.host().session.options().fuel_per_operation;
+        self.saved_fuel = Some(previous);
+        let allowance = previous.min(fuel);
+        self.host().set_operation_fuel(allowance);
+        allowance
+    }
     pub(crate) fn host(&mut self) -> &mut MacroHost<'static> {
         self.host.as_mut().expect("live Macro lease")
     }

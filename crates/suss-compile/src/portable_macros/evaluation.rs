@@ -7,6 +7,7 @@ use crate::portable_session::CompilationSnapshot;
 pub(crate) enum PreparedEvaluation {
     Fragment(crate::portable::modules::PreparedInput),
     TopLevelDo(Vec<Form>),
+    MacroDeclaration(Form),
 }
 
 impl MacroHost<'_> {
@@ -64,6 +65,14 @@ impl MacroHost<'_> {
             }
         }
         if matches!(&form.kind, Kind::List(items) if matches!(items.first().map(|head| &head.kind),
+            Some(Kind::Symbol(name)) if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), name, "defmacro"))) {
+            // Normalize aliases only after resolution against the caller's real
+            // environment. The existing declaration converter validates the rest.
+            let Kind::List(items) = &mut form.kind else { unreachable!() };
+            items[0].kind = Kind::Symbol(suss_reader::Symbol::namespaced("suss.core", "defmacro"));
+            return Ok(PreparedEvaluation::MacroDeclaration(form));
+        }
+        if matches!(&form.kind, Kind::List(items) if matches!(items.first().map(|head| &head.kind),
             Some(Kind::Symbol(name)) if name.namespace.is_none() && name.name == "do"))
         {
             let (span, _, kind) = form.into_parts();
@@ -105,6 +114,17 @@ impl MacroHost<'_> {
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = self.session.evaluation_updates_input_namespace()?;
             match self.prepare_native_evaluation(&snapshot, form)? {
+                PreparedEvaluation::MacroDeclaration(form) => {
+                    self.enter_namespace(&namespace)?;
+                    let outcome = (|| {
+                        let origin = crate::portable::SourceOrigin::native_evaluation(self.session.native_owner());
+                        let mut pending = self.prepare_macro_definition(&form, form.span.clone(), Some(&origin))?;
+                        pending.prepared.fragment.environment.enter_namespace(phase, &original).map_err(SessionError::Compile)?;
+                        self.commit_macro_definition(pending).map(|(_function, variable)| variable)
+                    })();
+                    self.enter_namespace(&original)?;
+                    result = Some(outcome?);
+                }
                 PreparedEvaluation::TopLevelDo(forms) => {
                     self.session.charge_host_work(forms.len() as u64 + 1)?;
                     pending.extend(forms.into_iter().rev());

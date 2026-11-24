@@ -1326,6 +1326,13 @@ impl SessionHost<'_> {
     }
     /// Capture before borrowing the Store for compiler-data traversal. This is
     /// the same cancellation flag used by this Session's epoch callback.
+    /// Cap an already-active operation without starting/refilling its budget.
+    pub(crate) fn cap_operation_fuel(&mut self, limit: u64) -> Result<u64, SessionError> {
+        let remaining = self.operation_fuel_remaining()?.min(limit);
+        self.store.set_fuel(remaining)?;
+        self.charge_host_work(0)?;
+        Ok(remaining)
+    }
     pub(crate) fn host_work_interrupt(&self) -> Arc<AtomicBool> {
         self.interrupt.clone()
     }

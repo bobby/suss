@@ -7,6 +7,8 @@ use crate::{
     portable_macros::{CompiledMacros, MacroAuthority, MacroService, PreparedEvaluation},
 };
 
+mod macro_function;
+
 #[derive(Default)]
 pub(super) struct Evaluation {
     profile: Mutex<Option<Arc<ReentryProfile>>>,
@@ -206,11 +208,16 @@ impl Evaluation {
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = view.evaluation_updates_input_namespace()?;
             let allowance = view.operation_fuel_remaining()?;
-            let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance)?;
+            let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance, view.interrupt.clone())?;
             // Release the isolated Macro lease before executing Runtime code.
             // Compilation and macro execution debit the caller cumulatively.
             view.charge_host_work(spent)?;
             match prepared? {
+                PreparedEvaluation::MacroDeclaration(form) => {
+                    let prepared = view.prepare_native_macro_declaration(&service, &snapshot, form)?;
+                    let outcome = view.eval_prepared(prepared);
+                    result = Some(outcome?);
+                }
                 PreparedEvaluation::TopLevelDo(forms) => {
                     view.charge_host_work(forms.len() as u64 + 1)?;
                     pending.extend(forms.into_iter().rev());

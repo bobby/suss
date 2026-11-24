@@ -19,6 +19,7 @@ pub struct SourceOrigin {
     // boundary schemas) may touch built-in type internals; user source may not.
     privileged: bool,
     native_owner: Option<u64>,
+    macro_definition: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition {
@@ -79,12 +80,18 @@ impl SourceOrigin {
             reader_forms: None,
             privileged: false,
             native_owner: None,
+            macro_definition: false,
         }
     }
     pub(crate) fn native_evaluation(owner: u64) -> Self {
         Self { native_owner: Some(owner), ..Self::new("", None) }
     }
     pub(crate) fn native_owner(&self) -> Option<u64> { self.native_owner }
+    pub(crate) fn for_macro_definition(&self, native_owner: u64) -> Self {
+        Self { macro_definition: true,
+            native_owner: self.native_owner.map(|_| native_owner), ..self.clone() }
+    }
+    pub(crate) fn is_macro_definition(&self) -> bool { self.macro_definition }
     /// Compiler-authored source whose code may access built-in type internals
     /// (design decision 2026-10-25). Never constructed from user input.
     pub(crate) fn privileged(text: impl Into<Arc<str>>) -> Self {
@@ -100,7 +107,7 @@ impl SourceOrigin {
     /// loaded source must never select another module's declaration context.
     pub(crate) fn same_input(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.text, &other.text) && self.path == other.path && self.privileged == other.privileged
-            && self.native_owner == other.native_owner
+            && self.native_owner == other.native_owner && self.macro_definition == other.macro_definition
     }
     pub fn path(&self) -> Option<&Path> {
         self.path.as_deref()
