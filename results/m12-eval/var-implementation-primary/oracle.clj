@@ -1,0 +1,2 @@
+(println (pr-str (pr-str (do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch ClassCastException _ true))])))))
+(println (pr-str (pr-str (do (def review-nonmacro-flag 42) (defmacro review-var-macro-flag [] 42) [(.isMacro (var review-nonmacro-flag)) (.isMacro (var review-var-macro-flag))]))))

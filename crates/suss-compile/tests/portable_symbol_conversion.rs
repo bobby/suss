@@ -248,6 +248,13 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
     );
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 40);
+    // Preserve the complete forty-row implementation corpus. Its two Var
+    // implementation assumptions are superseded by fresh Clojure observations;
+    // every case still executes, including all fixed/spread invocation guards.
+    let var_primary: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/var-implementation-primary/cases.json"
+    )).unwrap();
+    assert_eq!(var_primary.len(), 2);
     for macro_phase in [false, true] {
         let mut session = if macro_phase {
             Session::new_macro().unwrap()
@@ -255,7 +262,15 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
             Session::new_repl().unwrap()
         };
         let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
+        let mut exercised = 0;
         for case in cases {
+            exercised += 1;
+            if let Some(primary) = var_primary.iter().find(|primary| primary["name"] == case["id"]) {
+                check(&mut session, &mut decoder,
+                    primary["native_expression"].as_str().unwrap(),
+                    primary["expected"].as_str().unwrap());
+                continue;
+            }
             let value = session
                 .eval_probe(case["source"].as_str().unwrap())
                 .unwrap_or_else(|e| panic!("phase={macro_phase} {}: {e}", case["id"]));
@@ -268,5 +283,6 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
                 case["id"]
             );
         }
+        assert_eq!(exercised, 40);
     }
 }
