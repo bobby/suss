@@ -34848,3 +34848,39 @@ budget targets. Native current-baseline suite0 and strict full-capture review
 are required separately from outer producer0. No baseline, original primary,
 skip, opaque-judgment or failure-count rule is changed. Exact workspace,
 independent promotion review and final-head CI remain required.
+
+### Fresh complete native0 after the CI repairs (2026-11-24)
+
+Atc3946719, eval-broader-after-indexed-seq-repair completes all7 commands with
+actual0 and unchanged HEAD/inputs/Binaryen. Public eval26, compiler host117 and
+193 tests across all25 selected targets pass, as do optimized random effects
+and Java/Node-free bootstrap reproduction (71.35s). The complete native suite
+returns actual0 in316.79s against unchanged baseline dea5db93. The outer producer0
+is qualified separately from the actual native0. Strict current-capture review0
+retains all5564 observed identities, all5346 earlier comparable successes, exact
+34/61/34 complete eval/symbol/var? bodies with original5/0/8 guest ordinals, and
+229/229 plus200/200 independently matching tagged numeric rows. Counts stay
+5354pass/106guest/105fail/1374unexecuted/63failednamespaces/0skip; no baseline is
+written and every unrelated failure remains. Raw captures/logs/input receipts
+are retained as deterministic gzip; the strict report stays readable.
+
+The previously published fb276 CI has green foundation and integration2/3/4/6;
+integration0/1/5 expose the preserved analyzer, definition-fixture and IndexedSeq
+findings repaired by the passing local cohorts. Integration7 is still running
+and its in-progress logs endpoint returns404; no verdict is inferred for it.
+Publishing the meaningful corrected checkpoint can supersede that old-head job
+under the existing workflow concurrency rule. This is not a budget refusal or
+a rerun of an unchanged failing source. Final corrected-head CI remains required.
+
+This follow-up changes evidence/docs only; executable compiler/core/native tests
+remain identical to validated c3946719/1876f27d. The accepted design's obsolete
+implementation-absence notes about indistinguishable types, throwing Ratio/Decimal
+values and WIT wrapper integers are removed; its full numeric behavior contract
+and original issue criteria remain. Numeric eq/not-eq/num source blockers are
+not waived and no numeric issue is closed.
+
+Start the exact cargo test --workspace --locked -- --test-threads=2 command via
+`launch-eval-workspace.py full-workspace-after-indexed-seq-repair`, freezing source
+and HEAD through its terminal receipt. Publish this corrected checkpoint to the
+existing draft516, then require exact workspace0, independent promotion review
+and passing final-head CI before ready status. No merge is authorized.

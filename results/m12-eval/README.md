@@ -9,6 +9,28 @@ captured roots survive redefinition, GC and public owner replacement. Cumulative
 allowances and cancellation cover compilation and isolated calls. Pure AOT
 retains the explicit missing-compiler-capability error and its import contract.
 
+At `c3946719`, the corrected-source frozen broader gate passes all7 commands:
+26 public eval tests,117 compiler host regressions,193 tests across25 selected
+numeric/module/artifact/budget/analyzer/symbol targets, optimized random effects,
+Java/Node-free bootstrap reproduction, actual complete native suite execution
+and strict host review. HEAD, inputs and Binaryen remain unchanged. The focused
+Var/Symbol repair cohort separately passes all76 target tests at `1876f27d`.
+
+The fresh complete native suite returns actual0 in316.79s against the unchanged
+reviewed baseline. Its5564 observed rows preserve all previous counts, failures,
+skips and original opaque judgments; no baseline is written. All229 BigInt/Ratio
+and200 Decimal tagged-operand rows remain independent host matches. The original
+complete eval/symbol/var? bodies retain34/61/34 rows with29/61/26 host matches and
+original5/0/8 guest judgments. The105 unrelated accepted assertion failures and
+63 namespace failures remain explicit; this is baseline conformance, not whole-
+language or complete numeric source-form acceptance.
+
+[Fresh strict capture review](eval-broader-after-indexed-seq-repair/complete-capture/current-complete-capture-review.json)
+and [actual native0 receipt](eval-broader-after-indexed-seq-repair/complete-capture/suite-commands.json.gz)
+retain the new evidence. Historical101 attempts below keep their original source
+qualification and outcomes. The exact workspace baseline, independent promotion
+review and final-head CI remain separate gates.
+
 At `7fde2815`, all25 public target tests pass, including27 fresh symbol controls
 in both phases, and all6 retained identifier tests execute the original40-row
 implementation corpus and every fixed/spread invocation guard. The complete

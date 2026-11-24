@@ -19,6 +19,9 @@ remain valid. Native compiled eval and real binding-cell Vars now execute all34
 unchanged eval assertions (29host+5originalguest), all61 symbol assertions and
 all34 var? assertions (26host+8originalguest). Fresh phase/GC/failure/cancellation
 controls and a full5564-row capture preserve every prior comparable success.
+A fresh frozen capture at c3946719 returns native0 against the same reviewed
+baseline; strict review retains all5564 observed identities, original counts,
+failures, skips and opaque judgments without a new baseline change.
 The reviewed baseline removes only these completed namespace-load failures and
 keeps ifn?'s actual missing-promise blocker. All229 BigInt/Ratio and200 Decimal
 tagged-operand rows match independently; these subsets do not establish whole
