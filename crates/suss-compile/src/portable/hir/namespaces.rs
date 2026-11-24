@@ -149,7 +149,7 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Global(cell.clone())),
         };
         let defining = before.resolve(self.phase, &publish, span.clone()).is_err();
-        let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
+        let name = quoted(&span, symbol(&span, Symbol::new(&namespace)));
         let nil = || synthetic(&span, Kind::Nil);
         let list = |names_list: Vec<String>| if names_list.is_empty() { nil() } else { names(&span, names_list) };
         // The scope travels as an array in core's slot order, with nil for an
