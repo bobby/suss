@@ -33814,3 +33814,17 @@ plus cache-disabled retention of distinct errors/messages/nil data across20,000
 escaping vector allocations with a1MiB initial heap. That is allocation-pressure
 evidence, not a claim of observed GC event counts. Final-input-diff qualifies
 only documentation additions after frozen runs; production/tests/fixtures match.
+
+
+## Reader full-workspace completion evidence (2026-11-23)
+
+The original `cargo test --workspace --locked -- --test-threads=2` process at
+`9f1cf726` terminated after executing all369 native/doc targets. The frozen log
+records2,468 passing tests,14 explicitly ignored,zero failures andzero filtered.
+All recorded inputs and HEAD remained unchanged. Cargo's exit status was lost
+when its outer recorder detached; it remains unknown and is not reported as0.
+`results/m12-reader-followup/workspace-with-disk-temporary/completion-audit`
+retains the original incomplete receipt, log, initial observer and corrected
+audit. The correction includes explicit rlib targets and identifies duplicate
+integration-target names using Cargo package fingerprints; none are missing or
+unexpected. This qualifies the evidence, without changing tests or budgets.
