@@ -8,15 +8,17 @@ use crate::{
 use std::{collections::{BTreeMap, BTreeSet}, sync::{Arc, Mutex, MutexGuard}};
 use suss_reader::forms::{Form, Kind, read_forms};
 mod reentry;
+mod facade;
+pub use facade::CompiledMacros;
+pub(crate) use facade::MacroService;
 #[derive(Clone, Copy)]
 pub(crate) enum CompilerCatalogMode {
     Full,
     RecordBindings,
 }
-/// The public owner retains the isolated Macro Store. Callback views borrow
-/// that same Store and share its catalog; they never reconstruct a macro host.
-pub type CompiledMacros = MacroHost<'static>;
-pub struct MacroHost<'store> {
+/// The phase Store and catalog. Callback views borrow that same Store and
+/// share its catalog; they never reconstruct a macro host.
+pub(crate) struct MacroHost<'store> {
     session: SessionHost<'store>,
     bridge: Arc<FormBridge>,
     catalog: Arc<Mutex<MacroCatalog>>,
@@ -1223,7 +1225,7 @@ mod when_let_validation_tests {
             "../../../tests/oracle/when-let-validation-observations.json"
         )).unwrap();
         assert_eq!(reference["upstream"], "c4295f303100bbf5afac449242d30bca1126f1a1");
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         let function = catalog(&macros.catalog).definitions[&("suss.core".to_owned(), "when-let".to_owned())].clone();
         let capture = macros.session.eval(r#"
           (fn [expand form bindings]
@@ -1263,7 +1265,7 @@ mod doseq_validation_tests {
     /// doseq checks its bindings as Clojure's assert-args does (#30).
     #[test]
     fn doseq_validation_matches_clojures_messages_and_phase() {
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         let function = catalog(&macros.catalog).definitions[&("suss.core".to_owned(), "doseq".to_owned())].clone();
         let capture = macros.session.eval(r#"
           (fn [expand form bindings]
@@ -1297,7 +1299,7 @@ mod defmulti_validation_tests {
     /// defmulti's syntax checks throw Clojure's messages (#30).
     #[test]
     fn defmulti_validation_matches_clojures_messages() {
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         let function = catalog(&macros.catalog).definitions[&("suss.core".to_owned(), "defmulti".to_owned())].clone();
         let capture = macros.session.eval(r#"
           (fn [expand form args]
@@ -1422,7 +1424,7 @@ mod declaration_provenance_tests {
     }
     #[test]
     fn failed_macro_replacement_budget_preserves_old_definition_and_catalog_policy() {
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         macros.define("(defmacro retained-policy [] 17)").unwrap();
         let key = ("user".to_owned(), "retained-policy".to_owned());
         let old_hash = catalog(&macros.catalog).declaration_sources[&key].clone();
@@ -1579,7 +1581,7 @@ mod parameter_observation_tests {
         const OLD: &str = "(defmacro retained-observation [] 17)";
         let payload = (0..256).map(|n| n.to_string()).collect::<Vec<_>>().join(" ");
         let replacement = format!("(defmacro ^{{:suss/compiler-catalog true :scan-payload [{payload}]}} retained-observation [] 99)");
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         let allowance = macros.expansion_work_fuel();
         // Establish that this finite replacement really succeeds at the same
         // ordinary default; no larger allowance or production hook is introduced.
@@ -1640,7 +1642,7 @@ mod assert_compilation_tests {
     #[test]
     fn assert_flag_is_read_in_the_macro_store_before_operand_analysis() {
         for mut target in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-            let mut macros = CompiledMacros::new().unwrap();
+            let mut macros = MacroHost::new().unwrap();
             let initial = macros.session.eval("suss.core/*assert*").unwrap();
             assert!(matches!(macros.bridge.read(&mut macros.session, &initial, 0..0).unwrap().kind, Kind::Bool(true)));
             macros.session.eval("(set! suss.core/*assert* false)").unwrap();

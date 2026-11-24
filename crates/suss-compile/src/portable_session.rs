@@ -1531,6 +1531,9 @@ impl SessionHost<'_> {
             &mut request,
             Some(&portable::SourceOrigin::new(source, None)),
         )?;
+        // Preparation owns the isolated Macro Store only until compilation
+        // finishes. Runtime code may call eval and borrow that same authority.
+        drop(request);
         self.eval_prepared_linked(prepared, linked)
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.

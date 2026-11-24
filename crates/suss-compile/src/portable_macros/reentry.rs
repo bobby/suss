@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn borrowed_macro_authority_expands_existing_macros_and_publishes_new_ones() {
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         macros.define("(defmacro twice [x] (list '+ x x))").unwrap();
         let reader = macros.bridge.borrowed_reader(&mut macros.session).unwrap();
         let profile = macros.reentry_profile();
