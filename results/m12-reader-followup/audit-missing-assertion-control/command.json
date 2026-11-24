@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "results/m12-reader-followup/audit-suite.py",
+    "audit-missing-assertion-control"
+  ],
+  "exit_code": 1,
+  "seconds": 14.761023759841919,
+  "expected_result": "reject a missing assertion and changed per-test counts",
+  "removed_primary_id": "clojure.core-test.abs/test-abs#7",
+  "source_capture_sha256": "864e82c894307050a4c542aec9cd07e3d4af77342f190ef62c44ce5448d9cc16",
+  "not_a_suss_execution": true
+}

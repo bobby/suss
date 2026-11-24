@@ -1,0 +1,14 @@
+[
+  {
+    "name": "uuid-case-duplicate-17",
+    "expression": "(try (macroexpand (quote (case #uuid \"1-2-3-4-5\" #uuid \"1-2-3-4-5\" :a #uuid \"00000001-0002-0003-0004-000000000005\" :b :miss))) :accepted (catch Throwable e :rejected))",
+    "expected": ":rejected",
+    "compile_source": "(case #uuid \"1-2-3-4-5\" #uuid \"1-2-3-4-5\" :a #uuid \"00000001-0002-0003-0004-000000000005\" :b :miss)"
+  },
+  {
+    "name": "uuid-case-duplicate-18",
+    "expression": "(try (macroexpand (quote (case [#uuid \"1-2-3-4-5\"] [#uuid \"1-2-3-4-5\"] :a [#uuid \"00000001-0002-0003-0004-000000000005\"] :b :miss))) :accepted (catch Throwable e :rejected))",
+    "expected": ":rejected",
+    "compile_source": "(case [#uuid \"1-2-3-4-5\"] [#uuid \"1-2-3-4-5\"] :a [#uuid \"00000001-0002-0003-0004-000000000005\"] :b :miss)"
+  }
+]

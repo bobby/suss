@@ -1,0 +1,33 @@
+[
+  {
+    "receipt": "results/m12-reader-followup/after-review-repairs-clean-project-cache/commands.json",
+    "recorded_head": "c0d6caf5464a3718d094eddca908cc44725585fc",
+    "recorded_inputs_unchanged": true,
+    "later_changed_inputs": [
+      "crates/suss-compile/tests/portable_unboxed_locals.rs",
+      "docs/compatibility/README.md",
+      "docs/roadmap/handoff.md"
+    ],
+    "qualification": "Production and fixture bytes match; only the explicit helper inventory test and subsequent compatibility/handoff documentation differ. The original13-test target revalidates that inventory change."
+  },
+  {
+    "receipt": "results/m12-reader-followup/after-explicit-character-helper-inventory/commands.json",
+    "recorded_head": "5269cf4f6fd6e6634f788cc613909e3a9b7d1bf4",
+    "recorded_inputs_unchanged": true,
+    "later_changed_inputs": [
+      "docs/compatibility/README.md",
+      "docs/roadmap/handoff.md"
+    ],
+    "qualification": "Production and fixture bytes match; only the explicit helper inventory test and subsequent compatibility/handoff documentation differ. The original13-test target revalidates that inventory change."
+  },
+  {
+    "receipt": "results/m12-case-budget/after-review-repairs-and-helper-inventory/foundation.json",
+    "recorded_head": "5269cf4f6fd6e6634f788cc613909e3a9b7d1bf4",
+    "recorded_inputs_unchanged": true,
+    "later_changed_inputs": [
+      "docs/compatibility/README.md",
+      "docs/roadmap/handoff.md"
+    ],
+    "qualification": "Production and fixture bytes match; only the explicit helper inventory test and subsequent compatibility/handoff documentation differ. The original13-test target revalidates that inventory change."
+  }
+]

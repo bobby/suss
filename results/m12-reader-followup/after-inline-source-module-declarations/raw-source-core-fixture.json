@@ -1,0 +1,4 @@
+{
+  "fixture_sha256": "722ab7fe78b1a9998c3afbad40c944e3e653929ca3395a6ab66422f519eeeb92",
+  "qualification": "Original low-level Session::with_options_in fixture loads raw core source. It reaches UUID literal requires shipped core after inline declarations prepare. The module feature regression now uses new_repl_with_options/new_macro_with_options, matching normal shipped-bootstrap namespace loading. No production reader/literal guard or budget is removed."
+}

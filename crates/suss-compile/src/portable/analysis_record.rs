@@ -2,7 +2,7 @@
 //! asks for them. Compilation drops each fragment's HIR once it is lowered;
 //! `suss analyze` runs the ordinary compilation pipeline with recording on.
 use super::{SourceOrigin, hir::Hir, resolve};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 /// One analyzed fragment: its top-level forms' HIR, in order, and the
 /// environment after them.
@@ -21,6 +21,19 @@ thread_local! {
     static RECORDING: RefCell<Option<Vec<RecordedFragment>>> = const { RefCell::new(None) };
     static FILTER: RefCell<Option<Filter>> = const { RefCell::new(None) };
     static PENDING: RefCell<Option<Vec<Hir>>> = const { RefCell::new(None) };
+    static INTERNAL_SETUP: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Compiler bookkeeping may reuse source declarations without creating new
+/// source forms. Preserve the enclosing recorder and any pending HIR, including
+/// when setup fails or recursively prepares other internal declarations.
+pub(crate) fn internal_setup<T>(f: impl FnOnce() -> T) -> T {
+    struct Restore(bool);
+    impl Drop for Restore {
+        fn drop(&mut self) { INTERNAL_SETUP.with(|state| state.set(self.0)); }
+    }
+    let _restore = Restore(INTERNAL_SETUP.with(|state| state.replace(true)));
+    f()
 }
 
 /// Run `f`, returning what it returns and the fragments analyzed meanwhile on
@@ -50,7 +63,8 @@ fn recording() -> bool {
 }
 
 fn wanted(origin: Option<&SourceOrigin>) -> bool {
-    recording() && FILTER.with(|f| f.borrow().as_ref().is_none_or(|filter| filter(origin)))
+    !INTERNAL_SETUP.with(Cell::get)
+        && recording() && FILTER.with(|f| f.borrow().as_ref().is_none_or(|filter| filter(origin)))
 }
 
 /// Called by the analyzer with a fragment's analyzed top-level forms.
@@ -89,7 +103,7 @@ pub(super) fn fragment(
 
 /// Forget forms analyzed outside a fragment.
 pub(super) fn clear_pending() {
-    if recording() {
+    if recording() && !INTERNAL_SETUP.with(Cell::get) {
         PENDING.with(|p| p.borrow_mut().take());
     }
 }

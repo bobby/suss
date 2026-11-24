@@ -1,0 +1,5 @@
+Syntax error reading source at (results/m12-character-coercion/oracle.clj:68:45).
+Invalid character constant: \ud800
+
+Full report at:
+/tmp/clojure-6571899992330058102.edn

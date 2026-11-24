@@ -1,0 +1,146 @@
+diff --git i/crates/suss-cli/tests/clojure_uuid.rs w/crates/suss-cli/tests/clojure_uuid.rs
+index fe121314..4cda8dca 100644
+--- i/crates/suss-cli/tests/clojure_uuid.rs
++++ w/crates/suss-cli/tests/clojure_uuid.rs
+@@ -207,3 +207,29 @@ fn actual_aot_executes_uuid_values_readers_and_signed_boundaries() {
+         include_str!("../../../results/m12-reader-followup/uuid-boundary-cases.json"),
+     ]);
+ }
++
++#[test]
++fn ordinary_source_core_loads_uuid_readers_in_both_phases() {
++    use suss_cli::portable_session::{SessionError, SessionOptions};
++    use suss_compile::portable::resolve::Phase;
++    for phase in [Phase::Runtime, Phase::Macro] {
++        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
++        let accessor = session.eval("suss.core/ex-message").unwrap();
++        if let Err(error) = session.eval(include_str!("../../../runtime/core-import/suss/core.sus")) {
++            let text = if let SessionError::Language(payload) = &error {
++                session.invoke(&accessor, &[payload]).and_then(|value| session.inspect(&value, |mut store, value| {
++                    let Some(reference) = value.unwrap_anyref() else { return Ok("nil diagnostic".into()); };
++                    let Some(array) = reference.as_array(&store)? else { return Ok("non-string diagnostic".into()); };
++                    let units = array.elems(&mut store)?.map(|v| v.unwrap_i32() as u16).collect::<Vec<_>>();
++                    Ok(String::from_utf16_lossy(&units))
++                })).unwrap_or_else(|e| e.to_string())
++            } else { error.to_string() };
++            panic!("{phase:?} source core load: {text}");
++        }
++        session.enter_namespace("user").unwrap();
++        let mut macros = CompiledMacros::new().unwrap();
++        assert_eq!(observed(&mut session, &mut macros,
++            "(let [x (read-string \"#uuid \\\"1-2-3-4-5\\\"\")] [(uuid? x) (str x) (hash x)])").unwrap(),
++            "[true \"00000001-0002-0003-0004-000000000005\" 393223]");
++    }
++}
+diff --git i/crates/suss-cli/tests/compiled_record_default_budget.rs w/crates/suss-cli/tests/compiled_record_default_budget.rs
+index f544c918..a002e540 100644
+--- i/crates/suss-cli/tests/compiled_record_default_budget.rs
++++ w/crates/suss-cli/tests/compiled_record_default_budget.rs
+@@ -48,6 +48,7 @@ fn repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_de
+     child.stdin.take().unwrap().write_all(format!("{DEFINITIONS}{VALUE}\n").as_bytes()).unwrap();
+     let output = child.wait_with_output().unwrap();
+     let trace = String::from_utf8(output.stderr.clone()).unwrap();
++    if std::env::var_os("SUSS_RAW_KEY_TRACE").is_some() { eprintln!("{trace}"); }
+     assert!(!trace.contains("Error:"), "{trace}");
+     assert_eq!(successful(output).lines().last(), Some("17"));
+     let mut previous = None;
+diff --git i/crates/suss-cli/tests/record_factory_preservation.rs w/crates/suss-cli/tests/record_factory_preservation.rs
+index d6868a21..46a636fa 100644
+--- i/crates/suss-cli/tests/record_factory_preservation.rs
++++ w/crates/suss-cli/tests/record_factory_preservation.rs
+@@ -100,6 +100,7 @@ fn erase_spans(form: &mut Form) {
+         | Kind::Bool(_)
+         | Kind::Number(_)
+         | Kind::Long(_)
++        | Kind::Uuid(_)
+         | Kind::Exact(_)
+         | Kind::String(_)
+         | Kind::Symbol(_)
+diff --git i/crates/suss-compile/src/portable_macro_graph.rs w/crates/suss-compile/src/portable_macro_graph.rs
+index c9e7fd61..33834f96 100644
+--- i/crates/suss-compile/src/portable_macro_graph.rs
++++ w/crates/suss-compile/src/portable_macro_graph.rs
+@@ -567,7 +567,9 @@ impl<'a> AnalysisGraph<'a> {
+         Ok(())
+     }
+     fn materialize(&mut self, root: Value) -> Result<SessionValue> {
+-        self.materialize_using(root, self.bridge)
++        let result = self.materialize_using(root, self.bridge);
++        self.raw_keys.trace_final();
++        result
+     }
+     fn materialize_using(&mut self, root: Value, bridge: &FormBridge) -> Result<SessionValue> {
+         self.session.charge_host_work(1)?;
+diff --git i/crates/suss-compile/src/portable_macro_graph/raw_keys.rs w/crates/suss-compile/src/portable_macro_graph/raw_keys.rs
+index 01d80721..f70ffdf3 100644
+--- i/crates/suss-compile/src/portable_macro_graph/raw_keys.rs
++++ w/crates/suss-compile/src/portable_macro_graph/raw_keys.rs
+@@ -203,6 +203,16 @@ fn sort_groups<E>(
+ }
+ 
+ impl Interner {
++    pub(super) fn trace_final(&self) {
++        if std::env::var_os("SUSS_RAW_KEY_TRACE").is_none() { return; }
++        eprintln!("raw-key-final calls={} entries={} intern={} comparison={} head_lookup={} head_insert={}",
++            self.profile_calls, self.keys.len(), self.profile_work, self.profile_comparison_work,
++            self.profile_head_lookup_work, self.profile_head_insert_work);
++        let st = &self.entry_stats;
++        eprintln!("raw-entry-final entries={} capacity={} alloc={} reloc={} dir_alloc={} dir_reloc={} access={} staging={} publication={}",
++            self.keys.len(), self.keys.capacity(), st.allocation, st.relocation,
++            st.directory_allocation, st.directory_relocation, st.access, st.staging, st.publication);
++    }
+     #[cfg(all(test, not(suss_generator)))]
+     fn intern<E>(
+         &mut self,
+diff --git i/crates/suss-reader/src/uuid.rs w/crates/suss-reader/src/uuid.rs
+index 932339c7..15c01509 100644
+--- i/crates/suss-reader/src/uuid.rs
++++ w/crates/suss-reader/src/uuid.rs
+@@ -240,8 +240,9 @@ mod tests {
+             "#{#uuid \"1-2-3-4-5\" #uuid \"00000001-0002-0003-0004-000000000005\"}",
+             "{#uuid \"1-2-3-4-5\" 1 #uuid \"00000001-0002-0003-0004-000000000005\" 2}",
+         ] {
+-            assert!(
+-                edn::read_one(source, &Options::default()).is_err(),
++            assert_eq!(
++                edn::read_one(source, &Options::default()).unwrap_err().message,
++                "Duplicate key: 00000001-0002-0003-0004-000000000005",
+                 "canonical duplicate: {source}"
+             );
+         }
+diff --git i/docs/compatibility/when-let/provenance.json w/docs/compatibility/when-let/provenance.json
+index c818a9b4..c3bdc582 100644
+--- i/docs/compatibility/when-let/provenance.json
++++ w/docs/compatibility/when-let/provenance.json
+@@ -56,7 +56,7 @@
+   "patch_sha256": "b0648abff634d85b8f2883c64faf1dd16ae2cffababd2a5c9d767e2f822a8bc5",
+   "files": {
+     "crates/suss-compile/src/portable_when_let.rs": "0de7d8f16339b7327b7e133279d6be7e4a7ecb8d554379e196d0a0f1a7a39e09",
+-    "crates/suss-compile/src/portable/hir/destructuring.rs": "31b19c0135b15c10c5d046d1ff6e615d19d76f6096abb4461ef1a6c96611c983",
++    "crates/suss-compile/src/portable/hir/destructuring.rs": "08c5a88fc311837ff49dced30e9d42e9837fd6a0e3bc0eb96b23fb0336ef9c0c",
+     "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
+     "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
+     "crates/suss-cli/tests/compiled_when_let.rs": "1df467f62d35324d6ec8b5289dd09e16ca7bef83a9aae7dd4e2362e94b4e6369",
+@@ -66,7 +66,8 @@
+     "Register defmacro locally; core/let spelling uses established bootstrap binding resolution.",
+     "Lower ordered assert-args checks to ordinary compiled if/throw/ex-info with identical messages and phase data.",
+     "Keep vector invocation, complete docstring, syntax-quote and hygienic temporary shape unchanged.",
+-    "Bootstrap let calls the existing EPL-derived destructuring binder for ordered vector/map binding pairs; no function wrapper, runtime extraction or loop rewrite."
++    "Bootstrap let calls the existing EPL-derived destructuring binder for ordered vector/map binding pairs; no function wrapper, runtime extraction or loop rewrite.",
++    "UUID literals retain their nominal signed-half hash when used as destructuring binding-map keys; prior native destructuring regressions and captured upstream forms remain unchanged."
+   ],
+   "dependencies": {
+     "macro": [
+diff --git i/results/m12-reader-followup/run-source.py w/results/m12-reader-followup/run-source.py
+index f118ebfb..fdac1e43 100644
+--- i/results/m12-reader-followup/run-source.py
++++ w/results/m12-reader-followup/run-source.py
+@@ -6,7 +6,7 @@ paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude
+ inputs={p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths if p and not p.startswith('results/') and (ROOT/p).is_file()}
+ for name in ['reader-cases.json','uuid-parser-cases.edn','uuid-hex-digit-jvm.bin','uuid-runtime-cases.json','uuid-boundary-cases.json']:
+  p=BASE/name;inputs[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
+-commands=[('reader',['cargo','test','-p','suss-reader','--locked','--','--test-threads=2']),('compiled-uuid',['cargo','test','-p','suss-cli','--locked','--test','clojure_uuid','--','--test-threads=2']),('record-budget',['cargo','test','--workspace','--locked','--test','compiled_record_default_budget','--','--nocapture','--test-threads=2']),('aot-size',['cargo','test','--workspace','--locked','--test','runtime_namespaces','aot_namespace_frame_size_is_bounded_per_form','--','--exact','--nocapture','--test-threads=2']),('decoder-source-tooling',['cargo','test','--workspace','--locked','--test','portable_value_decoder','--test','builtin_internals_sealed','--test','analyzer_edn','--test','analyzer_edn_core','--','--test-threads=2'])]
++commands=[('membership-sharing',['cargo','test','-p','suss-compile','--locked','--lib','portable_macro_graph::sharing_tests','--','--test-threads=2']),('record-budget',['cargo','test','--workspace','--locked','--test','compiled_record_default_budget','--','--nocapture','--test-threads=2']),('compiled-uuid',['cargo','test','-p','suss-cli','--locked','--test','clojure_uuid','--','--test-threads=2']),('aot-size',['cargo','test','--workspace','--locked','--test','runtime_namespaces','aot_namespace_frame_size_is_bounded_per_form','--','--exact','--nocapture','--test-threads=2']),('decoder-source-tooling',['cargo','test','--workspace','--locked','--test','portable_value_decoder','--test','builtin_internals_sealed','--test','analyzer_edn','--test','analyzer_edn_core','--','--test-threads=2'])]
+ env=os.environ|{'CARGO_TARGET_DIR':str(ROOT.parent/'m12-suite-platform-target'),'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable','XDG_RUNTIME_DIR':'/run/user/1000'}
+ record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'inputs':inputs,'commands':[],'complete':False}
+ def save():(OUT/'commands.json').write_text(json.dumps(record,indent=2)+'\n')

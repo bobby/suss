@@ -1,3 +1,33 @@
+Checked `char` coercion now follows Clojure source overloads in the compiled
+pipeline. [Character evidence](../../results/m12-character-coercion/README.md)
+retains401 Runtime/Macro/actual-AOT controls (397 primary matches/four explicit
+accepted platform differences), effect-order and GC checks, all nine unchanged
+vendored char assertions, and103 passing
+focused/regression tests. [Provenance](bootstrap/clojure-char.json) and the
+[representation/overload contract](../runtime/character-coercion.md) preserve
+original source and licenses. Broader EDN, workspace, CI and review acceptance
+retain their separate evidence; focused results do not establish broader numeric
+or Java Character compatibility.
+
+Runtime `read-string` syntax quote now preserves the primary's quoted UUID
+structure. Three fresh JVM structures/bit fields execute in Runtime, Macro and
+actual AOT; retained values are decoded independently after GC. Macro imports
+retain successfully initialized source identities after a later initializer
+fails, preserve those original hashes across file changes and regain cache hits
+after retry. [Review repair evidence](../../results/m12-reader-followup/README.md)
+retains the actual before-failure receipts and repaired-source checks.
+
+`clojure.edn/read-string` now exposes the same compiled data reader as
+`suss.edn/read-string`, in Runtime and Macro. The focused compatibility test
+passes; the complete EDN suite remains subject to the independently audited
+full capture in [reader evidence](../../results/m12-reader-followup/README.md).
+
+UUID values now have [compiled integration evidence](../../results/m12-reader-followup/README.md)
+for canonical128-bit storage, readers, macro/source transport, signed comparison,
+hashing, GC and actual AOT. [Source provenance](bootstrap/clojure-uuid.json) retains
+the complete class adaptation and licenses. Focused results do not establish a
+complete EDN/suite, workspace, CI or issue-acceptance pass.
+
 # ClojureScript compatibility evidence
 
 The compiler-owned [case source macro](bootstrap/clojure-case.json) executes all72

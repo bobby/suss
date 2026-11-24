@@ -1,0 +1,22 @@
+{
+  "state_before": {
+    "conclusion": "",
+    "headSha": "24da88f4fac6a75e7e80a426a8b5e0c5af4855e8",
+    "status": "in_progress"
+  },
+  "command": [
+    "gh",
+    "run",
+    "cancel",
+    "45196497382"
+  ],
+  "exit_code": 0,
+  "output": "\u2713 Request to cancel workflow 45196497382 submitted.\n",
+  "reason": "Completed integration1 and integration3 logs independently confirm the published inline defmacro regression and unchanged-baseline diagnostic drift. Preserve both actual failures, cancel remaining work on this proven pre-fix draft head, and free runners for PR505 final-head CI. The repaired implementation is being tested locally; a fresh final-head run is still required.",
+  "preserved_failure_jobs": [
+    137768451147,
+    137768450908
+  ],
+  "untouched_promotion_run": 45197016214,
+  "not_a_passing_run": true
+}

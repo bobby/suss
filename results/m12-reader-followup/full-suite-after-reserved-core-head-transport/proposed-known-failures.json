@@ -1,0 +1,395 @@
+{
+  "assertions": {
+    "clojure.core-test.assoc/test-assoc#31": "verdict:fail",
+    "clojure.core-test.assoc/test-assoc#32": "verdict:fail",
+    "clojure.core-test.assoc/test-assoc#34": "verdict:fail",
+    "clojure.core-test.assoc/test-assoc#35": "verdict:fail",
+    "clojure.core-test.char-qmark/test-char?#33": "verdict:fail",
+    "clojure.core-test.char-qmark/test-char?#34": "verdict:fail",
+    "clojure.core-test.compare/test-compare#12": "observation:value",
+    "clojure.core-test.contains-qmark/test-contains?#69": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#70": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#71": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#72": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#73": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#74": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#75": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#76": "verdict:fail",
+    "clojure.core-test.contains-qmark/test-contains?#77": "verdict:fail",
+    "clojure.core-test.count/test-count#20": "verdict:fail",
+    "clojure.core-test.counted-qmark/test-counted?#14": "verdict:fail",
+    "clojure.core-test.dissoc/test-dissoc#17": "observation:undecodable",
+    "clojure.core-test.double-qmark/test-double?#10": "verdict:fail",
+    "clojure.core-test.double-qmark/test-double?#11": "verdict:fail",
+    "clojure.core-test.double-qmark/test-double?#9": "verdict:fail",
+    "clojure.core-test.empty-qmark/test-empty?#15": "verdict:fail",
+    "clojure.core-test.empty/test-empty#1": "count:18/19",
+    "clojure.core-test.empty/test-empty#10": "count:18/19",
+    "clojure.core-test.empty/test-empty#11": "count:18/19",
+    "clojure.core-test.empty/test-empty#12": "count:18/19",
+    "clojure.core-test.empty/test-empty#13": "count:18/19",
+    "clojure.core-test.empty/test-empty#14": "count:18/19",
+    "clojure.core-test.empty/test-empty#15": "count:18/19",
+    "clojure.core-test.empty/test-empty#16": "count:18/19",
+    "clojure.core-test.empty/test-empty#17": "count:18/19",
+    "clojure.core-test.empty/test-empty#18": "count:18/19",
+    "clojure.core-test.empty/test-empty#19": "count:18/19",
+    "clojure.core-test.empty/test-empty#2": "count:18/19",
+    "clojure.core-test.empty/test-empty#3": "count:18/19",
+    "clojure.core-test.empty/test-empty#4": "count:18/19",
+    "clojure.core-test.empty/test-empty#5": "count:18/19",
+    "clojure.core-test.empty/test-empty#6": "count:18/19",
+    "clojure.core-test.empty/test-empty#7": "count:18/19",
+    "clojure.core-test.empty/test-empty#8": "count:18/19",
+    "clojure.core-test.empty/test-empty#9": "count:18/19",
+    "clojure.core-test.keyword/test-keyword#57": "verdict:fail",
+    "clojure.core-test.keyword/test-keyword#58": "verdict:fail",
+    "clojure.core-test.keyword/test-keyword#59": "verdict:fail",
+    "clojure.core-test.keyword/test-keyword#60": "verdict:fail",
+    "clojure.core-test.keyword/test-keyword#61": "verdict:fail",
+    "clojure.core-test.last/test-last#10": "verdict:fail",
+    "clojure.core-test.map/test-map#68": "verdict:fail",
+    "clojure.core-test.mapcat/test-mapcat#12": "observation:undecodable",
+    "clojure.core-test.mapcat/test-mapcat#3": "observation:undecodable",
+    "clojure.core-test.nan-qmark/test-NaN?#1": "verdict:fail",
+    "clojure.core-test.nan-qmark/test-NaN?#2": "verdict:fail",
+    "clojure.core-test.not-empty/test-not-empty#11": "verdict:fail",
+    "clojure.core-test.nthrest/test-nthrest#11": "verdict:fail",
+    "clojure.core-test.nthrest/test-nthrest#12": "verdict:fail",
+    "clojure.core-test.nthrest/test-nthrest#13": "verdict:fail",
+    "clojure.core-test.nthrest/test-nthrest#14": "verdict:fail",
+    "clojure.core-test.pr-str/test-pr-str#2": "verdict:fail",
+    "clojure.core-test.prn-str/test-prn-str#2": "verdict:fail",
+    "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#1": "verdict:fail",
+    "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#1": "verdict:fail",
+    "clojure.core-test.repeat/test-repeat#10": "verdict:fail",
+    "clojure.core-test.repeat/test-repeat#11": "observation:undecodable",
+    "clojure.core-test.repeat/test-repeat#12": "observation:undecodable",
+    "clojure.core-test.repeat/test-repeat#7": "observation:undecodable",
+    "clojure.core-test.repeat/test-repeat#8": "observation:undecodable",
+    "clojure.core-test.repeat/test-repeat#9": "verdict:fail",
+    "clojure.core-test.reverse/test-reverse#9": "verdict:fail",
+    "clojure.core-test.reversible-qmark/test-reversible?#19": "verdict:fail",
+    "clojure.core-test.select-keys/test-select-keys#11": "verdict:fail",
+    "clojure.core-test.select-keys/test-select-keys#12": "verdict:fail",
+    "clojure.core-test.seqable-qmark/test-seqable?#17": "verdict:fail",
+    "clojure.core-test.set/test-set#13": "verdict:fail",
+    "clojure.core-test.simple-ident-qmark/test-simple-ident?#3": "verdict:fail",
+    "clojure.core-test.simple-keyword-qmark/test-simple-keyword?#2": "verdict:fail",
+    "clojure.core-test.string-qmark/test-string?#42": "verdict:fail",
+    "clojure.core-test.string-qmark/test-string?#43": "verdict:fail",
+    "clojure.core-test.string-qmark/test-string?#44": "verdict:fail",
+    "clojure.core-test.string-qmark/test-string?#45": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#28": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#30": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#31": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#32": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#33": "verdict:fail",
+    "clojure.core-test.subvec/test-subvec#34": "verdict:fail",
+    "clojure.edn-test.read-string/test-read-string#188": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#202": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#203": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#204": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#205": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#206": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#207": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#208": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#209": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#210": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#211": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#212": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#213": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#249": "verdict:fail",
+    "clojure.edn-test.read-string/test-read-string#266": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#267": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#69": "observation:value",
+    "clojure.edn-test.read-string/test-read-string#95": "kind:error",
+    "clojure.edn-test.read-string/test-read-string#96": "kind:error"
+  },
+  "namespaces": {
+    "clojure.core-test.add-watch": {
+      "diagnostic": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 250..14860",
+      "stage": "namespace"
+    },
+    "clojure.core-test.ancestors": {
+      "diagnostic": "clojure.core-test.ancestors (Some(\"<root>/clojure/core_test/ancestors.cljc\")): Unresolved Runtime name clojure.core_test.ancestors.TestAncestorsProtocol at bytes 246..8404",
+      "stage": "namespace"
+    },
+    "clojure.core-test.any-qmark": {
+      "diagnostic": "clojure.core-test.any-qmark (Some(\"<root>/clojure/core_test/any_qmark.cljc\")): Unresolved Runtime name any? at bytes 239..478",
+      "stage": "namespace"
+    },
+    "clojure.core-test.binding": {
+      "diagnostic": "clojure.core-test.binding (Some(\"<root>/clojure/core_test/binding.cljc\")): Unresolved Runtime name future at bytes 225..2775",
+      "stage": "namespace"
+    },
+    "clojure.core-test.boolean-qmark": {
+      "diagnostic": "clojure.core-test.boolean-qmark (Some(\"<root>/clojure/core_test/boolean_qmark.cljc\")): Unresolved Runtime name boolean? at bytes 279..941",
+      "stage": "namespace"
+    },
+    "clojure.core-test.bound-fn": {
+      "diagnostic": "clojure.core-test.bound-fn (Some(\"<root>/clojure/core_test/bound_fn.cljc\")): Unresolved Runtime name bound-fn at bytes 262..1891",
+      "stage": "namespace"
+    },
+    "clojure.core-test.bound-fn-star": {
+      "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Unresolved Runtime name bound-fn* at bytes 290..1947",
+      "stage": "namespace"
+    },
+    "clojure.core-test.comment": {
+      "diagnostic": "clojure.core-test.comment (Some(\"<root>/clojure/core_test/comment.cljc\")): Unresolved Runtime name comment at bytes 237..443",
+      "stage": "namespace"
+    },
+    "clojure.core-test.constantly": {
+      "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unresolved Runtime name some-fn at bytes 240..1477",
+      "stage": "namespace"
+    },
+    "clojure.core-test.distinct": {
+      "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Unresolved Runtime name distinct at bytes 244..1776",
+      "stage": "namespace"
+    },
+    "clojure.core-test.drop-last": {
+      "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Unresolved Runtime name drop-last at bytes 245..3362",
+      "stage": "namespace"
+    },
+    "clojure.core-test.eq": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    },
+    "clojure.core-test.eval": {
+      "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+      "stage": "namespace"
+    },
+    "clojure.core-test.ffirst": {
+      "diagnostic": "clojure.core-test.ffirst (Some(\"<root>/clojure/core_test/ffirst.cljc\")): Unresolved Runtime name ffirst at bytes 251..1277",
+      "stage": "namespace"
+    },
+    "clojure.core-test.fnext": {
+      "diagnostic": "clojure.core-test.fnext (Some(\"<root>/clojure/core_test/fnext.cljc\")): Unresolved Runtime name fnext at bytes 250..1215",
+      "stage": "namespace"
+    },
+    "clojure.core-test.format": {
+      "diagnostic": "clojure.core-test.format (Some(\"<root>/clojure/core_test/format.cljc\")): Unresolved Runtime name format at bytes 224..1132",
+      "stage": "namespace"
+    },
+    "clojure.core-test.get-in": {
+      "diagnostic": "clojure.core-test.get-in (Some(\"<root>/clojure/core_test/get_in.cljc\")): Unresolved Runtime name get-in at bytes 232..1785",
+      "stage": "namespace"
+    },
+    "clojure.core-test.identity": {
+      "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag inst at bytes 680..717",
+      "stage": "read"
+    },
+    "clojure.core-test.ifn-qmark": {
+      "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name var at bytes 352..1464",
+      "stage": "namespace"
+    },
+    "clojure.core-test.intern": {
+      "diagnostic": "clojure.core-test.intern (Some(\"<root>/clojure/core_test/intern.cljc\")): Unresolved Runtime name intern at bytes 230..946",
+      "stage": "namespace"
+    },
+    "clojure.core-test.lazy-seq": {
+      "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Unresolved Runtime name assert at bytes 244..4118",
+      "stage": "namespace"
+    },
+    "clojure.core-test.merge": {
+      "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Unresolved Runtime name any? at bytes 237..4753",
+      "stage": "namespace"
+    },
+    "clojure.core-test.min-key": {
+      "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+      "stage": "namespace"
+    },
+    "clojure.core-test.nfirst": {
+      "diagnostic": "clojure.core-test.nfirst (Some(\"<root>/clojure/core_test/nfirst.cljc\")): Unresolved Runtime name nfirst at bytes 251..1279",
+      "stage": "namespace"
+    },
+    "clojure.core-test.nnext": {
+      "diagnostic": "clojure.set (Some(\"<root>/clojure/core_test/nnext.cljc\")): No source for namespace clojure.set at bytes 52..63",
+      "stage": "namespace"
+    },
+    "clojure.core-test.not-eq": {
+      "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282",
+      "stage": "read"
+    },
+    "clojure.core-test.not-every-qmark": {
+      "diagnostic": "clojure.core-test.not-every-qmark (Some(\"<root>/clojure/core_test/not_every_qmark.cljc\")): Unresolved Runtime name not-every? at bytes 266..364",
+      "stage": "namespace"
+    },
+    "clojure.core-test.nth": {
+      "diagnostic": "clojure.core-test.nth (Some(\"<root>/clojure/core_test/nth.cljc\")): Unsupported reader dispatch at bytes 1748..1750",
+      "stage": "read"
+    },
+    "clojure.core-test.nthnext": {
+      "diagnostic": "clojure.core-test.nthnext (Some(\"<root>/clojure/core_test/nthnext.cljc\")): Unresolved Runtime name nthnext at bytes 231..1069",
+      "stage": "namespace"
+    },
+    "clojure.core-test.num": {
+      "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported reader dispatch at bytes 3408..3410",
+      "stage": "read"
+    },
+    "clojure.core-test.parents": {
+      "diagnostic": "clojure.core-test.parents (Some(\"<root>/clojure/core_test/parents.cljc\")): Unresolved Runtime name String at bytes 244..8534",
+      "stage": "namespace"
+    },
+    "clojure.core-test.parse-boolean": {
+      "diagnostic": "clojure.core-test.parse-boolean (Some(\"<root>/clojure/core_test/parse_boolean.cljc\")): Unresolved Runtime name parse-boolean at bytes 246..1526",
+      "stage": "namespace"
+    },
+    "clojure.core-test.parse-double": {
+      "diagnostic": "clojure.core-test.parse-double (Some(\"<root>/clojure/core_test/parse_double.cljc\")): Unresolved Runtime name parse-double at bytes 245..1751",
+      "stage": "namespace"
+    },
+    "clojure.core-test.parse-long": {
+      "diagnostic": "clojure.core-test.parse-long (Some(\"<root>/clojure/core_test/parse_long.cljc\")): Unresolved Runtime name parse-long at bytes 256..2069",
+      "stage": "namespace"
+    },
+    "clojure.core-test.parse-uuid": {
+      "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unresolved Runtime name parse-uuid at bytes 259..2057",
+      "stage": "namespace"
+    },
+    "clojure.core-test.pop-bang": {
+      "diagnostic": "clojure.core-test.pop-bang (Some(\"<root>/clojure/core_test/pop_bang.cljc\")): Unresolved Runtime name pop! at bytes 238..1274",
+      "stage": "namespace"
+    },
+    "clojure.core-test.rand": {
+      "diagnostic": "clojure.core-test.rand (Some(\"<root>/clojure/core_test/rand.cljc\")): Unresolved Runtime name p/when-var-exists at bytes 178..195",
+      "stage": "namespace"
+    },
+    "clojure.core-test.rand-int": {
+      "diagnostic": "clojure.core-test.rand-int (Some(\"<root>/clojure/core_test/rand_int.cljc\")): Unresolved Runtime name p/when-var-exists at bytes 174..191",
+      "stage": "namespace"
+    },
+    "clojure.core-test.rand-nth": {
+      "diagnostic": "clojure.core-test.rand-nth (Some(\"<root>/clojure/core_test/rand_nth.cljc\")): Unresolved Runtime name repeatedly at bytes 244..991",
+      "stage": "namespace"
+    },
+    "clojure.core-test.random-sample": {
+      "diagnostic": "clojure.core-test.random-sample (Some(\"<root>/clojure/core_test/random_sample.cljc\")): Unresolved Runtime name repeatedly at bytes 249..3315",
+      "stage": "namespace"
+    },
+    "clojure.core-test.random-uuid": {
+      "diagnostic": "clojure.core-test.random-uuid (Some(\"<root>/clojure/core_test/random_uuid.cljc\")): Unsupported reader dispatch at bytes 467..469",
+      "stage": "read"
+    },
+    "clojure.core-test.realized-qmark": {
+      "diagnostic": "clojure.core-test.realized-qmark (Some(\"<root>/clojure/core_test/realized_qmark.cljc\")): Unresolved Runtime name promise at bytes 406..3747",
+      "stage": "namespace"
+    },
+    "clojure.core-test.reduce": {
+      "diagnostic": "clojure.core-test.reduce (Some(\"<root>/clojure/core_test/reduce.cljc\")): Unresolved Runtime name boolean-array at bytes 242..5272",
+      "stage": "namespace"
+    },
+    "clojure.core-test.remove": {
+      "diagnostic": "clojure.core-test.remove (Some(\"<root>/clojure/core_test/remove.cljc\")): Unsupported reader dispatch at bytes 1204..1206",
+      "stage": "read"
+    },
+    "clojure.core-test.remove-watch": {
+      "diagnostic": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 238..8527",
+      "stage": "namespace"
+    },
+    "clojure.core-test.repeatedly": {
+      "diagnostic": "clojure.core-test.repeatedly (Some(\"<root>/clojure/core_test/repeatedly.cljc\")): Unsupported reader dispatch at bytes 2122..2124",
+      "stage": "read"
+    },
+    "clojure.core-test.run-bang": {
+      "diagnostic": "clojure.core-test.run-bang (Some(\"<root>/clojure/core_test/run_bang.cljc\")): Unresolved Runtime name run! at bytes 238..1716",
+      "stage": "namespace"
+    },
+    "clojure.core-test.shuffle": {
+      "diagnostic": "clojure.core-test.shuffle (Some(\"<root>/clojure/core_test/shuffle.cljc\")): Unresolved Runtime name shuffle at bytes 239..1519",
+      "stage": "namespace"
+    },
+    "clojure.core-test.some-fn": {
+      "diagnostic": "clojure.core-test.some-fn (Some(\"<root>/clojure/core_test/some_fn.cljc\")): Unresolved Runtime name some-fn at bytes 237..1324",
+      "stage": "namespace"
+    },
+    "clojure.core-test.sort-by": {
+      "diagnostic": "clojure.core-test.sort-by (Some(\"<root>/clojure/core_test/sort_by.cljc\")): Unresolved Runtime name sort-by at bytes 243..5303",
+      "stage": "namespace"
+    },
+    "clojure.core-test.special-symbol-qmark": {
+      "diagnostic": "clojure.core-test.special-symbol-qmark (Some(\"<root>/clojure/core_test/special_symbol_qmark.cljc\")): Unresolved Runtime name special-symbol? at bytes 241..1558",
+      "stage": "namespace"
+    },
+    "clojure.core-test.subs": {
+      "diagnostic": "clojure.core-test.subs (Some(\"<root>/clojure/core_test/subs.cljc\")): Unresolved Runtime name subs at bytes 228..2414",
+      "stage": "namespace"
+    },
+    "clojure.core-test.symbol": {
+      "diagnostic": "clojure.core-test.symbol (Some(\"<root>/clojure/core_test/symbol.cljc\")): Unresolved Runtime name var at bytes 234..3104",
+      "stage": "namespace"
+    },
+    "clojure.core-test.take-last": {
+      "diagnostic": "clojure.core-test.take-last (Some(\"<root>/clojure/core_test/take_last.cljc\")): Unresolved Runtime name take-last at bytes 245..1135",
+      "stage": "namespace"
+    },
+    "clojure.core-test.taps": {
+      "diagnostic": "clojure.core-test.taps (Some(\"<root>/clojure/core_test/taps.cljc\")): Unresolved Runtime name clojure.lang.IPending at bytes 222..3465",
+      "stage": "namespace"
+    },
+    "clojure.core-test.uuid-qmark": {
+      "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unresolved Runtime name parse-uuid at bytes 231..1206",
+      "stage": "namespace"
+    },
+    "clojure.core-test.var-qmark": {
+      "diagnostic": "clojure.core-test.var-qmark (Some(\"<root>/clojure/core_test/var_qmark.cljc\")): Unresolved Runtime name var at bytes 517..1919",
+      "stage": "namespace"
+    },
+    "clojure.core-test.when-first": {
+      "diagnostic": "clojure.core-test.when-first (Some(\"<root>/clojure/core_test/when_first.cljc\")): Unresolved Runtime name when-first at bytes 241..1445",
+      "stage": "namespace"
+    },
+    "clojure.core-test.when-let": {
+      "diagnostic": "clojure.core-test.when-let (Some(\"<root>/clojure/core_test/when_let.cljc\")): Unresolved Runtime name macroexpand at bytes 244..2234",
+      "stage": "namespace"
+    },
+    "clojure.core-test.with-out-str": {
+      "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478",
+      "stage": "namespace"
+    },
+    "clojure.string-test.blank-qmark": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/blank_qmark.cljc\")): No source for namespace clojure.string at bytes 47..61",
+      "stage": "namespace"
+    },
+    "clojure.string-test.capitalize": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/capitalize.cljc\")): No source for namespace clojure.string at bytes 46..60",
+      "stage": "namespace"
+    },
+    "clojure.string-test.ends-with-qmark": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/ends_with_qmark.cljc\")): No source for namespace clojure.string at bytes 51..65",
+      "stage": "namespace"
+    },
+    "clojure.string-test.escape": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/escape.cljc\")): No source for namespace clojure.string at bytes 42..56",
+      "stage": "namespace"
+    },
+    "clojure.string-test.lower-case": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/lower_case.cljc\")): No source for namespace clojure.string at bytes 46..60",
+      "stage": "namespace"
+    },
+    "clojure.string-test.replace": {
+      "diagnostic": "clojure.string-test.replace (Some(\"<root>/clojure/string_test/replace.cljc\")): Unsupported reader dispatch at bytes 2324..2326",
+      "stage": "read"
+    },
+    "clojure.string-test.reverse": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/reverse.cljc\")): No source for namespace clojure.string at bytes 43..57",
+      "stage": "namespace"
+    },
+    "clojure.string-test.split-lines": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/split_lines.cljc\")): No source for namespace clojure.string at bytes 47..61",
+      "stage": "namespace"
+    },
+    "clojure.string-test.starts-with-qmark": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/starts_with_qmark.cljc\")): No source for namespace clojure.string at bytes 53..67",
+      "stage": "namespace"
+    },
+    "clojure.string-test.upper-case": {
+      "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/upper_case.cljc\")): No source for namespace clojure.string at bytes 46..60",
+      "stage": "namespace"
+    }
+  },
+  "schema": 1,
+  "skip-mismatches": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "tests": {}
+}

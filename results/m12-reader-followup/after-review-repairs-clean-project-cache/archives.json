@@ -1,0 +1,42 @@
+[
+  {
+    "raw": "commands.json",
+    "archive": "commands.json.gz",
+    "raw_sha256": "24e96c8e33e5bb7ce76930c4f4092f51be2b22f09b184f9d993ee00e98831ff7",
+    "raw_bytes": 502653,
+    "archive_sha256": "5bf48e01355507540ecfd7cfadea5d0291cde308f745da1cdde0545073c37325",
+    "archive_bytes": 184536
+  },
+  {
+    "raw": "original-record-and-artifact-guards.log",
+    "archive": "original-record-and-artifact-guards.log.gz",
+    "raw_sha256": "eb4e9cbeb9c73e65faeddf40424d8bc37c458d837cbc31507b8eee9d9f7e75af",
+    "raw_bytes": 2540,
+    "archive_sha256": "d389dd6d2f0b8e08c48cec297f371783369882dcc2591cefcf273eddf508420b",
+    "archive_bytes": 915
+  },
+  {
+    "raw": "partial-import-recovery.log",
+    "archive": "partial-import-recovery.log.gz",
+    "raw_sha256": "cfbb5e9b4f7812947523a80bbb7d5f47472931c4e695d03a980816058971d8ba",
+    "raw_bytes": 1471,
+    "archive_sha256": "ae11162c33e9b08b06255e16c53867a0a9ff19b20ac39f1df600026713d98aae",
+    "archive_bytes": 486
+  },
+  {
+    "raw": "source-and-cache-regressions.log",
+    "archive": "source-and-cache-regressions.log.gz",
+    "raw_sha256": "34852223d786ddc055c15c8fa0dc65efa787a35020bdf494ff018975c34a2b83",
+    "raw_bytes": 8228,
+    "archive_sha256": "35685fd0ebc074bd48b21d682d38296e777636433f98b504d12b1f1f74e0f25a",
+    "archive_bytes": 2188
+  },
+  {
+    "raw": "uuid-runtime-syntax-quote.log",
+    "archive": "uuid-runtime-syntax-quote.log.gz",
+    "raw_sha256": "a2293422a0a73e244793b40fa0391728aa4e1e84e7ec4860fbaa63df74e6f2f0",
+    "raw_bytes": 799,
+    "archive_sha256": "62505ec5ffb716658b994ff6438af084e8a48bbb54f24d1a50aa4461cc19af36",
+    "archive_bytes": 468
+  }
+]

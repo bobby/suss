@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "session_observation_hook",
+    "--",
+    "--nocapture",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "seconds": 167.2052948474884,
+  "inputs_unchanged": true,
+  "input_count": 3888,
+  "qualification": "Input hashes recorded immediately after launching this bounded focused run; no source changes during execution."
+}

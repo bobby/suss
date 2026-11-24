@@ -1,0 +1,28 @@
+Running as unit: run-p349852-i92603869.scope; invocation ID: 43ec50235f0244178471147996792f6c
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.31s
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test aot_records_fit_default_budget_and_execute ... ok
+test eval_and_script_records_fit_default_compilation_budget ... ok
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.37s
+
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 10 tests
+test a_namespace_whose_dependency_failed_to_load_recovers ... ok
+test component_exports_see_the_root_namespace ... ok
+test core_names_added_before_the_first_resolution_resolve_to_core ... ok
+test aot_namespace_frame_size_is_bounded_per_form ... ok
+test macros_see_the_namespace_being_compiled ... ok
+test namespace_functions_follow_clojure ... ok
+test ns_is_bound_while_loading_and_rebindable ... ok
+test runtime_resolution_agrees_with_syntax_quote ... ok
+test script_files_start_in_user ... ok
+test the_repl_starts_in_user_and_follows_ns_and_in_ns ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.34s
+

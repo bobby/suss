@@ -1,0 +1,596 @@
+Running as unit: run-p4094520-i92147299.scope; invocation ID: 2bc0656a89494d8d92366f8dae884dc0
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 4m 18s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 1 test
+test uuid_values_and_readers_follow_primary_in_both_phases ... FAILED
+
+failures:
+
+---- uuid_values_and_readers_follow_primary_in_both_phases stdout ----
+
+thread 'uuid_values_and_readers_follow_primary_in_both_phases' (4103814) panicked at crates/suss-cli/tests/clojure_uuid.rs:52:5:
+Runtime case0: (str #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected "550e8400-e29b-41d4-a716-446655440000"
+actual Ok("\"e29b41d4-e29b-41d4-5544-000055440000\"")
+Runtime case1: (pr-str #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected "#uuid \"550e8400-e29b-41d4-a716-446655440000\""
+actual Ok("\"#uuid \\\"e29b41d4-e29b-41d4-5544-000055440000\\\"\"")
+Runtime case2: (hash #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected 1170702770
+actual Ok("0")
+Runtime case7: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (read-string "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Ok("false")
+Runtime case8: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (suss.edn/read-string "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case17: (= #uuid "00000000-0000-0000-0000-000000000000" (suss.edn/read-string "#uuid \"00000000-0000-0000-0000-000000000000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case18: (str #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff")
+expected "ffffffff-ffff-ffff-ffff-ffffffffffff"
+actual Ok("\"ffffffff-ffff-ffff-ffff-0000ffffffff\"")
+Runtime case19: (pr-str #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff")
+expected "#uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\""
+actual Ok("\"#uuid \\\"ffffffff-ffff-ffff-ffff-0000ffffffff\\\"\"")
+Runtime case26: (= #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff" (suss.edn/read-string "#uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case27: (str #uuid "80000000-0000-0000-0000-000000000000")
+expected "80000000-0000-0000-0000-000000000000"
+actual Ok("\"00000000-0000-0000-0000-000000000000\"")
+Runtime case28: (pr-str #uuid "80000000-0000-0000-0000-000000000000")
+expected "#uuid \"80000000-0000-0000-0000-000000000000\""
+actual Ok("\"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"")
+Runtime case29: (hash #uuid "80000000-0000-0000-0000-000000000000")
+expected -2147483648
+actual Ok("0")
+Runtime case34: (= #uuid "80000000-0000-0000-0000-000000000000" (read-string "#uuid \"80000000-0000-0000-0000-000000000000\""))
+expected true
+actual Ok("false")
+Runtime case35: (= #uuid "80000000-0000-0000-0000-000000000000" (suss.edn/read-string "#uuid \"80000000-0000-0000-0000-000000000000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case36: (str #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected "7fffffff-ffff-ffff-ffff-ffffffffffff"
+actual Ok("\"ffffffff-ffff-ffff-ffff-0000ffffffff\"")
+Runtime case37: (pr-str #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""
+actual Ok("\"#uuid \\\"ffffffff-ffff-ffff-ffff-0000ffffffff\\\"\"")
+Runtime case38: (hash #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected -2147483648
+actual Ok("0")
+Runtime case43: (= #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff" (read-string "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Ok("false")
+Runtime case44: (= #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff" (suss.edn/read-string "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case45: (str #uuid "1-1-1-1-1")
+expected "00000001-0001-0001-0001-000000000001"
+actual Ok("\"00010001-0001-0001-0000-000000000001\"")
+Runtime case46: (pr-str #uuid "1-1-1-1-1")
+expected "#uuid \"00000001-0001-0001-0001-000000000001\""
+actual Ok("\"#uuid \\\"00010001-0001-0001-0000-000000000001\\\"\"")
+Runtime case47: (hash #uuid "1-1-1-1-1")
+expected 1
+actual Ok("0")
+Runtime case52: (= #uuid "1-1-1-1-1" (read-string "#uuid \"1-1-1-1-1\""))
+expected true
+actual Ok("false")
+Runtime case53: (= #uuid "1-1-1-1-1" (suss.edn/read-string "#uuid \"1-1-1-1-1\""))
+expected true
+actual Err("Compile(Diagnostic { span: 35..55, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case54: (str #uuid "1-2-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case55: (pr-str #uuid "1-2-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case56: (hash #uuid "1-2-3-4-5")
+expected 393223
+actual Ok("0")
+Runtime case61: (= #uuid "1-2-3-4-5" (read-string "#uuid \"1-2-3-4-5\""))
+expected true
+actual Ok("false")
+Runtime case62: (= #uuid "1-2-3-4-5" (suss.edn/read-string "#uuid \"1-2-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 35..55, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case63: (str #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected "550e8400-e29b-41d4-a716-446655440000"
+actual Ok("\"e29b41d4-e29b-41d4-5544-000055440000\"")
+Runtime case64: (pr-str #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected "#uuid \"550e8400-e29b-41d4-a716-446655440000\""
+actual Ok("\"#uuid \\\"e29b41d4-e29b-41d4-5544-000055440000\\\"\"")
+Runtime case65: (hash #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected 1170702770
+actual Ok("0")
+Runtime case70: (= #uuid "550E8400-E29B-41D4-A716-446655440000" (read-string "#uuid \"550E8400-E29B-41D4-A716-446655440000\""))
+expected true
+actual Ok("false")
+Runtime case71: (= #uuid "550E8400-E29B-41D4-A716-446655440000" (suss.edn/read-string "#uuid \"550E8400-E29B-41D4-A716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case72: (str #uuid "+1-+2-+3-+4-+5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case73: (pr-str #uuid "+1-+2-+3-+4-+5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case74: (hash #uuid "+1-+2-+3-+4-+5")
+expected 393223
+actual Ok("0")
+Runtime case79: (= #uuid "+1-+2-+3-+4-+5" (read-string "#uuid \"+1-+2-+3-+4-+5\""))
+expected true
+actual Ok("false")
+Runtime case80: (= #uuid "+1-+2-+3-+4-+5" (suss.edn/read-string "#uuid \"+1-+2-+3-+4-+5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 40..60, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case81: (str #uuid "000000001-2-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case82: (pr-str #uuid "000000001-2-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case83: (hash #uuid "000000001-2-3-4-5")
+expected 393223
+actual Ok("0")
+Runtime case88: (= #uuid "000000001-2-3-4-5" (read-string "#uuid \"000000001-2-3-4-5\""))
+expected true
+actual Ok("false")
+Runtime case89: (= #uuid "000000001-2-3-4-5" (suss.edn/read-string "#uuid \"000000001-2-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 43..63, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case90: (str #uuid "1-00002-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case91: (pr-str #uuid "1-00002-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case92: (hash #uuid "1-00002-3-4-5")
+expected 393223
+actual Ok("0")
+Runtime case97: (= #uuid "1-00002-3-4-5" (read-string "#uuid \"1-00002-3-4-5\""))
+expected true
+actual Ok("false")
+Runtime case98: (= #uuid "1-00002-3-4-5" (suss.edn/read-string "#uuid \"1-00002-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case99: (str #uuid "1-2-00003-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case100: (pr-str #uuid "1-2-00003-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case101: (hash #uuid "1-2-00003-4-5")
+expected 393223
+actual Ok("0")
+Runtime case106: (= #uuid "1-2-00003-4-5" (read-string "#uuid \"1-2-00003-4-5\""))
+expected true
+actual Ok("false")
+Runtime case107: (= #uuid "1-2-00003-4-5" (suss.edn/read-string "#uuid \"1-2-00003-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case108: (str #uuid "1-2-3-00004-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case109: (pr-str #uuid "1-2-3-00004-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case110: (hash #uuid "1-2-3-00004-5")
+expected 393223
+actual Ok("0")
+Runtime case115: (= #uuid "1-2-3-00004-5" (read-string "#uuid \"1-2-3-00004-5\""))
+expected true
+actual Ok("false")
+Runtime case116: (= #uuid "1-2-3-00004-5" (suss.edn/read-string "#uuid \"1-2-3-00004-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case117: (str #uuid "1-2-3-4-0000000000005")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case118: (pr-str #uuid "1-2-3-4-0000000000005")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case119: (hash #uuid "1-2-3-4-0000000000005")
+expected 393223
+actual Ok("0")
+Runtime case124: (= #uuid "1-2-3-4-0000000000005" (read-string "#uuid \"1-2-3-4-0000000000005\""))
+expected true
+actual Ok("false")
+Runtime case125: (= #uuid "1-2-3-4-0000000000005" (suss.edn/read-string "#uuid \"1-2-3-4-0000000000005\""))
+expected true
+actual Err("Compile(Diagnostic { span: 47..67, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case126: (str #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case127: (pr-str #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case128: (hash #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected 393223
+actual Ok("0")
+Runtime case133: (= #uuid "\uff11-\uff12-\uff13-\uff14-\uff15" (read-string "#uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\""))
+expected true
+actual Ok("false")
+Runtime case134: (= #uuid "\uff11-\uff12-\uff13-\uff14-\uff15" (suss.edn/read-string "#uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\""))
+expected true
+actual Err("Compile(Diagnostic { span: 60..80, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case135: (str #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Runtime case136: (pr-str #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Runtime case137: (hash #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected 393223
+actual Ok("0")
+Runtime case142: (= #uuid "\u0661-\u0662-\u0663-\u0664-\u0665" (read-string "#uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\""))
+expected true
+actual Ok("false")
+Runtime case143: (= #uuid "\u0661-\u0662-\u0663-\u0664-\u0665" (suss.edn/read-string "#uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\""))
+expected true
+actual Err("Compile(Diagnostic { span: 60..80, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case144: (try (suss.edn/read-string "#uuid \"\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case145: (try (suss.edn/read-string "#uuid \"not-a-uuid\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case146: (try (suss.edn/read-string "#uuid \"1-2-3-4\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case147: (try (suss.edn/read-string "#uuid \"1-2-3-4-5-6\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case148: (try (suss.edn/read-string "#uuid \"-1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case149: (try (suss.edn/read-string "#uuid \"1--2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case150: (try (suss.edn/read-string "#uuid \"1-2-3-4-\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case151: (try (suss.edn/read-string "#uuid \"1-2-3-4-g\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case152: (try (suss.edn/read-string "#uuid \"0x1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case153: (try (suss.edn/read-string "#uuid \"12345678901234567-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case154: (try (suss.edn/read-string "#uuid \"0000000000000000000000000001-2-3-4-5\"") (catch :default e :error))
+expected #uuid "00000001-0002-0003-0004-000000000005"
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case155: (try (suss.edn/read-string "#uuid \" 1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case156: (try (suss.edn/read-string "#uuid \"1-2-3-4-5 \"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case157: (try (suss.edn/read-string "#uuid \"1-2-3-4-\\uff27\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case158: (try (suss.edn/read-string "#uuid nil") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case159: (try (suss.edn/read-string "#uuid 0") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case160: (try (suss.edn/read-string "#uuid :x") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case161: (try (suss.edn/read-string "#uuid [1]") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case162: (try (suss.edn/read-string "#uuid ()") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case166: (suss.edn/read-string {:readers {'uuid (fn [x] [:override x])}} "#uuid \"550e8400-e29b-41d4-a716-446655440000\"")
+expected [:override "550e8400-e29b-41d4-a716-446655440000"]
+actual Err("Compile(Diagnostic { span: 14..34, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Runtime case167: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (suss.edn/read-string {:default (fn [tag x] :default)} "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Runtime name suss.edn/read-string\" })")
+Macro case0: (str #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected "550e8400-e29b-41d4-a716-446655440000"
+actual Ok("\"e29b41d4-e29b-41d4-5544-000055440000\"")
+Macro case1: (pr-str #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected "#uuid \"550e8400-e29b-41d4-a716-446655440000\""
+actual Ok("\"#uuid \\\"e29b41d4-e29b-41d4-5544-000055440000\\\"\"")
+Macro case2: (hash #uuid "550e8400-e29b-41d4-a716-446655440000")
+expected 1170702770
+actual Ok("0")
+Macro case7: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (read-string "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Ok("false")
+Macro case8: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (suss.edn/read-string "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case17: (= #uuid "00000000-0000-0000-0000-000000000000" (suss.edn/read-string "#uuid \"00000000-0000-0000-0000-000000000000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case18: (str #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff")
+expected "ffffffff-ffff-ffff-ffff-ffffffffffff"
+actual Ok("\"ffffffff-ffff-ffff-ffff-0000ffffffff\"")
+Macro case19: (pr-str #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff")
+expected "#uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\""
+actual Ok("\"#uuid \\\"ffffffff-ffff-ffff-ffff-0000ffffffff\\\"\"")
+Macro case26: (= #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff" (suss.edn/read-string "#uuid \"ffffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case27: (str #uuid "80000000-0000-0000-0000-000000000000")
+expected "80000000-0000-0000-0000-000000000000"
+actual Ok("\"00000000-0000-0000-0000-000000000000\"")
+Macro case28: (pr-str #uuid "80000000-0000-0000-0000-000000000000")
+expected "#uuid \"80000000-0000-0000-0000-000000000000\""
+actual Ok("\"#uuid \\\"00000000-0000-0000-0000-000000000000\\\"\"")
+Macro case29: (hash #uuid "80000000-0000-0000-0000-000000000000")
+expected -2147483648
+actual Ok("0")
+Macro case34: (= #uuid "80000000-0000-0000-0000-000000000000" (read-string "#uuid \"80000000-0000-0000-0000-000000000000\""))
+expected true
+actual Ok("false")
+Macro case35: (= #uuid "80000000-0000-0000-0000-000000000000" (suss.edn/read-string "#uuid \"80000000-0000-0000-0000-000000000000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case36: (str #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected "7fffffff-ffff-ffff-ffff-ffffffffffff"
+actual Ok("\"ffffffff-ffff-ffff-ffff-0000ffffffff\"")
+Macro case37: (pr-str #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""
+actual Ok("\"#uuid \\\"ffffffff-ffff-ffff-ffff-0000ffffffff\\\"\"")
+Macro case38: (hash #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff")
+expected -2147483648
+actual Ok("0")
+Macro case43: (= #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff" (read-string "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Ok("false")
+Macro case44: (= #uuid "7fffffff-ffff-ffff-ffff-ffffffffffff" (suss.edn/read-string "#uuid \"7fffffff-ffff-ffff-ffff-ffffffffffff\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case45: (str #uuid "1-1-1-1-1")
+expected "00000001-0001-0001-0001-000000000001"
+actual Ok("\"00010001-0001-0001-0000-000000000001\"")
+Macro case46: (pr-str #uuid "1-1-1-1-1")
+expected "#uuid \"00000001-0001-0001-0001-000000000001\""
+actual Ok("\"#uuid \\\"00010001-0001-0001-0000-000000000001\\\"\"")
+Macro case47: (hash #uuid "1-1-1-1-1")
+expected 1
+actual Ok("0")
+Macro case52: (= #uuid "1-1-1-1-1" (read-string "#uuid \"1-1-1-1-1\""))
+expected true
+actual Ok("false")
+Macro case53: (= #uuid "1-1-1-1-1" (suss.edn/read-string "#uuid \"1-1-1-1-1\""))
+expected true
+actual Err("Compile(Diagnostic { span: 35..55, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case54: (str #uuid "1-2-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case55: (pr-str #uuid "1-2-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case56: (hash #uuid "1-2-3-4-5")
+expected 393223
+actual Ok("0")
+Macro case61: (= #uuid "1-2-3-4-5" (read-string "#uuid \"1-2-3-4-5\""))
+expected true
+actual Ok("false")
+Macro case62: (= #uuid "1-2-3-4-5" (suss.edn/read-string "#uuid \"1-2-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 35..55, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case63: (str #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected "550e8400-e29b-41d4-a716-446655440000"
+actual Ok("\"e29b41d4-e29b-41d4-5544-000055440000\"")
+Macro case64: (pr-str #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected "#uuid \"550e8400-e29b-41d4-a716-446655440000\""
+actual Ok("\"#uuid \\\"e29b41d4-e29b-41d4-5544-000055440000\\\"\"")
+Macro case65: (hash #uuid "550E8400-E29B-41D4-A716-446655440000")
+expected 1170702770
+actual Ok("0")
+Macro case70: (= #uuid "550E8400-E29B-41D4-A716-446655440000" (read-string "#uuid \"550E8400-E29B-41D4-A716-446655440000\""))
+expected true
+actual Ok("false")
+Macro case71: (= #uuid "550E8400-E29B-41D4-A716-446655440000" (suss.edn/read-string "#uuid \"550E8400-E29B-41D4-A716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case72: (str #uuid "+1-+2-+3-+4-+5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case73: (pr-str #uuid "+1-+2-+3-+4-+5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case74: (hash #uuid "+1-+2-+3-+4-+5")
+expected 393223
+actual Ok("0")
+Macro case79: (= #uuid "+1-+2-+3-+4-+5" (read-string "#uuid \"+1-+2-+3-+4-+5\""))
+expected true
+actual Ok("false")
+Macro case80: (= #uuid "+1-+2-+3-+4-+5" (suss.edn/read-string "#uuid \"+1-+2-+3-+4-+5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 40..60, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case81: (str #uuid "000000001-2-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case82: (pr-str #uuid "000000001-2-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case83: (hash #uuid "000000001-2-3-4-5")
+expected 393223
+actual Ok("0")
+Macro case88: (= #uuid "000000001-2-3-4-5" (read-string "#uuid \"000000001-2-3-4-5\""))
+expected true
+actual Ok("false")
+Macro case89: (= #uuid "000000001-2-3-4-5" (suss.edn/read-string "#uuid \"000000001-2-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 43..63, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case90: (str #uuid "1-00002-3-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case91: (pr-str #uuid "1-00002-3-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case92: (hash #uuid "1-00002-3-4-5")
+expected 393223
+actual Ok("0")
+Macro case97: (= #uuid "1-00002-3-4-5" (read-string "#uuid \"1-00002-3-4-5\""))
+expected true
+actual Ok("false")
+Macro case98: (= #uuid "1-00002-3-4-5" (suss.edn/read-string "#uuid \"1-00002-3-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case99: (str #uuid "1-2-00003-4-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case100: (pr-str #uuid "1-2-00003-4-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case101: (hash #uuid "1-2-00003-4-5")
+expected 393223
+actual Ok("0")
+Macro case106: (= #uuid "1-2-00003-4-5" (read-string "#uuid \"1-2-00003-4-5\""))
+expected true
+actual Ok("false")
+Macro case107: (= #uuid "1-2-00003-4-5" (suss.edn/read-string "#uuid \"1-2-00003-4-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case108: (str #uuid "1-2-3-00004-5")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case109: (pr-str #uuid "1-2-3-00004-5")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case110: (hash #uuid "1-2-3-00004-5")
+expected 393223
+actual Ok("0")
+Macro case115: (= #uuid "1-2-3-00004-5" (read-string "#uuid \"1-2-3-00004-5\""))
+expected true
+actual Ok("false")
+Macro case116: (= #uuid "1-2-3-00004-5" (suss.edn/read-string "#uuid \"1-2-3-00004-5\""))
+expected true
+actual Err("Compile(Diagnostic { span: 39..59, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case117: (str #uuid "1-2-3-4-0000000000005")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case118: (pr-str #uuid "1-2-3-4-0000000000005")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case119: (hash #uuid "1-2-3-4-0000000000005")
+expected 393223
+actual Ok("0")
+Macro case124: (= #uuid "1-2-3-4-0000000000005" (read-string "#uuid \"1-2-3-4-0000000000005\""))
+expected true
+actual Ok("false")
+Macro case125: (= #uuid "1-2-3-4-0000000000005" (suss.edn/read-string "#uuid \"1-2-3-4-0000000000005\""))
+expected true
+actual Err("Compile(Diagnostic { span: 47..67, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case126: (str #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case127: (pr-str #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case128: (hash #uuid "\uff11-\uff12-\uff13-\uff14-\uff15")
+expected 393223
+actual Ok("0")
+Macro case133: (= #uuid "\uff11-\uff12-\uff13-\uff14-\uff15" (read-string "#uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\""))
+expected true
+actual Ok("false")
+Macro case134: (= #uuid "\uff11-\uff12-\uff13-\uff14-\uff15" (suss.edn/read-string "#uuid \"\\uff11-\\uff12-\\uff13-\\uff14-\\uff15\""))
+expected true
+actual Err("Compile(Diagnostic { span: 60..80, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case135: (str #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected "00000001-0002-0003-0004-000000000005"
+actual Ok("\"00020003-0002-0003-0000-000000000005\"")
+Macro case136: (pr-str #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected "#uuid \"00000001-0002-0003-0004-000000000005\""
+actual Ok("\"#uuid \\\"00020003-0002-0003-0000-000000000005\\\"\"")
+Macro case137: (hash #uuid "\u0661-\u0662-\u0663-\u0664-\u0665")
+expected 393223
+actual Ok("0")
+Macro case142: (= #uuid "\u0661-\u0662-\u0663-\u0664-\u0665" (read-string "#uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\""))
+expected true
+actual Ok("false")
+Macro case143: (= #uuid "\u0661-\u0662-\u0663-\u0664-\u0665" (suss.edn/read-string "#uuid \"\\u0661-\\u0662-\\u0663-\\u0664-\\u0665\""))
+expected true
+actual Err("Compile(Diagnostic { span: 60..80, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case144: (try (suss.edn/read-string "#uuid \"\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case145: (try (suss.edn/read-string "#uuid \"not-a-uuid\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case146: (try (suss.edn/read-string "#uuid \"1-2-3-4\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case147: (try (suss.edn/read-string "#uuid \"1-2-3-4-5-6\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case148: (try (suss.edn/read-string "#uuid \"-1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case149: (try (suss.edn/read-string "#uuid \"1--2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case150: (try (suss.edn/read-string "#uuid \"1-2-3-4-\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case151: (try (suss.edn/read-string "#uuid \"1-2-3-4-g\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case152: (try (suss.edn/read-string "#uuid \"0x1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case153: (try (suss.edn/read-string "#uuid \"12345678901234567-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case154: (try (suss.edn/read-string "#uuid \"0000000000000000000000000001-2-3-4-5\"") (catch :default e :error))
+expected #uuid "00000001-0002-0003-0004-000000000005"
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case155: (try (suss.edn/read-string "#uuid \" 1-2-3-4-5\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case156: (try (suss.edn/read-string "#uuid \"1-2-3-4-5 \"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case157: (try (suss.edn/read-string "#uuid \"1-2-3-4-\\uff27\"") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case158: (try (suss.edn/read-string "#uuid nil") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case159: (try (suss.edn/read-string "#uuid 0") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case160: (try (suss.edn/read-string "#uuid :x") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case161: (try (suss.edn/read-string "#uuid [1]") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case162: (try (suss.edn/read-string "#uuid ()") (catch :default e :error))
+expected :error
+actual Err("Compile(Diagnostic { span: 19..39, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case166: (suss.edn/read-string {:readers {'uuid (fn [x] [:override x])}} "#uuid \"550e8400-e29b-41d4-a716-446655440000\"")
+expected [:override "550e8400-e29b-41d4-a716-446655440000"]
+actual Err("Compile(Diagnostic { span: 14..34, message: \"Unresolved Macro name suss.edn/read-string\" })")
+Macro case167: (= #uuid "550e8400-e29b-41d4-a716-446655440000" (suss.edn/read-string {:default (fn [tag x] :default)} "#uuid \"550e8400-e29b-41d4-a716-446655440000\""))
+expected true
+actual Err("Compile(Diagnostic { span: 62..82, message: \"Unresolved Macro name suss.edn/read-string\" })")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    uuid_values_and_readers_follow_primary_in_both_phases
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.98s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_uuid`

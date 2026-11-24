@@ -1,0 +1,11 @@
+Running as unit: run-p322304-i92568176.scope; invocation ID: 6fac8355941544efa4713d5f26c5ad22
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 53s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/suss_compile-1fa5c4d601d83553)
+
+running 1 test
+test portable_session::tests::namespace_local_macros_roll_back_on_real_link_failure ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 218 filtered out; finished in 1.94s
+

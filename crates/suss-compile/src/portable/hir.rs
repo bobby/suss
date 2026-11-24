@@ -1343,6 +1343,21 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
+    /// Construct a nominal UUID through the captured, compiler-owned core cell.
+    fn uuid_literal(&mut self, form: &Form, value: suss_reader::uuid::Uuid) -> Result<Hir, Diagnostic> {
+        let binding = self.environment.resolve(self.phase,
+            &suss_reader::Symbol::namespaced("suss.core", "uuid-from-parts"), form.span.clone())?;
+        let global = self.environment.existing_core_link(binding.global())
+            .ok_or_else(|| fail(form.span.clone(), "UUID literal requires shipped core"))?;
+        let callee = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Global(global)) };
+        let arguments = [value.most, value.least].into_iter().map(|part| Hir {
+            source: None, span: form.span.clone(), metadata: vec![], ty: Type::Number,
+            kind: std::sync::Arc::new(Expression::Literal(Literal::Long(part))),
+        }).collect();
+        Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) })
+    }
     /// Exact literals retain their integer fields and Decimal's signed scale.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
         if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
@@ -1513,6 +1528,12 @@ impl Analyzer<'_> {
                         function_scopes: &self.function_scopes,
                     };
                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                        if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
+                            let namespace = self.environment.current_namespace(self.phase).to_owned();
+                            if let Some(names) = self.expander.declared_macro_exports(&namespace) {
+                                self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
+                            }
+                        }
                         return self.form_in_named(&expanded, context, tail, name_hint);
                     }
                     // Bootstrap binding forms lower before source facts are
@@ -1751,6 +1772,7 @@ impl Analyzer<'_> {
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::Long(value) => Expression::Literal(Literal::Long(*value)),
+            Kind::Uuid(value) => return self.uuid_literal(form, *value),
             Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
@@ -3481,6 +3503,20 @@ impl Analyzer<'_> {
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));
             }
+            let long_bits = match symbol.name.as_str() {
+                "long-bit-and" => Some(Bitwise::And),
+                "long-bit-or" => Some(Bitwise::Or),
+                "long-bit-xor" => Some(Bitwise::Xor),
+                "long-bit-shift-left" => Some(Bitwise::Left),
+                "long-unsigned-bit-shift-right" => Some(Bitwise::Unsigned),
+                _ => None,
+            };
+            if let Some(operation) = long_bits {
+                if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                    return Err(fail(form.span.clone(), "Private long bit adapters require compiled core"));
+                }
+                return self.selected_bitwise_form(form, args, operation);
+            }
             if matches!(symbol.name.as_str(), "long-add" | "long-less" | "chunk-index-add") {
                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
@@ -4403,6 +4439,15 @@ impl Analyzer<'_> {
                     Some("unchecked-long") => Some(Nominal::UncheckedLongCast),
                     _ => None,
                 };
+                if core_var.as_deref() == Some("char") {
+                    let argument = self.form(&args[0])?;
+                    let selector = self.literal_form(form, Literal::Long(16));
+                    let unit = Hir { source: None, span: form.span.clone(), metadata: Vec::new(),
+                        ty: Bitwise::Cast.result(), kind: std::sync::Arc::new(Expression::Bitwise {
+                            operation: Bitwise::Cast, arguments: vec![argument, selector],
+                        }) };
+                    return Ok(self.nominal(form, Nominal::StringFromUnit, vec![unit]));
+                }
                 if let Some(cast) = cast {
                     let argument = self.form(&args[0])?;
                     return Ok(self.nominal(form, cast, vec![argument]));

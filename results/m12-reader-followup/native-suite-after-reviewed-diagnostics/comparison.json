@@ -1,0 +1,15 @@
+{
+  "counts": {
+    "pass": 4842,
+    "guest-judged": 75,
+    "fail": 86,
+    "not-executed": 1936,
+    "skipped": 0,
+    "namespaces-failed": 72
+  },
+  "capture_sha256": "d98ab8264fa2b1fe1e15db90f95ac145e26f49c12ae1a88087943a1ed4ab92c7",
+  "byte_identical_to_original_capture": true,
+  "native_exit_code": 0,
+  "primary_and_guards_unchanged": true,
+  "edn_assertions_executed": 0
+}

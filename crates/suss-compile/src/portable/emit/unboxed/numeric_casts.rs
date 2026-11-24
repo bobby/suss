@@ -8,7 +8,7 @@ pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Optio
         }
     }
     if operation != Bitwise::Cast || arguments.len() != 2 { return None; }
-    literals[arguments[1].0].filter(|index| (0..=15).contains(index)).map(|index| index as usize)
+    literals[arguments[1].0].filter(|index| (0..=18).contains(index)).map(|index| index as usize)
 }
 pub(super) fn result(index: usize) -> Repr {
     if (8..=11).contains(&index) { Repr::Double } else { Repr::Long }

@@ -30,10 +30,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Unresolved Runtime name bound-fn* at bytes 290..1947"
   },
-  "clojure.core-test.char": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.char (Some(\"<root>/clojure/core_test/char.cljc\")): Unresolved Runtime name char at bytes 240..1201"
-  },
   "clojure.core-test.comment": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.comment (Some(\"<root>/clojure/core_test/comment.cljc\")): Unresolved Runtime name comment at bytes 237..443"
@@ -76,7 +72,7 @@
   },
   "clojure.core-test.identity": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag uuid at bytes 627..671"
+   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag inst at bytes 680..717"
   },
   "clojure.core-test.ifn-qmark": {
    "stage": "namespace",
@@ -143,8 +139,8 @@
    "diagnostic": "clojure.core-test.parse-long (Some(\"<root>/clojure/core_test/parse_long.cljc\")): Unresolved Runtime name parse-long at bytes 256..2069"
   },
   "clojure.core-test.parse-uuid": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): No reader function for tag uuid at bytes 1114..1158"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unresolved Runtime name parse-uuid at bytes 259..2057"
   },
   "clojure.core-test.pop-bang": {
    "stage": "namespace",
@@ -227,8 +223,8 @@
    "diagnostic": "clojure.core-test.taps (Some(\"<root>/clojure/core_test/taps.cljc\")): Unresolved Runtime name clojure.lang.IPending at bytes 222..3465"
   },
   "clojure.core-test.uuid-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): No reader function for tag uuid at bytes 345..389"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unresolved Runtime name parse-uuid at bytes 231..1206"
   },
   "clojure.core-test.var-qmark": {
    "stage": "namespace",
@@ -245,10 +241,6 @@
   "clojure.core-test.with-out-str": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478"
-  },
-  "clojure.edn-test.read-string": {
-   "stage": "read",
-   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782"
   },
   "clojure.string-test.blank-qmark": {
    "stage": "namespace",
@@ -378,7 +370,26 @@
   "clojure.core-test.subvec/test-subvec#31": "verdict:fail",
   "clojure.core-test.subvec/test-subvec#32": "verdict:fail",
   "clojure.core-test.subvec/test-subvec#33": "verdict:fail",
-  "clojure.core-test.subvec/test-subvec#34": "verdict:fail"
+  "clojure.core-test.subvec/test-subvec#34": "verdict:fail",
+  "clojure.edn-test.read-string/test-read-string#69": "observation:value",
+  "clojure.edn-test.read-string/test-read-string#95": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#96": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#188": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#202": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#203": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#204": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#205": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#206": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#207": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#208": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#209": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#210": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#211": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#212": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#213": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#249": "verdict:fail",
+  "clojure.edn-test.read-string/test-read-string#266": "kind:error",
+  "clojure.edn-test.read-string/test-read-string#267": "kind:error"
  },
  "skip-mismatches": []
 }

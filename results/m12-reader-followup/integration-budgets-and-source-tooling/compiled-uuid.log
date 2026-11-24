@@ -1,0 +1,16 @@
+Running as unit: run-p4146942-i92207096.scope; invocation ID: 548bd01c500640799c2316254cfeb3d6
+    Finished `test` profile [optimized] target(s) in 0.14s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 8 tests
+test actual_aot_executes_uuid_values_readers_and_signed_boundaries ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test retained_uuid_storage_is_nominal_exact_and_independent_after_gc ... ok
+test signed_boundaries_keys_and_quotation_follow_primary ... ok
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary ... ok
+test uuid_fields_and_private_width_adapters_remain_sealed ... ok
+test uuid_values_and_readers_follow_primary_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.80s
+

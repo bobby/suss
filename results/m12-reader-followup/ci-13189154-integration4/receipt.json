@@ -1,0 +1,10 @@
+{
+  "run": 45234599879,
+  "job": 137902837522,
+  "head": "13189154b4e04e171d4e28ef9e155066ad7adf81",
+  "raw_sha256": "7bf649ed34a34f9c144d4395016efa401e2e89938d78d28def5cbcad9bc55a8e",
+  "raw_bytes": 199268,
+  "archive_sha256": "3df46bba3c2ad28ad35023cd02eb8e7f1110034b8ba54acbd182cbd3262c6156",
+  "archive_bytes": 41138,
+  "failure": "portable_unboxed_locals::raw_numeric_helpers_return_scalars_without_numeric_boxes inventory expects37 exports; actual40 includes three new checked char overloads. Scalar/no-numeric-box checks have not yet run past this assertion."
+}

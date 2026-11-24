@@ -13,6 +13,13 @@ impl Analyzer<'_> {
         } else {
             operation
         };
+        self.selected_bitwise_form(form, args, operation)
+    }
+    /// Explicitly selected width for original core code that follows Clojure
+    /// long semantics rather than a ported ClojureScript storage algorithm.
+    pub(super) fn selected_bitwise_form(
+        &mut self, form: &Form, args: &[Form], operation: Bitwise,
+    ) -> Result<Hir, Diagnostic> {
         if args.len() > 256
             || (operation.variadic() && args.len() < 2)
             || (!operation.variadic() && args.len() != operation.arity())

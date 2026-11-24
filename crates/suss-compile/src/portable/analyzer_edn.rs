@@ -232,6 +232,7 @@ impl<'o> Projector<'o> {
                     suss_reader::forms::ExactValue::Ratio { .. } => Some("ratio"),
                     _ => None,
                 },
+                Kind::Uuid(_) => Some("uuid"),
                 Kind::String(_) => Some("string"),
                 Kind::Keyword(_) => Some("keyword"),
                 _ => None,

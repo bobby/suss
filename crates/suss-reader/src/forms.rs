@@ -260,6 +260,8 @@ pub enum Kind {
     Long(i64),
     /// See [`ExactNumber`].
     Exact(ExactNumber),
+    /// Immutable UUID with two signed 64-bit halves, selected from #uuid.
+    Uuid(crate::uuid::Uuid),
     String(Vec<u16>),
     Symbol(Symbol),
     Keyword(Keyword),
@@ -531,6 +533,10 @@ fn metadata_target(kind: &Kind) -> bool {
 /// category without evaluating a constructor call. Other tags still fail.
 fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), ParseError> {
     match (tag.namespace.as_deref(), tag.name.as_str()) {
+        (None, "uuid") => match &target.kind {
+            Kind::String(units) => crate::uuid::Uuid::parse(units).map(|_| ()).map_err(|e| error(span, e.to_string())),
+            _ => Err(error(span, "#uuid data reader expected string")),
+        },
         (None, "queue") if matches!(target.kind, Kind::Vector(_)) => Ok(()),
         (None, "queue") => Err(error(span, "Queue literal expects a vector for its elements.")),
         (Some("suss"), "biginteger") => match &target.kind {
@@ -638,6 +644,9 @@ fn select_inner(
             form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
                 let Kind::String(units) = &target.kind else { unreachable!() };
                 Kind::Exact(ExactNumber::biginteger_text(&String::from_utf16(units).unwrap()).unwrap())
+            } else if tag.namespace.is_none() && tag.name == "uuid" {
+                let Kind::String(units) = &target.kind else { unreachable!() };
+                Kind::Uuid(crate::uuid::Uuid::parse(units).expect("validated UUID"))
             } else { Kind::Tagged { tag, form: Box::new(target) } };
             Some(form)
         }

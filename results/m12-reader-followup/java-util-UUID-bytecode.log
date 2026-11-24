@@ -1,0 +1,808 @@
+Compiled from "UUID.java"
+public final class java.util.UUID implements java.io.Serializable, java.lang.Comparable<java.util.UUID> {
+  private static final long serialVersionUID;
+
+  private final long mostSigBits;
+
+  private final long leastSigBits;
+
+  private static final jdk.internal.access.JavaLangAccess jla;
+
+  private static final byte[] NIBBLES;
+
+  static final boolean $assertionsDisabled;
+
+  private java.util.UUID(byte[]);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: lconst_0
+       5: lstore_2
+       6: lconst_0
+       7: lstore        4
+       9: getstatic     #7                  // Field $assertionsDisabled:Z
+      12: ifne          32
+      15: aload_1
+      16: arraylength
+      17: bipush        16
+      19: if_icmpeq     32
+      22: new           #13                 // class java/lang/AssertionError
+      25: dup
+      26: ldc           #15                 // String data must be 16 bytes in length
+      28: invokespecial #17                 // Method java/lang/AssertionError."<init>":(Ljava/lang/Object;)V
+      31: athrow
+      32: iconst_0
+      33: istore        6
+      35: iload         6
+      37: bipush        8
+      39: if_icmpge     63
+      42: lload_2
+      43: bipush        8
+      45: lshl
+      46: aload_1
+      47: iload         6
+      49: baload
+      50: sipush        255
+      53: iand
+      54: i2l
+      55: lor
+      56: lstore_2
+      57: iinc          6, 1
+      60: goto          35
+      63: bipush        8
+      65: istore        6
+      67: iload         6
+      69: bipush        16
+      71: if_icmpge     97
+      74: lload         4
+      76: bipush        8
+      78: lshl
+      79: aload_1
+      80: iload         6
+      82: baload
+      83: sipush        255
+      86: iand
+      87: i2l
+      88: lor
+      89: lstore        4
+      91: iinc          6, 1
+      94: goto          67
+      97: aload_0
+      98: lload_2
+      99: putfield      #20                 // Field mostSigBits:J
+     102: aload_0
+     103: lload         4
+     105: putfield      #24                 // Field leastSigBits:J
+     108: return
+
+  public java.util.UUID(long, long);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: lload_1
+       6: putfield      #20                 // Field mostSigBits:J
+       9: aload_0
+      10: lload_3
+      11: putfield      #24                 // Field leastSigBits:J
+      14: return
+
+  public static java.util.UUID randomUUID();
+    Code:
+       0: getstatic     #27                 // Field java/util/UUID$Holder.numberGenerator:Ljava/security/SecureRandom;
+       3: astore_0
+       4: bipush        16
+       6: newarray       byte
+       8: astore_1
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #33                 // Method java/security/SecureRandom.nextBytes:([B)V
+      14: aload_1
+      15: bipush        6
+      17: dup2
+      18: baload
+      19: bipush        15
+      21: iand
+      22: i2b
+      23: bastore
+      24: aload_1
+      25: bipush        6
+      27: dup2
+      28: baload
+      29: bipush        64
+      31: ior
+      32: i2b
+      33: bastore
+      34: aload_1
+      35: bipush        8
+      37: dup2
+      38: baload
+      39: bipush        63
+      41: iand
+      42: i2b
+      43: bastore
+      44: aload_1
+      45: bipush        8
+      47: dup2
+      48: baload
+      49: bipush        -128
+      51: ior
+      52: i2b
+      53: bastore
+      54: new           #8                  // class java/util/UUID
+      57: dup
+      58: aload_1
+      59: invokespecial #39                 // Method "<init>":([B)V
+      62: areturn
+
+  public static java.util.UUID nameUUIDFromBytes(byte[]);
+    Code:
+       0: ldc           #41                 // String MD5
+       2: invokestatic  #43                 // Method java/security/MessageDigest.getInstance:(Ljava/lang/String;)Ljava/security/MessageDigest;
+       5: astore_1
+       6: goto          21
+       9: astore_2
+      10: new           #51                 // class java/lang/InternalError
+      13: dup
+      14: ldc           #53                 // String MD5 not supported
+      16: aload_2
+      17: invokespecial #55                 // Method java/lang/InternalError."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+      20: athrow
+      21: aload_1
+      22: aload_0
+      23: invokevirtual #58                 // Method java/security/MessageDigest.digest:([B)[B
+      26: astore_2
+      27: aload_2
+      28: bipush        6
+      30: dup2
+      31: baload
+      32: bipush        15
+      34: iand
+      35: i2b
+      36: bastore
+      37: aload_2
+      38: bipush        6
+      40: dup2
+      41: baload
+      42: bipush        48
+      44: ior
+      45: i2b
+      46: bastore
+      47: aload_2
+      48: bipush        8
+      50: dup2
+      51: baload
+      52: bipush        63
+      54: iand
+      55: i2b
+      56: bastore
+      57: aload_2
+      58: bipush        8
+      60: dup2
+      61: baload
+      62: bipush        -128
+      64: ior
+      65: i2b
+      66: bastore
+      67: new           #8                  // class java/util/UUID
+      70: dup
+      71: aload_2
+      72: invokespecial #39                 // Method "<init>":([B)V
+      75: areturn
+    Exception table:
+       from    to  target type
+           0     6     9   Class java/security/NoSuchAlgorithmException
+
+  private static long parse4Nibbles(java.lang.String, int);
+    Code:
+       0: getstatic     #62                 // Field NIBBLES:[B
+       3: astore_2
+       4: aload_0
+       5: iload_1
+       6: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+       9: istore_3
+      10: aload_0
+      11: iload_1
+      12: iconst_1
+      13: iadd
+      14: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      17: istore        4
+      19: aload_0
+      20: iload_1
+      21: iconst_2
+      22: iadd
+      23: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      26: istore        5
+      28: aload_0
+      29: iload_1
+      30: iconst_3
+      31: iadd
+      32: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      35: istore        6
+      37: iload_3
+      38: iload         4
+      40: ior
+      41: iload         5
+      43: ior
+      44: iload         6
+      46: ior
+      47: sipush        255
+      50: if_icmple     59
+      53: ldc2_w        #72                 // long -1l
+      56: goto          86
+      59: aload_2
+      60: iload_3
+      61: baload
+      62: bipush        12
+      64: ishl
+      65: aload_2
+      66: iload         4
+      68: baload
+      69: bipush        8
+      71: ishl
+      72: ior
+      73: aload_2
+      74: iload         5
+      76: baload
+      77: iconst_4
+      78: ishl
+      79: ior
+      80: aload_2
+      81: iload         6
+      83: baload
+      84: ior
+      85: i2l
+      86: lreturn
+
+  public static java.util.UUID fromString(java.lang.String);
+    Code:
+       0: aload_0
+       1: invokevirtual #74                 // Method java/lang/String.length:()I
+       4: bipush        36
+       6: if_icmpne     201
+       9: aload_0
+      10: bipush        8
+      12: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      15: istore_1
+      16: aload_0
+      17: bipush        13
+      19: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      22: istore_2
+      23: aload_0
+      24: bipush        18
+      26: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      29: istore_3
+      30: aload_0
+      31: bipush        23
+      33: invokevirtual #66                 // Method java/lang/String.charAt:(I)C
+      36: istore        4
+      38: iload_1
+      39: bipush        45
+      41: if_icmpne     201
+      44: iload_2
+      45: bipush        45
+      47: if_icmpne     201
+      50: iload_3
+      51: bipush        45
+      53: if_icmpne     201
+      56: iload         4
+      58: bipush        45
+      60: if_icmpne     201
+      63: aload_0
+      64: iconst_0
+      65: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+      68: lstore        5
+      70: aload_0
+      71: iconst_4
+      72: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+      75: lstore        7
+      77: aload_0
+      78: bipush        9
+      80: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+      83: lstore        9
+      85: aload_0
+      86: bipush        14
+      88: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+      91: lstore        11
+      93: aload_0
+      94: bipush        19
+      96: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+      99: lstore        13
+     101: aload_0
+     102: bipush        24
+     104: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+     107: lstore        15
+     109: aload_0
+     110: bipush        28
+     112: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+     115: lstore        17
+     117: aload_0
+     118: bipush        32
+     120: invokestatic  #78                 // Method parse4Nibbles:(Ljava/lang/String;I)J
+     123: lstore        19
+     125: lload         5
+     127: lload         7
+     129: lor
+     130: lload         9
+     132: lor
+     133: lload         11
+     135: lor
+     136: lload         13
+     138: lor
+     139: lload         15
+     141: lor
+     142: lload         17
+     144: lor
+     145: lload         19
+     147: lor
+     148: lconst_0
+     149: lcmp
+     150: iflt          201
+     153: new           #8                  // class java/util/UUID
+     156: dup
+     157: lload         5
+     159: bipush        48
+     161: lshl
+     162: lload         7
+     164: bipush        32
+     166: lshl
+     167: lor
+     168: lload         9
+     170: bipush        16
+     172: lshl
+     173: lor
+     174: lload         11
+     176: lor
+     177: lload         13
+     179: bipush        48
+     181: lshl
+     182: lload         15
+     184: bipush        32
+     186: lshl
+     187: lor
+     188: lload         17
+     190: bipush        16
+     192: lshl
+     193: lor
+     194: lload         19
+     196: lor
+     197: invokespecial #82                 // Method "<init>":(JJ)V
+     200: areturn
+     201: aload_0
+     202: invokestatic  #85                 // Method fromString1:(Ljava/lang/String;)Ljava/util/UUID;
+     205: areturn
+
+  private static java.util.UUID fromString1(java.lang.String);
+    Code:
+       0: aload_0
+       1: invokevirtual #74                 // Method java/lang/String.length:()I
+       4: istore_1
+       5: iload_1
+       6: bipush        36
+       8: if_icmple     21
+      11: new           #89                 // class java/lang/IllegalArgumentException
+      14: dup
+      15: ldc           #91                 // String UUID string too large
+      17: invokespecial #93                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      20: athrow
+      21: aload_0
+      22: bipush        45
+      24: invokevirtual #96                 // Method java/lang/String.indexOf:(I)I
+      27: istore_2
+      28: aload_0
+      29: bipush        45
+      31: iload_2
+      32: iconst_1
+      33: iadd
+      34: invokevirtual #100                // Method java/lang/String.indexOf:(II)I
+      37: istore_3
+      38: aload_0
+      39: bipush        45
+      41: iload_3
+      42: iconst_1
+      43: iadd
+      44: invokevirtual #100                // Method java/lang/String.indexOf:(II)I
+      47: istore        4
+      49: aload_0
+      50: bipush        45
+      52: iload         4
+      54: iconst_1
+      55: iadd
+      56: invokevirtual #100                // Method java/lang/String.indexOf:(II)I
+      59: istore        5
+      61: aload_0
+      62: bipush        45
+      64: iload         5
+      66: iconst_1
+      67: iadd
+      68: invokevirtual #100                // Method java/lang/String.indexOf:(II)I
+      71: istore        6
+      73: iload         5
+      75: iflt          83
+      78: iload         6
+      80: iflt          110
+      83: new           #89                 // class java/lang/IllegalArgumentException
+      86: dup
+      87: new           #103                // class java/lang/StringBuilder
+      90: dup
+      91: invokespecial #105                // Method java/lang/StringBuilder."<init>":()V
+      94: ldc           #106                // String Invalid UUID string:
+      96: invokevirtual #108                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      99: aload_0
+     100: invokevirtual #108                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     103: invokevirtual #112                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     106: invokespecial #93                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+     109: athrow
+     110: aload_0
+     111: iconst_0
+     112: iload_2
+     113: bipush        16
+     115: invokestatic  #116                // Method java/lang/Long.parseLong:(Ljava/lang/CharSequence;III)J
+     118: ldc2_w        #122                // long 4294967295l
+     121: land
+     122: lstore        7
+     124: lload         7
+     126: bipush        16
+     128: lshl
+     129: lstore        7
+     131: lload         7
+     133: aload_0
+     134: iload_2
+     135: iconst_1
+     136: iadd
+     137: iload_3
+     138: bipush        16
+     140: invokestatic  #116                // Method java/lang/Long.parseLong:(Ljava/lang/CharSequence;III)J
+     143: ldc2_w        #124                // long 65535l
+     146: land
+     147: lor
+     148: lstore        7
+     150: lload         7
+     152: bipush        16
+     154: lshl
+     155: lstore        7
+     157: lload         7
+     159: aload_0
+     160: iload_3
+     161: iconst_1
+     162: iadd
+     163: iload         4
+     165: bipush        16
+     167: invokestatic  #116                // Method java/lang/Long.parseLong:(Ljava/lang/CharSequence;III)J
+     170: ldc2_w        #124                // long 65535l
+     173: land
+     174: lor
+     175: lstore        7
+     177: aload_0
+     178: iload         4
+     180: iconst_1
+     181: iadd
+     182: iload         5
+     184: bipush        16
+     186: invokestatic  #116                // Method java/lang/Long.parseLong:(Ljava/lang/CharSequence;III)J
+     189: ldc2_w        #124                // long 65535l
+     192: land
+     193: lstore        9
+     195: lload         9
+     197: bipush        48
+     199: lshl
+     200: lstore        9
+     202: lload         9
+     204: aload_0
+     205: iload         5
+     207: iconst_1
+     208: iadd
+     209: iload_1
+     210: bipush        16
+     212: invokestatic  #116                // Method java/lang/Long.parseLong:(Ljava/lang/CharSequence;III)J
+     215: ldc2_w        #126                // long 281474976710655l
+     218: land
+     219: lor
+     220: lstore        9
+     222: new           #8                  // class java/util/UUID
+     225: dup
+     226: lload         7
+     228: lload         9
+     230: invokespecial #82                 // Method "<init>":(JJ)V
+     233: areturn
+
+  public long getLeastSignificantBits();
+    Code:
+       0: aload_0
+       1: getfield      #24                 // Field leastSigBits:J
+       4: lreturn
+
+  public long getMostSignificantBits();
+    Code:
+       0: aload_0
+       1: getfield      #20                 // Field mostSigBits:J
+       4: lreturn
+
+  public int version();
+    Code:
+       0: aload_0
+       1: getfield      #20                 // Field mostSigBits:J
+       4: bipush        12
+       6: lshr
+       7: ldc2_w        #128                // long 15l
+      10: land
+      11: l2i
+      12: ireturn
+
+  public int variant();
+    Code:
+       0: aload_0
+       1: getfield      #24                 // Field leastSigBits:J
+       4: ldc2_w        #130                // long 64l
+       7: aload_0
+       8: getfield      #24                 // Field leastSigBits:J
+      11: bipush        62
+      13: lushr
+      14: lsub
+      15: l2i
+      16: lushr
+      17: aload_0
+      18: getfield      #24                 // Field leastSigBits:J
+      21: bipush        63
+      23: lshr
+      24: land
+      25: l2i
+      26: ireturn
+
+  public long timestamp();
+    Code:
+       0: aload_0
+       1: invokevirtual #132                // Method version:()I
+       4: iconst_1
+       5: if_icmpeq     18
+       8: new           #135                // class java/lang/UnsupportedOperationException
+      11: dup
+      12: ldc           #137                // String Not a time-based UUID
+      14: invokespecial #139                // Method java/lang/UnsupportedOperationException."<init>":(Ljava/lang/String;)V
+      17: athrow
+      18: aload_0
+      19: getfield      #20                 // Field mostSigBits:J
+      22: ldc2_w        #140                // long 4095l
+      25: land
+      26: bipush        48
+      28: lshl
+      29: aload_0
+      30: getfield      #20                 // Field mostSigBits:J
+      33: bipush        16
+      35: lshr
+      36: ldc2_w        #124                // long 65535l
+      39: land
+      40: bipush        32
+      42: lshl
+      43: lor
+      44: aload_0
+      45: getfield      #20                 // Field mostSigBits:J
+      48: bipush        32
+      50: lushr
+      51: lor
+      52: lreturn
+
+  public int clockSequence();
+    Code:
+       0: aload_0
+       1: invokevirtual #132                // Method version:()I
+       4: iconst_1
+       5: if_icmpeq     18
+       8: new           #135                // class java/lang/UnsupportedOperationException
+      11: dup
+      12: ldc           #137                // String Not a time-based UUID
+      14: invokespecial #139                // Method java/lang/UnsupportedOperationException."<init>":(Ljava/lang/String;)V
+      17: athrow
+      18: aload_0
+      19: getfield      #24                 // Field leastSigBits:J
+      22: ldc2_w        #142                // long 4611404543450677248l
+      25: land
+      26: bipush        48
+      28: lushr
+      29: l2i
+      30: ireturn
+
+  public long node();
+    Code:
+       0: aload_0
+       1: invokevirtual #132                // Method version:()I
+       4: iconst_1
+       5: if_icmpeq     18
+       8: new           #135                // class java/lang/UnsupportedOperationException
+      11: dup
+      12: ldc           #137                // String Not a time-based UUID
+      14: invokespecial #139                // Method java/lang/UnsupportedOperationException."<init>":(Ljava/lang/String;)V
+      17: athrow
+      18: aload_0
+      19: getfield      #24                 // Field leastSigBits:J
+      22: ldc2_w        #126                // long 281474976710655l
+      25: land
+      26: lreturn
+
+  public java.lang.String toString();
+    Code:
+       0: getstatic     #144                // Field jla:Ljdk/internal/access/JavaLangAccess;
+       3: aload_0
+       4: getfield      #24                 // Field leastSigBits:J
+       7: aload_0
+       8: getfield      #20                 // Field mostSigBits:J
+      11: invokeinterface #148,  5          // InterfaceMethod jdk/internal/access/JavaLangAccess.fastUUID:(JJ)Ljava/lang/String;
+      16: areturn
+
+  public int hashCode();
+    Code:
+       0: aload_0
+       1: getfield      #20                 // Field mostSigBits:J
+       4: aload_0
+       5: getfield      #24                 // Field leastSigBits:J
+       8: lxor
+       9: invokestatic  #154                // Method java/lang/Long.hashCode:(J)I
+      12: ireturn
+
+  public boolean equals(java.lang.Object);
+    Code:
+       0: aconst_null
+       1: aload_1
+       2: if_acmpeq     14
+       5: aload_1
+       6: invokevirtual #158                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+       9: ldc           #8                  // class java/util/UUID
+      11: if_acmpeq     16
+      14: iconst_0
+      15: ireturn
+      16: aload_1
+      17: checkcast     #8                  // class java/util/UUID
+      20: astore_2
+      21: aload_0
+      22: getfield      #20                 // Field mostSigBits:J
+      25: aload_2
+      26: getfield      #20                 // Field mostSigBits:J
+      29: lcmp
+      30: ifne          49
+      33: aload_0
+      34: getfield      #24                 // Field leastSigBits:J
+      37: aload_2
+      38: getfield      #24                 // Field leastSigBits:J
+      41: lcmp
+      42: ifne          49
+      45: iconst_1
+      46: goto          50
+      49: iconst_0
+      50: ireturn
+
+  public int compareTo(java.util.UUID);
+    Code:
+       0: aload_0
+       1: getfield      #20                 // Field mostSigBits:J
+       4: aload_1
+       5: getfield      #20                 // Field mostSigBits:J
+       8: invokestatic  #162                // Method java/lang/Long.compare:(JJ)I
+      11: istore_2
+      12: iload_2
+      13: ifeq          20
+      16: iload_2
+      17: goto          31
+      20: aload_0
+      21: getfield      #24                 // Field leastSigBits:J
+      24: aload_1
+      25: getfield      #24                 // Field leastSigBits:J
+      28: invokestatic  #162                // Method java/lang/Long.compare:(JJ)I
+      31: ireturn
+
+  public int compareTo(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #8                  // class java/util/UUID
+       5: invokevirtual #166                // Method compareTo:(Ljava/util/UUID;)I
+       8: ireturn
+
+  static {};
+    Code:
+       0: ldc           #8                  // class java/util/UUID
+       2: invokevirtual #170                // Method java/lang/Class.desiredAssertionStatus:()Z
+       5: ifne          12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: putstatic     #7                  // Field $assertionsDisabled:Z
+      16: invokestatic  #176                // Method jdk/internal/access/SharedSecrets.getJavaLangAccess:()Ljdk/internal/access/JavaLangAccess;
+      19: putstatic     #144                // Field jla:Ljdk/internal/access/JavaLangAccess;
+      22: sipush        256
+      25: newarray       byte
+      27: astore_0
+      28: aload_0
+      29: iconst_m1
+      30: invokestatic  #182                // Method java/util/Arrays.fill:([BB)V
+      33: aload_0
+      34: bipush        48
+      36: iconst_0
+      37: bastore
+      38: aload_0
+      39: bipush        49
+      41: iconst_1
+      42: bastore
+      43: aload_0
+      44: bipush        50
+      46: iconst_2
+      47: bastore
+      48: aload_0
+      49: bipush        51
+      51: iconst_3
+      52: bastore
+      53: aload_0
+      54: bipush        52
+      56: iconst_4
+      57: bastore
+      58: aload_0
+      59: bipush        53
+      61: iconst_5
+      62: bastore
+      63: aload_0
+      64: bipush        54
+      66: bipush        6
+      68: bastore
+      69: aload_0
+      70: bipush        55
+      72: bipush        7
+      74: bastore
+      75: aload_0
+      76: bipush        56
+      78: bipush        8
+      80: bastore
+      81: aload_0
+      82: bipush        57
+      84: bipush        9
+      86: bastore
+      87: aload_0
+      88: bipush        65
+      90: bipush        10
+      92: bastore
+      93: aload_0
+      94: bipush        66
+      96: bipush        11
+      98: bastore
+      99: aload_0
+     100: bipush        67
+     102: bipush        12
+     104: bastore
+     105: aload_0
+     106: bipush        68
+     108: bipush        13
+     110: bastore
+     111: aload_0
+     112: bipush        69
+     114: bipush        14
+     116: bastore
+     117: aload_0
+     118: bipush        70
+     120: bipush        15
+     122: bastore
+     123: aload_0
+     124: bipush        97
+     126: bipush        10
+     128: bastore
+     129: aload_0
+     130: bipush        98
+     132: bipush        11
+     134: bastore
+     135: aload_0
+     136: bipush        99
+     138: bipush        12
+     140: bastore
+     141: aload_0
+     142: bipush        100
+     144: bipush        13
+     146: bastore
+     147: aload_0
+     148: bipush        101
+     150: bipush        14
+     152: bastore
+     153: aload_0
+     154: bipush        102
+     156: bipush        15
+     158: bastore
+     159: aload_0
+     160: putstatic     #62                 // Field NIBBLES:[B
+     163: return
+}

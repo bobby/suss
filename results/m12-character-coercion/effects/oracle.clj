@@ -1,0 +1,8 @@
+(assert (= "1.12.6" (clojure-version)))
+(println (pr-str (pr-str (let [trace (atom []) value (char (do (swap! trace conj :arg) 65))] [value @trace]))))
+(println (pr-str (pr-str (let [trace (atom []) f (do (swap! trace conj :callee) char) value (f (do (swap! trace conj :arg) 65))] [value @trace]))))
+(println (pr-str (pr-str (let [trace (atom []) value (apply (do (swap! trace conj :callee) char) (do (swap! trace conj :args) [65]))] [value @trace]))))
+(println (pr-str (pr-str (let [trace (atom []) value (try (char (do (swap! trace conj :arg) (throw (ex-info "stop" {})))) (catch Throwable e :throws))] [value @trace]))))
+(println (pr-str (pr-str (let [trace (atom []) value (try (char (do (swap! trace conj :arg) -1)) (catch Throwable e :throws))] [value @trace]))))
+(println (pr-str (pr-str (let [trace (atom []) value (try ((do (swap! trace conj :callee) char) (do (swap! trace conj :first) 65) (do (swap! trace conj :second) 66)) (catch Throwable e :throws))] [value @trace]))))
+(println (pr-str (pr-str (try (apply char []) (catch Throwable e :throws)))))

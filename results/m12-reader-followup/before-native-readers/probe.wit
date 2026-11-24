@@ -1,0 +1,1 @@
+package test:uuid; world w { export check: func(unused: u32) -> u32; }

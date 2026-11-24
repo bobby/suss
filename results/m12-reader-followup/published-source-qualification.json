@@ -1,0 +1,20 @@
+{
+  "head": "d9976de1fc6d51dde86e90f502c988fdd23fb174",
+  "gates": [
+    {
+      "gate": "typed-offsets-and-source-safe-uuid-table",
+      "production_files": 727,
+      "production_inputs_match": true,
+      "terminal_complete": true,
+      "exit_code": 0
+    },
+    {
+      "gate": "uuid-source-roundtrip-and-ci-regressions",
+      "production_files": 727,
+      "production_inputs_match": true,
+      "terminal_complete": true,
+      "exit_code": 0
+    }
+  ],
+  "limitation": "These receipts qualify the listed focused gates only; they do not establish full suite/workspace/CI/promotion acceptance."
+}

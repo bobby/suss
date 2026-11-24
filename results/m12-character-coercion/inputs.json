@@ -1,0 +1,506 @@
+[
+  {
+    "name": "direct-0",
+    "route": "direct",
+    "input": "0",
+    "expression": "(char 0)"
+  },
+  {
+    "name": "var-1",
+    "route": "var",
+    "input": "0",
+    "expression": "((identity char) 0)"
+  },
+  {
+    "name": "apply-2",
+    "route": "apply",
+    "input": "0",
+    "expression": "(apply char [0])"
+  },
+  {
+    "name": "direct-3",
+    "route": "direct",
+    "input": "65",
+    "expression": "(char 65)"
+  },
+  {
+    "name": "var-4",
+    "route": "var",
+    "input": "65",
+    "expression": "((identity char) 65)"
+  },
+  {
+    "name": "apply-5",
+    "route": "apply",
+    "input": "65",
+    "expression": "(apply char [65])"
+  },
+  {
+    "name": "direct-6",
+    "route": "direct",
+    "input": "65535",
+    "expression": "(char 65535)"
+  },
+  {
+    "name": "var-7",
+    "route": "var",
+    "input": "65535",
+    "expression": "((identity char) 65535)"
+  },
+  {
+    "name": "apply-8",
+    "route": "apply",
+    "input": "65535",
+    "expression": "(apply char [65535])"
+  },
+  {
+    "name": "direct-9",
+    "route": "direct",
+    "input": "-1",
+    "expression": "(char -1)"
+  },
+  {
+    "name": "var-10",
+    "route": "var",
+    "input": "-1",
+    "expression": "((identity char) -1)"
+  },
+  {
+    "name": "apply-11",
+    "route": "apply",
+    "input": "-1",
+    "expression": "(apply char [-1])"
+  },
+  {
+    "name": "direct-12",
+    "route": "direct",
+    "input": "65536",
+    "expression": "(char 65536)"
+  },
+  {
+    "name": "var-13",
+    "route": "var",
+    "input": "65536",
+    "expression": "((identity char) 65536)"
+  },
+  {
+    "name": "apply-14",
+    "route": "apply",
+    "input": "65536",
+    "expression": "(apply char [65536])"
+  },
+  {
+    "name": "direct-15",
+    "route": "direct",
+    "input": "65.9",
+    "expression": "(char 65.9)"
+  },
+  {
+    "name": "var-16",
+    "route": "var",
+    "input": "65.9",
+    "expression": "((identity char) 65.9)"
+  },
+  {
+    "name": "apply-17",
+    "route": "apply",
+    "input": "65.9",
+    "expression": "(apply char [65.9])"
+  },
+  {
+    "name": "direct-18",
+    "route": "direct",
+    "input": "-0.9",
+    "expression": "(char -0.9)"
+  },
+  {
+    "name": "var-19",
+    "route": "var",
+    "input": "-0.9",
+    "expression": "((identity char) -0.9)"
+  },
+  {
+    "name": "apply-20",
+    "route": "apply",
+    "input": "-0.9",
+    "expression": "(apply char [-0.9])"
+  },
+  {
+    "name": "direct-21",
+    "route": "direct",
+    "input": "65535.9",
+    "expression": "(char 65535.9)"
+  },
+  {
+    "name": "var-22",
+    "route": "var",
+    "input": "65535.9",
+    "expression": "((identity char) 65535.9)"
+  },
+  {
+    "name": "apply-23",
+    "route": "apply",
+    "input": "65535.9",
+    "expression": "(apply char [65535.9])"
+  },
+  {
+    "name": "direct-24",
+    "route": "direct",
+    "input": "##NaN",
+    "expression": "(char ##NaN)"
+  },
+  {
+    "name": "var-25",
+    "route": "var",
+    "input": "##NaN",
+    "expression": "((identity char) ##NaN)"
+  },
+  {
+    "name": "apply-26",
+    "route": "apply",
+    "input": "##NaN",
+    "expression": "(apply char [##NaN])"
+  },
+  {
+    "name": "direct-27",
+    "route": "direct",
+    "input": "##Inf",
+    "expression": "(char ##Inf)"
+  },
+  {
+    "name": "var-28",
+    "route": "var",
+    "input": "##Inf",
+    "expression": "((identity char) ##Inf)"
+  },
+  {
+    "name": "apply-29",
+    "route": "apply",
+    "input": "##Inf",
+    "expression": "(apply char [##Inf])"
+  },
+  {
+    "name": "direct-30",
+    "route": "direct",
+    "input": "##-Inf",
+    "expression": "(char ##-Inf)"
+  },
+  {
+    "name": "var-31",
+    "route": "var",
+    "input": "##-Inf",
+    "expression": "((identity char) ##-Inf)"
+  },
+  {
+    "name": "apply-32",
+    "route": "apply",
+    "input": "##-Inf",
+    "expression": "(apply char [##-Inf])"
+  },
+  {
+    "name": "direct-33",
+    "route": "direct",
+    "input": "65N",
+    "expression": "(char 65N)"
+  },
+  {
+    "name": "var-34",
+    "route": "var",
+    "input": "65N",
+    "expression": "((identity char) 65N)"
+  },
+  {
+    "name": "apply-35",
+    "route": "apply",
+    "input": "65N",
+    "expression": "(apply char [65N])"
+  },
+  {
+    "name": "direct-36",
+    "route": "direct",
+    "input": "18446744073709551681N",
+    "expression": "(char 18446744073709551681N)"
+  },
+  {
+    "name": "var-37",
+    "route": "var",
+    "input": "18446744073709551681N",
+    "expression": "((identity char) 18446744073709551681N)"
+  },
+  {
+    "name": "apply-38",
+    "route": "apply",
+    "input": "18446744073709551681N",
+    "expression": "(apply char [18446744073709551681N])"
+  },
+  {
+    "name": "direct-39",
+    "route": "direct",
+    "input": "-18446744073709551616N",
+    "expression": "(char -18446744073709551616N)"
+  },
+  {
+    "name": "var-40",
+    "route": "var",
+    "input": "-18446744073709551616N",
+    "expression": "((identity char) -18446744073709551616N)"
+  },
+  {
+    "name": "apply-41",
+    "route": "apply",
+    "input": "-18446744073709551616N",
+    "expression": "(apply char [-18446744073709551616N])"
+  },
+  {
+    "name": "direct-42",
+    "route": "direct",
+    "input": "18446744073709617152N",
+    "expression": "(char 18446744073709617152N)"
+  },
+  {
+    "name": "var-43",
+    "route": "var",
+    "input": "18446744073709617152N",
+    "expression": "((identity char) 18446744073709617152N)"
+  },
+  {
+    "name": "apply-44",
+    "route": "apply",
+    "input": "18446744073709617152N",
+    "expression": "(apply char [18446744073709617152N])"
+  },
+  {
+    "name": "direct-45",
+    "route": "direct",
+    "input": "131/2",
+    "expression": "(char 131/2)"
+  },
+  {
+    "name": "var-46",
+    "route": "var",
+    "input": "131/2",
+    "expression": "((identity char) 131/2)"
+  },
+  {
+    "name": "apply-47",
+    "route": "apply",
+    "input": "131/2",
+    "expression": "(apply char [131/2])"
+  },
+  {
+    "name": "direct-48",
+    "route": "direct",
+    "input": "-1/2",
+    "expression": "(char -1/2)"
+  },
+  {
+    "name": "var-49",
+    "route": "var",
+    "input": "-1/2",
+    "expression": "((identity char) -1/2)"
+  },
+  {
+    "name": "apply-50",
+    "route": "apply",
+    "input": "-1/2",
+    "expression": "(apply char [-1/2])"
+  },
+  {
+    "name": "direct-51",
+    "route": "direct",
+    "input": "655359/10",
+    "expression": "(char 655359/10)"
+  },
+  {
+    "name": "var-52",
+    "route": "var",
+    "input": "655359/10",
+    "expression": "((identity char) 655359/10)"
+  },
+  {
+    "name": "apply-53",
+    "route": "apply",
+    "input": "655359/10",
+    "expression": "(apply char [655359/10])"
+  },
+  {
+    "name": "direct-54",
+    "route": "direct",
+    "input": "65.9M",
+    "expression": "(char 65.9M)"
+  },
+  {
+    "name": "var-55",
+    "route": "var",
+    "input": "65.9M",
+    "expression": "((identity char) 65.9M)"
+  },
+  {
+    "name": "apply-56",
+    "route": "apply",
+    "input": "65.9M",
+    "expression": "(apply char [65.9M])"
+  },
+  {
+    "name": "direct-57",
+    "route": "direct",
+    "input": "-0.9M",
+    "expression": "(char -0.9M)"
+  },
+  {
+    "name": "var-58",
+    "route": "var",
+    "input": "-0.9M",
+    "expression": "((identity char) -0.9M)"
+  },
+  {
+    "name": "apply-59",
+    "route": "apply",
+    "input": "-0.9M",
+    "expression": "(apply char [-0.9M])"
+  },
+  {
+    "name": "direct-60",
+    "route": "direct",
+    "input": "65535.9M",
+    "expression": "(char 65535.9M)"
+  },
+  {
+    "name": "var-61",
+    "route": "var",
+    "input": "65535.9M",
+    "expression": "((identity char) 65535.9M)"
+  },
+  {
+    "name": "apply-62",
+    "route": "apply",
+    "input": "65535.9M",
+    "expression": "(apply char [65535.9M])"
+  },
+  {
+    "name": "direct-63",
+    "route": "direct",
+    "input": "\\a",
+    "expression": "(char \\a)"
+  },
+  {
+    "name": "var-64",
+    "route": "var",
+    "input": "\\a",
+    "expression": "((identity char) \\a)"
+  },
+  {
+    "name": "apply-65",
+    "route": "apply",
+    "input": "\\a",
+    "expression": "(apply char [\\a])"
+  },
+  {
+    "name": "direct-66",
+    "route": "direct",
+    "input": "\\uD800",
+    "expression": "(char \\uD800)"
+  },
+  {
+    "name": "var-67",
+    "route": "var",
+    "input": "\\uD800",
+    "expression": "((identity char) \\uD800)"
+  },
+  {
+    "name": "apply-68",
+    "route": "apply",
+    "input": "\\uD800",
+    "expression": "(apply char [\\uD800])"
+  },
+  {
+    "name": "direct-69",
+    "route": "direct",
+    "input": "nil",
+    "expression": "(char nil)"
+  },
+  {
+    "name": "var-70",
+    "route": "var",
+    "input": "nil",
+    "expression": "((identity char) nil)"
+  },
+  {
+    "name": "apply-71",
+    "route": "apply",
+    "input": "nil",
+    "expression": "(apply char [nil])"
+  },
+  {
+    "name": "direct-72",
+    "route": "direct",
+    "input": "true",
+    "expression": "(char true)"
+  },
+  {
+    "name": "var-73",
+    "route": "var",
+    "input": "true",
+    "expression": "((identity char) true)"
+  },
+  {
+    "name": "apply-74",
+    "route": "apply",
+    "input": "true",
+    "expression": "(apply char [true])"
+  },
+  {
+    "name": "direct-75",
+    "route": "direct",
+    "input": "\"a\"",
+    "expression": "(char \"a\")"
+  },
+  {
+    "name": "var-76",
+    "route": "var",
+    "input": "\"a\"",
+    "expression": "((identity char) \"a\")"
+  },
+  {
+    "name": "apply-77",
+    "route": "apply",
+    "input": "\"a\"",
+    "expression": "(apply char [\"a\"])"
+  },
+  {
+    "name": "direct-78",
+    "route": "direct",
+    "input": "\"ab\"",
+    "expression": "(char \"ab\")"
+  },
+  {
+    "name": "var-79",
+    "route": "var",
+    "input": "\"ab\"",
+    "expression": "((identity char) \"ab\")"
+  },
+  {
+    "name": "apply-80",
+    "route": "apply",
+    "input": "\"ab\"",
+    "expression": "(apply char [\"ab\"])"
+  },
+  {
+    "name": "direct-81",
+    "route": "direct",
+    "input": ":x",
+    "expression": "(char :x)"
+  },
+  {
+    "name": "var-82",
+    "route": "var",
+    "input": ":x",
+    "expression": "((identity char) :x)"
+  },
+  {
+    "name": "apply-83",
+    "route": "apply",
+    "input": ":x",
+    "expression": "(apply char [:x])"
+  }
+]

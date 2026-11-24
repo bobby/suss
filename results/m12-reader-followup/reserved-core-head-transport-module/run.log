@@ -1,0 +1,13 @@
+Running as unit: run-p694999-i92948812.scope; invocation ID: c49a39dc630044338bd615578b79225a
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 9.24s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-followup-target/debug/deps/clojure_test_suite-684b122543cdeb29)
+
+running 2 tests
+test assertion_head_transport::assertion_head_transport_keeps_user_heads_distinct ... ok
+4 independently decoded core-alias assertions; user head, wrong operator, verdict and operands rejected
+
+test assertion_head_transport::assertion_head_transport_executes_local_macro_and_preserves_comparison_guards ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 9.19s
+

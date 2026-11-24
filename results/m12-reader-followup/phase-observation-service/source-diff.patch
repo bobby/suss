@@ -1,0 +1,92 @@
+diff --git i/crates/suss-compile/src/portable_macros.rs w/crates/suss-compile/src/portable_macros.rs
+index 0c740790..46c80e27 100644
+--- i/crates/suss-compile/src/portable_macros.rs
++++ w/crates/suss-compile/src/portable_macros.rs
+@@ -649,6 +649,16 @@ impl CompiledMacros {
+     pub fn set_operation_fuel(&mut self, fuel: u64) {
+         self.session.set_operation_fuel(fuel);
+     }
++    /// Explicitly provide the harness observer in this isolated Macro Store.
++    /// Runtime observers are never inherited. The callback is synchronous and
++    /// must not re-enter the Store; replacement/reset drops this capability.
++    pub fn install_observation_hook(
++        &mut self,
++        callback: impl for<'a> Fn(wasmtime::StoreContextMut<'a, ()>, wasmtime::Val) -> wasmtime::Result<u32>
++            + Send + Sync + 'static,
++    ) -> Result<(), SessionError> {
++        self.session.install_phase_observation_hook(callback)
++    }
+     /// Interrupts a running macro expansion in this compiled macro session.
+     pub fn interrupt_handle(&self) -> crate::portable_session::InterruptHandle {
+         self.session.interrupt_handle()
+diff --git i/crates/suss-compile/src/portable_session/observation.rs w/crates/suss-compile/src/portable_session/observation.rs
+index d48effa7..3e6a59be 100644
+--- i/crates/suss-compile/src/portable_session/observation.rs
++++ w/crates/suss-compile/src/portable_session/observation.rs
+@@ -19,6 +19,18 @@ impl Session {
+         if self.phase != Phase::Runtime {
+             return Err(wasmtime::Error::msg("Observation hooks require Runtime phase").into());
+         }
++        self.install_phase_observation_hook(callback)
++    }
++
++    // Macro hosts must opt in through CompiledMacros, with their own callback.
++    // Neither cells nor native closures can cross the two phase Stores.
++    pub(crate) fn install_phase_observation_hook(
++        &mut self,
++        callback: impl for<'a> Fn(StoreContextMut<'a, ()>, Val) -> wasmtime::Result<u32>
++        + Send
++        + Sync
++        + 'static,
++    ) -> Result<(), SessionError> {
+         if portable::resolve::locate_source_if_present(NAMESPACE, &self.options.source_paths, 0..0)
+             .map_err(SessionError::Compile)?
+             .is_some()
+diff --git i/crates/suss-compile/tests/session_observation_hook.rs w/crates/suss-compile/tests/session_observation_hook.rs
+index 066997e2..04e87d1d 100644
+--- i/crates/suss-compile/tests/session_observation_hook.rs
++++ w/crates/suss-compile/tests/session_observation_hook.rs
+@@ -74,3 +74,43 @@ fn hook_rejects_non_runtime_phase_and_filesystem_namespace_override() {
+     .unwrap();
+     assert!(session.install_observation_hook(|_, _| Ok(0)).is_err());
+ }
++
++#[test]
++fn namespace_local_macros_require_an_explicit_isolated_observer() {
++    use suss_compile::portable_macros::CompiledMacros;
++    let root = tempfile::tempdir().unwrap();
++    std::fs::write(root.path().join("provider.sus"),
++        "(ns provider (:require [suss.harness.observation :as host])) (def token (fn [x] (host/capture x)))").unwrap();
++    std::fs::write(root.path().join("consumer.sus"),
++        "(ns consumer (:require [provider :as p])) (defmacro answer [x] (p/token x)) (def value (answer 41))").unwrap();
++    let mut session = Session::new_repl_with_options(SessionOptions {
++        source_paths: vec![root.path().to_owned()], ..Default::default()
++    }).unwrap();
++    let runtime_values = Arc::new(Mutex::new(Vec::new()));
++    let output = runtime_values.clone();
++    session.install_observation_hook(move |mut store, value| {
++        output.lock().unwrap().push(observed_number(&mut store, value));
++        Ok(900)
++    }).unwrap();
++    let mut macros = CompiledMacros::new().unwrap();
++    let failure = session.load_namespace_with_macros("consumer", &mut macros).unwrap_err();
++    assert!(failure.to_string().contains("No source for namespace suss.harness.observation"), "{failure}");
++    assert!(runtime_values.lock().unwrap().is_empty());
++
++    let macro_values = Arc::new(Mutex::new(Vec::new()));
++    let output = macro_values.clone();
++    macros.install_observation_hook(move |mut store, value| {
++        output.lock().unwrap().push(observed_number(&mut store, value));
++        Ok(17)
++    }).unwrap();
++    assert!(macros.install_observation_hook(|_, _| Ok(0)).is_err());
++    session.load_namespace_with_macros("consumer", &mut macros).unwrap();
++    let value = session.eval("consumer/value").unwrap();
++    assert_eq!(session.inspect(&value, |mut store, value| Ok(observed_number(&mut store, value))).unwrap(), 17);
++    assert_eq!(*macro_values.lock().unwrap(), vec![41]);
++    assert!(runtime_values.lock().unwrap().is_empty());
++    let value = session.eval("(provider/token 52)").unwrap();
++    assert_eq!(session.inspect(&value, |mut store, value| Ok(observed_number(&mut store, value))).unwrap(), 900);
++    assert_eq!(*runtime_values.lock().unwrap(), vec![52]);
++    assert_eq!(*macro_values.lock().unwrap(), vec![41]);
++}

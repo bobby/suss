@@ -1,0 +1,23 @@
+Running as unit: run-p222830-i92484704.scope; invocation ID: 56e7492d26bb48fb996aa2d18111fbde
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 6.89s
+     Running tests/inline_module_macros.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/inline_module_macros-b8319c7a7102b0b8)
+
+running 1 test
+test source_namespace_local_macros_use_phase_imports_and_expand_following_forms ... FAILED
+
+failures:
+
+---- source_namespace_local_macros_use_phase_imports_and_expand_following_forms stdout ----
+
+thread 'source_namespace_local_macros_use_phase_imports_and_expand_following_forms' (223108) panicked at crates/suss-cli/tests/inline_module_macros.rs:27:73:
+called `Result::unwrap()` on an `Err` value: Module(ModuleDiagnostic { namespace: "local.reader", source_path: Some("/tmp/.tmplkpOCJ/local/reader.sus"), span: 54..62, message: "Unresolved Runtime name defmacro" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    source_namespace_local_macros_use_phase_imports_and_expand_following_forms
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 24.90s
+
+error: test failed, to rerun pass `-p suss-cli --test inline_module_macros`

@@ -1,0 +1,16 @@
+[
+  {
+    "name": "min-key",
+    "source_sha256": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
+    "adapted_sha256": "1c5750d36d8f83a9f11881b79d02e79d13a5c7b9c51b7b31d27da2d6cb3799c6",
+    "patch_sha256": "ce2e470cf13e33da5dabc9ab79e8b1df3180678ffe111f3c56e285fdb4e7309e",
+    "rationale": "Replace defn expansion with def/fn for bootstrap importing; preserve complete arities, documentation and attribute metadata. All arity bodies and nested named functions are byte-preserved."
+  },
+  {
+    "name": "some-fn",
+    "source_sha256": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398",
+    "adapted_sha256": "d265383241e3244618f0ca3175fa286ee5754fa06afe9b80cb8d0fa5ee70b1ed",
+    "patch_sha256": "b5e4137a003710f4273da7a81dd023c2ec6d7b72602707babb02a43a1b7f3261",
+    "rationale": "Replace defn expansion with def/fn for bootstrap importing; preserve complete arities, documentation and attribute metadata. All arity bodies and nested named functions are byte-preserved."
+  }
+]

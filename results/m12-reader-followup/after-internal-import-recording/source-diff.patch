@@ -1,0 +1,114 @@
+diff --git i/crates/suss-cli/tests/analyzer_edn.rs w/crates/suss-cli/tests/analyzer_edn.rs
+index 4ff221e1..01ab935f 100644
+--- i/crates/suss-cli/tests/analyzer_edn.rs
++++ w/crates/suss-cli/tests/analyzer_edn.rs
+@@ -310,6 +310,35 @@ fn user_forms_round_trip() {
+     assert!(emitted.contains("(suss.core/defmacro unless \"Like when-not.\" ([test] nil) ([test & body]"), "{emitted}");
+ }
+ 
++#[test]
++fn local_macro_import_setup_keeps_one_node_per_source_declaration() {
++    use suss_reader::edn::Value;
++    let source = r#"(ns first (:require [clojure.edn :as edn]))
++(defmacro data [text] (list 'quote (edn/read-string text)))
++(def value (data "17"))
++(ns second (:require [clojure.edn :as other]))
++(defmacro data [text] (list 'quote (other/read-string text)))
++(def value (data "[29]"))"#;
++    let path = root().join("target/local-macro-analysis.sus");
++    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
++    let document = hir_document(&fragments, &path).unwrap();
++    assert_eq!(asts(&document).len(), 6, "one node per original source form");
++    let declarations: Vec<_> = asts(&document).iter()
++        .filter(|node| get(node, "op") == &Value::keyword("suss/ns")).collect();
++    assert_eq!(declarations.len(), 2);
++    for declaration in declarations {
++        assert_eq!(get(get(declaration, "env"), "phase"), &Value::keyword("runtime"));
++    }
++    let Value::Map(namespaces) = get(get(&document, "global-env"), "macro-namespaces") else { panic!("macro namespaces") };
++    for (namespace, alias) in [("first", "edn"), ("second", "other")] {
++        let scope = namespaces.get(&Value::Symbol(suss_reader::Symbol::new(namespace))).unwrap();
++        let Value::Map(aliases) = get(scope, "aliases") else { panic!("macro aliases") };
++        assert_eq!(aliases.get(&Value::Symbol(suss_reader::Symbol::new(alias))),
++            Some(&Value::Symbol(suss_reader::Symbol::new("clojure.edn"))));
++    }
++    assert_round_trip(source, &path, &[]);
++}
++
+ /// A recur targets the innermost loop or fn method, also inside an
+ /// intrinsic.
+ #[test]
+diff --git i/crates/suss-compile/src/portable/analysis_record.rs w/crates/suss-compile/src/portable/analysis_record.rs
+index 82662ad4..779b2192 100644
+--- i/crates/suss-compile/src/portable/analysis_record.rs
++++ w/crates/suss-compile/src/portable/analysis_record.rs
+@@ -2,7 +2,7 @@
+ //! asks for them. Compilation drops each fragment's HIR once it is lowered;
+ //! `suss analyze` runs the ordinary compilation pipeline with recording on.
+ use super::{SourceOrigin, hir::Hir, resolve};
+-use std::cell::RefCell;
++use std::cell::{Cell, RefCell};
+ 
+ /// One analyzed fragment: its top-level forms' HIR, in order, and the
+ /// environment after them.
+@@ -21,6 +21,19 @@ thread_local! {
+     static RECORDING: RefCell<Option<Vec<RecordedFragment>>> = const { RefCell::new(None) };
+     static FILTER: RefCell<Option<Filter>> = const { RefCell::new(None) };
+     static PENDING: RefCell<Option<Vec<Hir>>> = const { RefCell::new(None) };
++    static INTERNAL_SETUP: Cell<bool> = const { Cell::new(false) };
++}
++
++/// Compiler bookkeeping may reuse source declarations without creating new
++/// source forms. Preserve the enclosing recorder and any pending HIR, including
++/// when setup fails or recursively prepares other internal declarations.
++pub(crate) fn internal_setup<T>(f: impl FnOnce() -> T) -> T {
++    struct Restore(bool);
++    impl Drop for Restore {
++        fn drop(&mut self) { INTERNAL_SETUP.with(|state| state.set(self.0)); }
++    }
++    let _restore = Restore(INTERNAL_SETUP.with(|state| state.replace(true)));
++    f()
+ }
+ 
+ /// Run `f`, returning what it returns and the fragments analyzed meanwhile on
+@@ -50,7 +63,8 @@ fn recording() -> bool {
+ }
+ 
+ fn wanted(origin: Option<&SourceOrigin>) -> bool {
+-    recording() && FILTER.with(|f| f.borrow().as_ref().is_none_or(|filter| filter(origin)))
++    !INTERNAL_SETUP.with(Cell::get)
++        && recording() && FILTER.with(|f| f.borrow().as_ref().is_none_or(|filter| filter(origin)))
+ }
+ 
+ /// Called by the analyzer with a fragment's analyzed top-level forms.
+@@ -89,7 +103,7 @@ pub(super) fn fragment(
+ 
+ /// Forget forms analyzed outside a fragment.
+ pub(super) fn clear_pending() {
+-    if recording() {
++    if recording() && !INTERNAL_SETUP.with(Cell::get) {
+         PENDING.with(|p| p.borrow_mut().take());
+     }
+ }
+diff --git i/crates/suss-compile/src/portable_macros.rs w/crates/suss-compile/src/portable_macros.rs
+index 46c80e27..ae040c2d 100644
+--- i/crates/suss-compile/src/portable_macros.rs
++++ w/crates/suss-compile/src/portable_macros.rs
+@@ -315,7 +315,7 @@ impl CompiledMacros {
+                     // keep their existing once-only loading contract even when
+                     // the caller's later declaration preparation fails.
+                     let transactions = std::mem::take(&mut self.declaration_transactions);
+-                    let imported = (|| {
++                    let imported = crate::portable::analysis_record::internal_setup(|| {
+                         let span = declaration.span.clone();
+                         let prepared = self.session.compilation_snapshot().prepare_with_origin(
+                             vec![declaration], span, self, Some(&module.origin),
+@@ -341,7 +341,7 @@ impl CompiledMacros {
+                             self.loaded_sources.insert(name, identity);
+                         }
+                         Ok::<_, SessionError>(())
+-                    })();
++                    });
+                     debug_assert!(self.declaration_transactions.is_empty());
+                     self.declaration_transactions = transactions;
+                     imported?;

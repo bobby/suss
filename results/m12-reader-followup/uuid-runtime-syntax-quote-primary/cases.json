@@ -1,0 +1,26 @@
+[
+  {
+    "name": "short",
+    "source": "(read-string \"`#uuid \\\"1-2-3-4-5\\\"\")",
+    "printed": "(quote #uuid \"00000001-0002-0003-0004-000000000005\")",
+    "head": "quote",
+    "most": "4295098371",
+    "least": "1125899906842629"
+  },
+  {
+    "name": "signed",
+    "source": "(read-string \"`#uuid \\\"80000000-0000-0001-ffff-fffffffffffe\\\"\")",
+    "printed": "(quote #uuid \"80000000-0000-0001-ffff-fffffffffffe\")",
+    "head": "quote",
+    "most": "-9223372036854775807",
+    "least": "-2"
+  },
+  {
+    "name": "positive",
+    "source": "(read-string \"`#uuid \\\"7fffffff-ffff-fffe-8000-000000000001\\\"\")",
+    "printed": "(quote #uuid \"7fffffff-ffff-fffe-8000-000000000001\")",
+    "head": "quote",
+    "most": "9223372036854775806",
+    "least": "-9223372036854775807"
+  }
+]

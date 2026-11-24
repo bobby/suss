@@ -44,6 +44,7 @@ pub enum Value {
     /// A normalized non-integral ratio. Integral values use BigInt.
     Ratio(num_rational::BigRational),
     String(String),
+    Uuid(crate::uuid::Uuid),
     Keyword(Keyword),
     Symbol(Symbol),
     List(Vec<Value>),
@@ -85,6 +86,7 @@ impl Value {
             Value::BigInt(_) => 11,
             Value::Ratio(_) => 12,
             Value::BigInteger(_) => 13,
+            Value::Uuid(_) => 14,
         }
     }
 }
@@ -124,6 +126,7 @@ impl Ord for Value {
                 (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name))
             }
             (Value::String(a), Value::String(b)) => a.cmp(b),
+            (Value::Uuid(a), Value::Uuid(b)) => a.cmp(b),
             (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
             (Value::Long(a), Value::Long(b)) => a.cmp(b),
             (Value::BigInt(a), Value::BigInt(b)) => a.cmp(b),
@@ -253,6 +256,7 @@ fn write(out: &mut String, value: &Value) -> Result<(), Error> {
                 out.push_str(&format!("{}/{}", x.numer(), x.denom()));
             }
             Value::String(s) => string(out, s),
+            Value::Uuid(value) => { out.push_str("#uuid "); string(out, &value.to_string()); },
             Value::Keyword(k) => out.push_str(&keyword_text(k)?),
             Value::Symbol(s) => out.push_str(&symbol_text(s)?),
             Value::List(items) => sequence(out, "(", items.iter(), ")")?,
@@ -536,7 +540,10 @@ fn failure(span: Range<usize>, message: impl Into<String>) -> Error {
     }
 }
 fn duplicate(span: Range<usize>, key: &Value) -> Error {
-    let printed = print(key).unwrap_or_else(|_| format!("{key:?}"));
+    let printed = match key {
+        Value::Uuid(value) => value.to_string(),
+        _ => print(key).unwrap_or_else(|_| format!("{key:?}")),
+    };
     failure(span, format!("Duplicate key: {printed}"))
 }
 
@@ -971,6 +978,13 @@ impl<'s> Parser<'s, '_> {
     fn tagged(&self, tag: &Symbol, value: Value) -> Result<Value, String> {
         if let Some(reader) = self.options.readers.get(tag) {
             return reader(value);
+        }
+        if tag.namespace.is_none() && tag.name == "uuid" {
+            return match value.unmeta() {
+                Value::String(text) => crate::uuid::Uuid::parse(&text.encode_utf16().collect::<Vec<_>>())
+                    .map(Value::Uuid).map_err(|error| error.to_string()),
+                _ => Err("#uuid data reader expected string".into()),
+            };
         }
         if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
             let number = match value.unmeta() {

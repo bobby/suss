@@ -361,6 +361,20 @@ pub unsafe extern "C" fn suss_format_number(value: f64, output: *mut u8) -> usiz
     length
 }
 
+/// Java Float.toString for a source-float diagnostic, preserving binary32's
+/// shortest digits rather than printing its widened binary64 approximation.
+/// Caller provides at least32 bytes of private scratch storage.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn suss_format_float(value: f64, output: *mut u8) -> usize {
+    let value = value as f32;
+    let mut buffer = ryu_js::Buffer::new();
+    let text = buffer.format(value);
+    let mut java_text = [0u8; 32];
+    let length = java(f64::from(value), text.as_bytes(), &mut java_text);
+    unsafe { core::ptr::copy_nonoverlapping(java_text.as_ptr(), output, length) };
+    length
+}
+
 
 // Original Suss schoolbook magnitude kernel, measured in the BigInt placement
 // experiment. The GC bridge owns distinct aligned input/output scratch regions.

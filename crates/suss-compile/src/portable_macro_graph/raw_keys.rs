@@ -203,6 +203,16 @@ fn sort_groups<E>(
 }
 
 impl Interner {
+    pub(super) fn trace_final(&self) {
+        if std::env::var_os("SUSS_RAW_KEY_TRACE").is_none() { return; }
+        eprintln!("raw-key-final calls={} entries={} intern={} comparison={} head_lookup={} head_insert={}",
+            self.profile_calls, self.keys.len(), self.profile_work, self.profile_comparison_work,
+            self.profile_head_lookup_work, self.profile_head_insert_work);
+        let st = &self.entry_stats;
+        eprintln!("raw-entry-final entries={} capacity={} alloc={} reloc={} dir_alloc={} dir_reloc={} access={} staging={} publication={}",
+            self.keys.len(), self.keys.capacity(), st.allocation, st.relocation,
+            st.directory_allocation, st.directory_relocation, st.access, st.staging, st.publication);
+    }
     #[cfg(all(test, not(suss_generator)))]
     fn intern<E>(
         &mut self,
@@ -417,12 +427,17 @@ impl Interner {
                             Kind::AutoKeyword(_) => 15,
                             Kind::Exact(_) => 16,
                             Kind::Long(_) => 17,
+                            Kind::Uuid(_) => 18,
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
                             Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
                             Kind::Number(v) => {
                                 append(&mut key, &v.to_bits().to_le_bytes(), charge)?
+                            }
+                            Kind::Uuid(v) => {
+                                append(&mut key, &v.most.to_le_bytes(), charge)?;
+                                append(&mut key, &v.least.to_le_bytes(), charge)?;
                             }
                             Kind::Long(v) => append(&mut key, &v.to_le_bytes(), charge)?,
                             Kind::Exact(v) => text(&mut key, &v.text, charge)?,

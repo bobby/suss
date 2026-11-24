@@ -1,0 +1,13 @@
+Running as unit: run-p4191353-i92258767.scope; invocation ID: a2bedede18a540ae81831770513255cc
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+error[E0433]: cannot find `portable` in `suss_cli`
+   --> crates/suss-cli/tests/clojure_uuid.rs:214:19
+    |
+214 |     use suss_cli::portable::resolve::Phase;
+    |                   ^^^^^^^^ could not find `portable` in `suss_cli`
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `suss-cli` (test "clojure_uuid") due to 1 previous error

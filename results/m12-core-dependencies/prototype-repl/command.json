@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/suss",
+    "--no-cache",
+    "repl",
+    "--compile-fuel",
+    "10000000"
+  ],
+  "source_head": "c42b75bfaf2b56cc53e64beb0d032d75db3aa498",
+  "executable_sha256": "e95805623548ee355c1ac396f36c54386df0ce6d4f1211675704e17d4ebb78af",
+  "input_sha256": "c98e46b579ae10a0495636e24c832eb6e18c2d5e485b1e22c882e65ab71948f5",
+  "primary_sha256": "c21a78287a08f38f051b4d610fdfe0c62aa49c9d277566d98ef0cd94461edfeb",
+  "probe_inputs_sha256": "4cb2f71bf0b09848499c54f17d06488897414d8e4fb9a5e491572826d7f23d28",
+  "complete": true,
+  "qualification": "Each control is an individual REPL request with explicit ordinary 10M compilation allowance; local definitions only, not production core/Macro/AOT acceptance. Six pure fixture constructors have separate actual JVM equivalence evidence.",
+  "exit_code": 0,
+  "seconds": 89.78626084327698,
+  "observed_rows": 396,
+  "expected_rows": 396,
+  "prefix": [
+    "#'user/min-key",
+    "#'user/some-fn"
+  ],
+  "prefix_matches": true,
+  "executable_unchanged": true,
+  "decode_errors": [],
+  "mismatches": [],
+  "extra_rows": []
+}

@@ -1,0 +1,14 @@
+{
+  "head": "d9976de1fc6d51dde86e90f502c988fdd23fb174",
+  "reason": "Exact-head CI job137725928966 proves E0004: Observation::Uuid missing from this unchanged test projection. The full workspace build necessarily includes this native test target. Stop to repair the known compilation error, not an observation timeout.",
+  "ci": "https://github.com/bobby/suss/actions/runs/45184343437/job/137725928966",
+  "scope": "run-p72441-i92332877.scope",
+  "properties": {
+    "ActiveState": "active",
+    "InvocationID": "f21819b9ff8d40d9abe54de6260938f8",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/run-p72441-i92332877.scope"
+  },
+  "file": "crates/suss-cli/tests/portable_reduction_dispatch.rs",
+  "sha256": "be026a64410f7f82101f07b2f77e712db934a8449ee0140bbba4d4a3d1d8ce22",
+  "signal": "SIGINT"
+}

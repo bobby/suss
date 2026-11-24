@@ -1,0 +1,2 @@
+Running as unit: run-p3903438-i91965266.scope; invocation ID: 4a73610130174c76b39127a16740b1bf
+Compilation error: Parse error: /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/before-native-readers/uuid.sus: No reader function for tag uuid at bytes 31..48

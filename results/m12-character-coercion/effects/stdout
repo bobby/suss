@@ -1,0 +1,7 @@
+"[\\A [:arg]]"
+"[\\A [:callee :arg]]"
+"[\\A [:callee :args]]"
+"[:throws [:arg]]"
+"[:throws [:arg]]"
+"[:throws [:callee :first :second]]"
+":throws"

@@ -611,25 +611,39 @@ fn compile_snapshots_with_expander(
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
+    expander.begin_declarations().map_err(|error| ModuleDiagnostic {
+        namespace: environment.current_namespace(phase).into(), source_path: None,
+        span: error.span, message: error.message,
+    })?;
+    let result = compile_snapshot_declarations(snapshots, environment, phase, expander);
+    let finished = expander.end_declarations(result.is_ok()).map_err(|error| ModuleDiagnostic {
+        namespace: environment.current_namespace(phase).into(), source_path: None,
+        span: error.span, message: error.message,
+    });
+    finished?;
+    result
+}
+
+fn compile_snapshot_declarations(
+    snapshots: Vec<SourceModule>, environment: &Environment, phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
+) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
     let mut snapshot = environment.clone();
     let mut modules = Vec::new();
     for unit in snapshots {
         expander
             .charge_expansion_work(unit.source.len() as u64, 0..unit.source.len())
             .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
+        let origin = super::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
+        expander.begin_source_module(&unit.forms, &origin)
+            .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
+        let prepared = super::prepare_fragment_forms_with_origin(
+            unit.forms, 0..unit.source.len(), &snapshot, phase, expander, Some(&origin),
+        );
+        let finished = expander.end_source_module();
         let PreparedFragment {
             wasm, environment, ..
-        } = super::prepare_fragment_forms_with_origin(
-            unit.forms,
-            0..unit.source.len(),
-            &snapshot,
-            phase,
-            expander,
-            Some(&super::SourceOrigin::new(
-                unit.source.as_str(),
-                Some(unit.path.clone()),
-            )),
-        )
+        } = prepared.and_then(|prepared| finished.map(|_| prepared))
         .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
         snapshot = environment;
         modules.push(PreparedModule {

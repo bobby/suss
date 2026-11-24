@@ -1,0 +1,81 @@
+Running as unit: run-p45075-i92300906.scope; invocation ID: e3d21e0958dd48589791311028815c2e
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 20.70s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 14 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test cli_prints_documents_that_suss_reads ... ok
+test letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 72.83s
+
+     Running tests/builtin_internals_sealed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/builtin_internals_sealed-b82f2888bf411b77)
+
+running 7 tests
+test core_internal_calls_are_direct_linked_against_user_redefinition ... ok
+test core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test builtin_classes_resist_aliased_extension_and_node_singletons_stay_private ... ok
+test user_type_fields_keep_ordinary_access ... ok
+test user_code_cannot_reach_builtin_internals_in_either_phase ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.62s
+
+     Running tests/analyzer_edn_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/analyzer_edn_core-8d4d42231c6fcd44)
+
+running 2 tests
+test core_document_has_no_lowered_nodes ... ok
+test core_round_trips_in_both_phases ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.62s
+
+     Running tests/portable_value_decoder.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_value_decoder-bdff15d92878dc0e)
+
+running 30 tests
+test bigint_decoder_reads_exact_storage_after_gc_without_guest_printers ... ok
+test canonical_identifiers_reject_malformed_namespaces_names_and_excessive_nesting ... ok
+test captured_decoder_rejects_foreign_and_reset_sessions_before_descriptor_access ... ok
+test chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values ... ok
+test collection_decoder_rejects_nominal_impostors_malformed_counts_and_missing_backing ... ok
+test case_hash_preserves_retained_fields_after_gc_and_public_rebinding ... ok
+test decimal_decoder_rejects_mutable_owners_and_malformed_exact_coefficients ... ok
+test decoder_bounds_are_checked_before_string_traversal ... ok
+test decoder_rejects_unknown_sentinels_nulls_and_unboxed_values ... ok
+test identifier_decoder_retains_canonical_identity_through_gc_and_redefinition ... ok
+test indexed_sequences_and_map_entries_decode_actual_storage_after_gc ... ok
+test indexed_sequences_reject_invalid_offsets_and_storage ... ok
+test map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries ... ok
+test map_set_decoder_rejects_invalid_counts_flags_and_node_storage ... ok
+test persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values ... ok
+test compiled_case_retains_literal_values_after_gc_and_keeps_collision_equality_live ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_calls ... ok
+test scalar_decoder_preserves_bits_and_language_sentinels_after_gc ... ok
+test ratio_decoder_reads_actual_exact_children_after_gc ... ok
+test scalar_decoder_rejects_mutable_number_impostor ... ok
+test set_decoder_preserves_nested_elements_and_nil_through_gc ... ok
+test sorted_collection_decoder_preserves_exact_fields_after_gc_without_guest_comparison ... ok
+test string_decoder_preserves_utf16_including_astral_and_lone_surrogates ... ok
+test string_decoder_rejects_immutable_utf16_array_impostor ... ok
+test sorted_collection_decoder_rejects_count_layout_and_budget_errors ... ok
+test unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors ... ok
+test vector_decoder_rejects_count_exceeding_trie_capacity ... ok
+test vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.62s
+

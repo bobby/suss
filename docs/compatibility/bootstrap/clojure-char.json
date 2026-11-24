@@ -1,0 +1,36 @@
+{
+  "upstream": {
+    "primary": "org.clojure/clojure1.12.6",
+    "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "core_source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "char_form_sha256": "bb83f6b0bd02f3da4b5a67bfaaa8b081d3fc05b6b5e40f12d1f9d2fe172e3203",
+    "license": "EPL-1.0; runtime/core-import/epl-v10.html",
+    "qualification": "Complete core char form and development bytecode inspection retained. Implementation must preserve source overload selection and Number.longValue semantics; no Java runtime dependency."
+  },
+  "license": "EPL-1.0 for retained/adapted Clojure form; original Suss native implementation and existing separately licensed ryu-js helper",
+  "adaptation": "Object, primitive Double and primitive Float source classes select distinct checked UTF-16 unit casts before backend storage inference. Object conversion uses exact Number.longValue low bits; primitive floating conversion checks the original value. Source-float diagnostics use binary32 shortest digits. Native helpers are allocator-free; Java is a development oracle only.",
+  "platform_differences": [
+    "One-unit UTF-16 Strings are also characters under the accepted design; three original String controls differ from JVM Character coercion.",
+    "ADR-0003 returns a Double from float. A first-class rounded input retains its widened Double value in range text, rather than inventing a boxed Float; one fresh control records this difference."
+  ],
+  "files": {
+    "crates/suss-cli/tests/clojure_char.rs": "8a8a4291ff48acadfd9a496ecd8430c41fea6e5c66d617618a9a44d3e1459390",
+    "crates/suss-compile/src/portable/hir.rs": "9fe8578200853d290a41e8c8f89a2ea30637e0d10d69c1b8faf68ef01e42d5f5",
+    "crates/suss-compile/src/portable/hir/local_hints.rs": "9b72a55c018e1fc96efc27c28fa59d07c48942e3e74b73a3711a37e576f3757b",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "9f90f38d46473857714580ddd0db8914bbb23f4c5eacf95349af914484bb7d60",
+    "crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs": "8ae8eec83a26ca1f50754e38f2752b386fa7986267c9c6d94eba8a771a9e8411",
+    "crates/suss-compile/src/runtime_abi/bitwise.rs": "eb1a51b52ed9bdd6de245a2761c596ec1618aca85a2b877b227008301d04d9ad",
+    "crates/suss-compile/src/runtime_abi/numeric.rs": "94e1a6e1683265a4973de62046844b075b4701bcb2babf5ef6b522815b436da0",
+    "docs/compatibility/bootstrap/exact-integers.sus": "f400a8617d37e327f8a6478e222ccab1084959b98a9dd3ae0d0ffd1c2b04f2cf",
+    "runtime/numeric/src/lib.rs": "33cdfa128995f1d40e7bcbd295607fd80286c1dcdc8352b8ae83bf42988dcfce",
+    "runtime/numeric/artifact/manifest.json": "3bf856201e249ea82f2a7d4cdccf147697bb1c7462823fa15f270b370df3b4b3",
+    "runtime/numeric/artifact/numeric.wasm": "3b73ca99259700f5ab1231b474ec0675090879ec25957f4f5ed7ea0a2c080b9f",
+    "docs/compatibility/character/NOTICE": "6d0e9c1bfe1a90453e40b83c99a5caba391a2a9df9bf2e998fc5eca11770ab58",
+    "results/m12-character-coercion/upstream-char.clj": "e9bd421c4c5405005918b3546cfd7eb23f2c9bade16a816c3dcc3222d074c5ad",
+    "results/m12-character-coercion/primary/cases.json": "88566be353e22fbec0c90b18d0545e64253eb10dceba5cb813aea8dfcb66746c",
+    "results/m12-character-coercion/float-primary/cases.json": "326310be9aa0ff8cd9aa23d2a3ae5dd06d20811cc2dfb04e7fab2745654ab22b",
+    "results/m12-character-coercion/object-float-probe/cases.json": "11c780aa9937a5670309430fac578bbf22635178404bb3f625b009a84b54136d",
+    "results/m12-character-coercion/exact-number-primary/cases.json": "55ab718520fc1c18d0fcefd4f86716ba6bae43b36439f773ca386a1889d437b3",
+    "results/m12-character-coercion/effects/cases.json": "4e84e840c429663fc1c1984fd56789eecb04c000400d3cf66bf054895839bda0"
+  }
+}

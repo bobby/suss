@@ -1,0 +1,66 @@
+[
+  {
+    "raw": "build-cache-probe.stderr",
+    "archive": "build-cache-probe.stderr.gz",
+    "raw_sha256": "4f3b8ad39ea31923dc2b9f2d964fe93eb157363110cb25e0da39cb7bb3fe2edb",
+    "raw_bytes": 94,
+    "archive_sha256": "dd6c2bdae5e04049bdd14bd0edb40308a1fa26cb2dbb1153bf71a30b7b405163",
+    "archive_bytes": 107
+  },
+  {
+    "raw": "build-cache-probe.stdout",
+    "archive": "build-cache-probe.stdout.gz",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "archive_bytes": 20
+  },
+  {
+    "raw": "cache-recovery-before.stderr",
+    "archive": "cache-recovery-before.stderr.gz",
+    "raw_sha256": "a953695241bb0e1e8f716a50e205673908fd1268b6a7a394b72351a785406b78",
+    "raw_bytes": 463,
+    "archive_sha256": "2cad34c922f0d8220401104caa491a4d75f3032ad77d7eb71d9c26f9e2f05bbd",
+    "archive_bytes": 359
+  },
+  {
+    "raw": "cache-recovery-before.stdout",
+    "archive": "cache-recovery-before.stdout.gz",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "archive_bytes": 20
+  },
+  {
+    "raw": "commands.json",
+    "archive": "commands.json.gz",
+    "raw_sha256": "fdbb4474c49be9b2d3ec83853cbfd9bca8cb420669989fa532fc4878e524af08",
+    "raw_bytes": 522639,
+    "archive_sha256": "dc48ecee3f4382a259142e6b5c2fafb59a497bfeba29e0cc6b063c444dea0a86",
+    "archive_bytes": 185967
+  },
+  {
+    "raw": "source-qualification.json",
+    "archive": "source-qualification.json.gz",
+    "raw_sha256": "6d40607a620908d9d3cb09f2bb7e065475181f99c54981dc43f07a93a39bc402",
+    "raw_bytes": 647,
+    "archive_sha256": "2df3a52f6810e0d8db326db839ea84b50202fb1f77ccc5f97f307914ef4dfc95",
+    "archive_bytes": 415
+  },
+  {
+    "raw": "uuid-runtime-syntax-quote-before.stderr",
+    "archive": "uuid-runtime-syntax-quote-before.stderr.gz",
+    "raw_sha256": "8136f68ff0e2107ab060766e0a419a6a0eea5fe0f7bab0339a601de545eb431b",
+    "raw_bytes": 171,
+    "archive_sha256": "06ffa682051ef509dc7241339b98b000ea78ecbc6cf30a2dd949b5fa4ec2728b",
+    "archive_bytes": 164
+  },
+  {
+    "raw": "uuid-runtime-syntax-quote-before.stdout",
+    "archive": "uuid-runtime-syntax-quote-before.stdout.gz",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "archive_bytes": 20
+  }
+]

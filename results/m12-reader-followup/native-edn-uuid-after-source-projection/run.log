@@ -1,0 +1,13 @@
+Running as unit: run-p3977587-i92028881.scope; invocation ID: 5e6f12d0af484781859ec039bd711f96
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 13.01s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-target/debug/deps/suss_reader-10c228a0d621537c)
+
+running 4 tests
+test uuid::tests::native_edn_preserves_uuid_values_canonical_keys_and_reader_precedence ... ok
+test uuid::tests::ordering_compares_each_signed_half_without_subtraction_overflow ... ok
+test uuid::tests::every_utf16_hex_digit_matches_the_executed_jvm_scan ... ok
+test uuid::tests::parser_matches_fresh_primary_bits_hashes_canonical_text_and_lossless_errors ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 0.00s
+

@@ -310,6 +310,35 @@ fn user_forms_round_trip() {
     assert!(emitted.contains("(suss.core/defmacro unless \"Like when-not.\" ([test] nil) ([test & body]"), "{emitted}");
 }
 
+#[test]
+fn local_macro_import_setup_keeps_one_node_per_source_declaration() {
+    use suss_reader::edn::Value;
+    let source = r#"(ns first (:require [clojure.edn :as edn]))
+(defmacro data [text] (list 'quote (edn/read-string text)))
+(def value (data "17"))
+(ns second (:require [clojure.edn :as other]))
+(defmacro data [text] (list 'quote (other/read-string text)))
+(def value (data "[29]"))"#;
+    let path = root().join("target/local-macro-analysis.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    assert_eq!(asts(&document).len(), 6, "one node per original source form");
+    let declarations: Vec<_> = asts(&document).iter()
+        .filter(|node| get(node, "op") == &Value::keyword("suss/ns")).collect();
+    assert_eq!(declarations.len(), 2);
+    for declaration in declarations {
+        assert_eq!(get(get(declaration, "env"), "phase"), &Value::keyword("runtime"));
+    }
+    let Value::Map(namespaces) = get(get(&document, "global-env"), "macro-namespaces") else { panic!("macro namespaces") };
+    for (namespace, alias) in [("first", "edn"), ("second", "other")] {
+        let scope = namespaces.get(&Value::Symbol(suss_reader::Symbol::new(namespace))).unwrap();
+        let Value::Map(aliases) = get(scope, "aliases") else { panic!("macro aliases") };
+        assert_eq!(aliases.get(&Value::Symbol(suss_reader::Symbol::new(alias))),
+            Some(&Value::Symbol(suss_reader::Symbol::new("clojure.edn"))));
+    }
+    assert_round_trip(source, &path, &[]);
+}
+
 /// A recur targets the innermost loop or fn method, also inside an
 /// intrinsic.
 #[test]
@@ -470,5 +499,38 @@ fn letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hint
         "(letfn [(left ([] (right 0)) ([n] (right n 1))) (right ([n] n) ([n & more] (left)))] (left))",
     ] {
         assert_round_trip(source, &path, &[]);
+    }
+}
+
+#[test]
+fn uuid_ast_values_survive_edn_emission_and_executed_source_round_trips() {
+    use suss_reader::edn::{self, Options, Value};
+    use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
+    let source = r##"#uuid "1-2-3-4-5"
+#uuid "80000000-0000-0001-ffff-fffffffffffe"
+#uuid "7fffffff-ffff-fffe-8000-000000000001""##;
+    let path = root().join("target/uuid-data.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    let nodes = asts(&document);
+    assert_eq!(nodes.len(), 3);
+    for (node, original) in nodes.iter().zip(source.lines()) {
+        assert_eq!(get(node, "op"), &Value::keyword("const"));
+        assert_eq!(get(node, "type"), &Value::keyword("uuid"));
+        assert_eq!(get(node, "val"), &edn::read_one(original, &Options::default()).unwrap());
+    }
+    let wire = print(&document).unwrap();
+    let restored = edn::read_one(&wire, &Options::default()).unwrap();
+    assert_eq!(restored, document);
+    let emitted = emitted_source(&restored).unwrap();
+    assert_round_trip(&emitted, &path, &[]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let value = session.eval_with_macros(&emitted, &mut macros).unwrap();
+        session.collect().unwrap();
+        let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
+        let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+        let expected = edn::read_one(source.lines().last().unwrap(), &Options::default()).unwrap();
+        assert_eq!(edn::source::form_to_value(&actual).unwrap(), expected);
     }
 }

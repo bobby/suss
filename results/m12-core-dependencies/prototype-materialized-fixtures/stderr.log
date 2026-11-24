@@ -1,0 +1,2 @@
+Running as unit: run-p205477-i92457098.scope; invocation ID: f3711d3f4ae845b3b820246535bd118c
+Error: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 40479..40486

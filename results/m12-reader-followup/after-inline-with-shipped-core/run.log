@@ -1,0 +1,10 @@
+Running as unit: run-p264137-i92532926.scope; invocation ID: bf06e69ea3354549bb391590be962feb
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.38s
+     Running tests/inline_module_macros.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/inline_module_macros-b8319c7a7102b0b8)
+
+running 1 test
+test source_namespace_local_macros_use_phase_imports_and_expand_following_forms ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 15.11s
+

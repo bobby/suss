@@ -9,7 +9,7 @@
 use super::*;
 
 /// `number-cast`'s kinds, as core's coercions pass them.
-pub(crate) const CASTS: [(&str, Cast); 16] = [
+pub(crate) const CASTS: [(&str, Cast); 19] = [
     ("long", Cast::Checked(64)),
     ("int", Cast::Checked(32)),
     ("short", Cast::Checked(16)),
@@ -26,8 +26,11 @@ pub(crate) const CASTS: [(&str, Cast); 16] = [
     ("short-object", Cast::ObjectChecked(16)),
     ("byte-object", Cast::ObjectChecked(8)),
     ("int-float", Cast::IntFloat),
+    ("char-object", Cast::Character(0)),
+    ("char-primitive", Cast::Character(1)),
+    ("char-float", Cast::Character(2)),
 ];
-pub(crate) const CAST_RAW_EXPORTS: [&str; 16] = [
+pub(crate) const CAST_RAW_EXPORTS: [&str; 19] = [
     "number-cast-long-raw",
     "number-cast-int-raw",
     "number-cast-short-raw",
@@ -44,6 +47,9 @@ pub(crate) const CAST_RAW_EXPORTS: [&str; 16] = [
     "number-cast-short-object-raw",
     "number-cast-byte-object-raw",
     "number-cast-int-float-raw",
+    "number-cast-char-object-raw",
+    "number-cast-char-primitive-raw",
+    "number-cast-char-float-raw",
 ];
 #[derive(Clone, Copy)]
 pub(crate) enum Cast {
@@ -62,6 +68,9 @@ pub(crate) enum Cast {
     /// Source float(long) rounds directly; replacement doubles remain checked.
     FloatLong,
     Double,
+    /// Return the checked UTF-16 unit as a long; the source wrapper constructs
+    /// its one-unit string. Primitive floating sources check before truncation.
+    Character(u8),
 }
 
 /// Throw a language error whose message is `prefix` and the printed number in
@@ -172,10 +181,57 @@ pub(super) fn intrinsics(b: &mut Builder) {
     b.function("bitwise-long-operand", &[VALUE], &[ValType::I64], &operand);
 }
 
+/// Clojure RT.charCast's Object and primitive-floating overloads. Keep the
+/// original operand for range diagnostics, and use Number.longValue's exact
+/// low bits for arbitrary precision inputs rather than a binary64 detour.
+fn character_cast(b: &Builder, source_kind: u8, raw: bool) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = Vec::new();
+    if source_kind == 0 {
+        // The accepted platform represents a Character as a one-unit UTF-16
+        // string; no fresh JVM Character identity or distinct String is forged.
+        code.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(STRING)), If(BlockType::Empty),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen,
+            I32Const(1), I32Eq, If(BlockType::Empty),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), I32Const(0),
+            ArrayGetU(STRING), I64ExtendI32U]);
+        if !raw { code.push(Call(b.names["long-box"])); }
+        code.extend([Return, End, End]);
+    }
+    numeric_cast_errors::nonnumber_errors(&mut code,
+        "Cannot invoke \"java.lang.Number.longValue()\" because \"x\" is null");
+    code.extend([LocalGet(0), Call(b.names["number-test"]), I32Eqz, If(BlockType::Empty)]);
+    code.extend(numeric::error("char requires a number or one-unit character", nominal::ERROR_GLOBAL));
+    code.push(End);
+    if source_kind != 0 {
+        code.extend([LocalGet(0), Call(b.names["number-cast-double-raw"]), LocalSet(2),
+            LocalGet(2), F64Const(0.0.into()), F64Ge,
+            LocalGet(2), F64Const(65535.0.into()), F64Le, I32And, I32Eqz,
+            If(BlockType::Empty)]);
+        if source_kind == 2 {
+            code.extend([LocalGet(2), Call(b.names["float-string"]), LocalSet(3)]);
+            code.extend(throw_with_value(b, "Value out of range for char: ", 3));
+        } else {
+            code.extend(throw_with_value(b, "Value out of range for char: ", 0));
+        }
+        code.extend([End, LocalGet(2), I64TruncSatF64S]);
+    } else {
+        code.extend([LocalGet(0), Call(b.names["number-cast-unchecked-long-raw"]), LocalTee(1),
+            I64Const(65535), I64GtU, If(BlockType::Empty)]);
+        code.extend(throw_with_value(b, "Value out of range for char: ", 0));
+        code.extend([End, LocalGet(1)]);
+    }
+    if !raw { code.push(Call(b.names["long-box"])); }
+    code
+}
+
 /// The body of one cast of the value in local 0. Local 1 is an i64, local 2
 /// an f64.
 fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'static>> {
     use Instruction::*;
+    if let Cast::Character(primitive) = kind {
+        return character_cast(b, primitive, raw);
+    }
     let name = match name {
         "float-long" => "float", "int-float" => "int",
         other => other.strip_suffix("-object").unwrap_or(other),
@@ -426,6 +482,7 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
             code.extend([LocalGet(0), Call(double)]);
             if !raw { code.push(Call(b.names["number-box"])); }
         }
+        Cast::Character(_) => unreachable!("character cast has its own checked path"),
     }
     code
 }

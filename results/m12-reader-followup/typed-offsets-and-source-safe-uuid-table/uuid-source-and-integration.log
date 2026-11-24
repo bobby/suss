@@ -1,0 +1,80 @@
+Running as unit: run-p20703-i92284022.scope; invocation ID: efd9e36b756e467bbbe2f62d2602d781
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 14s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 9 tests
+test actual_aot_executes_uuid_values_readers_and_signed_boundaries has been running for over 60 seconds
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary has been running for over 60 seconds
+test actual_aot_executes_uuid_values_readers_and_signed_boundaries ... ok
+test ordinary_source_core_loads_uuid_readers_in_both_phases ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test retained_uuid_storage_is_nominal_exact_and_independent_after_gc ... ok
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary ... ok
+test signed_boundaries_keys_and_quotation_follow_primary ... ok
+test uuid_fields_and_private_width_adapters_remain_sealed ... ok
+test uuid_values_and_readers_follow_primary_in_both_phases ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 123.95s
+
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test aot_records_fit_default_budget_and_execute ... ok
+test eval_and_script_records_fit_default_compilation_budget ... ok
+record membership fuel: [361130, 368956]
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.40s
+
+     Running tests/portable_hash_numeric_boundaries.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_hash_numeric_boundaries-d79351a7f9a953f4)
+
+running 4 tests
+test numeric_hash_adapters_validate_in_both_compilation_phases ... ok
+test numeric_hash_boundaries_keep_effects_typed_errors_and_compile_atomicity ... ok
+test numeric_hash_remainder_checks_both_operands_after_source_evaluation ... ok
+test hash_numeric_boundaries_match_independently_encoded_primary_observations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.71s
+
+     Running tests/portable_public_hash.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_public_hash-6673546bee5f0a40)
+
+running 5 tests
+test numeric_date_storage_executes_without_full_core ... ok
+test date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority ... ok
+test public_hash_matches_independently_decoded_primary_observations ... ok
+test time_clip_rejects_wrong_storage_and_preserves_effects_and_compile_atomicity ... ok
+test public_hash_retains_scalar_branches_and_captured_callable_after_gc ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.61s
+
+     Running tests/portable_reduction.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_reduction-2abff07b5b2adc72)
+
+running 3 tests
+test reduced_values_and_saved_reducers_survive_gc_and_language_errors ... ok
+test reduction_contract_match_independently_encoded_primary_observations ... ok
+test reduced_stops_vector_callbacks_at_chunk_boundaries_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.51s
+
+     Running tests/portable_vector_trie.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/portable_vector_trie-9d83d7d28f0630b2)
+
+running 5 tests
+test association_copies_only_selected_path_across_fragments_and_gc ... ok
+test throwing_live_clone_prevents_source_parent_mutation_and_recovers ... ok
+test vector_node_clone_owns_outer_array_and_preserves_edit_and_child ... ok
+test throwing_outer_pop_clone_preserves_original_recursive_path_after_gc ... ok
+test vector_trie_matches_independently_decoded_primary_values ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.49s
+
+     Running tests/record_factory_preservation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/record_factory_preservation-e1452a5850ef4eb3)
+
+running 1 test
+test old_and_candidate_factory_forms_match_with_recursive_metadata ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.73s
+

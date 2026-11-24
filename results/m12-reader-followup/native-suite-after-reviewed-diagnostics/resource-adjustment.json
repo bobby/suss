@@ -1,0 +1,14 @@
+{
+  "at": "2026-11-23T15:56:52.892110+00:00",
+  "command": [
+    "systemctl",
+    "--user",
+    "set-property",
+    "run-p400783-i92661381.scope",
+    "MemoryMax=4G"
+  ],
+  "exit_code": 0,
+  "previous_memory_max_bytes": 3221225472,
+  "memory_max_bytes": 4294967296,
+  "reason": "Match the prior full-suite allowance and avoid paging at the 3GiB resident ceiling. No test computation/compilation fuel or source changes; the same native process continues."
+}

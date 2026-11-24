@@ -19,6 +19,7 @@ pub(crate) fn normalized_reader_metadata(
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
+    Uuid,
     Symbol,
     Keyword,
     List,
@@ -45,7 +46,8 @@ enum Class {
     PersistentQueue,
 }
 // One enumeration for bridge construction and initial bootstrap authority.
-const SOURCE_CLASSES: [(&str, Class); 24] = [
+const SOURCE_CLASSES: [(&str, Class); 25] = [
+    ("UUID", Class::Uuid),
     ("Symbol", Class::Symbol),
     ("Keyword", Class::Keyword),
     ("List", Class::List),
@@ -911,6 +913,11 @@ impl FormBridge {
                             self.scalar(session, &Literal::Decimal { negative: num_traits::Signed::is_negative(unscaled),
                                 unscaled: unscaled.to_u32_digits().1, scale: *scale })?
                         }
+                        Kind::Uuid(value) => {
+                            let most = self.scalar(session, &Literal::Long(value.most))?;
+                            let least = self.scalar(session, &Literal::Long(value.least))?;
+                            self.construct(session, Class::Uuid, &[&most, &least])?
+                        }
                         Kind::String(value) => {
                             self.scalar(session, &Literal::String(value.clone()))?
                         }
@@ -1401,6 +1408,18 @@ fn decode_datum_inner<T: DatumTarget>(
                 reader_metadata = metadata(store, value, classes, span, depth, budget)?;
             }
             match class {
+                Class::Uuid => {
+                    if data.len() != 2 { return Err(error("Invalid UUID field layout")); }
+                    let half = |store: &mut StoreContextMut<'_, ()>, value: &Val| {
+                        match runtime_number(store, value)? {
+                            Some(RuntimeNumber::Long(value)) => Ok(value),
+                            _ => Err(error("Invalid UUID long field")),
+                        }
+                    };
+                    DecodedKind::Plain(Kind::Uuid(suss_reader::uuid::Uuid {
+                        most: half(store, &data[0])?, least: half(store, &data[1])?,
+                    }))
+                }
                 Class::Symbol | Class::Keyword => {
                     let count = if matches!(class, Class::Symbol) { 5 } else { 4 };
                     if data.len() != count {

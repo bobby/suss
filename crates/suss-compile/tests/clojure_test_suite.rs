@@ -14,6 +14,8 @@
 mod portable_decode;
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
+#[path = "support/assertion_head_transport.rs"]
+mod assertion_head_transport;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -238,6 +240,7 @@ fn tagged(value: &Observation) -> Value {
         Observation::Bool(value) => json!({"tag": "bool", "value": value}),
         Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
+        Observation::Uuid { most, least } => json!({"tag":"uuid", "most":most.to_string(), "least":least.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
         Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),
         Observation::Ratio(numerator, denominator) => json!({"tag":"ratio", "numerator":numerator, "denominator":denominator}),
@@ -350,6 +353,13 @@ impl Harness {
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(OPERATION_FUEL);
+        // Local transformers import this namespace in the isolated Macro phase.
+        // Provide that dependency explicitly, without sharing Runtime's Store,
+        // decoder, snapshots or token stream. Assertions execute only in Runtime;
+        // an accidental expansion-time capture is a hard failure, never a token.
+        macros.install_observation_hook(|_, _| Err(wasmtime::Error::msg(
+            "Assertion snapshots require Runtime test execution",
+        ))).unwrap();
         session
             .load_namespace_with_macros(HARNESS, &mut macros)
             .unwrap();
@@ -426,9 +436,10 @@ impl Harness {
             let kind = name(&fields[0]).expect("assertion kind");
             let verdict = name(&fields[1]).expect("assertion verdict");
             let snapshot = count(&fields[2]).expect("assertion snapshot index");
-            let head = name(&fields[3]);
+            let source_head = name(&fields[3]);
+            let head = source_head.as_deref().map(assertion_head_transport::canonical);
             let payload = self.snapshots.lock().unwrap().get(snapshot).cloned().expect("assertion snapshot exists");
-            let mut entry = json!({"test":test,"ordinal":index+1,"kind":kind,"verdict":verdict,"head":head});
+            let mut entry = json!({"test":test,"ordinal":index+1,"kind":kind,"verdict":verdict,"head":head,"source-head":source_head});
             match kind.as_str() {
                 "predicate" => { entry["result"]=payload[0].clone(); entry["operands"]=json!(payload[1..]); }
                 "value" => entry["value"]=payload[0].clone(),

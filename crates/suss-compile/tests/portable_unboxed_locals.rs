@@ -409,7 +409,15 @@ fn raw_numeric_helpers_return_scalars_without_numeric_boxes() {
             _ => {}
         }
     }
-    assert_eq!(exports.len(), 37);
+    // Preserve the original 37-helper inventory and require each appended
+    // checked character overload. Every helper below retains the scalar-return
+    // and no-numeric-box checks, including the three new exports.
+    let character_casts = ["number-cast-char-object-raw",
+        "number-cast-char-primitive-raw", "number-cast-char-float-raw"];
+    assert_eq!(exports.len(), 37 + character_casts.len());
+    for name in character_casts {
+        assert!(exports.values().any(|actual| actual == name), "missing raw helper {name}");
+    }
     assert_eq!(boxes.len(), 2);
     for (index, name) in &exports {
         let result = results[functions[*index as usize] as usize].unwrap();

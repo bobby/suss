@@ -1,0 +1,13 @@
+{
+  "head": "d64d424fda7d8989255cdce74adbc373b044537d",
+  "job": 137731790838,
+  "run": 45185990872,
+  "command": [
+    "gh",
+    "api",
+    "--allow-escape-sequences",
+    "repos/bobby/suss/actions/jobs/137731790838/logs"
+  ],
+  "sha256": "22014eaee335829de404b47b8711f96add93b0166ce9c3e2f3c8e6886c3f2c86",
+  "finding": "Only clojure_test_suite_matches_reviewed_baseline failed: four namespace diagnostics advance past unsupported UUID. Native audit separately verifies no prior-pass regressions. No baseline write has occurred."
+}

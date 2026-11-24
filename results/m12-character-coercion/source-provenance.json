@@ -1,0 +1,8 @@
+{
+  "primary": "org.clojure/clojure1.12.6",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "core_source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "char_form_sha256": "bb83f6b0bd02f3da4b5a67bfaaa8b081d3fc05b6b5e40f12d1f9d2fe172e3203",
+  "license": "EPL-1.0; runtime/core-import/epl-v10.html",
+  "qualification": "Complete core char form and development bytecode inspection retained. Implementation must preserve source overload selection and Number.longValue semantics; no Java runtime dependency."
+}

@@ -164,6 +164,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Tagged { tag, .. } => identifier_size(tag.namespace.as_deref(), &tag.name),
                         Kind::Bool(_) => 2,
                         Kind::Number(_) | Kind::Long(_) => 9,
+                        Kind::Uuid(_) => 17,
                         Kind::Exact(v) => 9usize.saturating_add(v.text.len()),
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
                         Kind::Symbol(v) => identifier_size(v.namespace.as_deref(), &v.name),
@@ -210,6 +211,11 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Long(v) => {
                             out.push(17);
                             out.extend_from_slice(&v.to_le_bytes());
+                        }
+                        Kind::Uuid(v) => {
+                            out.push(18);
+                            out.extend_from_slice(&v.most.to_le_bytes());
+                            out.extend_from_slice(&v.least.to_le_bytes());
                         }
                         Kind::Exact(v) => {
                             // The spelling, so diagnostics name it.

@@ -1,0 +1,732 @@
+diff --git c/crates/suss-cli/tests/clojure_uuid.rs w/crates/suss-cli/tests/clojure_uuid.rs
+index edf0f724..bf833869 100644
+--- c/crates/suss-cli/tests/clojure_uuid.rs
++++ w/crates/suss-cli/tests/clojure_uuid.rs
+@@ -139,6 +139,10 @@ fn signed_boundaries_keys_and_quotation_follow_primary() {
+     check_cases(&[include_str!("../../../results/m12-reader-followup/uuid-boundary-cases.json")]);
+ }
+ #[test]
++fn independently_read_uuid_case_values_follow_primary_in_both_phases() {
++    check_cases(&[include_str!("../../../results/m12-reader-followup/uuid-case-runtime-cases.json")]);
++}
++#[test]
+ fn uuid_fields_and_private_width_adapters_remain_sealed() {
+     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+         for source in [
+@@ -229,6 +233,41 @@ fn actual_aot_executes_uuid_values_readers_and_signed_boundaries() {
+     ]);
+ }
+ 
++#[test]
++fn actual_aot_dispatches_independently_read_uuid_case_values() {
++    check_aot_cases(&[include_str!("../../../results/m12-reader-followup/uuid-case-runtime-cases.json")]);
++}
++
++#[test]
++fn uuid_duplicate_case_constants_are_rejected_in_both_phases_and_actual_aot() {
++    use std::process::Command;
++    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
++        "../../../results/m12-reader-followup/uuid-case-expansion-cases.json")).unwrap();
++    assert_eq!(cases.len(), 2);
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        let mut macros = CompiledMacros::new().unwrap();
++        for row in &cases {
++            let source = row["compile_source"].as_str().unwrap();
++            let error = session.eval_with_macros(source, &mut macros).unwrap_err();
++            assert!(error.to_string().contains("Duplicate case test constant"), "{source}: {error}");
++        }
++    }
++    let root = tempfile::tempdir().unwrap();
++    let file = root.path().join("duplicate.sus");
++    let wit = root.path().join("probe.wit");
++    std::fs::write(&wit, "package test:duplicate; world w { export check: func(unused: u32) -> u32; }").unwrap();
++    for row in &cases {
++        let source = row["compile_source"].as_str().unwrap();
++        std::fs::write(&file, format!("(ns duplicate) (def check (fn [unused] {source}))")).unwrap();
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["--no-cache", "compile"]).arg(&file).args(["-w"]).arg(&wit)
++            .args(["--export", "check=duplicate/check", "-o"]).arg(root.path().join("probe.wasm"))
++            .output().unwrap();
++        assert!(!output.status.success(), "{source}: {output:?}");
++        assert!(String::from_utf8_lossy(&output.stderr).contains("Duplicate case test constant"), "{source}: {output:?}");
++    }
++}
++
+ #[test]
+ fn ordinary_source_core_loads_uuid_readers_in_both_phases() {
+     use suss_cli::portable_session::{SessionError, SessionOptions};
+diff --git c/crates/suss-cli/tests/inline_module_macros.rs w/crates/suss-cli/tests/inline_module_macros.rs
+index 49585073..76f62603 100644
+--- c/crates/suss-cli/tests/inline_module_macros.rs
++++ w/crates/suss-cli/tests/inline_module_macros.rs
+@@ -5,6 +5,11 @@ use suss_compile::portable::resolve::Phase;
+ mod portable_decode;
+ use portable_decode::{Decoder, Observation};
+ 
++fn value(session: &mut Session, macros: &mut CompiledMacros, source: &str) -> String {
++    let value = session.eval_with_macros(source, macros).unwrap();
++    suss_cli::portable_repl::NativeDisplay::default().display(session, &value).unwrap()
++}
++
+ #[test]
+ fn source_namespace_local_macros_use_phase_imports_and_expand_following_forms() {
+     let root = tempfile::tempdir().unwrap();
+@@ -16,12 +21,14 @@ fn source_namespace_local_macros_use_phase_imports_and_expand_following_forms()
+ (def answer (wrapped "[1.25M #uuid \"1-2-3-4-5\"]"))
+ "##).unwrap();
+     for phase in [Phase::Runtime, Phase::Macro] {
+-        let mut session = Session::with_options_in(SessionOptions {
++        let options = SessionOptions {
+             source_paths: vec![root.path().to_owned()],
+             ..SessionOptions::default()
+-        }, phase).unwrap();
+-        session.eval(include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
+-        session.enter_namespace("user").unwrap();
++        };
++        let mut session = match phase {
++            Phase::Runtime => Session::new_repl_with_options(options),
++            Phase::Macro => Session::new_macro_with_options(options),
++        }.unwrap();
+         let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+         let mut macros = CompiledMacros::new().unwrap();
+         session.load_namespace_with_macros("local.reader", &mut macros).unwrap();
+@@ -37,3 +44,117 @@ fn source_namespace_local_macros_use_phase_imports_and_expand_following_forms()
+         ]), "{phase:?}");
+     }
+ }
++
++#[test]
++fn source_namespace_macro_replacements_roll_back_after_failed_reload_and_recover() {
++    let root = tempfile::tempdir().unwrap();
++    let file = root.path().join("app.sus");
++    std::fs::write(&file, "(ns app) (defmacro answer [] 17) (def value (answer))").unwrap();
++    let mut session = Session::new_repl_with_options(SessionOptions {
++        source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
++    }).unwrap();
++    let mut macros = CompiledMacros::new().unwrap();
++    session.load_namespace_with_macros("app", &mut macros).unwrap();
++    assert_eq!(value(&mut session, &mut macros, "[app/value (app/answer)]"), "[17 17]");
++    std::fs::write(&file, "(ns app) (defmacro answer [] 99) (def value (answer)) unresolved").unwrap();
++    let failure = session.reload_namespace_with_macros("app", false, &mut macros).unwrap_err();
++    assert!(failure.to_string().contains("unresolved"), "{failure}");
++    session.collect().unwrap();
++    assert_eq!(session.current_namespace(), "user");
++    assert_eq!(value(&mut session, &mut macros, "[app/value (app/answer)]"), "[17 17]");
++    std::fs::write(&file, "(ns app) (defmacro answer [] 23) (def value (answer))").unwrap();
++    session.reload_namespace_with_macros("app", false, &mut macros).unwrap();
++    assert_eq!(value(&mut session, &mut macros, "[app/value (app/answer)]"), "[23 23]");
++}
++
++#[test]
++fn source_namespace_macros_do_not_leak_from_a_later_script_compile_failure() {
++    let root = tempfile::tempdir().unwrap();
++    std::fs::write(root.path().join("app.sus"), "(ns app) (defmacro answer [] 17) (def value (answer))").unwrap();
++    let mut session = Session::new_repl_with_options(SessionOptions {
++        source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
++    }).unwrap();
++    let mut macros = CompiledMacros::new().unwrap();
++    let failure = suss_cli::portable_repl::evaluate_script_compiled(&mut session, &mut macros,
++        "(ns caller (:require [app])) unresolved", None).unwrap_err();
++    assert!(failure.to_string().contains("unresolved"), "{failure}");
++    assert!(session.eval_with_macros("app/value", &mut macros).is_err());
++    assert!(session.eval_with_macros("(app/answer)", &mut macros).is_err());
++    assert_eq!(session.current_namespace(), "user");
++    session.load_namespace_with_macros("app", &mut macros).unwrap();
++    assert_eq!(value(&mut session, &mut macros, "[app/value (app/answer)]"), "[17 17]");
++}
++
++#[test]
++fn source_script_local_macros_keep_each_namespace_import_scope() {
++    let mut session = Session::new_repl().unwrap();
++    let mut macros = CompiledMacros::new().unwrap();
++    let result = suss_cli::portable_repl::evaluate_script_compiled(&mut session, &mut macros, r#"
++(ns first (:require [clojure.edn :as edn]))
++(defmacro data [text] (list 'quote (edn/read-string text)))
++(def answer (data "1.25M"))
++(ns second (:require [clojure.edn :as other]))
++(defmacro data [text] (list 'quote (other/read-string text)))
++(def answer (data "[7]"))
++[first/answer second/answer]
++"#, None).unwrap();
++    assert_eq!(result, "[1.25M [7]]");
++    assert_eq!(session.current_namespace(), "second");
++}
++
++#[test]
++fn namespace_local_macros_preserve_successfully_loaded_macro_dependencies() {
++    let root = tempfile::tempdir().unwrap();
++    std::fs::write(root.path().join("tools.sus"),
++        "(ns tools) (def effects (atom 0)) (swap! effects inc) (defmacro imported [] @effects)").unwrap();
++    let file = root.path().join("app.sus");
++    let prefix = "(ns app (:require-macros [tools :refer [imported]])) (defmacro answer [] (imported)) (def value (answer))";
++    std::fs::write(&file, format!("{prefix} unresolved")).unwrap();
++    let mut session = Session::new_repl_with_options(SessionOptions {
++        source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
++    }).unwrap();
++    let mut macros = CompiledMacros::new().unwrap();
++    assert!(session.load_namespace_with_macros("app", &mut macros).is_err());
++    assert!(session.eval_with_macros("(app/answer)", &mut macros).is_err());
++    assert_eq!(value(&mut session, &mut macros, "(tools/imported)"), "1");
++    std::fs::write(&file, prefix).unwrap();
++    session.load_namespace_with_macros("app", &mut macros).unwrap();
++    assert_eq!(value(&mut session, &mut macros, "[app/value (app/answer) (tools/imported)]"), "[1 1 1]");
++}
++
++#[test]
++fn source_namespace_local_macros_execute_in_actual_aot_with_original_positions() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let file = root.path().join("app.sus");
++    let wit = root.path().join("probe.wit");
++    let wasm = root.path().join("probe.wasm");
++    std::fs::write(root.path().join("tools.sus"), "(ns tools) (defmacro same [x] x)").unwrap();
++    std::fs::write(root.path().join("state.sus"), "(ns state) (def effects (atom 0))").unwrap();
++    let source = concat!(
++        "(ns app (:require [clojure.edn :as edn] [state]) (:require-macros [tools :refer [same]]))\n",
++        "(swap! state/effects inc)\n",
++        "(defmacro data [text] (same (list 'quote (edn/read-string text))))\n",
++        "(defmacro where [] (list 'quote [(get (meta &form) :line) (get (meta &form) :column) (get (meta &form) :file)]))\n",
++        "(def location (where))\n",
++        r##"(def result (data "[1.25M #uuid \"1-2-3-4-5\"]"))
++"##,
++    );
++    // Write first so the exact filename asserted by guest data is canonical.
++    std::fs::write(&file, source).unwrap();
++    let path = serde_json::to_string(file.canonicalize().unwrap().to_str().unwrap()).unwrap();
++    let check = format!(r#"(def check (fn [unused] (if (and
++      (= result [1.25M #uuid "1-2-3-4-5"])
++      (= @state/effects 1) (= location [5 15 {path}])) 1 0)))"#);
++    std::fs::write(&file, format!("{source}{check}\n")).unwrap();
++    std::fs::write(&wit, "package test:inline; world w { export check: func(unused: u32) -> u32; }").unwrap();
++    let compiled = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++        .args(["--no-cache", "compile"]).arg(&file).args(["--src"]).arg(root.path())
++        .args(["-w"]).arg(&wit).args(["--export", "check=app/check", "-o"]).arg(&wasm)
++        .output().unwrap();
++    assert!(compiled.status.success(), "{compiled:?}");
++    let executed = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++        .args(["--no-cache", "run"]).arg(&wasm).args(["--invoke", "check", "0"]).output().unwrap();
++    assert!(executed.status.success(), "{executed:?}");
++    assert_eq!(String::from_utf8(executed.stdout).unwrap(), "1\n");
++}
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index 31060846..800634c9 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -1528,6 +1528,12 @@ impl Analyzer<'_> {
+                         function_scopes: &self.function_scopes,
+                     };
+                     if let Some(expanded) = self.expander.expand(form, expansion_context)? {
++                        if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
++                            let namespace = self.environment.current_namespace(self.phase).to_owned();
++                            if let Some(names) = self.expander.declared_macro_exports(&namespace) {
++                                self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
++                            }
++                        }
+                         return self.form_in_named(&expanded, context, tail, name_hint);
+                     }
+                     // Bootstrap binding forms lower before source facts are
+diff --git c/crates/suss-compile/src/portable/mod.rs w/crates/suss-compile/src/portable/mod.rs
+index 93a618b2..580777c0 100644
+--- c/crates/suss-compile/src/portable/mod.rs
++++ w/crates/suss-compile/src/portable/mod.rs
+@@ -112,6 +112,15 @@ pub trait ExpansionHost {
+         false
+     }
+     fn source_paths(&mut self, _paths: &[std::path::PathBuf]) {}
++    /// Staged source declarations may outlive individual transformer calls.
++    /// Hosts without source declarations have no state to journal.
++    fn begin_declarations(&mut self) -> Result<(), Diagnostic> { Ok(()) }
++    fn end_declarations(&mut self, _commit: bool) -> Result<(), Diagnostic> { Ok(()) }
++    fn begin_source_module(
++        &mut self, _forms: &[suss_reader::forms::Form], _origin: &SourceOrigin,
++    ) -> Result<(), Diagnostic> { Ok(()) }
++    fn end_source_module(&mut self) -> Result<(), Diagnostic> { Ok(()) }
++    fn declared_macro_exports(&self, _namespace: &str) -> Option<Vec<String>> { None }
+     fn load_macro_namespace(
+         &mut self,
+         _namespace: &str,
+@@ -381,6 +390,13 @@ impl ExpansionHost for ExpansionRequest<'_> {
+     }
+     fn supports_macro_imports(&self) -> bool { self.host.supports_macro_imports() }
+     fn source_paths(&mut self, paths: &[std::path::PathBuf]) { self.host.source_paths(paths) }
++    fn begin_declarations(&mut self) -> Result<(), Diagnostic> { self.host.begin_declarations() }
++    fn end_declarations(&mut self, commit: bool) -> Result<(), Diagnostic> { self.host.end_declarations(commit) }
++    fn begin_source_module(&mut self, forms: &[suss_reader::forms::Form], origin: &SourceOrigin) -> Result<(), Diagnostic> {
++        self.host.begin_source_module(forms, origin)
++    }
++    fn end_source_module(&mut self) -> Result<(), Diagnostic> { self.host.end_source_module() }
++    fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> { self.host.declared_macro_exports(namespace) }
+     fn load_macro_namespace(&mut self, namespace: &str, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
+         self.host.load_macro_namespace(namespace, span)
+     }
+diff --git c/crates/suss-compile/src/portable/modules.rs w/crates/suss-compile/src/portable/modules.rs
+index 9f3d61ad..4b3158ff 100644
+--- c/crates/suss-compile/src/portable/modules.rs
++++ w/crates/suss-compile/src/portable/modules.rs
+@@ -610,6 +610,23 @@ fn compile_snapshots_with_expander(
+     environment: &Environment,
+     phase: Phase,
+     expander: &mut dyn super::ExpansionHost,
++) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
++    expander.begin_declarations().map_err(|error| ModuleDiagnostic {
++        namespace: environment.current_namespace(phase).into(), source_path: None,
++        span: error.span, message: error.message,
++    })?;
++    let result = compile_snapshot_declarations(snapshots, environment, phase, expander);
++    let finished = expander.end_declarations(result.is_ok()).map_err(|error| ModuleDiagnostic {
++        namespace: environment.current_namespace(phase).into(), source_path: None,
++        span: error.span, message: error.message,
++    });
++    finished?;
++    result
++}
++
++fn compile_snapshot_declarations(
++    snapshots: Vec<SourceModule>, environment: &Environment, phase: Phase,
++    expander: &mut dyn super::ExpansionHost,
+ ) -> Result<(Vec<PreparedModule>, Environment), ModuleDiagnostic> {
+     let mut snapshot = environment.clone();
+     let mut modules = Vec::new();
+@@ -617,19 +634,16 @@ fn compile_snapshots_with_expander(
+         expander
+             .charge_expansion_work(unit.source.len() as u64, 0..unit.source.len())
+             .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
++        let origin = super::SourceOrigin::new(unit.source.as_str(), Some(unit.path.clone()));
++        expander.begin_source_module(&unit.forms, &origin)
++            .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
++        let prepared = super::prepare_fragment_forms_with_origin(
++            unit.forms, 0..unit.source.len(), &snapshot, phase, expander, Some(&origin),
++        );
++        let finished = expander.end_source_module();
+         let PreparedFragment {
+             wasm, environment, ..
+-        } = super::prepare_fragment_forms_with_origin(
+-            unit.forms,
+-            0..unit.source.len(),
+-            &snapshot,
+-            phase,
+-            expander,
+-            Some(&super::SourceOrigin::new(
+-                unit.source.as_str(),
+-                Some(unit.path.clone()),
+-            )),
+-        )
++        } = prepared.and_then(|prepared| finished.map(|_| prepared))
+         .map_err(|error| located(&unit.identity, Some(&unit.path), error))?;
+         snapshot = environment;
+         modules.push(PreparedModule {
+diff --git c/crates/suss-compile/src/portable_macros.rs w/crates/suss-compile/src/portable_macros.rs
+index 33c5fb36..39675200 100644
+--- c/crates/suss-compile/src/portable_macros.rs
++++ w/crates/suss-compile/src/portable_macros.rs
+@@ -39,6 +39,20 @@ pub struct CompiledMacros {
+     exception_message: SessionValue,
+     namespace_objects: BTreeMap<String, SessionValue>,
+     macro_namespace: Option<String>,
++    inline_modules: Vec<InlineModule>,
++    declaration_transactions: Vec<DeclarationTransaction>,
++}
++struct InlineModule {
++    declarations: Vec<Form>,
++    active_declaration: Option<usize>,
++    top_level_heads: BTreeMap<(usize, usize), suss_reader::Symbol>,
++    origin: crate::portable::SourceOrigin,
++    caller: Option<String>,
++}
++#[derive(Default)]
++struct DeclarationTransaction {
++    checkpoint: Option<MacroCheckpoint>,
++    globals: BTreeSet<crate::portable::resolve::Global>,
+ }
+ // Hash the identical legacy Debug/source/path stream without retaining a copy of
+ // that stream. The meter error must survive fmt::Error's intentionally tiny API.
+@@ -272,6 +286,86 @@ fn add_implicit_arguments(parts: &[Form], form: &Form) -> Result<Vec<Form>, Sess
+     Ok(result)
+ }
+ impl CompiledMacros {
++    pub(crate) fn define_inline_macro(
++        &mut self, form: &Form, environment: &crate::portable::resolve::Environment,
++        phase: crate::portable::resolve::Phase,
++    ) -> Result<(), SessionError> {
++        // Checkpoints are lazy: an ordinary module must not copy the macro
++        // catalog or initialize any additional compile-time dependencies.
++        for index in 0..self.declaration_transactions.len() {
++            if self.declaration_transactions[index].checkpoint.is_none() {
++                let checkpoint = self.binding_checkpoint()?;
++                self.declaration_transactions[index].checkpoint = Some(checkpoint);
++            }
++        }
++        let mut module = self.inline_modules.pop().expect("inline module scope");
++        let namespace = environment.current_namespace(phase).to_owned();
++        let result = (|| {
++            if module.caller.is_none() {
++                module.caller = Some(self.session.current_namespace().to_owned());
++            }
++            self.enter_namespace(&namespace)?;
++            let index = module.declarations.partition_point(|declaration| declaration.span.start <= form.span.start);
++            if let Some(index) = index.checked_sub(1) {
++                if module.active_declaration != Some(index) {
++                    let declaration = crate::portable::clone_form_metered(&module.declarations[index], &mut |work| {
++                        self.session.charge_host_work(work).map_err(|error| Diagnostic { span: form.span.clone(), message: error.to_string() })
++                    }).map_err(SessionError::Compile)?;
++                    // Required Macro dependencies that initialize successfully
++                    // keep their existing once-only loading contract even when
++                    // the caller's later declaration preparation fails.
++                    let transactions = std::mem::take(&mut self.declaration_transactions);
++                    let imported = (|| {
++                        let span = declaration.span.clone();
++                        let prepared = self.session.compilation_snapshot().prepare_with_origin(
++                            vec![declaration], span, self, Some(&module.origin),
++                        )?;
++                        let sources = prepared.modules.iter().map(|unit| {
++                            let identity = crate::portable::bootstrap::sha256(
++                                format!("{:?}:{:?}:{}", unit.source_path, unit.dependencies, unit.source).as_bytes(),
++                            );
++                            (unit.identity.namespace().to_owned(), identity)
++                        }).collect::<Vec<_>>();
++                        self.incomplete_sources.extend(sources.iter().map(|(name, _)| name.clone()));
++                        self.session.eval_prepared(prepared)?;
++                        for (name, identity) in sources {
++                            self.incomplete_sources.remove(&name);
++                            self.loaded_sources.insert(name, identity);
++                        }
++                        Ok::<_, SessionError>(())
++                    })();
++                    debug_assert!(self.declaration_transactions.is_empty());
++                    self.declaration_transactions = transactions;
++                    imported?;
++                    module.active_declaration = Some(index);
++                }
++            }
++            self.enter_namespace(&namespace)?;
++            let mut declaration = crate::portable::clone_form_metered(form, &mut |work| {
++                self.session.charge_host_work(work).map_err(|error| Diagnostic {
++                    span: form.span.clone(), message: error.to_string(),
++                })
++            }).map_err(SessionError::Compile)?;
++            let Kind::List(items) = &mut declaration.kind else { unreachable!() };
++            items[0].kind = Kind::Symbol(suss_reader::Symbol { namespace: Some("suss.core".into()), name: "defmacro".into() });
++            if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
++                let global = crate::portable::resolve::Environment::default().declare_cell(
++                    crate::portable::resolve::Phase::Macro, &namespace, &name.name,
++                ).map_err(SessionError::Compile)?;
++                for transaction in &mut self.declaration_transactions {
++                    transaction.globals.insert(global.clone());
++                }
++            }
++            crate::portable::source::resolve_auto_keywords(
++                std::slice::from_mut(&mut declaration), environment, phase,
++            ).map_err(SessionError::Compile)?;
++            let span = declaration.span.clone();
++            self.define_form_with_origin(declaration, span, Some(&module.origin))?;
++            Ok(())
++        })();
++        self.inline_modules.push(module);
++        result
++    }
+     pub fn new() -> Result<Self, SessionError> {
+         Self::with_bootstrap(Session::new_macro()?)
+     }
+@@ -308,6 +402,8 @@ impl CompiledMacros {
+             exception_message,
+             namespace_objects,
+             macro_namespace: None,
++            inline_modules: Vec::new(),
++            declaration_transactions: Vec::new(),
+         };
+         macros.enter_namespace("suss.core")?;
+         macros.define(crate::portable_defn::SOURCE)?;
+@@ -727,6 +823,46 @@ impl CompiledMacros {
+     }
+ }
+ impl ExpansionHost for CompiledMacros {
++    fn begin_declarations(&mut self) -> Result<(), Diagnostic> {
++        self.declaration_transactions.push(DeclarationTransaction::default());
++        Ok(())
++    }
++    fn end_declarations(&mut self, commit: bool) -> Result<(), Diagnostic> {
++        let transaction = self.declaration_transactions.pop().expect("declaration transaction");
++        if !commit {
++            if let Some(checkpoint) = transaction.checkpoint {
++                self.restore_bindings(checkpoint, &transaction.globals.into_iter().collect::<Vec<_>>())
++                    .map_err(|error| Diagnostic { span: 0..0, message: error.to_string() })?;
++            }
++        }
++        Ok(())
++    }
++    fn begin_source_module(&mut self, forms: &[Form], origin: &crate::portable::SourceOrigin) -> Result<(), Diagnostic> {
++        let mut declarations = Vec::new();
++        let mut top_level_heads = BTreeMap::new();
++        for form in forms {
++            self.charge_expansion_work(1, form.span.clone())?;
++            let Kind::List(items) = &form.kind else { continue };
++            let Some(Form { kind: Kind::Symbol(head), .. }) = items.first() else { continue };
++            self.charge_expansion_work((std::mem::size_of::<(usize, usize, suss_reader::Symbol)>() + head.name.len() + head.namespace.as_ref().map_or(0, String::len)) as u64, form.span.clone())?;
++            top_level_heads.insert((form.span.start, form.span.end), head.clone());
++            if head.name == "ns" && (head.namespace.is_none() || matches!(head.namespace.as_deref(), Some("suss.core" | "clojure.core" | "cljs.core"))) {
++                declarations.push(crate::portable::clone_form_metered(form, &mut |work| self.charge_expansion_work(work, form.span.clone()))?);
++            }
++        }
++        self.inline_modules.push(InlineModule { declarations, active_declaration: None, top_level_heads, origin: origin.clone(), caller: None });
++        Ok(())
++    }
++    fn end_source_module(&mut self) -> Result<(), Diagnostic> {
++        let module = self.inline_modules.pop().expect("source module scope");
++        if let Some(caller) = module.caller {
++            self.enter_namespace(&caller).map_err(|error| Diagnostic { span: 0..0, message: error.to_string() })?;
++        }
++        Ok(())
++    }
++    fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> {
++        Some(self.definitions.keys().filter(|(ns, _)| ns == namespace).map(|(_, name)| name.clone()).collect())
++    }
+     fn expansion_work_fuel(&self) -> u64 {
+         self.session.options().fuel_per_operation
+     }
+@@ -854,6 +990,17 @@ impl ExpansionHost for CompiledMacros {
+         else {
+             return Ok(None);
+         };
++        if !self.inline_modules.is_empty()
++            && context.function_scopes.is_empty() && context.locals.is_empty() && context.fields.is_empty()
++            && context.environment.resolves_bootstrap_name(context.phase, name, "defmacro")
++            && self.inline_modules.last().is_some_and(|module|
++                module.top_level_heads.get(&(form.span.start, form.span.end)) == Some(name))
++        {
++            self.define_inline_macro(form, context.environment, context.phase).map_err(|error| Diagnostic {
++                span: form.span.clone(), message: format!("Compiled local macro declaration failed: {error}"),
++            })?;
++            return Ok(Some(Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil }));
++        }
+         if name.namespace.is_none()
+             && matches!(
+                 name.name.as_str(),
+diff --git c/crates/suss-compile/src/portable_repl.rs w/crates/suss-compile/src/portable_repl.rs
+index 6f7ebe18..663fab1c 100644
+--- c/crates/suss-compile/src/portable_repl.rs
++++ w/crates/suss-compile/src/portable_repl.rs
+@@ -374,7 +374,7 @@ pub(crate) fn prepare_script_compiled(
+ /// Return the completed immutable input snapshot for multi-source AOT batches.
+ /// The ordinary script entrypoint retains its existing result and transaction.
+ pub(crate) fn prepare_script_compiled_batch(
+-    mut snapshot: crate::portable_session::CompilationSnapshot,
++    snapshot: crate::portable_session::CompilationSnapshot,
+     macros: &mut crate::portable_macros::CompiledMacros,
+     forms: Vec<suss_reader::forms::Form>,
+     source_len: usize,
+@@ -386,54 +386,42 @@ pub(crate) fn prepare_script_compiled_batch(
+     ),
+     SessionError,
+ > {
+-    let checkpoint = macros.binding_checkpoint()?;
+-    let mut staged_macros = Vec::new();
+-    let preparation = (|| -> Result<Vec<PreparedScript>, SessionError> {
++    crate::portable::ExpansionHost::begin_declarations(macros).map_err(SessionError::Compile)?;
++    if let Err(error) = crate::portable::ExpansionHost::begin_source_module(macros, &forms, origin) {
++        crate::portable::ExpansionHost::end_declarations(macros, false).map_err(SessionError::Compile)?;
++        return Err(SessionError::Compile(error));
++    }
++    let result = prepare_script_declarations(snapshot, macros, forms, source_len, origin);
++    let finished = crate::portable::ExpansionHost::end_source_module(macros);
++    crate::portable::ExpansionHost::end_declarations(macros, result.is_ok() && finished.is_ok()).map_err(SessionError::Compile)?;
++    finished.map_err(SessionError::Compile)?;
++    result
++}
++fn prepare_script_declarations(
++    mut snapshot: crate::portable_session::CompilationSnapshot,
++    macros: &mut crate::portable_macros::CompiledMacros,
++    forms: Vec<suss_reader::forms::Form>, source_len: usize,
++    origin: &crate::portable::SourceOrigin,
++) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
+         let mut prepared = Vec::new();
+-        for mut form in forms {
++        for form in forms {
+             let definition = matches!(&form.kind, suss_reader::forms::Kind::List(items)
+             if matches!(items.first().map(|head| &head.kind),
+                 Some(suss_reader::forms::Kind::Symbol(symbol))
+                 if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), symbol, "defmacro")));
+             if definition {
+-                let suss_reader::forms::Kind::List(items) = &mut form.kind else {
+-                    unreachable!()
+-                };
+-                items[0].kind = suss_reader::forms::Kind::Symbol(suss_reader::Symbol {
+-                    namespace: Some("suss.core".into()),
+-                    name: "defmacro".into(),
+-                });
+-                let namespace = snapshot.environment.current_namespace(snapshot.phase());
+-                if let Some(suss_reader::forms::Form {
+-                    kind: suss_reader::forms::Kind::Symbol(name),
+-                    ..
+-                }) = items.get(1)
+-                {
+-                    let global = crate::portable::resolve::Environment::default()
+-                        .declare_cell(
+-                            crate::portable::resolve::Phase::Macro,
+-                            namespace,
+-                            &name.name,
+-                        )
+-                        .map_err(SessionError::Compile)?;
+-                    staged_macros.push((macros.binding_checkpoint()?, global));
+-                }
+-                // Auto-resolved keywords use the runtime namespace's aliases,
+-                // which the macro session does not see (#30).
+-                crate::portable::source::resolve_auto_keywords(
+-                    std::slice::from_mut(&mut form),
+-                    &snapshot.environment,
+-                    snapshot.phase(),
+-                )
+-                .map_err(SessionError::Compile)?;
+-                macros.enter_namespace(namespace)?;
++                let namespace = snapshot.environment.current_namespace(snapshot.phase()).to_owned();
+                 let var = match defined_name(&form) {
+-                    Some(name) => var_text(namespace, name),
++                    Some(name) => var_text(&namespace, name),
+                     None => String::new(),
+                 };
+                 macros
+-                    .define_form_with_origin(form, 0..source_len, Some(origin))
++                    .define_inline_macro(&form, &snapshot.environment, snapshot.phase())
+                     .map_err(|error| macro_definition_error(error, 0..source_len))?;
++                if let Some(names) = crate::portable::ExpansionHost::declared_macro_exports(macros, &namespace) {
++                    snapshot.environment.declare_macro_exports(snapshot.phase(), &namespace, &names)
++                        .map_err(SessionError::Compile)?;
++                }
+                 prepared.push(PreparedScript::Macro(var));
+             } else {
+                 let input = snapshot.prepare_with_origin(
+@@ -449,19 +437,6 @@ pub(crate) fn prepare_script_compiled_batch(
+                 prepared.push(PreparedScript::Runtime(input));
+             }
+         }
+-        Ok(prepared)
+-    })();
+-    let prepared = match preparation {
+-        Ok(prepared) => prepared,
+-        Err(error) => {
+-            for (before, global) in staged_macros.into_iter().rev() {
+-                macros.restore_bindings(before, &[global])?;
+-            }
+-            macros.restore_bindings(checkpoint, &[])?;
+-            return Err(error);
+-        }
+-    };
+-    drop(checkpoint);
+     Ok((prepared, snapshot))
+ }
+ 
+diff --git c/crates/suss-compile/src/portable_session.rs w/crates/suss-compile/src/portable_session.rs
+index 0489a854..7b31c6d9 100644
+--- c/crates/suss-compile/src/portable_session.rs
++++ w/crates/suss-compile/src/portable_session.rs
+@@ -1535,6 +1535,15 @@ impl Session {
+         &mut self,
+         source: &str,
+         expander: &mut dyn portable::ExpansionHost,
++    ) -> Result<SessionValue, SessionError> {
++        expander.begin_declarations().map_err(SessionError::Compile)?;
++        let mut linked = false;
++        let result = self.eval_with_staged_macros(source, expander, &mut linked);
++        expander.end_declarations(linked).map_err(SessionError::Compile)?;
++        result
++    }
++    fn eval_with_staged_macros(
++        &mut self, source: &str, expander: &mut dyn portable::ExpansionHost, linked: &mut bool,
+     ) -> Result<SessionValue, SessionError> {
+         let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
+         let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
+@@ -1554,7 +1563,7 @@ impl Session {
+             &mut request,
+             Some(&portable::SourceOrigin::new(source, None)),
+         )?;
+-        self.eval_prepared(prepared)
++        self.eval_prepared_linked(prepared, linked)
+     }
+     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
+     /// No source printing/rereading, initializer replay or host interpretation.
+@@ -1580,6 +1589,11 @@ impl Session {
+     pub(crate) fn eval_prepared(
+         &mut self,
+         prepared: portable::modules::PreparedInput,
++    ) -> Result<SessionValue, SessionError> {
++        self.eval_prepared_linked(prepared, &mut false)
++    }
++    fn eval_prepared_linked(
++        &mut self, prepared: portable::modules::PreparedInput, linked: &mut bool,
+     ) -> Result<SessionValue, SessionError> {
+         let PreparedFragment {
+             wasm,
+@@ -1595,6 +1609,7 @@ impl Session {
+             .collect();
+         bytes.push(&wasm);
+         let mut instances = self.install(&bytes, environment, &cells)?;
++        *linked = true;
+         let input = instances.pop().unwrap();
+         self.initialize_modules(prepared.modules, instances)?;
+         self.eval_instance(input)
+@@ -1665,6 +1680,21 @@ impl Session {
+         provided: BTreeSet<ModuleIdentity>,
+         reloading: bool,
+         expander: Option<&mut dyn portable::ExpansionHost>,
++    ) -> Result<Option<SessionValue>, SessionError> {
++        let Some(expander) = expander else {
++            return self.load_namespace_plan(namespace, provided, reloading, None, &mut false);
++        };
++        expander.begin_declarations().map_err(SessionError::Compile)?;
++        let mut linked = false;
++        let result = self.load_namespace_plan(namespace, provided, reloading, Some(&mut *expander), &mut linked);
++        // Initializer failures retain installed state, as before. A preparation
++        // or linking error must not publish compiler-only replacements.
++        expander.end_declarations(linked).map_err(SessionError::Compile)?;
++        result
++    }
++    fn load_namespace_plan(
++        &mut self, namespace: &str, provided: BTreeSet<ModuleIdentity>, reloading: bool,
++        expander: Option<&mut dyn portable::ExpansionHost>, linked: &mut bool,
+     ) -> Result<Option<SessionValue>, SessionError> {
+         let mut plan = if let Some(expander) = expander {
+             portable::modules::prepare_modules_with_expander(
+@@ -1695,6 +1725,7 @@ impl Session {
+             .map(|module| module.wasm.as_slice())
+             .collect();
+         let instances = self.install(&bytes, plan.environment, &plan.cells)?;
++        *linked = true;
+         if reloading {
+             // Preparation/linking failed without changing loaded identities. Once
+             // execution starts, every selected unit must complete initialization
+@@ -2092,6 +2123,36 @@ impl Session {
+ #[cfg(all(test, not(suss_generator)))]
+ mod tests {
+     use super::*;
++    #[test]
++    fn namespace_local_macros_roll_back_on_real_link_failure() {
++        let root = tempfile::tempdir().unwrap();
++        std::fs::write(root.path().join("app.sus"),
++            "(ns app) (defmacro answer [] 17) (def value (answer))").unwrap();
++        let mut session = Session::new_repl_with_options(SessionOptions {
++            source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
++        }).unwrap();
++        let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
++        session.eval("(def keep 41)").unwrap();
++        let before = session.stats();
++        // Artifacts remain valid and keep their original verified identities.
++        // Only the test Store's linker loses its physical imports, so failure
++        // occurs during actual instantiation, after declaration preparation.
++        let empty = Linker::new(&session.engine);
++        let old = std::mem::replace(&mut session.linker, empty);
++        let result = session.load_namespace_with_macros("app", &mut macros);
++        session.linker = old;
++        let error = result.unwrap_err();
++        assert!(format!("{error:?}").contains("unknown import"), "{error:?}");
++        assert_eq!(session.stats(), before);
++        assert_eq!(session.current_namespace(), "user");
++        assert!(session.eval_with_macros("(app/answer)", &mut macros).is_err());
++        assert!(session.eval("app/value").is_err());
++        let keep = session.eval("keep").unwrap();
++        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "41");
++        session.load_namespace_with_macros("app", &mut macros).unwrap();
++        let answer = session.eval_with_macros("[app/value (app/answer)]", &mut macros).unwrap();
++        assert_eq!(crate::portable_repl::display(&mut session, &answer).unwrap(), "[17 17]");
++    }
+     fn legacy_construct(
+         session: &mut Session,
+         class: &SessionValue,

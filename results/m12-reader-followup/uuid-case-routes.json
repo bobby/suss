@@ -1,0 +1,7 @@
+{
+  "primary_sha256": "b32a22d953d526997be804d8bcce5749e0254ab946953d09331db5a94c92d30b",
+  "runtime_macro_aot": 17,
+  "source_expansion_runtime_macro_aot": 2,
+  "all_primary_ids_preserved": true,
+  "qualification": "The two macroexpand primary controls test rejection by the actual source compiler. They do not require a guest macroexpand function and are not skipped."
+}

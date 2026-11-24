@@ -1,0 +1,5 @@
+{
+  "base": "1aea883eba67ffbea3ed7c1c517d8cc96c6f23ae",
+  "patch_sha256": "6c6207a79e3b45133b5e09803720bf8970abc617dd17f15314c16d25607123ba",
+  "purpose": "Retain exact candidate production/test source while its gate is live; no claim of final acceptance."
+}

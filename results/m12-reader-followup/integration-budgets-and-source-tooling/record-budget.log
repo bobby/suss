@@ -1,0 +1,22 @@
+Running as unit: run-p4147459-i92202842.scope; invocation ID: 5e295053b1e54497bb8aaa4aa18a4e62
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.71s
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test aot_records_fit_default_budget_and_execute ... ok
+test eval_and_script_records_fit_default_compilation_budget ... ok
+
+thread 'repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default' (4147637) panicked at crates/suss-cli/tests/compiled_record_default_budget.rs:64:5:
+membership fuel: [969223, 1118958]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... FAILED
+
+failures:
+
+failures:
+    repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.74s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_record_default_budget`

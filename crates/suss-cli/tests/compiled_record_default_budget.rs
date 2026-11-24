@@ -48,6 +48,7 @@ fn repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_de
     child.stdin.take().unwrap().write_all(format!("{DEFINITIONS}{VALUE}\n").as_bytes()).unwrap();
     let output = child.wait_with_output().unwrap();
     let trace = String::from_utf8(output.stderr.clone()).unwrap();
+    if std::env::var_os("SUSS_RAW_KEY_TRACE").is_some() { eprintln!("{trace}"); }
     assert!(!trace.contains("Error:"), "{trace}");
     assert_eq!(successful(output).lines().last(), Some("17"));
     let mut previous = None;

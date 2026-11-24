@@ -19,6 +19,7 @@ pub enum Observation {
     /// A double's bits.
     Number(u64),
     Long(i64),
+    Uuid { most: i64, least: i64 },
     BigInt(String),
     Ratio(String, String),
     Decimal {
@@ -41,6 +42,7 @@ pub enum Observation {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Class {
+    Uuid,
     Keyword,
     Symbol,
     Vector,
@@ -212,6 +214,7 @@ impl Decoder {
                 r#"(new suss.core/Symbol nil "decoder" "decoder" 0 nil)"#,
                 Class::Symbol,
             ),
+            ("(new suss.core/UUID 0 0)", Class::Uuid),
             ("[]", Class::Vector),
             (
                 "(new suss.core/VectorNode nil (suss.core/make-array 32))",
@@ -553,6 +556,18 @@ impl Decoder {
             if fields.len() == 4 {
                 let (class, args) = self.object(store, value)?;
                 match class {
+                    Class::Uuid => {
+                        let [most, least] = args.as_slice() else {
+                            return Err(wasmtime::Error::msg("Malformed UUID field count"));
+                        };
+                        let Observation::Long(most) = self.value(store, most, depth + 1)? else {
+                            return Err(wasmtime::Error::msg("Malformed UUID most-significant long"));
+                        };
+                        let Observation::Long(least) = self.value(store, least, depth + 1)? else {
+                            return Err(wasmtime::Error::msg("Malformed UUID least-significant long"));
+                        };
+                        return Ok(Observation::Uuid { most, least });
+                    }
                     Class::ExceptionInfo => {
                         return Ok(Observation::ExceptionInfo {
                             message: Box::new(self.value(store, &args[0], depth + 1)?),
@@ -699,7 +714,7 @@ impl Decoder {
                     | Class::TreeMap => 5,
                     Class::Vector | Class::HashMap | Class::ChunkedSeq | Class::IntegerRange => 6,
                     Class::Range => 7,
-                    Class::Node | Class::KeySeq | Class::ValSeq => 2,
+                    Class::Node | Class::KeySeq | Class::ValSeq | Class::Uuid => 2,
                     Class::IndexedSeq
                     | Class::MapEntry
                     | Class::HashSet

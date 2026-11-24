@@ -1,0 +1,6 @@
+;; Original Suss compatibility namespace. Both names use the same compiled
+;; data-only reader, including options, errors and tagged-reader precedence.
+(ns clojure.edn
+  (:require [suss.edn :as edn]))
+
+(def read-string edn/read-string)

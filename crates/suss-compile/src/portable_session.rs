@@ -1458,6 +1458,9 @@ impl Session {
             self.provided.remove(identity);
         }
     }
+    pub(crate) fn has_initialized_source_module(&self, identity: &ModuleIdentity) -> bool {
+        self.provided.contains(identity)
+    }
     /// Called only after every form of this phase module has initialized.
     pub(crate) fn initialized_source_namespace(
         &mut self,
@@ -1536,6 +1539,15 @@ impl Session {
         source: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<SessionValue, SessionError> {
+        expander.begin_declarations().map_err(SessionError::Compile)?;
+        let mut linked = false;
+        let result = self.eval_with_staged_macros(source, expander, &mut linked);
+        expander.end_declarations(linked).map_err(SessionError::Compile)?;
+        result
+    }
+    fn eval_with_staged_macros(
+        &mut self, source: &str, expander: &mut dyn portable::ExpansionHost, linked: &mut bool,
+    ) -> Result<SessionValue, SessionError> {
         let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
         let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
             portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len()).map_err(|error| suss_reader::ParseError {
@@ -1554,7 +1566,7 @@ impl Session {
             &mut request,
             Some(&portable::SourceOrigin::new(source, None)),
         )?;
-        self.eval_prepared(prepared)
+        self.eval_prepared_linked(prepared, linked)
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
     /// No source printing/rereading, initializer replay or host interpretation.
@@ -1581,6 +1593,11 @@ impl Session {
         &mut self,
         prepared: portable::modules::PreparedInput,
     ) -> Result<SessionValue, SessionError> {
+        self.eval_prepared_linked(prepared, &mut false)
+    }
+    fn eval_prepared_linked(
+        &mut self, prepared: portable::modules::PreparedInput, linked: &mut bool,
+    ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
             environment,
@@ -1595,6 +1612,7 @@ impl Session {
             .collect();
         bytes.push(&wasm);
         let mut instances = self.install(&bytes, environment, &cells)?;
+        *linked = true;
         let input = instances.pop().unwrap();
         self.initialize_modules(prepared.modules, instances)?;
         self.eval_instance(input)
@@ -1666,6 +1684,21 @@ impl Session {
         reloading: bool,
         expander: Option<&mut dyn portable::ExpansionHost>,
     ) -> Result<Option<SessionValue>, SessionError> {
+        let Some(expander) = expander else {
+            return self.load_namespace_plan(namespace, provided, reloading, None, &mut false);
+        };
+        expander.begin_declarations().map_err(SessionError::Compile)?;
+        let mut linked = false;
+        let result = self.load_namespace_plan(namespace, provided, reloading, Some(&mut *expander), &mut linked);
+        // Initializer failures retain installed state, as before. A preparation
+        // or linking error must not publish compiler-only replacements.
+        expander.end_declarations(linked).map_err(SessionError::Compile)?;
+        result
+    }
+    fn load_namespace_plan(
+        &mut self, namespace: &str, provided: BTreeSet<ModuleIdentity>, reloading: bool,
+        expander: Option<&mut dyn portable::ExpansionHost>, linked: &mut bool,
+    ) -> Result<Option<SessionValue>, SessionError> {
         let mut plan = if let Some(expander) = expander {
             portable::modules::prepare_modules_with_expander(
                 namespace,
@@ -1695,6 +1728,7 @@ impl Session {
             .map(|module| module.wasm.as_slice())
             .collect();
         let instances = self.install(&bytes, plan.environment, &plan.cells)?;
+        *linked = true;
         if reloading {
             // Preparation/linking failed without changing loaded identities. Once
             // execution starts, every selected unit must complete initialization
@@ -2092,6 +2126,36 @@ impl Session {
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
+    #[test]
+    fn namespace_local_macros_roll_back_on_real_link_failure() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::write(root.path().join("app.sus"),
+            "(ns app) (defmacro answer [] 17) (def value (answer))").unwrap();
+        let mut session = Session::new_repl_with_options(SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
+        }).unwrap();
+        let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        session.eval("(def keep 41)").unwrap();
+        let before = session.stats();
+        // Artifacts remain valid and keep their original verified identities.
+        // Only the test Store's linker loses its physical imports, so failure
+        // occurs during actual instantiation, after declaration preparation.
+        let empty = Linker::new(&session.engine);
+        let old = std::mem::replace(&mut session.linker, empty);
+        let result = session.load_namespace_with_macros("app", &mut macros);
+        session.linker = old;
+        let error = result.unwrap_err();
+        assert!(format!("{error:?}").contains("unknown import"), "{error:?}");
+        assert_eq!(session.stats(), before);
+        assert_eq!(session.current_namespace(), "user");
+        assert!(session.eval_with_macros("(app/answer)", &mut macros).is_err());
+        assert!(session.eval("app/value").is_err());
+        let keep = session.eval("keep").unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "41");
+        session.load_namespace_with_macros("app", &mut macros).unwrap();
+        let answer = session.eval_with_macros("[app/value (app/answer)]", &mut macros).unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &answer).unwrap(), "[17 17]");
+    }
     fn legacy_construct(
         session: &mut Session,
         class: &SessionValue,

@@ -189,6 +189,7 @@ fn syntax_hash(form: &Form) -> u32 {
                 .wrapping_add(syntax_hash(target)),
             2,
         ),
+        Kind::Uuid(value) => value.hash_code() as u32,
         // A queue hashes as an ordered collection, like its vector.
         Kind::Tagged { form, .. } => syntax_hash(form),
         // Any stable hash: evaluating the literal throws (#333).

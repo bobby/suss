@@ -46,6 +46,7 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
                 Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
                 Box::new(Value::String(number.text.clone())),
             ),
+            Kind::Uuid(value) => Value::Uuid(*value),
             Kind::String(units) => string_value(units),
             Kind::Symbol(s) => Value::Symbol(s.clone()),
             Kind::Keyword(k) => Value::Keyword(k.clone()),
@@ -61,6 +62,12 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
                     map.insert(form_to_value(&pair[0])?, form_to_value(&pair[1])?);
                 }
                 Value::Map(map)
+            }
+            Kind::Tagged { tag, form } if tag.namespace.is_none() && tag.name == "uuid" => {
+                let Kind::String(units) = &form.kind else {
+                    return Err(Error::new("#uuid data reader expected string"));
+                };
+                Value::Uuid(crate::uuid::Uuid::parse(units).map_err(|error| Error::new(error.to_string()))?)
             }
             Kind::Tagged { tag, form } => Value::Tagged(tag.clone(), Box::new(form_to_value(form)?)),
             Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
@@ -128,6 +135,7 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::BigInteger(n) => form(Kind::Exact(crate::forms::ExactNumber::integer(num_traits::Signed::is_negative(n), n.to_u32_digits().1, false))),
             Value::Ratio(n) => form(Kind::Exact(crate::forms::ExactNumber::ratio(num_traits::Signed::is_negative(n), n.numer().to_u32_digits().1, n.denom().to_u32_digits().1))),
             Value::String(s) => form(Kind::String(s.encode_utf16().collect())),
+            Value::Uuid(value) => form(Kind::Uuid(*value)),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),
             Value::Symbol(s) => form(Kind::Symbol(s.clone())),
             Value::List(items) => form(Kind::List(items.iter().map(value_to_form).collect())),

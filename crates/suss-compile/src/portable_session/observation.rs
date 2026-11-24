@@ -19,6 +19,18 @@ impl Session {
         if self.phase != Phase::Runtime {
             return Err(wasmtime::Error::msg("Observation hooks require Runtime phase").into());
         }
+        self.install_phase_observation_hook(callback)
+    }
+
+    // Macro hosts must opt in through CompiledMacros, with their own callback.
+    // Neither cells nor native closures can cross the two phase Stores.
+    pub(crate) fn install_phase_observation_hook(
+        &mut self,
+        callback: impl for<'a> Fn(StoreContextMut<'a, ()>, Val) -> wasmtime::Result<u32>
+        + Send
+        + Sync
+        + 'static,
+    ) -> Result<(), SessionError> {
         if portable::resolve::locate_source_if_present(NAMESPACE, &self.options.source_paths, 0..0)
             .map_err(SessionError::Compile)?
             .is_some()

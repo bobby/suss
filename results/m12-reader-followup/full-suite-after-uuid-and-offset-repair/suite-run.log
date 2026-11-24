@@ -1,0 +1,24 @@
+Running as unit: run-p125473-i92379479.scope; invocation ID: 0b453955ef9d4817bbe0a62b077d93a6
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+clojure-test-suite suite: fail=86 guest-judged=75 namespaces-failed=72 not-executed=1936 pass=4842 skipped=0
+namespaces clojure.core-test.identity: expected {'stage': 'read', 'diagnostic': 'clojure.core-test.identity (Some("<root>/clojure/core_test/identity.cljc")): No reader function for tag uuid at bytes 627..671'}, observed {'stage': 'read', 'diagnostic': 'clojure.core-test.identity (Some("<root>/clojure/core_test/identity.cljc")): No reader function for tag inst at bytes 680..717'}
+namespaces clojure.core-test.parse-uuid: expected {'stage': 'read', 'diagnostic': 'clojure.core-test.parse-uuid (Some("<root>/clojure/core_test/parse_uuid.cljc")): No reader function for tag uuid at bytes 1114..1158'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.parse-uuid (Some("<root>/clojure/core_test/parse_uuid.cljc")): Unresolved Runtime name parse-uuid at bytes 259..2057'}
+namespaces clojure.core-test.uuid-qmark: expected {'stage': 'read', 'diagnostic': 'clojure.core-test.uuid-qmark (Some("<root>/clojure/core_test/uuid_qmark.cljc")): No reader function for tag uuid at bytes 345..389'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.core-test.uuid-qmark (Some("<root>/clojure/core_test/uuid_qmark.cljc")): Unresolved Runtime name parse-uuid at bytes 231..1206'}
+namespaces clojure.edn-test.read-string: expected {'stage': 'read', 'diagnostic': 'clojure.edn-test.read-string (Some("<root>/clojure/edn_test/read_string.cljc")): No reader function for tag uuid at bytes 9738..9782'}, observed {'stage': 'namespace', 'diagnostic': 'clojure.edn (Some("<root>/clojure/edn_test/read_string.cljc")): No source for namespace clojure.edn at bytes 82..93'}
+Suss results differ from the reviewed known-failure baseline (new or changed failures, or unexpected passes)
+
+
+thread 'clojure_test_suite_matches_reviewed_baseline' (125474) panicked at crates/suss-compile/tests/clojure_test_suite.rs:619:5:
+suite differs from its reviewed baseline
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test clojure_test_suite_matches_reviewed_baseline ... FAILED
+
+failures:
+
+failures:
+    clojure_test_suite_matches_reviewed_baseline
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 580.31s
+

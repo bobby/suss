@@ -7,6 +7,7 @@
 mod parser;
 pub mod forms;
 pub mod edn;
+pub mod uuid;
 
 #[cfg(all(feature = "component", target_family = "wasm"))]
 mod component;

@@ -1,0 +1,200 @@
+[
+  {
+    "name": "exact-direct-0",
+    "expression": "(char (biginteger \"65\"))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-var-1",
+    "expression": "((identity char) (biginteger \"65\"))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-apply-2",
+    "expression": "(apply char [(biginteger \"65\")])",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-direct-3",
+    "expression": "(char (biginteger \"18446744073709551681\"))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-var-4",
+    "expression": "((identity char) (biginteger \"18446744073709551681\"))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-apply-5",
+    "expression": "(apply char [(biginteger \"18446744073709551681\")])",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-direct-6",
+    "expression": "(char (biginteger \"18446744073709617151\"))",
+    "primary_edn": "[:ok 65535]",
+    "unit": 65535
+  },
+  {
+    "name": "exact-var-7",
+    "expression": "((identity char) (biginteger \"18446744073709617151\"))",
+    "primary_edn": "[:ok 65535]",
+    "unit": 65535
+  },
+  {
+    "name": "exact-apply-8",
+    "expression": "(apply char [(biginteger \"18446744073709617151\")])",
+    "primary_edn": "[:ok 65535]",
+    "unit": 65535
+  },
+  {
+    "name": "exact-direct-9",
+    "expression": "(char (biginteger \"18446744073709551615\"))",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709551615\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709551615"
+  },
+  {
+    "name": "exact-var-10",
+    "expression": "((identity char) (biginteger \"18446744073709551615\"))",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709551615\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709551615"
+  },
+  {
+    "name": "exact-apply-11",
+    "expression": "(apply char [(biginteger \"18446744073709551615\")])",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709551615\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709551615"
+  },
+  {
+    "name": "exact-direct-12",
+    "expression": "(char (biginteger \"-18446744073709551616\"))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-var-13",
+    "expression": "((identity char) (biginteger \"-18446744073709551616\"))",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-apply-14",
+    "expression": "(apply char [(biginteger \"-18446744073709551616\")])",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-direct-15",
+    "expression": "(char 36893488147419103363/2)",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-var-16",
+    "expression": "((identity char) 36893488147419103363/2)",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-apply-17",
+    "expression": "(apply char [36893488147419103363/2])",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-direct-18",
+    "expression": "(char -36893488147419103231/2)",
+    "primary_edn": "[:ok 1]",
+    "unit": 1
+  },
+  {
+    "name": "exact-var-19",
+    "expression": "((identity char) -36893488147419103231/2)",
+    "primary_edn": "[:ok 1]",
+    "unit": 1
+  },
+  {
+    "name": "exact-apply-20",
+    "expression": "(apply char [-36893488147419103231/2])",
+    "primary_edn": "[:ok 1]",
+    "unit": 1
+  },
+  {
+    "name": "exact-direct-21",
+    "expression": "(char 18446744073709551681.9M)",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-var-22",
+    "expression": "((identity char) 18446744073709551681.9M)",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-apply-23",
+    "expression": "(apply char [18446744073709551681.9M])",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "exact-direct-24",
+    "expression": "(char -18446744073709551616.9M)",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-var-25",
+    "expression": "((identity char) -18446744073709551616.9M)",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-apply-26",
+    "expression": "(apply char [-18446744073709551616.9M])",
+    "primary_edn": "[:ok 0]",
+    "unit": 0
+  },
+  {
+    "name": "exact-direct-27",
+    "expression": "(char 18446744073709617152.1M)",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709617152.1\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709617152.1"
+  },
+  {
+    "name": "exact-var-28",
+    "expression": "((identity char) 18446744073709617152.1M)",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709617152.1\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709617152.1"
+  },
+  {
+    "name": "exact-apply-29",
+    "expression": "(apply char [18446744073709617152.1M])",
+    "primary_edn": "[:throws \"java.lang.IllegalArgumentException\" \"Value out of range for char: 18446744073709617152.1\"]",
+    "error_class": "java.lang.IllegalArgumentException",
+    "message": "Value out of range for char: 18446744073709617152.1"
+  },
+  {
+    "name": "context-30",
+    "expression": "(with-precision 1 :rounding UP (char 18446744073709551681.9M))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  },
+  {
+    "name": "context-31",
+    "expression": "(with-precision 1 :rounding DOWN (char 36893488147419103363/2))",
+    "primary_edn": "[:ok 65]",
+    "unit": 65
+  }
+]

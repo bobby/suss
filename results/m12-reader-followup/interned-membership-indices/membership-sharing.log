@@ -1,0 +1,33 @@
+Running as unit: run-p4159001-i92219112.scope; invocation ID: 295a499727e041ab99bc61ae39de4d79
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2m 31s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/suss_compile-1fa5c4d601d83553)
+
+running 22 tests
+test portable_macro_graph::sharing_tests::binding_index_sort_uses_guest_string_order_and_stops_on_budget_error ... ok
+test portable_macro_graph::sharing_tests::binding_index_transport_preserves_delimiters_empty_names_and_utf16_offsets ... ok
+test portable_macro_graph::sharing_tests::borrowed_body_and_owned_metadata_cold_utf16_leaves_are_independent_copies ... ok
+test portable_macro_graph::sharing_tests::bottom_up_scalar_and_reader_forms_share_recipe_keys ... ok
+test portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier ... ok
+test portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks ... ok
+test portable_macro_graph::sharing_tests::declaration_metadata_builds_keep_budgets_and_revision_independence ... ok
+test portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order ... ok
+test portable_macro_graph::sharing_tests::exact_namespace_identity_hits_charge_lookup_not_snapshot_size ... ok
+test portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results ... ok
+test portable_macro_graph::sharing_tests::interned_large_literal_import_fits_finite_fuel_without_discarded_copy ... ok
+test portable_macro_graph::sharing_tests::namespace_snapshots_share_only_when_all_facts_and_declaration_revisions_match ... ok
+test portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order ... ok
+test portable_macro_graph::sharing_tests::new_parent_of_interned_large_child_fits_finite_fuel_without_discarded_copy ... ok
+test portable_macro_graph::sharing_tests::packed_membership_indices_share_contents_without_losing_name_boundaries ... ok
+test portable_macro_graph::sharing_tests::owned_normalized_metadata_fuel_failure_preserves_input_and_retry_recovers ... ok
+test portable_macro_graph::sharing_tests::reader_data_identity_preserves_number_bits_metadata_and_order ... ok
+test portable_macro_graph::sharing_tests::raw_splicing_forms_have_distinct_cache_identity_and_are_rejected_by_consumers ... ok
+test portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery ... ok
+test portable_macro_graph::sharing_tests::shared_dag_validation_charges_each_dependency_edge_once ... ok
+test portable_macro_graph::sharing_tests::shared_reader_data_matches_existing_canonical_transport_after_gc ... ok
+test portable_macro_graph::sharing_tests::task_map_slot_keeps_alias_on_a_canonical_map_cache_hit ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 196 filtered out; finished in 15.59s
+

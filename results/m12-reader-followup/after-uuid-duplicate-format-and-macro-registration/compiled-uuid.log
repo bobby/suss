@@ -1,0 +1,20 @@
+Running as unit: run-p4134037-i92187938.scope; invocation ID: 95de5116ab2445b9a18b893ea2fe5f93
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 50s
+     Running tests/clojure_uuid.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-platform-target/debug/deps/clojure_uuid-064b79c9fed9f74a)
+
+running 8 tests
+test actual_aot_executes_uuid_values_readers_and_signed_boundaries ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test all_uuid_runtime_parser_inputs_and_lossless_errors_follow_primary ... ok
+test retained_uuid_storage_is_nominal_exact_and_independent_after_gc ... ok
+test signed_boundaries_keys_and_quotation_follow_primary ... ok
+test uuid_fields_and_private_width_adapters_remain_sealed ... ok
+test uuid_values_and_readers_follow_primary_in_both_phases ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 67.66s
+

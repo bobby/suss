@@ -1,0 +1,3 @@
+["short","(read-string \"`#uuid \\\"1-2-3-4-5\\\"\")","(quote #uuid \"00000001-0002-0003-0004-000000000005\")","quote","4295098371","1125899906842629"]
+["signed","(read-string \"`#uuid \\\"80000000-0000-0001-ffff-fffffffffffe\\\"\")","(quote #uuid \"80000000-0000-0001-ffff-fffffffffffe\")","quote","-9223372036854775807","-2"]
+["positive","(read-string \"`#uuid \\\"7fffffff-ffff-fffe-8000-000000000001\\\"\")","(quote #uuid \"7fffffff-ffff-fffe-8000-000000000001\")","quote","9223372036854775806","-9223372036854775807"]

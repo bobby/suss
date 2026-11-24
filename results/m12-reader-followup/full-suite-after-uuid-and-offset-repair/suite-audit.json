@@ -1,0 +1,318 @@
+{
+  "base": "a783ad60540b4bc22820e8811a568132a0b14210",
+  "baseline_written": false,
+  "capture_sha256": "14ac165818f894a228c77f221f4174e4b988744f53024cb46625a6d43026a0f0",
+  "changes": {
+    "assertions": [],
+    "namespaces": [
+      {
+        "id": "clojure.core-test.identity",
+        "new": {
+          "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag inst at bytes 680..717",
+          "stage": "read"
+        },
+        "old": {
+          "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag uuid at bytes 627..671",
+          "stage": "read"
+        }
+      },
+      {
+        "id": "clojure.core-test.parse-uuid",
+        "new": {
+          "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unresolved Runtime name parse-uuid at bytes 259..2057",
+          "stage": "namespace"
+        },
+        "old": {
+          "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): No reader function for tag uuid at bytes 1114..1158",
+          "stage": "read"
+        }
+      },
+      {
+        "id": "clojure.core-test.uuid-qmark",
+        "new": {
+          "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unresolved Runtime name parse-uuid at bytes 231..1206",
+          "stage": "namespace"
+        },
+        "old": {
+          "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): No reader function for tag uuid at bytes 345..389",
+          "stage": "read"
+        }
+      },
+      {
+        "id": "clojure.edn-test.read-string",
+        "new": {
+          "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+          "stage": "namespace"
+        },
+        "old": {
+          "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9738..9782",
+          "stage": "read"
+        }
+      }
+    ],
+    "tests": []
+  },
+  "counts": {
+    "fail": 86,
+    "guest-judged": 75,
+    "namespaces-failed": 72,
+    "not-executed": 1936,
+    "pass": 4842,
+    "skipped": 0
+  },
+  "edn": {
+    "captured_assertions": 0,
+    "outcomes": {
+      "not-executed": 297
+    },
+    "primary_assertions": 297
+  },
+  "newly_executed_failures": [],
+  "numeric_subsets": {
+    "bigint-ratio": {
+      "outcomes": {
+        "not-executed": 15,
+        "pass": 214
+      },
+      "primary_assertions": 229,
+      "unresolved": [
+        {
+          "actual": null,
+          "form": "(= 111/7 ((constantly 111/7)))",
+          "id": "clojure.core-test.constantly/test-constantly#6",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unresolved Runtime name some-fn at bytes 240..1477",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1N (eval 1N))",
+          "id": "clojure.core-test.eval/test-eval#5",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1/2 (eval 1/2))",
+          "id": "clojure.core-test.eval/test-eval#7",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1N (apply min-key identity [1N 2N]))",
+          "id": "clojure.core-test.min-key/test-min-key#3",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1N (apply min-key identity [2N 1N 3N]))",
+          "id": "clojure.core-test.min-key/test-min-key#4",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1N (apply min-key identity [1N 2]))",
+          "id": "clojure.core-test.min-key/test-min-key#5",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1/2 (apply min-key identity [1/2 1]))",
+          "id": "clojure.core-test.min-key/test-min-key#10",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1/2 (apply min-key identity [1/2 1 3/2]))",
+          "id": "clojure.core-test.min-key/test-min-key#11",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1/2 (apply min-key identity [1/2 1]))",
+          "id": "clojure.core-test.min-key/test-min-key#12",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 1/2 (apply min-key identity [1/2 1 2N]))",
+          "id": "clojure.core-test.min-key/test-min-key#13",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 0N (clojure.edn/read-string \"0N\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#131",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= -42N (clojure.edn/read-string \"-42N\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#132",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 42N (clojure.edn/read-string \"42N\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#133",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 42N (clojure.edn/read-string \"+42N\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#134",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(= 9223372036854775808N result)",
+          "id": "clojure.edn-test.read-string/test-read-string#135",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        }
+      ]
+    },
+    "decimal": {
+      "outcomes": {
+        "not-executed": 6,
+        "pass": 194
+      },
+      "primary_assertions": 200,
+      "unresolved": [
+        {
+          "actual": null,
+          "form": "(= 1.0M (eval 1.0M))",
+          "id": "clojure.core-test.eval/test-eval#6",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 0M (clojure.edn/read-string \"0.0M\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#142",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 42M (clojure.edn/read-string \"42M\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#143",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= -3.14M (clojure.edn/read-string \"-3.14M\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#144",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"3.14M\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#145",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        },
+        {
+          "actual": null,
+          "form": "(clojure.core/= 3.14M (clojure.edn/read-string \"+3.14M\"))",
+          "id": "clojure.edn-test.read-string/test-read-string#146",
+          "outcome": "not-executed",
+          "reason": {
+            "diagnostic": "clojure.edn (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No source for namespace clojure.edn at bytes 82..93",
+            "stage": "namespace"
+          }
+        }
+      ]
+    }
+  },
+  "old_counts": {
+    "fail": 86,
+    "guest-judged": 75,
+    "namespaces-failed": 72,
+    "not-executed": 1936,
+    "pass": 4842,
+    "skipped": 0
+  },
+  "other_new_failures": [],
+  "previous_capture_sha256": "864e82c894307050a4c542aec9cd07e3d4af77342f190ef62c44ce5448d9cc16",
+  "previously_passing_regressions": [],
+  "primary_and_count_skip_guards_unchanged": true,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "prior_individually_comparable_passes_preserved": 4932,
+  "prior_strict_passes_preserved": 4917,
+  "raw_assertions": 5002,
+  "raw_comparison_regressions": []
+}

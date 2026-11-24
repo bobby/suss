@@ -35,6 +35,7 @@ fn raw(value: Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool", "value":value}),
         Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
+        Observation::Uuid { most, least } => json!({"tag":"uuid", "most":most.to_string(), "least":least.to_string()}),
         Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::BigInt(value) => json!({"tag":"bigint", "value":value}),
         Observation::Decimal { unscaled, scale } => json!({"tag":"decimal", "unscaled":unscaled, "scale":scale}),

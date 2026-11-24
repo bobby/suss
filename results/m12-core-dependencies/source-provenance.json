@@ -1,0 +1,13 @@
+{
+  "upstream": "Clojure 1.12.6",
+  "jar": "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "entry": "clojure/core.clj",
+  "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "retained_forms": {
+    "results/m12-core-dependencies/upstream-min-key.clj": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
+    "results/m12-core-dependencies/upstream-some-fn.clj": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398"
+  },
+  "license": "EPL-1.0; runtime/core-import/epl-v10.html",
+  "qualification": "Retained source and new primary controls only. No production implementation or pass claim yet."
+}

@@ -1,0 +1,19 @@
+{
+  "char_assertions": 9,
+  "host_matches": 9,
+  "guest_judgments": 0,
+  "missing": 0,
+  "ordered_ids_match": true,
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "source_sha256": "81b2d879da6016c6034c573bbd3738d4c3a77f9e39e2e7972cc078404d23a9e7",
+  "capture_sha256": "8c29a290f91d8c54b49d63f03007745e3ac3f6a47d28e70de9c3af71b71ef367",
+  "full_suite_counts": {
+    "pass": 4991,
+    "guest-judged": 77,
+    "fail": 241,
+    "not-executed": 1630,
+    "skipped": 0,
+    "namespaces-failed": 70
+  },
+  "qualification": "This proves the complete original char body. It does not certify broader EDN/numeric compatibility or relabel the full native comparison result."
+}

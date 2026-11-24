@@ -120,7 +120,9 @@ runtime Vars, so `ns-refers` maps names to qualified symbols. A runtime
 resolution agrees with syntax quote's (`docs/runtime/runtime-namespaces.md`).
 Running programs read data with `read-string` and `suss.edn/read-string`,
 following `clojure.core/read-string` and `clojure.edn/read-string`, in both
-phases and every target, from a reader written in Suss in core. `read-string`
+phases and every target, from a reader written in Suss in core. The shipped
+`clojure.edn` compatibility namespace exposes the same `read-string` function as
+`suss.edn` (2026-11-23). `read-string`
 reads code as Clojure's reader does: syntax quote and `::k` resolve against
 `*ns*`, record literals construct records while `*read-eval*` is true, and
 reader conditionals need `:read-cond`. Neither evaluates code. Their lexical

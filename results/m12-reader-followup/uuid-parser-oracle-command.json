@@ -1,0 +1,24 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/uuid-parser-oracle.clj",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/uuid-parser-cases.edn",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/uuid-hex-digit-jvm.bin",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-reader-followup-source/results/m12-reader-followup/uuid-parser-inputs.edn"
+  ],
+  "exit_code": 0,
+  "seconds": 2.3175244331359863,
+  "source_sha256": "f88cbc838a08339f957c550bcb827425d78d6c2b44e13d54ab3cb1ee570bb0b2",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "outputs": {
+    "uuid-parser-cases.edn": "4f961b749bd50df7e4a969baedb3b8494904851dbb14c1151550915bbd4616ac",
+    "uuid-hex-digit-jvm.bin": "c1719d81c8ef0e742b4dc0170fe82d53f1664ff3d123b850062949b3dc115260"
+  }
+}
