@@ -47,7 +47,7 @@ impl MacroService {
         fuel: u64,
     ) -> Result<
         (
-            Result<crate::portable::modules::PreparedInput, SessionError>,
+            Result<PreparedEvaluation, SessionError>,
             u64,
         ),
         SessionError,
@@ -59,9 +59,7 @@ impl MacroService {
         let host = lease.host();
         host.set_operation_fuel(allowance);
         let _budget = host.session.operation_budget_scope()?;
-        let span = form.span.clone();
-        let origin = crate::portable::SourceOrigin::new("", None);
-        let result = snapshot.prepare_with_origin(vec![form], span, host, Some(&origin));
+        let result = host.prepare_native_evaluation(snapshot, form);
         let remaining = host.session.operation_fuel_remaining()?;
         Ok((result, allowance.saturating_sub(remaining)))
     }

@@ -4,7 +4,7 @@
 use super::*;
 use crate::{
     portable_macro_data::FormBridge,
-    portable_macros::{CompiledMacros, MacroAuthority, MacroService},
+    portable_macros::{CompiledMacros, MacroAuthority, MacroService, PreparedEvaluation},
 };
 
 #[derive(Default)]
@@ -207,43 +207,62 @@ impl Evaluation {
         let namespace = registry_lock(&self.namespace)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
-        let namespace = namespace.read(&mut view)?;
         let authority = registry_lock(&self.own).clone();
         if let Some(authority) = authority {
-            // This Store already owns user macro definitions. Reentry uses its
-            // live catalog and the active Caller, not its unavailable owner.
-            return authority.bind(view).evaluate_native_form(form, &namespace);
+            // This Store owns the active Macro authority and its real catalog.
+            return authority.bind(view).evaluate_native_form(form);
         }
         let service = self.service()?;
-        let mut snapshot = view.compilation_snapshot();
-        let original = snapshot
-            .environment
-            .current_namespace(view.phase)
-            .to_owned();
-        snapshot
-            .environment
-            .enter_namespace(view.phase, &namespace)
-            .map_err(SessionError::Compile)?;
-        let allowance = view.operation_fuel_remaining()?;
-        let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance)?;
-        // Compilation and macro execution consume the caller's allowance too.
-        // Check cancellation before considering the compiler's returned error.
-        view.charge_host_work(spent)?;
-        let mut prepared = prepared?;
-        if prepared.fragment.namespace_directive.is_none() {
-            // The runtime binding selects this analysis context. Its temporary
-            // namespace must not replace the host's ordinary input context.
-            prepared
-                .fragment
+        let mut pending = vec![form];
+        let mut result = None;
+        while let Some(form) = pending.pop() {
+            let namespace = namespace.read(&mut view)?;
+            let mut snapshot = view.compilation_snapshot();
+            let original = snapshot
                 .environment
-                .enter_namespace(view.phase, &original)
+                .current_namespace(view.phase)
+                .to_owned();
+            snapshot
+                .environment
+                .enter_namespace(view.phase, &namespace)
                 .map_err(SessionError::Compile)?;
+            let allowance = view.operation_fuel_remaining()?;
+            let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance)?;
+            // Release the isolated Macro lease before executing Runtime code.
+            // Compilation and macro execution debit the caller cumulatively.
+            view.charge_host_work(spent)?;
+            match prepared? {
+                PreparedEvaluation::TopLevelDo(forms) => {
+                    view.charge_host_work(forms.len() as u64 + 1)?;
+                    pending.extend(forms.into_iter().rev());
+                }
+                PreparedEvaluation::Fragment(mut prepared) => {
+                    if prepared.fragment.namespace_directive.is_none() {
+                        prepared
+                            .fragment
+                            .environment
+                            .enter_namespace(view.phase, &original)
+                            .map_err(SessionError::Compile)?;
+                    }
+                    result = Some(view.eval_prepared(prepared)?);
+                }
+            }
         }
-        view.eval_prepared(prepared)
+        result.ok_or_else(|| wasmtime::Error::msg("No compiled eval unit produced a value").into())
     }
 }
 
 impl SessionHost<'_> {
+    pub(crate) fn evaluation_namespace(&mut self) -> Result<String, SessionError> {
+        let state = self
+            .evaluation
+            .as_ref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native evaluation authority"))?;
+        let namespace = registry_lock(&state.namespace)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
+        namespace.read(self)
+    }
     fn core_cell(&self, name: &str) -> Result<Global, SessionError> {
         let compiler = registry_lock(&self.compiler);
         let global = compiler

@@ -260,3 +260,80 @@ fn vars_retain_real_live_cells_identity_metadata_and_callability() {
         }
     }
 }
+
+#[test]
+fn eval_preserves_primary_top_level_do_compilation_and_effect_boundaries() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/do-boundary-primary/cases.json"
+    ))
+    .unwrap();
+    let definitions: Vec<String> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/do-boundary-primary/macros.json"
+    ))
+    .unwrap();
+    assert_eq!(rows.len(), 11);
+    assert_eq!(definitions.len(), 5);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("user").unwrap();
+        macros.enter_namespace("user").unwrap();
+        suss_compile::portable_repl::evaluate_script_compiled(
+            &mut session,
+            &mut macros,
+            include_str!("../../../results/m12-eval/do-boundary-primary/setup.sus"),
+            None,
+        )
+        .unwrap();
+        for definition in &definitions {
+            macros
+                .define(&definition.replace("(catch Throwable ", "(catch :default "))
+                .unwrap();
+        }
+        session
+            .eval_with_macros("(eval-do-init-counter)", &mut macros)
+            .unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let expression = row["expression"]
+                .as_str()
+                .unwrap()
+                .replace("(catch Throwable ", "(catch :default ");
+            let value = session
+                .eval_with_macros(&expression, &mut macros)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{}",
+                row["name"]
+            );
+            eprintln!(
+                "eval-do-primary-match {:?} {}",
+                session.phase(),
+                row["name"]
+            );
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} after GC",
+                row["name"]
+            );
+        }
+    }
+}

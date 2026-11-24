@@ -10,6 +10,8 @@ use suss_reader::forms::{Form, Kind, read_forms};
 mod reentry;
 pub(crate) use reentry::MacroAuthority;
 mod facade;
+mod evaluation;
+pub(crate) use evaluation::PreparedEvaluation;
 pub use facade::CompiledMacros;
 pub(crate) use facade::MacroService;
 #[derive(Clone, Copy)]
@@ -374,19 +376,6 @@ impl MacroHost<'static> {
     }
 }
 impl MacroHost<'_> {
-    pub(crate) fn evaluate_native_form(&mut self, form: Form, namespace: &str) -> Result<SessionValue, SessionError> {
-        let mut snapshot = self.session.compilation_snapshot();
-        let phase = self.session.phase();
-        let original = snapshot.environment.current_namespace(phase).to_owned();
-        snapshot.environment.enter_namespace(phase, namespace).map_err(SessionError::Compile)?;
-        let span = form.span.clone();
-        let origin = crate::portable::SourceOrigin::new("", None);
-        let mut prepared = snapshot.prepare_with_origin(vec![form], span, self, Some(&origin))?;
-        if prepared.fragment.namespace_directive.is_none() {
-            prepared.fragment.environment.enter_namespace(phase, &original).map_err(SessionError::Compile)?;
-        }
-        self.session.eval_prepared(prepared)
-    }
     pub(crate) fn define_inline_macro(
         &mut self, form: &Form, environment: &crate::portable::resolve::Environment,
         phase: crate::portable::resolve::Phase,
