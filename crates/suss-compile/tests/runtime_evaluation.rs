@@ -8,7 +8,7 @@ use suss_compile::{
     portable_session::{RuntimeNumber, runtime_number},
     runtime_abi,
 };
-use wasmtime::{Func, Instance, Module, Rooted, Store, Val};
+use wasmtime::{AsContextMut, Func, Instance, Module, Rooted, Store, Val};
 
 #[test]
 fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
@@ -35,6 +35,7 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
         .call(&mut store, &[Val::null_any_ref()], &mut result)
         .unwrap_err();
     assert!(error.is::<wasmtime::ThrownException>());
+    assert!(store.as_context_mut().take_pending_exception().is_some());
 
     let calls = Arc::new(AtomicUsize::new(0));
     let count = calls.clone();
@@ -53,7 +54,7 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
     runtime
         .get_func(&mut store, "number-box")
         .unwrap()
-        .call(&mut store, &[Val::F64(0.5)], &mut result)
+        .call(&mut store, &[Val::F64(0.5_f64.to_bits())], &mut result)
         .unwrap();
     let held = result[0]
         .unwrap_anyref()
@@ -65,7 +66,7 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
     evaluate
         .call(&mut store, &[Val::AnyRef(Some(input))], &mut result)
         .unwrap();
-    assert!(Rooted::ref_eq(&store, &input, &result[0].unwrap_anyref().unwrap()).unwrap());
+    assert!(Rooted::ref_eq(&store, &input, result[0].unwrap_anyref().unwrap()).unwrap());
     assert!(
         matches!(runtime_number(&mut store, &result[0]).unwrap(), Some(RuntimeNumber::Double(value)) if value.to_bits()==0.5_f64.to_bits())
     );

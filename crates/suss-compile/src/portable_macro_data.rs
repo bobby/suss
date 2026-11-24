@@ -6,6 +6,8 @@ use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
+mod borrowed_reader;
+
 pub(crate) fn normalized_reader_metadata(
     session: &mut Session,
     form: &Form,
