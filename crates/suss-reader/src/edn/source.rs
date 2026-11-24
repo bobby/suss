@@ -15,6 +15,11 @@ pub const UTF16_TAG: &str = "utf16";
 /// The tag of an exact numeric literal binary64 can't hold, by its text:
 /// `#suss/exact-number "1/3"` (#333).
 pub const EXACT_NUMBER_TAG: &str = "exact-number";
+/// Checked Pattern source projection. This is tooling data, not a runtime
+/// Pattern object. Its payload `[site source]` uses first-traversal indices
+/// scoped to one projection, retaining distinct and shared literal identities
+/// without process addresses. Decoding revalidates the exact UTF-16 source.
+pub const PATTERN_TAG: &str = "pattern";
 
 fn keyword(name: &str) -> Value {
     Value::keyword(name)
@@ -23,6 +28,9 @@ fn keyword(name: &str) -> Value {
 /// The value a selected form reads as. Reader conditionals, discards and
 /// prefixes must already be selected, as they are in analyzed forms.
 pub fn form_to_value(form: &Form) -> Result<Value, Error> {
+    form_to_value_with(form, &mut Vec::new())
+}
+fn form_to_value_with(form: &Form, sites: &mut Vec<crate::pattern::PatternLiteral>) -> Result<Value, Error> {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let value = match &form.kind {
             Kind::NativeConstant { .. } => return Err(Error::new("Native constants cannot be serialized as syntax")),
@@ -41,19 +49,27 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
                 }
             },
             Kind::Uuid(value) => Value::Uuid(*value),
+            Kind::Pattern(value) => {
+                let site = if let Some(site) = sites.iter().position(|existing| existing == value) { site }
+                    else { let site = sites.len(); sites.push(value.clone()); site };
+                Value::Tagged(
+                    Symbol { namespace: Some("suss".into()), name: PATTERN_TAG.into() },
+                    Box::new(Value::Vector(vec![Value::Long(site as i64), string_value(value.source().units())])),
+                )
+            },
             Kind::String(units) => string_value(units),
             Kind::Symbol(s) => Value::Symbol(s.clone()),
             Kind::Keyword(k) => Value::Keyword(k.clone()),
-            Kind::List(items) => Value::List(values(items)?),
-            Kind::Vector(items) => Value::Vector(values(items)?),
-            Kind::Set(items) => Value::Set(values(items)?.into_iter().collect::<BTreeSet<_>>()),
+            Kind::List(items) => Value::List(values(items, sites)?),
+            Kind::Vector(items) => Value::Vector(values(items, sites)?),
+            Kind::Set(items) => Value::Set(values(items, sites)?.into_iter().collect::<BTreeSet<_>>()),
             Kind::Map(entries) => {
                 if entries.len() % 2 != 0 {
                     return Err(Error::new("Map literal must contain an even number of forms"));
                 }
                 let mut map = BTreeMap::new();
                 for pair in entries.chunks_exact(2) {
-                    map.insert(form_to_value(&pair[0])?, form_to_value(&pair[1])?);
+                    map.insert(form_to_value_with(&pair[0], sites)?, form_to_value_with(&pair[1], sites)?);
                 }
                 Value::Map(map)
             }
@@ -63,7 +79,7 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
                 };
                 Value::Uuid(crate::uuid::Uuid::parse(units).map_err(|error| Error::new(error.to_string()))?)
             }
-            Kind::Tagged { tag, form } => Value::Tagged(tag.clone(), Box::new(form_to_value(form)?)),
+            Kind::Tagged { tag, form } => Value::Tagged(tag.clone(), Box::new(form_to_value_with(form, sites)?)),
             Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
                 return Err(Error::new("Reader syntax must be selected before conversion to data"));
             }
@@ -71,13 +87,13 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
                 return Err(Error::new("Auto-resolved keywords must be resolved before conversion to data"));
             }
         };
-        let meta = metadata(form)?;
+        let meta = metadata_with(form, sites)?;
         Ok(if meta.is_empty() { value } else { Value::Meta(Box::new(value), meta) })
     })
 }
 
-fn values(items: &[Form]) -> Result<Vec<Value>, Error> {
-    items.iter().map(form_to_value).collect()
+fn values(items: &[Form], sites: &mut Vec<crate::pattern::PatternLiteral>) -> Result<Vec<Value>, Error> {
+    items.iter().map(|form| form_to_value_with(form, sites)).collect()
 }
 
 /// A Suss string: an EDN string when it is valid Unicode, otherwise its
@@ -95,19 +111,22 @@ pub fn string_value(units: &[u16]) -> Value {
 /// The merged metadata of a form's prefixes. As in tools.reader, the
 /// innermost prefix applies first and outer prefixes replace its values.
 pub fn metadata(form: &Form) -> Result<BTreeMap<Value, Value>, Error> {
+    metadata_with(form, &mut Vec::new())
+}
+fn metadata_with(form: &Form, sites: &mut Vec<crate::pattern::PatternLiteral>) -> Result<BTreeMap<Value, Value>, Error> {
     let mut meta = BTreeMap::new();
     for prefix in form.metadata.iter().rev() {
         match &prefix.kind {
             Kind::Map(entries) if entries.len() % 2 == 0 => {
                 for pair in entries.chunks_exact(2) {
-                    meta.insert(form_to_value(&pair[0])?, form_to_value(&pair[1])?);
+                    meta.insert(form_to_value_with(&pair[0], sites)?, form_to_value_with(&pair[1], sites)?);
                 }
             }
             Kind::Keyword(k) => {
                 meta.insert(Value::Keyword(k.clone()), Value::Bool(true));
             }
             Kind::Symbol(_) | Kind::String(_) => {
-                meta.insert(keyword("tag"), form_to_value(prefix)?);
+                meta.insert(keyword("tag"), form_to_value_with(prefix, sites)?);
             }
             _ => return Err(Error::new("Metadata must be a map, keyword, symbol or string")),
         }
@@ -118,6 +137,9 @@ pub fn metadata(form: &Form) -> Result<BTreeMap<Value, Value>, Error> {
 /// A form that reads as `value`, without source positions. Metadata becomes
 /// one map prefix; a `#suss/utf16` string becomes the string it encodes.
 pub fn value_to_form(value: &Value) -> Form {
+    value_to_form_with(value, &mut BTreeMap::new())
+}
+fn value_to_form_with(value: &Value, sites: &mut BTreeMap<i64, crate::pattern::PatternLiteral>) -> Form {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let form = |kind| Form { span: 0..0, metadata: Vec::new(), kind };
         match value {
@@ -138,13 +160,30 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::Uuid(value) => form(Kind::Uuid(*value)),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),
             Value::Symbol(s) => form(Kind::Symbol(s.clone())),
-            Value::List(items) => form(Kind::List(items.iter().map(value_to_form).collect())),
-            Value::Vector(items) => form(Kind::Vector(items.iter().map(value_to_form).collect())),
-            Value::Set(items) => form(Kind::Set(items.iter().map(value_to_form).collect())),
+            Value::List(items) => form(Kind::List(items.iter().map(|value| value_to_form_with(value, sites)).collect())),
+            Value::Vector(items) => form(Kind::Vector(items.iter().map(|value| value_to_form_with(value, sites)).collect())),
+            Value::Set(items) => form(Kind::Set(items.iter().map(|value| value_to_form_with(value, sites)).collect())),
             Value::Map(map) => form(Kind::Map(
-                map.iter().flat_map(|(k, v)| [value_to_form(k), value_to_form(v)]).collect(),
+                map.iter().flat_map(|(k, v)| [value_to_form_with(k, sites), value_to_form_with(v, sites)]).collect(),
             )),
             Value::Tagged(tag, inner) => match (tag.namespace.as_deref(), tag.name.as_str(), &**inner) {
+                (Some("suss"), PATTERN_TAG, Value::Vector(fields)) if fields.len() == 2 => {
+                    let source = value_to_form_with(&fields[1], sites);
+                    let literal = match (&fields[0], &source.kind) {
+                        (Value::Long(site), Kind::String(units)) if *site >= 0 => {
+                            match sites.get(site) {
+                                Some(existing) if existing.source().units() == units => Some(existing.clone()),
+                                Some(_) => None,
+                                None => crate::pattern::PatternLiteral::compile(units).ok().inspect(|literal| { sites.insert(*site, literal.clone()); }),
+                            }
+                        }
+                        _ => None,
+                    };
+                    match literal {
+                        Some(literal) => form(Kind::Pattern(literal)),
+                        None => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form_with(inner, sites)) }),
+                    }
+                }
                 (Some("suss"), UTF16_TAG, Value::Vector(units))
                     if units.iter().all(|u| matches!(u, Value::Long(n) if (0..=65535).contains(n))) =>
                 {
@@ -155,15 +194,15 @@ pub fn value_to_form(value: &Value) -> Form {
                 (Some("suss"), EXACT_NUMBER_TAG, Value::String(text)) => {
                     match crate::forms::number(text) {
                         Ok(crate::forms::NumberToken::Exact(number)) => form(Kind::Exact(number)),
-                        _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
+                        _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form_with(inner, sites)) }),
                     }
                 }
-                _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
+                _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form_with(inner, sites)) }),
             },
             Value::Meta(inner, meta) => {
-                let mut out = value_to_form(inner);
+                let mut out = value_to_form_with(inner, sites);
                 out.metadata = vec![form(Kind::Map(
-                    meta.iter().flat_map(|(k, v)| [value_to_form(k), value_to_form(v)]).collect(),
+                    meta.iter().flat_map(|(k, v)| [value_to_form_with(k, sites), value_to_form_with(v, sites)]).collect(),
                 ))];
                 out
             }
@@ -199,6 +238,31 @@ fn write_form(form: &Form, out: &mut String) -> Result<(), Error> {
             Ok(())
         };
         match &form.kind {
+            Kind::Pattern(pattern) => {
+                // Raw regex source already quotes its embedded quote tokens.
+                // It is checked at construction; escaping again changes it.
+                let units = pattern.source().units();
+                let mut escaped = false;
+                let mut literal = true;
+                for &unit in units {
+                    if escaped { escaped = false; }
+                    else if unit == 92 { escaped = true; }
+                    else if unit == 34 { literal = false; }
+                }
+                if let Ok(source) = String::from_utf16(units)
+                    && literal && !escaped
+                {
+                    out.push_str("#\"");
+                    out.push_str(&source);
+                    out.push('"');
+                    Ok(())
+                } else {
+                    // Some programmatically created sources cannot be raw
+                    // regex tokens. The source carrier retains those units.
+                    out.push_str("#suss/pattern ");
+                    write_form(&Form { span: 0..0, metadata: vec![], kind: Kind::String(units.to_vec()) }, out)
+                }
+            }
             Kind::List(forms) => items("(", forms, ')', out),
             Kind::Vector(forms) => items("[", forms, ']', out),
             Kind::Set(forms) => items("#{", forms, '}', out),
@@ -279,37 +343,52 @@ impl<'a> LineIndex<'a> {
 /// map) or `:form` (a tagged literal's form). Set items and map entries are in
 /// the canonical order in which the value prints.
 pub fn span_tree(form: &Form, lines: Option<&LineIndex>) -> Result<Value, Error> {
+    let mut sites = Vec::new();
+    let mut pending = vec![form];
+    while let Some(form) = pending.pop() {
+        pending.extend(form.metadata.iter().rev());
+        match &form.kind {
+            Kind::Pattern(literal) => if !sites.iter().any(|site| site == literal) { sites.push(literal.clone()); },
+            Kind::List(items) | Kind::Vector(items) | Kind::Set(items) | Kind::Map(items) | Kind::Conditional(items) | Kind::SplicingConditional(items) => pending.extend(items.iter().rev()),
+            Kind::Tagged { form, .. } | Kind::Discard(form) => pending.push(form),
+            Kind::Prefix { operator, target } => { pending.push(target); pending.push(operator); },
+            _ => {},
+        }
+    }
+    span_tree_with(form, lines, &mut sites)
+}
+fn span_tree_with(form: &Form, lines: Option<&LineIndex>, sites: &mut Vec<crate::pattern::PatternLiteral>) -> Result<Value, Error> {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let mut tree = position(&form.span, lines);
         if !form.metadata.is_empty() {
             tree.insert(
                 keyword("meta"),
-                Value::Vector(form.metadata.iter().map(|m| span_tree(m, lines)).collect::<Result<_, _>>()?),
+                Value::Vector(form.metadata.iter().map(|m| span_tree_with(m, lines, sites)).collect::<Result<_, _>>()?),
             );
         }
         match &form.kind {
             Kind::List(items) | Kind::Vector(items) => {
-                tree.insert(keyword("items"), trees(items.iter(), lines)?);
+                tree.insert(keyword("items"), trees(items.iter(), lines, sites)?);
             }
             Kind::Set(items) => {
-                let mut sorted = items.iter().map(|i| Ok((form_to_value(i)?, i))).collect::<Result<Vec<_>, Error>>()?;
+                let mut sorted = items.iter().map(|i| Ok((form_to_value_with(i, sites)?, i))).collect::<Result<Vec<_>, Error>>()?;
                 sorted.sort_by(|a, b| a.0.cmp(&b.0));
-                tree.insert(keyword("items"), trees(sorted.into_iter().map(|(_, i)| i), lines)?);
+                tree.insert(keyword("items"), trees(sorted.into_iter().map(|(_, i)| i), lines, sites)?);
             }
             Kind::Map(entries) => {
                 let mut sorted = entries
                     .chunks_exact(2)
-                    .map(|pair| Ok((form_to_value(&pair[0])?, pair)))
+                    .map(|pair| Ok((form_to_value_with(&pair[0], sites)?, pair)))
                     .collect::<Result<Vec<_>, Error>>()?;
                 sorted.sort_by(|a, b| a.0.cmp(&b.0));
                 let entries = sorted
                     .into_iter()
-                    .map(|(_, pair)| Ok(Value::Vector(vec![span_tree(&pair[0], lines)?, span_tree(&pair[1], lines)?])))
+                    .map(|(_, pair)| Ok(Value::Vector(vec![span_tree_with(&pair[0], lines, sites)?, span_tree_with(&pair[1], lines, sites)?])))
                     .collect::<Result<Vec<_>, Error>>()?;
                 tree.insert(keyword("entries"), Value::Vector(entries));
             }
             Kind::Tagged { form, .. } => {
-                tree.insert(keyword("form"), span_tree(form, lines)?);
+                tree.insert(keyword("form"), span_tree_with(form, lines, sites)?);
             }
             _ => {}
         }
@@ -317,8 +396,8 @@ pub fn span_tree(form: &Form, lines: Option<&LineIndex>) -> Result<Value, Error>
     })
 }
 
-fn trees<'f>(items: impl Iterator<Item = &'f Form>, lines: Option<&LineIndex>) -> Result<Value, Error> {
-    Ok(Value::Vector(items.map(|i| span_tree(i, lines)).collect::<Result<_, _>>()?))
+fn trees<'f>(items: impl Iterator<Item = &'f Form>, lines: Option<&LineIndex>, sites: &mut Vec<crate::pattern::PatternLiteral>) -> Result<Value, Error> {
+    Ok(Value::Vector(items.map(|i| span_tree_with(i, lines, sites)).collect::<Result<_, _>>()?))
 }
 
 /// `{:start :end}` and, with `lines`, `:line :column :end-line :end-column`.

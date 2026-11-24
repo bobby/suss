@@ -57,6 +57,7 @@ impl Form {
     pub fn clone_metered(&self, meter: &mut WorkMeter<'_>) -> Result<Self, ParseError> {
         let text = match &self.kind {
             Kind::String(x) => x.len() as u64,
+            Kind::Pattern(x) => x.source().units().len() as u64,
             Kind::Symbol(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
             Kind::Keyword(x) | Kind::AutoKeyword(x) => {
                 (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64
@@ -258,6 +259,8 @@ pub enum Kind {
     Exact(ExactNumber),
     /// Immutable UUID with two signed 64-bit halves, selected from #uuid.
     Uuid(crate::uuid::Uuid),
+    /// Checked immutable regular-expression source, with literal-site identity.
+    Pattern(crate::pattern::PatternLiteral),
     String(Vec<u16>),
     Symbol(Symbol),
     Keyword(Keyword),
@@ -539,6 +542,11 @@ fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), P
             Kind::String(units) if String::from_utf16(units).ok().and_then(|s| ExactNumber::biginteger_text(&s)).is_some() => Ok(()),
             _ => Err(error(span, "BigInteger literal expects a decimal string.")),
         },
+        (Some("suss"), "pattern") => match &target.kind {
+            Kind::String(units) => crate::pattern::PatternLiteral::compile(units)
+                .map(|_| ()).map_err(|e| error(span, e.to_string())),
+            _ => Err(error(span, "Pattern literal expects a string.")),
+        },
         _ => Err(error(span, format!("No reader function for tag {tag}"))),
     }
 }
@@ -637,7 +645,10 @@ fn select_inner(
             };
             form.span.end = target.span.end;
             check_tagged(&tag, &target, form.span.clone())?;
-            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
+            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "pattern" {
+                let Kind::String(units) = &target.kind else { unreachable!() };
+                Kind::Pattern(crate::pattern::PatternLiteral::compile(units).expect("validated Pattern"))
+            } else if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
                 let Kind::String(units) = &target.kind else { unreachable!() };
                 Kind::Exact(ExactNumber::biginteger_text(&String::from_utf16(units).unwrap()).unwrap())
             } else if tag.namespace.is_none() && tag.name == "uuid" {
@@ -1088,6 +1099,7 @@ impl Reader<'_, '_, '_> {
                     }));
                 }
                 Some('{') => Kind::Set(self.items(start, '}')?),
+                Some('"') => Kind::Pattern(self.pattern(start)?),
                 Some('_') => {
                     let target = self.required()?;
                     if pending_prefix(&target.kind, self.meter, target.span.clone())? {
@@ -1265,6 +1277,28 @@ impl Reader<'_, '_, '_> {
                     if let Some(form) = self.form()? {
                         items.push(form);
                     }
+                }
+            }
+        }
+    }
+    fn pattern(&mut self, start: usize) -> Result<crate::pattern::PatternLiteral, ParseError> {
+        let mut units = Vec::new();
+        loop {
+            match self.take() {
+                None => return Err(self.incomplete(start, "EOF while reading regex")),
+                Some('"') => return crate::pattern::PatternLiteral::compile(&units)
+                    .map_err(|failure| self.fail(start, failure.to_string())),
+                Some('\\') => {
+                    // Regex escapes belong to Pattern, including the slash
+                    // before a quote. Only suppress that quote's termination.
+                    units.push(92);
+                    let c = self.take().ok_or_else(|| self.incomplete(start, "EOF while reading regex"))?;
+                    let mut buffer = [0; 2];
+                    units.extend_from_slice(c.encode_utf16(&mut buffer));
+                }
+                Some(c) => {
+                    let mut buffer = [0; 2];
+                    units.extend_from_slice(c.encode_utf16(&mut buffer));
                 }
             }
         }

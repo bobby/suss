@@ -556,3 +556,10 @@ fn uuid_ast_values_survive_edn_emission_and_executed_source_round_trips() {
         assert_eq!(edn::source::form_to_value(&actual).unwrap(), expected);
     }
 }
+
+#[test]
+fn checked_pattern_sources_and_distinct_collection_keys_round_trip() {
+    for source in [r##"#"(?i)a\d""##, r##"'[#"a" #"a"]"##, r##"#{#"a" #"a"}"##, r##"{#"a" 1 #"a" 2}"##] {
+        assert_round_trip(source, Path::new("pattern-source.sus"), &[]);
+    }
+}

@@ -35158,3 +35158,31 @@ bodies. Pinned value controls require retained function/loop literal identity an
 a fresh instance for separately compiled constants. Do not substitute fabricated
 pattern fixtures or a JVM primitive-boxing Checker. Preserve the accepted :suss/
 :default feature contract and the exact workspace/review/final-head CI gates.
+
+
+### Checked Pattern literal/value integration (2026-11-24)
+
+The numeric branch integrates all published eval corrections at3f79ff38. It adds
+checked regex source forms, lossless source tooling with projection-local literal
+identities, sealed immutable nominal Pattern values and private per-compilation
+literal roots. Exact macro-class authority validates transferred source/flags;
+GC, direct scalar eval, closure/loop lifetime and protected core construction use
+ordinary compiled machinery. No matching engine or Java implementation is shipped.
+
+`cargo test -p suss-reader --locked --offline -- --test-threads=2` returns0 for93
+tests in43.28s. A frozen expanded native command for clojure_pattern_literals,
+analyzer_edn, builtin_construction_sealed and builtin_internals_sealed returns0
+for34 tests in503.18s. It includes18 primary value and6 collection controls in both
+phases, independent retained storage checks and21 actual AOT controls, executed
+twice. All before-failures, the verified old tooling source archive and terminal
+receipts remain under results/m12-pattern-values. These focused results do not
+establish complete numeric bodies, workspace, independent review or final-head CI.
+
+Next execute the complete original numeric-dependent eq/not-eq/num bodies.
+Preserve the accepted Suss/default feature contract and unchanged original JVM
+primary/count/opaque rules. A supplemental complete original default-num JVM
+recording has26 assertions:23 pass and three Short/Byte/Integer preservation
+checks fail because JVM num widens those narrow boxes. Suss deliberately has no
+narrow boxed values (ADR-0003); keep these differences explicit, never label them
+host matches or fabricate JVM Checker fixtures. Preserve exact frozen eval
+workspace validation independently of numeric-branch edits.

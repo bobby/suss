@@ -4,7 +4,28 @@
 //! The parser is original Rust. Property/name facts come from the pinned JVM
 //! development oracle; no Java implementation or Java dependency is shipped.
 use std::collections::BTreeSet;
+use std::sync::Arc;
 mod unicode;
+
+/// One read literal site. Cloning a form retains that site's identity; reading
+/// the same text again creates a distinct literal. Addresses are never source
+/// data and must not be used in persistent compiler keys.
+#[derive(Clone, Debug)]
+pub struct PatternLiteral(Arc<PatternSource>);
+impl PatternLiteral {
+    pub fn compile(units: &[u16]) -> Result<Self, Error> {
+        PatternSource::compile(units).map(|source| Self(Arc::new(source)))
+    }
+    pub fn source(&self) -> &PatternSource {
+        &self.0
+    }
+}
+impl PartialEq for PatternLiteral {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+impl Eq for PatternLiteral {}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PatternSource {
@@ -331,7 +352,9 @@ impl Parser<'_> {
                         return Err(self.error("Illegal character range", self.at - 1));
                     }
                     _ => {
-                        return Err(self.error("Illegal character range", self.at.saturating_sub(1)));
+                        return Err(
+                            self.error("Illegal character range", self.at.saturating_sub(1))
+                        );
                     }
                 }
             }

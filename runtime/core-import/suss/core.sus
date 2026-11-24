@@ -10246,6 +10246,24 @@ reduces them without incurring seq initialization"
               (UUID. most least))))))))
 ;; END UUID values and tagged-reader parser
 
+;; BEGIN checked immutable Pattern literals
+;; Original Suss implementation. Checked UTF-16 source and flags arrive only
+;; through compiler-owned literal construction or authenticated macro transfer.
+;; A Pattern is an identity value, not a map/vector source descriptor.
+(deftype Pattern [source flags]
+  Object
+  (toString [this] source)
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (-write writer (str "#\"" source "\""))))
+(def ^:private pattern-from-source (fn [source flags] (Pattern. source flags)))
+;; END checked immutable Pattern literals
+
+
 
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.

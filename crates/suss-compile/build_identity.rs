@@ -20,6 +20,7 @@ fn compiler_identity(root: &std::path::Path) -> String {
     let mut files = vec![
         root.join("Cargo.toml"),
         root.join("Cargo.lock"),
+        root.join("crates/suss-reader/src/pattern/unicode-names.bin"),
         crate_root.join("build.rs"),
         crate_root.join("build_identity.rs"),
         // Executable runtime dependencies are part of the artifact identity,

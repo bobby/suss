@@ -21,6 +21,7 @@ pub(crate) fn normalized_reader_metadata(
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
+    Pattern,
     Uuid,
     Symbol,
     Keyword,
@@ -48,7 +49,8 @@ enum Class {
     PersistentQueue,
 }
 // One enumeration for bridge construction and initial bootstrap authority.
-const SOURCE_CLASSES: [(&str, Class); 25] = [
+const SOURCE_CLASSES: [(&str, Class); 26] = [
+    ("Pattern", Class::Pattern),
     ("UUID", Class::Uuid),
     ("Symbol", Class::Symbol),
     ("Keyword", Class::Keyword),
@@ -924,6 +926,11 @@ impl FormBridge {
                             self.scalar(session, &Literal::Decimal { negative: num_traits::Signed::is_negative(unscaled),
                                 unscaled: unscaled.to_u32_digits().1, scale: *scale })?
                         }
+                        Kind::Pattern(value) => {
+                            let source = self.scalar(session, &Literal::String(value.source().units().to_vec()))?;
+                            let flags = self.scalar(session, &Literal::Long(value.source().flags().into()))?;
+                            self.construct(session, Class::Pattern, &[&source, &flags])?
+                        }
                         Kind::Uuid(value) => {
                             let most = self.scalar(session, &Literal::Long(value.most))?;
                             let least = self.scalar(session, &Literal::Long(value.least))?;
@@ -1475,6 +1482,16 @@ fn decode_datum_inner<T: DatumTarget>(
                 reader_metadata = metadata(store, value, classes, span, depth, budget)?;
             }
             match class {
+                Class::Pattern => {
+                    if data.len() != 2 { return Err(error("Invalid Pattern field layout")); }
+                    let source = text(store, &data[0], budget)?;
+                    let literal = suss_reader::pattern::PatternLiteral::compile(&source)
+                        .map_err(|failure| error(&failure.to_string()))?;
+                    if !matches!(runtime_number(&mut *store, &data[1])?, Some(RuntimeNumber::Long(flags)) if flags == i64::from(literal.source().flags())) {
+                        return Err(error("Invalid Pattern flags"));
+                    }
+                    DecodedKind::Plain(Kind::Pattern(literal))
+                }
                 Class::Uuid => {
                     if data.len() != 2 { return Err(error("Invalid UUID field layout")); }
                     let half = |store: &mut StoreContextMut<'_, ()>, value: &Val| {

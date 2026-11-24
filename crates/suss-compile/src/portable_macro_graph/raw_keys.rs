@@ -45,6 +45,7 @@ impl Plan {
 #[derive(Default)]
 pub(super) struct Interner {
     heads: RawHeads,
+    pattern_sites: Vec<suss_reader::pattern::PatternLiteral>,
     keys: Entries,
     entry_stats: EntryStats,
     profile_calls: u64,
@@ -429,6 +430,7 @@ impl Interner {
                             Kind::Exact(_) => 16,
                             Kind::Long(_) => 17,
                             Kind::Uuid(_) => 18,
+                            Kind::Pattern(_) => 20,
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
@@ -439,6 +441,15 @@ impl Interner {
                             Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
                             Kind::Number(v) => {
                                 append(&mut key, &v.to_bits().to_le_bytes(), charge)?
+                            }
+                            Kind::Pattern(v) => {
+                                charge(self.pattern_sites.len() as u64 + 1)?;
+                                let index = if let Some(index) = self.pattern_sites.iter().position(|site| site == v) { index }
+                                else {
+                                    reserve(&mut self.pattern_sites, 1, charge)?;
+                                    let index = self.pattern_sites.len(); self.pattern_sites.push(v.clone()); index
+                                };
+                                size(&mut key, index, charge)?;
                             }
                             Kind::Uuid(v) => {
                                 append(&mut key, &v.most.to_le_bytes(), charge)?;

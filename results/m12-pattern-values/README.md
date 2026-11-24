@@ -47,3 +47,53 @@ stable across closures, while separate literal sites are distinct. These actual
 observations rule out pooling by pattern text and require care with constant
 collection contexts; they are not native Pattern pass claims. Compiler-data
 identity remains subject to the accepted design's guarantees.
+
+
+## Checked source forms and actual compiled literal values (2026-11-24)
+
+The reader now admits regex tokens through PatternSource, preserving raw UTF-16
+source/backslashes and checking invalid patterns even in discarded or inactive
+branches. Twenty fresh pinned reader controls include quotes, supplementary
+characters, multiline source, metadata rejection and invalid tokens. The initial
+exact regression returns101 for the missing dispatch. The first integration run
+exposes an omitted conditional-selection step in the test adapter; a subsequent
+compile-only lifetime error is retained too. All92 reader tests then return0.
+
+PatternLiteral clones retain a read site's identity; distinct reads differ.
+Source emission uses raw regex tokens where representable and a validated string
+carrier otherwise. A real collection control exposes equal-text Pattern keys
+collapsing in tooling (stable-toolchain build0, actual101; the first non-stable
+compiler attempt fails to build and is not an execution failure). The exact old
+reader source is reconstructed from the retained transformation and verified
+against every recorded failure input hash before archiving. Per-projection
+first-traversal site indices now retain distinct and shared objects without
+addresses. The complete reader command returns0 for93 tests in43.28s, including
+all192 syntax cases and the new collection/source/span round trips.
+
+The compiled pipeline constructs genuine sealed immutable Pattern instances with
+source and flags, identity equality/hash and ordinary Object/printing protocols.
+The HIR hoists each literal into a fresh deterministic private rooted cell for
+that compilation. Original core links protect construction against redefinition.
+Authenticated bootstrap-class macro transfer validates exact source/flag fields;
+direct eval retains the original actual Pattern root. The Unicode binary table
+is now part of both compiler identities, so changes invalidate artifacts.
+
+The generator check returns0. A first native run returns0 for18 literal/value
+controls in each of Runtime and Macro, including post-GC observations. The
+expanded command initially fails to compile two new test borrows; those receipts
+are retained. After fixing them, the unchanged-source expanded command returns0
+in503.18s for34 complete-target tests: analyzer18, sealed construction5, sealed
+internals7 and Pattern4. The Pattern target executes the18 primary value controls
+and all6 collection controls in both phases, independently inspects canonical
+nominal storage/source/Long flags after GC and real Macro transfer, rejects
+private construction/field access, and executes21 pure primary controls in a real
+AOT component twice. The first native target's case repeats within this expanded
+run; it is not an additional unique test.
+
+Commands, terminal exits, frozen HEAD/input hashes and logs are retained as
+compressed receipts. Reader and compiled runs use isolated targets, never the
+active compiled-eval target. No matching API, runtime regex reader, Java Pattern
+interop, full numeric source-body, complete workspace, review or final-head CI
+pass is inferred. The unchanged original suite/primary/skip/count/opaque rules and
+reviewed baseline remain intact at this checkpoint. See
+[original class provenance](../../docs/compatibility/bootstrap/pattern-literals.json).

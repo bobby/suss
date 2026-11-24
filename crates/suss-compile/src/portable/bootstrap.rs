@@ -94,6 +94,7 @@ fn error(message: impl Into<String>) -> Diagnostic {
 /// core macro expansions refer to them from user code, as in ClojureScript;
 /// direct linking already keeps their internal arguments out of user hands.
 const CORE_PRIVATE: &[&str] = &[
+    "pattern-from-source",
     "uuid-text", "uuid-hash-code", "uuid-from-parts", "uuid-read", "reader-uuid", "reader-uuid-tag?",
     "case-hash-code", "case-string-hash-code", "case-symbol-hash-code",
     "array-for", "unchecked-array-for", "unchecked-editable-array-for", "first-array-for-longvec",

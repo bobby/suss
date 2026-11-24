@@ -379,6 +379,7 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                     append(&mut key, &[17], charge)?;
                     append(&mut key, &value.to_le_bytes(), charge)?;
                 }
+                Kind::Pattern(_) => return Err(SessionError::Host(wasmtime::Error::msg("Pattern identity requires the graph-local interner"))),
                 Kind::Uuid(value) => {
                     append(&mut key, &[18], charge)?;
                     append(&mut key, &value.most.to_le_bytes(), charge)?;
@@ -1034,6 +1035,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
                             Kind::Long(v) => Kind::Long(*v),
                             Kind::Exact(v) => Kind::Exact(v.clone()),
                             Kind::Uuid(v) => Kind::Uuid(*v),
+                            Kind::Pattern(v) => Kind::Pattern(v.clone()),
                             Kind::String(v) => Kind::String(v.clone()),
                             Kind::Symbol(v) => Kind::Symbol(v.clone()),
                             Kind::Keyword(v) => Kind::Keyword(v.clone()),
@@ -2606,7 +2608,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
         if source.form.metadata.is_empty()
             && matches!(
                 &source.form.kind,
-                Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::Long(_) | Kind::Uuid(_) | Kind::String(_) | Kind::Keyword(_)
+                Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::Long(_) | Kind::Uuid(_) | Kind::Pattern(_) | Kind::String(_) | Kind::Keyword(_)
             )
         {
             field_push!(self, fields; ("op", self.keyword("const")?));

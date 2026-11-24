@@ -1297,6 +1297,7 @@ struct Analyzer<'a> {
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
     callable_keys: BTreeMap<Global, Hir>,
+    pattern_sites: Vec<(suss_reader::pattern::PatternLiteral, Global)>,
     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
     method_recurrence: Vec<(LoopId, bool)>,
@@ -1369,6 +1370,31 @@ impl Analyzer<'_> {
         }).collect();
         Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(), ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) })
+    }
+    /// Hoist an immutable Pattern to a private rooted cell. Every read site
+    /// owns one object across loops and closures; subsequent compilations use
+    /// fresh deterministic environment cells, never a process address.
+    fn pattern_literal(&mut self, form: &Form, value: &suss_reader::pattern::PatternLiteral) -> Result<Hir, Diagnostic> {
+        self.expander.charge_expansion_work(self.pattern_sites.len() as u64 + 1, form.span.clone())?;
+        let node = |kind| Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+            kind: std::sync::Arc::new(kind) };
+        if let Some((_, cell)) = self.pattern_sites.iter().find(|(site, _)| site == value) {
+            return Ok(node(Expression::Global(cell.clone())));
+        }
+        let binding = self.environment.resolve(self.phase,
+            &suss_reader::Symbol::namespaced("suss.core", "pattern-from-source"), form.span.clone())?;
+        let helper = self.environment.existing_core_link(binding.global())
+            .ok_or_else(|| fail(form.span.clone(), "Pattern literal requires shipped core"))?;
+        let arguments = vec![self.literal_form(form, Literal::String(value.source().units().to_vec())),
+            self.literal_form(form, Literal::Long(i64::from(value.source().flags())))];
+        let construction = node(Expression::Call { callee: Box::new(node(Expression::Global(helper))), arguments });
+        let cell = self.environment.constant_cell(self.phase);
+        self.pattern_sites.push((value.clone(), cell.clone()));
+        let initialize = node(Expression::Definition { result: None, constant: None, global: cell.clone(),
+            name_metadata: vec![], name_span: form.span.clone(), docstring: None,
+            initializer: Some(Box::new(construction)), once: true, linked: None });
+        self.callable_keys.insert(cell.clone(), initialize);
+        Ok(node(Expression::Global(cell)))
     }
     /// Exact literals retain their integer fields and Decimal's signed scale.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
@@ -1790,6 +1816,7 @@ impl Analyzer<'_> {
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
             Kind::Long(value) => Expression::Literal(Literal::Long(*value)),
             Kind::Uuid(value) => return self.uuid_literal(form, *value),
+            Kind::Pattern(value) => return self.pattern_literal(form, value),
             Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
@@ -4828,6 +4855,7 @@ pub(crate) fn prepare_with_origin(
         source_callables: Vec::new(),
         source_nodes: Vec::new(),
         callable_keys: BTreeMap::new(),
+        pattern_sites: Vec::new(),
         catch_aliases: Vec::new(),
         target: None,
         method_recurrence: Vec::new(),

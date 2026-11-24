@@ -50,6 +50,7 @@ pub(crate) fn resolve_auto_keywords(
             | Kind::Number(_)
             | Kind::Long(_)
             | Kind::Uuid(_)
+                | Kind::Pattern(_)
                 | Kind::Exact(_)
             | Kind::String(_)
             | Kind::Symbol(_)

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "distinct-set-literals",
+    "expression": "(count #{#\"a\" #\"a\"})",
+    "observed_edn": "2"
+  },
+  {
+    "name": "distinct-map-literals",
+    "expression": "(count {#\"a\" 1 #\"a\" 2})",
+    "observed_edn": "2"
+  },
+  {
+    "name": "same-set-object",
+    "expression": "(let [r #\"a\"] (count (hash-set r r)))",
+    "observed_edn": "1"
+  },
+  {
+    "name": "same-map-object",
+    "expression": "(let [r #\"a\"] (get (hash-map r 1 r 2) r))",
+    "observed_edn": "2"
+  },
+  {
+    "name": "set-source-print",
+    "expression": "(pr-str #{#\"a\" #\"a\"})",
+    "observed_edn": "\"#{#\\\"a\\\" #\\\"a\\\"}\""
+  },
+  {
+    "name": "map-source-values",
+    "expression": "(sort (vals {#\"a\" 1 #\"a\" 2}))",
+    "observed_edn": "(1 2)"
+  }
+]
