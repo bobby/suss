@@ -1295,6 +1295,8 @@ struct Analyzer<'a> {
     /// fields by name.
     field_owner: Option<BindingId>,
     function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
+    native_function_pools: Vec<u64>,
+    native_pool_initializers: Vec<BTreeMap<Global, Hir>>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -2701,7 +2703,14 @@ impl Analyzer<'_> {
         // must not change an initializer function's return behavior.
         let return_hint = primitive_tag_key(form, "rettag")?;
         let outer_return_hint = std::mem::replace(&mut self.pending_return_hint, return_hint);
-        let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        let native = self.origin.as_ref().is_some_and(|origin| origin.native_owner().is_some());
+        if native { let pool=self.environment.native_function_pool(); self.native_function_pools.push(pool); self.native_pool_initializers.push(BTreeMap::new()); }
+        let mut result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        if native {
+            self.native_function_pools.pop();
+            let initializers=self.native_pool_initializers.pop().unwrap();
+            result=result.map(|value| Self::initialize_native_pool(value,initializers));
+        }
         self.pending_return_hint = outer_return_hint;
         self.pending_param_hints = outer_hints;
         self.suspendable = suspendable;
@@ -4856,6 +4865,8 @@ pub(crate) fn prepare_with_origin(
         type_body_fields: Vec::new(),
         field_owner: None,
         function_scopes: Vec::new().into(),
+        native_function_pools: Vec::new(),
+        native_pool_initializers: Vec::new(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
@@ -4873,6 +4884,11 @@ pub(crate) fn prepare_with_origin(
         method_recurrence: Vec::new(),
         primitive_methods: HashMap::new(),
     };
+    if origin.is_some_and(|origin| origin.native_owner().is_some()) {
+        let pool=analyzer.environment.native_function_pool();
+        analyzer.native_function_pools.push(pool);
+        analyzer.native_pool_initializers.push(BTreeMap::new());
+    }
     // The frame's own forms take the fragment's extent, not the source's, so
     // a fragment's IR and cache key do not change with the rest of its file.
     let extent = match (forms.first(), forms.last()) {
@@ -4887,6 +4903,9 @@ pub(crate) fn prepare_with_origin(
         super::analysis_record::analyzed_forms(origin, items);
     }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
+    if let Some(initializers)=analyzer.native_pool_initializers.pop() {
+        hir=Analyzer::initialize_native_pool(hir,initializers);
+    }
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

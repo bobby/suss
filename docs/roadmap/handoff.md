@@ -35430,3 +35430,123 @@ checks the exact previous/primary/baseline hashes and never writes a baseline.
 Its per-row5369 host-compatible decisions are not the old global5354 count:
 existing count guards also affect the global classification. Scope and evidence
 review of these newly visible differences is required before any baseline change.
+
+### Eval validation at the frozen scalar/class correction (2026-11-24)
+
+At3f79ff38 the exact baseline `cargo test --workspace --locked --
+--test-threads=2` returns0 in14,291.917s. The durable scope terminates normally;
+all recorded inputs and checked-out HEAD remain unchanged. Compressed full log
+and source receipt are retained under
+`results/m12-eval/full-workspace-after-scalar-and-class-root-corrections`.
+
+The preceding seven-command broader gate also returns0, including public eval,
+existing hosts, numeric/module/artifact/budget guards, the optimized random
+effect check, Java/Node-free double-bootstrap reproduction, fresh actual native
+suite capture and unchanged strict capture review. Complete eval retains34 rows:
+29 host matches and the same five guest judgments at ordinals15-19; all three
+numeric eval rows match independently. Symbol61 and Var34 retain their exact
+counts/judgments. All5,346 prior comparable successes are conserved; no baseline,
+primary, skip/count/opaque rule or original suite bytes change. Numeric tagged
+subsets match229/229 and200/200; full #338/#339 source-form acceptance remains a
+separate requirement.
+
+Remote foundation, all eight integration shards and aggregate pass on3f79ff38
+in run45411802198. The primary verifier passes again after the workspace terminal.
+The live-Var verifier first detects three stale source digests from the scalar/
+class corrections. Refreshing only those digests makes it pass; upstream, primary,
+adaptation, verifier and frozen native receipts are unchanged. The old record and
+actual before/after exits are kept under provenance-refresh-after-scalar-class-roots.
+Independent review and passing CI on the final published head still gate ready
+status. No merge is authorized.
+
+
+### Independent eval promotion review regressions (2026-11-24)
+
+Independent review at a881b165 records three concrete primary/native differences:
+embedded capture-free functions need fresh instances while captured functions
+fail constant initialization before their evaluated unit body; isolated macro
+expansion/raw calls need the caller's math context; directly invoked evaluated
+macros must preserve transferable ExceptionInfo message/data. Existing top-level
+function eval identity remains true. Captured-function failure is materialization
+(ExceptionInInitializerError on JVM), not a compile-syntax error.
+
+Fresh pinned source, actual stdout/exit/hash records and reviewer findings are
+retained under results/m12-eval/promotion-review-findings. New independent
+Runtime/Macro regressions retain all6 function,2 exception and3 math controls.
+Before implementation changes the native command returns101 in16.285s: all three
+new tests fail; two existing primary boundary tests pass. Source/HEAD unchanged.
+The prior complete workspace result remains valid evidence for its frozen source,
+but does not cover these controls. CI45460496718 is canceled for these confirmed
+defects, not a budget refusal. Keep the same draft PR; fix, validate, independently
+review and require passing final-head CI before ready status.
+
+
+### Isolated eval MathContext inheritance and restoration (2026-11-24)
+
+The first correction transfers only validated precision/rounding scalars between
+Stores, preserving nil separately from an unlimited MathContext. The leased Macro
+host binds its own real *math-context* cell in a scoped dynamic frame. Preparation,
+evaluated macro declaration and raw invocation receive the actual caller context;
+restoration covers ordinary errors and uncatchable traps without refilling caller
+fuel. No MathContext object, Store pointer or frame crosses phase ownership.
+
+The first frozen gate returns0 for source check and the original3 primary controls
+in Runtime/Macro. A separate8-control primary records function constant alias/unit
+boundaries and three context rounding/nil/error-recovery controls. The subsequent
+frozen gate returns0 for both context tests, existing public eval budget/capability/
+cancellation controls, isolated-function cumulative budget and cancellation
+recovery. Its final command deliberately runs the still-unfixed five function
+constant/unit controls and returns101. This mixed-result batch is not all-pass
+evidence. All source/HEAD hashes remain unchanged; exact receipts are retained.
+
+The context values match the primary across rounding modes, nil/unlimited context
+and a throwing macro call. Function constant materialization and ExceptionInfo
+transfer remain separate review fixes, followed by fresh whole validation/review/
+final-head CI. Keep the same draft PR and do not merge.
+
+
+### Owned language-exception transfer across evaluated macro calls (2026-11-24)
+
+An isolated language exception now transfers owned message/data/cause Forms,
+using actual original accessor functions retained by the Macro bridge. It never
+transfers a source Store GC root. The caller reconstructs actual local Error or
+ExceptionInfo values, using its original ex-info constructor captured before user
+source exposure. Exact numeric data and UTF-16 messages retain their categories
+and scale. VM traps retain their trap path. Unsupported data transfer reports
+its actual diagnostic; causes are bounded to256 levels and ordinary work fuel.
+
+The first frozen correction gate returns0 for source check, both original
+ExceptionInfo observations in Runtime/Macro, and both math-context/restoration
+tests. Three additional pinned controls cover Decimal1.00M/Ratio2/3 data through
+a nested cause, ordinary division-error message/nil data, and nil ExceptionInfo
+message/empty data. Their native Runtime/Macro test passes, as do the original
+error controls and cumulative isolated-function budget check. Exact per-command
+receipts are retained; source/HEAD remain unchanged through each terminal.
+
+The final command deliberately checks the remaining function materialization
+problem and returns101. Its new3-control primary includes top-level metadata
+function identity, earlier top-level-do effects before nested metadata-function
+materialization failure, and existing captured-function top-level identity.
+No all-pass batch or completed eval issue is inferred. Function materialization,
+full validation, independent re-review and final-head CI still gate promotion.
+
+The function-constant review fix uses compiler-emitted calls through the existing
+universal closure ABI to initialize each original source function's constant
+pool at construction. Private site identities survive inlining and are shared
+across arities; direct C.EVAL def-prefix forms retain actual roots. The retained
+first eager-pool timing run exits101; the construction-time refinement passes
+all five context/pool, six original function and three timing primary controls
+in both phases. See `results/m12-eval/function-{def-and-pool,pool-initialization}-primary`
+and compressed receipts/source overlays under the `promotion-review-function-*`
+directories. No primary, baseline, count, skip or opaque rules change.
+
+Run `cargo test -p suss-cli --locked --offline --test clojure_eval -- --nocapture
+--test-threads=2`: all38 tests pass, actual0 in298.55s including compilation.
+Run `cargo test -p suss-compile --locked --offline --lib
+portable_session::installation::tests -- --nocapture --test-threads=2`: all3
+pass, actual0 in150.06s. Both commands finish with source and HEAD unchanged in
+`promotion-review-function-construction-complete-eval`. Provenance digests are
+refreshed separately under `provenance-refresh-after-review-fixes`, preserving
+upstream, adaptation, primary and historical frozen receipts. Broader compiler,
+complete native suite/capture and exact workspace validation must be rerun after
+these code changes; the earlier 3f79 workspace result is historical evidence.

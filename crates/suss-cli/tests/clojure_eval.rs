@@ -1290,3 +1290,122 @@ fn eval_retains_actual_class_values_in_generated_numeric_forms() {
     let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
     assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary);
 }
+
+
+fn promotion_review_controls(name: &str, source: &str, primary: &str, count: usize) {
+    let forms = suss_reader::forms::read_forms(primary.trim()).unwrap();
+    assert_eq!(forms.len(), 1);
+    let Kind::Vector(rows) = &forms[0].kind else { panic!("primary must retain all ordered controls") };
+    assert_eq!(rows.len(), count);
+    let wanted = canonical(expected(&forms[0]));
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        let source = source.replace("(catch Throwable ", "(catch :default ");
+        match session.eval_with_macros(&source, &mut macros) {
+            Ok(value) => {
+                session.collect().unwrap();
+                let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                if actual != wanted { failures.push(format!("{name} {phase:?}: expected {wanted:?}, actual {actual:?}")); }
+            }
+            Err(error) => failures.push(format!("{name} {phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn eval_function_constant_materialization_preserves_primary_identity_and_errors() {
+    promotion_review_controls("function-constants",
+        include_str!("../../../results/m12-eval/promotion-review-findings/function-constants/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/function-constants/primary.stdout"), 6);
+}
+
+#[test]
+fn evaluated_macro_language_exceptions_preserve_primary_message_and_data() {
+    promotion_review_controls("macro-exception-data",
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-exception-data/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-exception-data/primary.stdout"), 2);
+}
+
+#[test]
+fn evaluated_macro_calls_inherit_the_primary_caller_math_context() {
+    promotion_review_controls("macro-math-context",
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/primary.stdout"), 3);
+}
+
+
+fn supplemental_materialization_context_controls(start: usize, end: usize) {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/materialization-and-context-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 8);
+    let stdout = include_str!("../../../results/m12-eval/materialization-and-context-primary/stdout.log");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let source = format!("[{}]", rows[start..end].iter().map(|row| row["expression"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    let primary = format!("[{}]", rows[start..end].iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    promotion_review_controls("supplemental-materialization-context", &source, &primary, end-start);
+}
+
+#[test]
+fn eval_math_context_scopes_preserve_rounding_nil_and_exception_restoration() {
+    supplemental_materialization_context_controls(5, 8);
+}
+
+#[test]
+fn eval_function_constant_initialization_preserves_unit_effects_and_aliases() {
+    supplemental_materialization_context_controls(0, 5);
+}
+
+
+fn independent_exception_function_primary(rows: &str, stdout: &str, name: &str) {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(rows).unwrap();
+    assert_eq!(rows.len(), 3);
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    // Each primary expression returns normally. An outer owned catch makes
+    // unexpected native errors visible without preventing later controls.
+    let source = format!("[{}]", rows.iter().map(|row| format!("(try {} (catch :default unexpected :unexpected-native-error))", row["expression"].as_str().unwrap())).collect::<Vec<_>>().join(" "));
+    let primary = format!("[{}]", rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    promotion_review_controls(name, &source, &primary, 3);
+}
+
+#[test]
+fn evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/exception-transfer-primary/cases.json"),
+        include_str!("../../../results/m12-eval/exception-transfer-primary/stdout.log"), "exception-extra-primary");
+}
+
+#[test]
+fn eval_metadata_functions_preserve_top_roots_and_nested_unit_boundaries() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/function-metadata-primary/cases.json"),
+        include_str!("../../../results/m12-eval/function-metadata-primary/stdout.log"), "metadata-function-primary");
+}
+
+
+#[test]
+fn eval_function_pool_context_preserves_direct_def_and_distinct_nested_pools() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/function-def-and-pool-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 5);
+    let stdout = include_str!("../../../results/m12-eval/function-def-and-pool-primary/stdout.log");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    let adapters: Vec<serde_json::Value> = serde_json::from_str(include_str!("../../../results/m12-eval/function-def-and-pool-primary/native-adapter.json")).unwrap();
+    assert_eq!(adapters.len(), 5);
+    for (row, adapter) in rows.iter().zip(&adapters) { assert_eq!(row["name"], adapter["name"]); assert_eq!(row["observed_edn"], adapter["observed_edn"]); }
+    let source = format!("[{}]", adapters.iter().map(|row| format!("(try {} (catch :default unexpected :unexpected-native-error))", row["native_expression"].as_str().unwrap())).collect::<Vec<_>>().join(" "));
+    assert_eq!(include_str!("../../../results/m12-eval/function-def-and-pool-primary/adapted-stdout.log"), stdout);
+    promotion_review_controls("function-def-context-and-pools", &source, &primary, 5);
+}
+
+
+#[test]
+fn eval_function_pool_initialization_preserves_construction_effects_and_arity_sharing() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/function-pool-initialization-primary/cases.json"),
+        include_str!("../../../results/m12-eval/function-pool-initialization-primary/stdout.log"), "function-pool-construction-primary");
+}

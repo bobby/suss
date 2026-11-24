@@ -6,6 +6,7 @@ pub(super) struct CompilerState {
     pub environment: Environment,
     pub cells: Arc<BTreeMap<CellIdentity, Global>>,
     pub linker: Linker<()>,
+    pub native_function_cells: Arc<BTreeMap<String, Global>>,
     pub provided: BTreeSet<ModuleIdentity>,
     pub resident: Vec<Instance>,
     pub artifact_bytes: usize,
@@ -26,10 +27,11 @@ pub(super) fn install(
     environment: Environment,
     cells: &[CellIdentity],
     interrupt: &AtomicBool,
+    evaluation: Option<&Arc<evaluation::Evaluation>>,
 ) -> Result<Vec<Instance>, SessionError> {
-    let (linker, known_cells) = {
+    let (linker, known_cells, native_function_cells) = {
         let state = registry_lock(shared);
-        (state.linker.clone(), state.cells.clone())
+        (state.linker.clone(), state.cells.clone(), state.native_function_cells.clone())
     };
     let installed = installation::install(
         store,
@@ -38,9 +40,11 @@ pub(super) fn install(
         phase,
         &linker,
         &known_cells,
+        &native_function_cells,
         bytes,
         cells,
         interrupt,
+        evaluation,
     )?;
     drop(known_cells);
     let mut state = registry_lock(shared);

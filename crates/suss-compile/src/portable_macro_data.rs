@@ -7,6 +7,8 @@ use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
 mod borrowed_reader;
+mod exception;
+pub(crate) use exception::TransferredException;
 
 pub(crate) fn normalized_reader_metadata(
     session: &mut SessionHost<'_>,
@@ -325,6 +327,9 @@ impl FormBridge {
         for (name, source) in [
             ("hash", "suss.core/hash"),
             ("key-test", "suss.core/key-test"),
+            ("exception-message", "suss.core/ex-message"),
+            ("exception-data", "suss.core/ex-data"),
+            ("exception-cause", "suss.core/ex-cause"),
             // Empty literals lower to core's own EMPTY values; class
             // properties of built-in types are private to suss.core.
             ("empty-map", "{}"),
@@ -1042,16 +1047,17 @@ impl FormBridge {
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
         span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
         class_test: wasmtime::Func, instance_test: wasmtime::Func, var_class: wasmtime::OwnedRooted<AnyRef>,
+        meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, var_class, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, var_class, meta_fn_class, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native))?;
-        for (index, value) in constants { session.retain_native_constant(index, value)?; }
+        for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
     }
     fn read_with_context(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
         span: Range<usize>, include_metadata: bool, native: Option<NativeRead>,
-    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>)>), SessionError> {
+    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         self.check(session)?;
         session.with_operation_budget(|session| {
             let interrupt = session.host_work_interrupt();
@@ -1237,27 +1243,49 @@ struct NativeRead {
     class_test: wasmtime::Func,
     instance_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
-    constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>)>,
+    meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
 }
 static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 impl NativeRead {
-    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<Kind>> {
+    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val, depth: usize,
+        interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Kind>> {
         let mut result = [Val::I32(0)];
-        self.closure_test.call(&mut *store, &[*value], &mut result)?;
-        if result[0].unwrap_i32() == 0 {
-            self.class_test.call(&mut *store, &[*value], &mut result)?;
+        // Class constructors are represented by closures too. Class identity
+        // must win before deciding whether to materialize a function constant.
+        self.class_test.call(&mut *store, &[*value], &mut result)?;
+        let class = result[0].unwrap_i32() != 0;
+        let mut function = false;
+        if !class {
+            self.closure_test.call(&mut *store, &[*value], &mut result)?;
+            function = result[0].unwrap_i32() != 0;
+            if !function {
+                let class = Val::AnyRef(Some(self.meta_fn_class.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
+                function = result[0].unwrap_i32() != 0;
+            }
         }
-        if result[0].unwrap_i32() == 0 {
+        if !class && !function {
             let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
             self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
             if result[0].unwrap_i32() == 0 { return Ok(None); }
+        }
+        let materialize = function && depth != 0;
+        let root = reference(value)?;
+        // Clojure's constant pool preserves repeated source object aliases.
+        // Compare actual roots and meter comparisons; no pointer is serialized.
+        for (index, previous, mode) in &self.constants {
+            Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            let previous = previous.to_rooted(&mut *store);
+            if *mode == materialize && wasmtime::Rooted::<AnyRef>::ref_eq(&*store, root, &previous)? {
+                return Ok(Some(Kind::NativeConstant { owner: self.owner, index: *index }));
+            }
         }
         let index = NEXT_NATIVE_CONSTANT.fetch_update(
             std::sync::atomic::Ordering::Relaxed, std::sync::atomic::Ordering::Relaxed,
             |index| index.checked_add(1),
         ).map_err(|_| error("Native constant identity exhausted"))?;
-        let root = reference(value)?.to_owned_rooted(&mut *store)?;
-        self.constants.push((index, root));
+        self.constants.push((index, root.to_owned_rooted(&mut *store)?, materialize));
         Ok(Some(Kind::NativeConstant { owner: self.owner, index }))
     }
 }
@@ -1378,7 +1406,7 @@ fn decode_datum_inner<T: DatumTarget>(
 ) -> wasmtime::Result<T> {
     spend(store, budget)?;
     if let Some(native) = &mut budget.native {
-        if let Some(kind) = native.constant(store, value)? {
+        if let Some(kind) = native.constant(store, value, depth, &budget.interrupt)? {
             return Ok(T::plain(Form { span: span.clone(), metadata: vec![], kind }));
         }
     }

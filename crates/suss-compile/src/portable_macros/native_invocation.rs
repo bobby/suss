@@ -58,16 +58,15 @@ impl Drop for InterruptRelay {
 }
 
 fn transferable_error(host: &mut MacroHost<'static>, error: SessionError) -> SessionError {
-    // A language exception owns a root in this Macro Store. Preserve its actual
-    // display as a new caller-side Error instead of sending that root across
-    // Stores. VM traps remain traps and never carry a portable payload.
-    if matches!(error, SessionError::Language(_)) {
-        SessionError::Host(wasmtime::Error::msg(crate::portable_repl::error_display(
-            &mut host.session,
-            &error,
-        )))
-    } else {
-        error
+    let SessionError::Language(value) = error else { return error };
+    match host.bridge.transfer_exception(&mut host.session, &value) {
+        Ok(payload) => SessionError::Host(wasmtime::Error::new(payload)),
+        // A failure while transporting the owned payload must also remain in
+        // its source Store. Preserve an honest diagnostic, never a foreign root.
+        Err(error) if matches!(error, SessionError::Language(_)) => SessionError::Host(
+            wasmtime::Error::msg(format!("Cannot transfer macro exception: {}",
+                crate::portable_repl::error_display(&mut host.session, &error)))),
+        Err(error) => error,
     }
 }
 
@@ -81,12 +80,13 @@ impl MacroService {
         form: Form,
         namespace: &str,
         fuel: u64,
+        context: Option<(i32, i32)>,
         interrupt: Arc<AtomicBool>,
         prepare_caller: impl FnOnce(Form, Form, Vec<String>, u64) -> Result<(T, u64), SessionError>,
     ) -> Result<(Result<(T, SessionValue), SessionError>, u64), SessionError> {
         let mut lease = self.lease();
         let allowance = lease.limit_fuel(fuel);
-        let host = lease.host();
+        lease.with_math_context(context, |host| {
         let _budget = host.session.operation_budget_scope()?;
         let _relay = InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
         let original = host.session.current_namespace().to_owned();
@@ -145,6 +145,7 @@ impl MacroService {
             .map_err(|error| transferable_error(host, error));
         host.enter_namespace(&original)?;
         Ok((committed, spent))
+        })
     }
 
     pub(crate) fn invoke_root(
@@ -153,11 +154,12 @@ impl MacroService {
         namespace: &str,
         arguments: Vec<Form>,
         fuel: u64,
+        context: Option<(i32, i32)>,
         interrupt: Arc<AtomicBool>,
     ) -> Result<(Result<Form, SessionError>, u64), SessionError> {
         let mut lease = self.lease();
         let allowance = lease.limit_fuel(fuel);
-        let host = lease.host();
+        lease.with_math_context(context, |host| {
         let _budget = host.session.operation_budget_scope()?;
         let _relay = InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
         let result = (|| {
@@ -173,6 +175,7 @@ impl MacroService {
         .map_err(|error| transferable_error(host, error));
         let spent = allowance.saturating_sub(host.session.operation_fuel_remaining()?);
         Ok((result, spent))
+        })
     }
 }
 
@@ -219,7 +222,7 @@ mod tests {
         let interrupt = macros.interrupt_handle();
         let form = suss_reader::forms::read_forms("(defmacro cancelled-declaration [] 42)").unwrap().pop().unwrap();
         let result = service.declare_evaluation(
-            form, "cancelled-namespace", 400_000_000,
+            form, "cancelled-namespace", 400_000_000, None,
             Arc::new(AtomicBool::new(false)),
             move |_, _, _, _| {
                 // Cancel after preparation, precisely at the cap before commit.

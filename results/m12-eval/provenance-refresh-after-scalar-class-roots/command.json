@@ -1,0 +1,12 @@
+{
+  "head": "3f79ff3873ad1f21f0ec3d4787b384eeb4156b91",
+  "before_exit_code": 1,
+  "after_exit_code": 0,
+  "changed_source_paths": [
+    "crates/suss-compile/src/portable_session/evaluation.rs",
+    "crates/suss-cli/tests/clojure_eval.rs",
+    "crates/suss-compile/src/portable_macro_data.rs"
+  ],
+  "semantic_provenance_unchanged": true,
+  "reason": "Refresh three current-source digests after separately validated scalar and class-root corrections. Upstream adaptation, actual primary, verifier and native frozen receipts are unchanged."
+}

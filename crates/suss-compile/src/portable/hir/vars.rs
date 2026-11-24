@@ -20,7 +20,19 @@ impl Analyzer<'_> {
                 "Native constant belongs to another compilation owner",
             ));
         }
-        let cell = self.environment.native_constant(self.phase, owner, index);
+        let direct = self.origin.as_ref().is_some_and(|origin| origin.native_direct_constants())
+            && self.native_function_pools.len()==1;
+        let cell = if direct { self.environment.native_value(self.phase,owner,index) } else {
+            let pool=*self.native_function_pools.last().ok_or_else(|| fail(form.span.clone(),"Missing native function constant pool"))?;
+            let site=self.environment.native_function_site(self.phase,owner,index,pool);
+            let initializer=self.environment.native_function_initializer(&site);
+            let callee=Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Global(initializer)) };
+            self.native_pool_initializers.last_mut().unwrap().entry(site.clone()).or_insert_with(|| Hir {
+                source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Call {callee: Box::new(callee), arguments: vec![]}) });
+            site
+        };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
@@ -28,6 +40,13 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Global(cell)),
         })
+    }
+
+    pub(super) fn initialize_native_pool(value: Hir, initializers: BTreeMap<Global,Hir>) -> Hir {
+        if initializers.is_empty() { return value; }
+        let mut items=initializers.into_values().collect::<Vec<_>>();
+        Hir { source: value.source.clone(), span: value.span.clone(), metadata: value.metadata.clone(), ty: value.ty,
+            kind: std::sync::Arc::new(Expression::Do({items.push(value);items})) }
     }
 
     fn var_core_call(

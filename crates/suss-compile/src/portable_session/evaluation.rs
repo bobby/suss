@@ -8,6 +8,8 @@ use crate::{
 };
 
 mod macro_function;
+pub(super) mod function_pool;
+mod math_context;
 
 #[derive(Default)]
 pub(super) struct Evaluation {
@@ -19,7 +21,9 @@ pub(super) struct Evaluation {
     input_base: Mutex<Option<OwnedRooted<AnyRef>>>,
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
 #[derive(Clone)]
@@ -273,7 +277,8 @@ impl Evaluation {
         // Preserve its caller-owned root rather than reconstructing equal data.
         if matches!(
             &form.kind,
-            suss_reader::forms::Kind::Nil
+            suss_reader::forms::Kind::NativeConstant { .. }
+                | suss_reader::forms::Kind::Nil
                 | suss_reader::forms::Kind::Bool(_)
                 | suss_reader::forms::Kind::Long(_)
                 | suss_reader::forms::Kind::Number(_)
@@ -316,7 +321,7 @@ impl Evaluation {
             let publish_namespace = view.evaluation_updates_input_namespace()?;
             let allowance = view.operation_fuel_remaining()?;
             let (prepared, spent) =
-                service.prepare_evaluation(&snapshot, form, allowance, view.interrupt.clone())?;
+                service.prepare_evaluation(&snapshot, form, allowance, view.evaluation_math_context()?, view.interrupt.clone())?;
             // Release the isolated Macro lease before executing Runtime code.
             // Compilation and macro execution debit the caller cumulatively.
             view.charge_host_work(spent)?;
@@ -595,6 +600,16 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
+        let cell = self.core_cell("MetaFn")?;
+        let value = {
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        let descriptor = self.data_descriptor(&value, true)?;
+        *registry_lock(&state.meta_fn_class) = Some(descriptor.object()?.clone());
+
         // Retain core's original get function. The generic native invocation
         // ABI takes callable functions; keyword application is compiler lowering.
         let cell = self.core_cell("get")?;
@@ -612,6 +627,17 @@ impl SessionHost<'_> {
             )?
         };
         *registry_lock(&state.metadata_lookup) = Some(value.object()?.clone());
+        // Capture the original constructor before exposing this Session to user
+        // source; restoring an exception must not consult a rebound ex-info.
+        let cell = self.core_cell("ex-info")?;
+        let value = {
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        *registry_lock(&state.exception_info) = Some(value.object()?.clone());
+
         let runtime = self.runtime;
         let signature = runtime
             .get_func(&mut self.store, "evaluate-form")
@@ -651,6 +677,20 @@ impl SessionHost<'_> {
     fn throw_evaluation_error<T>(&mut self, error: SessionError) -> wasmtime::Result<T> {
         let payload = match error {
             SessionError::Language(value) => value,
+            SessionError::Host(error) if error.is::<crate::portable_macro_data::TransferredException>() => {
+                let state = self.evaluation.clone()
+                    .ok_or_else(|| wasmtime::Error::msg("Missing exception restoration authority"))?;
+                let bridge = state.bridge(self).map_err(native_error)?;
+                let constructor = registry_lock(&state.exception_info).clone()
+                    .ok_or_else(|| wasmtime::Error::msg("Missing original exception constructor"))?;
+                let factory = {
+                    let mut roots = RootScope::new(&mut self.store);
+                    let value = Val::AnyRef(Some(constructor.to_rooted(&mut roots)));
+                    own(&mut roots, value, self.identity, &self.handles).map_err(native_error)?
+                };
+                error.downcast_ref::<crate::portable_macro_data::TransferredException>().unwrap()
+                    .restore(&bridge, self, &factory).map_err(native_error)?
+            }
             error => {
                 let text = error.to_string();
                 let units = text.encode_utf16().collect::<Vec<_>>();
@@ -737,6 +777,8 @@ impl SessionHost<'_> {
         let var_class = registry_lock(&evaluation.var_class)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        let meta_fn_class = registry_lock(&evaluation.meta_fn_class).clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native metadata-function authority"))?;
         bridge.read_evaluation(
             self,
             value,
@@ -746,12 +788,14 @@ impl SessionHost<'_> {
             class_test,
             instance_test,
             var_class,
+            meta_fn_class,
         )
     }
     pub(crate) fn retain_native_constant(
         &mut self,
         index: u64,
         value: OwnedRooted<AnyRef>,
+        materialize_function: bool,
     ) -> Result<(), SessionError> {
         self.charge_host_work(1)?;
         let identity = CellIdentity::native_constant(self.phase, self.identity, index);
@@ -786,6 +830,12 @@ impl SessionHost<'_> {
             &identity.import_name(),
             global,
         )?;
+        if materialize_function {
+            Arc::make_mut(&mut state.native_function_cells).insert(identity.import_name(), global);
+        }
+        let literal=CellIdentity::native_value(self.phase,self.identity,index);
+        state.linker.define(&self.store,literal.import_module(),&literal.import_name(),global)?;
+        Arc::make_mut(&mut state.cells).insert(literal,global);
         Arc::make_mut(&mut state.cells).insert(identity, global);
         Ok(())
     }

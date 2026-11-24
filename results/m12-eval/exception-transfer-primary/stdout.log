@@ -1,0 +1,3 @@
+["outer" {:decimal 1.00M} "inner" {:ratio 2/3}]
+["Divide by zero" nil]
+[nil {}]

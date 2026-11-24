@@ -1,0 +1,6 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (let [x 1 f (fn [] x)] (try (eval (list 'def 'review-new-stable-function f)) (catch Throwable e nil)) [(var? (resolve 'review-new-stable-function)) (bound? (resolve 'review-new-stable-function)) (identical? f (var-get (resolve 'review-new-stable-function))) ((var-get (resolve 'review-new-stable-function)))]))
+(prn (do (def review-old-stable-function 42) (let [x 1 f (fn [] x)] (try (eval (list 'def 'review-old-stable-function f)) (catch Throwable e nil)) [(identical? f review-old-stable-function) (if (fn? review-old-stable-function) (review-old-stable-function) :not-function)])))
+(prn (do (def ^{:doc "old"} review-stable-function-doc 42) (let [x 1 f (fn [] x)] (try (eval (list 'def (with-meta 'review-stable-function-doc {:doc "new"}) f)) (catch Throwable e nil)) [(identical? f review-stable-function-doc) (:doc (meta (var review-stable-function-doc)))])))
+(prn (let [f (fn [n] n) gs (eval (list 'vector (list 'fn [] (list 'quote f)) (list 'fn [] (list 'quote f)))) a ((first gs)) b ((second gs))] [(identical? f a) (identical? a b) (a 42) (b 43)]))
+(prn (do (defn define-review-identity [x] x) (let [f (fn [n] n)] (identical? f (eval (list 'define-review-identity f))))))

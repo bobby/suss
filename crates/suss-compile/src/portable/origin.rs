@@ -19,6 +19,7 @@ pub struct SourceOrigin {
     // boundary schemas) may touch built-in type internals; user source may not.
     privileged: bool,
     native_owner: Option<u64>,
+    native_direct_constants: bool,
     macro_definition: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,6 +81,7 @@ impl SourceOrigin {
             reader_forms: None,
             privileged: false,
             native_owner: None,
+            native_direct_constants: false,
             macro_definition: false,
         }
     }
@@ -87,6 +89,11 @@ impl SourceOrigin {
         Self { native_owner: Some(owner), ..Self::new("", None) }
     }
     pub(crate) fn native_owner(&self) -> Option<u64> { self.native_owner }
+    pub(crate) fn with_native_direct_constants(&self, direct: bool) -> Self {
+        Self { native_direct_constants: direct, ..self.clone() }
+    }
+    pub(crate) fn native_direct_constants(&self) -> bool { self.native_direct_constants }
+
     pub(crate) fn for_macro_definition(&self, native_owner: u64) -> Self {
         Self { macro_definition: true,
             native_owner: self.native_owner.map(|_| native_owner), ..self.clone() }
@@ -108,6 +115,7 @@ impl SourceOrigin {
     pub(crate) fn same_input(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.text, &other.text) && self.path == other.path && self.privileged == other.privileged
             && self.native_owner == other.native_owner && self.macro_definition == other.macro_definition
+            && self.native_direct_constants == other.native_direct_constants
     }
     pub fn path(&self) -> Option<&Path> {
         self.path.as_deref()

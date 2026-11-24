@@ -1,0 +1,31 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(assert (= \"1.12.6\" (clojure-version))) [(with-precision 3 (eval '(/ 1M 3M))) (do (eval '(defmacro third-decimal [] (/ 1M 3M))) (with-precision 3 (try (eval '(third-decimal)) (catch Throwable e :error)))) (let [v (eval '(defmacro raw-third-decimal [] (/ 1M 3M)))] (with-precision 3 (try (v nil nil) (catch Throwable e :error))))]"
+  ],
+  "exit_code": 0,
+  "cases": [
+    [
+      "runtime-math-context",
+      "(with-precision 3 (eval '(/ 1M 3M)))"
+    ],
+    [
+      "macro-math-context",
+      "(do (eval '(defmacro third-decimal [] (/ 1M 3M))) (with-precision 3 (try (eval '(third-decimal)) (catch Throwable e :error))))"
+    ],
+    [
+      "raw-macro-math-context",
+      "(let [v (eval '(defmacro raw-third-decimal [] (/ 1M 3M)))] (with-precision 3 (try (v nil nil) (catch Throwable e :error))))"
+    ]
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  }
+}

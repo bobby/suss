@@ -466,7 +466,7 @@ fn own<C: AsContextMut<Data = ()>>(
     })
 }
 // Either root may be nil (None) when no frame or join is active.
-struct DynamicCheckpoint {
+pub(crate) struct DynamicCheckpoint {
     frame: Option<OwnedRooted<AnyRef>>,
 }
 // Snapshot the caller's rooted dynamic context, including native interop calls.
@@ -776,6 +776,7 @@ impl SessionHost<'_> {
                 linker,
                 environment,
                 cells: Arc::new(cells),
+                native_function_cells: Arc::new(BTreeMap::new()),
                 provided,
                 resident: Vec::new(),
                 artifact_bytes: 0,
@@ -1377,7 +1378,7 @@ impl SessionHost<'_> {
     ) -> Result<Vec<Instance>, SessionError> {
         compiler_state::install(
             &self.compiler, self.store.as_context_mut(), &self.engine,
-            self.runtime, self.phase, bytes, environment, cells, &self.interrupt,
+            self.runtime, self.phase, bytes, environment, cells, &self.interrupt, self.evaluation.as_ref(),
         )
     }
     fn eval_instance(&mut self, instance: Instance, input: bool) -> Result<SessionValue, SessionError> {
@@ -1754,6 +1755,15 @@ impl SessionHost<'_> {
             result = Some(value);
         }
         Ok(result)
+    }
+    pub(crate) fn data_language_error(&mut self, message: &SessionValue) -> Result<SessionValue, SessionError> {
+        self.check(message)?;
+        self.charge_host_work(1)?;
+        let mut scope = RootScope::new(&mut self.store);
+        let function = self.runtime.get_func(&mut scope, "language-error-new")
+            .ok_or_else(|| wasmtime::Error::msg("Missing language error constructor"))?;
+        let message = message.val(&mut scope.as_context_mut());
+        call(&mut scope, self.runtime, function, &[message], self.identity, &self.handles)
     }
     /// Allocate compiler data scalars through the shared runtime without compiling
     /// source, replaying initializers or adding resident fragments.

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "[(let [f (fn [n] n)] (identical? f (eval f))) (let [f (fn [n] n)] (identical? f (eval (list 'identity f)))) (let [f (fn [n] n)] (identical? f (eval (list 'quote f)))) (let [x 1 f (fn [n] (+ n x))] (try (let [g (eval (list 'identity f))] [(g 41) (identical? f g)]) (catch :default e :error))) (let [a (atom 0) f (fn [] (swap! a inc))] (try (let [g (eval (list 'identity f))] [(f) (g) (f)]) (catch :default e :error))) (let [f (with-meta (fn [n] n) {:m 1})] (try (let [g (eval (list 'identity f))] [(g 42) (meta g) (identical? f g)]) (catch :default e :error)))]"
+  ],
+  "exit_code": 0,
+  "seconds": 31.311742544174194,
+  "head": "a881b16507460924821ff14426fa3d6a0aa0d7a4"
+}

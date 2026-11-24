@@ -1,0 +1,5 @@
+[true true true 1]
+[true 1]
+[true "new"]
+[false false 42 43]
+true

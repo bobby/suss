@@ -45,6 +45,7 @@ impl MacroService {
         snapshot: &crate::portable_session::CompilationSnapshot,
         form: Form,
         fuel: u64,
+        context: Option<(i32, i32)>,
         interrupt: Arc<std::sync::atomic::AtomicBool>,
     ) -> Result<
         (
@@ -55,19 +56,28 @@ impl MacroService {
     > {
         let mut lease = self.lease();
         let allowance = lease.limit_fuel(fuel);
-        let host = lease.host();
-        host.set_operation_fuel(allowance);
+        lease.with_math_context(context, |host| {
         let _budget = host.session.operation_budget_scope()?;
         let _relay = super::native_invocation::InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
         let result = host.prepare_native_evaluation(snapshot, form);
         let remaining = host.session.operation_fuel_remaining()?;
         Ok((result, allowance.saturating_sub(remaining)))
+        })
     }
     fn with_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         operation(self.lease().host())
     }
 }
 impl MacroLease {
+    pub(super) fn with_math_context<T>(&mut self, context: Option<(i32, i32)>,
+        operation: impl FnOnce(&mut MacroHost<'static>) -> Result<T, SessionError>) -> Result<T, SessionError>
+    {
+        let _budget = self.host().session.operation_budget_scope()?;
+        let checkpoint = self.host().session.enter_evaluation_math_context(context)?;
+        let result = operation(self.host());
+        let restoration = self.host().session.leave_evaluation_math_context(&checkpoint);
+        match result { Err(error) => Err(error), Ok(value) => restoration.map(|()| value) }
+    }
     pub(super) fn limit_fuel(&mut self, fuel: u64) -> u64 {
         let previous = self.host().session.options().fuel_per_operation;
         self.saved_fuel = Some(previous);
