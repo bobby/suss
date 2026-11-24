@@ -386,8 +386,8 @@
     (reduce-kv (fn [m alias target]
                  (if (= (.-str alias) (.-str target)) m (assoc m alias (intern-namespace target))))
                {} (namespace-slot (the-ns ns) ns-aliases-slot))))
-;; Clojure maps each referred symbol to its Var. Suss has no runtime Vars, so
-;; the value is the fully qualified symbol the name refers to. Refers are kept
+;; Clojure maps each referred symbol to its Var. The Suss ns-refers contract
+;; retains the fully qualified target symbol as its value. Refers are kept
 ;; by name string, which is cheaper to look up than a symbol.
 (def ns-refers
   (fn [ns]
@@ -2557,10 +2557,15 @@
     ;; Binding keys and namespace objects keep the platform's canonical core
     ;; identity. Public Var symbols use Clojure's core spelling for source data.
     (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
-      (assoc metadata :name (symbol name)
-                      :ns (the-ns (symbol namespace))))))
+      ;; Keep Var interning independent of the mutable IndexedSeq constructor
+      ;; used by variadic argument packing. Both metadata updates are fixed arity.
+      (let [name (symbol name)
+            namespace (the-ns (symbol namespace))]
+        (assoc (assoc metadata :name name) :ns namespace)))))
 (def ^:private update-binding-var-meta!
   (fn [v metadata]
     (set! (.-_meta v)
-      (assoc metadata :name (:name (meta v)) :ns (:ns (meta v))))
+      (let [name (:name (meta v))
+            namespace (:ns (meta v))]
+        (assoc (assoc metadata :name name) :ns namespace)))
     v))

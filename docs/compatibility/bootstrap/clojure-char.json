@@ -21,7 +21,7 @@
     "crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs": "8ae8eec83a26ca1f50754e38f2752b386fa7986267c9c6d94eba8a771a9e8411",
     "crates/suss-compile/src/runtime_abi/bitwise.rs": "eb1a51b52ed9bdd6de245a2761c596ec1618aca85a2b877b227008301d04d9ad",
     "crates/suss-compile/src/runtime_abi/numeric.rs": "94e1a6e1683265a4973de62046844b075b4701bcb2babf5ef6b522815b436da0",
-    "docs/compatibility/bootstrap/exact-integers.sus": "bc4710c25babca03313be2560dbd2e13a3bf5b3a8a146cb5bbca1b7e60bb9df7",
+    "docs/compatibility/bootstrap/exact-integers.sus": "a4cfd726d19c4c6da4eae2bd118ec009f96394b1a2c172ffbd2bfa77c4e75977",
     "runtime/numeric/src/lib.rs": "33cdfa128995f1d40e7bcbd295607fd80286c1dcdc8352b8ae83bf42988dcfce",
     "runtime/numeric/artifact/manifest.json": "3bf856201e249ea82f2a7d4cdccf147697bb1c7462823fa15f270b370df3b4b3",
     "runtime/numeric/artifact/numeric.wasm": "3b73ca99259700f5ab1231b474ec0675090879ec25957f4f5ed7ea0a2c080b9f",

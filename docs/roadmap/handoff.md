@@ -34765,3 +34765,36 @@ repeat the exact workspace baseline on the corrected source. Independent review
 and final-head CI remain required; no promotion, issue closure or merge is claimed.
 A separate cargo fmt --all --check observation returns1 with431 repository-wide
 file differences; it is check-only and applies no broad formatting changes.
+
+### Definition fixtures and IndexedSeq-dependent Var metadata (2026-11-24)
+
+Frozen9ae63bdc passes the complete core_import17 and compiled_async_streams12
+targets (43.80s including compilation) and all25 public eval tests (48.65s).
+HEAD/inputs remain unchanged. Original stream cancellation/backpressure/GC/private
+authority guards all execute; no async runtime fix is needed for those captures.
+
+Published CI shard0 additionally reports the already-repaired analyzer assertion,
+a large-source metadata fixture decoding a definition's Var as a number, and
+a genuine failure while redefining IndexedSeq in the unchanged indexed-data guard.
+A diagnostic using the existing CLI catches actual Invalid nominal operation;
+restoring IndexedSeq before printing confirms the error without an invented value.
+Original CI/diagnostic logs are retained in ci-fb276-definition-fixtures.
+
+The two native Var metadata helpers now use fixed-arity assoc calls, avoiding
+variadic argument packing through the mutable IndexedSeq constructor after that
+constructor's own root is replaced. Metadata operand evaluation remains ordered.
+A new Runtime/Macro regression keeps the real Var across GC, constructor
+replacement, metadata replacement and root updates, decoding actual results.
+The unchanged indexed-data constructor-retention assertions remain. The large
+source fixture now reads metadata-keep after its definition and before the
+original1MiB comment; all fuel, effect, failure and recovery assertions remain.
+The stale ns-refers comment is aligned with its unchanged symbolic-value contract.
+Core generation and all affected source/provenance records are refreshed and
+verified; primary bytes, arithmetic kernels and accepted suite failures are unchanged.
+
+Run `var-helpers-after-indexed-seq-ci --var-helper-ci-only` via the external
+durable launcher and freeze source/HEAD through its terminal receipt. It runs
+the complete two macro-data targets, sealed built-in guards, complete corrected
+identity/stream targets and all public eval tests. A fresh broader/native suite
+capture, Java/Node-free bootstrap, exact workspace baseline, independent review
+and final-head CI remain required for this executable source change.

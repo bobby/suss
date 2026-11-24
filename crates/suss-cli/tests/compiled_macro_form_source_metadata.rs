@@ -369,7 +369,7 @@ fn large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_re
             .eval("(def metadata-keep 7) (def metadata-effects 0)")
             .unwrap();
         let source = format!(
-            "(def metadata-keep (do (set! metadata-effects (+ metadata-effects 1)) ^{{:payload 42}} (metadata-data)))\n;{}",
+            "(def metadata-keep (do (set! metadata-effects (+ metadata-effects 1)) ^{{:payload 42}} (metadata-data)))\nmetadata-keep\n;{}",
             "x".repeat(1_048_576)
         );
         let value = session.eval_with_macros(&source, &mut macros).unwrap();

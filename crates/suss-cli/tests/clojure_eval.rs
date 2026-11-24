@@ -1141,3 +1141,36 @@ fn symbol_conversion_uses_public_var_names_and_clojure_two_argument_admission() 
         }
     }
 }
+
+#[test]
+fn live_var_metadata_and_roots_survive_replacing_the_core_indexed_seq_constructor() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        session
+            .eval("(ns suss.core) (def IndexedSeq nil)")
+            .unwrap();
+        session.enter_namespace("user").unwrap();
+        let original = session.eval("(def ^{:probe 17} retained 42)").unwrap();
+        let observe = session
+            .eval("(fn [v] [(var? v) @v (:probe (meta v)) (= v (var retained))])")
+            .unwrap();
+        for (root, metadata) in [(42, 17), (43, 18)] {
+            if root == 43 {
+                session.eval("(def ^{:probe 18} retained 43)").unwrap();
+            }
+            session.collect().unwrap();
+            let value = session.invoke(&observe, &[&original]).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(
+                decoder.decode_session(&mut session, &value).unwrap(),
+                Observation::Vector(vec![
+                    Observation::Bool(true),
+                    Observation::Long(root),
+                    Observation::Long(metadata),
+                    Observation::Bool(true),
+                ]),
+                "{:?}", session.phase()
+            );
+        }
+    }
+}
