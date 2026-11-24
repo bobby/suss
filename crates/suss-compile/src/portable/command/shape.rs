@@ -7,7 +7,7 @@ use wit_parser::{Function, FunctionKind, Resolve, Type, TypeDefKind, TypeId};
 
 /// Types omitted from a reachable command binding stay in the resolved profile;
 /// this encoder does not replace them with guessed function signatures.
-pub(super) struct Types<'a> {
+pub(crate) struct Types<'a> {
     resolve: &'a Resolve,
     pub section: ComponentTypeSection,
     defined: BTreeMap<TypeId, u32>,

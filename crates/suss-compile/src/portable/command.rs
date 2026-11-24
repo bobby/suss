@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use wit_parser::{Resolve, UnresolvedPackageGroup, WorldId};
 
 pub(super) mod memory;
-mod shape;
+pub(crate) mod shape;
 mod adapter;
 mod assembly;
 pub mod async_bridge;

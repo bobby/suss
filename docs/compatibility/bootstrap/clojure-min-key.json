@@ -24,10 +24,10 @@
     "qualification": "Only pure map-indexed candidate-map constructors are materialized; fresh JVM execution checks all396 combined probe values against untouched primary controls. No min-key/key-function body changes."
   },
   "files": {
-    "docs/compatibility/bootstrap/exact-integers.sus": "55c4b0974e90a6e9afd11fc229268db5e754dc8046e7e59d8dae96e0b9eb1644",
-    "docs/compatibility/core-import.json": "0c4eae7214a2de3884f9c2dc42d42f37d813951c85000a3ea438535aa1e754f8",
-    "runtime/core-import/manifest.json": "ede8163df9db16c0960abbe6d6f6fcc05d943f563fd7e31148414f6521f00c7f",
-    "runtime/core-import/suss/core.sus": "9a0a0129a93acb210eccc99c68e00d2ab10a16791e302b7524de08498c32911d",
+    "docs/compatibility/bootstrap/exact-integers.sus": "38e96c5694e328c565e4406a3de4f88aafe9de59d5ee76ba5809af772a0aa2e2",
+    "docs/compatibility/core-import.json": "3ab0f93e33b0b40061ec90f4722315b99fdd4443df8568dbc0ca5c59ac720936",
+    "runtime/core-import/manifest.json": "94cdeacc65e243e592142bd46eae0c7be9adcac3cf5470eaf75ee5464c8c336b",
+    "runtime/core-import/suss/core.sus": "7aad2a8fc9762c07ac28efff905e50b351082ea41e80860dabc6472305210d8e",
     "crates/suss-cli/tests/clojure_min_key.rs": "94d5062874a9d8a05ca9abd561ee1292eb4083c2bde779f0923f0bb078718029",
     "crates/suss-compile/tests/support/pinned_min_key_body.rs": "45d603fcb9c750f4480ce9a7d0a5a5a9934d0dc0f73e98d1722e8bdde5df5b49",
     "results/m12-core-dependencies/upstream-min-key.clj": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",

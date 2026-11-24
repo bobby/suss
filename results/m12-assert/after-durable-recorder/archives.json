@@ -1,0 +1,30 @@
+{
+  "source_head": "eb18cc3a7ffc0b8a505f13e10f4a894f4dcc0688",
+  "archives": {
+    "body-capture/constantly-observations.json": {
+      "sha256": "fafd8bf07e3006ca2e07982fcd08d43537373da1d01dd5d1a5911b667dad71f5",
+      "gzip_sha256": "60a17bda24383d14d5af588b4034a68548264fdb7d6a4895540fd7c3fbc8fda8"
+    },
+    "body-capture/some_fn-observations.json": {
+      "sha256": "2cf3daad290432bfd9c7cbd6e6ac58fdfa3c85ac92094ecd84d18ca7dc3bd326",
+      "gzip_sha256": "25772497445f8fa36413882473097ecc3da63ae1222ce12f48c1490c66f55eb1"
+    },
+    "commands.json": {
+      "sha256": "09b8062b94a71c4362e0c608c608d2fe1e27b155309c8487984d9f416955cd39",
+      "gzip_sha256": "b2da8add7c4461ed061a61f615be8a8cffd13d8891a42dd4fb6e8eb6dd326c43"
+    },
+    "compile-time-flags.log": {
+      "sha256": "2ed6bd3aa87e66e02b90d6dbefad42d898f70082f9950fd3c632a6f04386dc9f",
+      "gzip_sha256": "48eabde7e0c0c4c30e449a7333e59520a44abb3667d397c6009b12a078602e71"
+    },
+    "original-some-fn-and-constantly-bodies.log": {
+      "sha256": "7c6e6834da37f26f6a7be71e9226e0b2ee7b2be32751862a1779dd08f6c112ef",
+      "gzip_sha256": "e30aaed829ab0552d97b11cf8f6c3bafe740a1c33bc27eeb04136d9a4eda4204"
+    },
+    "runtime-macro-actual-aot.log": {
+      "sha256": "07fd131b22602c340ebaae809a174eae99a4f5626dab4bc587d927736790d323",
+      "gzip_sha256": "d3c85b8b65b47937599ca995d762b25fd3fbffd68b0ce9ded43ae3cdccfa0739"
+    }
+  },
+  "qualification": "On eb18cc3a, compile-time assert flags and all19 primary controls in Runtime/Macro/actual AOT pass; both decoder guards pass. All16 original some-fn rows are actual ordered host matches, zero guest/fail/skip. Constantly has zero executed rows because rand-int is unresolved. Overall101 and unchanged inputs remain preserved. These older-source receipts do not establish current RNG/core full acceptance."
+}

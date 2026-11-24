@@ -1,0 +1,122 @@
+[
+  {
+    "name": "numeric-literals",
+    "expression": "[(eval 1N) (eval 1/2) (eval 1.50M)]",
+    "expected": "[1N 1/2 1.50M]"
+  },
+  {
+    "name": "quoted-numeric-application",
+    "expression": "(eval '(+ 1N 1/2))",
+    "expected": "3/2"
+  },
+  {
+    "name": "self-evaluating-values",
+    "expression": "[(eval 1) (eval 0) (eval -1) (eval 1.0) (eval \"a string\") (eval \"(+ 1 2)\") (eval \\x) (eval true) (eval false) (eval nil) (eval :a-keyword)]",
+    "expected": "[1 0 -1 1.0 \"a string\" \"(+ 1 2)\" \\x true false nil :a-keyword]"
+  },
+  {
+    "name": "empty-list",
+    "expression": "(eval '())",
+    "expected": "()"
+  },
+  {
+    "name": "embedded-global-symbol",
+    "expression": "(eval [:a :b 'user/eval-fixture-value])",
+    "expected": "[:a :b 42]"
+  },
+  {
+    "name": "collection-values",
+    "expression": "[(eval [:a :b]) (eval {:a :b}) (eval #{:a :b})]",
+    "expected": "[[:a :b] {:a :b} #{:b :a}]"
+  },
+  {
+    "name": "compiled-function",
+    "expression": "(let [f (eval '(fn [x] (+ x 1N)))] [(fn? f) (f 2)])",
+    "expected": "[true 3N]"
+  },
+  {
+    "name": "existing-function-identity",
+    "expression": "(let [f (fn [x] x)] (identical? (eval f) f))",
+    "expected": "true"
+  },
+  {
+    "name": "function-symbol",
+    "expression": "[(fn? (eval '+)) (fn? (eval +))]",
+    "expected": "[true true]"
+  },
+  {
+    "name": "qualified-global",
+    "expression": "(eval 'user/eval-fixture-value)",
+    "expected": "42"
+  },
+  {
+    "name": "namespace-selection",
+    "expression": "(binding [*ns* (the-ns 'eval-fixture)] (eval 'value))",
+    "expected": "73"
+  },
+  {
+    "name": "lexical-locals-are-not-captured",
+    "expression": "(let [only-local 7] (try (eval 'only-local) (catch Throwable e :unresolved)))",
+    "expected": ":unresolved"
+  },
+  {
+    "name": "ordinary-var-result",
+    "expression": "(let [v (eval '(def eval-created 17))] [(var? v) (deref v) (:name (meta v))])",
+    "expected": "[true 17 eval-created]"
+  },
+  {
+    "name": "stable-var-identity",
+    "expression": "(identical? (var eval-created) (eval '(var eval-created)))",
+    "expected": "true"
+  },
+  {
+    "name": "macro-and-loop",
+    "expression": "(eval '(let [initial 0] (loop [x initial] (if (= x 43) x (recur (inc x))))))",
+    "expected": "43"
+  },
+  {
+    "name": "user-compiled-macro",
+    "expression": "(eval '(eval-fixture-macro))",
+    "expected": ":expanded"
+  },
+  {
+    "name": "recursive-eval",
+    "expression": "[(eval '(eval 1N)) (eval '(eval (eval 1/2)))]",
+    "expected": "[1N 1/2]"
+  },
+  {
+    "name": "lazy-result-not-realized",
+    "expression": "(first (eval '(range)))",
+    "expected": "0"
+  },
+  {
+    "name": "dynamic-math-context",
+    "expression": "(with-precision 5 (eval '(/ 1M 3M)))",
+    "expected": "0.33333M"
+  },
+  {
+    "name": "wrong-arity-evaluates-arguments",
+    "expression": "(let [trace (atom []) result (try (eval (do (swap! trace conj :left) 1) (do (swap! trace conj :right) 2)) (catch Throwable e :arity))] [result @trace])",
+    "expected": "[:arity [:left :right]]"
+  },
+  {
+    "name": "do-prefix-effects-before-compile-error",
+    "expression": "(let [trace (atom []) result (try (eval '(do (swap! user/eval-fixture-effects conj :prefix) eval-missing-name)) (catch Throwable e :compile))] [result @user/eval-fixture-effects])",
+    "expected": "[:compile [:prefix]]"
+  },
+  {
+    "name": "failed-initializer-preserves-root",
+    "expression": "(let [result (try (eval '(def eval-existing (throw (ex-info \"failure\" {})))) (catch Throwable e :throw))] [result eval-existing])",
+    "expected": "[:throw 99]"
+  },
+  {
+    "name": "generated-data-is-compiled",
+    "expression": "(eval (list '+ 1N 1/2))",
+    "expected": "3/2"
+  },
+  {
+    "name": "fresh-global-definition",
+    "expression": "(do (eval '(def eval-fresh 21)) (eval '(* user/eval-fresh 2)))",
+    "expected": "42"
+  }
+]

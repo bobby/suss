@@ -797,7 +797,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             name if name == "primitive-unsigned-bit-shift-right-raw" => (vec![VALUE; 2], vec![ValType::I64]),
             name if name.starts_with("int32-") && name.ends_with("-raw") =>
                 (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
-            "future-pending-new" | "dynamic-fork" | "dynamic-save" => (vec![], vec![VALUE]),
+            "future-pending-new" | "dynamic-fork" | "dynamic-save" | "random-double" => (vec![], vec![VALUE]),
             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
             "dynamic-pop" => (vec![VALUE], vec![]),

@@ -431,6 +431,7 @@ impl CompiledMacros {
         macros.define(crate::portable_core_macros::THREAD_LAST)?;
         macros.define(crate::portable_core_macros::DEFMULTI)?;
         macros.define(crate::portable_core_macros::DEFMETHOD)?;
+        macros.define(crate::portable_core_macros::ASSERT)?;
         // Shipped record macro implementations build forms from core's Cons
         // directly, so they are evaluated as core (#279).
         macros
@@ -1066,7 +1067,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision", "case"]
+                ["->>", "assert", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let", "with-precision", "case"]
                     .into_iter()
                     .find_map(|core_name| {
                         context
@@ -1621,5 +1622,42 @@ mod parameter_observation_tests {
         let bridge = FormBridge::new(&mut caller).unwrap();
         assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Long(17));
         assert_eq!(macros.expansion_work_fuel(), budget);
+    }
+}
+
+#[cfg(all(test, not(suss_generator)))]
+mod assert_compilation_tests {
+    use super::*;
+
+    #[test]
+    fn assert_flag_is_read_in_the_macro_store_before_operand_analysis() {
+        for mut target in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let mut macros = CompiledMacros::new().unwrap();
+            let initial = macros.session.eval("suss.core/*assert*").unwrap();
+            assert!(matches!(macros.bridge.read(&mut macros.session, &initial, 0..0).unwrap().kind, Kind::Bool(true)));
+            macros.session.eval("(set! suss.core/*assert* false)").unwrap();
+            macros.session.collect().unwrap();
+            let source = "(assert definitely-missing (also-missing))";
+            let omitted = target.eval_with_macros(source, &mut macros).unwrap();
+            let mut bridge = FormBridge::new(&mut target).unwrap();
+            assert!(matches!(bridge.read(&mut target, &omitted, 0..source.len()).unwrap().kind, Kind::Nil));
+            // A disabled macro still has its real compiled arities. Omitting
+            // analysis is not a host-side blanket skip of assert forms.
+            for source in ["(assert)", "(assert true 1 2)"] {
+                assert!(matches!(target.eval_with_macros(source, &mut macros),
+                    Err(SessionError::Compile(_))), "{source}");
+            }
+            let repeated_source = "(try (assert false) (catch :default e (ex-message e)))";
+            let disabled_known = target.eval_with_macros(repeated_source, &mut macros).unwrap();
+            assert!(matches!(bridge.read(&mut target, &disabled_known, 0..0).unwrap().kind, Kind::Nil));
+            macros.session.eval("(set! suss.core/*assert* true)").unwrap();
+            macros.session.collect().unwrap();
+            // Recompile identical text after the flag changes. Expansion must
+            // observe current Macro state rather than replaying a cached result.
+            let problem = target.eval_with_macros(repeated_source, &mut macros).unwrap();
+            let observed = bridge.read(&mut target, &problem, 0..0).unwrap();
+            assert!(matches!(observed.kind, Kind::String(ref units)
+                if String::from_utf16(units).unwrap() == "Assert failed: false"));
+        }
     }
 }

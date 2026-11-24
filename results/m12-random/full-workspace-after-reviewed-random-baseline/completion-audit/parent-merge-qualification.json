@@ -1,0 +1,30 @@
+{
+  "validated_source_head": "61397661ddba8d0022b876d1163dd170ea3ef0ea",
+  "merged_parent": "8e05f09c9482dc176517256180a2c2509bef9794",
+  "comparison_scope": "Resolved parent merge index, before adding this completion evidence and validation notes.",
+  "changed_existing_files": [
+    "docs/roadmap/handoff.md"
+  ],
+  "added_parent_evidence_files": [
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/README.md",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/cargo-fingerprints.json.gz",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/cargo-metadata.json.gz",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/corrected-target-audit.json",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/original-audit-completed.py",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/original-command.json.gz",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/original-observation.json.gz",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/reader-parent-merge-qualification.json",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/replay-targets.py",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/replayed-target-coverage.json",
+    "results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit/run.log.gz",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/README.md",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/audit-completed.py",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/corrected-target-audit.json",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/original-command.json.gz",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/original-observation.json.gz",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/run.log.gz"
+  ],
+  "all_preexisting_implementation_tests_fixtures_manifests_and_evidence_unchanged": true,
+  "source_cargo_exit_code": 0,
+  "qualification": "Source validation belongs to frozen61397661. The parent reconciliation changes only handoff notes and imports historical completion evidence. New completion archives and notes are a separate documentation-only addition."
+}

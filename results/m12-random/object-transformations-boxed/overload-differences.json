@@ -1,0 +1,9 @@
+[
+  {
+    "operation": "rand-int",
+    "bound": "2147483648",
+    "draw": "0.9999999999999999",
+    "literal_expected": "[:error]",
+    "object_expected": "[:value \"2147483647\" :integer]"
+  }
+]

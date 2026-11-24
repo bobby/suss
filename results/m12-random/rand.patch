@@ -1,0 +1,18 @@
+--- clojure.core/rand
++++ suss.core/rand
+@@ -1,7 +1,8 @@
+-(defn rand
+-  "Returns a random floating point number between 0 (inclusive) and
+-  n (default 1) (exclusive)."
+-  {:added "1.0"
+-   :static true}
+-  ([] (. Math (random)))
+-  ([n] (* n (rand))))
++;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
++;; See runtime/core-import/epl-v10.html.
++(def ^{:doc "Returns a random floating point number between 0 (inclusive) and
++  n (default 1) (exclusive)." :added "1.0" :static true} rand
++  (let [* *]
++    (fn
++      ([] (suss.bootstrap/random-double))
++      ([n] (* n (rand))))))

@@ -1,0 +1,97 @@
+[
+  {
+    "name": "truthy-true",
+    "expression": "(assert true)",
+    "expected": "nil"
+  },
+  {
+    "name": "truthy-zero",
+    "expression": "(assert 0)",
+    "expected": "nil"
+  },
+  {
+    "name": "truthy-string",
+    "expression": "(assert \"\")",
+    "expected": "nil"
+  },
+  {
+    "name": "truthy-vector",
+    "expression": "(assert [])",
+    "expected": "nil"
+  },
+  {
+    "name": "truthy-map",
+    "expression": "(assert {})",
+    "expected": "nil"
+  },
+  {
+    "name": "truthy-keyword",
+    "expression": "(assert :ok)",
+    "expected": "nil"
+  },
+  {
+    "name": "message-false",
+    "expression": "(try (assert false) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: false\""
+  },
+  {
+    "name": "message-nil",
+    "expression": "(try (assert nil) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: nil\""
+  },
+  {
+    "name": "optional-string",
+    "expression": "(try (assert false \"details\") (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: details\\nfalse\""
+  },
+  {
+    "name": "optional-nil",
+    "expression": "(try (assert false nil) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: \\nfalse\""
+  },
+  {
+    "name": "optional-keyword",
+    "expression": "(try (assert false :details) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: :details\\nfalse\""
+  },
+  {
+    "name": "optional-number",
+    "expression": "(try (assert false 42) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: 42\\nfalse\""
+  },
+  {
+    "name": "condition-once",
+    "expression": "(let [t (atom []) v (assert (do (swap! t conj :condition) true) (do (swap! t conj :message) \"unused\"))] [v @t])",
+    "expected": "[nil [:condition]]"
+  },
+  {
+    "name": "failed-condition-before-message",
+    "expression": "(let [t (atom []) v (try (assert (do (swap! t conj :condition) false) (do (swap! t conj :message) \"details\")) (catch Throwable e (ex-message e)))] [v @t])",
+    "expected": "[\"Assert failed: details\\n(do (swap! t conj :condition) false)\" [:condition :message]]"
+  },
+  {
+    "name": "condition-throw",
+    "expression": "(let [t (atom []) v (try (assert (do (swap! t conj :condition) (throw (ex-info \"condition\" {:v :condition-threw}))) (do (swap! t conj :message) \"unused\")) (catch Throwable e (:v (ex-data e))))] [v @t])",
+    "expected": "[:condition-threw [:condition]]"
+  },
+  {
+    "name": "message-throw",
+    "expression": "(let [t (atom []) v (try (assert (do (swap! t conj :condition) false) (do (swap! t conj :message) (throw (ex-info \"message\" {:v :message-threw})))) (catch Throwable e (:v (ex-data e))))] [v @t])",
+    "expected": "[:message-threw [:condition :message]]"
+  },
+  {
+    "name": "fresh-errors",
+    "expression": "(let [a (try (assert false) (catch Throwable e e)) b (try (assert false) (catch Throwable e e))] [(identical? a b) (ex-message a) (ex-message b) (ex-data a)])",
+    "expected": "[false \"Assert failed: false\" \"Assert failed: false\" nil]"
+  },
+  {
+    "name": "lexical-shadow",
+    "expression": "(let [assert (fn [x] [:local x])] (assert false))",
+    "expected": "[:local false]"
+  },
+  {
+    "name": "runtime-binding-is-too-late",
+    "expression": "(try (binding [*assert* false] (assert false)) (catch Throwable e (ex-message e)))",
+    "expected": "\"Assert failed: false\""
+  }
+]

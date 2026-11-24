@@ -1,0 +1,42 @@
+[
+  {
+    "name": "some-fn-effects-construction-order",
+    "expression": "(let [t (atom []) f (some-fn (do (swap! t conj :make-a) (fn [x] (swap! t conj [:a x]) false)) (do (swap! t conj :make-b) (fn [x] (swap! t conj [:b x]) :hit))) v (f 1 2)] [v @t])",
+    "expected": "[:hit [:make-a :make-b [:a 1] [:a 2] [:b 1]]]"
+  },
+  {
+    "name": "some-fn-effects-construction-throw",
+    "expression": "(let [t (atom []) v (try (some-fn (do (swap! t conj :make-a) (throw (ex-info \"stop\" {:v :stopped}))) (do (swap! t conj :make-b) identity)) (catch Throwable e (:v (ex-data e))))] [v @t])",
+    "expected": "[:stopped [:make-a]]"
+  },
+  {
+    "name": "some-fn-effects-argument-order",
+    "expression": "(let [t (atom []) f (some-fn (fn [x] (swap! t conj [:p x]) :hit)) v (f (do (swap! t conj :arg-a) 1) (do (swap! t conj :arg-b) 2))] [v @t])",
+    "expected": "[:hit [:arg-a :arg-b [:p 1]]]"
+  },
+  {
+    "name": "some-fn-effects-argument-throw",
+    "expression": "(let [t (atom []) f (some-fn (fn [x] (swap! t conj [:p x]) :hit)) v (try (f (do (swap! t conj :arg-a) 1) (do (swap! t conj :arg-b) (throw (ex-info \"stop\" {:v :stopped}))) (do (swap! t conj :arg-c) 3)) (catch Throwable e (:v (ex-data e))))] [v @t])",
+    "expected": "[:stopped [:arg-a :arg-b]]"
+  },
+  {
+    "name": "some-fn-effects-predicate-throw",
+    "expression": "(let [t (atom []) f (some-fn (fn [x] (swap! t conj [:a x]) (throw (ex-info \"stop\" {:v :stopped}))) (fn [x] (swap! t conj [:b x]) :hit)) v (try (f (do (swap! t conj :arg-a) 1) (do (swap! t conj :arg-b) 2)) (catch Throwable e (:v (ex-data e))))] [v @t])",
+    "expected": "[:stopped [:arg-a :arg-b [:a 1]]]"
+  },
+  {
+    "name": "some-fn-effects-captured-original-function",
+    "expression": "(do (def some-fn-original-p (fn [x] [:old x])) (let [f (some-fn some-fn-original-p)] (def some-fn-original-p (fn [x] [:new x])) (f 42)))",
+    "expected": "[:old 42]"
+  },
+  {
+    "name": "some-fn-effects-retained-capture",
+    "expression": "(let [captured 41 f (some-fn (fn [x] (if (= x captured) [:captured x] nil)))] [(f 0 41) (f 42)])",
+    "expected": "[[:captured 41] nil]"
+  },
+  {
+    "name": "some-fn-effects-zero-argument-construction",
+    "expression": "(let [t (atom []) f (some-fn (do (swap! t conj :make) (fn [x] (swap! t conj x) :hit))) v (f)] [v @t])",
+    "expected": "[nil [:make]]"
+  }
+]

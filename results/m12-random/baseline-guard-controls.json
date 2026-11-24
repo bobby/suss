@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "results/m12-random/test_random_baseline.py"
+  ],
+  "exit_code": 0,
+  "unittest_reported_seconds": 8.394,
+  "tests": 7,
+  "inputs_sha256": {
+    "results/m12-random/review-random-baseline.py": "28a2bc266e08241ebdab1ecc70ae4c13e8f2798dae57bd76df27a70257c3952b",
+    "results/m12-random/test_random_baseline.py": "e5bb3c3fd78ec91db2ba919e132d4d6bd3d2a7d433aab617f3d212e3a9b4dc53",
+    "results/m12-random/random-parent-baseline.json.gz": "7a402f78c166b20a883b09fa26e6da099dbc990f8af09bc7e2e4bb3fdccffe37",
+    "tests/oracle/clojure-test-suite-observations.json": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+    "results/m12-reader-followup/full-suite-after-random-and-assert/suite-capture/suite-observations.json.gz": "a532fd1c6fdca8918bad0a5764e0d77d974e85c4359bbc7066d444b49c986160"
+  }
+}

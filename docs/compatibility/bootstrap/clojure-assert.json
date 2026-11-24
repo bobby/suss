@@ -1,0 +1,37 @@
+{
+  "primary": {
+    "upstream": "Clojure 1.12.6",
+    "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "entry": "clojure/core.clj",
+    "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+    "original_form_sha256": "7303fba10a70b9a5bcd3aa5e02e292d50a72bf8c10623b14d68a6703a9167aec"
+  },
+  "license": {
+    "id": "EPL-1.0",
+    "notice": "results/m12-core-dependencies/NOTICE",
+    "text": "runtime/core-import/epl-v10.html"
+  },
+  "adaptation": "Retain complete macro/doc/metadata/arities/control flow/message expressions. Replace only two JVM AssertionError constructor calls with the existing catchable portable Error adapter, as other compiled core macros do. The Macro phase reads its own dynamic *assert* Var before operand analysis; default true.",
+  "limits": "Java AssertionError class identity/metadata is not provided by the existing portable Error family and is not claimed here. Primary observations cover control flow, messages, fresh error identity, ex-data, lexical shadowing and compile-time flags; not JVM class interoperability. Native execution/body acceptance requires separate receipts.",
+  "primary_controls": 19,
+  "compile_time_primary": [
+    true,
+    true,
+    null
+  ],
+  "files": {
+    "crates/suss-compile/src/portable_core_macros.rs": "2f5d9130ec7a8e01802c39f2d0c1c9995a3209585d9e05d998a15dbcabccb01a",
+    "crates/suss-compile/src/portable_macros.rs": "a33360aba6e66e61426133ece54dd9743d7903e8cec08dc596f09f5822b979a7",
+    "crates/suss-cli/tests/clojure_assert.rs": "836cdbc024b63e5a1d64745ea3b63e0353064e39d309f2e6d935ad9ccb2f2389",
+    "docs/compatibility/bootstrap/exact-integers.sus": "38e96c5694e328c565e4406a3de4f88aafe9de59d5ee76ba5809af772a0aa2e2",
+    "docs/compatibility/core-import.json": "3ab0f93e33b0b40061ec90f4722315b99fdd4443df8568dbc0ca5c59ac720936",
+    "runtime/core-import/suss/core.sus": "7aad2a8fc9762c07ac28efff905e50b351082ea41e80860dabc6472305210d8e",
+    "runtime/core-import/manifest.json": "94cdeacc65e243e592142bd46eae0c7be9adcac3cf5470eaf75ee5464c8c336b",
+    "results/m12-assert/upstream-assert.clj": "7303fba10a70b9a5bcd3aa5e02e292d50a72bf8c10623b14d68a6703a9167aec",
+    "results/m12-assert/assert-adapted.sus": "8b60f347abd22a3562c9ef5e68e6e416d2d3255a4dbc77c75c95ffcb1d1277b3",
+    "results/m12-assert/assert.patch": "93ce7dc6690798145532f3f404b2b2a18733fdcad8361d56dbaa5094761f62a9",
+    "results/m12-assert/cases.json": "6911290a5c7da399736ec1f8cb1903c47996107eac19723998938b3281db3a26",
+    "results/m12-assert/command.json": "93a385b8c6fe2f547722b303d1e863850bc26dfaf05ba27a93c43174740b5998",
+    "results/m12-assert/oracle.clj": "66fb6b4de512b2ac0a41cd94dd923b4f56c6dcff05a505fd9569cddfbbee979c"
+  }
+}

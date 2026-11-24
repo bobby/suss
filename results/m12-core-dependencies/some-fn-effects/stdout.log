@@ -1,0 +1,8 @@
+"[:hit [:make-a :make-b [:a 1] [:a 2] [:b 1]]]"
+"[:stopped [:make-a]]"
+"[:hit [:arg-a :arg-b [:p 1]]]"
+"[:stopped [:arg-a :arg-b]]"
+"[:stopped [:arg-a :arg-b [:a 1]]]"
+"[:old 42]"
+"[[:captured 41] nil]"
+"[nil [:make]]"

@@ -1,0 +1,15 @@
+{
+  "recorded_head": "ec646d912d3065da1b62eea0c4af1ba461829b28",
+  "native_log_summary": {
+    "passed": 1,
+    "failed": 0
+  },
+  "recorded_commands": [],
+  "cargo_exit_code": null,
+  "original_record_complete": false,
+  "current_inputs_match_original": true,
+  "verified_input_count": 3906,
+  "observation_time_unix": 1795475273.7811575,
+  "scope_state": "inactive/dead; no original Cargo or recorder process remains",
+  "qualification": "Tool/environment transition lost the outside-scope recorder. Preserve incomplete original receipt and observed native result separately; do not invent an exit status. A new inside-scope recorder reruns the gate."
+}

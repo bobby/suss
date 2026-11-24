@@ -1,0 +1,6 @@
+{
+  "qualification": "This first Object-overload probe fails before observations because Clojure rejects Object hints on primitive local initializers. The failed source/stdout/stderr/command and compiler report are preserved; no126-row pass is inferred.",
+  "compiler_report_sha256": "4170829dff7ca5dbb31c727e933e72197e26e2bb1aad47fd55513f073dfcbc37",
+  "compiler_report_archive": "compiler-report.edn.gz",
+  "compiler_report_gzip_sha256": "8e082a225bb7b16a6c026a3e2fa24f953124c31636fb9911f073b09a543cc00c"
+}

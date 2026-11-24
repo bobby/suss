@@ -1,3 +1,140 @@
+## Object-overload random controls and complete assert execution (2026-11-23)
+
+The e89e8ad2 core-only gate returns0 in654.236s (including a library rebuild),
+inputs/tool unchanged. All126 public Object-overload controls match in Runtime
+and isolated Macro; each consumes exactly one provider word and survives GC.
+The normal-provider/fresh-phase stream check also passes. Direct numeric datum
+checks are now added alongside the original report comparison; the public AOT
+component adds raw f64/s64 exports, retaining the report checks and all fixtures.
+These additional fields and actual CLI routes need fresh native execution.
+
+The earlier eb18cc3a assert gate passes its compile-time flag regression and all19
+primary controls in both phases and actual AOT, plus both independent decoder
+guards. All16 ordered original some-fn assertions match on the host. Constantly
+executes zero rows at unresolved rand-int, retaining overall101 and unchanged
+inputs. The complete older-source receipt/logs/captures are archived separately;
+no current RNG/full-body acceptance is inferred from them.
+
+The completed assert target is idle. New RNG public checks reuse that existing
+workspace-feature target after verifying no active source/target processes,
+avoiding a duplicate dependency rebuild. The existing isolated private target
+retains its separate receipts; no source inputs are changed during native runs.
+
+## Public rand-int Object-overload fixture correction (2026-11-23)
+
+The1ded898d focused run passes all five boundary tests, including actual Binaryen
+optimization/effect retention, and normal Runtime/Macro entropy. Fixed-draw host
+comparison fails on2147483648 times0.9999999999999999: the original direct-literal
+primary int expression selects a primitive overload and throws, while Suss returns
+2147483647. Original overall101, logs and unchanged source/tool checks remain
+archived; no full fixed-draw Macro/Runtime pass is inferred.
+
+Retained JVM bytecode confirms actual rand multiplies Object/Object and returns
+Object; rand-int invokes RT.intCast(Object). A fresh126-row boxed/Object oracle
+returns0 in2.478s and differs on exactly that single expected value, agreeing with
+the native result. The first hint-only oracle attempt fails before observations
+because Clojure disallows Object hints on primitive initializers; its complete
+failure/report is retained. Identity calls box the corrected oracle initializers.
+The original126-row literal fixture and original suite primary remain unchanged.
+Public tests now select the separate Object corpus; production numeric code is
+unchanged. Fresh native comparison and actual CLI/AOT execution remain required.
+
+## Entropy boundary execution and explicit optimization tool (2026-11-23)
+
+On97a2d235, the production runtime entropy test returns0 after2265.436s
+(including a dependency rebuild), inputs unchanged. Ordinary selected-WIT AOT
+and pure-world missing-capability cases pass. The optimized case fails101
+because wasm-opt is absent from that recorder's environment; the combined
+recorder stops before its public-core command. These original receipts/logs
+remain archived without relabeling the overall failure.
+
+The retained Binaryen133 tools match their original official-download hashes.
+Fresh focused runs explicitly select SUSS_WASM_OPT and include the named optional
+optimization test. Normal CI reports that new external-tool test as ignored;
+manual execution remains required evidence. New boundary coverage also requires
+unused draws to retain effects, and provider failure/replacement to remain honest.
+The new public target executes16 actual-API primary controls,126 controlled
+transformations through one real compiled AOT component, and fresh actual CLI
+WASI streams. These are test requirements until fresh receipts establish results.
+
+## Compiled eval primary observations (2026-11-23)
+
+results/m12-eval/primary retains24 fresh Clojure1.12.6 observations and the complete
+upstream eval form/EPL notice. The primary command returns0 in2.628s. A top-level
+eval do preserves a prefix effect before a later form's compile error; a throwing
+definition initializer preserves its prior root. Namespace/Var identity, generated
+calls, functions, macros, recursion, laziness and dynamic math context are observed.
+These are primary semantic controls for#515, not native implementation or affected
+34-body/numeric acceptance passes. The original primary fixture remains unchanged.
+
+## Execution-time random capability candidate (2026-11-23)
+
+The private runtime now has a typed entropy callback outside the pinned ABI
+prelude, native sessions install OS entropy, and explicit selected-world standard
+random imports use the shared resolved WIT encoder. AOT installation precedes
+source initializers in ordinary and optimized assembly; pure worlds keep their
+import contract and missing entropy throws a catchable language error. The public
+Clojure rand/rand-int forms retain checked numeric function values rather than
+core legacy coercing macros. Exact source patches/EPL and126 primary deterministic
+transformations are retained under results/m12-random. Fresh native execution is
+required; feasibility and fixture recordings are not production pass claims.
+
+## Validation recorder recovery (2026-11-23)
+
+A workspace/tool transition detached the outside-scope Python recorders.
+The original complete-body logs, incomplete JSON receipts and exact input hashes
+remain intact. The ec646d91 flag test log records one native pass, but its Cargo
+exit status was not captured; a separate qualification records that distinction
+and verifies the current inputs still match. It is not relabeled as a complete
+gate. H/K full Cargo processes remain live in their original bounded scopes.
+
+run-durable-focused.py puts the recorder itself inside the bounded systemd scope
+and ignores client-disconnect SIGHUP. Cargo and result/hash recording therefore
+share that protected scope. It preserves the managed environment, original
+commands, resource cap and source/test/fixture expectations. Fresh execution
+is required before claiming the detached gate passed as a whole.
+
+The corrected-borrow assert gate on e20f18c5 returns101 after721.661s,
+inputs unchanged. The native flag regression observes the initialized Macro
+flag, then fails compiling an unqualified assert because registration omitted
+the existing automatic core-macro lookup list. Assert is now added to that
+list through the same excluded/shadowed-name lookup rules as the other compiled
+core macros. The regression is unchanged and the actual failure is archived.
+Native execution must be repeated; source registration alone is not a pass.
+
+The first assert focused gate on51cf8942 returns101 after138.454s, inputs unchanged,
+before executing language tests: the regression moved String units from a Form
+that implements Drop (E0509). The pattern now borrows those units. The original
+failed build/receipt is archived; it is not a semantic counterexample or native
+pass. Fresh execution is required after this test-code correction.
+
+## Compiled assert dependency and original body counterexamples (2026-11-23)
+
+run-before-bodies.py links the unchanged original body targets against frozen
+ea924dec producer libraries without writing their Cargo target. Build returns0;
+both native body targets fail101 after86.320s. Actual captured namespace diagnostics
+name unresolved assert in some-fn and unresolved rand-int in constantly. Neither
+namespace executes any assertion. Source/library hashes remain unchanged. This
+is a native immutable-library witness, not a Cargo pass or31/16 passing controls.
+
+The complete Clojure1.12.6 assert macro is installed through the existing compiled
+macro path. Two constructor expressions use the existing portable Error adapter;
+the original branches, doc/metadata, arities and messages remain retained with
+an exact patch/EPL provenance. Java AssertionError class identity is outside this
+adapter and is not counted as a compatibility match. Its dynamic Macro-phase
+*assert* Var starts true and is read before operand analysis. A Runtime binding
+does not retroactively disable expansion. New native tests require actual
+Runtime/Macro/AOT results and disabled-flag/arity behavior; no native pass is
+claimed before execution.
+
+Fresh JVM evidence records19 message/control-flow/effect/capture observations
+and [true true nil] for the default flag, Var.isDynamic and disabled expansion.
+The initial driver incorrectly expected :dynamic metadata to be true; the
+actual [true nil nil] result, Java0/driver1 and original inputs are retained.
+The corrected query uses the actual Var runtime flag, without altering the
+observed initial result. Rand-int remains a real whole-body dependency; it must
+use actual randomness rather than a constant or skipped original assertion.
+
 ## min-key bootstrap reproduction (2026-11-23)
 
 run-bootstrap-min-key.py returns0 on a16df2ac after227.037s, with inputs unchanged.
@@ -26,6 +163,44 @@ have226/229 actual host matches (seven newly executed min-key rows), with two ev
 rows and one constantly/some-fn row still unexecuted. Decimal remains199/200 with
 its eval row unexecuted. Bootstrap and the exact two-thread workspace baseline
 require new frozen receipts on this reviewed baseline.
+
+## Complete Clojure some-fn import (2026-11-23)
+
+The complete byte-preserved some-fn-adapted.sus form is appended through the
+existing core loader, with original documentation, metadata, arities and named
+closures. The pinned JAR/entry/whole-form hashes, exact retained defn-to-def/fn
+patch, EPL notice and all364 untouched primary expressions are verified by
+some-fn-provenance.py. Eight supplemental construction/argument/capture controls
+retain their fresh JVM source, output and JAR hashes. The generated515 files and
+conservative whole-core provenance for char/min-key are refreshed; this does not
+claim new native passes for those functions.
+
+The imported form and authored native regressions still require execution.
+No existing live target is reused for this candidate. The original assertion
+dependency remains a real failure and must be resolved before the whole16-row
+some-fn body can satisfy its guard; the original body is unchanged.
+
+## some-fn shipped-binding and assertion dependency probes (2026-11-23)
+
+run-some-fn-before.py retains two actual immutable native CLI counterexamples
+on a374b92d. (some-fn identity) exits1 with an unresolved some-fn binding after
+87.425s; compiling the short-circuit assertion predicate exits1 with an unresolved
+assert binding after80.531s. Input and executable hashes remain unchanged. The
+copied CLI is qualified against every recorded9d501d71 input: only the two listed
+documentation files differ, with production/tests/fixtures identical. These are
+failing CLI evaluations, not Cargo passes. Byte-exact receipts/diagnostics and
+explicit missing-binding review are archived under before-shipped-some-fn.
+
+some-fn-effects/oracle.py records eight fresh Clojure1.12.6 controls for predicate
+construction, argument effects/throws, short-circuiting and retained captures.
+They supplement the unchanged364 prior primary controls. New native regressions
+exercise all372 in Runtime/Macro/actual AOT and retain a constructed closure over
+GC/public constructor redefinition; they require execution before any pass claim.
+The whole-body targets preserve all16 some-fn and31 constantly assertions, including
+the Ratio row. Two existing primary constantly judgments (opaque closure and
+randomized form) remain explicitly separate from its29 host comparisons. The
+real assert dependency is retained; no body/expectation/count/skip substitution
+is allowed. An explicit free target is required before starting these jobs.
 
 ## Shipped min-key primary execution (2026-11-23)
 
@@ -33905,6 +34080,46 @@ evidence, not a claim of observed GC event counts. Final-input-diff qualifies
 only documentation additions after frozen runs; production/tests/fixtures match.
 
 
+## Execution-time random provider and original higher-order bodies (2026-11-23)
+
+`results/m12-random/run-public.py after-project-package-cache-reset` preserves
+a native overall101: both Runtime/Macro public-core tests pass, while a
+controlled AOT fixture fails to parse its reserved result export name. At
+`1abb5843`, `run-public.py after-wit-name-and-call-lifecycle --public-and-bodies`
+returns0 with unchanged inputs. All five public tests pass, including126
+controlled real AOT reports/raw numeric exports, actual CLI/WASI effects and
+fresh provider streams. Component calls complete post-return; each row has a
+fresh instance so expected uncaught errors cannot poison subsequent calls.
+All16 original some-fn assertions and all31 original constantly assertions
+execute; the Ratio is an actual host match and both existing guest judgments
+remain explicit. The prior successful direct-storage126-control run per native
+phase remains source-qualified to be02889d. Full capture/baseline review,
+bootstrap and full workspace validation are still separate requirements.
+
+
+## Full higher-order capture and entropy bootstrap (2026-11-23)
+
+At201a7bcf, `run-integration.py complete-capture-and-bootstrap` returns0
+with recorded inputs unchanged. The original exact suite target returns101
+against the previous baseline after664.706s; its complete5,435-row capture
+and independent audit preserve all prior comparable successes. Counts:
+5,238 host matches,93 guest judgments,105 failures,1,503 unexecuted,zero skips
+and66 failed namespaces. Newly loaded some-fn/constantly/lazy-seq bodies
+contribute16/31/31 rows, retaining their0/2/10 existing guest judgments. The
+constantly Ratio independently matches; remaining numeric subsets are
+BigInt/Ratio227/229 and Decimal199/200, with2+1 rows blocked by eval.
+
+Seven adversarial baseline controls pass. `review-random-baseline.py ...
+--write` removes only the three observed namespace-load failures; all other
+baseline entries, original primary, count/skip rules and guest judgments stay
+unchanged. The original native101 and old baseline remain retained. The
+subsequent `scripts/clojure_test_suite.py compare --observations ...` returns0,
+which is host review, not a native rerun. Java/Node-free double bootstrap,
+checkout-independent compiler identity and all four original execution tests
+also return0 (452.479s). Receipts and full logs are under
+`results/m12-random/complete-capture-and-bootstrap` and
+`results/m12-reader-followup/full-suite-after-random-and-assert`.
+
 ## Min-key full-workspace completion evidence (2026-11-24)
 
 The exact `cargo test --workspace --locked -- --test-threads=2` process at
@@ -33932,3 +34147,40 @@ retains the original incomplete receipt, log, initial observer and corrected
 audit. The correction includes explicit rlib targets and identifies duplicate
 integration-target names using Cargo package fingerprints; none are missing or
 unexpected. This qualifies the evidence, without changing tests or budgets.
+
+
+## Frozen randomness workspace and optimizer validation (2026-11-24)
+
+At61397661, `cargo test --workspace --locked -- --test-threads=2` returns0
+after11,089.347s. The durable recorder observes unchanged tracked inputs and
+HEAD. Archive-only replay verifies all375 expected native/doc targets:
+2,496 passed,15 explicit ignores,zero failed andzero filtered. This reruns
+the shipped some-fn, assert, public randomness and complete original body
+guards along with the original numeric, record, artifact, import and size
+suites. Full receipts, logs, metadata, fingerprints and replay are under
+`results/m12-random/full-workspace-after-reviewed-random-baseline/completion-audit`.
+
+The ignored `optimized_selected_random_import_preserves_draws` is separately
+executed with the hash-verified official Binaryen133 tools:1pass,0failed
+(1.631s including Cargo), unchanged inputs/HEAD/tools. Its receipt and log
+are under `results/m12-random/optimized-after-final-baseline`. Other ignores
+retain their original unsupported/manual/doc qualifications.
+
+Reconciling the rebased min-key parent8e05f09c preserves every pre-existing
+implementation, test, fixture, manifest and evidence blob exactly; only
+handoff prose changes and historical parent completion archives are added.
+The qualification records this comparison before the new completion notes
+and archives. Real eval and the remaining numeric umbrella requirements
+remain separate work; these command results establish no eval acceptance.
+
+
+## Random provenance review correction (2026-11-24)
+
+Independent review found the recorded hash for
+`crates/suss-cli/tests/clojure_random.rs` preceded its WIT-name and lifecycle
+repair. `python3 results/m12-random/provenance.py --record` refreshes that
+one metadata field; `python3 results/m12-random/provenance.py` then passes.
+The implementation, tests, fixtures, manifests and archived native inputs are
+unchanged from447c1957, so the frozen61397661 native results retain the
+source-equivalence qualification above. Final-head remote checks remain
+required after this documentation-only correction.

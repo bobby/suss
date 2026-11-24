@@ -1,0 +1,16 @@
+{
+  "source_head": "61397661ddba8d0022b876d1163dd170ea3ef0ea",
+  "expected_count": 375,
+  "observed_count": 375,
+  "passed_tests": 2496,
+  "ignored_tests": 15,
+  "all_native_and_doc_targets_pass": true,
+  "cargo_exit_code": 0,
+  "qualification": "Replay the exact random/some-fn workspace target coverage from archives.\n\nThe original durable recorder supplies Cargo's actual exit and unchanged-input/\nHEAD observations. This replay verifies that receipt and every native/doc\nresult against archived metadata and fingerprints, without live build files.",
+  "inputs_sha256": {
+    "command.json.gz": "da74df6660749a2dc2eb0549b351b14f76181e263badb97448da22cde3866fec",
+    "run.log.gz": "28548d28cd23bc04e2aad915a3cc31d33912ae2e173de6660ec5607940814d7c",
+    "cargo-metadata.json.gz": "00dcc52f7026b7d7bc6f0ffc38dea4459d1104725137f7a7e997c0b564335121",
+    "cargo-fingerprints.json.gz": "6a92ce495f8bc1f4ed85020413b17d9d56b2b2c6940c63367f0e0cc73b4980cf"
+  }
+}

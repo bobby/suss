@@ -1,0 +1,58 @@
+[
+  {
+    "raw": "command.json",
+    "archive": "command.json.gz",
+    "raw_sha256": "46671894830fe38542cad3f228911d5a35a081e659f0466a68159627aaea5bc1",
+    "archive_sha256": "f396e09713b5ac408ca2b4df77475016563f6e8cbde869df6993350cc0faf32c",
+    "raw_bytes": 955155,
+    "archive_bytes": 333243
+  },
+  {
+    "raw": "build.stdout",
+    "archive": "build.stdout.gz",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "raw_bytes": 0,
+    "archive_bytes": 20
+  },
+  {
+    "raw": "build.stderr",
+    "archive": "build.stderr.gz",
+    "raw_sha256": "3e7a6c4264728a01f617f69be6dabccec519b1443f184e102490f2e7cd9bb6e0",
+    "archive_sha256": "c97ba44df92acd128f08f183bd684d34b01721ef358a69d97ba4c3734fd4783f",
+    "raw_bytes": 95,
+    "archive_bytes": 107
+  },
+  {
+    "raw": "bodies.stdout",
+    "archive": "bodies.stdout.gz",
+    "raw_sha256": "8b5c631af241137baaa83188c87389b03bbf68c7306bc54bdf476caf812e366a",
+    "archive_sha256": "536e04b1ecbe722b05eb001ce7e15570f95627657b06d0330b94ac9255a70f9b",
+    "raw_bytes": 712,
+    "archive_bytes": 248
+  },
+  {
+    "raw": "bodies.stderr",
+    "archive": "bodies.stderr.gz",
+    "raw_sha256": "a8c471bddb100f442b79a6d2449b0dae31db9e99d69dce3a257db06abf1e1abd",
+    "archive_sha256": "786bd0a4dfec9e3e164ad6b6e9da29c11a1789a236e2eaa3784f60204c4c3262",
+    "raw_bytes": 1208,
+    "archive_bytes": 517
+  },
+  {
+    "raw": "capture/constantly-observations.json",
+    "archive": "capture/constantly-observations.json.gz",
+    "raw_sha256": "fafd8bf07e3006ca2e07982fcd08d43537373da1d01dd5d1a5911b667dad71f5",
+    "archive_sha256": "60a17bda24383d14d5af588b4034a68548264fdb7d6a4895540fd7c3fbc8fda8",
+    "raw_bytes": 428,
+    "archive_bytes": 272
+  },
+  {
+    "raw": "capture/some_fn-observations.json",
+    "archive": "capture/some_fn-observations.json.gz",
+    "raw_sha256": "debcf9a635bfebd04917a59991bec6f257b53984d76d2c1972a7325e22bdfc09",
+    "archive_sha256": "4df56b9b934226e3cb9d0b65cf4c33f854ff6a63e081fc78ad45baa9f3fbc212",
+    "raw_bytes": 417,
+    "archive_bytes": 270
+  }
+]

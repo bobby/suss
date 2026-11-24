@@ -1,0 +1,18 @@
+[
+  {
+    "raw": "commands.json",
+    "archive": "commands.json.gz",
+    "raw_sha256": "070ba58468b0ce14e548c0b5a10d8f2f0400665f8c7f22774aa5234dee535be0",
+    "archive_sha256": "b76a4f85619201ec8a17f31674f8aedc13def7afe2b592d82a508247e147c9a9",
+    "raw_bytes": 499870,
+    "archive_bytes": 184448
+  },
+  {
+    "raw": "compile-time-flags.log",
+    "archive": "compile-time-flags.log.gz",
+    "raw_sha256": "83a8bbd0887c71b8ac2c5cb5bcc90e9877abe502102addddd75df5edc8038e18",
+    "archive_sha256": "84ff817bd595cf6e8d5a41e2e36b21c6a2d3451af19af703204664fab18f7114",
+    "raw_bytes": 1703,
+    "archive_bytes": 715
+  }
+]
