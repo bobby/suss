@@ -121,7 +121,7 @@ fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities
         check(
             &mut session,
             &mut decoder,
-            "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (boolean? (.isMacro (var review-ordinary-var)))])",
+            "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (identical? false (.isMacro (var review-ordinary-var)))])",
             "[false true]",
         );
         for arity in 0..=20 {

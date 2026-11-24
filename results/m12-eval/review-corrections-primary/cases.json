@@ -61,7 +61,7 @@
   },
   {
     "name": "ordinary-var-macro-boolean",
-    "expression": "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (boolean? (.isMacro (var review-ordinary-var)))])",
+    "expression": "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (identical? false (.isMacro (var review-ordinary-var)))])",
     "expected": "[false true]"
   },
   {

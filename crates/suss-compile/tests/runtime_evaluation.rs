@@ -33,8 +33,7 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
     let mut result = [Val::null_any_ref()];
     let error = evaluate
         .call(&mut store, &[Val::null_any_ref()], &mut result)
-        .err()
-        .expect("compiler must reject unauthenticated access");
+        .unwrap_err();
     assert!(error.is::<wasmtime::ThrownException>());
     assert!(store.as_context_mut().take_pending_exception().is_some());
 

@@ -10,5 +10,5 @@
 (println (pr-str (pr-str (do (eval '(defmacro review-eval-add [x] (list '+ x 1))) (eval '(review-eval-add 41))))))
 (println (pr-str (pr-str (let [v (eval '(defmacro review-eval-var [] 42))] [(var? v) (.isMacro v) (:macro (meta v)) (identical? v (eval '(var review-eval-var)))]))))
 (println (pr-str (pr-str (do (try (eval '(do (defmacro review-prefix [] 42) missing-review)) (catch Exception _ nil)) (eval '(review-prefix))))))
-(println (pr-str (pr-str (do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (boolean? (.isMacro (var review-ordinary-var)))]))))
+(println (pr-str (pr-str (do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (identical? false (.isMacro (var review-ordinary-var)))]))))
 (println (pr-str (pr-str (do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch ClassCastException _ true))])))))
