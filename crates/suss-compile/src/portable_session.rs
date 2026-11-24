@@ -1270,7 +1270,7 @@ impl SessionHost<'_> {
     }
     fn budget(&mut self) -> Result<(), SessionError> {
         if self.store.is_borrowed() {
-            return Self::consume_host_work(self.store.as_context_mut(), 0, &self.interrupt);
+            return Self::consume_host_work(self.store.as_context_mut(), 0, &self.interrupt).map_err(Into::into);
         }
         if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
             return Ok(());

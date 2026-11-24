@@ -30,7 +30,7 @@ pub enum AsyncDispatch {
 const NATIVE_SCOPE: i32 = 0;
 
 fn export(
-    scope: &mut RootScope<&mut Store<()>>,
+    scope: &mut RootScope<StoreContextMut<'_, ()>>,
     runtime: Instance,
     name: &str,
 ) -> Result<Func, SessionError> {
@@ -286,7 +286,7 @@ impl SessionHost<'_> {
         ) -> Result<R, SessionError>,
     ) -> Result<R, SessionError> {
         self.budget()?;
-        let mut scope = RootScope::new(&mut self.store);
+        let mut scope = RootScope::new(self.store.as_context_mut());
         let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
         let outcome = f(&mut scope, self.runtime, self.identity, &self.handles);
         let outcome = match outcome {

@@ -534,8 +534,8 @@ mod tests {
     }
 }
 
-pub(super) fn recovery_candidates(
-    scope: &mut RootScope<&mut Store<()>>,
+pub(super) fn recovery_candidates<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
 ) -> wasmtime::Result<Vec<OwnedRooted<AnyRef>>> {
     let mut result = [Val::null_any_ref()];
@@ -555,8 +555,8 @@ pub(super) fn recovery_candidates(
     }
     Ok(candidates)
 }
-pub(super) fn recovered_owner(
-    scope: &mut RootScope<&mut Store<()>>,
+pub(super) fn recovered_owner<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     candidates: &[OwnedRooted<AnyRef>],
 ) -> wasmtime::Result<Option<OwnedRooted<AnyRef>>> {
