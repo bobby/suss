@@ -34155,3 +34155,20 @@ The earlier compile101 and original incomplete receipt stay preserved with a
 posthoc input check; no failed attempt is relabeled. Persistent publication,
 macro expansion, real Vars, public eval and complete primary/body acceptance
 remain separate requirements. The runtime capability alone implements no eval.
+
+
+## Shared compiler publication (2026-11-24)
+
+Atadb66ae9, the owned session and borrowed callback share one authoritative
+compiler catalog/cell map. The three private reentry tests pass in both phases:
+callback definitions are visible to later owned inputs, owned definitions are
+visible to callbacks, and a compiled function survives GC and sees live root
+redefinition. Namespace getters return owned metadata snapshots. No Store alias
+or Session pointer is captured, and metadata locks do not cross Wasm execution.
+
+`run-state-gates.py after-shared-compiler-publication` returns0 at0d7f5e9e,
+inputs unchanged:36 session library, nine inline module, four observation and
+four bootstrap tests pass. Java/Node-free double bootstrap and source identity
+verification also pass (277.446s). Full receipts/logs are retained under
+`results/m12-eval/after-shared-compiler-publication`. Public eval, borrowed macro
+host authority, real Vars and complete primary/body acceptance remain required.

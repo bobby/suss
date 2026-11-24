@@ -46,3 +46,12 @@ live root redefinition in both phases. The namespace getter returns an owned
 snapshot rather than borrowing through the metadata lock. Existing session,
 module, observation and bootstrap behavior needs broader regression checks.
 Public eval, macro authority and real Var acceptance remain unimplemented.
+
+The broader state gate at0d7f5e9e returns0, inputs unchanged:36 session library
+tests, nine inline-module macro tests, four isolated observation tests and four
+original bootstrap execution tests pass. Java/Node-free double reproduction
+and compiler identity verification also pass (bootstrap command277.446s).
+The expected caught panic in the existing nested-budget unwind regression is
+retained in its log; the test and all36 session cases pass. This establishes
+existing owned-session behavior after shared metadata publication, not public
+eval, macro-authority sharing, real Vars or complete numeric acceptance.
