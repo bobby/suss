@@ -234,7 +234,7 @@ mod tests {
         assert!(matches!(bridge.read(&mut runtime, &value, 0..0).unwrap().kind, Kind::Long(42)));
         let count = |service: &MacroService| service.with_host(|host| {
             let value = host.session.eval("@macro-service-effects").unwrap();
-            host.bridge.read(&mut host.session, &value, 0..0).unwrap().kind
+            host.bridge.read(&mut host.session, &value, 0..0).unwrap().into_parts().2
         });
         assert_eq!(count(&service), Kind::Long(1));
 
