@@ -19,6 +19,7 @@ assert all(sha((tool.parent/name).read_bytes())==h for name,h in tool_record["ve
 record={"head":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),"inputs":inputs,"TMPDIR":env.get("TMPDIR"),"runner_sha256":sha(Path(__file__).read_bytes()),"commands":[],"scope":scope,"recorder_pid":os.getpid(),"binaryen":{"wasm_opt":str(tool),"sha256":tool_record["verified_tool_sha256"]},"complete":False}
 def save():(OUT/"commands.json").write_text(json.dumps(record,indent=2)+"\n")
 commands=[
+ ("public-core-storage-both-phases",["cargo","test","--workspace","--locked","--lib","random_tests","--","--nocapture","--test-threads=2"]),
  ("public-runtime-macro-actual-aot",["cargo","test","--workspace","--locked","--test","clojure_random","--","--nocapture","--test-threads=2"]),
  ("original-some-fn-and-constantly-bodies",["cargo","test","--workspace","--locked","--test","clojure_test_suite","pinned_some_fn_bodies","--","--nocapture","--test-threads=2"])]
 save();exit_code=0

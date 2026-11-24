@@ -1,0 +1,14 @@
+{
+  "source_head": "e89e8ad2bcbc74a6b20207bfc1463fdf3c92b0d7",
+  "archives": {
+    "commands.json": {
+      "sha256": "b96fd54ae337bf8c85585d9f84a8f9886c81155981da11ba630986e0d3067e6c",
+      "gzip_sha256": "42c24782f1df9d82124e7d8ecbabe3efe5077e07805ad1b90683c02f0222bb35"
+    },
+    "public-core-both-phases.log": {
+      "sha256": "afa265ac2761a03d22df709391b0a3a12782e6eccd29e58d13d7e4239c568e6e",
+      "gzip_sha256": "7cfe8a79f8827d1f80957afc49ca2666db79b6d6f28e105b5004dff51080b4c0"
+    }
+  },
+  "qualification": "All126 Object-overload controls match in Runtime and Macro, with exact draw consumption and post-GC report decoding; normal provider/fresh-phase streams also pass. The added direct numeric field/scalar-export checks require a fresh execution. This is not a public CLI/full-body/workspace acceptance pass."
+}

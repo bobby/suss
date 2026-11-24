@@ -38,7 +38,7 @@ fn random_public_core_matches_controlled_primary_transformations_in_both_phases(
                 Ordering::SeqCst,
             );
             let expression = format!(
-                "(try (let [x ({} {})] [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]) (catch :default e [:error]))",
+                "(try (let [x ({} {})] [x [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)]]) (catch :default e [:error [:error]]))",
                 row["operation"].as_str().unwrap(),
                 row["bound"].as_str().unwrap()
             );
@@ -54,11 +54,63 @@ fn random_public_core_matches_controlled_primary_transformations_in_both_phases(
         session.collect().unwrap();
         for (value, row) in values.iter().zip(&rows) {
             let observed = bridge.read(&mut session, value, 0..0).unwrap();
+            let Kind::Vector(ref envelope) = observed.kind else {
+                panic!("{observed:?}")
+            };
+            assert_eq!(envelope.len(), 2);
             assert_eq!(
-                suss_reader::edn::source::print_form(&observed).unwrap(),
+                suss_reader::edn::source::print_form(&envelope[1]).unwrap(),
                 row["expected"].as_str().unwrap(),
                 "{row}"
             );
+            // Read the actual numeric datum independently of its guest printer
+            // and type predicates. The primary's round-tripping print and JVM
+            // category supply expected fields; NaN payloads are not a contract.
+            use suss_reader::edn::Value;
+            let expected =
+                suss_reader::edn::read_one(row["expected"].as_str().unwrap(), &Default::default())
+                    .unwrap();
+            let Value::Vector(ref fields) = expected else {
+                panic!("{expected:?}")
+            };
+            let Value::Keyword(ref tag) = fields[0] else {
+                panic!("{fields:?}")
+            };
+            if tag.name == "error" {
+                assert!(
+                    matches!(&envelope[0].kind, Kind::Keyword(value)
+                    if value.namespace.is_none() && value.name == "error"),
+                    "{row}"
+                );
+            } else {
+                let (Value::String(text), Value::Keyword(kind)) = (&fields[1], &fields[2]) else {
+                    panic!("{fields:?}")
+                };
+                match kind.name.as_str() {
+                    "integer" => assert!(
+                        matches!(envelope[0].kind, Kind::Long(value)
+                        if value == text.parse::<i64>().unwrap()),
+                        "{row}"
+                    ),
+                    "double" => {
+                        let expected = match text.as_str() {
+                            "##NaN" => f64::NAN,
+                            "##Inf" => f64::INFINITY,
+                            "##-Inf" => f64::NEG_INFINITY,
+                            _ => text.parse::<f64>().unwrap(),
+                        };
+                        let Kind::Number(actual) = envelope[0].kind else {
+                            panic!("{row}: {:?}", envelope[0])
+                        };
+                        if expected.is_nan() {
+                            assert!(actual.is_nan(), "{row}");
+                        } else {
+                            assert_eq!(actual.to_bits(), expected.to_bits(), "{row}");
+                        }
+                    }
+                    other => panic!("unassessed primary numeric category {other}"),
+                }
+            }
         }
         assert_eq!(draws.load(Ordering::SeqCst), 126);
     }

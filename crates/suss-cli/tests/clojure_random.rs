@@ -32,6 +32,51 @@ fn observation(value: &suss_reader::edn::Value) -> Observation {
     }
 }
 
+fn expected_numeric(row: &serde_json::Value) -> Observation {
+    use suss_reader::edn::Value;
+    let value =
+        suss_reader::edn::read_one(row["expected"].as_str().unwrap(), &Default::default()).unwrap();
+    let Value::Vector(fields) = value else {
+        panic!("{value:?}")
+    };
+    let Value::Keyword(tag) = &fields[0] else {
+        panic!("{fields:?}")
+    };
+    if tag.name == "error" {
+        assert_eq!(fields.len(), 1);
+        return Observation::Keyword(None, "error".encode_utf16().collect());
+    }
+    assert_eq!(tag.name, "value");
+    assert_eq!(fields.len(), 3);
+    let Value::String(text) = &fields[1] else {
+        panic!("{fields:?}")
+    };
+    let Value::Keyword(kind) = &fields[2] else {
+        panic!("{fields:?}")
+    };
+    match kind.name.as_str() {
+        "integer" => Observation::Long(text.parse().unwrap()),
+        "double" => Observation::Number(
+            match text.as_str() {
+                "##NaN" => f64::NAN,
+                "##Inf" => f64::INFINITY,
+                "##-Inf" => f64::NEG_INFINITY,
+                _ => text.parse::<f64>().unwrap(),
+            }
+            .to_bits(),
+        ),
+        other => panic!("unassessed primary numeric category {other}"),
+    }
+}
+fn canonical_nan(value: Observation) -> Observation {
+    match value {
+        Observation::Number(bits) if f64::from_bits(bits).is_nan() => {
+            Observation::Number(f64::NAN.to_bits())
+        }
+        other => other,
+    }
+}
+
 #[test]
 fn public_random_effects_and_normal_provider_in_both_phases() {
     let rows = effects();
@@ -84,9 +129,11 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
                      x (if (= operation "rand") (rand bound) (rand-int bound))]
                  [:value (pr-str x) (cond (double? x) :double (integer? x) :integer :else :other)])
                (catch :default e [:error])))
-        (defn ^:export result [operation text] (pr-str (report operation text)))"#;
+        (defn ^:export result [operation text] (pr-str (report operation text)))
+        (defn ^:export rand-value [text] (rand (read-string text)))
+        (defn ^:export rand-int-value [text] (rand-int (read-string text)))"#;
     let wit = format!(
-        "{}\nworld controls {{ import random; export result: func(operation: string, text: string) -> string; }}",
+        "{}\nworld controls {{ import random; export result: func(operation: string, text: string) -> string; export rand-value: func(text: string) -> f64; export rand-int-value: func(text: string) -> s64; }}",
         include_str!("../../../vendor/wasi/wasi-wit-0.3.1/cli/deps/random.wit")
     );
     let bytes = suss_compile::Compiler::new().compile(source, &wit).unwrap();
@@ -130,6 +177,12 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
     let result = instance
         .get_typed_func::<(String, String), (String,)>(&mut store, "result")
         .unwrap();
+    let rand_value = instance
+        .get_typed_func::<(String,), (f64,)>(&mut store, "rand-value")
+        .unwrap();
+    let rand_int_value = instance
+        .get_typed_func::<(String,), (i64,)>(&mut store, "rand-int-value")
+        .unwrap();
     for (index, row) in rows.iter().enumerate() {
         word.store(
             match row["draw"].as_str().unwrap() {
@@ -157,7 +210,34 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
             suss_reader::edn::read_one(row["expected"].as_str().unwrap(), &Default::default())
                 .unwrap();
         assert_eq!(actual, expected, "{row}");
-        assert_eq!(draws.load(Ordering::SeqCst), index + 1, "{row}");
+        assert_eq!(draws.load(Ordering::SeqCst), 2 * index + 1, "{row}");
+        store
+            .set_fuel(suss_compile::portable::DEFAULT_OPERATION_FUEL)
+            .unwrap();
+        let bound = (row["bound"].as_str().unwrap().to_owned(),);
+        let wanted = expected_numeric(row);
+        let raw = if row["operation"] == "rand" {
+            rand_value
+                .call(&mut store, bound)
+                .map(|(value,)| Observation::Number(value.to_bits()))
+        } else {
+            rand_int_value
+                .call(&mut store, bound)
+                .map(|(value,)| Observation::Long(value))
+        };
+        if matches!(wanted, Observation::Keyword(_, _)) {
+            assert!(
+                raw.is_err(),
+                "a primary error cannot cross the raw scalar boundary as a value: {row}"
+            );
+        } else {
+            assert_eq!(
+                canonical_nan(raw.unwrap()),
+                canonical_nan(wanted),
+                "raw scalar fields: {row}"
+            );
+        }
+        assert_eq!(draws.load(Ordering::SeqCst), 2 * (index + 1), "{row}");
     }
 }
 

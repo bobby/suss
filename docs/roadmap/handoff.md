@@ -1,3 +1,25 @@
+## Object-overload random controls and complete assert execution (2026-11-23)
+
+The e89e8ad2 core-only gate returns0 in654.236s (including a library rebuild),
+inputs/tool unchanged. All126 public Object-overload controls match in Runtime
+and isolated Macro; each consumes exactly one provider word and survives GC.
+The normal-provider/fresh-phase stream check also passes. Direct numeric datum
+checks are now added alongside the original report comparison; the public AOT
+component adds raw f64/s64 exports, retaining the report checks and all fixtures.
+These additional fields and actual CLI routes need fresh native execution.
+
+The earlier eb18cc3a assert gate passes its compile-time flag regression and all19
+primary controls in both phases and actual AOT, plus both independent decoder
+guards. All16 ordered original some-fn assertions match on the host. Constantly
+executes zero rows at unresolved rand-int, retaining overall101 and unchanged
+inputs. The complete older-source receipt/logs/captures are archived separately;
+no current RNG/full-body acceptance is inferred from them.
+
+The completed assert target is idle. New RNG public checks reuse that existing
+workspace-feature target after verifying no active source/target processes,
+avoiding a duplicate dependency rebuild. The existing isolated private target
+retains its separate receipts; no source inputs are changed during native runs.
+
 ## Public rand-int Object-overload fixture correction (2026-11-23)
 
 The1ded898d focused run passes all five boundary tests, including actual Binaryen
