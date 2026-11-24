@@ -59,7 +59,7 @@
     "crates/suss-compile/src/portable/hir.rs": "4de6aa07a817b9f7c8e96bbc8cd2b6e5abf0f7610970be2cbfd3e954e0574f88",
     "crates/suss-compile/src/portable/ir.rs": "45076f706c4458a2cb5a0c03419a758b079acad2e6a1618101c5ed215c24c46c",
     "crates/suss-compile/src/portable/resolve.rs": "1f221cf9888a8fc33c245691826911a9989511a6185e8db6eea17866acd646cc",
-    "crates/suss-compile/src/portable_session/evaluation.rs": "4c22bfa18674627d33eee685925ae10343e5c63df547b53c0a363febd15596bf",
+    "crates/suss-compile/src/portable_session/evaluation.rs": "159e258e97983689b29d382c45675b3b1904ddabbb2e584ef6e9220e92c0914b",
     "crates/suss-compile/src/portable_macros.rs": "dd2d688b4369e511957828168a27305903b353b2c51bd3cc24247359457a8f13",
     "crates/suss-compile/src/portable_session.rs": "5e34e07323fed157bd1f5373760cd46a99836a01957d823b909d1a50978b37f2",
     "docs/compatibility/bootstrap/exact-integers.sus": "487123d3fae7597da9b78cb81b1b7ceb727a338eb1ab62627e05a3227506acb2",

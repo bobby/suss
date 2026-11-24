@@ -294,13 +294,13 @@ impl SessionHost<'_> {
                 wasmtime::Error::msg("Native input namespace entry is already active").into(),
             );
         }
-        let frame = self
+        let value = self
             .runtime
             .get_global(&mut self.store, "dynamic-frame")
             .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame checkpoint"))?
-            .get(&mut self.store)
-            .unwrap_anyref();
-        let frame = frame
+            .get(&mut self.store);
+        let frame = value
+            .unwrap_anyref()
             .map(|frame| frame.to_owned_rooted(&mut self.store))
             .transpose()?;
         *registry_lock(&state.input_base) = frame;
