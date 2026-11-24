@@ -34249,3 +34249,29 @@ receipts/logs are retained under
 inline forwarding method and test-only owned-form API compile failures remain
 archived. Public eval, request-scoped callback installation, real Vars and the
 complete primary/body acceptance still remain required.
+
+
+## Public eval entry and current native boundary (2026-11-24)
+
+The ordinary public eval function now decodes actual nominal form data and
+compiles it through the persistent native compiler. It reuses caller binding
+cells, the isolated Macro authority, current dynamic namespace and math
+context, and cumulative allowances. Function constants return the original
+root. No prior source is replayed and form data is not printed and reread.
+
+At ab2caa9b, the strict reentrant compiled-macro group returns0 (160.200s
+including build). The complete clojure_eval target returns101:4 tests pass
+and1 fails. All15 independent controls match in both Runtime and Macro,
+including retained post-GC comparisons. Runtime fixture controls for embedded
+globals, qualified globals and dynamic namespace selection match; the group
+then fails at ordinary-var-result, leaving later fixture controls unexecuted.
+All recorded inputs remain unchanged. Receipts and complete logs are under
+`results/m12-eval/public-eval-context-after-target-correction`.
+
+The preceding launch used an incorrect target path, was intentionally
+interrupted and returned-2 with unchanged inputs. It establishes no native
+pass; its receipt, partial log and target-correction explanation are retained
+under `results/m12-eval/public-eval-function-and-namespace-context`.
+Real live-cell Vars, top-level failure/effect boundaries, all34 unchanged
+original eval assertions, capability/budget/GC regressions and full validation
+remain required before claiming issue515 acceptance.
