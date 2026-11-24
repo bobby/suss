@@ -1,10 +1,12 @@
 //! Invocation-local correspondence, never an identity inferred from spans alone.
 use super::Result;
-use crate::portable_session::{Session, SessionError};
+use crate::portable_session::{SessionHost, SessionError};
+#[cfg(all(test, not(suss_generator)))]
+use crate::portable_session::Session;
 use suss_reader::forms::{Form, Kind};
 
 /// Grow a work stack with its allocation charged before it happens.
-fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Result<()> {
+fn reserve<T>(session: &mut SessionHost<'_>, values: &mut Vec<T>, extra: usize) -> Result<()> {
     session.charge_host_work(1)?;
     if extra > values.capacity() - values.len() {
         let needed = values.len().checked_add(extra).ok_or_else(|| invalid("Initializer plan allocation overflow"))?;
@@ -22,7 +24,7 @@ fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Resul
 fn invalid(message: &'static str) -> SessionError {
     wasmtime::Error::msg(message).into()
 }
-fn text<T: PartialEq>(session: &mut Session, a: &[T], b: &[T]) -> Result<bool> {
+fn text<T: PartialEq>(session: &mut SessionHost<'_>, a: &[T], b: &[T]) -> Result<bool> {
     session.charge_host_work(1)?;
     if a.len() != b.len() { return Ok(false); }
     for (a, b) in a.chunks(256).zip(b.chunks(256)) {
@@ -31,7 +33,7 @@ fn text<T: PartialEq>(session: &mut Session, a: &[T], b: &[T]) -> Result<bool> {
     }
     Ok(true)
 }
-fn namespace(session: &mut Session, a: &Option<String>, b: &Option<String>) -> Result<bool> {
+fn namespace(session: &mut SessionHost<'_>, a: &Option<String>, b: &Option<String>) -> Result<bool> {
     session.charge_host_work(1)?;
     match (a, b) {
         (None, None) => Ok(true),
@@ -41,8 +43,8 @@ fn namespace(session: &mut Session, a: &Option<String>, b: &Option<String>) -> R
 }
 /// Strictly stronger than raw-key equality: includes every span and raw metadata
 /// prefix, distinguishes kinds and exact numeric bits, and never calls guests.
-pub(super) fn same(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
-    fn push<'a, 'b>(session: &mut Session, pending: &mut Vec<(&'a Form, &'b Form)>,
+pub(super) fn same(session: &mut SessionHost<'_>, a: &Form, b: &Form) -> Result<bool> {
+    fn push<'a, 'b>(session: &mut SessionHost<'_>, pending: &mut Vec<(&'a Form, &'b Form)>,
         a: &'a Form, b: &'b Form) -> Result<()> {
         reserve(session, pending, 1)?;
         session.charge_host_work(3)?;
@@ -172,7 +174,7 @@ mod tests {
         let bridge = FormBridge::new(&mut session).unwrap();
         let initializer = form(Kind::Vector(vec![form(Kind::String(vec![0xd800; 65536]))]));
         let definition = form(Kind::List(vec![read("def"), read("large"), initializer.clone()]));
-        let measure = |session: &mut Session, reuse: bool| {
+        let measure = |session: &mut SessionHost<'_>, reuse: bool| {
             session.with_operation_budget(|session| {
                 let before = session.operation_fuel_remaining()?;
                 let mut graph = AnalysisGraph::new(&bridge, session);

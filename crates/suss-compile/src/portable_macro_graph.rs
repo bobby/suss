@@ -9,7 +9,7 @@ use crate::portable::{
 };
 use crate::{
     portable_macro_data::{FormBridge, MetadataShape},
-    portable_session::{Session, SessionError, SessionValue},
+    portable_session::{SessionHost, SessionError, SessionValue},
 };
 use std::{
     cmp::Ordering,
@@ -17,6 +17,8 @@ use std::{
     sync::Arc,
 };
 use suss_reader::forms::{Form, Kind};
+#[cfg(all(test, not(suss_generator)))]
+use crate::portable_session::Session;
 
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
@@ -84,7 +86,7 @@ fn sort_binding_names<'a>(
 }
 
 fn charge_origin_work(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     span: std::ops::Range<usize>,
     units: u64,
 ) -> std::result::Result<(), portable::Diagnostic> {
@@ -115,7 +117,7 @@ fn preserve_source_error<T>(
 }
 
 fn symbol_position(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     origin: &portable::SourceOrigin,
     form: &Form,
 ) -> Result<Option<portable::SourcePosition>> {
@@ -478,9 +480,9 @@ enum Task {
 /// Recipe memo tables live for one build; transported data is immutable
 /// Clojure data (design decision 2026-10-25). An owned revision pointer is not
 /// an artifact cache key.
-pub struct AnalysisGraph<'a> {
+pub struct AnalysisGraph<'a, 'store> {
     bridge: &'a FormBridge,
-    session: &'a mut Session,
+    session: &'a mut SessionHost<'store>,
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     raw_keys: Interner,
@@ -503,7 +505,7 @@ pub struct AnalysisGraph<'a> {
     recipes: Vec<Option<Recipe>>,
     jobs: VecDeque<(Value, Task)>,
 }
-impl<'a> AnalysisGraph<'a> {
+impl<'a, 'store> AnalysisGraph<'a, 'store> {
     fn reader_key(&mut self, form: &Form) -> Result<KeyId> {
         let mut plan = Plan::default();
         let root = self.raw_keys.plan(form, &mut plan, &mut |units| {
@@ -517,7 +519,7 @@ impl<'a> AnalysisGraph<'a> {
         })
         .map_err(SessionError::Compile)
     }
-    pub fn new(bridge: &'a FormBridge, session: &'a mut Session) -> Self {
+    pub fn new(bridge: &'a FormBridge, session: &'a mut SessionHost<'store>) -> Self {
         Self {
             bridge,
             session,
@@ -995,7 +997,7 @@ impl<'a> AnalysisGraph<'a> {
             fn form(&self) -> &Form {
                 match self { Self::Borrowed(form) => form, Self::Owned(form) => form }
             }
-            fn leaf(self, session: &mut Session) -> Result<Form> {
+            fn leaf(self, session: &mut SessionHost<'_>) -> Result<Form> {
                 match self {
                     // A queue literal is transported whole, with its metadata.
                     Self::Owned(form) if matches!(form.kind, Kind::Tagged { .. }) => Ok(form),
@@ -1728,7 +1730,7 @@ impl<'a> AnalysisGraph<'a> {
             return Ok(*value);
         }
         let tracing = std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some();
-        let trace = |session: &Session, stage: &str| -> Result<()> {
+        let trace = |session: &SessionHost<'_>, stage: &str| -> Result<()> {
             if tracing {
                 eprintln!("metadata-declaration {}/{} {stage}: {}", global.namespace(), global.name(), session.operation_fuel_remaining()?);
             }
@@ -3229,7 +3231,7 @@ mod sharing_tests {
     #[test]
     fn owned_normalized_metadata_fuel_failure_preserves_input_and_retry_recovers() {
         const MARKER: &str = "owned-prefix-marker";
-        fn marker_emitted(graph: &AnalysisGraph<'_>) -> bool {
+        fn marker_emitted(graph: &AnalysisGraph<'_, '_>) -> bool {
             graph.recipes.iter().flatten().any(|recipe| {
                 matches!(recipe, Recipe::Form(Form { kind: Kind::Symbol(symbol), .. })
                     if symbol.namespace.is_none() && symbol.name == MARKER)
@@ -3589,7 +3591,7 @@ mod sharing_tests {
         let (global, source) = namespace.declarations.iter()
             .find(|(global, _)| global.name() == "review-retained")
             .map(|(global, source)| (global.clone(), source.clone())).unwrap();
-        let build = |session: &mut Session, source: &Arc<portable::resolve::DefinitionInfo>| {
+        let build = |session: &mut SessionHost<'_>, source: &Arc<portable::resolve::DefinitionInfo>| {
             let _request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, session);
             let root = graph.declaration(&global, Some(source), 0).unwrap();
@@ -3984,7 +3986,7 @@ mod sharing_tests {
             .eval("(fn [value index] (nth (nth value index) 0))")
             .unwrap();
         fn bitmaps(
-            session: &mut Session,
+            session: &mut SessionHost<'_>,
             bridge: &FormBridge,
             probe: &SessionValue,
             value: &SessionValue,

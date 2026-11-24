@@ -79,7 +79,9 @@ mod tests {
         assert_send::<Session>();
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
             let bridge = Arc::new(FormBridge::new(&mut session).unwrap());
-            let transformer = session.eval("(fn* [n] (list '+ n 1/2))").unwrap();
+            let transformer = session.eval(
+                "(fn* [n env] (if (= (:context env) :expr) (list '+ n 1/2) (throw (ex-info \"missing expansion context\" {}))))"
+            ).unwrap();
             let cancellations = Arc::new(AtomicUsize::new(0));
             let cancelled = cancellations.clone();
             let pending = session
@@ -108,8 +110,26 @@ mod tests {
                         own(&mut roots, args[0].clone(), view.identity, &view.handles)
                             .map_err(|error| wasmtime::Error::msg(error.to_string()))?
                     };
+                    // The ordinary analysis graph must also work through the
+                    // active Caller, including its original construction meter.
+                    let snapshot = view.compilation_snapshot();
+                    let namespace = Arc::new(crate::portable::hir::SourceNamespace::capture(
+                        &snapshot.environment, view.phase,
+                    ));
+                    let environment = crate::portable_macro_graph::AnalysisGraph::new(
+                        &data, &mut view,
+                    ).expansion(crate::portable::ExpansionContext {
+                        environment: &snapshot.environment,
+                        namespace_snapshot: &namespace,
+                        origin: None,
+                        phase: snapshot.phase,
+                        context: crate::portable::AnalysisContext::Expression,
+                        locals: &std::collections::HashMap::new(),
+                        fields: &std::collections::HashMap::new(),
+                        function_scopes: &[],
+                    }).map_err(|error| wasmtime::Error::msg(error.to_string()))?;
                     let value = view
-                        .invoke(&transformer, &[&input])
+                        .invoke(&transformer, &[&input, &environment])
                         .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
                     let form = data
                         .read(&mut view, &value, 0..0)
