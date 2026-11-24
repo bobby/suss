@@ -123,3 +123,35 @@ checks the exact previous/primary/baseline hashes and never writes a baseline.
 Its per-row5369 host-compatible decisions are not the old global5354 count:
 existing count guards also affect the global classification. Scope and evidence
 review of these newly visible differences is required before any baseline change.
+
+### Explicit failure ledger after newly executable bodies (2026-11-24)
+
+`review-expanded-failure-ledger.py` returns0 after reviewing the original
+complete101 capture against the accepted platform contract. ADR-0003 Types has
+no narrow boxed Short/Byte/Integer values; the accepted design uses one-unit
+UTF-16 strings for characters. The unchanged global JVM/clj num18 reference
+therefore cannot align with the actual default26 body, and remove#18's Java
+Character sequence error differs from the accepted string representation. The
+four-run pinned Clojure/default26 primary remains separate:23 host matches and
+three explicit narrow-wrapper differences, never26 host matches. No fake Checker,
+Character marker, changed primary/count guard, skip or opaque rule is introduced.
+
+The ledger now records all26 num count/unexpected-assertion differences and the
+one remove verdict failure individually. Four namespaces become loaded; four
+reader failures advance to actual missing re-matcher/repeatedly/clojure.string
+errors. All old test failures and other assertion failures remain. The exact
+historical dea5db93 ledger is archived as `baseline-before-expansion.json.gz`,
+and the conservation script reads compressed-only archives as well as local raw
+files. Its original native101 remains101. The new ledger is failure accounting;
+it does not turn these132 failed global comparisons into passing assertions.
+
+The numeric branch incorporates eval9a02658e via0b0af7b3; the only merge conflict
+was appended handoff prose, with both sets of evidence retained. Current source
+hashes are refreshed in `provenance-after-eval-review-integration`, preserving
+original primary/source/adaptation/license records and earlier frozen receipts.
+A fresh integrated-source native capture is required. Run
+`review-integrated-capture.py <capture-directory>` only after all actual inner
+terminals finish: it requires native0 against the explicit ledger, unchanged
+complete row identities/classifications, preserved earlier successful judgments
+and229/200 independently matching numeric tagged rows. API/AOT, default26,
+workspace, independent review and final-head CI remain separate gates.

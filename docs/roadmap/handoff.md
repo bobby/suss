@@ -35550,3 +35550,21 @@ refreshed separately under `provenance-refresh-after-review-fixes`, preserving
 upstream, adaptation, primary and historical frozen receipts. Broader compiler,
 complete native suite/capture and exact workspace validation must be rerun after
 these code changes; the earlier 3f79 workspace result is historical evidence.
+
+The numeric branch integrates eval9a02658e in0b0af7b3; source merges automatically,
+and the appended handoff conflict preserves both branches' evidence. Refresh only
+current source hashes in eval/num provenance; keep original primary/adaptation/
+license and frozen receipts unchanged. `results/m12-num-api/review-expanded-failure-ledger.py`
+returns0 for the precise newly executable failure accounting: four loaded
+namespaces, four failures advancing to missing dependencies,26 num count/profile
+rows and remove#18 Character/string verdict. ADR-0003 Types and the accepted
+UTF-16 string contract support the classifications. Original global JVM/clj18
+and independent default26 remain separate; the latter keeps23 host matches and
+three explicit narrow-wrapper differences. No primary/comparator/count/skip/
+opaque rule changes. The former ledger is archived; its native101 stays101.
+The new ledger explicitly retains132 failed global comparisons, rather than
+calling them passes. Fresh native capture, complete controls and exact workspace
+validation are required on this integrated source. The integrated capture
+reviewer requires actual inner native0, all prior observation identities and
+successful decisions, plus229/200 tagged numeric matches against the unchanged
+primary; outer producer0 alone is insufficient.
