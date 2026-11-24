@@ -682,9 +682,9 @@ fn eval_compiles_nested_function_and_var_constants_including_quotation() {
     ))
     .unwrap();
     assert_eq!(rows.len(), 14);
-    // The four evaluated macro declaration controls remain research until that
-    // separate declaration/publication finding is fixed. Nothing is skipped in
-    // the original 34-row eval body or any existing primary group.
+    // The four macro declaration controls also occur in the dedicated 22-row
+    // declaration test. This group isolates nested constants; the original
+    // 34-row body and its count/skip rules are unchanged.
     let selected: Vec<_> = rows
         .iter()
         .filter(|row| {
@@ -850,4 +850,154 @@ fn evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion() 
             );
         }
     }
+}
+
+#[test]
+fn evaluated_macro_function_survives_gc_owner_drop_and_another_macro_service() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let function = session.eval_with_macros(
+            "(do (eval '(defmacro retained-macro-root [x] (list '+ x 1))) @(eval '(var retained-macro-root)))",
+            &mut macros,
+        ).unwrap();
+        drop(macros);
+        session.collect().unwrap();
+        let mut other = CompiledMacros::new().unwrap();
+        other
+            .define("(defmacro retained-macro-root [x] 999)")
+            .unwrap();
+        session.eval_with_macros("(+ 1 2)", &mut other).unwrap();
+        let nil = session.eval("nil").unwrap();
+        let argument = session.eval("41").unwrap();
+        let value = session.invoke(&function, &[&nil, &nil, &argument]).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        assert_eq!(
+            decoder.decode_session(&mut session, &value).unwrap(),
+            Observation::List(vec![
+                Observation::Symbol(None, "+".encode_utf16().collect()),
+                Observation::Long(41),
+                Observation::Long(1)
+            ])
+        );
+    }
+}
+
+#[test]
+fn actual_reentrant_macro_eval_publishes_in_its_own_store() {
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define("(defmacro declare-in-macro [] (let [v (eval '(defmacro inner-native-declaration [x] (list '+ x 1)))] (list 'quote [(.isMacro v) (eval '(inner-native-declaration 41)) (@v nil nil 1)])))").unwrap();
+    let value = session
+        .eval_with_macros("(declare-in-macro)", &mut macros)
+        .unwrap();
+    session.collect().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+    assert_eq!(
+        decoder.decode_session(&mut session, &value).unwrap(),
+        Observation::Vector(vec![
+            Observation::Bool(true),
+            Observation::Long(42),
+            Observation::List(vec![
+                Observation::Symbol(None, "+".encode_utf16().collect()),
+                Observation::Long(1),
+                Observation::Long(1)
+            ])
+        ])
+    );
+}
+
+#[test]
+fn isolated_macro_function_calls_share_the_original_caller_allowance() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let observations = Arc::new(AtomicUsize::new(0));
+        let observer = observations.clone();
+        macros
+            .install_observation_hook(move |_, _| {
+                observer.fetch_add(1, Ordering::SeqCst);
+                Ok(0)
+            })
+            .unwrap();
+        session
+            .eval_with_macros(
+                "(eval '(defmacro raw-budget-once [] (suss.bootstrap/observe 1) 1))",
+                &mut macros,
+            )
+            .unwrap();
+        let repeated = session
+            .eval_with_macros(
+                "(let [f @(eval '(var raw-budget-once))] (fn [] (loop [] (f nil nil) (recur))))",
+                &mut macros,
+            )
+            .unwrap();
+        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (suss.bootstrap/observe 2) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
+        let nil = session.eval("nil").unwrap();
+        for (function, args) in [(&repeated, vec![]), (&looping, vec![&nil, &nil])] {
+            observations.store(0, Ordering::SeqCst);
+            session.set_operation_fuel(200_000);
+            let start = std::time::Instant::now();
+            let error = session.invoke(function, &args).unwrap_err();
+            assert!(error.to_string().to_lowercase().contains("fuel"), "{error}");
+            assert!(start.elapsed() < std::time::Duration::from_secs(5));
+            assert!(
+                observations.load(Ordering::SeqCst) > 0,
+                "the actual Macro body must run before exhaustion"
+            );
+            session.set_operation_fuel(10_000_000);
+            let value = session
+                .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
+                .unwrap();
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(
+                decoder.decode_session(&mut session, &value).unwrap(),
+                Observation::Ratio("3".into(), "2".into())
+            );
+        }
+    }
+}
+
+#[test]
+fn runtime_cancellation_reaches_an_isolated_macro_function_and_returns_the_lease() {
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let (signal, observed) = std::sync::mpsc::sync_channel(1);
+    macros
+        .install_observation_hook(move |_, _| {
+            let _ = signal.try_send(());
+            Ok(0)
+        })
+        .unwrap();
+    let function = session.eval_with_macros("(do (eval '(defmacro raw-cancel-loop [] (suss.bootstrap/observe 77) (loop [] (recur)))) @(eval '(var raw-cancel-loop)))", &mut macros).unwrap();
+    let nil = session.eval("nil").unwrap();
+    session.set_operation_fuel(u64::MAX);
+    macros.set_operation_fuel(u64::MAX);
+    let interrupt = session.interrupt_handle();
+    let controller = std::thread::spawn(move || {
+        let ran = observed
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .is_ok();
+        interrupt.interrupt();
+        ran
+    });
+    let error = session.invoke(&function, &[&nil, &nil]).unwrap_err();
+    assert!(
+        controller.join().unwrap(),
+        "the compiled Macro body must reach its signal-only observer"
+    );
+    assert!(error.to_string().contains("Interrupted"), "{error}");
+    session.set_operation_fuel(10_000_000);
+    macros.set_operation_fuel(10_000_000);
+    let value = session
+        .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
+        .unwrap();
+    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+    assert_eq!(
+        decoder.decode_session(&mut session, &value).unwrap(),
+        Observation::Ratio("3".into(), "2".into())
+    );
 }

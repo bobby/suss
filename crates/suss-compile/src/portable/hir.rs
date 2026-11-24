@@ -684,8 +684,8 @@ pub enum Nominal {
     CallableKeyRegister,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
-    /// Compiler-only access to a binding cell captured by a native Var.
-    BindingValue,
+    /// Compiler-only construction of the shared Wasm getter for a native Var.
+    BindingGetter,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -855,7 +855,7 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::BindingValue | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
+                Self::BindingDefined | Self::BindingGetter | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
@@ -2605,7 +2605,9 @@ impl Analyzer<'_> {
             self.environment.end_direct_link(&global);
             initializer
         };
-        let result = if !self.privileged && self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone()).is_ok() {
+        let native_vars = self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone())
+            .ok().and_then(|binding| self.environment.existing_core_link(binding.global())).is_some();
+        let result = if !self.privileged && native_vars {
             Some(Box::new(self.binding_var(form, &global, true)?))
         } else { None };
         Ok(Hir {
@@ -3521,14 +3523,6 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
-            if symbol.name == "binding-cell-value" {
-                if !self.privileged {
-                    return Err(fail(form.span.clone(), "Binding cell reads require compiler-owned core"));
-                }
-                if args.len() != 1 { return Err(fail(form.span.clone(), "Binding cell read requires one argument")); }
-                let value = self.form(&args[0])?;
-                return Ok(self.nominal(form, Nominal::BindingValue, vec![value]));
-            }
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));

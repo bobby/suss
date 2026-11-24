@@ -383,7 +383,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringSlice => { names.insert("string-slice"); }
                         Nominal::StringFromUnit => { names.insert("string-from-unit"); }
                         Nominal::BindingDefined => { names.insert("binding-defined"); }
-                        Nominal::BindingValue => { names.insert("binding-get"); }
+                        Nominal::BindingGetter => { names.insert("binding-getter"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -4415,7 +4415,7 @@ fn emit_function(
                         }
                         Nominal::Class
                         | Nominal::BindingDefined
-                        | Nominal::BindingValue
+                        | Nominal::BindingGetter
                         | Nominal::DecimalContextNew
                         | Nominal::DecimalContextGetter
                         | Nominal::CoerceString
@@ -4501,7 +4501,7 @@ fn emit_function(
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
                                 Nominal::BindingDefined => "binding-defined",
-                                Nominal::BindingValue => "binding-get",
+                                Nominal::BindingGetter => "binding-getter",
                                 Nominal::DecimalContextNew => "decimal-context-new",
                                 Nominal::DecimalContextGetter => "decimal-context-getter-install",
                                 Nominal::CoerceString => "coerce-string",

@@ -1859,6 +1859,13 @@ fn build_module() -> Vec<u8> {
         },
     ]);
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
+    let binding_getter_entry = b.typed(INVOKE, &[], &[
+        LocalGet(0), ReturnCall(b.names["binding-get"]),
+    ]);
+    b.function("binding-getter", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefFunc(binding_getter_entry), I32Const(0), I32Const(0),
+        Call(b.names["closure-new"]),
+    ]);
     // Anonymous publication tests the same selected dynamic/root cell value
     // as an ordinary read. An unbound root must not be read eagerly, while an
     // active dynamic entry may still provide a value for that root cell.
@@ -1926,6 +1933,7 @@ fn build_module() -> Vec<u8> {
     decimals::context_constructor(&mut b);
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    arithmetic_functions.push(binding_getter_entry);
     arithmetic_functions.extend(arrays::functions(&mut b));
     maps::functions(&mut b);
     chunks::functions(&mut b);

@@ -34534,3 +34534,35 @@ Run `macro-declaration-first-native --macro-declaration-only` with the external
 durable launcher and freeze source/HEAD until its terminal receipt. Runtime
 ordinary def replacement and namespace/alias publication require explicit
 validation; no passing declaration acceptance is claimed by this source change.
+
+The first macro-declaration run at `43944fc7` returned actual101 after six
+Runtime primary matches, reproducing stale macro expansion after ordinary def.
+The next run at `188de06f` also returned101: seven Runtime controls matched,
+including ordinary replacement, before compiler-data transport encountered the
+private native proxy in a declaration initializer. Both frozen-input receipts
+and complete logs remain archived in their respective `results/m12-eval/` run
+directories. Declaration revision tracking now distinguishes later ordinary def
+from the earlier macro; the adapter closure is excluded from public Runtime
+source initializers while retaining the actual macro declaration source. Its body
+has genuine Macro-phase analysis, not a fabricated Runtime function AST.
+
+Remote CI for published `d2e759fa` also reported test-only non-exhaustive Kind
+matches, ordinary source-core load failures from the privileged cell-read source
+helper, and a private catch-name test that no longer selected an actual collision.
+The next source experiment moves the shared getter into the existing Wasm runtime,
+keeps the source helper generic, handles opaque leaves in the private key oracle
+and source visitor, and makes the hygiene guard deliberately collide with the
+observed candidate instead of depending on unrelated binding-ID allocation.
+`cargo check --workspace --all-targets --locked` completes after regenerating the
+core import. The initial dirty development check correctly failed against stale
+generated source; it is not native acceptance evidence.
+
+Run `ci-and-macro-declaration-corrections --ci-macro-corrections-only` through the
+external durable launcher. It compiles all targets, executes portable host/unit
+regressions and the actual CI source-core/hygiene targets, then runtime/Var/AOT
+size guards, existing public controls plus new macro lifecycle/cancellation/budget
+guards, the unchanged original eval body and the complete new22-row declaration
+primary test. That last control retains separate acceptance: namespace aliases
+and other later cases have not yet been established. The focused public regression
+command filters only that new22-row test before executing it separately in full;
+no original fixture, assertion count, skip list or allowance is changed.

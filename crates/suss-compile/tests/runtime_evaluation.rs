@@ -132,6 +132,6 @@ fn opaque_native_constants_require_the_private_compilation_owner() {
         )
         .err()
         .expect("compiler must reject unauthenticated access");
-        assert!(error.message.contains("compiler-owned core"), "{error}");
+        assert!(error.message.contains("binding-cell-value"), "{error}");
     }
 }

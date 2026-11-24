@@ -82,9 +82,10 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(kind),
         };
         // Capture the actual cell, bypassing const substitution/direct links.
-        // Core shares one getter body across all Vars, so AOT code stays bounded
+        // The runtime shares one getter body across all Vars, so AOT code stays bounded
         // per definition while dynamic bindings and root replacement stay live.
         let target_cell = node(Expression::GlobalCell(target.clone()));
+        let getter = self.nominal(form, Nominal::BindingGetter, vec![target_cell]);
         let namespace = self.literal_form(
             form,
             Literal::String(target.namespace().encode_utf16().collect()),
@@ -127,7 +128,7 @@ impl Analyzer<'_> {
         let construction = self.var_core_call(
             form,
             "make-binding-var",
-            vec![target_cell, namespace, name, metadata_value.clone()],
+            vec![getter, namespace, name, metadata_value.clone()],
         )?;
         let initialize = node(Expression::Definition {
             result: None,

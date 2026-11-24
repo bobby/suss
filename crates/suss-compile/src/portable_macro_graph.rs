@@ -364,6 +364,11 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                 pending.extend(form.metadata.iter().rev().map(Task::Form));
             }
             Task::Kind(form) => match &form.kind {
+                Kind::NativeConstant { owner, index } => {
+                    append(&mut key, &[19], charge)?;
+                    append(&mut key, &owner.to_le_bytes(), charge)?;
+                    append(&mut key, &index.to_le_bytes(), charge)?;
+                }
                 Kind::Nil => append(&mut key, &[0], charge)?,
                 Kind::Bool(value) => append(&mut key, &[1, u8::from(*value)], charge)?,
                 Kind::Number(value) => {

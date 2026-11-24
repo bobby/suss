@@ -1392,6 +1392,18 @@ impl Environment {
         self.scope_mut(phase).excluded_core.insert(name.into());
         Ok(())
     }
+    pub(crate) fn record_native_macro_source(&mut self, phase: Phase, namespace: &str, name: &str,
+        source: suss_reader::forms::Form,
+    ) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some(info) = self.definition_info(&global) {
+            let mut info = info.clone();
+            info.definition_form = source;
+            info.initializer_form = None;
+            info.initializer = None;
+            self.record_definition(global, info);
+        }
+    }
     pub(crate) fn record_macro_declaration(&mut self, phase: Phase, namespace: &str, name: &str) {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
         let revision = self.shared_definition_info(&global).cloned();

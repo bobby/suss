@@ -82,7 +82,7 @@ impl MacroService {
         namespace: &str,
         fuel: u64,
         interrupt: Arc<AtomicBool>,
-        prepare_caller: impl FnOnce(Form, Vec<String>, u64) -> Result<(T, u64), SessionError>,
+        prepare_caller: impl FnOnce(Form, Form, Vec<String>, u64) -> Result<(T, u64), SessionError>,
     ) -> Result<(Result<(T, SessionValue), SessionError>, u64), SessionError> {
         let mut lease = self.lease();
         let allowance = lease.limit_fuel(fuel);
@@ -123,7 +123,7 @@ impl MacroService {
             .map(|(_, name)| name.clone())
             .collect();
         names.insert(name.name.clone());
-        let (caller, remaining) = match prepare_caller(template, names.into_iter().collect(), spent)
+        let (caller, remaining) = match prepare_caller(template, form, names.into_iter().collect(), spent)
         {
             Ok(caller) => caller,
             Err(error) => {

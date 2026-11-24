@@ -53,7 +53,7 @@ impl SessionHost<'_> {
             &namespace,
             allowance,
             self.interrupt.clone(),
-            |mut template, names, spent| {
+            |mut template, source, names, spent| {
                 self.charge_host_work(spent)?;
                 // Only the publication prefix enters this compiler: the actual
                 // macro body has already been analyzed once in its owning Store.
@@ -83,6 +83,12 @@ impl SessionHost<'_> {
                     .environment
                     .declare_macro_exports(snapshot.phase(), &namespace, &names)
                     .map_err(SessionError::Compile)?;
+                prepared.fragment.environment.record_native_macro_source(
+                    snapshot.phase(),
+                    &namespace,
+                    &name,
+                    source,
+                );
                 prepared.fragment.environment.record_macro_declaration(
                     snapshot.phase(),
                     &namespace,
