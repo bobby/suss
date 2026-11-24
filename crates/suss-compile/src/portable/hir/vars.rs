@@ -79,7 +79,7 @@ impl Analyzer<'_> {
             pairs.push(Form {
                 span: form.span.clone(),
                 metadata: vec![],
-                kind: Kind::Keyword(Symbol::new("doc")),
+                kind: Kind::Keyword(suss_reader::Keyword::new("doc")),
             });
             pairs.push(Form {
                 span: form.span.clone(),
