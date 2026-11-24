@@ -129,7 +129,13 @@ fn run(fixture: bool) {
                 .replace("(catch Throwable ", "(catch :default ");
             let value = session
                 .eval_with_macros(&expression, &mut macros)
-                .unwrap_or_else(|error| panic!("{}: {error}", row["name"]));
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
             // Check each unchanged control before a later unsupported control
             // can abort this group. Keep the original retained post-GC checks.
             let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
@@ -222,7 +228,13 @@ fn vars_retain_real_live_cells_identity_metadata_and_callability() {
                 .replace("(catch Throwable ", "(catch :default ");
             let value = session
                 .eval_with_macros(&expression, &mut macros)
-                .unwrap_or_else(|error| panic!("{}: {error}", row["name"]));
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
             let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
             assert_eq!(forms.len(), 1);
             decoder.refill(20_000);

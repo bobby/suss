@@ -14,7 +14,7 @@ pub(super) struct Evaluation {
     external: Mutex<Option<MacroService>>,
     own: Mutex<Option<MacroAuthority>>,
     namespace: Mutex<Option<NamespaceAccess>>,
-    var_class: Mutex<Option<SessionValue>>,
+    var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
 #[derive(Clone)]
@@ -195,7 +195,7 @@ impl Evaluation {
             .runtime
             .get_func(&mut view.store, "object-instance")
             .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
-        let class = var_class.val(&mut view.store.as_context_mut());
+        let class = Val::AnyRef(Some(var_class.to_rooted(&mut view.store)));
         let input = value.val(&mut view.store.as_context_mut());
         let mut is_var = [Val::I32(0)];
         predicate.call(&mut view.store, &[class, input], &mut is_var)?;
@@ -304,7 +304,8 @@ impl SessionHost<'_> {
                 &self.handles,
             )?
         };
-        *registry_lock(&state.var_class) = Some(value);
+        let descriptor = self.data_descriptor(&value, true)?;
+        *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
         let runtime = self.runtime;
         let signature = runtime
             .get_func(&mut self.store, "evaluate-form")

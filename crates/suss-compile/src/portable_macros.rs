@@ -1065,6 +1065,7 @@ impl ExpansionHost for MacroHost<'_> {
                     | "fn"
                     | "fn*"
                     | "def"
+                    | "var"
                     | "defonce"
                     | "set!"
                     | "throw"
