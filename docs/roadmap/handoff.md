@@ -35249,3 +35249,31 @@ object constant pools. Generic list literals reuse a boxed constant, while
 primitive vector elements box separately. Do not patch NaN outcomes directly;
 implement source-selected primitive/Object equality and literal object context,
 keeping source hints separate from physical storage and WIT specialization.
+
+
+### Original literal-site aliasing participates in source artifact reuse (2026-11-24)
+
+A frozen f1a011e3 standalone cache probe builds0 and returns101: original-site
+alias partitions emit different fresh Wasm but incorrectly share a source cache
+key. Hashes confirm unchanged source/HEAD/rlib. The selected IR/artifact run is
+explicitly stopped for this actual counterexample; cargo returns101 on SIGTERM
+after2044.14s, with five complete groups37 pass and21 other pipeline successes.
+Its pending397-case corpus has no terminal verdict. Receipts remain under
+results/m12-numeric-literal-identity; this command is not a pass.
+
+Source keys now include a deterministic first-traversal literal-site alias
+partition across nested functions and continuations, without serializing process
+addresses. Focused regressions require separate cache artifacts for different
+partitions and reuse for fresh allocations with identical partitions. Dedicated
+cache/native checks and strict original numeric bodies remain separate evidence.
+
+
+The cache-key correction passes12 unit tests and40 selected IR/API/artifact/
+native tests, including retained exact literal roots and actual AOT. One earlier
+new nested fixture wrongly discarded an unused function and returns101 before
+correction; its exact inputs remain retained. The subsequent10-case NaN
+regression returns101 in Runtime/Macro independent decoding and actual AOT;
+four source-context cases differ. Both decoder adversarial controls pass.
+See results/m12-number-source-objects and the per-command frozen receipts under
+results/m12-numeric-literal-identity. Apply source-directed primitive/Object
+boxing next, then re-run those controls and the unchanged strict142-row bodies.

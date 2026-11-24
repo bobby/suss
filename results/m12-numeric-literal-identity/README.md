@@ -50,3 +50,47 @@ IR resource/pipeline/continuation consumers, artifact determinism, broader
 module/inline/bootstrap/workspace checks, strict complete numeric bodies,
 independent review and final-head CI retain separate gates. The three NaN
 failures in the142-assertion equality bodies remain unresolved and strict.
+
+
+## Source artifact cache preserves original-site alias partitions
+
+A standalone probe linked against the frozen f1a011e3 compiler confirms an
+artifact-key collision: distinct and shared literal sites emit different fresh
+Wasm (1056/1051 bytes), but source reuse returns the first artifact with one
+miss and one hit. Stable rustc build returns0 and the actual probe returns101;
+source, HEAD and rlib hashes remain unchanged. The cache-site-partition-before
+receipt and complete probe preserve the counterexample.
+
+The running IR/artifact command was stopped for that confirmed same-source bug,
+not a timeout. Its actual cargo exit101 records SIGTERM of portable_pipeline
+after2044.14s with source/HEAD unchanged. Five complete groups pass37 tests and
+21 other pipeline tests report success; the397-case compiler corpus has no
+terminal result and is not certified. Stop/resource-adjustment receipts and
+compressed actual output remain beside that command.
+
+The cache key now additionally hashes the original literal-site alias partition
+in deterministic traversal order, including nested function and continuation
+bodies. Process addresses remain temporary map keys; only ordinal indices are
+hashed. Regression checks distinguish alias partitions and require cache hits
+for independently allocated copies with the same partition. Validation results
+for this correction must be retained separately from the canceled command.
+
+
+The first cache-unit command returns101 solely because its newly added nested
+fixture discards an unused function: fresh distinct/shared graphs then both
+contain one surviving literal. Its11 other unit tests pass; later commands do
+not execute. The exact source file, frozen hashes and output are retained under
+site-partition-cache-and-number-before. The corrected fixture retains two
+reachable literal branches in a nested function.
+
+With that fixture correction, all12 source-cache unit tests return0 in148.01s
+(including compilation). The selected IR/API/artifact/cache and exact-number
+identity targets return0 for40 tests in400.27s. Both commands share frozen
+source/HEAD through terminal. This does not certify the canceled397-case corpus
+or the full workspace. Their actual logs and per-command receipts are retained
+under site-partition-cache-and-number-before-corrected-fixture.
+
+The subsequent NaN before-regression returns101 in91.27s: independent storage
+decoding in Runtime/Macro and actual AOT both fail. The two decoder adversarial
+controls pass. That failed command is preserved separately from the52 passing
+cache/compiler/native checks. No NaN fix or numeric acceptance is inferred.

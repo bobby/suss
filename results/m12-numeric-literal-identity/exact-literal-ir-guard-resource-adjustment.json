@@ -1,0 +1,7 @@
+{
+  "time": "2026-11-24T16:21:40.471871+00:00",
+  "scope": "suss-m12-exact-literal-ir-artifact-guards.scope",
+  "change": "Runtime CPUQuota 100% to 200%; no process restart, source or HEAD modification",
+  "reason": "Eight host logical CPUs; simultaneous eval scope limited to300%. Allow existing compiler corpus to use available CPU. This is semantic validation, not performance measurement.",
+  "actual": "CPUQuotaPerSecUSec=2s\n"
+}

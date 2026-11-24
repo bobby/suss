@@ -1,0 +1,9 @@
+{
+  "time": "2026-11-24T16:31:26.563937+00:00",
+  "scope": "suss-m12-exact-literal-ir-artifact-guards.scope",
+  "reason": "Confirmed same-source literal-site alias-partition source artifact cache collision; standalone stable rustc build0, actual run101; fresh distinct/shared bytes differ but cache returns first artifact with hit1/miss1. Not a timeout.",
+  "counterexample": "exact-literal-cache-partition-before",
+  "source_head": "f1a011e353fa4a4d0374137c3014e2e676ea6feb",
+  "terminated_test_pid": 3420185,
+  "qualification": "Selected IR/artifact command canceled; do not call it a pass or infer pending corpus results. Preserve actual terminal command receipt and source/HEAD hashes."
+}
