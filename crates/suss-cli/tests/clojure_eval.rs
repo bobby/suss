@@ -1213,3 +1213,35 @@ fn var_metadata_uses_original_core_data_without_changing_user_resolution() {
         }
     }
 }
+
+#[test]
+fn eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/scalar-identity-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 1);
+    let row = &rows[0];
+    let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+    let primary = expected(&forms[0]);
+    let expression = row["expression"].as_str().unwrap();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let value = session.eval(expression).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary, "{:?}", session.phase());
+        let observer = session.eval("(fn [x] (identical? x (eval x)))").unwrap();
+        for source in ["9223372036854775808N", "1/3", "1.50M", r#"#uuid "00112233-4455-6677-8899-aabbccddeeff""#] {
+            let original = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let value = session.invoke(&observer, &[&original]).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Bool(true), "{:?} {source}", session.phase());
+        }
+    }
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define(&format!("(defmacro scalar-self-roots [] {expression})")).unwrap();
+    let value = session.eval_with_macros("(scalar-self-roots)", &mut macros).unwrap();
+    session.collect().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+    assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary);
+}

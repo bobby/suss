@@ -34985,3 +34985,32 @@ to this checkout. Its unchanged offline baseline passes with original dependency
 identities after subset-lock reconciliation; the initial --locked refusal is
 retained. The copy's Decimal implementation remains separate from this frozen
 eval source and has no claimed workspace integration or acceptance pass.
+
+
+### Existing scalar identity counterexample (2026-11-24)
+
+Atf17f7077 the current workspace-built CLI embeds the exact current core source
+and returns0 for the scalar eval probe, but its twelve identity observations are
+[true true true true true true false false false true true false]. Fresh pinned
+Clojure1.12.6 returns0 with all twelve true. The differences are actual BigInt,
+Ratio, Decimal and UUID inputs. Binary/core/HEAD stay unchanged; comparison101
+is separate from the JVM/native process exit codes. No artifact build or source
+mutation is involved in this diagnostic. Its exact source, outputs, hashes and
+commands are retained in results/m12-eval/scalar-identity-before.
+
+The required exact workspace run is deliberately stopped for this confirmed
+same-source semantic counterexample: actual-15 after4185.71s, source and HEAD
+unchanged, recorder retained and scope drained. Its successful completed prefix
+is evidence only for that prefix; the canceled run is not a pass. Current-head
+CI45392660131 is also canceled for the confirmed bug, with seven integration
+shards and foundation already successful. This is not an Actions budget refusal.
+
+A primary-backed regression now checks all twelve scalar identities, retained
+roots after GC in Runtime/Macro, and actual reentrant Macro execution. First run
+`scalar-identity-regression-before-fix --scalar-identity-before-only` against the
+unchanged implementation, freezing source/HEAD through its terminal receipt.
+Then preserve actual scalar argument roots while keeping executable form data on
+the existing compiled path; validate the exact regression, complete public and
+capability controls and definition/stream targets before a new broader capture,
+exact workspace baseline, independent review and final-head CI. No promotion or
+completion is inferred from the earlier passing scopes.
