@@ -34925,3 +34925,27 @@ eval/identity/stream targets. Compiler logic and one authored regression change;
 core source, numeric kernels, primary, upstream suite and accepted failure map
 do not. A fresh broader/native capture, exact workspace0, independent review
 and final-head CI remain required before ready status.
+
+### Scoped core metadata focused validation (2026-11-24)
+
+Atf3ae547d, var-metadata-after-aot-constructor-ci completes all4 commands with
+actual0 and unchanged HEAD/inputs. The new native ordinary/:const constructor
+replacement, retained nested metadata/root/GC and subsequent user-resolution
+control passes in Runtime and Macro (156.69s including compilation). The exact
+unchanged original AOT failure case passes (41.96s). All37 complete option16/
+source metadata10/indexed4/sealed7 tests pass (459.09s), followed by all56 complete
+public eval27/identity17/stream12 tests (101.69s). These are93 complete-target tests;
+the two preceding targeted checks repeat cases included in those full targets.
+Original assertions, budget limits, fixture bodies and primary bytes remain.
+
+This follow-up changes evidence/docs only; compiler/core/native tests remain
+identical to validated f3ae547d. Run `eval-broader-after-var-metadata-core-links
+--broader-current-baseline-only` through the external launcher and freeze source
+and HEAD through its terminal receipt. Retain the existing25 selected targets;
+the unchanged-source complete option target already has a current focused pass
+and need not be redundantly added to that group. Its same-source receipt remains
+part of acceptance, and the required unfiltered workspace command includes it.
+The fresh full native capture must return actual0 and satisfy the unchanged
+strict reviewer with no new baseline change. Then retry the exact two-thread
+workspace baseline before independent review and final-head CI. No promotion,
+issue closure, merge or numeric source-form scope exception is claimed.

@@ -9,6 +9,17 @@ captured roots survive redefinition, GC and public owner replacement. Cumulative
 allowances and cancellation cover compilation and isolated calls. Pure AOT
 retains the explicit missing-compiler-capability error and its import contract.
 
+At `f3ae547d`, the scoped Var metadata follow-up passes all4 focused commands
+with unchanged source/HEAD:93 tests across complete AOT option, metadata,
+indexed-data, sealed built-in, public eval27, identity and stream targets.
+The new Runtime/Macro ordinary/:const constructor replacement control and the
+unchanged original AOT constructor-redefinition case also pass as targeted checks.
+Compiler-owned metadata uses original core bindings while subsequent user
+initializers retain ordinary resolution. The earlier current-source AOT101 and
+cancelled baseline/CI attempts remain preserved; the earlier complete native0
+below does not validate this later compiler change. Fresh broader/capture,
+exact workspace, independent review and final-head CI remain required.
+
 At `c3946719`, the corrected-source frozen broader gate passes all7 commands:
 26 public eval tests,117 compiler host regressions,193 tests across25 selected
 numeric/module/artifact/budget/analyzer/symbol targets, optimized random effects,
