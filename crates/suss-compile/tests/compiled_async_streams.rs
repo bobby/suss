@@ -177,7 +177,8 @@ fn stream_failure_preserves_false_reason_and_discards_buffered_data() {
 fn cancelled_read_and_blocked_write_retire_operations_without_closing_endpoints() {
     let mut h = Harness::new();
     h.pair(1);
-    let abandoned_read = h.eval("(def abandoned-read (a/read-chunk reader 1))");
+    // def returns its real Var; retain the bound operation future for host checks.
+    let abandoned_read = h.eval("(def abandoned-read (a/read-chunk reader 1)) abandoned-read");
     h.pump_to_idle();
     h.pending(&abandoned_read);
     assert_eq!(h.text("(a/cancel! abandoned-read)"), "true");
@@ -197,7 +198,7 @@ fn cancelled_read_and_blocked_write_retire_operations_without_closing_endpoints(
     let fill = h.eval("(a/write-chunk writer [31])");
     h.pump_to_idle();
     h.ready(&fill, "nil");
-    let abandoned_write = h.eval("(def abandoned-write (a/write-chunk writer [99]))");
+    let abandoned_write = h.eval("(def abandoned-write (a/write-chunk writer [99])) abandoned-write");
     h.pump_to_idle();
     h.pending(&abandoned_write);
     assert_eq!(h.text("(a/cancel! abandoned-write)"), "true");
@@ -331,7 +332,7 @@ fn duplicate_read_and_write_fail_without_replacing_original_endpoint_operation()
     let retained = h.eval("(a/read-chunk reader 1)");
     h.pump_to_idle();
     h.ready(&retained, "[32]");
-    let empty = h.eval("(def empty-read (a/read-chunk reader 1))");
+    let empty = h.eval("(def empty-read (a/read-chunk reader 1)) empty-read");
     h.pump_to_idle();
     h.pending(&empty);
     h.eval("(a/close! writer)");
@@ -380,7 +381,7 @@ fn reader_close_fails_pending_operations_and_discards_previously_accepted_buffer
 fn public_nominal_guards_preserve_writer_only_failure_and_nil_failure_is_not_eof() {
     let mut h = Harness::new();
     h.pair(1);
-    let original = h.eval("(def guarded-read (a/read-chunk reader 1))");
+    let original = h.eval("(def guarded-read (a/read-chunk reader 1)) guarded-read");
     h.pump_to_idle();
     h.pending(&original);
     // The staged native profile's fail! accepts a WRITER. Rejecting a reader
@@ -418,7 +419,7 @@ fn cancelled_parent_finally_awaits_pending_stream_read_until_independent_writer_
     let mut h = Harness::new();
     h.pair(1);
     h.eval("(def body-dependency (a/completion)) (def cleanup-steps 0) (def cleanup-value 0)");
-    let parent = h.eval("(def parent (future (try (await body-dependency) (finally (set! cleanup-steps (+ cleanup-steps 1)) (set! cleanup-value (nth (await (a/read-chunk reader 1)) 0)) (set! cleanup-steps (+ cleanup-steps 1))))))");
+    let parent = h.eval("(def parent (future (try (await body-dependency) (finally (set! cleanup-steps (+ cleanup-steps 1)) (set! cleanup-value (nth (await (a/read-chunk reader 1)) 0)) (set! cleanup-steps (+ cleanup-steps 1)))))) parent");
     h.pump_to_idle();
     h.pending(&parent);
     assert_eq!(h.text("(a/cancel! parent)"), "true");
@@ -494,7 +495,7 @@ fn session_cannot_settle_or_directly_cancel_private_stream_operation_future() {
     // Capture the actual private operation future from a running compiled task,
     // rather than manufacturing storage with a host ABI call. Its owner finally
     // remains responsible for retirement, exactly as the public wrapper does.
-    let owner = h.eval("(def owner (future (let [operation (suss.internal.async/stream-begin-read reader 1)] (set! operation-future (suss.internal.async/stream-operation-future operation)) (try (await operation-future) (finally (suss.internal.async/stream-operation-retire operation))))))");
+    let owner = h.eval("(def owner (future (let [operation (suss.internal.async/stream-begin-read reader 1)] (set! operation-future (suss.internal.async/stream-operation-future operation)) (try (await operation-future) (finally (suss.internal.async/stream-operation-retire operation)))))) owner");
     h.pump_to_idle();
     h.pending(&owner);
     let operation = h.eval("operation-future");

@@ -163,8 +163,10 @@ fn imported_core_aliases_and_captured_function_observe_live_redefinition() {
 #[test]
 fn imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity() {
     let mut session = loaded();
+    // Clojure def returns the real Var; return the counter explicitly so the
+    // argument-order probe continues to pass numeric values through identity.
     session
-        .eval("(def count 0) (def next (fn [] (def count (+ count 1))))")
+        .eval("(def count 0) (def next (fn [] (def count (+ count 1)) count))")
         .unwrap();
     let value = session.eval("(identity (next))").unwrap();
     assert_eq!(number(&mut session, &value), num(1.0));

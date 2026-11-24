@@ -34736,3 +34736,32 @@ are identical to validated bbf77597. Retry the exact workspace command through
 source and HEAD through its terminal receipt. The earlier workspace101 and its
 actual failing assertion remain preserved; this focused0 does not replace the
 full baseline or final-head CI. No issue closure or merge is claimed.
+
+### Confirmed CI definition-result fixture repairs (2026-11-24)
+
+Published fb2761f1 CI45373118279 reports one core_import failure and five
+compiled_async_streams failures (jobs138372169209/138372169252). Their original
+logs are preserved under results/m12-eval/ci-fb276-definition-fixtures. Both
+fixture files were byte-identical in the running local9342245a checkout. The
+full workspace retry passed6 complete targets, including all17 analyzer tests,
+AOT source preparation and apply guards, before deliberate cancellation for
+these concrete same-source CI findings. Its recorder returns actual-15 after
+902.66s, with unchanged inputs/HEAD and drained scope; cancellation qualification
+and partial logs are preserved. This is neither a timeout nor a baseline pass.
+
+The identity counter helper now explicitly returns count after its def. Six
+stream source snippets retain their original definition initializers and append
+the bound name, so host checks inspect actual futures rather than the real Var
+returned by def. Every original assertion, scheduler/GC step, cancellation,
+backpressure, private-operation authority and budget guard remains. No async
+runtime, compiler, shipped core, suite or accepted failure map changes here.
+Raw Session fixtures without shipped core retain their existing no-Var fallback;
+they are not blindly rewritten.
+
+Run `definition-fixtures-after-confirmed-ci --definition-fixtures-only` via
+the external durable launcher, freezing source/HEAD through the terminal receipt.
+This runs both complete affected targets and all public eval controls. Then
+repeat the exact workspace baseline on the corrected source. Independent review
+and final-head CI remain required; no promotion, issue closure or merge is claimed.
+A separate cargo fmt --all --check observation returns1 with431 repository-wide
+file differences; it is check-only and applies no broad formatting changes.
