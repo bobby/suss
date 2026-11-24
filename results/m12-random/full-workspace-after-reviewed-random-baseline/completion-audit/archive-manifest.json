@@ -1,0 +1,18 @@
+{
+  "command.json.gz": {
+    "raw_sha256": "ee336fcb4ee96c813fd89e365199817aec4cd60f8a1c349c7a823fb73389537a",
+    "archive_sha256": "da74df6660749a2dc2eb0549b351b14f76181e263badb97448da22cde3866fec"
+  },
+  "run.log.gz": {
+    "raw_sha256": "abbd2779681366caaf6ff0a80bccb349d354e8aca08c419d880e5c5172fe5897",
+    "archive_sha256": "28548d28cd23bc04e2aad915a3cc31d33912ae2e173de6660ec5607940814d7c"
+  },
+  "cargo-metadata.json.gz": {
+    "raw_sha256": "88e40e6d178b9227253ce3e97c0e3c84c7758721614d2c0ca8856e3779cfa375",
+    "archive_sha256": "00dcc52f7026b7d7bc6f0ffc38dea4459d1104725137f7a7e997c0b564335121"
+  },
+  "cargo-fingerprints.json.gz": {
+    "raw_sha256": "5d46fa589c0e02521e51a2e63860a28ba3fcae84fbe1e6e6918a065574580bb5",
+    "archive_sha256": "6a92ce495f8bc1f4ed85020413b17d9d56b2b2c6940c63367f0e0cc73b4980cf"
+  }
+}
