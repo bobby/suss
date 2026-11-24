@@ -34,7 +34,7 @@ impl Session {
         if portable::resolve::locate_source_if_present(NAMESPACE, &self.options.source_paths, 0..0)
             .map_err(SessionError::Compile)?
             .is_some()
-            || self.environment.has_namespace(self.phase, NAMESPACE)
+            || registry_lock(&self.compiler).environment.has_namespace(self.phase, NAMESPACE)
         {
             return Err(wasmtime::Error::msg(
                 "Observation hook cannot replace an existing namespace",
@@ -42,7 +42,7 @@ impl Session {
             .into());
         }
         let symbol = suss_reader::Symbol::namespaced(NAMESPACE, NAME);
-        if self.environment.resolve(self.phase, &symbol, 0..0).is_ok() {
+        if registry_lock(&self.compiler).environment.resolve(self.phase, &symbol, 0..0).is_ok() {
             return Err(wasmtime::Error::msg(
                 "Observation hook target already has a source binding",
             )
@@ -50,7 +50,7 @@ impl Session {
         }
 
         self.budget()?;
-        let mut environment = self.environment.clone();
+        let mut environment = registry_lock(&self.compiler).environment.clone();
         let cell_identity = environment
             .declare_cell(self.phase, NAMESPACE, NAME)
             .map_err(SessionError::Compile)?;
@@ -143,7 +143,7 @@ impl Session {
             ),
             cell[0].clone(),
         )?;
-        let mut linker = self.linker.clone();
+        let mut linker = registry_lock(&self.compiler).linker.clone();
         linker.define(
             &scope,
             cell_identity.import_module(),
@@ -156,10 +156,13 @@ impl Session {
             .call(&mut scope, &[cell[0].clone(), closure[0].clone()], &mut [])?;
         drop(scope);
 
-        self.linker = linker;
-        self.cells.insert(cell_identity, global);
-        self.environment = environment;
-        self.provided.insert(provided);
+        {
+            let mut code = registry_lock(&self.compiler);
+            code.linker = linker;
+            Arc::make_mut(&mut code.cells).insert(cell_identity, global);
+            code.environment = environment;
+            code.provided.insert(provided);
+        }
         Ok(())
     }
 }

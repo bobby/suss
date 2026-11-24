@@ -464,10 +464,10 @@ fn evaluate_forms_compiled(
                         namespace: Some("suss.core".into()),
                         name: "defmacro".into(),
                     });
-                    macros.enter_namespace(runtime.current_namespace())?;
+                    macros.enter_namespace(&runtime.current_namespace())?;
                     let form = forms.into_iter().next().unwrap();
                     let var =
-                        defined_name(&form).map(|name| var_text(runtime.current_namespace(), name));
+                        defined_name(&form).map(|name| var_text(&runtime.current_namespace(), name));
                     let value = macros
                         .define_form_with_origin(form, 0..source_len, Some(origin))
                         .map_err(|error| macro_definition_error(error, 0..source_len))?;

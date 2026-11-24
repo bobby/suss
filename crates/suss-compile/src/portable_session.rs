@@ -29,6 +29,8 @@ mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
 mod observation;
 mod installation;
+mod compiler_state;
+use compiler_state::{CompilerState, SharedCompiler};
 #[cfg(test)]
 mod random_tests;
 
@@ -220,13 +222,8 @@ pub struct Session {
     store: Store<()>,
     runtime: Instance,
     numeric_memory: Memory,
-    linker: Linker<()>,
-    environment: Environment,
-    cells: BTreeMap<CellIdentity, Global>,
-    provided: BTreeSet<ModuleIdentity>,
-    resident: Vec<Instance>,
+    compiler: SharedCompiler,
     base_runtime_artifact_bytes: usize,
-    artifact_bytes: usize,
     bootstrap_core: bool,
     pending_host_futures: SharedPendingRegistry,
     native_factories: Vec<native_async::FactoryProfile>,
@@ -583,7 +580,7 @@ impl Session {
         artifact: crate::portable_expression::ExpressionArtifact,
         core_ready: impl FnOnce(&mut Session) -> Result<T, SessionError>,
     ) -> Result<(Option<SessionValue>, T), SessionError> {
-        if self.phase != Phase::Runtime || !self.resident.is_empty() {
+        if self.phase != Phase::Runtime || !registry_lock(&self.compiler).resident.is_empty() {
             return Err(SessionError::Host(wasmtime::Error::msg(
                 "Expression artifacts require an empty Runtime session",
             )));
@@ -610,7 +607,7 @@ impl Session {
         self.bootstrap_core = true;
         let core =
             ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?;
-        self.provided.insert(core);
+        registry_lock(&self.compiler).provided.insert(core);
         let identity = self.identity;
         let observation = core_ready(self)?;
         if self.identity != identity {
@@ -763,13 +760,15 @@ impl Session {
             store,
             runtime,
             numeric_memory,
-            linker,
-            environment,
-            cells,
-            provided,
-            resident: Vec::new(),
+            compiler: Arc::new(Mutex::new(CompilerState {
+                linker,
+                environment,
+                cells: Arc::new(cells),
+                provided,
+                resident: Vec::new(),
+                artifact_bytes: 0,
+            })),
             base_runtime_artifact_bytes: runtime_bytes.len() + bindings.wasm.len(),
-            artifact_bytes: 0,
             bootstrap_core: false,
             pending_host_futures: Arc::new(Mutex::new(Vec::new())),
             native_factories: Vec::new(),
@@ -788,8 +787,9 @@ impl Session {
     pub(crate) fn operation_fuel_remaining(&self) -> Result<u64, SessionError> {
         self.store.get_fuel().map_err(Into::into)
     }
-    pub fn current_namespace(&self) -> &str {
-        self.environment.current_namespace(self.phase)
+    /// An owned snapshot; native callbacks can publish namespace metadata.
+    pub fn current_namespace(&self) -> String {
+        registry_lock(&self.compiler).environment.current_namespace(self.phase).to_owned()
     }
     // Use the same binary64 formatter as compiled arithmetic. The REPL never
     // recompiles or re-evaluates the input to print its already-rooted result.
@@ -816,17 +816,18 @@ impl Session {
         })
     }
     pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
-        self.environment
+        registry_lock(&self.compiler).environment
             .enter_namespace(self.phase, namespace)
             .map_err(SessionError::Compile)
     }
     pub fn stats(&self) -> SessionStats {
+        let code = registry_lock(&self.compiler);
         SessionStats {
-            resident_fragments: self.resident.len(),
+            resident_fragments: code.resident.len(),
             base_runtime_artifact_bytes: self.base_runtime_artifact_bytes,
-            resident_artifact_bytes: self.artifact_bytes,
-            binding_cells: self.cells.len(),
-            loaded_modules: self.provided.len() - 1,
+            resident_artifact_bytes: code.artifact_bytes,
+            binding_cells: code.cells.len(),
+            loaded_modules: code.provided.len() - 1,
             external_value_handles: self.handles.load(Ordering::Relaxed),
             pending_host_requests: registry_lock(&self.pending_host_futures).len(),
             gc_heap_capacity: self.store.gc_heap_capacity(),
@@ -1176,7 +1177,7 @@ impl Session {
         Ok(replacement)
     }
     pub(crate) fn resolves_macro_definition(&self, symbol: &suss_reader::Symbol) -> bool {
-        self.environment
+        registry_lock(&self.compiler).environment
             .resolves_bootstrap_name(self.phase, symbol, "defmacro")
     }
     fn check(&self, value: &SessionValue) -> Result<(), SessionError> {
@@ -1354,23 +1355,10 @@ impl Session {
         environment: Environment,
         cells: &[CellIdentity],
     ) -> Result<Vec<Instance>, SessionError> {
-        let installed = installation::install(
-            self.store.as_context_mut(),
-            &self.engine,
-            self.runtime,
-            self.phase,
-            &self.linker,
-            &self.cells,
-            bytes,
-            cells,
-            &self.interrupt,
-        )?;
-        self.linker = installed.linker;
-        self.cells.extend(installed.cells);
-        self.environment = environment;
-        self.resident.extend(installed.instances.iter().copied());
-        self.artifact_bytes += installed.artifact_bytes;
-        Ok(installed.instances)
+        compiler_state::install(
+            &self.compiler, self.store.as_context_mut(), &self.engine,
+            self.runtime, self.phase, bytes, environment, cells, &self.interrupt,
+        )
     }
     fn eval_instance(&mut self, instance: Instance) -> Result<SessionValue, SessionError> {
         let mut scope = RootScope::new(&mut self.store);
@@ -1387,12 +1375,13 @@ impl Session {
         )
     }
     pub fn eval(&mut self, source: &str) -> Result<SessionValue, SessionError> {
+        let snapshot = self.compilation_snapshot();
         let prepared = portable::modules::prepare_input(
             source,
             &self.options.source_paths,
-            &self.environment,
+            &snapshot.environment,
             self.phase,
-            &self.provided,
+            &snapshot.provided,
         )
         .map_err(input_error)?;
         self.eval_prepared(prepared)
@@ -1401,12 +1390,13 @@ impl Session {
     /// for core-internal structural tests. User input must use [`Self::eval`].
     #[doc(hidden)]
     pub fn eval_privileged(&mut self, source: &str) -> Result<SessionValue, SessionError> {
+        let snapshot = self.compilation_snapshot();
         let prepared = portable::modules::prepare_privileged_input(
             source,
             &self.options.source_paths,
-            &self.environment,
+            &snapshot.environment,
             self.phase,
-            &self.provided,
+            &snapshot.provided,
         )
         .map_err(input_error)?;
         self.eval_prepared(prepared)
@@ -1417,7 +1407,7 @@ impl Session {
         namespace: &str,
         names: &[String],
     ) -> Result<(), SessionError> {
-        self.environment
+        registry_lock(&self.compiler).environment
             .declare_macro_exports(self.phase, namespace, names)
             .map_err(SessionError::Compile)
     }
@@ -1426,25 +1416,26 @@ impl Session {
     }
     pub(crate) fn invalidate_source_modules(&mut self, identities: &[ModuleIdentity]) {
         for identity in identities {
-            self.provided.remove(identity);
+            registry_lock(&self.compiler).provided.remove(identity);
         }
     }
     pub(crate) fn has_initialized_source_module(&self, identity: &ModuleIdentity) -> bool {
-        self.provided.contains(identity)
+        registry_lock(&self.compiler).provided.contains(identity)
     }
     /// Called only after every form of this phase module has initialized.
     pub(crate) fn initialized_source_namespace(
         &mut self,
         namespace: &str,
     ) -> Result<(), SessionError> {
-        self.provided
+        registry_lock(&self.compiler).provided
             .insert(ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?);
         Ok(())
     }
     pub(crate) fn binding_checkpoint(&mut self) -> Result<BindingCheckpoint, SessionError> {
+        let code = registry_lock(&self.compiler);
         let mut values = BTreeMap::new();
         let mut scope = RootScope::new(&mut self.store);
-        for (identity, global) in &self.cells {
+        for (identity, global) in code.cells.iter() {
             let cell = global
                 .get(&mut scope)
                 .unwrap_anyref()
@@ -1460,7 +1451,7 @@ impl Session {
             values.insert(identity.clone(), (value, bound));
         }
         Ok(BindingCheckpoint {
-            environment: self.environment.clone(),
+            environment: code.environment.clone(),
             values,
         })
     }
@@ -1471,7 +1462,7 @@ impl Session {
     ) -> Result<(), SessionError> {
         let mut scope = RootScope::new(&mut self.store);
         for identity in globals {
-            if let Some(global) = self.cells.get(identity) {
+            if let Some(global) = registry_lock(&self.compiler).cells.get(identity).copied() {
                 let cell = global
                     .get(&mut scope)
                     .unwrap_anyref()
@@ -1491,18 +1482,19 @@ impl Session {
                 }
             }
         }
-        self.environment
+        registry_lock(&self.compiler).environment
             .restore_declarations(&checkpoint.environment, globals, self.phase);
         // Keep initialized dependency cells/modules and resident code. Unpublished
         // fresh cells remain unbound and reusable under their stable identity.
         Ok(())
     }
     pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {
+        let code = registry_lock(&self.compiler);
         CompilationSnapshot {
-            environment: self.environment.clone(),
+            environment: code.environment.clone(),
             phase: self.phase,
             source_paths: self.options.source_paths.clone(),
-            provided: self.provided.clone(),
+            provided: code.provided.clone(),
         }
     }
     pub fn eval_with_macros(
@@ -1546,13 +1538,14 @@ impl Session {
         forms: Vec<suss_reader::forms::Form>,
         span: std::ops::Range<usize>,
     ) -> Result<SessionValue, SessionError> {
+        let snapshot = self.compilation_snapshot();
         let prepared = portable::modules::prepare_input_forms(
             forms,
             span,
             &self.options.source_paths,
-            &self.environment,
+            &snapshot.environment,
             self.phase,
-            &self.provided,
+            &snapshot.provided,
         )
         .map_err(|error| match error {
             portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
@@ -1594,14 +1587,16 @@ impl Session {
         &mut self,
         namespace: &str,
     ) -> Result<Option<SessionValue>, SessionError> {
-        self.load_namespace_with_provided(namespace, self.provided.clone(), false, None)
+        let provided = registry_lock(&self.compiler).provided.clone();
+        self.load_namespace_with_provided(namespace, provided, false, None)
     }
     pub fn load_namespace_with_macros(
         &mut self,
         namespace: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<Option<SessionValue>, SessionError> {
-        self.load_namespace_with_provided(namespace, self.provided.clone(), false, Some(expander))
+        let provided = registry_lock(&self.compiler).provided.clone();
+        self.load_namespace_with_provided(namespace, provided, false, Some(expander))
     }
     /// Recompile and initialize a namespace using its existing live cells. When
     /// dependencies is true, reload its reachable dependencies in require order.
@@ -1634,8 +1629,7 @@ impl Session {
                 message: "The supplied core profile is reprovisioned by session reset".into(),
             }));
         }
-        let provided = self
-            .provided
+        let provided = registry_lock(&self.compiler).provided
             .iter()
             .filter(|module| {
                 if dependencies {
@@ -1670,11 +1664,12 @@ impl Session {
         &mut self, namespace: &str, provided: BTreeSet<ModuleIdentity>, reloading: bool,
         expander: Option<&mut dyn portable::ExpansionHost>, linked: &mut bool,
     ) -> Result<Option<SessionValue>, SessionError> {
+        let environment = registry_lock(&self.compiler).environment.clone();
         let mut plan = if let Some(expander) = expander {
             portable::modules::prepare_modules_with_expander(
                 namespace,
                 &self.options.source_paths,
-                &self.environment,
+                &environment,
                 self.phase,
                 &provided,
                 expander,
@@ -1683,14 +1678,14 @@ impl Session {
             portable::modules::prepare_modules(
                 namespace,
                 &self.options.source_paths,
-                &self.environment,
+                &environment,
                 self.phase,
                 &provided,
             )
         }
         .map_err(SessionError::Module)?;
         plan.environment
-            .enter_namespace(self.phase, self.current_namespace())
+            .enter_namespace(self.phase, &self.current_namespace())
             .map_err(SessionError::Compile)?;
         self.budget()?;
         let bytes: Vec<_> = plan
@@ -1705,7 +1700,7 @@ impl Session {
             // execution starts, every selected unit must complete initialization
             // before it can be considered loaded again. Earlier effects remain.
             for module in &plan.modules {
-                self.provided.remove(&module.identity);
+                registry_lock(&self.compiler).provided.remove(&module.identity);
             }
         }
         self.initialize_modules(plan.modules, instances)
@@ -1718,7 +1713,7 @@ impl Session {
         let mut result = None;
         for (module, instance) in modules.into_iter().zip(instances) {
             let value = self.eval_instance(instance)?;
-            self.provided.insert(module.identity);
+            registry_lock(&self.compiler).provided.insert(module.identity);
             result = Some(value);
         }
         Ok(result)
@@ -2112,9 +2107,9 @@ mod tests {
         // Only the test Store's linker loses its physical imports, so failure
         // occurs during actual instantiation, after declaration preparation.
         let empty = Linker::new(&session.engine);
-        let old = std::mem::replace(&mut session.linker, empty);
+        let old = std::mem::replace(&mut registry_lock(&session.compiler).linker, empty);
         let result = session.load_namespace_with_macros("app", &mut macros);
-        session.linker = old;
+        registry_lock(&session.compiler).linker = old;
         let error = result.unwrap_err();
         assert!(format!("{error:?}").contains("unknown import"), "{error:?}");
         assert_eq!(session.stats(), before);
@@ -3472,7 +3467,7 @@ mod tests {
     fn session_lifecycle_all_artifacts_are_gated_before_allocating_or_publishing_cells() {
         let mut session = Session::new().unwrap();
         let prepared =
-            portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
+            portable::prepare_fragment("(def ghost 7)", &registry_lock(&session.compiler).environment, Phase::Runtime)
                 .unwrap();
         let before = session.stats();
         assert!(matches!(
@@ -3530,7 +3525,7 @@ mod tests {
         let mut session = Session::new().unwrap();
         session.eval("(def keep 17.0)").unwrap();
         let prepared =
-            portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
+            portable::prepare_fragment("(def ghost 7)", &registry_lock(&session.compiler).environment, Phase::Runtime)
                 .unwrap();
         // Remove the source identity section if emitted, keeping every other
         // byte intact. This fixture runs before and after the production gate.
@@ -3613,7 +3608,7 @@ mod tests {
         let mut session = Session::new().unwrap();
         session.eval("(def keep 17)").unwrap();
         let prepared =
-            portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
+            portable::prepare_fragment("(def ghost 7)", &registry_lock(&session.compiler).environment, Phase::Runtime)
                 .unwrap();
         let wrong_phase = portable::artifact_identity::annotate_source(
             &prepared.wasm,

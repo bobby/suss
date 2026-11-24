@@ -95,9 +95,9 @@ mod tests {
             session.eval("(def counter 0)").unwrap();
             let engine = session.engine.clone();
             let runtime = session.runtime;
-            let environment = session.environment.clone();
-            let cells = session.cells.clone();
-            let linker = session.linker.clone();
+            let environment = registry_lock(&session.compiler).environment.clone();
+            let cells = registry_lock(&session.compiler).cells.clone();
+            let linker = registry_lock(&session.compiler).linker.clone();
             let interrupt = session.interrupt.clone();
             let evaluation = runtime
                 .get_func(&mut session.store, "evaluate-form")
@@ -191,9 +191,9 @@ mod tests {
             let engine = session.engine.clone();
             let runtime = session.runtime;
             let phase = session.phase;
-            let environment = session.environment.clone();
-            let cells = session.cells.clone();
-            let linker = session.linker.clone();
+            let environment = registry_lock(&session.compiler).environment.clone();
+            let cells = registry_lock(&session.compiler).cells.clone();
+            let linker = registry_lock(&session.compiler).linker.clone();
             let interrupt = session.interrupt.clone();
             let evaluation = runtime
                 .get_func(&mut session.store, "evaluate-form")
@@ -279,6 +279,133 @@ mod tests {
                     ))
                     .unwrap(),
                 Some(RuntimeNumber::Long(1))
+            ));
+        }
+    }
+
+    #[test]
+    fn borrowed_store_compiler_publishes_declarations_to_the_owned_session() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let bridge = crate::portable_macro_data::FormBridge::new(&mut session).unwrap();
+            let reader = bridge.borrowed_reader(&mut session).unwrap();
+            let shared = session.compiler.clone();
+            let engine = session.engine.clone();
+            let runtime = session.runtime;
+            let phase = session.phase;
+            let interrupt = session.interrupt.clone();
+            let signature = runtime
+                .get_func(&mut session.store, "evaluate-form")
+                .unwrap()
+                .ty(&session.store);
+            let callback = Func::try_new(
+                &mut session.store,
+                signature,
+                move |mut caller, args, results| {
+                    let form = reader.read(caller.as_context_mut(), &args[0], 0..0)?;
+                    // The owned session and callback read one authoritative catalog;
+                    // no metadata lock survives a call into Wasm.
+                    let environment = registry_lock(&shared).environment.clone();
+                    let fragment =
+                        portable::prepare_fragment_forms(vec![form], 0..0, &environment, phase)
+                            .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+                    let instances = compiler_state::install(
+                        &shared,
+                        caller.as_context_mut(),
+                        &engine,
+                        runtime,
+                        phase,
+                        &[&fragment.wasm],
+                        fragment.environment,
+                        &fragment.cells,
+                        &interrupt,
+                    )
+                    .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+                    instances[0].get_func(&mut caller, "eval").unwrap().call(
+                        &mut caller,
+                        &[],
+                        results,
+                    )
+                },
+            )
+            .unwrap();
+            runtime
+                .get_func(&mut session.store, "evaluation-source-install")
+                .unwrap()
+                .call(&mut session.store, &[Val::FuncRef(Some(callback))], &mut [])
+                .unwrap();
+            let module = wasmtime::Module::new(
+                &session.engine,
+                r#"(module
+                (import "runtime" "evaluate-form" (func $evaluate (param eqref) (result eqref)))
+                (func (export "go") (param eqref) (result eqref) local.get 0 call $evaluate))"#,
+            )
+            .unwrap();
+            let mut linker = Linker::new(&session.engine);
+            linker
+                .instance(&mut session.store, "runtime", runtime)
+                .unwrap();
+            let instance = linker.instantiate(&mut session.store, &module).unwrap();
+            let go = instance.get_func(&mut session.store, "go").unwrap();
+            let evaluate = |session: &mut Session, source: &str| {
+                let input = session.eval(source).unwrap();
+                session.budget().unwrap();
+                let mut roots = RootScope::new(&mut session.store);
+                let input = input.val(&mut roots.as_context_mut());
+                call(
+                    &mut roots,
+                    runtime,
+                    go,
+                    &[input],
+                    session.identity,
+                    &session.handles,
+                )
+                .unwrap()
+            };
+            evaluate(&mut session, "'(def compiled-host-value 17)");
+            let value = session.eval("compiled-host-value").unwrap();
+            assert!(matches!(
+                session
+                    .inspect(&value, |mut store, value| runtime_number(
+                        &mut store, &value
+                    ))
+                    .unwrap(),
+                Some(RuntimeNumber::Long(17))
+            ));
+            session.eval("(def host-value 23)").unwrap();
+            let value = evaluate(&mut session, "'(+ compiled-host-value host-value)");
+            assert!(matches!(
+                session
+                    .inspect(&value, |mut store, value| runtime_number(
+                        &mut store, &value
+                    ))
+                    .unwrap(),
+                Some(RuntimeNumber::Long(40))
+            ));
+            let function = evaluate(
+                &mut session,
+                "'(fn* [x] (+ compiled-host-value host-value x))",
+            );
+            session.collect().unwrap();
+            let one = session.eval("1").unwrap();
+            let value = session.invoke(&function, &[&one]).unwrap();
+            assert!(matches!(
+                session
+                    .inspect(&value, |mut store, value| runtime_number(
+                        &mut store, &value
+                    ))
+                    .unwrap(),
+                Some(RuntimeNumber::Long(41))
+            ));
+            session.eval("(def compiled-host-value 99)").unwrap();
+            session.collect().unwrap();
+            let value = session.invoke(&function, &[&one]).unwrap();
+            assert!(matches!(
+                session
+                    .inspect(&value, |mut store, value| runtime_number(
+                        &mut store, &value
+                    ))
+                    .unwrap(),
+                Some(RuntimeNumber::Long(123))
             ));
         }
     }

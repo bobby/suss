@@ -499,7 +499,7 @@ impl CompiledMacros {
         }
         Ok(())
     }
-    pub fn current_namespace(&self) -> &str {
+    pub fn current_namespace(&self) -> String {
         self.session.current_namespace()
     }
     pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
