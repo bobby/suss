@@ -1,0 +1,48 @@
+{
+  "inputs": {
+    "results/m12-numeric-source-bodies/num-selected-primary/oracle.clj": "22af303332be4408bcc402a3132c6c46b4ddc5fc9c984253b9d32e5425583e0b",
+    "results/m12-numeric-source-bodies/num-selected-primary/run.py": "a41c467b112b57060d7b760bad43b30cc94512f7f2ad508bac38726e3129f9d4",
+    "results/m12-numeric-source-bodies/num-selected-primary/selected-forms.clj": "ce8b346fb8dfc394539914b04509591e90e9c150c408246441ea7e27bde735c7",
+    "results/m12-numeric-source-bodies/num-selected-primary/observations.json": "091662e242132704eb5caa9e5038b44b0ac15b36fb8df7d51c08587bdc749433",
+    "results/m12-numeric-source-bodies/num-selected-primary/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/m12-numeric-source-bodies/num-selected-primary/stderr.log": "5bb91a2baa42d98f075ed44303170cade09fc439001a63b6df9bbca83d0cc7bb",
+    "results/m12-numeric-source-bodies/num-selected-primary/command.json": "7314173b72a6b6ae9bb1bd18a012b45c1e2b313101d8c47398a6a36f4d586212",
+    "results/m12-numeric-source-bodies/num-selected-primary/build-reference.py": "42f24542519f43c80d579fb6b708736d57ca54fae0fcecbd6fbeacc5cbc08745",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/oracle.clj": "22af303332be4408bcc402a3132c6c46b4ddc5fc9c984253b9d32e5425583e0b",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/run.py": "a41c467b112b57060d7b760bad43b30cc94512f7f2ad508bac38726e3129f9d4",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/selected-forms.clj": "ce8b346fb8dfc394539914b04509591e90e9c150c408246441ea7e27bde735c7",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/observations.json": "091662e242132704eb5caa9e5038b44b0ac15b36fb8df7d51c08587bdc749433",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/stderr.log": "3c09d2d6b846d5fdb7be424399c1e46df4734cb6fdb435f3874bd070149f4808",
+    "results/m12-numeric-source-bodies/num-selected-primary/run2/command.json": "3570979202ba77a2489e1f44df93207b9e0be6baf9434ac8bec36dde9d12ee8d",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/oracle.clj": "22af303332be4408bcc402a3132c6c46b4ddc5fc9c984253b9d32e5425583e0b",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/run.py": "a41c467b112b57060d7b760bad43b30cc94512f7f2ad508bac38726e3129f9d4",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/selected-forms.clj": "ce8b346fb8dfc394539914b04509591e90e9c150c408246441ea7e27bde735c7",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/observations.json": "091662e242132704eb5caa9e5038b44b0ac15b36fb8df7d51c08587bdc749433",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/stderr.log": "9a6c65f2eac5e78e46106a3b7bf95908984b1cf1cde097e29998d362e2d992a7",
+    "results/m12-numeric-source-bodies/num-selected-primary/run3/command.json": "0b666a3b931a9aa91907dd44a8f92f09df2b0a5e48729331be8c0de51257b991",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/oracle.clj": "22af303332be4408bcc402a3132c6c46b4ddc5fc9c984253b9d32e5425583e0b",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/run.py": "a41c467b112b57060d7b760bad43b30cc94512f7f2ad508bac38726e3129f9d4",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/selected-forms.clj": "ce8b346fb8dfc394539914b04509591e90e9c150c408246441ea7e27bde735c7",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/observations.json": "091662e242132704eb5caa9e5038b44b0ac15b36fb8df7d51c08587bdc749433",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/stderr.log": "044c5bba3f4c9b0268ad86821e50581312d6f017f142a61f48357a79146b7da1",
+    "results/m12-numeric-source-bodies/num-selected-primary/run4/command.json": "2d8ea2c55eb673b69cf4ea70634b7acf4a057e253ef3c86deaebd7ed13d7446f"
+  },
+  "standard_comparator_sha256": "197166b70c16a1bc5e7a82d5061b069b5ba7a45453056a014704b1c345de617b",
+  "output_sha256": "a634281c4eb2aa9a46e429561408f83e533c1e35826479a653b3a431e4a8be67",
+  "runs": 4,
+  "primary_exit_codes": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "preserved_primary_failures": [
+    7,
+    8,
+    9
+  ],
+  "qualification": "Supplemental complete original Suss/default-selected num body. All actual JVM verdicts/values retained. No global primary, comparator, counts, skip rules, opaque rules or baseline is modified."
+}

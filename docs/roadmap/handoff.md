@@ -35186,3 +35186,37 @@ checks fail because JVM num widens those narrow boxes. Suss deliberately has no
 narrow boxed values (ADR-0003); keep these differences explicit, never label them
 host matches or fabricate JVM Checker fixtures. Preserve exact frozen eval
 workspace validation independently of numeric-branch edits.
+
+
+### Complete numeric source-body counterexamples and num (2026-11-24)
+
+The complete original eq/not-eq bodies now load with real Pattern literals and
+execute142 ordered assertions. Their actual first comparison fails on boxed NaN:
+eq#70 and not-eq#70/71. Exact Decimal/Ratio rows12/68/69 match independently. The
+strict142-host-match check stays failing until the actual semantic gaps are fixed.
+No original suite bytes, primary, comparator, count/skip/opaque rule or reviewed
+baseline is modified. Existing MPL patch0006 adds only a Suss guard for the six
+unchanged Clojure-rule assertions already under Clj.
+
+The num body initially cannot load because num is missing. The complete pinned
+Clojure form is retained with EPL provenance; its JVM Number cast is adapted to
+checked nil/Number projection under ADR-0003. Four supplemental pinned JVM
+recordings of the entire original default body retain26 observations:23 pass and
+3 actual narrow boxed-type failures, actual exits1 each. The separate metadata
+builder preserves all of them, adding only standard canonical IDs/fields.
+
+After fixing an initial test setup error (reference generation failed before the
+native command was started), the complete default-num body check returns0 in9.38s
+on unchanged source/HEAD. It records23 independent host matches,3 explicit accepted
+Short/Byte/Integer platform differences, zero guests/skips/unexecuted rows and all26
+ordered identities. Ratio/BigInt/Decimal rows4/5/6 match. Before-failures and full
+captures remain under results/m12-numeric-source-bodies. Runtime/Macro/AOT API
+controls and broader/workspace/review/CI gates retain separate evidence.
+
+Fresh development-only scalar/source boxing controls also expose existing NaN
+object identity/equality and numeric literal lifetime differences. The actual
+native process returns0 but independent comparison fails101 on16 of34 controls.
+Do not manufacture passing NaN special cases: source overloads, raw locals, actual
+boxed values, literal sites, collection construction and returned constants must
+follow independently observed Clojure behavior. Preserve the isolated frozen eval
+workspace run independently; do not cancel it for unrelated old numeric gaps.

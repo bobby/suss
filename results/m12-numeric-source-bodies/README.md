@@ -28,3 +28,38 @@ away or changes the original global JVM/clj18-row num primary.
 Compressed receipts and raw captures retain the before-failures. The source
 branch's full workspace, independent review and final-head CI retain separate
 gates; no numeric issue closure or promotion is inferred.
+
+
+## Clojure num source adaptation and selected-body execution
+
+The entire pinned one-argument num form and original license are retained under
+docs/compatibility/num. The JVM Numbers/num cast becomes Suss's checked nil/Number
+category projection, returning the actual argument. ADR-0003 has no narrow boxed
+Number classes to widen. Core-owned guard calls retain normal rebinding policy;
+non-number inputs throw. No Java implementation, Checker or Java dependency is
+shipped. Source/provenance is under docs/compatibility/bootstrap/clojure-num.json.
+
+Four independent development JVM runs retain exactly the same26 observations:
+actual exits1 each,23 pass and3 fail. A separate supplemental metadata builder
+adds the ordinary canonical assertion IDs/forms/determinism fields after comparing
+all four complete raw recordings. It preserves every actual verdict/value and
+never changes or calls a relaxed version of the global primary normalizer.
+
+The first source-port run returns101 because I started it before its supplemental
+reference file existed (the metadata builder had a syntax error). Its native
+capture nevertheless records the entire namespace loaded and26 actual passing
+Suss assertions; the receipt is preserved as a failed comparison, not a pass.
+After correcting setup, the exact focused body command returns0 in9.38s on
+unchanged HEAD/source. Standard unchanged comparison yields23 host matches,
+3 explicit Short/Byte/Integer platform differences (ordinals7/8/9), zero guest
+judgments, zero skips, zero unexecuted rows and all26 ordered identities. Ratio,
+BigInt and Decimal rows4/5/6 match independently. The global JVM/clj18-row num
+primary remains unchanged. This selected-body result does not establish separate
+Macro/AOT controls, full workspace, review or final-head CI acceptance.
+
+The six-rule eq source adapter is now a zero-context patch hunk and retains
+original assertion bodies and context labels. This removes whitespace-only
+patch context from the repository diff; native source generation and the
+unchanged upstream lock check return0. All142 eq/not-eq observations still have
+a strict passing requirement. Their3 actual boxed-NaN failures remain unresolved;
+none is skipped, reclassified, removed, or made into a successful comparison.

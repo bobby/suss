@@ -2587,3 +2587,19 @@
             namespace (:ns (meta v))]
         (assoc (assoc metadata :name name) :ns namespace)))
     v))
+
+;; BEGIN Clojure num checked Number projection
+;; Copyright (c) Rich Hickey. All rights reserved.
+;; The use and distribution terms for this software are covered by the
+;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;; which can be found in runtime/core-import/epl-v10.html.
+;; By using this software in any fashion, you agree to be bound by its terms.
+;; Do not remove this notice or any other from this software.
+;; Complete Clojure1.12.6 num: the Number cast becomes the checked Suss numeric
+;; category projection. ADR-0003 has no narrow boxed Number classes to widen.
+(def ^{:tag Number :doc "Coerce to Number" :added "1.0"} num
+  (fn [x]
+    (if (nil? x) x
+      (if (number? x) x
+        (throw (suss.bootstrap/error "Cannot cast value to Number"))))))
+;; END Clojure num checked Number projection

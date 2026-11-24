@@ -59,7 +59,11 @@ root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'));import clojure_tes
 primary=root/'results/m12-numeric-source-bodies/num-selected-primary'
 receipt=json.loads((primary/'command.json').read_text())
 assert receipt['exit_code']==1 and receipt['inputs_unchanged']
-reference=json.loads((primary/'observations.json').read_text())
+reference=json.loads((primary/'reference.json').read_text())
+reference_build=json.loads((primary/'reference-build.json').read_text())
+assert reference_build['runs']==4 and reference_build['primary_exit_codes']==[1]*4
+assert reference_build['preserved_primary_failures']==[7,8,9]
+assert hashlib.sha256((primary/'reference.json').read_bytes()).hexdigest()==reference_build['output_sha256']
 assert reference['schema']==2 and reference['upstream']=='clojure-1.12.6' and reference['feature-selection']==['suss','default']
 assert reference['summary']=={'test':1,'pass':23,'fail':3,'error':0} and not reference['reporter-errors']
 # This is the complete original source under Suss/default reader selection,
