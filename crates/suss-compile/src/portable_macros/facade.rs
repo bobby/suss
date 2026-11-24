@@ -109,6 +109,11 @@ impl CompiledMacros {
         globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.restore_bindings(checkpoint, globals))
     }
+    pub(crate) fn define_inline_macro(&mut self, form: &Form,
+        environment: &crate::portable::resolve::Environment,
+        phase: crate::portable::resolve::Phase) -> Result<(), SessionError> {
+        self.with_host_mut(|host| host.define_inline_macro(form, environment, phase))
+    }
     pub(crate) fn define_form_with_origin(&mut self, form: Form, span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>) -> Result<SessionValue, SessionError> {
         self.with_host_mut(|host| host.define_form_with_origin(form, span, origin))
