@@ -136,14 +136,6 @@ mod tests {
                         view.reset().is_err(),
                         "a borrowed view cannot replace its owner"
                     );
-                    view.interrupt.store(true, Ordering::SeqCst);
-                    assert!(view.data_scalar(&portable::hir::Literal::Long(7)).is_err());
-                    assert!(
-                        view.interrupt.load(Ordering::SeqCst),
-                        "borrowed budget entry cannot clear cancellation"
-                    );
-                    // Fixture-only cleanup after independently checking preservation.
-                    view.interrupt.store(false, Ordering::SeqCst);
                     results[0] = value.val(&mut view.store.as_context_mut());
                     Ok(())
                 },
@@ -191,6 +183,62 @@ mod tests {
             let observed = bridge.read(&mut session, &value, 0..0).unwrap();
             let expected = suss_reader::forms::read_forms("3/2").unwrap().remove(0);
             assert_eq!(observed.kind, expected.kind);
+            // Cancellation follows the existing host contract: consume the
+            // request and exhaust fuel, rather than preserve a sticky flag.
+            let profile = session.reentry_profile();
+            let signature = runtime
+                .get_func(&mut session.store, "evaluate-form")
+                .unwrap()
+                .ty(&session.store);
+            let cancelled_entry =
+                Func::try_new(&mut session.store, signature, move |mut caller, _, _| {
+                    let mut view = profile.bind(caller.as_context_mut());
+                    view.interrupt.store(true, Ordering::SeqCst);
+                    let interrupted = view
+                        .data_scalar(&portable::hir::Literal::Long(7))
+                        .unwrap_err();
+                    assert!(interrupted.is_interrupt());
+                    assert!(!view.interrupt.load(Ordering::SeqCst));
+                    assert_eq!(view.store.get_fuel()?, 0);
+                    let retry = view
+                        .data_scalar(&portable::hir::Literal::Long(7))
+                        .unwrap_err();
+                    assert!(matches!(retry, SessionError::Trap(ref error)
+                    if error.downcast_ref::<wasmtime::Trap>()==Some(&wasmtime::Trap::OutOfFuel)));
+                    assert_eq!(
+                        view.store.get_fuel()?,
+                        0,
+                        "retry must not refill an exhausted entry"
+                    );
+                    Err(wasmtime::Trap::Interrupt.into())
+                })
+                .unwrap();
+            runtime
+                .get_func(&mut session.store, "evaluation-source-install")
+                .unwrap()
+                .call(
+                    &mut session.store,
+                    &[Val::FuncRef(Some(cancelled_entry))],
+                    &mut [],
+                )
+                .unwrap();
+            session.store.set_fuel(10_000).unwrap();
+            let failure = {
+                let mut roots = RootScope::new(&mut session.store);
+                call(
+                    &mut roots,
+                    runtime,
+                    go,
+                    &[Val::null_any_ref()],
+                    session.identity,
+                    &session.handles,
+                )
+                .unwrap_err()
+            };
+            assert!(failure.is_interrupt());
+            assert_eq!(session.store.get_fuel().unwrap(), 0);
+            assert_eq!(cancellations.load(Ordering::SeqCst), 0);
+            assert_eq!(session.stats().pending_host_requests, 1);
             drop(pending);
             drop(session);
             assert_eq!(
