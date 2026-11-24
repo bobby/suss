@@ -29,10 +29,10 @@
     "command_sha256": "71d57f206a7d67705e73aeafee8ab45694f6c01f89112d10ecf2b32e9437b823"
   },
   "files": {
-    "docs/compatibility/bootstrap/exact-integers.sus": "38e96c5694e328c565e4406a3de4f88aafe9de59d5ee76ba5809af772a0aa2e2",
-    "docs/compatibility/core-import.json": "3ab0f93e33b0b40061ec90f4722315b99fdd4443df8568dbc0ca5c59ac720936",
-    "runtime/core-import/manifest.json": "94cdeacc65e243e592142bd46eae0c7be9adcac3cf5470eaf75ee5464c8c336b",
-    "runtime/core-import/suss/core.sus": "7aad2a8fc9762c07ac28efff905e50b351082ea41e80860dabc6472305210d8e",
+    "docs/compatibility/bootstrap/exact-integers.sus": "487123d3fae7597da9b78cb81b1b7ceb727a338eb1ab62627e05a3227506acb2",
+    "docs/compatibility/core-import.json": "e045f241c0f71f29d0ed0d486c8231749de03f8daa331ac9a12ef9efdfbed03e",
+    "runtime/core-import/manifest.json": "e08428cdd19c1734dc1287c38af550d20bfef178465ef3084fcad41b4d3eda63",
+    "runtime/core-import/suss/core.sus": "02e39e8d85e376e6d44b43158b4c7ffa48cc11047714d359dcaaf733ee7c9455",
     "crates/suss-cli/tests/clojure_some_fn.rs": "46ebb3f0cc5a5775ba6fe6b1b2af7a378e2e32d7145b50f6ebfbd5f75835eb4e",
     "crates/suss-compile/tests/support/pinned_some_fn_bodies.rs": "fc71261ada05370cd86842523eb4bf6b9e340b9e95d9668ae938824cad6fc3cc",
     "results/m12-core-dependencies/upstream-some-fn.clj": "539ff191be03892a705ee13164d3b2b99906841a3a5091a8e32eac542f58c398",

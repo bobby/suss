@@ -247,3 +247,26 @@ HEAD remain unchanged; archives are under
 and compile attempts remain archived without success reclassification. Capability,
 operation budget/cancellation, full capture, broader regression/workspace and
 review/CI gates retain their separate requirements.
+
+
+## Public capability, allowance, cancellation and retained functions (2026-11-24)
+
+At88d244c0, the complete public target returns0 with13 tests (38.388s
+including build), and the complete original34-row body returns0 again
+(6.322s). A real AOT component has no host imports and reports the missing
+compiler capability. Repeated eval and eval of a compiled infinite loop exhaust
+the caller's original200,000-unit allowance in both native phases; a watchdog
+would fail an accidental refill. Runtime and actual reentrant Macro eval cancel
+after their compiled lexical bodies reach independent signal-only observers;
+both remain usable and the Macro lease returns. Returned public-eval functions
+survive GC and public macro-owner teardown while reading live redefined roots.
+All recorded inputs and HEAD are unchanged. Archives are under
+`results/m12-eval/public-eval-capability-budget-first-native`.
+
+The standalone primary verifier checks all60 ordered expressions, observations
+and pinned jars plus the complete eval adaptation. Source provenance metadata
+for the retained char/min-key/some-fn/assert/random forms is refreshed after the
+eval/Var additions; their actual adapted forms and primary fixtures are unchanged.
+These metadata updates do not reclassify old frozen receipts. The new broader
+gate hashes every tracked input and keeps a separate strict capture review before
+any baseline update.

@@ -641,3 +641,36 @@ fn reentrant_macro_eval_cancels_in_its_own_store_and_returns_its_lease() {
         Observation::Ratio("3".into(), "2".into())
     );
 }
+
+#[test]
+fn public_eval_diagnostics_preserve_the_actual_phase_and_unresolved_symbol() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let error = session
+            .eval_with_macros("(eval '(+ eval-diagnostic-missing 1))", &mut macros)
+            .unwrap_err();
+        let message = suss_compile::portable_repl::error_display(&mut session, &error);
+        let phase = format!("{:?}", session.phase());
+        assert!(
+            message.contains(&format!("Unresolved {phase} name eval-diagnostic-missing")),
+            "{message}"
+        );
+        // Form data has no source text to fabricate a byte span from. Preserve
+        // the compiler's actual diagnostic rather than replacing it with a pass.
+        assert!(message.contains("bytes"), "{message}");
+    }
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros
+        .define("(defmacro eval-diagnostic [] (eval 'eval-diagnostic-missing))")
+        .unwrap();
+    let error = session
+        .eval_with_macros("(eval-diagnostic)", &mut macros)
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("Unresolved Macro name eval-diagnostic-missing"),
+        "{error}"
+    );
+}
