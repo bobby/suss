@@ -470,39 +470,90 @@ fn native_error(error: SessionError) -> wasmtime::Error {
 }
 
 impl SessionHost<'_> {
-    pub(crate) fn native_owner(&self) -> u64 { self.identity }
-    pub(crate) fn read_native_evaluation(&mut self, bridge: &FormBridge, value: &SessionValue, span: std::ops::Range<usize>) -> Result<suss_reader::forms::Form, SessionError> {
-        let closure_test = self.runtime.get_func(&mut self.store, "closure-value-test")
-            .ok_or_else(|| wasmtime::Error::msg("Missing closure value classifier"))?;
-        let instance_test = self.runtime.get_func(&mut self.store, "object-instance")
-            .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
-        let evaluation = self.evaluation.as_ref()
-            .ok_or_else(|| wasmtime::Error::msg("Missing native evaluation authority"))?;
-        let var_class = registry_lock(&evaluation.var_class).clone()
-            .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
-        bridge.read_evaluation(self, value, span, self.identity, closure_test, instance_test, var_class)
+    pub(crate) fn native_owner(&self) -> u64 {
+        self.identity
     }
-    pub(crate) fn retain_native_constant(&mut self, index: u64, value: OwnedRooted<AnyRef>) -> Result<(), SessionError> {
+    pub(crate) fn read_native_evaluation(
+        &mut self,
+        bridge: &FormBridge,
+        value: &SessionValue,
+        span: std::ops::Range<usize>,
+    ) -> Result<suss_reader::forms::Form, SessionError> {
+        let closure_test = self
+            .runtime
+            .get_func(&mut self.store, "closure-value-test")
+            .ok_or_else(|| wasmtime::Error::msg("Missing closure value classifier"))?;
+        let instance_test = self
+            .runtime
+            .get_func(&mut self.store, "object-instance")
+            .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
+        let evaluation = self
+            .evaluation
+            .as_ref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native evaluation authority"))?;
+        let var_class = registry_lock(&evaluation.var_class)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        bridge.read_evaluation(
+            self,
+            value,
+            span,
+            self.identity,
+            closure_test,
+            instance_test,
+            var_class,
+        )
+    }
+    pub(crate) fn retain_native_constant(
+        &mut self,
+        index: u64,
+        value: OwnedRooted<AnyRef>,
+    ) -> Result<(), SessionError> {
         self.charge_host_work(1)?;
         let identity = CellIdentity::native_constant(self.phase, self.identity, index);
         let global = {
             let mut roots = RootScope::new(&mut self.store);
             let value = Val::AnyRef(Some(value.to_rooted(&mut roots)));
             let mut result = [Val::null_any_ref()];
-            self.runtime.get_func(&mut roots, "binding-new").unwrap()
+            self.runtime
+                .get_func(&mut roots, "binding-new")
+                .unwrap()
                 .call(&mut roots, &[value], &mut result)?;
-            let ty = result[0].unwrap_anyref().unwrap().as_struct(&roots)?.unwrap().ty(&roots)?;
-            Global::new(&mut roots, GlobalType::new(ValType::Ref(RefType::new(false, ty.into())), Mutability::Const), result[0])?
+            let ty = result[0]
+                .unwrap_anyref()
+                .unwrap()
+                .as_struct(&roots)?
+                .unwrap()
+                .ty(&roots)?;
+            Global::new(
+                &mut roots,
+                GlobalType::new(
+                    ValType::Ref(RefType::new(false, ty.into())),
+                    Mutability::Const,
+                ),
+                result[0],
+            )?
         };
         // No compiler guard is held across a guest call or instantiation.
         let mut state = registry_lock(&self.compiler);
-        state.linker.define(&self.store, identity.import_module(), &identity.import_name(), global)?;
+        state.linker.define(
+            &self.store,
+            identity.import_module(),
+            &identity.import_name(),
+            global,
+        )?;
         Arc::make_mut(&mut state.cells).insert(identity, global);
         Ok(())
     }
-    pub(crate) fn native_constant_value(&mut self, owner: u64, index: u64) -> Result<SessionValue, SessionError> {
+    pub(crate) fn native_constant_value(
+        &mut self,
+        owner: u64,
+        index: u64,
+    ) -> Result<SessionValue, SessionError> {
         if owner != self.identity {
-            return Err(wasmtime::Error::msg("Native constant cannot cross phase Store ownership").into());
+            return Err(
+                wasmtime::Error::msg("Native constant cannot cross phase Store ownership").into(),
+            );
         }
         self.binding_value(&CellIdentity::native_constant(self.phase, owner, index))
     }

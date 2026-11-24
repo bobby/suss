@@ -679,45 +679,87 @@ fn public_eval_diagnostics_preserve_the_actual_phase_and_unresolved_symbol() {
 fn eval_compiles_nested_function_and_var_constants_including_quotation() {
     let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-eval/review-corrections-primary/cases.json"
-    )).unwrap();
+    ))
+    .unwrap();
     assert_eq!(rows.len(), 14);
     // The four evaluated macro declaration controls remain research until that
     // separate declaration/publication finding is fixed. Nothing is skipped in
     // the original 34-row eval body or any existing primary group.
-    let selected: Vec<_> = rows.iter().filter(|row| !matches!(row["name"].as_str().unwrap(),
-        "evaluated-macro" | "evaluated-macro-argument" | "evaluated-macro-var" | "macro-prefix-survives-error"
-    )).collect();
+    let selected: Vec<_> = rows
+        .iter()
+        .filter(|row| {
+            !matches!(
+                row["name"].as_str().unwrap(),
+                "evaluated-macro"
+                    | "evaluated-macro-argument"
+                    | "evaluated-macro-var"
+                    | "macro-prefix-survives-error"
+            )
+        })
+        .collect();
     assert_eq!(selected.len(), 10);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
         let mut retained = Vec::new();
         for row in &selected {
-            let source = row["expression"].as_str().unwrap().replace("(catch ClassCastException ", "(catch :default ");
-            let value = session.eval_with_macros(&source, &mut macros).unwrap_or_else(|error|
-                panic!("{}: {}", row["name"], suss_compile::portable_repl::error_display(&mut session, &error)));
+            let source = row["expression"]
+                .as_str()
+                .unwrap()
+                .replace("(catch ClassCastException ", "(catch :default ");
+            let value = session
+                .eval_with_macros(&source, &mut macros)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
             let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
             assert_eq!(forms.len(), 1);
             decoder.refill(20_000);
-            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&forms[0])), "{}", row["name"]);
-            eprintln!("eval-review-primary-match {:?} {}", session.phase(), row["name"]);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{}",
+                row["name"]
+            );
+            eprintln!(
+                "eval-review-primary-match {:?} {}",
+                session.phase(),
+                row["name"]
+            );
             retained.push(value);
         }
         session.collect().unwrap();
         for (row, value) in selected.iter().zip(&retained) {
             let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
             decoder.refill(20_000);
-            assert_eq!(canonical(decoder.decode_session(&mut session, value).unwrap()), canonical(expected(&forms[0])), "{} after GC", row["name"]);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} after GC",
+                row["name"]
+            );
         }
         // The returned function still reads its retained constant after a
         // collection, a later compilation and the public macro owner's drop.
-        let function = session.eval_with_macros("(let [f (fn [x] (+ x 1))] (eval (list 'fn [] (list f 41))))", &mut macros).unwrap();
+        let function = session
+            .eval_with_macros(
+                "(let [f (fn [x] (+ x 1))] (eval (list 'fn [] (list f 41))))",
+                &mut macros,
+            )
+            .unwrap();
         drop(macros);
         session.collect().unwrap();
         session.eval("(+ 1 2)").unwrap();
         let value = session.invoke(&function, &[]).unwrap();
         decoder.refill(20_000);
-        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+        assert_eq!(
+            decoder.decode_session(&mut session, &value).unwrap(),
+            Observation::Long(42)
+        );
     }
 }
 
@@ -726,8 +768,17 @@ fn reentrant_macro_eval_keeps_its_own_nested_constants() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     macros.define("(defmacro nested-native-constants [] [(eval (list + 1 2)) (let [f (fn [x] (+ x 1))] ((eval (list 'fn [] (list f 41))))) (identical? (var map) (first (eval [(var map)])))])").unwrap();
-    let value = session.eval_with_macros("(nested-native-constants)", &mut macros).unwrap();
+    let value = session
+        .eval_with_macros("(nested-native-constants)", &mut macros)
+        .unwrap();
     session.collect().unwrap();
     let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
-    assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Vector(vec![Observation::Long(3), Observation::Long(42), Observation::Bool(true)]));
+    assert_eq!(
+        decoder.decode_session(&mut session, &value).unwrap(),
+        Observation::Vector(vec![
+            Observation::Long(3),
+            Observation::Long(42),
+            Observation::Bool(true)
+        ])
+    );
 }

@@ -33,7 +33,8 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
     let mut result = [Val::null_any_ref()];
     let error = evaluate
         .call(&mut store, &[Val::null_any_ref()], &mut result)
-        .unwrap_err();
+        .err()
+        .expect("compiler must reject unauthenticated access");
     assert!(error.is::<wasmtime::ThrownException>());
     assert!(store.as_context_mut().take_pending_exception().is_some());
 
@@ -88,18 +89,50 @@ fn evaluation_capability_is_explicit_and_its_gc_payload_stays_in_one_store() {
 
 #[test]
 fn opaque_native_constants_require_the_private_compilation_owner() {
-    use suss_compile::portable::{self, resolve::{Environment, Phase}};
+    use suss_compile::portable::{
+        self,
+        resolve::{Environment, Phase},
+    };
     use suss_reader::forms::{Form, Kind};
     for phase in [Phase::Runtime, Phase::Macro] {
-        let form = Form { span: 0..0, metadata: vec![], kind: Kind::NativeConstant { owner: 1, index: 1 } };
+        let form = Form {
+            span: 0..0,
+            metadata: vec![],
+            kind: Kind::NativeConstant { owner: 1, index: 1 },
+        };
         assert!(suss_reader::edn::source::form_to_value(&form).is_err());
-        let error = portable::prepare_fragment_forms(vec![form.clone()], 0..0, &Environment::default(), phase).unwrap_err();
+        let error = portable::prepare_fragment_forms(
+            vec![form.clone()],
+            0..0,
+            &Environment::default(),
+            phase,
+        )
+        .err()
+        .expect("compiler must reject unauthenticated access");
         assert!(error.message.contains("Native constant"), "{error}");
-        let quoted = Form { span: 0..0, metadata: vec![], kind: Kind::List(vec![
-            Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol::new("quote")) }, form,
-        ]) };
-        assert!(portable::prepare_fragment_forms(vec![quoted], 0..0, &Environment::default(), phase).is_err());
-        let error = portable::prepare_fragment("(suss.bootstrap/binding-cell-value 42)", &Environment::default(), phase).unwrap_err();
+        let quoted = Form {
+            span: 0..0,
+            metadata: vec![],
+            kind: Kind::List(vec![
+                Form {
+                    span: 0..0,
+                    metadata: vec![],
+                    kind: Kind::Symbol(suss_reader::Symbol::new("quote")),
+                },
+                form,
+            ]),
+        };
+        assert!(
+            portable::prepare_fragment_forms(vec![quoted], 0..0, &Environment::default(), phase)
+                .is_err()
+        );
+        let error = portable::prepare_fragment(
+            "(suss.bootstrap/binding-cell-value 42)",
+            &Environment::default(),
+            phase,
+        )
+        .err()
+        .expect("compiler must reject unauthenticated access");
         assert!(error.message.contains("compiler-owned core"), "{error}");
     }
 }

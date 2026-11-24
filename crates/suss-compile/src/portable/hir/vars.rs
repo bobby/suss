@@ -3,13 +3,31 @@ use super::*;
 use suss_reader::Symbol;
 
 impl Analyzer<'_> {
-    pub(super) fn native_constant(&mut self, form: &Form, owner: u64, index: u64) -> Result<Hir, Diagnostic> {
-        if self.origin.as_ref().and_then(|origin| origin.native_owner()) != Some(owner) {
-            return Err(fail(form.span.clone(), "Native constant belongs to another compilation owner"));
+    pub(super) fn native_constant(
+        &mut self,
+        form: &Form,
+        owner: u64,
+        index: u64,
+    ) -> Result<Hir, Diagnostic> {
+        if self
+            .origin
+            .as_ref()
+            .and_then(|origin| origin.native_owner())
+            != Some(owner)
+        {
+            return Err(fail(
+                form.span.clone(),
+                "Native constant belongs to another compilation owner",
+            ));
         }
         let cell = self.environment.native_constant(self.phase, owner, index);
-        Ok(Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Global(cell)) })
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: vec![],
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Global(cell)),
+        })
     }
 
     fn var_core_call(
@@ -67,8 +85,14 @@ impl Analyzer<'_> {
         // Core shares one getter body across all Vars, so AOT code stays bounded
         // per definition while dynamic bindings and root replacement stay live.
         let target_cell = node(Expression::GlobalCell(target.clone()));
-        let namespace = self.literal_form(form, Literal::String(target.namespace().encode_utf16().collect()));
-        let name = self.literal_form(form, Literal::String(target.name().encode_utf16().collect()));
+        let namespace = self.literal_form(
+            form,
+            Literal::String(target.namespace().encode_utf16().collect()),
+        );
+        let name = self.literal_form(
+            form,
+            Literal::String(target.name().encode_utf16().collect()),
+        );
         let info = self.environment.definition_info(target).cloned();
         let mut pairs = info
             .as_ref()
