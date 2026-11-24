@@ -9,6 +9,17 @@ captured roots survive redefinition, GC and public owner replacement. Cumulative
 allowances and cancellation cover compilation and isolated calls. Pure AOT
 retains the explicit missing-compiler-capability error and its import contract.
 
+At `d65fa9f4`, the scoped core-metadata compiler follow-up also passes the
+fresh7-command broader gate with unchanged source/HEAD/Binaryen: public eval27,
+compiler host117,193 tests across25 selected targets, optimized random effects,
+Java/Node-free bootstrap and actual full native suite0 plus strict review0.
+The complete option16 target remains covered by its same-source focused receipt.
+All5564 observed rows and all original count/failure/skip/opaque rules stay intact;
+all229/200 tagged numeric rows remain independent matches. No baseline is written.
+[Latest strict capture review](eval-broader-after-var-metadata-core-links/complete-capture/current-complete-capture-review.json)
+retains the actual native0 qualification. The exact workspace baseline,
+independent review and final-head CI remain required.
+
 At `f3ae547d`, the scoped Var metadata follow-up passes all4 focused commands
 with unchanged source/HEAD:93 tests across complete AOT option, metadata,
 indexed-data, sealed built-in, public eval27, identity and stream targets.

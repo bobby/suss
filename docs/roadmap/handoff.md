@@ -34949,3 +34949,39 @@ The fresh full native capture must return actual0 and satisfy the unchanged
 strict reviewer with no new baseline change. Then retry the exact two-thread
 workspace baseline before independent review and final-head CI. No promotion,
 issue closure, merge or numeric source-form scope exception is claimed.
+
+### Fresh native0 after original-core Var metadata lowering (2026-11-24)
+
+Atd65fa9f4, eval-broader-after-var-metadata-core-links completes all7 commands
+with actual0 and unchanged source/HEAD/Binaryen. Public eval27, compiler host117,
+193 tests across25 selected targets, optimized random effects and Java/Node-free
+bootstrap (69.65s) pass. The original complete option16/metadata/indexed/sealed
+and public/identity/stream targets already have the same-source93-test focused
+pass atf3ae547d. The fresh full native suite returns actual0 in337.21s
+against unchanged dea5db93 baseline; strict review0 retains all5564 observed
+identities, prior comparable successes, original counts/failures/skips/opaque
+judgments and229/229 plus200/200 tagged numeric host matches. No baseline is
+written. Exact complete eval34/symbol61/var?34 bodies retain29/61/26 host matches
+and original5/0/8 guest ordinals. Deterministic compressed logs and raw capture
+are retained; the strict review report stays readable.
+
+This follow-up changes evidence/docs only; compiler/core/native tests remain
+identical to validated d65fa9f4/f3ae547d. Start the exact required command via
+`launch-eval-workspace.py full-workspace-after-var-metadata-core-links`, freezing
+source and HEAD through its terminal receipt. Publish the corrected meaningful
+checkpoint to the existing draft516. Exact workspace0, independent promotion
+review and passing final-head CI remain required before ready status. No merge
+is authorized and the complete M12 acceptance scope remains unchanged.
+
+Separate read-only numeric audit finds a concrete tooling gap: a tiny external
+Rust program linked against the unchanged reader rlib returns actual101 for
+edn::read_one("1.0M"), showing the old unsupported-numeric diagnostic despite
+runtime Decimal support. Its command/source/rlib hashes and output are retained
+under the external eval-next-step/decimal-tooling-before directory. Fresh pinned
+Clojure1.12.6 controls return0 for126 coefficient/scale/printing/admission/duplicate
+observations, including i32 scale boundaries. A 300KiB reader/core source copy
+is isolated under external decimal-tooling-lab, with only fixture reads linking
+to this checkout. Its unchanged offline baseline passes with original dependency
+identities after subset-lock reconciliation; the initial --locked refusal is
+retained. The copy's Decimal implementation remains separate from this frozen
+eval source and has no claimed workspace integration or acceptance pass.
