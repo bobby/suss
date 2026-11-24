@@ -337,3 +337,67 @@ fn eval_preserves_primary_top_level_do_compilation_and_effect_boundaries() {
         }
     }
 }
+
+#[test]
+fn eval_namespace_changes_follow_real_caller_binding_frames() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/namespace-primary/cases.json"
+    ))
+    .unwrap();
+    assert_eq!(rows.len(), 15);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("user").unwrap();
+        macros.enter_namespace("user").unwrap();
+        suss_compile::portable_repl::evaluate_script_compiled(
+            &mut session,
+            &mut macros,
+            include_str!("../../../results/m12-eval/namespace-primary/setup.sus"),
+            None,
+        )
+        .unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let expression = row["expression"]
+                .as_str()
+                .unwrap()
+                .replace("(catch Throwable ", "(catch :default ");
+            let value = session
+                .eval_with_macros(&expression, &mut macros)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: {}",
+                        row["name"],
+                        suss_compile::portable_repl::error_display(&mut session, &error)
+                    )
+                });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{}",
+                row["name"]
+            );
+            eprintln!(
+                "eval-namespace-primary-match {:?} {}",
+                session.phase(),
+                row["name"]
+            );
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} after GC",
+                row["name"]
+            );
+        }
+    }
+}

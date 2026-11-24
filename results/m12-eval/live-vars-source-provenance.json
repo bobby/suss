@@ -67,7 +67,7 @@
     "docs/compatibility/core-import.json": "e045f241c0f71f29d0ed0d486c8231749de03f8daa331ac9a12ef9efdfbed03e",
     "runtime/core-import/manifest.json": "e08428cdd19c1734dc1287c38af550d20bfef178465ef3084fcad41b4d3eda63",
     "runtime/core-import/suss/core.sus": "02e39e8d85e376e6d44b43158b4c7ffa48cc11047714d359dcaaf733ee7c9455",
-    "crates/suss-cli/tests/clojure_eval.rs": "f6fb31af189b82768392a3fad250cf5d81a112e0a6c8f2f5ab8efbcdda5ff97e",
+    "crates/suss-cli/tests/clojure_eval.rs": "318205f720bdb7535363086ff3c3797b9344a784396bc7ee374fef85713614aa",
     "crates/suss-compile/tests/support/pinned_eval_body.rs": "9424ad245ee5b9243b046ac5adf34130dfb20585a07f0f4801fe2e5734db7c58",
     "results/m12-eval/live-vars-primary/cases.json": "ee46f06327bdfa0e11696452e6d7e24f7a7f0903099a452df0f33d464efd64a0",
     "results/m12-eval/live-vars-primary/setup.sus": "0660d764a10d062a1f53571c5613ad9be16d9910c37cb16694ddfa7289494336"

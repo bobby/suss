@@ -208,3 +208,25 @@ compiler identity reproduction pass. Receipts/logs are retained under
 `results/m12-eval/after-live-vars-existing-regressions`. The separately recorded
 public do-prefix failure remains101; this gate does not relabel it or establish
 full eval/numeric acceptance.
+
+
+## Public eval top-level compilation boundaries (2026-11-24)
+
+At3d51d8b5, the top-level boundary gate returns0 with all recorded inputs
+and HEAD unchanged. Eleven fresh primary controls match in both native phases
+and after GC, including macro-produced/nested do, lexical-body precompilation,
+runtime throws, definitions before later errors, once-only macro expansion and
+reentrant compiled Macro eval. The focused command returns0 in158.281s
+including build; the complete public target returns0 in9.156s (all7 tests).
+All24 original public controls now match in both phases. The complete original
+34-row eval body returns0 again in10.944s:29 host matches/five original opaque
+judgments; numeric ordinals5–7 remain host matches. Archives are under
+`results/m12-eval/top-level-do-first-native`.
+
+The native compiler expands only the root to select Clojure Compiler.eval's
+top-level do boundary, then compiles and executes each unit through the ordinary
+pipeline against the same live cells. Lexical bodies retain whole-form analysis;
+no operator or expression body is interpreted on the host. Namespace mutation,
+capability/budget/cancellation checks and broader capture/validation remain
+separate acceptance gates. New pinned namespace controls are under
+`results/m12-eval/namespace-primary`; they are primary evidence only.

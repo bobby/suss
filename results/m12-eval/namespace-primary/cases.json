@@ -1,0 +1,77 @@
+[
+  {
+    "name": "repeated-current-namespace",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] [(eval 'value) (eval 'value)])",
+    "expected": "[11 11]"
+  },
+  {
+    "name": "set-ns-mutation-reaches-caller-frame",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] (eval '(set! *ns* (the-ns 'eval-context.two))) [(str (ns-name *ns*)) (eval 'value)])",
+    "expected": "[\"eval-context.two\" 22]"
+  },
+  {
+    "name": "do-next-unit-uses-mutated-namespace",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] (eval '(do (set! *ns* (the-ns 'eval-context.two)) value)))",
+    "expected": "22"
+  },
+  {
+    "name": "nested-binding-restores-eval-context",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] [(eval '(binding [*ns* (the-ns 'eval-context.two)] (eval 'value))) (eval 'value)])",
+    "expected": "[22 11]"
+  },
+  {
+    "name": "temporary-namespace-definition-persists-in-its-own-cell",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] (eval '(def new-value 33)) [(eval 'new-value) (eval 'eval-context.one/new-value)])",
+    "expected": "[33 33]"
+  },
+  {
+    "name": "outer-binding-restores-caller",
+    "expression": "[(binding [*ns* (the-ns 'eval-context.one)] (eval '(set! *ns* (the-ns 'eval-context.two))) (eval 'value)) (str (ns-name *ns*))]",
+    "expected": "[22 \"user\"]"
+  },
+  {
+    "name": "scoped-ns-directive",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] (eval '(ns eval-context.three)) [(str (ns-name *ns*)) (do (eval '(def inside 44)) (eval 'inside))])",
+    "expected": "[\"eval-context.three\" 44]"
+  },
+  {
+    "name": "input-namespace-after-scoped-directive",
+    "expression": "(str (ns-name *ns*))",
+    "expected": "\"user\""
+  },
+  {
+    "name": "namespace-prefix-survives-later-compile-error",
+    "expression": "(binding [*ns* (the-ns 'eval-context.one)] (let [result (try (eval '(do (set! *ns* (the-ns 'eval-context.two)) eval-context-missing)) (catch Throwable e :compile))] [result (str (ns-name *ns*))]))",
+    "expected": "[:compile \"eval-context.two\"]"
+  },
+  {
+    "name": "unscoped-ns-directive",
+    "expression": "(do (eval '(ns eval-context.four)) (str (ns-name *ns*)))",
+    "expected": "\"eval-context.four\""
+  },
+  {
+    "name": "input-namespace-after-unscoped-directive",
+    "expression": "(str (ns-name *ns*))",
+    "expected": "\"eval-context.four\""
+  },
+  {
+    "name": "restore-user-input",
+    "expression": "(do (eval '(ns user)) (str (ns-name *ns*)))",
+    "expected": "\"user\""
+  },
+  {
+    "name": "unscoped-namespace-prefix-before-compile-error",
+    "expression": "(let [result (try (eval '(do (set! *ns* (the-ns 'eval-context.two)) eval-context-missing)) (catch Throwable e :compile))] [result (str (ns-name *ns*))])",
+    "expected": "[:compile \"eval-context.two\"]"
+  },
+  {
+    "name": "input-namespace-after-prefix-error",
+    "expression": "(str (ns-name *ns*))",
+    "expected": "\"eval-context.two\""
+  },
+  {
+    "name": "restore-user-after-error",
+    "expression": "(do (eval '(ns user)) (str (ns-name *ns*)))",
+    "expected": "\"user\""
+  }
+]
