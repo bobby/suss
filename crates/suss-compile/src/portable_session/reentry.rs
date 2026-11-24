@@ -4,6 +4,7 @@
 use super::*;
 
 pub(crate) struct ReentryProfile {
+    evaluation: Option<std::sync::Weak<evaluation::Evaluation>>,
     engine: Engine,
     phase: Phase,
     options: SessionOptions,
@@ -25,6 +26,7 @@ impl SessionHost<'_> {
     /// profile may bind only the same Store's active Caller, within this entry.
     pub(crate) fn reentry_profile(&self) -> ReentryProfile {
         ReentryProfile {
+            evaluation: self.evaluation.as_ref().map(Arc::downgrade),
             engine: self.engine.clone(),
             phase: self.phase,
             options: self.options.clone(),
@@ -48,6 +50,7 @@ impl ReentryProfile {
     /// Form transport/invocation reuse the owned-session implementation.
     pub(crate) fn bind<'a>(&self, store: StoreContextMut<'a, ()>) -> SessionHost<'a> {
         SessionHost {
+            evaluation: self.evaluation.as_ref().and_then(std::sync::Weak::upgrade),
             engine: self.engine.clone(),
             phase: self.phase,
             options: self.options.clone(),

@@ -1,0 +1,9 @@
+{
+  "upstream": "Clojure1.12.6",
+  "primary_command": "results/m12-eval/primary/command.json",
+  "entry": "clojure/core.clj",
+  "upstream_eval_sha256": "abb5ab36e7d3dc58ad3c4c9ed4a65557ff655fcaa4823e793882f3f3c006ca5b",
+  "adapted_eval_sha256": "f8389a9ab362e4ab8b75e9d512ebfb8cef2441e2673cd179f2ed196de5f87015",
+  "rationale": "Retain the complete public one-argument eval function and metadata; replace the JVM Compiler.eval call with the explicit native compiled-host capability. Native form data is decoded and compiled, never printed/reread or tree-walked. AOT without the capability retains the ordinary missing-capability language error.",
+  "qualification": "Source adaptation and implementation checkpoint only. Public primary/body acceptance and real Var support remain required."
+}

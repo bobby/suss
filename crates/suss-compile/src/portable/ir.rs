@@ -1420,7 +1420,7 @@ fn loop_safe(operation: &Operation) -> bool {
         | Operation::Array { .. }
         | Operation::MakeClosure { .. }
         | Operation::MakeGeneralClosure { .. } => true,
-        Operation::Bitwise { operation, .. } => *operation != super::hir::Bitwise::RandomDouble,
+        Operation::Bitwise { operation, .. } => !matches!(operation, super::hir::Bitwise::RandomDouble | super::hir::Bitwise::EvaluateForm),
         Operation::Comparison { operation, .. } => !matches!(operation, C::Less | C::LessEqual | C::Greater | C::GreaterEqual),
         Operation::Arithmetic { coercing, .. } => !coercing,
         Operation::Nominal { operation, .. } => {

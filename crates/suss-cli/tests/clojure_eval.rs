@@ -127,11 +127,22 @@ fn run(fixture: bool) {
                 .as_str()
                 .unwrap()
                 .replace("(catch Throwable ", "(catch :default ");
-            retained.push(
-                session
-                    .eval_with_macros(&expression, &mut macros)
-                    .unwrap_or_else(|error| panic!("{}: {error}", row["name"])),
+            let value = session
+                .eval_with_macros(&expression, &mut macros)
+                .unwrap_or_else(|error| panic!("{}: {error}", row["name"]));
+            // Check each unchanged control before a later unsupported control
+            // can abort this group. Keep the original retained post-GC checks.
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{}",
+                row["name"]
             );
+            eprintln!("eval-primary-match {:?} {}", session.phase(), row["name"]);
+            retained.push(value);
         }
         session.collect().unwrap();
         for (value, row) in retained.iter().zip(&selected) {

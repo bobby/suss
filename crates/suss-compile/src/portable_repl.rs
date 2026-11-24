@@ -296,6 +296,7 @@ pub fn evaluate_compiled_value(
     macros: &mut crate::portable_macros::CompiledMacros,
     source: &str,
 ) -> Result<CompiledValue, SessionError> {
+    runtime.attach_expander(macros);
     let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, None);
     evaluate_forms_compiled(runtime, macros, forms, source.len(), &origin)
@@ -309,6 +310,7 @@ pub fn evaluate_script_compiled(
     source: &str,
     path: Option<std::path::PathBuf>,
 ) -> Result<String, SessionError> {
+    runtime.attach_expander(macros);
     let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, path);
     let prepared = prepare_script_compiled(

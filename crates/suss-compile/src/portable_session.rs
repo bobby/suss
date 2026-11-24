@@ -33,6 +33,7 @@ mod compiler_state;
 use compiler_state::{CompilerState, SharedCompiler};
 mod store_access;
 mod reentry;
+mod evaluation;
 pub(crate) use reentry::ReentryProfile;
 #[cfg(test)]
 mod random_tests;
@@ -217,6 +218,7 @@ pub struct SessionStats {
 /// An owned persistent host. Borrowed native views use the same implementation.
 pub type Session = SessionHost<'static>;
 pub struct SessionHost<'store> {
+    evaluation: Option<Arc<evaluation::Evaluation>>,
     engine: Engine,
     phase: Phase,
     options: SessionOptions,
@@ -610,6 +612,7 @@ impl SessionHost<'_> {
             fragment: artifact.core,
         })?;
         self.bootstrap_core = true;
+        self.install_evaluation()?;
         let core =
             ModuleIdentity::new(Phase::Runtime, "suss.core").map_err(SessionError::Compile)?;
         registry_lock(&self.compiler).provided.insert(core);
@@ -662,6 +665,7 @@ impl SessionHost<'_> {
         })?;
         self.enter_namespace(&namespace)?;
         self.bootstrap_core = true;
+        self.install_evaluation()?;
         Ok(())
     }
     pub fn with_options(options: SessionOptions) -> Result<Self, SessionError> {
@@ -755,6 +759,7 @@ impl SessionHost<'_> {
             ModuleIdentity::new(phase, "suss.core").map_err(SessionError::Compile)?
         ]);
         Ok(Self {
+            evaluation: None,
             engine,
             phase,
             options,
@@ -1272,6 +1277,7 @@ impl SessionHost<'_> {
         if self.store.is_borrowed() {
             return Self::consume_host_work(self.store.as_context_mut(), 0, &self.interrupt).map_err(Into::into);
         }
+        self.refresh_evaluation_profile();
         if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
             return Ok(());
         }
@@ -1504,6 +1510,7 @@ impl SessionHost<'_> {
         source: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<SessionValue, SessionError> {
+        self.attach_expander(expander);
         expander.begin_declarations().map_err(SessionError::Compile)?;
         let mut linked = false;
         let result = self.eval_with_staged_macros(source, expander, &mut linked);

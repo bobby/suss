@@ -8,6 +8,7 @@ use crate::{
 use std::{collections::{BTreeMap, BTreeSet}, sync::{Arc, Mutex, MutexGuard}};
 use suss_reader::forms::{Form, Kind, read_forms};
 mod reentry;
+pub(crate) use reentry::MacroAuthority;
 mod facade;
 pub use facade::CompiledMacros;
 pub(crate) use facade::MacroService;
@@ -358,6 +359,8 @@ impl MacroHost<'static> {
         // Bootstrap code is already rooted in the Store. User source cache
         // accounting starts empty, including after an explicit session reset.
         catalog(&macros.catalog).artifact_cache = Default::default();
+        let authority = macros.authority();
+        macros.session.attach_macro_authority(authority);
         Ok(macros)
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
@@ -371,6 +374,13 @@ impl MacroHost<'static> {
     }
 }
 impl MacroHost<'_> {
+    pub(crate) fn evaluate_native_form(&mut self, form: Form) -> Result<SessionValue, SessionError> {
+        let snapshot = self.session.compilation_snapshot();
+        let span = form.span.clone();
+        let origin = crate::portable::SourceOrigin::new("", None);
+        let prepared = snapshot.prepare_with_origin(vec![form], span, self, Some(&origin))?;
+        self.session.eval_prepared(prepared)
+    }
     pub(crate) fn define_inline_macro(
         &mut self, form: &Form, environment: &crate::portable::resolve::Environment,
         phase: crate::portable::resolve::Phase,

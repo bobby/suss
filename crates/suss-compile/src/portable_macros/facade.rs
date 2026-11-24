@@ -12,19 +12,58 @@ pub(crate) struct MacroService(Arc<SharedHost>);
 pub(crate) struct MacroLease {
     shared: Arc<SharedHost>,
     host: Option<MacroHost<'static>>,
+    saved_fuel: Option<u64>,
 }
 impl MacroService {
     fn new(host: MacroHost<'static>) -> Self {
         Self(Arc::new(SharedHost {
-            available: Mutex::new(Some(host)), returned: Condvar::new(),
+            available: Mutex::new(Some(host)),
+            returned: Condvar::new(),
         }))
     }
     pub(crate) fn lease(&self) -> MacroLease {
-        let mut available = self.0.available.lock().unwrap_or_else(|error| error.into_inner());
+        let mut available = self
+            .0
+            .available
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         while available.is_none() {
-            available = self.0.returned.wait(available).unwrap_or_else(|error| error.into_inner());
+            available = self
+                .0
+                .returned
+                .wait(available)
+                .unwrap_or_else(|error| error.into_inner());
         }
-        MacroLease { shared: self.0.clone(), host: available.take() }
+        MacroLease {
+            shared: self.0.clone(),
+            host: available.take(),
+            saved_fuel: None,
+        }
+    }
+    pub(crate) fn prepare_evaluation(
+        &self,
+        snapshot: &crate::portable_session::CompilationSnapshot,
+        form: Form,
+        fuel: u64,
+    ) -> Result<
+        (
+            Result<crate::portable::modules::PreparedInput, SessionError>,
+            u64,
+        ),
+        SessionError,
+    > {
+        let mut lease = self.lease();
+        let previous = lease.host().session.options().fuel_per_operation;
+        let allowance = previous.min(fuel);
+        lease.saved_fuel = Some(previous);
+        let host = lease.host();
+        host.set_operation_fuel(allowance);
+        let _budget = host.session.operation_budget_scope()?;
+        let span = form.span.clone();
+        let origin = crate::portable::SourceOrigin::new("", None);
+        let result = snapshot.prepare_with_origin(vec![form], span, host, Some(&origin));
+        let remaining = host.session.operation_fuel_remaining()?;
+        Ok((result, allowance.saturating_sub(remaining)))
     }
     fn with_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         operation(self.lease().host())
@@ -37,8 +76,15 @@ impl MacroLease {
 }
 impl Drop for MacroLease {
     fn drop(&mut self) {
-        let host = self.host.take().expect("return Macro lease once");
-        let mut available = self.shared.available.lock().unwrap_or_else(|error| error.into_inner());
+        let mut host = self.host.take().expect("return Macro lease once");
+        if let Some(fuel) = self.saved_fuel.take() {
+            host.set_operation_fuel(fuel);
+        }
+        let mut available = self
+            .shared
+            .available
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         assert!(available.is_none(), "Macro Store already returned");
         *available = Some(host);
         self.shared.returned.notify_one();
@@ -60,9 +106,16 @@ impl CompiledMacros {
     }
     fn from_host(host: MacroHost<'static>) -> Self {
         let interrupt = host.interrupt_handle();
-        Self { service: MacroService::new(host), active: None, requests: 0, interrupt }
+        Self {
+            service: MacroService::new(host),
+            active: None,
+            requests: 0,
+            interrupt,
+        }
     }
-    pub(crate) fn service(&self) -> MacroService { self.service.clone() }
+    pub(crate) fn service(&self) -> MacroService {
+        self.service.clone()
+    }
     fn with_host_mut<T>(&mut self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         match &mut self.active {
             Some(lease) => operation(lease.host()),
@@ -75,7 +128,9 @@ impl CompiledMacros {
             None => self.service.with_host(|host| operation(host)),
         }
     }
-    pub fn current_namespace(&self) -> String { self.read_host(MacroHost::current_namespace) }
+    pub fn current_namespace(&self) -> String {
+        self.read_host(MacroHost::current_namespace)
+    }
     pub fn enter_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.enter_namespace(namespace))
     }
@@ -91,8 +146,13 @@ impl CompiledMacros {
     /// The existing synchronous observation hook remains non-reentrant.
     pub fn install_observation_hook(
         &mut self,
-        callback: impl for<'a> Fn(wasmtime::StoreContextMut<'a, ()>, wasmtime::Val) -> wasmtime::Result<u32>
-            + Send + Sync + 'static,
+        callback: impl for<'a> Fn(
+            wasmtime::StoreContextMut<'a, ()>,
+            wasmtime::Val,
+        ) -> wasmtime::Result<u32>
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.install_observation_hook(callback))
     }
@@ -105,17 +165,27 @@ impl CompiledMacros {
     pub(crate) fn binding_checkpoint(&mut self) -> Result<MacroCheckpoint, SessionError> {
         self.with_host_mut(MacroHost::binding_checkpoint)
     }
-    pub(crate) fn restore_bindings(&mut self, checkpoint: MacroCheckpoint,
-        globals: &[crate::portable::resolve::Global]) -> Result<(), SessionError> {
+    pub(crate) fn restore_bindings(
+        &mut self,
+        checkpoint: MacroCheckpoint,
+        globals: &[crate::portable::resolve::Global],
+    ) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.restore_bindings(checkpoint, globals))
     }
-    pub(crate) fn define_inline_macro(&mut self, form: &Form,
+    pub(crate) fn define_inline_macro(
+        &mut self,
+        form: &Form,
         environment: &crate::portable::resolve::Environment,
-        phase: crate::portable::resolve::Phase) -> Result<(), SessionError> {
+        phase: crate::portable::resolve::Phase,
+    ) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.define_inline_macro(form, environment, phase))
     }
-    pub(crate) fn define_form_with_origin(&mut self, form: Form, span: std::ops::Range<usize>,
-        origin: Option<&crate::portable::SourceOrigin>) -> Result<SessionValue, SessionError> {
+    pub(crate) fn define_form_with_origin(
+        &mut self,
+        form: Form,
+        span: std::ops::Range<usize>,
+        origin: Option<&crate::portable::SourceOrigin>,
+    ) -> Result<SessionValue, SessionError> {
         self.with_host_mut(|host| host.define_form_with_origin(form, span, origin))
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
@@ -133,26 +203,50 @@ impl Drop for CompiledMacros {
         // ExpansionRequest normally balances these, including unwinding. Also
         // retire an explicitly abandoned owner request before returning its host.
         if let Some(lease) = &mut self.active {
-            for _ in 0..self.requests { lease.host().end_expansion_request(); }
+            for _ in 0..self.requests {
+                lease.host().end_expansion_request();
+            }
         }
     }
 }
 impl ExpansionHost for CompiledMacros {
+    fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> {
+        Some(&self.service)
+    }
+
     fn begin_expansion_request(&mut self, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
-        if self.active.is_none() { self.active = Some(self.service.lease()); }
-        let result = self.active.as_mut().unwrap().host().begin_expansion_request(span);
-        if result.is_ok() { self.requests += 1; }
-        else if self.requests == 0 { self.active = None; }
+        if self.active.is_none() {
+            self.active = Some(self.service.lease());
+        }
+        let result = self
+            .active
+            .as_mut()
+            .unwrap()
+            .host()
+            .begin_expansion_request(span);
+        if result.is_ok() {
+            self.requests += 1;
+        } else if self.requests == 0 {
+            self.active = None;
+        }
         result
     }
     fn end_expansion_request(&mut self) {
         assert!(self.requests > 0, "balanced Macro request");
         self.active.as_mut().unwrap().host().end_expansion_request();
         self.requests -= 1;
-        if self.requests == 0 { self.active = None; }
+        if self.requests == 0 {
+            self.active = None;
+        }
     }
-    fn expansion_work_fuel(&self) -> u64 { self.read_host(MacroHost::expansion_work_fuel) }
-    fn charge_expansion_work(&mut self, work: u64, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
+    fn expansion_work_fuel(&self) -> u64 {
+        self.read_host(MacroHost::expansion_work_fuel)
+    }
+    fn charge_expansion_work(
+        &mut self,
+        work: u64,
+        span: std::ops::Range<usize>,
+    ) -> Result<(), Diagnostic> {
         self.with_host_mut(|host| host.charge_expansion_work(work, span))
     }
     fn begin_declarations(&mut self) -> Result<(), Diagnostic> {
@@ -161,7 +255,11 @@ impl ExpansionHost for CompiledMacros {
     fn end_declarations(&mut self, commit: bool) -> Result<(), Diagnostic> {
         self.with_host_mut(|host| host.end_declarations(commit))
     }
-    fn begin_source_module(&mut self, forms: &[Form], origin: &crate::portable::SourceOrigin) -> Result<(), Diagnostic> {
+    fn begin_source_module(
+        &mut self,
+        forms: &[Form],
+        origin: &crate::portable::SourceOrigin,
+    ) -> Result<(), Diagnostic> {
         self.with_host_mut(|host| host.begin_source_module(forms, origin))
     }
     fn end_source_module(&mut self) -> Result<(), Diagnostic> {
@@ -173,23 +271,41 @@ impl ExpansionHost for CompiledMacros {
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         self.read_host(MacroHost::artifact_dependencies)
     }
-    fn emit_fragment(&mut self, function: &crate::portable::ir::Function,
-        phase: crate::portable::resolve::Phase, forms: &[Form],
-        origin: Option<&crate::portable::SourceOrigin>) -> Result<Vec<u8>, Diagnostic> {
+    fn emit_fragment(
+        &mut self,
+        function: &crate::portable::ir::Function,
+        phase: crate::portable::resolve::Phase,
+        forms: &[Form],
+        origin: Option<&crate::portable::SourceOrigin>,
+    ) -> Result<Vec<u8>, Diagnostic> {
         self.with_host_mut(|host| host.emit_fragment(function, phase, forms, origin))
     }
-    fn supports_macro_imports(&self) -> bool { true }
+    fn supports_macro_imports(&self) -> bool {
+        true
+    }
     fn source_paths(&mut self, paths: &[std::path::PathBuf]) {
         self.with_host_mut(|host| host.source_paths(paths));
     }
-    fn load_macro_namespace(&mut self, namespace: &str, span: std::ops::Range<usize>) -> Result<Vec<String>, Diagnostic> {
+    fn load_macro_namespace(
+        &mut self,
+        namespace: &str,
+        span: std::ops::Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
         self.with_host_mut(|host| host.load_macro_namespace(namespace, span))
     }
-    fn load_macro_namespace_with_policy(&mut self, namespace: &str, policy: crate::portable::MacroReload,
-        span: std::ops::Range<usize>) -> Result<Vec<String>, Diagnostic> {
+    fn load_macro_namespace_with_policy(
+        &mut self,
+        namespace: &str,
+        policy: crate::portable::MacroReload,
+        span: std::ops::Range<usize>,
+    ) -> Result<Vec<String>, Diagnostic> {
         self.with_host_mut(|host| host.load_macro_namespace_with_policy(namespace, policy, span))
     }
-    fn expand(&mut self, form: &Form, context: ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
+    fn expand(
+        &mut self,
+        form: &Form,
+        context: ExpansionContext<'_>,
+    ) -> Result<Option<Form>, Diagnostic> {
         self.with_host_mut(|host| host.expand(form, context))
     }
 }
@@ -207,59 +323,106 @@ mod tests {
         let mut macros = CompiledMacros::new().unwrap();
         let service = macros.service();
         service.with_host(|host| {
-            host.session.eval("(def macro-service-effects (atom 0))").unwrap();
+            host.session
+                .eval("(def macro-service-effects (atom 0))")
+                .unwrap();
         });
-        macros.define(concat!(
-            "(defmacro persisted [x] ",
-            "(do (swap! macro-service-effects inc) (list '+ x 1)))",
-        )).unwrap();
+        macros
+            .define(concat!(
+                "(defmacro persisted [x] ",
+                "(do (swap! macro-service-effects inc) (list '+ x 1)))",
+            ))
+            .unwrap();
         let panic = catch_unwind(AssertUnwindSafe(|| {
             let _request = crate::portable::ExpansionRequest::new(&mut macros, 0..0).unwrap();
             panic!("request unwind fixture");
         }));
         assert!(panic.is_err());
-        assert!(service.0.available.lock().unwrap().is_some(), "unwind returns the Store");
+        assert!(
+            service.0.available.lock().unwrap().is_some(),
+            "unwind returns the Store"
+        );
         let mut runtime = Session::new_repl().unwrap();
         let bridge = FormBridge::new(&mut runtime).unwrap();
         let available_during_runtime = service.clone();
-        runtime.install_observation_hook(move |_, _| {
-            // Pure inspection only: observation hooks still never re-enter.
-            assert!(available_during_runtime.0.available.lock().unwrap().is_some(),
-                "finish Macro preparation before executing Runtime code");
-            Ok(0)
-        }).unwrap();
-        let value = runtime.eval_with_macros(concat!(
-            "(do (suss.harness.observation/capture nil) (persisted 41))",
-        ), &mut macros).unwrap();
-        assert!(matches!(bridge.read(&mut runtime, &value, 0..0).unwrap().kind, Kind::Long(42)));
-        let count = |service: &MacroService| service.with_host(|host| {
-            let value = host.session.eval("@macro-service-effects").unwrap();
-            host.bridge.read(&mut host.session, &value, 0..0).unwrap().into_parts().2
-        });
+        runtime
+            .install_observation_hook(move |_, _| {
+                // Pure inspection only: observation hooks still never re-enter.
+                assert!(
+                    available_during_runtime
+                        .0
+                        .available
+                        .lock()
+                        .unwrap()
+                        .is_some(),
+                    "finish Macro preparation before executing Runtime code"
+                );
+                Ok(0)
+            })
+            .unwrap();
+        let value = runtime
+            .eval_with_macros(
+                concat!("(do (suss.harness.observation/capture nil) (persisted 41))",),
+                &mut macros,
+            )
+            .unwrap();
+        assert!(matches!(
+            bridge.read(&mut runtime, &value, 0..0).unwrap().kind,
+            Kind::Long(42)
+        ));
+        let count = |service: &MacroService| {
+            service.with_host(|host| {
+                let value = host.session.eval("@macro-service-effects").unwrap();
+                host.bridge
+                    .read(&mut host.session, &value, 0..0)
+                    .unwrap()
+                    .into_parts()
+                    .2
+            })
+        };
         assert_eq!(count(&service), Kind::Long(1));
 
         let reader = bridge.borrowed_reader(&mut runtime).unwrap();
         let profile = runtime.reentry_profile();
         let compiler = service.clone();
-        let input = bridge.quote(&mut runtime,
-            read_forms("(fn* [] (persisted 41))").unwrap().remove(0)).unwrap();
-        let function = runtime.probe_evaluation(&input, move |mut caller, value| {
-            let form = reader.read(caller.as_context_mut(), &value, 0..0)?;
-            let mut view = profile.bind(caller);
-            let snapshot = view.compilation_snapshot();
-            let mut lease = compiler.lease();
-            let prepared = snapshot.prepare_with_origin(vec![form], 0..0, lease.host(), None)
-                .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
-            // Recursive Runtime evaluation must be able to borrow this same
-            // compiler after preparation, without holding its owned host.
-            drop(lease);
-            view.eval_prepared(prepared).map_err(|error| wasmtime::Error::msg(error.to_string()))
-        }).unwrap();
-        assert_eq!(count(&service), Kind::Long(2), "one expansion per real input");
+        let input = bridge
+            .quote(
+                &mut runtime,
+                read_forms("(fn* [] (persisted 41))").unwrap().remove(0),
+            )
+            .unwrap();
+        let function = runtime
+            .probe_evaluation(&input, move |mut caller, value| {
+                let form = reader.read(caller.as_context_mut(), &value, 0..0)?;
+                let mut view = profile.bind(caller);
+                let snapshot = view.compilation_snapshot();
+                let mut lease = compiler.lease();
+                let prepared = snapshot
+                    .prepare_with_origin(vec![form], 0..0, lease.host(), None)
+                    .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+                // Recursive Runtime evaluation must be able to borrow this same
+                // compiler after preparation, without holding its owned host.
+                drop(lease);
+                view.eval_prepared(prepared)
+                    .map_err(|error| wasmtime::Error::msg(error.to_string()))
+            })
+            .unwrap();
+        assert_eq!(
+            count(&service),
+            Kind::Long(2),
+            "one expansion per real input"
+        );
         drop(macros);
         runtime.collect().unwrap();
         let value = runtime.invoke(&function, &[]).unwrap();
-        assert!(matches!(bridge.read(&mut runtime, &value, 0..0).unwrap().kind, Kind::Long(42)));
-        assert_eq!(count(&service), Kind::Long(2), "no definition or expansion replay");
+        assert!(matches!(
+            bridge.read(&mut runtime, &value, 0..0).unwrap().kind,
+            Kind::Long(42)
+        ));
+        assert_eq!(
+            count(&service),
+            Kind::Long(2),
+            "no definition or expansion replay"
+        );
     }
 }

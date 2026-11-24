@@ -70,6 +70,11 @@ pub enum MacroReload {
 }
 pub const DEFAULT_OPERATION_FUEL: u64 = 10_000_000;
 pub trait ExpansionHost {
+    /// Native composition may retain the same persistent host after preparation.
+    /// Portable analysis never inspects or serializes this application context.
+    #[doc(hidden)]
+    fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> { None }
+
     /// Cumulative native work allowance for one preparation request. Compiled
     /// hosts return their configured Session allowance and debit guest/host work
     /// from that Session as well. The compiler enforces this fallback even when
@@ -370,6 +375,10 @@ impl<'a> ExpansionRequest<'a> {
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
+    fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> {
+        self.host.persistent_macro_context()
+    }
+
     fn expansion_work_fuel(&self) -> u64 { self.remaining }
     fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
         self.host.charge_expansion_work(work, span.clone())?;

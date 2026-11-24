@@ -285,6 +285,7 @@ pub enum Bitwise {
     F64TimeClip,
     /// Execution-time entropy; never a compiler constant or a pure operation.
     RandomDouble,
+    EvaluateForm,
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
@@ -439,6 +440,7 @@ impl Bitwise {
             Self::F64SafeInteger => "primitive-f64-safe-integer",
             Self::F64TimeClip => "primitive-f64-time-clip",
             Self::RandomDouble => "random-double",
+            Self::EvaluateForm => "evaluate-form",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
@@ -487,6 +489,7 @@ impl Bitwise {
     pub(crate) fn arity(self) -> usize {
         match self {
             Self::RandomDouble => 0,
+            Self::EvaluateForm => 1,
             Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
@@ -3684,6 +3687,7 @@ impl Analyzer<'_> {
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "random-double" => Some(Bitwise::RandomDouble),
+                "evaluate-form" => Some(Bitwise::EvaluateForm),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),

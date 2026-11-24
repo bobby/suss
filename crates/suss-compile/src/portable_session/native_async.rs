@@ -479,6 +479,7 @@ impl SessionHost<'_> {
 impl Drop for SessionHost<'_> {
     fn drop(&mut self) {
         if self.store.is_borrowed() { return; }
+        if let Some(evaluation) = self.evaluation.take() { evaluation.clear(); }
         let requests = registry_lock(&self.pending_host_futures).clone();
         for request in requests {
             if let Some(hook) = request.take_cancel() {
