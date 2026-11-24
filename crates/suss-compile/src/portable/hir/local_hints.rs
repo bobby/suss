@@ -15,7 +15,7 @@ pub(super) fn numeric_call(hir: &Hir) -> bool {
     let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
     global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
         ("=" | "quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
-        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec"
+        | ("num" | "abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec"
             | "byte" | "short" | "int" | "float" | "unchecked-byte" | "unchecked-short"
             | "unchecked-int" | "unchecked-float", 1))
 }
@@ -32,6 +32,23 @@ pub(super) fn inline(
     if global.namespace() != "suss.core" { return Ok(()); }
     let Some(node) = &source.node else { return Ok(()) };
     let SourceNode::Invoke { callee, arguments } = node.as_ref() else { return Ok(()) };
+    if global.name() == "num" && arguments.len() == 1 {
+        if !declaration.as_ref().and_then(|info| info.origin.as_ref()).is_some_and(|origin| origin.is_privileged()) {
+            return Ok(());
+        }
+        let mut value = arguments[0].clone();
+        // The primitive Numbers.num overload boxes a floating expression;
+        // an existing Object is projected unchanged. Literals are not loaded
+        // as generic-call Object constants at this inline boundary.
+        object_context::object(&mut value, false, facts, source_casts, meter)?;
+        let message = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(),
+            ty: Type::String, kind: std::sync::Arc::new(Expression::Literal(
+                Literal::String("Cannot cast value to Number".encode_utf16().collect()))) };
+        hir.kind = std::sync::Arc::new(Expression::Nominal {
+            operation: Nominal::NumCheck, arguments: vec![value, message] });
+        hir.ty = Type::Value;
+        return Ok(());
+    }
     if global.name() == "=" && arguments.len() == 2 {
         if !declaration.as_ref().and_then(|info| info.origin.as_ref()).is_some_and(|origin| origin.is_privileged()) {
             return Ok(());

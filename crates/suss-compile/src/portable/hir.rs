@@ -632,6 +632,8 @@ pub enum Nominal {
     DoubleCast,
     /// Fresh Object boxing of a source primitive floating expression.
     BoxDoubleObject,
+    /// Clojure num inline: retain nil/Number, otherwise throw an owned error.
+    NumCheck,
     /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
     /// cast for anything but a long.
     UncheckedLongCast,
@@ -831,6 +833,7 @@ impl Nominal {
                 Self::ApplySequenceOps => count == 10,
                 Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
+                Self::NumCheck => count == 2 && arguments[1] == Type::String,
                 Self::DecimalNew => count == 2,
                 Self::DecimalCoerce => count == 1,
                 Self::ApplySpread => count >= 2,
@@ -4026,6 +4029,10 @@ impl Analyzer<'_> {
         let inline_core = |name: &str| self.linked_core_call(&resolved, name)
             || matches!(&resolved, Some(ResolvedBinding::Cell(global))
                 if global.namespace() == "suss.core" && global.name() == name && self.privileged_definition(global));
+        if inline_core("num") && args.len() != 1 {
+            return Err(fail(form.span.clone(),
+                format!("Wrong number of args ({}) passed to: num inline", args.len())));
+        }
         let promoting = if inline_core("+'") && args.len() >= 2 { Some(Bitwise::PromoteAdd) }
             else if inline_core("*'") && args.len() >= 2 { Some(Bitwise::PromoteMultiply) }
             else if inline_core("-'") && !args.is_empty() {

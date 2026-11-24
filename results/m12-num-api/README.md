@@ -22,8 +22,36 @@ alias arity checks retain the actual diagnostic and evaluation effects.
 The first native/AOT test attempt fails setup because public subs is not loaded.
 Its exact test and actual101 are retained; it is not the semantic counterexample.
 Using the owned UTF-16 slice only for the diagnostic prefix fixes setup. The next
-frozen command returns101 in76.94s including compilation: each native phase
+frozen command returns101 in75.66s including compilation: each native phase
 records five discrepancies (two direct arity stages, two NaN inline identities,
 and direct-call num rebinding). The actual AOT reports the same value differences
 and accepts both bad-arity units, which should fail compilation. Decoder guards
 pass. All20 primary controls are retained; source and HEAD remain unchanged.
+
+
+### Public num inline and alias boundaries (2026-11-24)
+
+The complete14-control Clojure1.12.6 API primary and separate6 binding controls
+retain two direct-call compilation failures and18 value/effect observations.
+The native/AOT negative command returns101 in75.659s, with source/HEAD unchanged: 
+five discrepancies per native phase, plus actual AOT value and arity-stage
+failures. An earlier fixture setup failure on unloaded subs is retained separately.
+
+Authenticated direct source calls now implement the original num :inline rule:
+bad arities fail analysis; primitive floating inputs box freshly; existing Object
+inputs retain their roots. Ordinary aliases keep the original function's runtime
+arity, evaluation effects and live bindings. Compiler-owned NumCheck admits nil
+and actual Numbers or throws an owned error. The first emitter attempt passes
+Rust checking but fails generated Wasm validation because number-test inherited
+the generic import signature. Its exact source overlay and terminal101 are saved.
+Declaring the existing predicate as (eqref)->i32 fixes the import; no runtime
+export, Java dependency, original core form/notice or numeric kernel changes.
+
+The frozen complete-native-aot-after-import-signature-fix gate returns0 for all
+three commands: source check24.753s; all4 complete API/decoder tests271.810s;
+strict original numeric bodies157.948s. Runtime/Macro retain all20 controls and
+actual AOT checks18 values plus2 compile-stage failures. Original eq/not-eq keeps
+142 host matches; complete default-num retains26 rows with23 host matches and
+the same3 explicit narrow-number platform differences. Source/HEAD unchanged.
+Broader compiler/hint/WIT/cache/budget guards, complete capture, exact workspace,
+independent review and final-head CI remain separate requirements.

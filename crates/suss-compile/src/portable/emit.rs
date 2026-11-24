@@ -238,7 +238,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
                 // A hinted array access throws for a wrong hint (#389).
-                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_) | Nominal::CheckNumericCallee, .. });
+                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_) | Nominal::CheckNumericCallee | Nominal::NumCheck, .. });
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -367,6 +367,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::BoxDoubleObject => {},
+                        Nominal::NumCheck => { names.insert("number-test"); names.insert("language-error-new"); },
                         Nominal::PackedGet(_) => {
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
@@ -974,7 +975,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "keyword-intern" => (vec![VALUE], vec![VALUE]),
-            "keyword-test" => (vec![VALUE], vec![ValType::I32]),
+            "keyword-test" | "number-test" => (vec![VALUE], vec![ValType::I32]),
             "named-field-slot" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
@@ -3846,6 +3847,20 @@ fn emit_function(
                             code.push(I64Add);
                             code.extend(runtime_abi::long_box_in(long_locals[0]));
                             for instruction in code { function.instruction(&instruction); }
+                        }
+                        Nominal::NumCheck => {
+                            let value = arguments[0].0 as u32 + offset;
+                            function.instruction(&LocalGet(value))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                .instruction(&RefEq)
+                                .instruction(&LocalGet(value)).instruction(&Call(index("number-test")))
+                                .instruction(&I32Or)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(value))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&Call(index("language-error-new")))
+                                .instruction(&Throw(0)).instruction(&End);
                         }
                         Nominal::BoxDoubleObject => unreachable!("source primitive Object boxing was emitted above"),
                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {

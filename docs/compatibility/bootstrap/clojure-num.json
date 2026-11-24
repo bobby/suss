@@ -14,7 +14,7 @@
     "path": "runtime/core-import/epl-v10.html",
     "notice": "docs/compatibility/num/NOTICE"
   },
-  "adaptation": "The entire one-argument Clojure num form is retained separately. Its JVM Numbers/num cast is adapted to checked nil/Number category projection, preserving the actual argument and exact coefficient/scale. Suss has no narrow boxed classes (ADR-0003); primitive JVM Checker/boxing fixtures are not provided. Static core links protect the numeric guard under public rebinding. No Java implementation or Java dependency is shipped.",
+  "adaptation": "The entire one-argument Clojure num form is retained separately. Its JVM Numbers/num cast is adapted to checked nil/Number category projection, preserving the actual argument and exact coefficient/scale. Suss has no narrow boxed classes (ADR-0003); primitive JVM Checker/boxing fixtures are not provided. Static core links protect the numeric guard under public rebinding. No Java implementation or Java dependency is shipped. The retained original :inline metadata is implemented by authenticated direct-call source lowering: reject bad direct arities during analysis and select fresh floating primitive Object consumption while retaining existing Objects. NumCheck performs immutable nil/Number admission and an owned error; ordinary function aliases keep their original runtime arity/evaluation and binding behavior. The existing number-test import is explicitly declared as (eqref)->i32. No new runtime ABI export is added.",
   "block_sha256": "5130944bfbf41432ba571904d1268f412d94518515a9be14f814e5795c141f75",
   "files": {
     "docs/compatibility/num/upstream-num.clj": "1d9077d5d43dd8b937564d8864a1e1c80e8c2e926145f21712a4190d6faca102",
@@ -22,5 +22,12 @@
     "docs/compatibility/num/NOTICE": "96dc1cd42feac71ca5b8389de0d80415c8c143d60a12e5648327eb0480981481"
   },
   "evidence": "results/m12-numeric-source-bodies",
-  "limits": "Source adaptation; native Runtime/Macro/AOT, complete original selected num body, whole workspace and promotion require their own actual receipts."
+  "limits": "Source adaptation; native Runtime/Macro/AOT, complete original selected num body, whole workspace and promotion require their own actual receipts.",
+  "inline_implementation": {
+    "crates/suss-compile/src/portable/hir.rs": "633565e84fea96e51f3414ea35e432defe457f8b06a8b2030b3f796a48ae4653",
+    "crates/suss-compile/src/portable/hir/local_hints.rs": "40d37d2df2633bc884f47c439e925103b07e9fa17e278e4f65ebf14fe44d6755",
+    "crates/suss-compile/src/portable/emit.rs": "61ca9da581408dc39a349173e9269771a14ae927683149d1657e6236aaa1d784",
+    "crates/suss-compile/src/portable/ir.rs": "2a020fdef0819b3b16e68b2897b356010e852928e2a3f1ef1e8ccea7a039b08c"
+  },
+  "inline_evidence": "results/m12-num-api"
 }
