@@ -1250,3 +1250,43 @@ fn eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry() {
     let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
     assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary);
 }
+
+#[test]
+fn eval_retains_actual_class_values_in_generated_numeric_forms() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/class-data-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 1);
+    let row = &rows[0];
+    let expression = row["expression"].as_str().unwrap();
+    assert_eq!(row["expected"].as_str().unwrap().trim(), include_str!(
+        "../../../results/m12-eval/class-data-primary/primary.stdout.log"
+    ).trim());
+    assert!(include_str!("../../../results/m12-eval/class-data-primary/oracle.clj")
+        .ends_with(&format!("(prn {expression})\n")));
+    let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+    let primary = expected(&forms[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let value = session.eval(expression).unwrap();
+        session.collect().unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary, "{:?}", session.phase());
+        let observer = session.eval("(fn [t x] [(identical? t (eval t)) (eval (list 'instance? t x))])").unwrap();
+        for source in ["42", "1.0", "9223372036854775808N", "1/3", "1.50M", "(biginteger 7)"] {
+            let original = session.eval(source).unwrap();
+            let class_of = session.eval("type").unwrap();
+            let class = session.invoke(&class_of, &[&original]).unwrap();
+            session.collect().unwrap();
+            let value = session.invoke(&observer, &[&class, &original]).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Vector(vec![Observation::Bool(true), Observation::Bool(true)]), "{:?} {source}", session.phase());
+        }
+    }
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    macros.define(&format!("(defmacro numeric-class-data [] {expression})")).unwrap();
+    let value = session.eval_with_macros("(numeric-class-data)", &mut macros).unwrap();
+    session.collect().unwrap();
+    let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+    assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary);
+}

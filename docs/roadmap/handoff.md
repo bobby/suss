@@ -35038,3 +35038,28 @@ source and HEAD through all terminal receipts. It first tests the exact regressi
 then complete public/capability and original definition/stream targets. Fresh
 broader/native capture, exact workspace baseline, independent promotion review and
 passing final-head CI remain required. No promotion or merge is claimed.
+
+
+### Scalar correction passes; generated numeric class data probe (2026-11-24)
+
+At5c1a135c all3 scalar validation commands return0, with unchanged source/HEAD:
+exact regression160.19s including compilation; complete public28/capability2
+59.96s; original import17/stream12 44.06s. These are59 complete-target tests;
+the exact check repeats one of them. Runtime, Macro, real reentrant Macro and
+retained-GC scalar identity observations pass. Receipts are preserved separately.
+
+A preflight for generated numeric forms finds another concrete transfer gap.
+Pinned Clojure1.12.6 returns0 with six [true true] class-identity/instance? pairs
+for Long, Double, BigInt, Ratio, Decimal and BigInteger values. The current CLI
+returns1: Invalid or unsupported compiled macro data: Unexpected structure layout.
+Binary/core/HEAD stay unchanged and the binary embeds the exact current core.
+Its direct source, commands and outputs are retained under class-data-before.
+No new workspace run has been started after this preflight.
+
+The class-data regression and primary fixture are added to the same eval branch.
+First run `class-data-regression-before-fix --class-data-before-only` against the
+unchanged bridge. After its actual terminal result, extend the existing native
+constant admission with the runtime's real class-value classifier, preserving
+same-Store owner/roots and strict ordinary macro/source/display readers. Keep
+all exact regression/public/capability/definition and broader/native/workspace/
+review/final-head CI gates. No class marker fixture or serialized fake is used.
