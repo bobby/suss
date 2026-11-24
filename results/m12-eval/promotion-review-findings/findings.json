@@ -1,0 +1,37 @@
+{
+  "reviewed_head": "a881b16507460924821ff14426fa3d6a0aa0d7a4",
+  "source_changes": [],
+  "binary_sha256": "1e281b56b1376bd22229bf6945c451cc3b6545517ee55aa51389f3e41daa0b45",
+  "source_hashes": {
+    "crates/suss-compile/src/portable_macro_data.rs": "5142e55166294ad924c61b31924a5c07749c1c1ac732441d19a911e39a83bb2d",
+    "crates/suss-compile/src/portable_macros/native_invocation.rs": "cbb5f5d8e51c1261e5580dbd193661e71ae1156be6be274b49e95dca540b25f5",
+    "crates/suss-compile/src/portable_macros/facade.rs": "0d5295a4baa1e4948747d26837fda91dca87dbc33f83dd8284c29b844306fe83",
+    "crates/suss-compile/src/portable_session/evaluation.rs": "f4fe45324837bb0e2aa194aae812abbfe95c7aca2a026079be4977fb11ef6bcc"
+  },
+  "findings": [
+    {
+      "severity": "P1",
+      "name": "nested function constants retain forbidden captured closures",
+      "evidence": "review-516-function-constants",
+      "primary": "[true false false :error :error :error]",
+      "native": "[true true true [42 true] [1 2 3] :error]",
+      "failure_stage": "JVM ExceptionInInitializerError, cause No matching ctor, before evaluated unit invokes captured function; not CompilerException compile-syntax-check."
+    },
+    {
+      "severity": "P1",
+      "name": "isolated macro calls omit caller math context",
+      "evidence": "review-516-macro-math-context",
+      "primary": "[0.333M 0.333M 0.333M]",
+      "native": "[0.333M :error :error]"
+    },
+    {
+      "severity": "P2",
+      "name": "raw macro exceptions lose ExceptionInfo data and message",
+      "evidence": "review-516-macro-exception-data",
+      "primary": "[[\"boom\" {:value 1N}] [\"boom\" {:value 1N}]]",
+      "native": "[[\"boom\" {:value 1N}] [\"Host error: Uncaught language exception: boom\" nil]]"
+    }
+  ],
+  "negative_hypothesis": "Nested exact-number literal identity is false on both Clojure and Suss; no finding. Retained review-516-nested-scalar-identities.",
+  "qualification": "Read-only review; actual pinned Clojure and current J CLI probes, all processes returned normally. No code, fixtures, counts, skip/opaque rules, baseline or PR status changed. Earlier full workspace terminal0 is valid historical evidence but does not cover these controls."
+}

@@ -389,3 +389,24 @@ adaptation, verifier and frozen native receipts are unchanged. The old record an
 actual before/after exits are kept under provenance-refresh-after-scalar-class-roots.
 Independent review and passing CI on the final published head still gate ready
 status. No merge is authorized.
+
+
+### Independent eval promotion review regressions (2026-11-24)
+
+Independent review at a881b165 records three concrete primary/native differences:
+embedded capture-free functions need fresh instances while captured functions
+fail constant initialization before their evaluated unit body; isolated macro
+expansion/raw calls need the caller's math context; directly invoked evaluated
+macros must preserve transferable ExceptionInfo message/data. Existing top-level
+function eval identity remains true. Captured-function failure is materialization
+(ExceptionInInitializerError on JVM), not a compile-syntax error.
+
+Fresh pinned source, actual stdout/exit/hash records and reviewer findings are
+retained under results/m12-eval/promotion-review-findings. New independent
+Runtime/Macro regressions retain all6 function,2 exception and3 math controls.
+Before implementation changes the native command returns101 in16.285s: all three
+new tests fail; two existing primary boundary tests pass. Source/HEAD unchanged.
+The prior complete workspace result remains valid evidence for its frozen source,
+but does not cover these controls. CI45460496718 is canceled for these confirmed
+defects, not a budget refusal. Keep the same draft PR; fix, validate, independently
+review and require passing final-head CI before ready status.

@@ -1,0 +1,9 @@
+{
+  "macro-math-context/expression.sus": "4b861c0df1d91063d8868a330f43cd11fe1e866166bf1da9d143e3fe46a5878e",
+  "macro-math-context/primary.stdout": "ee389b92608458af9998d33a40484a3ce53a800603d5d1651dc410c42ef49baf",
+  "macro-math-context/primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "macro-math-context/primary.json": "a082ccab6b7f87afeeca4b51fe5e20227443f592512f1e6f25348f12c91c3814",
+  "macro-math-context/native.stdout": "c476211528044733ac514f1484a4f16750091f97065186f8ef497bcb581d3c25",
+  "macro-math-context/native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "macro-math-context/native.json": "ada1cc4a876db0957c780aad337893bc682694241236485f0816dfb5c950fc88"
+}

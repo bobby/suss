@@ -1290,3 +1290,49 @@ fn eval_retains_actual_class_values_in_generated_numeric_forms() {
     let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
     assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), primary);
 }
+
+
+fn promotion_review_controls(name: &str, source: &str, primary: &str, count: usize) {
+    let forms = suss_reader::forms::read_forms(primary.trim()).unwrap();
+    assert_eq!(forms.len(), 1);
+    let Kind::Vector(rows) = &forms[0].kind else { panic!("primary must retain all ordered controls") };
+    assert_eq!(rows.len(), count);
+    let wanted = canonical(expected(&forms[0]));
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        let source = source.replace("(catch Throwable ", "(catch :default ");
+        match session.eval_with_macros(&source, &mut macros) {
+            Ok(value) => {
+                session.collect().unwrap();
+                let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                if actual != wanted { failures.push(format!("{name} {phase:?}: expected {wanted:?}, actual {actual:?}")); }
+            }
+            Err(error) => failures.push(format!("{name} {phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn eval_function_constant_materialization_preserves_primary_identity_and_errors() {
+    promotion_review_controls("function-constants",
+        include_str!("../../../results/m12-eval/promotion-review-findings/function-constants/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/function-constants/primary.stdout"), 6);
+}
+
+#[test]
+fn evaluated_macro_language_exceptions_preserve_primary_message_and_data() {
+    promotion_review_controls("macro-exception-data",
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-exception-data/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-exception-data/primary.stdout"), 2);
+}
+
+#[test]
+fn evaluated_macro_calls_inherit_the_primary_caller_math_context() {
+    promotion_review_controls("macro-math-context",
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/expression.sus"),
+        include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/primary.stdout"), 3);
+}
