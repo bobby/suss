@@ -1,0 +1,1 @@
+[(let [x 0.1 f (fn [] x)] (identical? (f) (f))) (let [x ##NaN f (fn [] x)] (identical? (f) (f))) (let [x (identity 0.1) f (fn [] x)] (identical? (f) (f))) (let [x (identity ##NaN) f (fn [] x)] (identical? (f) (f)))]

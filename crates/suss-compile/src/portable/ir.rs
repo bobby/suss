@@ -201,6 +201,8 @@ struct Lowerer<'a> {
     recursive: HashMap<BindingId, (ValueId, usize)>,
     callables: HashMap<ValueId, super::primitive::Shape>,
     closures: HashSet<ValueId>,
+    /// Symbolic reader doubles share objects only within this original function.
+    symbolic_number_sites: HashMap<u64, std::sync::Arc<()>>,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 }
@@ -222,6 +224,7 @@ impl<'a> Lowerer<'a> {
             recursive: HashMap::new(),
             callables: HashMap::new(),
             closures: HashSet::new(),
+            symbolic_number_sites: HashMap::new(),
             targets: HashMap::new(),
             meter,
         };
@@ -459,10 +462,13 @@ impl<'a> Lowerer<'a> {
             }
             Expression::Literal(value) => {
                 let result = self.literal(value.clone(), hir.span.clone())?;
-                if matches!(value, Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) {
+                if matches!(value, Literal::ObjectNumber(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) {
                     self.charge(1, &hir.span)?;
+                    let site = if let Literal::ObjectNumber(number) = value && !number.is_finite() {
+                        self.symbolic_number_sites.entry(number.to_bits()).or_insert_with(|| std::sync::Arc::new(())).clone()
+                    } else { std::sync::Arc::new(()) };
                     self.function.blocks[self.current].instructions.last_mut()
-                        .expect("just emitted a source literal").literal_site = Some(std::sync::Arc::new(()));
+                        .expect("just emitted a source literal").literal_site = Some(site);
                 }
                 result
             },
@@ -1444,7 +1450,7 @@ fn loop_safe(operation: &Operation) -> bool {
                 operation,
                 N::IsMathContext | N::DecimalNew | N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
-                    | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
+                    | N::BoxDoubleObject | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
                     | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
                     | N::IsNativeObject | N::IsTypeConstructor | N::IsLanguageError | N::LanguageError

@@ -984,17 +984,14 @@ impl Locals {
         ]);
     }
 
-    /// `identical?` with a raw operand (#387), without boxing it. A long is
-    /// identical to a long of the same value, an i31 or a long box, and a
-    /// double to a boxed double that compares equal, as `identical-value`
-    /// answers for two boxed numbers; a long is never a double.
+    /// Integral identity uses its scalar representation without boxing.
+    /// Floating identity consumes Objects through ordinary materialization.
     pub(super) fn identical(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], result: ValueId) {
         use Instruction::*;
         let (x, y) = (arguments[0], arguments[1]);
         let (rx, ry) = (self.of(x), self.of(y));
         match (rx, ry) {
             (Repr::Long, Repr::Long) => code.extend([LocalGet(self.raw(x)), LocalGet(self.raw(y)), I64Eq]),
-            (Repr::Double, Repr::Double) => code.extend([LocalGet(self.raw(x)), LocalGet(self.raw(y)), F64Eq]),
             (Repr::Long, Repr::Boxed) | (Repr::Boxed, Repr::Long) => {
                 let (raw, other) = if rx == Repr::Long { (x, y) } else { (y, x) };
                 let (raw, other) = (self.raw(raw), self.boxed(other));
@@ -1009,17 +1006,6 @@ impl Locals {
                     StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, LocalGet(raw), I64Eq,
                     Else, I32Const(0), End,
                     End,
-                ]);
-            }
-            (Repr::Double, Repr::Boxed) | (Repr::Boxed, Repr::Double) => {
-                let (raw, other) = if rx == Repr::Double { (x, y) } else { (y, x) };
-                let (raw, other) = (self.raw(raw), self.boxed(other));
-                code.extend([
-                    LocalGet(other), RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-                    If(BlockType::Result(ValType::I32)),
-                    LocalGet(other), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-                    StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, LocalGet(raw), F64Eq,
-                    Else, I32Const(0), End,
                 ]);
             }
             // A long and a double, raw.
@@ -1198,7 +1184,8 @@ pub(super) fn raw_identical(locals: &Locals, instruction: &ir::Instruction) -> b
     if ir::operands(&instruction.operation).iter().any(|value| locals.of(*value).maybe()) { return false; }
     match &instruction.operation {
         Operation::Nominal { operation: super::super::hir::Nominal::Identical, arguments } => {
-            arguments.len() == 2 && arguments.iter().any(|argument| locals.of(*argument).numeric())
+            arguments.len() == 2 && arguments.iter().any(|argument| locals.of(*argument) == Repr::Long)
+                && arguments.iter().all(|argument| locals.of(*argument) != Repr::Double)
         }
         _ => false,
     }

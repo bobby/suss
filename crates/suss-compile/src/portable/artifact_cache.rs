@@ -613,7 +613,7 @@ fn literal_fields(
                 field(hash, b"fresh-literal-site");
             }
             match &instruction.operation {
-                ir::Operation::Literal(super::hir::Literal::Number(value)) => {
+                ir::Operation::Literal(super::hir::Literal::Number(value) | super::hir::Literal::ObjectNumber(value)) => {
                     hash.update(value.to_bits().to_le_bytes());
                 }
                 ir::Operation::MakeFuture { body, .. } => literal_fields(hash, &body.continuation.function, sites, meter)?,

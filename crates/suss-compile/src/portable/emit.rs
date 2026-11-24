@@ -250,7 +250,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Try { .. } => {
                         names.insert("try-invoke");
                     }
-                    Operation::Literal(Literal::Number(_)) => {
+                    Operation::Literal(Literal::Number(_) | Literal::ObjectNumber(_)) => {
                         names.insert("number-box");
                     }
                     Operation::Literal(Literal::Ratio { .. }) => { names.insert("bigint-new"); names.insert("ratio-literal"); }
@@ -366,6 +366,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ChunkIndexAdd => {},
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
+                        Nominal::BoxDoubleObject => {},
                         Nominal::PackedGet(_) => {
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
@@ -1170,7 +1171,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 Operation::Literal(Literal::String(units)) => {
                     literal_list.insert(units.clone());
                 }
-                Operation::Literal(Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) => {
+                Operation::Literal(Literal::ObjectNumber(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) => {
                     if let Some(site) = &inst.literal_site {
                         let next = exact_literal_sites.len();
                         exact_literal_sites.entry(std::sync::Arc::as_ptr(site) as usize).or_insert(next);
@@ -2417,6 +2418,18 @@ fn emit_function(
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
+            if let Operation::Nominal { operation: Nominal::BoxDoubleObject, arguments } = &inst.operation {
+                if locals.of(arguments[0]) == unboxed::Repr::Double {
+                    code.push(LocalGet(locals.raw(arguments[0])));
+                } else {
+                    locals.push_boxed(&mut code, arguments[0]);
+                    code.extend([RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }]);
+                }
+                code.extend([StructNew(runtime_abi::NUMBER), LocalSet(inst.result.0 as u32 + offset)]);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             if unboxed::raw_identical(&locals, inst) {
                 let Operation::Nominal { arguments, .. } = &inst.operation else { unreachable!("identical") };
                 locals.identical(&mut code, arguments, inst.result);
@@ -2625,13 +2638,17 @@ fn emit_function(
                     };
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
-                Operation::Literal(literal @ (Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. })) => {
+                Operation::Literal(literal @ (Literal::ObjectNumber(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. })) => {
                     let cache = inst.literal_site.as_ref().and_then(|site|
                         context.exact_literals.get(&(std::sync::Arc::as_ptr(site) as usize))).copied();
                     if let Some(cache) = cache {
                         function.instruction(&GlobalGet(cache)).instruction(&RefIsNull).instruction(&If(BlockType::Empty));
                     }
                     match literal {
+                        Literal::ObjectNumber(value) => {
+                            function.instruction(&F64Const((*value).into())).instruction(&StructNew(runtime_abi::NUMBER))
+                                .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
                         Literal::BigInt { negative, limbs, big_integer } => {
                             function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
                             for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
@@ -3227,24 +3244,13 @@ fn emit_function(
                             }
                             function.instruction(&I32Or);
                         }
-                        // The same reference is identical, unless a boxed double,
-                        // which compares by value (NaN isn't identical to
-                        // itself). Otherwise nil, or a long in i31 range,
-                        // which has no other representation (ABI v3), isn't;
-                        // only two other values need the runtime's test of
-                        // boxed numbers and strings.
+                        // Object doubles compare by actual reference. Source primitive
+                        // floating expressions have already been boxed at each use;
+                        // integral and UTF-16 scalar identity keeps its platform rules.
                         Nominal::Identical => {
                             let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
-                            // Tests that usually succeed come first: a failed
-                            // cast to a concrete type is wasmtime's slow
-                            // subtype check (#442). A long in i31 range has no
-                            // other representation, so with one, identity is
-                            // the reference's (#389). The same reference is
-                            // identical unless a boxed double, which compares
-                            // by value (NaN isn't identical to itself).
-                            // Distinct nominal objects, keywords among them,
-                            // aren't; only boxed longs, doubles and strings
-                            // compare by value (#361).
+                            // Canonical small integers and identical references avoid
+                            // the runtime helper. Distinct doubles are never identical.
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             let by_value = |function: &mut Function| {
                                 function
@@ -3269,14 +3275,7 @@ fn emit_function(
                                 .instruction(&LocalGet(b))
                                 .instruction(&RefEq)
                                 .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&LocalGet(a))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
-                                .instruction(&If(BlockType::Result(ValType::I32)));
-                            by_value(&mut function);
-                            function
-                                .instruction(&Else)
                                 .instruction(&I32Const(1))
-                                .instruction(&End)
                                 .instruction(&Else)
                                 .instruction(&LocalGet(a))
                                 .instruction(&RefIsNull)
@@ -3291,7 +3290,7 @@ fn emit_function(
                                 .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&I32Const(0))
                                 .instruction(&Else);
-                            for (index, ty) in [runtime_abi::NUMBER, runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
+                            for (index, ty) in [runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
                                 function.instruction(&LocalGet(a)).instruction(&RefTestNonNull(HeapType::Concrete(ty)));
                                 if index > 0 {
                                     function.instruction(&I32Or);
@@ -3840,6 +3839,7 @@ fn emit_function(
                             code.extend(runtime_abi::long_box_in(long_locals[0]));
                             for instruction in code { function.instruction(&instruction); }
                         }
+                        Nominal::BoxDoubleObject => unreachable!("source primitive Object boxing was emitted above"),
                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
                             // The checked cast (#385): an i31 or a boxed long
                             // (or double) inline, anything else through the

@@ -812,7 +812,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
         let kind = match &value {
             Literal::Nil => Kind::Nil,
             Literal::Bool(value) => Kind::Bool(*value),
-            Literal::Number(value) => Kind::Number(*value),
+            Literal::Number(value) | Literal::ObjectNumber(value) => Kind::Number(*value),
             Literal::Long(value) => Kind::Long(*value),
             Literal::BigInt { negative, limbs, big_integer } => {
                 self.charge(limbs.len())?;

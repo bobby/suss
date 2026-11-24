@@ -1,14 +1,36 @@
-//! Actual exact-number constants, independent of primitive boxing/cache choices.
+//! Pinned numeric Object constants and source primitive/Object overloads.
+//! The28 selected controls retain the full34-case primary; the six Long scalar
+//! representation/cache controls remain separate platform decisions.
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 use suss_compile::portable_session::sentinel_tag;
 
 #[test]
-fn exact_literal_function_sites_and_distinct_reads_follow_the_primary() {
+fn source_number_object_sites_and_overloads_follow_the_primary() {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-numeric-literal-identity/primary/cases.json"
     ))
     .unwrap();
     let names = [
+        "direct-nan-equality",
+        "object-nan-self",
+        "raw-local-nan-self",
+        "nan-apply-equality",
+        "nan-list-equality",
+        "nan-vector-equality",
+        "nan-negated-equality",
+        "nan-local-negated-equality",
+        "nan-object-negated-equality",
+        "nan-two-object-arguments",
+        "nan-computed-separate-arguments",
+        "nan-computed-shared-argument",
+        "function-literal-double",
+        "separate-literal-double",
+        "function-literal-nan",
+        "separate-literal-nan",
+        "function-literal-infinity",
+        "separate-literal-infinity",
+        "function-literal-negative-zero",
+        "separate-literal-negative-zero",
         "function-literal-bigint",
         "separate-literal-bigint",
         "function-literal-wide-bigint",
@@ -45,10 +67,19 @@ fn exact_literal_function_sites_and_distinct_reads_follow_the_primary() {
 }
 
 #[test]
-fn exact_literal_return_roots_survive_calls_fragments_and_collection() {
+fn source_number_literal_return_roots_survive_calls_fragments_and_collection() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        for token in ["1N", "9223372036854775808N", "1/3", "1.0M"] {
+        for token in [
+            "0.1",
+            "##NaN",
+            "##Inf",
+            "-0.0",
+            "1N",
+            "9223372036854775808N",
+            "1/3",
+            "1.0M",
+        ] {
             session
                 .eval_with_macros(
                     &format!("(def exact-literal-fn (fn [] {token}))"),
@@ -82,13 +113,33 @@ fn exact_literal_return_roots_survive_calls_fragments_and_collection() {
 }
 
 #[test]
-fn actual_aot_exact_literal_sites_match_the_primary() {
+fn actual_aot_source_number_object_sites_and_overloads_match_the_primary() {
     use std::process::Command;
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-numeric-literal-identity/primary/cases.json"
     ))
     .unwrap();
     let names = [
+        "direct-nan-equality",
+        "object-nan-self",
+        "raw-local-nan-self",
+        "nan-apply-equality",
+        "nan-list-equality",
+        "nan-vector-equality",
+        "nan-negated-equality",
+        "nan-local-negated-equality",
+        "nan-object-negated-equality",
+        "nan-two-object-arguments",
+        "nan-computed-separate-arguments",
+        "nan-computed-shared-argument",
+        "function-literal-double",
+        "separate-literal-double",
+        "function-literal-nan",
+        "separate-literal-nan",
+        "function-literal-infinity",
+        "separate-literal-infinity",
+        "function-literal-negative-zero",
+        "separate-literal-negative-zero",
         "function-literal-bigint",
         "separate-literal-bigint",
         "function-literal-wide-bigint",

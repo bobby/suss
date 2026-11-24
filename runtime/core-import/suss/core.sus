@@ -864,7 +864,9 @@
   comparison."
   (fn ([x] true)
   ([x y]
-    (if (nil? x)
+    (if (suss.bootstrap/same-reference? x y)
+      true
+      (if (nil? x)
       (nil? y)
       (if (suss.bootstrap/number? x)
         (if (suss.bootstrap/number? y)
@@ -873,7 +875,7 @@
         (if (suss.bootstrap/keyword? x)
           (identical? x y)
           (or (suss.bootstrap/equiv x y)
-            ^boolean (-equiv x y))))))
+            ^boolean (-equiv x y)))))))
   ([x y & more]
      (if (= x y)
        (if (next more)

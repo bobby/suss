@@ -94,3 +94,14 @@ The subsequent NaN before-regression returns101 in91.27s: independent storage
 decoding in Runtime/Macro and actual AOT both fail. The two decoder adversarial
 controls pass. That failed command is preserved separately from the52 passing
 cache/compiler/native checks. No NaN fix or numeric acceptance is inferred.
+
+## Floating Object constants and source overloads
+
+The source-context correction now executes28 explicitly selected floating,
+NaN/source-overload and exact-number controls from the intact34-case primary in
+Runtime, Macro and actual AOT. The six Long scalar representation controls remain
+separate platform choices. Actual returned literal references are retained for
+0.1,NaN,infinity,-0.0,BigInt,large BigInt,Ratio and Decimal across calls, fragments
+and GC in both phases. This expanded command returns0 along with the16-context
+native/AOT checks; the strict complete142 equality-body host comparisons also
+return0. See ../m12-number-source-objects for exact commands and receipts.

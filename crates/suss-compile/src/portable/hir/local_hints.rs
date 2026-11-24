@@ -14,7 +14,7 @@ pub(super) fn numeric_call(hir: &Hir) -> bool {
     let Some(node) = &source.node else { return false };
     let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
     global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
-        ("quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
+        ("=" | "quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
         | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec"
             | "byte" | "short" | "int" | "float" | "unchecked-byte" | "unchecked-short"
             | "unchecked-int" | "unchecked-float", 1))
@@ -24,20 +24,24 @@ pub(super) fn numeric_call(hir: &Hir) -> bool {
 /// ordinary alias or user function call still takes the original Object.
 pub(super) fn inline(
     hir: &mut Hir, facts: &mut SourceFacts,
+    source_casts: &HashMap<BindingId, Primitive>,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<(), Diagnostic> {
     let Some(source) = &hir.source else { return Ok(()) };
-    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { return Ok(()) };
+    let Some(SourceBinding::Global { global, declaration }) = &source.resolved else { return Ok(()) };
     if global.namespace() != "suss.core" { return Ok(()); }
     let Some(node) = &source.node else { return Ok(()) };
     let SourceNode::Invoke { callee, arguments } = node.as_ref() else { return Ok(()) };
     if global.name() == "=" && arguments.len() == 2 {
+        if !declaration.as_ref().and_then(|info| info.origin.as_ref()).is_some_and(|origin| origin.is_privileged()) {
+            return Ok(());
+        }
         let mut classes = Vec::with_capacity(2);
-        let mut hinted_object = false;
+        let mut primitive_operand = false;
         for argument in arguments.iter() {
             let class = primitive_returns::class(argument, facts, meter)?;
-            hinted_object |= matches!(class, Primitive::Long | Primitive::Double)
-                && primitive_returns::kind(argument, facts, meter)? == Primitive::Boxed;
+            primitive_operand |= matches!(class, Primitive::Byte | Primitive::Short | Primitive::Int
+                | Primitive::Long | Primitive::Float | Primitive::Double);
             classes.push(class);
         }
         // Util.equiv has (long,long), (double,double), and either primitive
@@ -54,9 +58,12 @@ pub(super) fn inline(
             (None, Some(_)) => classes[0] == Primitive::Boxed,
             _ => false,
         };
-        if hinted_object && selected {
+        if primitive_operand && selected {
             let mut arguments = arguments.to_vec();
             for argument in &mut arguments { operand(argument, facts, meter)?; }
+            if !classes.iter().all(|class| numeric(*class).is_some()) {
+                for argument in &mut arguments { object_context::object(argument, false, facts, source_casts, meter)?; }
+            }
             hir.kind = std::sync::Arc::new(if classes.iter().all(|class| numeric(*class).is_some()) {
                 // Both selected primitives have the same numeric category,
                 // so value equality is also category equality. Keep the

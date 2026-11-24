@@ -13,6 +13,7 @@ mod collections;
 mod comparisons;
 mod controls;
 mod division_overloads;
+mod object_context;
 mod extrema;
 mod local_hints;
 mod dynamic;
@@ -58,6 +59,8 @@ pub enum Literal {
     Bool(bool),
     /// A double.
     Number(f64),
+    /// A source double literal consumed as an Object constant.
+    ObjectNumber(f64),
     Long(i64),
     BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
     Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
@@ -70,7 +73,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } | Self::Decimal { .. } => Type::Number,
+            Self::Number(_) | Self::ObjectNumber(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } | Self::Decimal { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -627,6 +630,8 @@ pub enum Nominal {
     /// Owned canonical + over a checked Object[] chunk, or undefined.
     ChunkLongSum,
     DoubleCast,
+    /// Fresh Object boxing of a source primitive floating expression.
+    BoxDoubleObject,
     /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
     /// cast for anything but a long.
     UncheckedLongCast,
@@ -784,7 +789,7 @@ impl Nominal {
     pub fn result(self) -> Type {
         match self {
             Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
-            Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
+            Self::StringIndexOf | Self::ChunkIndexAdd | Self::BoxDoubleObject => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
             | Self::IsRatio
@@ -840,7 +845,7 @@ impl Nominal {
                 Self::DecimalContextGetter => count == 1,
                 Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard
             | Self::ScalarMapEntryGuard | Self::MapEntryType => count == 1,
-                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
+                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::BoxDoubleObject | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,

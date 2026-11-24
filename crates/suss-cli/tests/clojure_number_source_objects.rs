@@ -6,11 +6,17 @@ mod portable_decode;
 use portable_decode::{Decoder, Observation};
 
 fn cases() -> Vec<serde_json::Value> {
-    let cases = serde_json::from_str::<Vec<serde_json::Value>>(include_str!(
+    let mut cases = serde_json::from_str::<Vec<serde_json::Value>>(include_str!(
         "../../../results/m12-number-source-objects/primary/cases.json"
     ))
     .unwrap();
     assert_eq!(cases.len(), 10);
+    let captured = serde_json::from_str::<Vec<serde_json::Value>>(include_str!(
+        "../../../results/m12-number-source-objects/captured-primary/cases.json"
+    ))
+    .unwrap();
+    assert_eq!(captured.len(), 6);
+    cases.extend(captured);
     cases
 }
 fn expected(value: &suss_reader::edn::Value) -> Observation {
@@ -25,7 +31,10 @@ fn expected(value: &suss_reader::edn::Value) -> Observation {
 #[test]
 fn number_source_primitive_and_object_contexts_match_the_primary_in_both_phases() {
     let mut failures = Vec::new();
-    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+    for (phase, mut session) in [
+        ("Runtime", Session::new_repl().unwrap()),
+        ("Macro", Session::new_macro().unwrap()),
+    ] {
         let mut macros = CompiledMacros::new().unwrap();
         let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
         for row in cases() {
@@ -43,7 +52,7 @@ fn number_source_primitive_and_object_contexts_match_the_primary_in_both_phases(
             let expected = expected(&primary);
             if actual != expected {
                 failures.push(format!(
-                    "{}: expected {expected:?}, actual {actual:?}",
+                    "{phase} {}: expected {expected:?}, actual {actual:?}",
                     row["name"]
                 ));
             }
@@ -54,63 +63,67 @@ fn number_source_primitive_and_object_contexts_match_the_primary_in_both_phases(
 #[test]
 fn actual_aot_number_source_primitive_and_object_contexts_match_the_primary() {
     use std::process::Command;
-    let cases = cases();
-    let source = cases
-        .iter()
-        .map(|row| row["expression"].as_str().unwrap())
-        .collect::<Vec<_>>()
-        .join(" ");
-    let expected = format!(
-        "[{}]",
-        cases
+    let all_cases = cases();
+    // Keep unrelated primitive-hinted methods out of the unhinted modules:
+    // their validation must not accidentally enable a skipped source pass.
+    for cases in [&all_cases[..10], &all_cases[10..14], &all_cases[14..]] {
+        let source = cases
             .iter()
-            .map(|row| row["observed_edn"].as_str().unwrap())
+            .map(|row| row["expression"].as_str().unwrap())
             .collect::<Vec<_>>()
-            .join(" ")
-    );
-    let root = tempfile::tempdir().unwrap();
-    std::fs::write(
-        root.path().join("app.sus"),
-        format!("(ns number-source-objects) (def report (fn [] (pr-str [{source}])))"),
-    )
-    .unwrap();
-    std::fs::write(
-        root.path().join("app.wit"),
-        "package test:number-source-objects; world w { export report: func() -> string; }",
-    )
-    .unwrap();
-    let compiled = Command::new(env!("CARGO_BIN_EXE_suss"))
-        .current_dir(root.path())
-        .args([
-            "--no-cache",
-            "compile",
-            "app.sus",
-            "-w",
-            "app.wit",
-            "--export",
-            "report=number-source-objects/report",
-            "-o",
-            "app.wasm",
-        ])
-        .output()
+            .join(" ");
+        let expected = format!(
+            "[{}]",
+            cases
+                .iter()
+                .map(|row| row["observed_edn"].as_str().unwrap())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+        let root = tempfile::tempdir().unwrap();
+        std::fs::write(
+            root.path().join("app.sus"),
+            format!("(ns number-source-objects) (def report (fn [] (pr-str [{source}])))"),
+        )
         .unwrap();
-    assert!(
-        compiled.status.success(),
-        "{}",
-        String::from_utf8_lossy(&compiled.stderr)
-    );
-    let executed = Command::new(env!("CARGO_BIN_EXE_suss"))
-        .current_dir(root.path())
-        .args(["--no-cache", "run", "app.wasm", "--invoke", "report"])
-        .output()
+        std::fs::write(
+            root.path().join("app.wit"),
+            "package test:number-source-objects; world w { export report: func() -> string; }",
+        )
         .unwrap();
-    assert!(
-        executed.status.success(),
-        "{}",
-        String::from_utf8_lossy(&executed.stderr)
-    );
-    assert_eq!(
-        String::from_utf8(executed.stdout).unwrap().trim_end(),
-        expected
-    );
+        let compiled = Command::new(env!("CARGO_BIN_EXE_suss"))
+            .current_dir(root.path())
+            .args([
+                "--no-cache",
+                "compile",
+                "app.sus",
+                "-w",
+                "app.wit",
+                "--export",
+                "report=number-source-objects/report",
+                "-o",
+                "app.wasm",
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            compiled.status.success(),
+            "{}",
+            String::from_utf8_lossy(&compiled.stderr)
+        );
+        let executed = Command::new(env!("CARGO_BIN_EXE_suss"))
+            .current_dir(root.path())
+            .args(["--no-cache", "run", "app.wasm", "--invoke", "report"])
+            .output()
+            .unwrap();
+        assert!(
+            executed.status.success(),
+            "{}",
+            String::from_utf8_lossy(&executed.stderr)
+        );
+        assert_eq!(
+            String::from_utf8(executed.stdout).unwrap().trim_end(),
+            expected
+        );
+    }
 }

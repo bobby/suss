@@ -35277,3 +35277,30 @@ four source-context cases differ. Both decoder adversarial controls pass.
 See results/m12-number-source-objects and the per-command frozen receipts under
 results/m12-numeric-literal-identity. Apply source-directed primitive/Object
 boxing next, then re-run those controls and the unchanged strict142-row bodies.
+
+### Source primitive/Object numeric boundaries (2026-11-24)
+
+Source-directed floating boxing and original-function Object constant pools now
+preserve actual numeric roots while keeping source overloads separate from storage
+inference. Generic equality admits actual same references; source primitive
+comparisons keep their numeric overloads. Object-array traversal uses lexical
+source facts even when its only operand is a local. A NaN-only verdict exception
+is not used. The shared ABI, persistent numeric fields, wire formats and native
+authority remain unchanged; no Java dependency is shipped.
+
+Two compile/setup failures and the subsequent two primitive-vector native/AOT
+failures are preserved with exact input overlays. After the array traversal fix,
+the frozen batch returns0 for compilation/bootstrap (46.66s),7 native/AOT tests
+(579.39s), and2 complete-body tests (166.88s). Native execution covers16 contexts,
+28 selected source/float/exact controls, and8 actual retained literal-root
+categories across calls/fragments/GC in both phases. Capture controls already
+matched before the array fix; do not label them negative counterexamples.
+
+All142 original eq/not-eq assertions now independently host-match in order,
+with no guests/skips/unexecuted rows. Complete default num preserves26 ordered
+observations:23 host matches and3 explicit accepted narrow-value differences.
+Original suite/primary/count/comparator/skip/opaque rules are unchanged.
+Receipts and qualifications are under results/m12-number-source-objects.
+Next align legacy floating identity expectations with the pinned primary and run
+broader predicate/hint/WIT/raw-lane/budget/bootstrap/artifact checks. The separate
+frozen eval workspace run retains its own source/HEAD and terminal evidence.
