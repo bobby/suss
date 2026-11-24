@@ -34172,3 +34172,21 @@ four bootstrap tests pass. Java/Node-free double bootstrap and source identity
 verification also pass (277.446s). Full receipts/logs are retained under
 `results/m12-eval/after-shared-compiler-publication`. Public eval, borrowed macro
 host authority, real Vars and complete primary/body acceptance remain required.
+
+
+## Borrowed session data interface (2026-11-24)
+
+At6c864a34, `run-installation.py borrowed-session-view-cancellation-contract
+--borrowed-session-only` returns0 with unchanged inputs (295.633s including
+build,23.67s native). Both phases reuse owned-session FormBridge/invocation/
+compiler methods through an explicit Store borrow, compile real data to3/2,
+and retain it over GC. The owned Session stays Send. A view cannot reset its
+owner, refill caller fuel, or cancel owner requests on drop. The negative
+entry consumes cancellation and exhausts fuel; retry fails OutOfFuel and
+owner teardown cancels the pending native request exactly once.
+
+Original compile failures and the incorrect sticky-flag fixture failure remain
+retained. The final test follows the existing consumed-request/zero-fuel policy
+without changing consume_host_work. Request configuration is captured before
+entry; compiler/native state remains shared. Public eval, macro authority,
+real Vars and full primary/body acceptance remain required.

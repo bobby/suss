@@ -55,3 +55,20 @@ The expected caught panic in the existing nested-budget unwind regression is
 retained in its log; the test and all36 session cases pass. This establishes
 existing owned-session behavior after shared metadata publication, not public
 eval, macro-authority sharing, real Vars or complete numeric acceptance.
+
+At6c864a34, the borrowed session view regression returns0 (295.633s including
+build; native23.67s), inputs unchanged. Runtime/Macro callbacks reuse the
+existing FormBridge and invocation/compiler methods, compile actual form data
+to3/2, and retain the result across GC. Owned Session remains Send. Borrowed
+views cannot reset the owner, do not refill its budget, and do not retire its
+pending requests on drop; owner teardown cancels exactly once. The negative
+entry verifies the existing cancellation policy: consume the request, exhaust
+fuel, and reject a retry as OutOfFuel without replenishment.
+
+Earlier compile101 receipts retain the concrete-Store scope signatures and
+unchanged assertions, then the original311.053s runtime101 retains a mistaken
+sticky-flag test expectation. The corrected regression checks the pre-existing
+consumed-request/zero-fuel contract; production consume_host_work is unchanged.
+All failures remain archived. Existing session/module/observation/bootstrap
+checks must pass before publishing this interface change as a new checkpoint.
+No public eval or borrowed user-macro authority is claimed.
