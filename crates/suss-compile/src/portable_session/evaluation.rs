@@ -14,6 +14,8 @@ pub(super) struct Evaluation {
     external: Mutex<Option<MacroService>>,
     own: Mutex<Option<MacroAuthority>>,
     namespace: Mutex<Option<NamespaceAccess>>,
+    input_base: Mutex<Option<OwnedRooted<AnyRef>>>,
+    input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
@@ -138,8 +140,12 @@ impl Evaluation {
         let external = registry_lock(&self.external).take();
         let own = registry_lock(&self.own).take();
         let namespace = registry_lock(&self.namespace).take();
+        let input_base = registry_lock(&self.input_base).take();
+        self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
-        drop((profile, bridge, external, own, namespace, var_class));
+        drop((
+            profile, bridge, external, own, namespace, var_class, input_base,
+        ));
     }
     fn bridge(&self, view: &mut SessionHost<'_>) -> Result<Arc<FormBridge>, SessionError> {
         let existing = registry_lock(&self.bridge).clone();
@@ -226,6 +232,8 @@ impl Evaluation {
                 .environment
                 .enter_namespace(view.phase, &namespace)
                 .map_err(SessionError::Compile)?;
+            snapshot.environment.native_evaluation_namespace = true;
+            let publish_namespace = view.evaluation_updates_input_namespace()?;
             let allowance = view.operation_fuel_remaining()?;
             let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance)?;
             // Release the isolated Macro lease before executing Runtime code.
@@ -237,14 +245,23 @@ impl Evaluation {
                     pending.extend(forms.into_iter().rev());
                 }
                 PreparedEvaluation::Fragment(mut prepared) => {
-                    if prepared.fragment.namespace_directive.is_none() {
-                        prepared
-                            .fragment
-                            .environment
-                            .enter_namespace(view.phase, &original)
-                            .map_err(SessionError::Compile)?;
+                    prepared
+                        .fragment
+                        .environment
+                        .enter_namespace(view.phase, &original)
+                        .map_err(SessionError::Compile)?;
+                    let outcome = view.eval_prepared(prepared);
+                    if publish_namespace {
+                        match view
+                            .evaluation_namespace()
+                            .and_then(|namespace| view.enter_namespace(&namespace))
+                        {
+                            Ok(()) => {}
+                            Err(error) if outcome.is_ok() => return Err(error),
+                            Err(_) => {} // Preserve the original execution failure.
+                        }
                     }
-                    result = Some(view.eval_prepared(prepared)?);
+                    result = Some(outcome?);
                 }
             }
         }
@@ -252,7 +269,67 @@ impl Evaluation {
     }
 }
 
+pub(super) struct InputNamespaceScope(Arc<Evaluation>);
+impl Drop for InputNamespaceScope {
+    fn drop(&mut self) {
+        self.0.input_active.store(false, Ordering::SeqCst);
+        let base = registry_lock(&self.0.input_base).take();
+        drop(base);
+    }
+}
+
 impl SessionHost<'_> {
+    pub(super) fn evaluation_input_scope(
+        &mut self,
+        input: bool,
+    ) -> Result<Option<InputNamespaceScope>, SessionError> {
+        if !input || self.store.is_borrowed() {
+            return Ok(None);
+        }
+        let Some(state) = self.evaluation.clone() else {
+            return Ok(None);
+        };
+        if state.input_active.load(Ordering::SeqCst) {
+            return Err(
+                wasmtime::Error::msg("Native input namespace entry is already active").into(),
+            );
+        }
+        let frame = self
+            .runtime
+            .get_global(&mut self.store, "dynamic-frame")
+            .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame checkpoint"))?
+            .get(&mut self.store)
+            .unwrap_anyref();
+        let frame = frame
+            .map(|frame| frame.to_owned_rooted(&mut self.store))
+            .transpose()?;
+        *registry_lock(&state.input_base) = frame;
+        state.input_active.store(true, Ordering::SeqCst);
+        Ok(Some(InputNamespaceScope(state)))
+    }
+    pub(crate) fn evaluation_updates_input_namespace(&mut self) -> Result<bool, SessionError> {
+        let state = self
+            .evaluation
+            .as_ref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing evaluation authority"))?;
+        if !state.input_active.load(Ordering::SeqCst) {
+            return Ok(false);
+        }
+        let namespace = registry_lock(&state.namespace)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing namespace authority"))?;
+        let base = registry_lock(&state.input_base).clone();
+        let mut scope = RootScope::new(&mut self.store);
+        let cell = namespace.cell.get(&mut scope);
+        let base = Val::AnyRef(base.map(|frame| frame.to_rooted(&mut scope)));
+        let function = self
+            .runtime
+            .get_func(&mut scope, "dynamic-namespace-input-owner")
+            .ok_or_else(|| wasmtime::Error::msg("Missing input namespace owner classifier"))?;
+        let mut result = [Val::I32(0)];
+        function.call(&mut scope, &[cell, base], &mut result)?;
+        Ok(result[0].unwrap_i32() != 0)
+    }
     pub(crate) fn evaluation_namespace(&mut self) -> Result<String, SessionError> {
         let state = self
             .evaluation

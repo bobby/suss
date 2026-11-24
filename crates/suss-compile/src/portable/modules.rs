@@ -816,9 +816,16 @@ pub fn prepare_input_forms_with_origin<P: AsRef<Path>>(
         }
         discovery.snapshots
     };
+    let mut ordinary;
+    let dependency_environment = if environment.native_evaluation_namespace {
+        ordinary = environment.clone();
+        ordinary.native_evaluation_namespace = false;
+        &ordinary
+    } else { environment };
     let (modules, mut snapshot) =
-        compile_snapshots_with_expander(snapshots, environment, phase, expander)
+        compile_snapshots_with_expander(snapshots, dependency_environment, phase, expander)
             .map_err(InputDiagnostic::Dependency)?;
+    snapshot.native_evaluation_namespace = environment.native_evaluation_namespace;
     snapshot
         .enter_namespace(phase, environment.current_namespace(phase))
         .map_err(InputDiagnostic::Compile)?;

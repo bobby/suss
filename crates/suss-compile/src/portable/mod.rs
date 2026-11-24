@@ -352,7 +352,9 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     let dependencies = request.artifact_dependencies();
     let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
-    Ok(PreparedFragment { wasm, environment: analyzed.environment,
+    let mut environment = analyzed.environment;
+    environment.native_evaluation_namespace = false;
+    Ok(PreparedFragment { wasm, environment,
         cells: analyzed.cells, namespace_directive: analyzed.namespace_directive,
         definition: hir::result_definition(&analyzed.hir) })
 }

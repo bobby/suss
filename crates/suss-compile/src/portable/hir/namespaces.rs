@@ -286,6 +286,17 @@ impl Analyzer<'_> {
         }
         let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
         let global = self.assignment_target(&target)?;
+        if self.environment.native_evaluation_namespace {
+            // Eval runs in the existing caller frame. A namespace directive
+            // selects its new namespace after publication; ordinary forms keep
+            // the actual dynamic binding that selected their analysis context.
+            if namespace != before.current_namespace(self.phase) {
+                effects.push(Hir { source: None, span: span.clone(), metadata: vec![], ty: Type::Value,
+                    kind: std::sync::Arc::new(Expression::Assign { global, value: Box::new(read(&span)), linked: None }) });
+            }
+            effects.push(body);
+            return Ok(Hir { source: None, span, metadata: vec![], ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(effects)) });
+        }
         if self.environment.ordered_namespace_initialization {
             // The AOT loader owns one binding for the complete ordered load.
             // Every fragment selects its namespace after publishing its scope.

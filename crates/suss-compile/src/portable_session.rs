@@ -1368,7 +1368,8 @@ impl SessionHost<'_> {
             self.runtime, self.phase, bytes, environment, cells, &self.interrupt,
         )
     }
-    fn eval_instance(&mut self, instance: Instance) -> Result<SessionValue, SessionError> {
+    fn eval_instance(&mut self, instance: Instance, input: bool) -> Result<SessionValue, SessionError> {
+        let _namespace = self.evaluation_input_scope(input)?;
         let mut scope = RootScope::new(&mut self.store);
         let function = instance
             .get_func(&mut scope, "eval")
@@ -1602,7 +1603,7 @@ impl SessionHost<'_> {
         *linked = true;
         let input = instances.pop().unwrap();
         self.initialize_modules(prepared.modules, instances)?;
-        self.eval_instance(input)
+        self.eval_instance(input, true)
     }
     /// Load source once and preserve the caller's namespace scope. Successful
     /// dependencies remain provided if a later module initializer fails.
@@ -1735,7 +1736,7 @@ impl SessionHost<'_> {
     ) -> Result<Option<SessionValue>, SessionError> {
         let mut result = None;
         for (module, instance) in modules.into_iter().zip(instances) {
-            let value = self.eval_instance(instance)?;
+            let value = self.eval_instance(instance, false)?;
             registry_lock(&self.compiler).provided.insert(module.identity);
             result = Some(value);
         }

@@ -87,6 +87,7 @@ pub(super) fn fragment(
     let forms = PENDING.with(|p| p.borrow_mut().take()).unwrap_or_default();
     let mut environment = environment.clone();
     environment.ordered_namespace_initialization = false;
+    environment.native_evaluation_namespace = false;
     let fragment = RecordedFragment {
         phase,
         origin: origin.cloned(),

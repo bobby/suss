@@ -633,3 +633,30 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
     );
     vec![callback]
 }
+
+/// Whether the selected cell owner is the outermost owner above a native
+/// input's checkpoint. Inner user `binding`s must not change the next input's
+/// analysis namespace. Frames are the runtime's private, validated chain.
+pub(super) fn namespace_input_owner(b: &mut Builder) {
+    use Instruction::*;
+    // Parameters cell0/base1; cursor2, selected3, first4, entries5, index6.
+    let mut body = vec![GlobalGet(CURRENT), LocalSet(2), sentinel_value(NIL), LocalSet(3),
+        sentinel_value(NIL), LocalSet(4), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(2), LocalGet(1), RefEq, BrIf(1), LocalGet(2), RefIsNull, BrIf(1)];
+    guard(&mut body, 2, FRAME);
+    frame(&mut body, 2, 1);
+    body.push(LocalSet(5));
+    shape(&mut body, 5);
+    array(&mut body, 5);
+    body.extend([ArrayLen, LocalSet(6), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(6), I32Eqz, BrIf(1), LocalGet(6), I32Const(3), I32Sub, LocalSet(6)]);
+    array(&mut body, 5);
+    body.extend([LocalGet(6), ArrayGet(ARGS), LocalGet(0), RefEq, If(BlockType::Empty),
+        LocalGet(3), RefIsNull, If(BlockType::Empty), LocalGet(2), LocalSet(3), End,
+        LocalGet(2), LocalSet(4), End, Br(0), End, End]);
+    frame(&mut body, 2, 0);
+    body.extend([LocalSet(2), Br(0), End, End, LocalGet(3), RefIsNull, I32Eqz,
+        LocalGet(3), LocalGet(4), RefEq, I32And]);
+    b.function_with_locals("dynamic-namespace-input-owner", &[VALUE, VALUE], &[ValType::I32],
+        &[(4, VALUE), (1, ValType::I32)], &body);
+}

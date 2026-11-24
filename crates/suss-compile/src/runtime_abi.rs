@@ -1907,6 +1907,7 @@ fn build_module() -> Vec<u8> {
     );
     let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
+    dynamic::namespace_input_owner(&mut b);
     decimals::late_functions(&mut b);
     let coercion_types = coercions::declare(&mut b);
     let prototype_types = owned_prototypes::declare(&mut b);

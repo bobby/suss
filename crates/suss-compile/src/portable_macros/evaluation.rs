@@ -100,20 +100,32 @@ impl MacroHost<'_> {
                 .environment
                 .enter_namespace(phase, &namespace)
                 .map_err(SessionError::Compile)?;
+            snapshot.environment.native_evaluation_namespace = true;
+            let publish_namespace = self.session.evaluation_updates_input_namespace()?;
             match self.prepare_native_evaluation(&snapshot, form)? {
                 PreparedEvaluation::TopLevelDo(forms) => {
                     self.session.charge_host_work(forms.len() as u64 + 1)?;
                     pending.extend(forms.into_iter().rev());
                 }
                 PreparedEvaluation::Fragment(mut prepared) => {
-                    if prepared.fragment.namespace_directive.is_none() {
-                        prepared
-                            .fragment
-                            .environment
-                            .enter_namespace(phase, &original)
-                            .map_err(SessionError::Compile)?;
+                    prepared
+                        .fragment
+                        .environment
+                        .enter_namespace(phase, &original)
+                        .map_err(SessionError::Compile)?;
+                    let outcome = self.session.eval_prepared(prepared);
+                    if publish_namespace {
+                        match self
+                            .session
+                            .evaluation_namespace()
+                            .and_then(|namespace| self.session.enter_namespace(&namespace))
+                        {
+                            Ok(()) => {}
+                            Err(error) if outcome.is_ok() => return Err(error),
+                            Err(_) => {}
+                        }
                     }
-                    result = Some(self.session.eval_prepared(prepared)?);
+                    result = Some(outcome?);
                 }
             }
         }

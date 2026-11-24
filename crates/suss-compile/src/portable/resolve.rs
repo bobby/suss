@@ -327,6 +327,9 @@ pub struct Environment {
     /// This policy is transient; published catalogs clear it and AOT artifacts
     /// carry their own sealed load-scope requirement.
     pub(crate) ordered_namespace_initialization: bool,
+    /// Only the root native eval form inherits its caller's dynamic namespace
+    /// frame. Dependencies keep ordinary load frames; published catalogs clear it.
+    pub(crate) native_evaluation_namespace: bool,
     /// Analyzing the shipped core image itself, whose capture-free functions
     /// call each other directly (#360, #361). Only the bootstrap catalog sets
     /// it: privileged code compiled elsewhere, such as a session's core
@@ -491,6 +494,7 @@ impl Environment {
             core_protocols: BTreeSet::new(),
             direct_linking: false,
             ordered_namespace_initialization: false,
+            native_evaluation_namespace: false,
             core_image_links: false,
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),
