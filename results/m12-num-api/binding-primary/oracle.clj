@@ -1,0 +1,7 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (with-redefs [number? (constantly false)] (num 1)))
+(prn (let [f num] (with-redefs [number? (constantly false)] (f 1))))
+(prn (let [f num] (with-redefs [number? (constantly true)] (try (f "x") (catch Throwable e :error)))))
+(prn (with-redefs [num (fn [x] :rebound)] (num 1)))
+(prn (with-redefs [num (fn [x] :rebound)] (let [f num] (f 1))))
+(prn (let [num (fn [& xs] (count xs))] [(num) (num 1 2)]))

@@ -1,0 +1,1 @@
+[(identical? (num ##NaN) ##NaN) (identical? (num ##NaN) (num ##NaN)) (let [x (identity ##NaN)] (identical? (num x) x)) (let [f num] (identical? (f ##NaN) ##NaN))]
