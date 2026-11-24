@@ -5541,7 +5541,7 @@
        (throw (suss.bootstrap/error "symbol namespace must be a string or nil")))
      (if (or (nil? name) (string? name)) nil
        (throw (suss.bootstrap/error "symbol name must be a string or nil")))
-     (let [sym-str (if-not (nil? ns) (str_ ns "/" name) name)]
+     (let [sym-str (if-not (nil? ns) (suss.bootstrap/concat-string (suss.bootstrap/concat-string ns "/") (str_ name)) name)]
        (Symbol. ns name sym-str nil nil)))))
 
 (defprotocol IWriter

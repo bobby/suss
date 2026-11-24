@@ -34798,3 +34798,32 @@ the complete two macro-data targets, sealed built-in guards, complete corrected
 identity/stream targets and all public eval tests. A fresh broader/native suite
 capture, Java/Node-free bootstrap, exact workspace baseline, independent review
 and final-head CI remain required for this executable source change.
+
+### Qualified-symbol packing follow-up (2026-11-24)
+
+The ad61ecee focused gate returns actual101 after207.80s with unchanged source/
+HEAD. All7 sealed built-in and10 source-metadata tests pass, including the
+large-source/fuel guard. The indexed-data target still has3pass/1fail at the
+original constructor-redefinition assertion; later commands do not run. Its
+failed receipt/log is retained. Separately364 host unit tests and9 original
+adversarial capture-review tests pass on ad61ecee. No failed result is a pass.
+
+Fixed-arity metadata association removes one packing dependency, but constructing
+a qualified Symbol still calls variadic str_. The symbol adaptation now joins
+its admitted String namespace, slash and unary str_ name with fixed-arity UTF-16
+concatenation. This preserves nil-name admission and all27 unchanged fresh
+Clojure symbol controls, without duplicating Symbol semantics in Var construction.
+The original IndexedSeq-retention assertion remains unchanged. Repeat the complete
+focused gate as `var-helpers-after-fixed-symbol-spelling --var-helper-ci-only`.
+
+After a focused pass, use `eval-broader-after-indexed-seq-repair
+--broader-current-baseline-only`. It repeats the original broader native targets,
+Java/Node-free reproduction and complete native suite with the reviewed current
+baseline. The new wrapper requires every inner command, including native suite
+execution, to return actual0. It reuses the unchanged strict reviewer against
+the archived original baseline/capture, requires its proposed map to equal the
+existing dea5db93 baseline, protects exact comparator/harness hashes, retains all
+5564 ordered observed identities and requires identical original counts/failures.
+It accepts no new failure/skip/guest change and writes no baseline. Numeric
+source-form acceptance scope, exact workspace, independent review and final-head
+CI remain separate gates.

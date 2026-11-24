@@ -58,8 +58,8 @@
   "files": {
     "docs/compatibility/bootstrap/exact-integers.sus": "a4cfd726d19c4c6da4eae2bd118ec009f96394b1a2c172ffbd2bfa77c4e75977",
     "docs/compatibility/core-import.json": "3bbbd0b69d93c961224988947b5177bd296ef7cc0a9985a07cd23d7fc380e915",
-    "runtime/core-import/suss/core.sus": "50449de0b2b3082f93b19e1c5d974ba73e62fbc8a04048dbe84d0b3717895322",
-    "runtime/core-import/manifest.json": "9843c95a77510cdecc117637940a012e39901ee98ae2f3ffe0d4ee721ade70d3",
+    "runtime/core-import/suss/core.sus": "9644cba6aeecc3bdcbc65228e81e0f3c504592d34ff9b9014f4372eadb1ab420",
+    "runtime/core-import/manifest.json": "0dffdaf19a29149f4be9647dfce0f9282101e7d4ed23fe5d3cfed1ce9e1dbb35",
     "crates/suss-compile/src/runtime_abi/random.rs": "477224805d5dec5de5bbb3a270840e1e1aed10f7b324aedb887c55bd0d25b20f",
     "crates/suss-compile/src/portable/aot/random.rs": "a6908de9fc818415860130f933fc34f270481ed66ce012aa28a400be602155f5",
     "crates/suss-compile/src/portable_session/random_tests.rs": "145549ae0ee8244d516806697594360df570e5e9529a0aebf957cd816917b751",
