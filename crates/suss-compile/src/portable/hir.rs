@@ -1544,6 +1544,9 @@ impl Analyzer<'_> {
                             let namespace = self.environment.current_namespace(self.phase).to_owned();
                             if let Some(names) = self.expander.declared_macro_exports(&namespace) {
                                 self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
+                                if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
+                                    self.environment.record_macro_declaration(self.phase, &namespace, &name.name);
+                                }
                             }
                         }
                         return self.form_in_named(&expanded, context, tail, name_hint);

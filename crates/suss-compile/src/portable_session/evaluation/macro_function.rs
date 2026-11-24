@@ -53,7 +53,7 @@ impl SessionHost<'_> {
             &namespace,
             allowance,
             self.interrupt.clone(),
-            |mut template, spent| {
+            |mut template, names, spent| {
                 self.charge_host_work(spent)?;
                 // Only the publication prefix enters this compiler: the actual
                 // macro body has already been analyzed once in its owning Store.
@@ -62,6 +62,10 @@ impl SessionHost<'_> {
                 let Kind::List(parts) = &mut template.kind else {
                     return Err(wasmtime::Error::msg("Invalid macro publication prefix").into());
                 };
+                let Kind::Symbol(name) = &parts[1].kind else {
+                    unreachable!("validated macro name")
+                };
+                let name = name.name.clone();
                 parts.push(Form {
                     span: span.clone(),
                     metadata: vec![],
@@ -74,6 +78,16 @@ impl SessionHost<'_> {
                     &mut compiler,
                     Some(&origin),
                 )?;
+                prepared
+                    .fragment
+                    .environment
+                    .declare_macro_exports(snapshot.phase(), &namespace, &names)
+                    .map_err(SessionError::Compile)?;
+                prepared.fragment.environment.record_macro_declaration(
+                    snapshot.phase(),
+                    &namespace,
+                    &name,
+                );
                 prepared
                     .fragment
                     .environment

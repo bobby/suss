@@ -318,6 +318,10 @@ pub struct Environment {
     /// `bind`, `unbind` and `materialize_bootstrap` keep it (#319).
     identities: BTreeMap<(Phase, std::sync::Arc<str>), PersistentSet<Global>>,
     macro_exports: BTreeSet<(Phase, String, String)>,
+    // The ordinary declaration revision present at an explicit defmacro. A
+    // later ordinary def hides that transformer; namespace imports do not
+    // silently turn it back into a macro. Persistent snapshots share revisions.
+    macro_declarations: PersistentMap<Global, Option<std::sync::Arc<DefinitionInfo>>>,
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
     /// Protocols whose current definition is shipped core's (#279).
@@ -493,6 +497,7 @@ impl Environment {
             materialized_bootstrap: BTreeSet::new(),
             identities: BTreeMap::new(),
             macro_exports: BTreeSet::new(),
+            macro_declarations: PersistentMap::default(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
@@ -761,6 +766,10 @@ impl Environment {
                 None => {
                     definitions.remove(global);
                 }
+            }
+            match before.macro_declarations.get(global) {
+                Some(revision) => { self.macro_declarations.insert(global.clone(), revision.clone()); }
+                None => { self.macro_declarations.remove(global); }
             }
             let export = (phase, global.namespace.to_string(), global.name.to_string());
             if before.macro_exports.contains(&export) {
@@ -1382,6 +1391,21 @@ impl Environment {
         valid_name(name)?;
         self.scope_mut(phase).excluded_core.insert(name.into());
         Ok(())
+    }
+    pub(crate) fn record_macro_declaration(&mut self, phase: Phase, namespace: &str, name: &str) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        let revision = self.shared_definition_info(&global).cloned();
+        self.macro_declarations.insert(global, revision);
+        self.source_changed();
+    }
+    pub(crate) fn source_macro_overridden(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        let Some(declared) = self.macro_declarations.get(&global) else { return false };
+        match (declared, self.shared_definition_info(&global)) {
+            (None, None) => false,
+            (Some(declared), Some(current)) => !std::sync::Arc::ptr_eq(declared, current),
+            _ => true,
+        }
     }
     /// Macro catalogs describe functions in the isolated host, never Runtime cells.
     pub fn declare_macro_exports(

@@ -247,6 +247,7 @@ impl MacroHost<'_> {
             .map(|(_, name)| name.clone())
             .collect::<Vec<_>>();
         self.session.declare_macro_exports(&namespace, &exports)?;
+        self.session.record_macro_declaration(&namespace, &name);
         Ok((value, variable))
     }
 }

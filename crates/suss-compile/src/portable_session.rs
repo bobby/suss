@@ -1324,8 +1324,9 @@ impl SessionHost<'_> {
     pub(crate) fn end_operation_budget(&mut self) {
         end_operation_budget(&self.operation_budget_depth);
     }
-    /// Capture before borrowing the Store for compiler-data traversal. This is
-    /// the same cancellation flag used by this Session's epoch callback.
+    pub(crate) fn record_macro_declaration(&mut self, namespace: &str, name: &str) {
+        registry_lock(&self.compiler).environment.record_macro_declaration(self.phase, namespace, name);
+    }
     /// Cap an already-active operation without starting/refilling its budget.
     pub(crate) fn cap_operation_fuel(&mut self, limit: u64) -> Result<u64, SessionError> {
         let remaining = self.operation_fuel_remaining()?.min(limit);
@@ -1333,6 +1334,8 @@ impl SessionHost<'_> {
         self.charge_host_work(0)?;
         Ok(remaining)
     }
+    /// Capture before borrowing the Store for compiler-data traversal. This is
+    /// the same cancellation flag used by this Session's epoch callback.
     pub(crate) fn host_work_interrupt(&self) -> Arc<AtomicBool> {
         self.interrupt.clone()
     }

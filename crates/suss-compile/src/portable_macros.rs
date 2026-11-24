@@ -948,6 +948,9 @@ impl ExpansionHost for MacroHost<'_> {
                     name.name.clone(),
                 )
             });
+        if context.environment.source_macro_overridden(context.phase, &target.0, &target.1) {
+            return Ok(None);
+        }
         let Some(function) = catalog(&self.catalog).definitions.get(&target).cloned() else {
             return Ok(None);
         };

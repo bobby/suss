@@ -82,7 +82,7 @@ impl MacroService {
         namespace: &str,
         fuel: u64,
         interrupt: Arc<AtomicBool>,
-        prepare_caller: impl FnOnce(Form, u64) -> Result<(T, u64), SessionError>,
+        prepare_caller: impl FnOnce(Form, Vec<String>, u64) -> Result<(T, u64), SessionError>,
     ) -> Result<(Result<(T, SessionValue), SessionError>, u64), SessionError> {
         let mut lease = self.lease();
         let allowance = lease.limit_fuel(fuel);
@@ -110,7 +110,21 @@ impl MacroService {
                 kind: Kind::Nil,
             },
         );
-        let (caller, remaining) = match prepare_caller(template, spent) {
+        let Kind::List(parts) = &template.kind else {
+            unreachable!("validated macro prefix")
+        };
+        let Kind::Symbol(name) = &parts[1].kind else {
+            unreachable!("validated macro name")
+        };
+        let mut names: std::collections::BTreeSet<String> = catalog(&host.catalog)
+            .definitions
+            .keys()
+            .filter(|(ns, _)| ns == namespace)
+            .map(|(_, name)| name.clone())
+            .collect();
+        names.insert(name.name.clone());
+        let (caller, remaining) = match prepare_caller(template, names.into_iter().collect(), spent)
+        {
             Ok(caller) => caller,
             Err(error) => {
                 host.enter_namespace(&original)?;
