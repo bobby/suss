@@ -33905,6 +33905,21 @@ evidence, not a claim of observed GC event counts. Final-input-diff qualifies
 only documentation additions after frozen runs; production/tests/fixtures match.
 
 
+## Min-key full-workspace completion evidence (2026-11-24)
+
+The exact `cargo test --workspace --locked -- --test-threads=2` process at
+33382c1c terminated after all370 expected native/doc targets. Its log records
+2,473 passing tests,14 explicit ignores,zero failures andzero filtered tests;
+all recorded inputs and HEAD stayed unchanged. Cargo's exit status remains
+unknown because the original outer recorder detached. It is not reported as0.
+`results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit`
+retains the incomplete receipt, full log, initial/corrected audits and a
+standalone archive-only replay script. Metadata and366 Cargo fingerprints are
+preserved, so replay requires no live build target. The inventory correction
+includes rlib and package identities for duplicate integration target names.
+This evidence qualifies observed execution without changing tests or budgets.
+
+
 ## Reader full-workspace completion evidence (2026-11-23)
 
 The original `cargo test --workspace --locked -- --test-threads=2` process at
