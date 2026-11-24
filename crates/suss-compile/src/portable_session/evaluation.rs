@@ -19,6 +19,7 @@ pub(super) struct Evaluation {
     input_base: Mutex<Option<OwnedRooted<AnyRef>>>,
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
 #[derive(Clone)]
@@ -222,8 +223,16 @@ impl Evaluation {
         let input_base = registry_lock(&self.input_base).take();
         self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
+        let metadata_lookup = registry_lock(&self.metadata_lookup).take();
         drop((
-            profile, bridge, external, own, namespace, var_class, input_base,
+            profile,
+            bridge,
+            external,
+            own,
+            namespace,
+            var_class,
+            input_base,
+            metadata_lookup,
         ));
     }
     fn bridge(&self, view: &mut SessionHost<'_>) -> Result<Arc<FormBridge>, SessionError> {
@@ -435,6 +444,14 @@ impl SessionHost<'_> {
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing Var authority"))?;
         let bridge = state.bridge(self)?;
+        let lookup = registry_lock(&state.metadata_lookup)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native metadata lookup"))?;
+        let lookup = {
+            let mut roots = RootScope::new(&mut self.store);
+            let lookup = Val::AnyRef(Some(lookup.to_rooted(&mut roots)));
+            own(&mut roots, lookup, self.identity, &self.handles)?
+        };
         let key = bridge.quote(
             self,
             suss_reader::forms::Form {
@@ -476,7 +493,7 @@ impl SessionHost<'_> {
             if fields.len() != 3 {
                 return Err(wasmtime::Error::msg("Macro Var has invalid fields").into());
             }
-            let flag = self.invoke(&key, &[&fields[2]])?;
+            let flag = self.invoke(&lookup, &[&fields[2], &key])?;
             // The public isMacro getter uses Clojure truthiness, too. Looking
             // up just this key avoids decoding unrelated opaque metadata.
             let enabled = match flag.value.as_ref() {
@@ -571,6 +588,23 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
+        // Retain core's original get function. The generic native invocation
+        // ABI takes callable functions; keyword application is compiler lowering.
+        let cell = self.core_cell("get")?;
+        let value = {
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(
+                &mut roots,
+                self.runtime,
+                get,
+                &[cell],
+                self.identity,
+                &self.handles,
+            )?
+        };
+        *registry_lock(&state.metadata_lookup) = Some(value.object()?.clone());
         let runtime = self.runtime;
         let signature = runtime
             .get_func(&mut self.store, "evaluate-form")

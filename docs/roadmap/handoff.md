@@ -34641,3 +34641,11 @@ inspected declaration and leaving runtime effects untouched. A successful nested
 ordinary def has false metadata and is never undone. No previous source replays.
 Run `macro-failure-and-lifecycle-first-native --macro-failure-and-lifecycle-only`
 through the external launcher, freezing source/HEAD through its terminal receipt.
+
+At `7af321e5`, the new failure-boundary gate returns actual101 with frozen
+inputs: the host tried to invoke a keyword through the generic native function
+ABI and received Not callable. Keyword application belongs to compiler lowering.
+Metadata reconciliation now invokes the original core get function retained at
+bootstrap, reading only the :macro entry without serializing opaque metadata.
+No ABI or guest intrinsic is added. Repeat with
+`macro-failure-after-original-lookup --macro-failure-and-lifecycle-only`.
