@@ -6,6 +6,9 @@ sha=lambda raw:hashlib.sha256(raw).hexdigest()
 for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary',11),('namespace-primary',15),('review-corrections-primary',14),('var-implementation-primary',2)]:
  p=BASE/name;command=json.loads((p/'command.json').read_text());rows=json.loads((p/'cases.json').read_text())
  assert command['exit_code']==0 and command['controls']==count==len(rows)
+ if 'legacy_corpus_sha256' in command:
+  assert sha((ROOT/'tests/oracle/symbol-conversion-cases.json').read_bytes())==command['legacy_corpus_sha256']
+  assert [row['name'] for row in rows]==['symbol-var-thunk-meta','symbol-var-macro']
  assert all(sha(Path(path).read_bytes())==digest for path,digest in command['jars'].items())
  source=(p/'oracle.clj').read_bytes();stdout=(p/'stdout.log').read_bytes()
  assert sha(source)==command['source_sha256'] and sha(stdout)==command['stdout_sha256']

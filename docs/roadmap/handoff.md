@@ -34480,3 +34480,35 @@ complete original eval body. Source and HEAD must stay frozen through its
 terminal receipt. Passing this gate alone does not establish issue or PR
 acceptance; broader capture, full baseline and final independent review remain
 required. Do not merge without the user's later explicit instruction.
+
+The focused correction gate at `58470278815e4433c4bc6462ed885b318f455e71`
+returned actual exit 0 for all six commands, with HEAD and all recorded inputs
+unchanged. Receipts/logs and their limited qualification are retained under
+`results/m12-eval/constant-var-after-legacy-corpus-adaptation/`.
+
+- Two native capability/owner guards pass.
+- Ten new nested-function/Var controls match fresh Clojure in both phases and
+  after collection; a returned function retains its constant after later input
+  compilation and the public macro owner's drop.
+- The complete public eval target passes all 16 tests, including actual
+  reentrant Macro constants, the original 60 primary controls, capability,
+  cumulative budget, cancellation, namespace and diagnostic guards.
+- All six retained identifier tests pass. The forty-row corpus and all original
+  0–20/final-spread invocation guards remain exercised. Two ClojureScript Var
+  implementation assumptions use explicit, fresh Clojure-backed adaptations in
+  `results/m12-eval/var-implementation-primary/`; the original corpus is retained
+  unchanged and its SHA verified.
+- The unchanged AOT namespace size guard passes: 3,678 bytes per form for both
+  plain/scoped cases, with 25 extra code bytes per split form. Its original limits
+  remain 3,900 bytes, 128 extra code bytes and 32 scoped bytes.
+- The unchanged original eval body passes: all 34 ordered rows execute, with
+  29 host matches and precisely the original five guest judgments at ordinals
+  15–19; no failures, unexecuted rows or skips. Numeric rows 5–7 are host matches.
+
+Earlier failed runs retain actual exit 101 receipts, including the guard-test
+build error, the unrelated boolean? dependency in a new control, and the old
+ClojureScript Var metadata-copy expectation. They are not relabeled by this pass.
+Publication is source-equivalent to the tested head for executable compiler,
+core and tests; added evidence/handoff/verifier files are not a new full baseline.
+The remaining macro-declaration finding still precedes broader capture, exact
+workspace validation, bootstrap reproduction and independent promotion review.
