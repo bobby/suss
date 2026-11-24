@@ -34,7 +34,6 @@ use compiler_state::{CompilerState, SharedCompiler};
 mod store_access;
 mod reentry;
 pub(crate) use reentry::ReentryProfile;
-pub(crate) use reentry::ReentryProfile;
 #[cfg(test)]
 mod random_tests;
 
