@@ -5,6 +5,13 @@ use super::*;
 use Instruction::*;
 
 pub(super) fn append(b: &mut Builder, globals: &mut GlobalSection) {
+    b.function(
+        "closure-value-test",
+        &[VALUE],
+        &[ValType::I32],
+        &[LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE))],
+    );
+
     let source = b.next_type;
     b.types.ty().function([VALUE], [VALUE]);
     b.next_type += 1;

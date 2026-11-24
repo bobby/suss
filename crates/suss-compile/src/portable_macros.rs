@@ -374,11 +374,17 @@ impl MacroHost<'static> {
     }
 }
 impl MacroHost<'_> {
-    pub(crate) fn evaluate_native_form(&mut self, form: Form) -> Result<SessionValue, SessionError> {
-        let snapshot = self.session.compilation_snapshot();
+    pub(crate) fn evaluate_native_form(&mut self, form: Form, namespace: &str) -> Result<SessionValue, SessionError> {
+        let mut snapshot = self.session.compilation_snapshot();
+        let phase = self.session.phase();
+        let original = snapshot.environment.current_namespace(phase).to_owned();
+        snapshot.environment.enter_namespace(phase, namespace).map_err(SessionError::Compile)?;
         let span = form.span.clone();
         let origin = crate::portable::SourceOrigin::new("", None);
-        let prepared = snapshot.prepare_with_origin(vec![form], span, self, Some(&origin))?;
+        let mut prepared = snapshot.prepare_with_origin(vec![form], span, self, Some(&origin))?;
+        if prepared.fragment.namespace_directive.is_none() {
+            prepared.fragment.environment.enter_namespace(phase, &original).map_err(SessionError::Compile)?;
+        }
         self.session.eval_prepared(prepared)
     }
     pub(crate) fn define_inline_macro(
