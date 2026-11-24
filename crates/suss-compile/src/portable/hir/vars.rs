@@ -95,10 +95,15 @@ impl Analyzer<'_> {
             },
             0,
         )?;
+        // Metadata construction can contain its own HIR bindings. Evaluate it
+        // once and refer to the local in both the initial and update paths;
+        // cloning executable HIR would duplicate binding identities/effects.
+        let metadata = self.fresh_binding(form, metadata);
+        let metadata_value = self.local(form, metadata.id);
         let construction = self.var_core_call(
             form,
             "make-binding-var",
-            vec![getter, symbol, metadata.clone()],
+            vec![getter, symbol, metadata_value.clone()],
         )?;
         let initialize = node(Expression::Definition {
             result: None,
@@ -113,10 +118,14 @@ impl Analyzer<'_> {
         });
         let read = node(Expression::Global(cell));
         let result = if update {
-            self.var_core_call(form, "update-binding-var-meta!", vec![read, metadata])?
+            self.var_core_call(form, "update-binding-var-meta!", vec![read, metadata_value])?
         } else {
             read
         };
-        Ok(self.do_hir(form, vec![initialize, result]))
+        let body = self.do_hir(form, vec![initialize, result]);
+        Ok(node(Expression::Let {
+            bindings: vec![metadata],
+            body: Box::new(body),
+        }))
     }
 }
