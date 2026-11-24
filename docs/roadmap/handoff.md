@@ -35063,3 +35063,25 @@ constant admission with the runtime's real class-value classifier, preserving
 same-Store owner/roots and strict ordinary macro/source/display readers. Keep
 all exact regression/public/capability/definition and broader/native/workspace/
 review/final-head CI gates. No class marker fixture or serialized fake is used.
+
+
+### Native eval class constants (2026-11-24)
+
+At7c64c12c the exact class-data regression returns101 after successful compilation
+(4.82s build, 2.05s test). Runtime raises the same actual unsupported-layout language
+exception; source and HEAD remain unchanged. No assertion or primary is rewritten.
+Its command/log/recorder receipts are retained in deterministic compressed form.
+
+Native eval constant admission now also calls the existing runtime class-value-is
+classifier before decoding ordinary syntax. Recognized actual class objects use
+the existing same-Store native-constant owner/index/root mechanism, including when
+nested inside generated forms. No symbolic name or reconstructed class marker is
+substituted. Functions and Vars keep their prior admission; ordinary macro/source/
+display readers retain their strict whitelist. Runtime ABI exports, numeric kernels,
+core source, dependencies and persistent encodings do not change.
+
+Run `class-data-after-native-constant-admission --class-data-only`, preserving
+source/HEAD through terminal receipts. It exercises actual class identity and
+numeric instance? forms across Runtime, Macro, retained GC and real reentrant Macro,
+then all public/capability and original import/stream controls. Fresh broader/native,
+exact workspace, independent review and final-head CI still gate promotion.
