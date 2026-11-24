@@ -50,3 +50,20 @@ intCast(Object) signatures. Exactly one expected value differs:2147483647
 rather than an error. Original literals/receipts remain unchanged; the initial
 hint-only probe failure is also retained. Public tests select the Object corpus;
 production numeric code is unchanged. Fresh native comparison remains required.
+
+At be02889d, both public-core tests pass, including126 controlled Object
+transformations in each native phase with direct raw numeric field decoding,
+exact draw counts and normal provider samples (720.259s, inputs unchanged).
+The next target passes Runtime/Macro and actual CLI/WASI properties but fails
+before controlled AOT execution because result is a reserved WIT keyword. The
+original overall101 is retained.
+
+At1abb5843 the corrected sample-report export, component post-return lifecycle
+and fresh instance per deliberately trapping scalar row pass all five public
+tests (184.155s, inputs unchanged). Controlled AOT independently checks all126
+reports and raw f64/s64 results, preserving exact provider consumption. The
+complete original body target then passes (20.750s): all16 some-fn assertions
+match on the host; all31 constantly assertions execute with its Ratio as a
+strict host match and its two original guest judgments retained. No original
+body, primary, count, skip or budget changed. Complete workspace/capture and
+bootstrap acceptance remain separate.

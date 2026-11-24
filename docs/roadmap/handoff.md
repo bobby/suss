@@ -34078,3 +34078,20 @@ plus cache-disabled retention of distinct errors/messages/nil data across20,000
 escaping vector allocations with a1MiB initial heap. That is allocation-pressure
 evidence, not a claim of observed GC event counts. Final-input-diff qualifies
 only documentation additions after frozen runs; production/tests/fixtures match.
+
+
+## Execution-time random provider and original higher-order bodies (2026-11-23)
+
+`results/m12-random/run-public.py after-project-package-cache-reset` preserves
+a native overall101: both Runtime/Macro public-core tests pass, while a
+controlled AOT fixture fails to parse its reserved result export name. At
+`1abb5843`, `run-public.py after-wit-name-and-call-lifecycle --public-and-bodies`
+returns0 with unchanged inputs. All five public tests pass, including126
+controlled real AOT reports/raw numeric exports, actual CLI/WASI effects and
+fresh provider streams. Component calls complete post-return; each row has a
+fresh instance so expected uncaught errors cannot poison subsequent calls.
+All16 original some-fn assertions and all31 original constantly assertions
+execute; the Ratio is an actual host match and both existing guest judgments
+remain explicit. The prior successful direct-storage126-control run per native
+phase remains source-qualified to be02889d. Full capture/baseline review,
+bootstrap and full workspace validation are still separate requirements.
