@@ -1,0 +1,15 @@
+{
+  "assertions": [],
+  "namespaces": [
+    {
+      "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unresolved Runtime name num at bytes 619..3442",
+      "namespace": "clojure.core-test.num",
+      "stage": "namespace",
+      "status": "failure"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

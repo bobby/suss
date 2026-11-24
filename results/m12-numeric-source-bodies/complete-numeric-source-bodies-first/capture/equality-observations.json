@@ -1,0 +1,4826 @@
+{
+  "assertions": [
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "nil"
+        },
+        {
+          "tag": "nil"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            97
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            97
+          ]
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            103,
+            114,
+            101,
+            101,
+            110
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            103,
+            114,
+            101,
+            101,
+            110
+          ]
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              101,
+              103,
+              103,
+              115
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              101,
+              103,
+              103,
+              115
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              104,
+              97,
+              109
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              110,
+              100
+            ]
+          },
+          "tag": "keyword"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              104,
+              97,
+              109
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              110,
+              100
+            ]
+          },
+          "tag": "keyword"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              111,
+              110,
+              101,
+              45,
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              111,
+              110,
+              101,
+              45,
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              116,
+              119,
+              111
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              116,
+              119,
+              111
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "42"
+        },
+        {
+          "tag": "long",
+          "value": "42"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "40091eb851eb851f",
+          "tag": "f64"
+        },
+        {
+          "bits": "40091eb851eb851f",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "scale": 6,
+          "tag": "decimal",
+          "unscaled": "3141592"
+        },
+        {
+          "scale": 6,
+          "tag": "decimal",
+          "unscaled": "3141592"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "vector"
+        },
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        },
+        {
+          "items": [],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "seq"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "3"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  99
+                ]
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  100
+                ]
+              },
+              {
+                "tag": "long",
+                "value": "4"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  100
+                ]
+              },
+              {
+                "tag": "long",
+                "value": "4"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "3"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  99
+                ]
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 41,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 42,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 43,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 44,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 45,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 46,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 47,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "14"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "15"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "13"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "13"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "14"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "15"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 48,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "tag": "long",
+                "value": "13"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "14"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "15"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "tag": "long",
+                "value": "15"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "14"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "13"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 49,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 50,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 51,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "items": [],
+                "tag": "set"
+              },
+              {
+                "items": [
+                  {
+                    "items": [],
+                    "tag": "seq"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "items": [],
+                "tag": "set"
+              },
+              {
+                "items": [
+                  {
+                    "items": [],
+                    "tag": "seq"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 52,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    106,
+                    117,
+                    115,
+                    116
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              112,
+                              108,
+                              97,
+                              105,
+                              110
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "items": [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  115,
+                                  105,
+                                  109,
+                                  112,
+                                  108,
+                                  101
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "items": [
+                                {
+                                  "name": {
+                                    "tag": "string",
+                                    "units": [
+                                      116,
+                                      97,
+                                      105,
+                                      108,
+                                      111,
+                                      114
+                                    ]
+                                  },
+                                  "namespace": {
+                                    "tag": "nil"
+                                  },
+                                  "tag": "keyword"
+                                }
+                              ],
+                              "tag": "set"
+                            }
+                          ],
+                          "tag": "vector"
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    106,
+                    117,
+                    115,
+                    116
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              112,
+                              108,
+                              97,
+                              105,
+                              110
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "items": [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  115,
+                                  105,
+                                  109,
+                                  112,
+                                  108,
+                                  101
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "items": [
+                                {
+                                  "name": {
+                                    "tag": "string",
+                                    "units": [
+                                      116,
+                                      97,
+                                      105,
+                                      108,
+                                      111,
+                                      114
+                                    ]
+                                  },
+                                  "namespace": {
+                                    "tag": "nil"
+                                  },
+                                  "tag": "keyword"
+                                }
+                              ],
+                              "tag": "set"
+                            }
+                          ],
+                          "tag": "vector"
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 53,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "4"
+                    }
+                  ],
+                  "tag": "vector"
+                }
+              ],
+              "tag": "seq"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "4"
+                    }
+                  ],
+                  "tag": "seq"
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 54,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 55,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 56,
+      "source-head": "let",
+      "test": "clojure.core-test.eq/test-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 57,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 58,
+      "source-head": "let",
+      "test": "clojure.core-test.eq/test-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        }
+      ],
+      "ordinal": 59,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        }
+      ],
+      "ordinal": 60,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 61,
+      "source-head": "let",
+      "test": "clojure.core-test.eq/test-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 62,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 63,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 64,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 65,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 66,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 67,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 68,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 69,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 70,
+      "result": {
+        "tag": "bool",
+        "value": false
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "fail"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 71,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.eq/test-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "nil"
+        },
+        {
+          "tag": "nil"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            97
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            97
+          ]
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            103,
+            114,
+            101,
+            101,
+            110
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            103,
+            114,
+            101,
+            101,
+            110
+          ]
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              101,
+              103,
+              103,
+              115
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              101,
+              103,
+              103,
+              115
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              104,
+              97,
+              109
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              110,
+              100
+            ]
+          },
+          "tag": "keyword"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              104,
+              97,
+              109
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              110,
+              100
+            ]
+          },
+          "tag": "keyword"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              111,
+              110,
+              101,
+              45,
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              111,
+              110,
+              101,
+              45,
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              116,
+              119,
+              111
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              102,
+              105,
+              115,
+              104
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              116,
+              119,
+              111
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "42"
+        },
+        {
+          "tag": "long",
+          "value": "42"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "40091eb851eb851f",
+          "tag": "f64"
+        },
+        {
+          "bits": "40091eb851eb851f",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "scale": 6,
+          "tag": "decimal",
+          "unscaled": "3141592"
+        },
+        {
+          "scale": 6,
+          "tag": "decimal",
+          "unscaled": "3141592"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "vector"
+        },
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        },
+        {
+          "items": [],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "seq"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "3"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  99
+                ]
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  100
+                ]
+              },
+              {
+                "tag": "long",
+                "value": "4"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    50
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "string",
+                "units": [
+                  100
+                ]
+              },
+              {
+                "tag": "long",
+                "value": "4"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "3"
+              },
+              {
+                "tag": "string",
+                "units": [
+                  99
+                ]
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 41,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 42,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 43,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 44,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 45,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 46,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 47,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "14"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "15"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "13"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "13"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "14"
+              }
+            ],
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "15"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 48,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "tag": "long",
+                "value": "13"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "14"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "15"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "tag": "long",
+                "value": "15"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    99
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "14"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ],
+            [
+              {
+                "tag": "long",
+                "value": "13"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 49,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 50,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 51,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "items": [],
+                "tag": "set"
+              },
+              {
+                "items": [
+                  {
+                    "items": [],
+                    "tag": "seq"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "items": [],
+                "tag": "set"
+              },
+              {
+                "items": [
+                  {
+                    "items": [],
+                    "tag": "seq"
+                  }
+                ],
+                "tag": "vector"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 52,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    106,
+                    117,
+                    115,
+                    116
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              112,
+                              108,
+                              97,
+                              105,
+                              110
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "items": [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  115,
+                                  105,
+                                  109,
+                                  112,
+                                  108,
+                                  101
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "items": [
+                                {
+                                  "name": {
+                                    "tag": "string",
+                                    "units": [
+                                      116,
+                                      97,
+                                      105,
+                                      108,
+                                      111,
+                                      114
+                                    ]
+                                  },
+                                  "namespace": {
+                                    "tag": "nil"
+                                  },
+                                  "tag": "keyword"
+                                }
+                              ],
+                              "tag": "set"
+                            }
+                          ],
+                          "tag": "vector"
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    106,
+                    117,
+                    115,
+                    116
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "items": [
+                  {
+                    "name": {
+                      "tag": "string",
+                      "units": [
+                        97
+                      ]
+                    },
+                    "namespace": {
+                      "tag": "nil"
+                    },
+                    "tag": "keyword"
+                  },
+                  {
+                    "entries": [
+                      [
+                        {
+                          "name": {
+                            "tag": "string",
+                            "units": [
+                              112,
+                              108,
+                              97,
+                              105,
+                              110
+                            ]
+                          },
+                          "namespace": {
+                            "tag": "nil"
+                          },
+                          "tag": "keyword"
+                        },
+                        {
+                          "items": [
+                            {
+                              "name": {
+                                "tag": "string",
+                                "units": [
+                                  115,
+                                  105,
+                                  109,
+                                  112,
+                                  108,
+                                  101
+                                ]
+                              },
+                              "namespace": {
+                                "tag": "nil"
+                              },
+                              "tag": "keyword"
+                            },
+                            {
+                              "items": [
+                                {
+                                  "name": {
+                                    "tag": "string",
+                                    "units": [
+                                      116,
+                                      97,
+                                      105,
+                                      108,
+                                      111,
+                                      114
+                                    ]
+                                  },
+                                  "namespace": {
+                                    "tag": "nil"
+                                  },
+                                  "tag": "keyword"
+                                }
+                              ],
+                              "tag": "set"
+                            }
+                          ],
+                          "tag": "vector"
+                        }
+                      ]
+                    ],
+                    "tag": "map"
+                  }
+                ],
+                "tag": "seq"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 53,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "4"
+                    }
+                  ],
+                  "tag": "vector"
+                }
+              ],
+              "tag": "seq"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "items": [
+                {
+                  "tag": "long",
+                  "value": "2"
+                },
+                {
+                  "tag": "long",
+                  "value": "3"
+                },
+                {
+                  "items": [
+                    {
+                      "tag": "long",
+                      "value": "4"
+                    }
+                  ],
+                  "tag": "seq"
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 54,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 55,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 56,
+      "source-head": "let",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 57,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 58,
+      "source-head": "let",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        }
+      ],
+      "ordinal": 59,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "eq",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            98,
+            101,
+            101,
+            112
+          ]
+        }
+      ],
+      "ordinal": 60,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "eq",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 61,
+      "source-head": "let",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 62,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 63,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 64,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 65,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 66,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 67,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 68,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 69,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "pass"
+    },
+    {
+      "head": "identical?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 70,
+      "result": {
+        "tag": "bool",
+        "value": false
+      },
+      "source-head": "identical?",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "fail"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 71,
+      "result": {
+        "tag": "bool",
+        "value": false
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.not-eq/test-not-eq",
+      "verdict": "fail"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.eq",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.core-test.not-eq",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

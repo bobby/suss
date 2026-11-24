@@ -116,3 +116,26 @@
               :lpy  (is (= 9223372036854775808 result))      ;; basilisp integers use arbitrary precision
               :cljs (is (= 9223372036854776000 result))      ;; cljs is lossy
               :clj  (is (= 9223372036854775808N result)))))) ;; JVM promotes to BigInt
+
+--- a/test/clojure/core_test/eq.cljc
++++ b/test/clojure/core_test/eq.cljc
+@@ -128,6 +128,19 @@
+                (list ##NaN) (list ##NaN) false
+                ##NaN ##NaN false))
+ 
++     :suss (testing "jvm"
++            (are [in ex eq?] (identical? eq? (eq in ex))
++              2 2.0 false
++              (float 0.1) (double 0.1) false
++              (float 0.5) (double 0.5) true
++              1M 1 false
++              ;; ratios do not read in CLJS
++              22/7 44/14 true
++              ;; https://clojure.org/guides/equality notes that sometimes 
++              ;; collections with ##NaN are eq
++              #?@(:bb [] ;; seems undefined behavior
++                  :default [(list ##NaN) (list ##NaN) true])))
++
+      :clj (testing "jvm"
+             (are [in ex eq?] (identical? eq? (eq in ex))
+               2 2.0 false

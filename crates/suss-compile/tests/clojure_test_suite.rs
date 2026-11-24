@@ -22,6 +22,8 @@ mod pinned_min_key_body;
 mod pinned_some_fn_bodies;
 #[path = "support/pinned_eval_body.rs"]
 mod pinned_eval_body;
+#[path = "support/pinned_numeric_source_bodies.rs"]
+mod pinned_numeric_source_bodies;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
