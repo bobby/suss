@@ -1,0 +1,172 @@
+[
+  {
+    "name": "direct-nan-equality",
+    "expression": "(= ##NaN ##NaN)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "object-nan-self",
+    "expression": "((fn [x] (= x x)) ##NaN)",
+    "observed_edn": "true"
+  },
+  {
+    "name": "raw-local-nan-self",
+    "expression": "(let [x ##NaN] (= x x))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-apply-equality",
+    "expression": "(apply = [##NaN ##NaN])",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-list-equality",
+    "expression": "(= (list ##NaN) (list ##NaN))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "nan-vector-equality",
+    "expression": "(= [##NaN] [##NaN])",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-negated-equality",
+    "expression": "(not= ##NaN ##NaN)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-local-negated-equality",
+    "expression": "(let [x ##NaN] (not= x x))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "nan-object-negated-equality",
+    "expression": "((fn [x] (not= x x)) ##NaN)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-two-object-arguments",
+    "expression": "((fn [x y] (= x y)) ##NaN ##NaN)",
+    "observed_edn": "true"
+  },
+  {
+    "name": "nan-computed-separate-arguments",
+    "expression": "((fn [x y] (= x y)) (/ 0.0 0.0) (/ 0.0 0.0))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "nan-computed-shared-argument",
+    "expression": "(let [x (/ 0.0 0.0)] ((fn [y] (= y y)) x))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "function-literal-double",
+    "expression": "(let [f (fn [] 0.1)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-double",
+    "expression": "(identical? 0.1 0.1)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-nan",
+    "expression": "(let [f (fn [] ##NaN)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-nan",
+    "expression": "(identical? ##NaN ##NaN)",
+    "observed_edn": "true"
+  },
+  {
+    "name": "function-literal-infinity",
+    "expression": "(let [f (fn [] ##Inf)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-infinity",
+    "expression": "(identical? ##Inf ##Inf)",
+    "observed_edn": "true"
+  },
+  {
+    "name": "function-literal-negative-zero",
+    "expression": "(let [f (fn [] -0.0)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-negative-zero",
+    "expression": "(identical? -0.0 -0.0)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-zero-long",
+    "expression": "(let [f (fn [] 0)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-zero-long",
+    "expression": "(identical? 0 0)",
+    "observed_edn": "true"
+  },
+  {
+    "name": "function-literal-wide-long",
+    "expression": "(let [f (fn [] 1000)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-wide-long",
+    "expression": "(identical? 1000 1000)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-min-long",
+    "expression": "(let [f (fn [] -9223372036854775808)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-min-long",
+    "expression": "(identical? -9223372036854775808 -9223372036854775808)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-bigint",
+    "expression": "(let [f (fn [] 1N)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-bigint",
+    "expression": "(identical? 1N 1N)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-wide-bigint",
+    "expression": "(let [f (fn [] 9223372036854775808N)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-wide-bigint",
+    "expression": "(identical? 9223372036854775808N 9223372036854775808N)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-ratio",
+    "expression": "(let [f (fn [] 1/3)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-ratio",
+    "expression": "(identical? 1/3 1/3)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "function-literal-decimal",
+    "expression": "(let [f (fn [] 1.0M)] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-literal-decimal",
+    "expression": "(identical? 1.0M 1.0M)",
+    "observed_edn": "false"
+  }
+]
