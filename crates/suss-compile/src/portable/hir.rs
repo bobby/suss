@@ -3908,7 +3908,7 @@ impl Analyzer<'_> {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
+                "if" | "do" | "fn*" | "def" | "var" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
