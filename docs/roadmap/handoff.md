@@ -35369,7 +35369,7 @@ independent review and final-head CI remain separate requirements.
 The broader source-hint command returns101 at clean5b0a9726: original ADR-0004
 raw-core Runtime/Macro and actual AOT controls trap when raw-double is replaced
 by a boxed Long function. These controls are explicitly Suss's primitive-entry
-fallback contract; no primary or test expectation changes. Four earlier source
+fallback contract; no primary or test expectation changes. Three earlier source
 hint/overload/method targets pass; later command stages do not execute.
 
 The physical floating Object materializer now tests the actual value before
@@ -35382,3 +35382,16 @@ strict complete numeric bodies. All20 Num API and16 Object-context controls,
 142 equality host matches and26 default-num rows retain their earlier results.
 Source/HEAD unchanged; individual seconds and receipts are retained. Wider
 compiler/resource/WIT/cache/budget/bootstrap and final acceptance remain separate.
+
+
+### Broader compiler validation after boxed fallback correction (2026-11-24)
+
+At45733e74 all9 durable command stages return0, source and HEAD unchanged:
+source hints/primitive methods/overloads/raw-core/parameter/type guards; raw
+locals/captures, actual WIT, HIR resource and expression-artifact guards; source
+artifact/identity, default budgets and built-in authority guards; compiler
+library guards; Java/Node-free double bootstrap; and core-import, sequence,
+numeric and unchanged upstream contract checks. Full per-command logs/times
+are retained under results/m12-num-api/broader-compiler-after-boxed-replacement-fix.
+This checkpoint does not replace the full captured numeric acceptance, exact
+workspace, prerequisite eval review fixes, independent review or final-head CI.
