@@ -1358,3 +1358,29 @@ fn eval_math_context_scopes_preserve_rounding_nil_and_exception_restoration() {
 fn eval_function_constant_initialization_preserves_unit_effects_and_aliases() {
     supplemental_materialization_context_controls(0, 5);
 }
+
+
+fn independent_exception_function_primary(rows: &str, stdout: &str, name: &str) {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(rows).unwrap();
+    assert_eq!(rows.len(), 3);
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    // Each primary expression returns normally. An outer owned catch makes
+    // unexpected native errors visible without preventing later controls.
+    let source = format!("[{}]", rows.iter().map(|row| format!("(try {} (catch :default unexpected :unexpected-native-error))", row["expression"].as_str().unwrap())).collect::<Vec<_>>().join(" "));
+    let primary = format!("[{}]", rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    promotion_review_controls(name, &source, &primary, 3);
+}
+
+#[test]
+fn evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/exception-transfer-primary/cases.json"),
+        include_str!("../../../results/m12-eval/exception-transfer-primary/stdout.log"), "exception-extra-primary");
+}
+
+#[test]
+fn eval_metadata_functions_preserve_top_roots_and_nested_unit_boundaries() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/function-metadata-primary/cases.json"),
+        include_str!("../../../results/m12-eval/function-metadata-primary/stdout.log"), "metadata-function-primary");
+}

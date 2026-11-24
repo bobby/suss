@@ -434,3 +434,29 @@ The context values match the primary across rounding modes, nil/unlimited contex
 and a throwing macro call. Function constant materialization and ExceptionInfo
 transfer remain separate review fixes, followed by fresh whole validation/review/
 final-head CI. Keep the same draft PR and do not merge.
+
+
+### Owned language-exception transfer across evaluated macro calls (2026-11-24)
+
+An isolated language exception now transfers owned message/data/cause Forms,
+using actual original accessor functions retained by the Macro bridge. It never
+transfers a source Store GC root. The caller reconstructs actual local Error or
+ExceptionInfo values, using its original ex-info constructor captured before user
+source exposure. Exact numeric data and UTF-16 messages retain their categories
+and scale. VM traps retain their trap path. Unsupported data transfer reports
+its actual diagnostic; causes are bounded to256 levels and ordinary work fuel.
+
+The first frozen correction gate returns0 for source check, both original
+ExceptionInfo observations in Runtime/Macro, and both math-context/restoration
+tests. Three additional pinned controls cover Decimal1.00M/Ratio2/3 data through
+a nested cause, ordinary division-error message/nil data, and nil ExceptionInfo
+message/empty data. Their native Runtime/Macro test passes, as do the original
+error controls and cumulative isolated-function budget check. Exact per-command
+receipts are retained; source/HEAD remain unchanged through each terminal.
+
+The final command deliberately checks the remaining function materialization
+problem and returns101. Its new3-control primary includes top-level metadata
+function identity, earlier top-level-do effects before nested metadata-function
+materialization failure, and existing captured-function top-level identity.
+No all-pass batch or completed eval issue is inferred. Function materialization,
+full validation, independent re-review and final-head CI still gate promotion.

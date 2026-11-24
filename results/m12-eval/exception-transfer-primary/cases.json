@@ -1,0 +1,17 @@
+[
+  {
+    "name": "exception-exact-data-and-cause",
+    "expression": "(let [v (eval '(defmacro review-exact-cause [] (throw (ex-info \"outer\" {:decimal 1.00M} (ex-info \"inner\" {:ratio 2/3}))))) ] (try (v nil nil) (catch Throwable e [(ex-message e) (ex-data e) (ex-message (ex-cause e)) (ex-data (ex-cause e))])))",
+    "observed_edn": "[\"outer\" {:decimal 1.00M} \"inner\" {:ratio 2/3}]"
+  },
+  {
+    "name": "ordinary-error-message-without-info-data",
+    "expression": "(let [v (eval '(defmacro review-divide-error [] (/ 1 0)))] (try (v nil nil) (catch Throwable e [(ex-message e) (ex-data e)])))",
+    "observed_edn": "[\"Divide by zero\" nil]"
+  },
+  {
+    "name": "nil-info-message",
+    "expression": "(let [v (eval '(defmacro review-nil-message [] (throw (ex-info nil {}))))] (try (v nil nil) (catch Throwable e [(ex-message e) (ex-data e)])))",
+    "observed_edn": "[nil {}]"
+  }
+]

@@ -7,6 +7,8 @@ use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
 mod borrowed_reader;
+mod exception;
+pub(crate) use exception::TransferredException;
 
 pub(crate) fn normalized_reader_metadata(
     session: &mut SessionHost<'_>,
@@ -323,6 +325,9 @@ impl FormBridge {
         for (name, source) in [
             ("hash", "suss.core/hash"),
             ("key-test", "suss.core/key-test"),
+            ("exception-message", "suss.core/ex-message"),
+            ("exception-data", "suss.core/ex-data"),
+            ("exception-cause", "suss.core/ex-cause"),
             // Empty literals lower to core's own EMPTY values; class
             // properties of built-in types are private to suss.core.
             ("empty-map", "{}"),

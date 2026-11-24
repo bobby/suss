@@ -58,16 +58,15 @@ impl Drop for InterruptRelay {
 }
 
 fn transferable_error(host: &mut MacroHost<'static>, error: SessionError) -> SessionError {
-    // A language exception owns a root in this Macro Store. Preserve its actual
-    // display as a new caller-side Error instead of sending that root across
-    // Stores. VM traps remain traps and never carry a portable payload.
-    if matches!(error, SessionError::Language(_)) {
-        SessionError::Host(wasmtime::Error::msg(crate::portable_repl::error_display(
-            &mut host.session,
-            &error,
-        )))
-    } else {
-        error
+    let SessionError::Language(value) = error else { return error };
+    match host.bridge.transfer_exception(&mut host.session, &value) {
+        Ok(payload) => SessionError::Host(wasmtime::Error::new(payload)),
+        // A failure while transporting the owned payload must also remain in
+        // its source Store. Preserve an honest diagnostic, never a foreign root.
+        Err(error) if matches!(error, SessionError::Language(_)) => SessionError::Host(
+            wasmtime::Error::msg(format!("Cannot transfer macro exception: {}",
+                crate::portable_repl::error_display(&mut host.session, &error)))),
+        Err(error) => error,
     }
 }
 

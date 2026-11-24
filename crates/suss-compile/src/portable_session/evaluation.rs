@@ -21,6 +21,7 @@ pub(super) struct Evaluation {
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
 #[derive(Clone)]
@@ -612,6 +613,17 @@ impl SessionHost<'_> {
             )?
         };
         *registry_lock(&state.metadata_lookup) = Some(value.object()?.clone());
+        // Capture the original constructor before exposing this Session to user
+        // source; restoring an exception must not consult a rebound ex-info.
+        let cell = self.core_cell("ex-info")?;
+        let value = {
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        *registry_lock(&state.exception_info) = Some(value.object()?.clone());
+
         let runtime = self.runtime;
         let signature = runtime
             .get_func(&mut self.store, "evaluate-form")
@@ -651,6 +663,20 @@ impl SessionHost<'_> {
     fn throw_evaluation_error<T>(&mut self, error: SessionError) -> wasmtime::Result<T> {
         let payload = match error {
             SessionError::Language(value) => value,
+            SessionError::Host(error) if error.is::<crate::portable_macro_data::TransferredException>() => {
+                let state = self.evaluation.clone()
+                    .ok_or_else(|| wasmtime::Error::msg("Missing exception restoration authority"))?;
+                let bridge = state.bridge(self).map_err(native_error)?;
+                let constructor = registry_lock(&state.exception_info).clone()
+                    .ok_or_else(|| wasmtime::Error::msg("Missing original exception constructor"))?;
+                let factory = {
+                    let mut roots = RootScope::new(&mut self.store);
+                    let value = Val::AnyRef(Some(constructor.to_rooted(&mut roots)));
+                    own(&mut roots, value, self.identity, &self.handles).map_err(native_error)?
+                };
+                error.downcast_ref::<crate::portable_macro_data::TransferredException>().unwrap()
+                    .restore(&bridge, self, &factory).map_err(native_error)?
+            }
             error => {
                 let text = error.to_string();
                 let units = text.encode_utf16().collect::<Vec<_>>();

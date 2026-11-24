@@ -1755,6 +1755,15 @@ impl SessionHost<'_> {
         }
         Ok(result)
     }
+    pub(crate) fn data_language_error(&mut self, message: &SessionValue) -> Result<SessionValue, SessionError> {
+        self.check(message)?;
+        self.charge_host_work(1)?;
+        let mut scope = RootScope::new(&mut self.store);
+        let function = self.runtime.get_func(&mut scope, "language-error-new")
+            .ok_or_else(|| wasmtime::Error::msg("Missing language error constructor"))?;
+        let message = message.val(&mut scope.as_context_mut());
+        call(&mut scope, self.runtime, function, &[message], self.identity, &self.handles)
+    }
     /// Allocate compiler data scalars through the shared runtime without compiling
     /// source, replaying initializers or adding resident fragments.
     pub(crate) fn data_scalar(
