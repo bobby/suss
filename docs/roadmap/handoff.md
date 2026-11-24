@@ -34172,3 +34172,15 @@ handoff prose changes and historical parent completion archives are added.
 The qualification records this comparison before the new completion notes
 and archives. Real eval and the remaining numeric umbrella requirements
 remain separate work; these command results establish no eval acceptance.
+
+
+## Random provenance review correction (2026-11-24)
+
+Independent review found the recorded hash for
+`crates/suss-cli/tests/clojure_random.rs` preceded its WIT-name and lifecycle
+repair. `python3 results/m12-random/provenance.py --record` refreshes that
+one metadata field; `python3 results/m12-random/provenance.py` then passes.
+The implementation, tests, fixtures, manifests and archived native inputs are
+unchanged from447c1957, so the frozen61397661 native results retain the
+source-equivalence qualification above. Final-head remote checks remain
+required after this documentation-only correction.

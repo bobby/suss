@@ -65,7 +65,7 @@
     "crates/suss-compile/src/portable_session/random_tests.rs": "145549ae0ee8244d516806697594360df570e5e9529a0aebf957cd816917b751",
     "crates/suss-compile/tests/runtime_random.rs": "1e305df622198fc5930b6a5459e24fde3aa71000c76aa952f8d7630ac0230c51",
     "crates/suss-compile/tests/portable_random.rs": "0a876a8455c97e88b506819bf5356f7e5629c3d0607c611854a2a4f93fb6d103",
-    "crates/suss-cli/tests/clojure_random.rs": "125cdb493fe4ba68c4c2f7161c9fd002bf4206a244646191beb6e9d1e017fd40",
+    "crates/suss-cli/tests/clojure_random.rs": "0dbb1146c790bf92087ca13eba5e9cef8a0884e14414ba2f1e6fcbcb77818c0a",
     "results/m12-random/public-effects/cases.json": "c88881ba0f727eb0dc7f1e5db207ce1cbcbeb2a316ebf7731041899f11c6a933",
     "results/m12-random/public-effects/command.json": "2bb6ead58d9955f184a05f2415deb5c9a3a60dfcfb75bbe1031547dc16d9b13e",
     "results/m12-random/public-effects/oracle.clj": "4f67c1bb2f0ca5d932285a96d66983a1b6278ce6f5d077439c65e9f56ccf7ee6",
