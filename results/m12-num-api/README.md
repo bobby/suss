@@ -88,3 +88,38 @@ numeric and unchanged upstream contract checks. Full per-command logs/times
 are retained under results/m12-num-api/broader-compiler-after-boxed-replacement-fix.
 This checkpoint does not replace the full captured numeric acceptance, exact
 workspace, prerequisite eval review fixes, independent review or final-head CI.
+
+
+### Complete original capture after numeric source corrections (2026-11-24)
+
+At3ba85b35 the actual native complete-suite command returns101 in486.812s,
+with source/HEAD unchanged. The outer producer returns0; an explicit terminal
+verifier correctly rejects calling that a native pass. Complete source locking
+passes. Original global primary, comparator, count/skip/opaque rules and reviewed
+baseline remain unchanged. Full capture/command/log archives are retained.
+
+The read-only conservation reviewer preserves every prior ordered row, every
+old test's observed count, every previously loaded namespace and every successful
+row judgment. All229 BigInt/Ratio and200 Decimal tagged observations still match.
+The four newly loaded bodies execute186 additional rows:71 eq,71 not-eq,26 num
+and18 remove. All142 equality rows match. Global measured counts move from
+5354 host matches/106 guest judgments/105 failures/1374 unexecuted/63 failed
+namespaces to5512/107/132/1196/59, with zero skips in both captures.
+
+The newly exposed assertion differences are exactly the original JVM/clj num
+primary's18-row count versus Suss/default26 (including8 extra observed rows),
+and remove ordinal18 expecting a Character sequence error. Suss character
+literals are one-unit UTF-16 strings under the accepted platform contract, so
+that newly executed row reports no throw. Four other namespace failures advance
+past regex reading to the actual missing re-matcher/repeatedly/clojure.string
+dependencies. No new difference is accepted or hidden by this audit; native0
+and final workspace acceptance are not established. The separately recorded
+Clojure default-num26 reference and its explicit3 narrow-number differences
+remain distinct from the unchanged global JVM/clj18 primary.
+
+Run `python3 results/m12-num-api/review-full-capture-conservation.py
+results/m12-num-api/full-suite-after-source-inline` to reproduce the audit. It
+checks the exact previous/primary/baseline hashes and never writes a baseline.
+Its per-row5369 host-compatible decisions are not the old global5354 count:
+existing count guards also affect the global classification. Scope and evidence
+review of these newly visible differences is required before any baseline change.
