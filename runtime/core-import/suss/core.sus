@@ -5458,28 +5458,20 @@
                     (next remaining))
              result)))))))
 
-(deftype Var [val sym _meta]
+(deftype Var [val sym ^:mutable _meta]
   Object
   (isMacro [_]
-    (.-cljs$lang$macro (val)))
+    (:macro _meta))
   (toString [_]
     (str_ "#'" sym))
   IDeref
   (-deref [_] (val))
   IMeta
   (-meta [_] _meta)
-  IWithMeta
-  (-with-meta [_ new-meta]
-    (Var. val sym new-meta))
   IEquiv
-  (-equiv [this other]
-    (if (instance? Var other)
-      (= (.-sym this) (.-sym other))
-      false))
+  (-equiv [this other] (identical? this other))
   IHash
-  (-hash [_]
-    (hash-symbol sym))
-  Fn
+  (-hash [this] (suss.bootstrap/identity-uid this))
   IFn
   (-invoke [_]
     ((val)))
@@ -12672,3 +12664,17 @@ reduces them without incurring seq initialization"
        :added "1.0" :static true} eval
   (fn [form] (suss.bootstrap/evaluate-form form)))
 ;; END Clojure eval
+
+
+;; Original native Var construction adapters. Compiler-owned hidden cells
+;; intern the result; the getter is compiled directly against its live cell.
+(def ^:private make-binding-var
+  (fn [getter sym metadata]
+    (Var. getter sym
+      (assoc metadata :name (symbol (name sym))
+                      :ns (the-ns (symbol (namespace sym)))))))
+(def ^:private update-binding-var-meta!
+  (fn [v metadata]
+    (set! (.-_meta v)
+      (assoc metadata :name (:name (meta v)) :ns (:ns (meta v))))
+    v))

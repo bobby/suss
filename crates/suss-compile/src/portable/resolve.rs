@@ -1157,6 +1157,19 @@ impl Environment {
         }
         global
     }
+    /// One nominal Var per actual persistent source binding, phase-local and
+    /// unresolvable by user source. The getter closes over the original cell.
+    pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
+        let identity = format!("{}/{}", target.namespace(), target.name());
+        let name = identity.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        let global = Global { phase: target.phase, namespace: "suss.internal.vars".into(), name: format!("var-{name}").into() };
+        match self.bindings.get(&global) {
+            Some(Binding::InternalCell(_)) => {},
+            Some(_) => return Err(error("Var identity collides with a source binding")),
+            None => { self.bind(global.clone(), Binding::InternalCell(global.clone())); self.source_changed(); },
+        }
+        Ok(global)
+    }
     /// The hidden cell that holds the interned keyword `fqn` for literals
     /// (#361): every literal site of a keyword reads the same keyword.
     pub(crate) fn keyword_cell(&mut self, phase: Phase, fqn: &str) -> Global {

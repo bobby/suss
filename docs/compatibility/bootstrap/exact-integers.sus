@@ -2525,3 +2525,17 @@
        :added "1.0" :static true} eval
   (fn [form] (suss.bootstrap/evaluate-form form)))
 ;; END Clojure eval
+
+
+;; Original native Var construction adapters. Compiler-owned hidden cells
+;; intern the result; the getter is compiled directly against its live cell.
+(def ^:private make-binding-var
+  (fn [getter sym metadata]
+    (Var. getter sym
+      (assoc metadata :name (symbol (name sym))
+                      :ns (the-ns (symbol (namespace sym)))))))
+(def ^:private update-binding-var-meta!
+  (fn [v metadata]
+    (set! (.-_meta v)
+      (assoc metadata :name (:name (meta v)) :ns (:ns (meta v))))
+    v))

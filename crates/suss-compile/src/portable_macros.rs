@@ -822,7 +822,11 @@ impl MacroHost<'_> {
         let provenance = declaration_provenance_metered(form, origin,
             &mut |work| self.session.charge_host_work(work))
             .map_err(|error| declaration_provenance_context(error, &form.span, origin))?;
-        let value = self.session.eval_prepared(prepared)?;
+        let binding = prepared.fragment.definition.as_ref()
+            .ok_or_else(|| failure(form, "Macro declaration did not retain its binding identity"))?
+            .global.clone();
+        self.session.eval_prepared(prepared)?;
+        let value = self.session.binding_value(&binding)?;
         let namespace = self.session.current_namespace().to_owned();
         let key = (namespace.clone(), name.name.clone());
         if reads_caller_form {

@@ -194,3 +194,57 @@ fn compiled_eval_is_reentrant_inside_actual_compiled_macro_functions() {
         ])
     );
 }
+
+#[test]
+fn vars_retain_real_live_cells_identity_metadata_and_callability() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/live-vars-primary/cases.json"
+    ))
+    .unwrap();
+    assert_eq!(rows.len(), 10);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("user").unwrap();
+        macros.enter_namespace("user").unwrap();
+        suss_compile::portable_repl::evaluate_script_compiled(
+            &mut session,
+            &mut macros,
+            include_str!("../../../results/m12-eval/live-vars-primary/setup.sus"),
+            None,
+        )
+        .unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let expression = row["expression"]
+                .as_str()
+                .unwrap()
+                .replace("(catch Throwable ", "(catch :default ");
+            let value = session
+                .eval_with_macros(&expression, &mut macros)
+                .unwrap_or_else(|error| panic!("{}: {error}", row["name"]));
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, &value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{}",
+                row["name"]
+            );
+            eprintln!("var-primary-match {:?} {}", session.phase(), row["name"]);
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(20_000);
+            assert_eq!(
+                canonical(decoder.decode_session(&mut session, value).unwrap()),
+                canonical(expected(&forms[0])),
+                "{} after GC",
+                row["name"]
+            );
+        }
+    }
+}

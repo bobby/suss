@@ -70,7 +70,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Definition { constant: None,
+            kind: std::sync::Arc::new(Expression::Definition { result: None, constant: None,
                 global: global.clone(),
                 name_metadata: Vec::new(),
                 name_span: form.span.clone(),

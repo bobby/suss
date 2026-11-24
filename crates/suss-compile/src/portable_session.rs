@@ -1382,6 +1382,17 @@ impl SessionHost<'_> {
             &self.handles,
         )
     }
+    /// Read an already-published root through its real live binding cell.
+    /// Macro catalogs store the function root, separately from def's Var result.
+    pub(crate) fn binding_value(&mut self, identity: &CellIdentity) -> Result<SessionValue, SessionError> {
+        let cell = registry_lock(&self.compiler).cells.get(identity).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Missing published binding cell"))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let get = self.runtime.get_func(&mut roots, "binding-get")
+            .ok_or_else(|| wasmtime::Error::msg("Missing binding reader"))?;
+        let value = cell.get(&mut roots);
+        call(&mut roots, self.runtime, get, &[value], self.identity, &self.handles)
+    }
     pub fn eval(&mut self, source: &str) -> Result<SessionValue, SessionError> {
         let snapshot = self.compilation_snapshot();
         let prepared = portable::modules::prepare_input(

@@ -496,6 +496,7 @@ impl<'a> Lowerer<'a> {
             }
             Expression::Definition {
                 global,
+                result: var,
                 initializer,
                 once,
                 linked,
@@ -538,6 +539,7 @@ impl<'a> Lowerer<'a> {
                             )?;
                             self.write_link(linked, value, &hir.span)?;
                             self.write_link(constant, value, &hir.span)?;
+                            let value = if let Some(var) = var { operand!(var) } else { value };
                             self.function.blocks[self.current].terminator = Terminator::Jump {
                                 target: join,
                                 arguments: vec![value],
@@ -558,7 +560,7 @@ impl<'a> Lowerer<'a> {
                         )?;
                         self.write_link(linked, written, &hir.span)?;
                         self.write_link(constant, written, &hir.span)?;
-                        written
+                        if let Some(var) = var { operand!(var) } else { written }
                     }
                 } else {
                     // A declaration does not reset an existing cell or bind an unbound one.
@@ -568,7 +570,7 @@ impl<'a> Lowerer<'a> {
                             message: "HIR defonce requires initializer".into(),
                         });
                     }
-                    self.literal(Literal::Nil, hir.span.clone())?
+                    if let Some(var) = var { operand!(var) } else { self.literal(Literal::Nil, hir.span.clone())? }
                 }
             }
             Expression::Local(id) => {

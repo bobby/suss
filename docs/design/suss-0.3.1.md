@@ -610,3 +610,15 @@ implementation is a known gap.
 
 Upstream proposals and tool releases move. Recheck these sources when executing
 M0 and record actual tested revisions; do not equate an open proposal with support.
+
+
+2026-11-24 native Var decision (#515): public `var` and definition results
+refer to the native session's actual persistent binding cells. Intern one
+nominal Var per canonical phase/namespace/name in a compiler-owned hidden cell;
+its compiled getter reads the original live binding cell, including dynamic
+bindings, without retaining a root-value snapshot. Repeated lookup and eval
+return the same object across fragments and GC. Metadata belongs to that Var;
+redefinition retains identity while updating declaration metadata. Use the
+existing source-backed Var class and callable protocol machinery. This extends
+the earlier absence of runtime Vars; changing ns-refers' symbol-valued platform
+contract is separate work. Pure AOT does not acquire a hidden compiler service.

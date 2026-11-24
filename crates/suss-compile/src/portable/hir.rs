@@ -20,6 +20,7 @@ mod namespaces;
 mod exceptions;
 mod nominal;
 mod quotes;
+mod vars;
 mod primitive_returns;
 mod source_tags;
 use super::{
@@ -1186,6 +1187,8 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// Native Var result after a successful write; absent during bootstrap.
+        result: Option<Box<Hir>>,
         /// An initialized scalar constant revision, published with its live var.
         constant: Option<Global>,
         global: Global,
@@ -1719,6 +1722,7 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                result: None,
                 constant: None,
                         global: fallback.clone(),
                         name_metadata: Vec::new(),
@@ -2594,12 +2598,16 @@ impl Analyzer<'_> {
             self.environment.end_direct_link(&global);
             initializer
         };
+        let result = if !self.privileged && self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone()).is_ok() {
+            Some(Box::new(self.binding_var(form, &global, true)?))
+        } else { None };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                result,
                 constant: constant_cell,
                 global,
                 name_metadata: args[0].metadata.clone(),
@@ -4224,8 +4232,16 @@ impl Analyzer<'_> {
                 kind: std::sync::Arc::new(Expression::Recur { target, arguments }),
             });
         }
+        if bare && symbol.name == "var" {
+            if args.len() != 1 { return Err(fail(form.span.clone(), "var requires exactly one symbol")); }
+            let Kind::Symbol(target) = &args[0].kind else { return Err(fail(args[0].span.clone(), "var requires a symbol")); };
+            let binding = self.environment.resolve(self.phase, target, args[0].span.clone())?;
+            let global = binding.global().clone();
+            return self.binding_var(form, &global, false);
+        }
         if bare && symbol.name == "def" {
-            if args.len() == 1 && context != super::AnalysisContext::Statement {
+            if args.len() == 1 && context != super::AnalysisContext::Statement
+                && self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone()).is_err() {
                 return Err(fail(
                     form.span.clone(),
                     "Initializerless def expression results are not certified yet; use a declaration statement",

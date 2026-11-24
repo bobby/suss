@@ -14,6 +14,7 @@ pub(super) struct Evaluation {
     external: Mutex<Option<MacroService>>,
     own: Mutex<Option<MacroAuthority>>,
     namespace: Mutex<Option<NamespaceAccess>>,
+    var_class: Mutex<Option<SessionValue>>,
 }
 
 #[derive(Clone)]
@@ -137,7 +138,8 @@ impl Evaluation {
         let external = registry_lock(&self.external).take();
         let own = registry_lock(&self.own).take();
         let namespace = registry_lock(&self.namespace).take();
-        drop((profile, bridge, external, own, namespace));
+        let var_class = registry_lock(&self.var_class).take();
+        drop((profile, bridge, external, own, namespace, var_class));
     }
     fn bridge(&self, view: &mut SessionHost<'_>) -> Result<Arc<FormBridge>, SessionError> {
         let existing = registry_lock(&self.bridge).clone();
@@ -181,6 +183,23 @@ impl Evaluation {
         let mut is_function = [Val::I32(0)];
         predicate.call(&mut view.store, &[argument], &mut is_function)?;
         if is_function[0].unwrap_i32() != 0 {
+            return Ok(value);
+        }
+        // Vars are self-evaluating reference objects too. Classify against the
+        // actual canonical class captured during core provision, never a user
+        // predicate or an arbitrary decoder failure.
+        let var_class = registry_lock(&self.var_class)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        let predicate = view
+            .runtime
+            .get_func(&mut view.store, "object-instance")
+            .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
+        let class = var_class.val(&mut view.store.as_context_mut());
+        let input = value.val(&mut view.store.as_context_mut());
+        let mut is_var = [Val::I32(0)];
+        predicate.call(&mut view.store, &[class, input], &mut is_var)?;
+        if is_var[0].unwrap_i32() != 0 {
             return Ok(value);
         }
         let bridge = self.bridge(&mut view)?;
@@ -271,6 +290,21 @@ impl SessionHost<'_> {
         }
         let state = Arc::new(Evaluation::default());
         *registry_lock(&state.namespace) = Some(NamespaceAccess::capture(self)?);
+        let cell = self.core_cell("Var")?;
+        let value = {
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(
+                &mut roots,
+                self.runtime,
+                get,
+                &[cell],
+                self.identity,
+                &self.handles,
+            )?
+        };
+        *registry_lock(&state.var_class) = Some(value);
         let runtime = self.runtime;
         let signature = runtime
             .get_func(&mut self.store, "evaluate-form")
