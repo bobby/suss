@@ -296,7 +296,10 @@ fn exhausted_expansion_preserves_effects_already_executed_in_the_macro_store() {
         .eval_with_macros("(record-effect 7)", &mut macros)
         .unwrap();
     assert_eq!(number(&mut repl, &first), 7);
-    let calls = (0..32)
+    // The old 32-call batch now fits this same budget in the current compiler.
+    // Each call still fits independently; the larger batch must exhaust one
+    // cumulative budget after executing effects, then recover with the same limit.
+    let calls = (0..128)
         .map(|_| "(record-effect 1)")
         .collect::<Vec<_>>()
         .join(" ");

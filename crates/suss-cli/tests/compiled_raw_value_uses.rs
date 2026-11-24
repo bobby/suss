@@ -3,7 +3,9 @@
 //! array access's index, element and stored value are raw. Each case's value
 //! is the one the boxed paths gave before, including at the i31 boundary, for
 //! longs outside it, NaN and failing operations, except that a wrong array
-//! hint now throws, as Clojure's checked cast does (#389).
+//! hint now throws, as Clojure's checked cast does (#389). Computed double
+//! identity follows pinned Clojure: a new box differs from a Var's box (M12);
+//! results/m12-num-api/ci5-double-identity-primary records that correction.
 //! Operands derive from the argument `n`, 0, so nothing folds at compile
 //! time.
 use std::process::Command;
@@ -18,7 +20,7 @@ const CASES: &[(&str, &str, i64)] = &[
     ("identical-long-i31-var", "(loop [i (- n 3) c 0] (if (< i 3) (recur (inc i) (if (identical? i neg) (inc c) c)) c))", 1),
     ("identical-long-boxed-var", "(if (identical? (* (+ n 3) 1073741824) big) 1 0)", 1),
     ("identical-long-boxed-other", "(if (identical? (* (+ n 3) 1073741824) neg) 1 0)", 0),
-    ("identical-double-var", "(if (identical? (* (+ n 1.5) 2) d) 1 0)", 1),
+    ("identical-double-var", "(if (identical? (* (+ n 1.5) 2) d) 1 0)", 0),
     ("identical-long-double", "(if (identical? (+ n 3) d) 1 0)", 0),
     ("identical-double-long", "(if (identical? (+ n 3.0) three) 1 0)", 0),
     ("identical-long-keyword", "(if (identical? (+ n 3) kw) 1 0)", 0),

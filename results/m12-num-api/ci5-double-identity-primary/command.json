@@ -1,0 +1,59 @@
+{
+  "head": "9f573766ca082fd34b872b1f360bd1caf7fd5c00",
+  "production_binary_head": "7b71a47b8b60c3b47e69ebb3eabe098270521725",
+  "binary_sha256": "4bc50d0a1678cac13759a95517bfd4c8ae28127fc6a14c1ef04b9e61c0b978c0",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    [
+      "symbolic-nan-literal-identity",
+      "(identical? ##NaN ##NaN)"
+    ],
+    [
+      "computed-double-versus-var",
+      "(do (def d 3.0) (let [f (fn [n] (if (identical? (* (+ n 1.5) 2) d) 1 0))] (f 0)))"
+    ],
+    [
+      "retained-double-identity",
+      "(let [x (+ 1.5 1.5)] (identical? x x))"
+    ],
+    [
+      "computed-distinct-double",
+      "(let [f (fn [n] (identical? (* (+ n 1.5) 2) (* (+ n 1.5) 2)))] (f 0))"
+    ]
+  ],
+  "oracle_sha256": "7a9df5a7b76e3d8f202086447c05a199b35c333896932ad52aeac76f497e0bec",
+  "commands": [
+    {
+      "name": "primary",
+      "command": [
+        "java",
+        "-Xmx256m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/ci5-double-identity-primary/oracle.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 1.4890005588531494,
+      "stdout": "[true 0 false false]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/suss",
+        "-e",
+        "[(identical? ##NaN ##NaN) (do (def d 3.0) (let [f (fn [n] (if (identical? (* (+ n 1.5) 2) d) 1 0))] (f 0))) (let [x (+ 1.5 1.5)] (identical? x x)) (let [f (fn [n] (identical? (* (+ n 1.5) 2) (* (+ n 1.5) 2)))] (f 0))]"
+      ],
+      "exit_code": 0,
+      "seconds": 4.57466983795166,
+      "stdout": "[true 0 false false]\n",
+      "stderr_tail": ""
+    }
+  ],
+  "complete": true
+}

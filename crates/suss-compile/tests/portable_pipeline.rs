@@ -791,6 +791,10 @@ fn clojure_override(id: &str) -> Option<serde_json::Value> {
         "unary-divide" => serde_json::json!({"tag":"ratio","numerator":"1","denominator":"4"}),
         "negative-zero" => serde_json::json!({"tag":"long","value":"0"}),
         "predicate-identical-signed-zero" => serde_json::json!({"tag":"bool","value":false}),
+        // Clojure 1.12.6 uses the canonical symbolic-NaN object; the immutable
+        // CLJS fixture records a different identity model. Fresh primary:
+        // results/m12-num-api/ci5-double-identity-primary.
+        "predicate-identical-nan" => serde_json::json!({"tag":"bool","value":true}),
         "number-to-string-2" => string("-0.0"),
         "number-to-string-4" => string("1.0E-7"),
         "number-to-string-5" => string("1.0E-6"),

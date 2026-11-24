@@ -1,0 +1,13 @@
+{
+  "head": "9f573766ca082fd34b872b1f360bd1caf7fd5c00",
+  "actual_full_native_exit": 0,
+  "checker_source": "crates/suss-compile/tests/support/pinned_numeric_source_bodies.rs",
+  "checker_sha256": "1e2c9895efd3210e740c4467f481076ea2bb216aa3e9358335305d9824328543",
+  "full_capture_sha256": "cab09ef2adaedaf75b0c1e3e3a0fedd070b9852540982574a97eb87d1b7cb258",
+  "projected_num_view_sha256": "65d30afca0b0f5b4840f372c92b922b2ee5189c695a7342514bc6bc9c2679c08",
+  "exact_checker_code_sha256": "f6ed2489ca1dd37ce4e98c57e70d026a568045b68820411b77fa26694483162f",
+  "exit_code": 0,
+  "seconds": 0.0567629337310791,
+  "source_unchanged": true,
+  "qualification": "Independent exact existing default26 primary checks applied to the fresh full original capture, beyond the unchanged global JVM/clj18 count comparison. Must retain23host and3explicitnarrowdifferences; no assertion prefix, fabricated values, changed count/skip/opaque rule or primary edit."
+}
