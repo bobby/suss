@@ -82,3 +82,12 @@ Full receipts and logs are retained in
 `results/m12-eval/after-borrowed-session-interface`. These 54 regressions
 validate the borrowed interface while public eval, shared macro authority,
 real Vars and complete primary/body acceptance remain required.
+
+At f8f78da5, the borrowed analysis graph gate returns 0 with unchanged
+inputs. Runtime/Macro callbacks use the ordinary expansion-context transport,
+then invoke a compiled transformer and compile its real result to 3/2 across
+GC, without refilling caller fuel or retiring owner requests. All 60 existing
+analysis-graph regressions also pass (393.767 seconds including the build for
+the callback test; 8.329 seconds for the graph target). Full receipts/logs are
+under `results/m12-eval/borrowed-analysis-first-native`. Shared user-macro
+authority and public eval acceptance remain required.
