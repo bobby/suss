@@ -30,23 +30,16 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
             Kind::Long(n) => Value::Long(*n),
-            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Integer { big: true, .. }) => {
-                let crate::forms::ExactValue::Integer { value, .. } = &number.value else { unreachable!() };
-                Value::BigInt(value.clone())
-            }
-            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Integer { big: false, .. }) => {
-                let crate::forms::ExactValue::Integer { value, .. } = &number.value else { unreachable!() };
-                Value::BigInteger(value.clone())
-            }
-            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Ratio { .. }) => {
-                let crate::forms::ExactValue::Ratio { numerator, denominator } = &number.value else { unreachable!() };
-                Value::Ratio(num_rational::BigRational::new(numerator.clone(), denominator.clone()))
-            }
-            // Decimal still lacks a native tooling value; retain its carrier.
-            Kind::Exact(number) => Value::Tagged(
-                Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
-                Box::new(Value::String(number.text.clone())),
-            ),
+            Kind::Exact(number) => match &number.value {
+                crate::forms::ExactValue::Integer { value, big: true } => Value::BigInt(value.clone()),
+                crate::forms::ExactValue::Integer { value, big: false } => Value::BigInteger(value.clone()),
+                crate::forms::ExactValue::Ratio { numerator, denominator } => {
+                    Value::Ratio(num_rational::BigRational::new(numerator.clone(), denominator.clone()))
+                }
+                crate::forms::ExactValue::Decimal { unscaled, scale } => {
+                    Value::Decimal { unscaled: unscaled.clone(), scale: *scale }
+                }
+            },
             Kind::Uuid(value) => Value::Uuid(*value),
             Kind::String(units) => string_value(units),
             Kind::Symbol(s) => Value::Symbol(s.clone()),
@@ -135,6 +128,12 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::BigInt(n) => form(Kind::Exact(crate::forms::ExactNumber::bigint(num_traits::Signed::is_negative(n), n.to_u32_digits().1))),
             Value::BigInteger(n) => form(Kind::Exact(crate::forms::ExactNumber::integer(num_traits::Signed::is_negative(n), n.to_u32_digits().1, false))),
             Value::Ratio(n) => form(Kind::Exact(crate::forms::ExactNumber::ratio(num_traits::Signed::is_negative(n), n.numer().to_u32_digits().1, n.denom().to_u32_digits().1))),
+            Value::Decimal { unscaled, scale } => {
+                let mut number = crate::forms::ExactNumber::decimal(
+                    num_traits::Signed::is_negative(unscaled), unscaled.to_u32_digits().1, *scale);
+                number.text = format!("{}M", super::decimal_text(unscaled, *scale));
+                form(Kind::Exact(number))
+            }
             Value::String(s) => form(Kind::String(s.encode_utf16().collect())),
             Value::Uuid(value) => form(Kind::Uuid(*value)),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),

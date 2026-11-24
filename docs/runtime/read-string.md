@@ -108,11 +108,10 @@ them against `*ns*`, and the compiler against the current namespace (#30).
   class with a matching constructor. An unregistered name fails with "No
   record type for tag ...".
 - **Data:** characters are one-unit strings. Integers in the long range read
-  as longs and decimals as doubles (#335), with the compiler's rules
-  ([reader forms](reader-forms.md)); a literal that needs a BigInt, Ratio or
-  BigDecimal, such as `1/3`, `1N`, `1.5M` or `9223372036854775808`, fails
-  with "Unsupported numeric literal ..." unless it is in an unselected
-  conditional branch or dropped with `#_`, until #338 and #339. Duplicate keys
+  as longs and unsuffixed decimal/exponent literals as doubles, with the
+  compiler's rules ([reader forms](reader-forms.md)). BigInt, Ratio and
+  BigDecimal literals such as `1/3`, `1N`, `1.5M` and
+  `9223372036854775808` construct exact numeric values. Duplicate keys
   are found by Suss's `=`, so `#{1 1}` is a duplicate; `#{1 1.0}` holds two
   elements, as in Clojure.
 - **Errors:** errors are `ex-info` values with reader data, not
@@ -146,10 +145,11 @@ character class table and builds values with transients. `read-form` and
 because a Wasm frame holds a slot for every value its function keeps across a
 call. Other forms dispatch through tables of handlers indexed by the next unit.
 
-Numbers follow the compiler's reader. Integers in every radix, and ratio terms,
-are read exactly as longs by a private `suss.bootstrap/parse-long` primitive,
-which reports a value beyond the long range so the reader can reject it as a
-BigInt; doubles go through the runtime's correctly rounded parser. A `suss.bootstrap/string-from-unit` primitive builds the
+Numbers follow the compiler's reader. Small integer chunks use the private
+`suss.bootstrap/parse-long` primitive; arbitrary-precision accumulation retains
+integers and ratio terms beyond the long range. BigDecimal coefficients remain
+integers with a separate signed 32-bit scale. Doubles use the runtime's correctly
+rounded parser. A `suss.bootstrap/string-from-unit` primitive builds the
 one-unit strings of escapes and characters.
 
 `TaggedLiteral`, `tagged-literal?` and `tagged-literal` are imported from the

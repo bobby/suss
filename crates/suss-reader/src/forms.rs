@@ -3,8 +3,8 @@
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates. Integer literals in the long range are longs and
 //! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
-//! [`ExactNumber`]s. BigInt and Ratio evaluate as exact GC values; Decimal
-//! evaluation still needs their runtime types (ADR-0003, #338, #339).
+//! [`ExactNumber`]s. Their arbitrary-precision fields pass directly to the
+//! compiler, native tooling EDN and compiled Runtime/Macro numeric values.
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -158,10 +158,10 @@ fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
     Ok(())
 }
 
-/// A Clojure numeric literal that binary64 can't hold exactly: an `N` or `M`
-/// literal, an integer beyond ±2^53, or a ratio that doesn't reduce to an
-/// integer within ±2^53 (ADR-0003). It reads anywhere, so reader-conditional
-/// branches that mention one load, but evaluating it fails (#333).
+/// An exact Clojure BigInt, BigInteger, Ratio or BigDecimal datum. Ordinary
+/// integers in the signed 64-bit range use `Kind::Long`; larger integers and
+/// suffixed literals retain their category and arbitrary-precision fields.
+/// Unselected reader-conditional branches still validate numeric syntax.
 #[derive(Debug, Clone)]
 pub struct ExactNumber {
     /// The literal as written, for diagnostics and macro data.
@@ -184,9 +184,8 @@ impl PartialEq for ExactNumber {
         self.value == other.value
     }
 }
-/// Exact literals without a runtime value use this macro-data placeholder
-/// namespace. BigInt and Ratio have real runtime values; Decimal still uses a
-/// symbol named by the literal text, which decoding restores.
+/// The reserved namespace recognized by `ExactNumber::from_symbol` when
+/// decoding symbolic macro input. Native numeric transport uses exact fields.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
     /// The decimal-string payload of the Suss BigInteger source/data carrier.
@@ -240,13 +239,6 @@ impl ExactNumber {
             ExactValue::Ratio { numerator, denominator } => format!("{numerator}/{denominator}"),
             ExactValue::Decimal { unscaled, scale } => format!("{unscaled}E{}M", -i64::from(*scale)),
         }
-    }
-    /// The evaluation-time failure for a runtime type not yet implemented.
-    pub fn unsupported_message(&self) -> String {
-        format!(
-            "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
-            self.text
-        )
     }
 }
 

@@ -50,25 +50,24 @@ reduces to an integer is that long (`4/2` is 2), while a term beyond the long
 range makes the result a BigInt (`36893488147419103232/8`). Any other literal,
 such as `1/3`, `1N`, `1.5M` or `9223372036854775808`, reads as a `Kind::Exact`
 form holding its Clojure value (a reduced ratio, an integer marked BigInt or
-not, or a BigDecimal's unscaled integer and scale). Until Suss has BigInt,
-Ratio and BigDecimal ([ADR-0003](../adr/0003-clojure-numeric-tower.md), #338,
-#339), evaluating one throws "Unsupported numeric literal 1/3: ratios, BigInts
-and BigDecimals need Clojure's numeric types (#338, #339)", in code and in
-quoted data, so nothing rounds silently. A `case` with such a constant
-evaluates its expression and then throws the same way. Because they read, a
-reader-conditional branch that isn't selected, or a form dropped with `#_`,
-may hold them; only a malformed literal, such as `1/0` ("Divide by zero"),
+not, or a BigDecimal's unscaled integer and scale). The compiler lowers those
+fields into exact runtime values, including quoted data and `case` constants;
+no binary64 conversion or unsupported-numeric placeholder is involved. A
+reader-conditional branch that is not selected, or a form dropped with `#_`,
+still validates its numeric syntax. A malformed literal, such as `1/0` ("Divide by zero"),
 `1/2N`, `08`, `02r1` or a BigDecimal whose scale doesn't fit 32 bits
 ("Decimal exponent out of range"), fails there. As in Clojure, a radix
 integer's trailing `N` or `M` is a digit, so `36rN` is 23 and `2r1N` is
 malformed.
 
-Tooling EDN (`suss analyze`) shows an exact literal as
-`#suss/exact-number "1/3"`. Macros receive an exact literal as a symbol in the
-`suss.reader.exact-number` namespace named by its text, and an expansion that
-returns that symbol gives the literal back. A literal in a macro's own code,
-such as a syntax-quote template, is evaluated when the macro runs, so that
-macro fails to expand until #338 and #339.
+Tooling EDN (`suss analyze`) carries BigInt, Ratio and BigDecimal directly,
+printing tokens such as `1N`, `1/3` and `1.50M`. BigDecimal retains its unscaled
+integer and signed 32-bit scale through native form conversion and source
+emission. Compiled Runtime/Macro transport carries the same numeric fields;
+macro arguments, results and syntax-quote templates use real numeric values.
+The separate `#suss/biginteger "digits"` carrier preserves the BigInteger
+projection's plain printing when emitted source would otherwise read as Long
+or BigInt. See [tooling EDN](tooling-edn.md).
 
 An auto-resolved keyword, `::name` or `::alias/name`, is
 read as an `AutoKeyword` form; the compiler resolves it in the current namespace

@@ -34985,3 +34985,29 @@ to this checkout. Its unchanged offline baseline passes with original dependency
 identities after subset-lock reconciliation; the initial --locked refusal is
 retained. The copy's Decimal implementation remains separate from this frozen
 eval source and has no claimed workspace integration or acceptance pass.
+
+
+### Exact native Decimal tooling follow-up (2026-11-24)
+
+The numeric completion branch is based on f17f7077 without modifying the frozen
+compiled-eval checkout. Native EDN now retains Decimal coefficient/scale, prints
+ordinary M literals, and projects exact source forms. Scale-aware reader key
+identities preserve storage while rejecting numeric duplicates; Serde refuses
+lossy primitive conversion. The unused unsupported-numeric diagnostic is removed.
+
+`cargo test -p suss-reader --locked --offline -- --test-threads=2` completes with
+actual0 in39.26s in the real workspace dependency graph, source/primary/HEAD
+unchanged. It reuses only the inactive isolated reader target; it never writes
+the active eval workspace build target. The original failing Rust control and
+126 fresh pinned JVM coefficient/scale/printing/admission/duplicate controls are
+retained under results/m12-decimal-tooling. Original suite bodies, primary,
+skips, accepted failures, dependency versions and numeric runtime kernels stay
+unchanged.
+
+Next validate analyzer/source and actual Runtime/Macro/AOT integration, implement
+the real Pattern literal/value prerequisite needed to load complete eq/not-eq/
+num bodies, and execute those original numeric source bodies. Fresh independent
+Pattern observations show stable function/loop literal-site identity and reader
+syntax validation are required; allocating markers per call is incorrect.
+Retain the exact workspace, independent review and final-head CI gates before
+promotion. The focused reader result does not prove those broader gates.

@@ -1492,15 +1492,17 @@ and full namespace/import support are not inferred from these checks.
 
 ## Exact native EDN and analyzer data
 
-Native tooling EDN retains BigInt and Ratio values directly and prints their
-canonical numeric tokens. Its structural Value model retains categories;
+Native tooling EDN retains BigInt, Ratio and Decimal values directly and
+prints their canonical numeric tokens. Decimal stores an arbitrary-precision
+unscaled integer and signed 32-bit scale, preserving trailing zeros. Its structural Value model retains categories;
 runtime numeric equality is unchanged. Reader key identity coalesces Long and
-BigInt, including nested keys, and the printer rejects data that could not read
+BigInt, and numerically equal Decimal scales, including nested keys, and the printer rejects data that could not read
 back because of duplicate numeric keys or an integral Ratio representation.
 Serde retains supported signed/unsigned128-bit integer bits and explicitly
-rejects unsupported exact representations. Decimal values and their source
-carriers remain separate; existing conversion still recognizes validated
-legacy exact-number tags.
+rejects unsupported exact primitive representations. Decimal source projection
+retains its numeric fields and emits ordinary `M` literals. Existing conversion
+still recognizes validated exact-number tags; new Decimal output uses native
+values. The separate BigInteger source carrier remains unchanged.
 
 BigInt/Ratio analyzer literals expose const-node val/type data. Numeric class
 references emit dotted class names instead of invalid slash-qualified vars.

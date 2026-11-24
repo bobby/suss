@@ -1,0 +1,42 @@
+{
+  "build_command": [
+    "rustup",
+    "run",
+    "stable",
+    "rustc",
+    "--edition=2024",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/decimal-tooling-before/probe.rs",
+    "--extern",
+    "suss_reader=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_reader-0e27d776d2814d78.rlib",
+    "-L",
+    "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps",
+    "-o",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/decimal-tooling-before/probe"
+  ],
+  "build_exit_code": 0,
+  "head": "d65fa9f4ade880f59e053912b17699ad1c1809d5",
+  "inputs": {
+    "crates/suss-reader/src/component.rs": "e6e79cf30b883538f0bbaccf418ac585ea715a2fa751e2aaac3a678b707ca2f2",
+    "crates/suss-reader/src/edn/serde.rs": "4e9c1ea19702325c584d942e7399d648f2707db904e4b3c312a389a05609f37f",
+    "crates/suss-reader/src/edn/source.rs": "4c376049a0c142f71acf81a917b88d7266748a26df320357737ed5281a42944a",
+    "crates/suss-reader/src/edn.rs": "164a3dff694bbe255160ef19c1266fdd3fb4ddbbfd945e7e4cfd37139abeadd6",
+    "crates/suss-reader/src/forms/source_metadata.rs": "baec3d53fd6e7f81437a4717b997fda8bffcd9a37fd5946da13bc34a143d22d9",
+    "crates/suss-reader/src/forms/source_snapshot.rs": "139d8d93b21763b2ebdd9e5807b0d7d5feb77fbe6c67d3995a384aa89cfae301",
+    "crates/suss-reader/src/forms.rs": "977bb70c7be52a5d5483d6465b7ed51c91f02f7f158c3b906f6e8652a481d24a",
+    "crates/suss-reader/src/lib.rs": "20293fa1c55a49055537f96ad65a61f6179660693dfd6e4fd46ae79cde48dadc",
+    "crates/suss-reader/src/parser.rs": "d76eda97d10939dfd915d70a164d21e1a4f2a91700eb22569135683c50626a5c",
+    "crates/suss-reader/src/uuid.rs": "090616f8b3fab8e9af09dc35861486c6feb9ead29f05c7f1d04ce0f41b922386"
+  },
+  "reader_rlib": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_reader-0e27d776d2814d78.rlib",
+  "reader_rlib_sha256": "2d1549baa346665da601608bf8d1c2cfbcdcb7506b343c4b9ee67b4eec790618",
+  "source_sha256": "4e36c0fc0e2f66fe5eb958ab2e77c1d014fdd04579fc2dcf32b68e0268896bfc",
+  "qualification": "Read-only capability counterexample for #339 tooling Decimal admission, outside the frozen eval checkout inputs. This is not an eval regression or a passing acceptance test; the runtime Decimal implementation is a separate path.",
+  "command": [
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/decimal-tooling-before/probe"
+  ],
+  "exit_code": 101,
+  "binary_sha256": "c0bcd544c064574da3b01bea0eda3f481549c930c92ca7ba9193d7c6e79668e9",
+  "seconds": 0.11226749420166016,
+  "inputs_unchanged": true,
+  "library_unchanged": true
+}

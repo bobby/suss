@@ -43,6 +43,8 @@ pub enum Value {
     BigInteger(num_bigint::BigInt),
     /// A normalized non-integral ratio. Integral values use BigInt.
     Ratio(num_rational::BigRational),
+    /// Exact BigDecimal storage. Preserve scale even for numerically equal values.
+    Decimal { unscaled: num_bigint::BigInt, scale: i32 },
     String(String),
     Uuid(crate::uuid::Uuid),
     Keyword(Keyword),
@@ -87,6 +89,7 @@ impl Value {
             Value::Ratio(_) => 12,
             Value::BigInteger(_) => 13,
             Value::Uuid(_) => 14,
+            Value::Decimal { .. } => 15,
         }
     }
 }
@@ -101,12 +104,30 @@ fn reader_key(value: &Value) -> Value {
     use num_traits::ToPrimitive;
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || match value.unmeta() {
         Value::BigInt(n) | Value::BigInteger(n) => n.to_i64().map(Value::Long).unwrap_or_else(|| Value::BigInt(n.clone())),
+        Value::Decimal { unscaled, scale } => decimal_identity(unscaled, *scale),
         Value::List(items) => Value::List(items.iter().map(reader_key).collect()),
         Value::Vector(items) => Value::Vector(items.iter().map(reader_key).collect()),
         Value::Map(items) => Value::Map(items.iter().map(|(k,v)| (reader_key(k), reader_key(v))).collect()),
         Value::Set(items) => Value::Set(items.iter().map(reader_key).collect()),
         _ => value.clone(),
     })
+}
+
+fn decimal_identity(unscaled: &num_bigint::BigInt, scale: i32) -> Value {
+    if unscaled.sign() == num_bigint::Sign::NoSign {
+        return Value::Decimal { unscaled: unscaled.clone(), scale: 0 };
+    }
+    let text = unscaled.to_string();
+    // Clamp at the representable scale floor. Equivalent inputs then retain
+    // the same coefficient at that floor without overflowing an i32 scale.
+    let available = usize::try_from(i64::from(scale) - i64::from(i32::MIN))
+        .unwrap_or(usize::MAX);
+    let removed = text.bytes().rev().take_while(|&b| b == b'0').count().min(available);
+    let unscaled = num_bigint::BigInt::parse_bytes(text[..text.len() - removed].as_bytes(), 10)
+        .expect("nonzero BigInt digits remain after stripping trailing zeros");
+    let scale = i32::try_from(i64::from(scale) - removed as i64)
+        .expect("trailing-zero removal is clamped to the scale range");
+    Value::Decimal { unscaled, scale }
 }
 
 fn check_reader_keys<'a>(keys: impl Iterator<Item = &'a Value>) -> Result<(), Error> {
@@ -132,6 +153,9 @@ impl Ord for Value {
             (Value::BigInt(a), Value::BigInt(b)) => a.cmp(b),
             (Value::BigInteger(a), Value::BigInteger(b)) => a.cmp(b),
             (Value::Ratio(a), Value::Ratio(b)) => a.cmp(b),
+            (Value::Decimal { unscaled: a, scale: s }, Value::Decimal { unscaled: b, scale: t }) => {
+                a.cmp(b).then_with(|| s.cmp(t))
+            }
             // Only collections recurse, so only they need a growable stack.
             (a, b) => stacker::maybe_grow(64 * 1024, 1024 * 1024, || a.cmp_slow(b)),
         }
@@ -237,6 +261,44 @@ pub fn print_pretty(value: &Value) -> Result<String, Error> {
 
 const WIDTH: usize = 80;
 
+/// BigDecimal's plain/scientific spelling, without the EDN M suffix.
+fn decimal_text(unscaled: &num_bigint::BigInt, scale: i32) -> String {
+    let text = unscaled.to_string();
+    let (negative, digits) = match text.strip_prefix('-') {
+        Some(digits) => (true, digits),
+        None => (false, text.as_str()),
+    };
+    let exponent = digits.len() as i64 - i64::from(scale) - 1;
+    let mut out = String::new();
+    if negative { out.push('-'); }
+    if scale >= 0 && exponent >= -6 {
+        let point = digits.len() as i64 - i64::from(scale);
+        if point > 0 {
+            let point = point as usize;
+            out.push_str(&digits[..point]);
+            if point < digits.len() {
+                out.push('.');
+                out.push_str(&digits[point..]);
+            }
+        } else {
+            out.push_str("0.");
+            // The plain-notation condition bounds this padding to five zeros.
+            out.extend(std::iter::repeat_n('0', (-point) as usize));
+            out.push_str(digits);
+        }
+    } else {
+        out.push_str(&digits[..1]);
+        if digits.len() > 1 {
+            out.push('.');
+            out.push_str(&digits[1..]);
+        }
+        out.push('E');
+        if exponent >= 0 { out.push('+'); }
+        out.push_str(&exponent.to_string());
+    }
+    out
+}
+
 fn write(out: &mut String, value: &Value) -> Result<(), Error> {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         match value {
@@ -254,6 +316,10 @@ fn write(out: &mut String, value: &Value) -> Result<(), Error> {
                     return Err(Error::new("Integral Ratio must be a BigInt"));
                 }
                 out.push_str(&format!("{}/{}", x.numer(), x.denom()));
+            }
+            Value::Decimal { unscaled, scale } => {
+                out.push_str(&decimal_text(unscaled, *scale));
+                out.push('M');
             }
             Value::String(s) => string(out, s),
             Value::Uuid(value) => { out.push_str("#uuid "); string(out, &value.to_string()); },
@@ -748,10 +814,7 @@ impl<'s> Parser<'s, '_> {
                     forms::NumberToken::Long(value) => Value::Long(value),
                     forms::NumberToken::Exact(forms::ExactNumber { value: forms::ExactValue::Integer { value, .. }, .. }) => Value::BigInt(value),
                     forms::NumberToken::Exact(forms::ExactNumber { value: forms::ExactValue::Ratio { numerator, denominator }, .. }) => Value::Ratio(num_rational::BigRational::new(numerator, denominator)),
-                    forms::NumberToken::Exact(_) if self.discarding > 0 => Value::Nil,
-                    forms::NumberToken::Exact(value) => {
-                        return Err(fail(self, &value.unsupported_message()))
-                    }
+                    forms::NumberToken::Exact(forms::ExactNumber { value: forms::ExactValue::Decimal { unscaled, scale }, .. }) => Value::Decimal { unscaled, scale },
                 }
             }
             token => {
