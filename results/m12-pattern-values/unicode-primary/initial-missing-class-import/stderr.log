@@ -1,0 +1,5 @@
+Syntax error compiling at (results/m12-pattern-values/unicode-primary/oracle.clj:9:17).
+No such namespace: Character$UnicodeScript
+
+Full report at:
+/tmp/clojure-5343733606886321200.edn

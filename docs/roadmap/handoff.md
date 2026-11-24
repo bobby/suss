@@ -35011,3 +35011,31 @@ Pattern observations show stable function/loop literal-site identity and reader
 syntax validation are required; allocating markers per call is incorrect.
 Retain the exact workspace, independent review and final-head CI gates before
 promotion. The focused reader result does not prove those broader gates.
+
+
+### Checked Pattern source admission (2026-11-24)
+
+The separate numeric branch adds an original Rust checked-source parser for Java
+pattern grammar. Its exact UTF-16 source/flag data and generated Unicode15.0 name/
+codepoint/property facts are prepared for compiler-reader integration. It does not
+yet add source-form or compiled Pattern value support and is not a matching engine.
+No Java dependency or JDK implementation code is shipped. The full observed Unicode
+name/codepoint table is front-coded, round-trip checked and accompanied by its
+Unicode notice; regeneration uses the retained compressed primary observations.
+
+The initial76 JVM cases pass natively. An independent116-case challenge exposes19
+real discrepancies (actual101, frozen source archived). Their original observations
+are preserved; quote/flag boundaries, class ranges, supplementary escapes and named
+codepoint/property handling are corrected. The complete reader command returns0
+for90 tests in36.38s, including192 admission cases and original Decimal controls.
+Following private accessors and formatting, both full admission targets return0 in
+13.90s. Exact commands, hashes, failures and receipts are retained under
+results/m12-pattern-values; no suite counts, primary, skips or baseline are changed.
+
+Next wire checked source through forms, source/graph quoting and canonical macro
+transfer; add actual immutable Pattern objects and per-literal-site root caching,
+then exercise Runtime/Macro/AOT/GC/ownership and the complete original numeric
+bodies. Pinned value controls require retained function/loop literal identity and
+a fresh instance for separately compiled constants. Do not substitute fabricated
+pattern fixtures or a JVM primitive-boxing Checker. Preserve the accepted :suss/
+:default feature contract and the exact workspace/review/final-head CI gates.

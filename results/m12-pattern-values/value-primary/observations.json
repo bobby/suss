@@ -1,0 +1,132 @@
+[
+  {
+    "name": "separate-literal-equality",
+    "expression": "(= #\"my regex\" #\"my regex\")",
+    "observed_edn": "false"
+  },
+  {
+    "name": "separate-literal-identity",
+    "expression": "(identical? #\"my regex\" #\"my regex\")",
+    "observed_edn": "false"
+  },
+  {
+    "name": "same-binding-equality",
+    "expression": "(let [r #\"my regex\" r2 r] (= r r2))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "same-binding-identity",
+    "expression": "(let [r #\"my regex\" r2 r] (identical? r r2))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "same-function-literal",
+    "expression": "(let [f (fn [] #\"a\")] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "same-function-literal-equality",
+    "expression": "(let [f (fn [] #\"a\")] (= (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "different-function-literal",
+    "expression": "(let [f (fn [] #\"a\") g (fn [] #\"a\")] (= (f) (g)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "loop-site-retention",
+    "expression": "(loop [i 0 before nil result true] (if (= i 3) result (let [r #\"a\"] (recur (inc i) r (and result (or (nil? before) (identical? before r)))))))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "eval-pattern-self",
+    "expression": "(let [r #\"a\"] (identical? r (eval r)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "eval-quoted-pattern-self",
+    "expression": "(let [r #\"a\"] (identical? r (eval (list (quote quote) r))))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "eval-generated-vector-pattern",
+    "expression": "(let [r #\"a\"] (identical? r (first (eval [r]))))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "separate-read-pattern",
+    "expression": "(= (read-string \"#\\\"a\\\"\") (read-string \"#\\\"a\\\"\"))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "re-pattern-identity",
+    "expression": "(let [r #\"a\"] (identical? r (re-pattern r)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "print-pattern",
+    "expression": "(pr-str #\"my regex\")",
+    "observed_edn": "\"#\\\"my regex\\\"\""
+  },
+  {
+    "name": "str-pattern",
+    "expression": "(str #\"my regex\")",
+    "observed_edn": "\"my regex\""
+  },
+  {
+    "name": "regex-backslash-print",
+    "expression": "(pr-str #\"\\d+\\s\")",
+    "observed_edn": "\"#\\\"\\\\d+\\\\s\\\"\""
+  },
+  {
+    "name": "regex-backslash-str",
+    "expression": "(str #\"\\d+\\s\")",
+    "observed_edn": "\"\\\\d+\\\\s\""
+  },
+  {
+    "name": "regex-inline-flags",
+    "expression": "(str #\"(?im)a\")",
+    "observed_edn": "\"(?im)a\""
+  },
+  {
+    "name": "pattern-meta",
+    "expression": "(meta #\"a\")",
+    "observed_edn": "nil"
+  },
+  {
+    "name": "pattern-class",
+    "expression": "(.getName (class #\"a\"))",
+    "observed_edn": "\"java.util.regex.Pattern\""
+  },
+  {
+    "name": "pattern-identity-hash",
+    "expression": "(let [r #\"a\"] (= (hash r) (System/identityHashCode r)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "pattern-print-read-fresh",
+    "expression": "(let [r #\"a\" next (read-string (pr-str r))] [(= r next) (= (str r) (str next))])",
+    "observed_edn": "[false true]"
+  },
+  {
+    "name": "numeric-predicate-pattern",
+    "expression": "(mapv #(% #\"a\") [number? integer? rational? decimal?])",
+    "observed_edn": "[false false false false]"
+  },
+  {
+    "name": "num-pattern-error",
+    "expression": "(try (num #\"a\") :accepted (catch Throwable e [:error (.getName (class e))]))",
+    "observed_edn": "[:error \"java.lang.ClassCastException\"]"
+  },
+  {
+    "name": "invalid-pattern-reader",
+    "expression": "(try (read-string \"#\\\"[\\\"\") :accepted (catch Throwable e [:error (.getName (class e))]))",
+    "observed_edn": "[:error \"java.util.regex.PatternSyntaxException\"]"
+  },
+  {
+    "name": "invalid-pattern-discard",
+    "expression": "(try (read-string \"#_#\\\"[\\\" 1\") :accepted (catch Throwable e [:error (.getName (class e))]))",
+    "observed_edn": "[:error \"java.util.regex.PatternSyntaxException\"]"
+  }
+]

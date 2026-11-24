@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "results/m12-regex-followup/oracle-initial.py"
+  ],
+  "exit_code": 1,
+  "source_sha256": "4ebd4743ec4e77bfad8573b2351efb0996f5d3af1527688082869368db35363d",
+  "limitation": "Python syntax failure before any JVM execution."
+}

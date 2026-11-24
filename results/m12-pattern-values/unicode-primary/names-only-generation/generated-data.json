@@ -1,0 +1,19 @@
+{
+  "names": 288767,
+  "block_size": 32,
+  "binary_bytes": 1372000,
+  "binary_sha256": "73fc9ea898da9b8774d5793f51fc98bf7d222215f708a3b343120d7f2bf11689",
+  "property_counts": {
+    "plain": 72,
+    "plain-folded": 0,
+    "is": 79,
+    "is-folded": 26,
+    "scripts": 320,
+    "blocks": 756,
+    "categories": 42
+  },
+  "properties_rs_sha256": "59c59629b83f0bd587f3abf1a7eecf281c22e2ba66dd7845de9af2b790290629",
+  "full_name_round_trip_verified": true,
+  "source_names_sha256": "7d3c506b734229ed44e1dc38dc5a964e5ec61247bf74c77c407ce1b337e38bb3",
+  "qualification": "Front-coded public semantic name facts from the pinned JVM. No implementation source is copied. Lookup is exact, not probabilistic."
+}

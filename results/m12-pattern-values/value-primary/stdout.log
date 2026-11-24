@@ -1,0 +1,26 @@
+separate-literal-equality false
+separate-literal-identity false
+same-binding-equality true
+same-binding-identity true
+same-function-literal true
+same-function-literal-equality true
+different-function-literal false
+loop-site-retention true
+eval-pattern-self true
+eval-quoted-pattern-self false
+eval-generated-vector-pattern false
+separate-read-pattern false
+re-pattern-identity true
+print-pattern "#\"my regex\""
+str-pattern "my regex"
+regex-backslash-print "#\"\\d+\\s\""
+regex-backslash-str "\\d+\\s"
+regex-inline-flags "(?im)a"
+pattern-meta nil
+pattern-class "java.util.regex.Pattern"
+pattern-identity-hash true
+pattern-print-read-fresh [false true]
+numeric-predicate-pattern [false false false false]
+num-pattern-error [:error "java.lang.ClassCastException"]
+invalid-pattern-reader [:error "java.util.regex.PatternSyntaxException"]
+invalid-pattern-discard [:error "java.util.regex.PatternSyntaxException"]
