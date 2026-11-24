@@ -1017,3 +1017,44 @@ fn runtime_cancellation_reaches_an_isolated_macro_function_and_returns_the_lease
         Observation::Ratio("3".into(), "2".into())
     );
 }
+
+#[test]
+fn public_alias_preserves_primary_state_errors_and_argument_order() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/alias-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 15);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        // The primary creates these namespaces. Establish the same objects via
+        // ordinary native ns forms; create-ns is a separate public API gap.
+        suss_compile::portable_repl::evaluate_script_compiled(
+            &mut session, &mut macros,
+            "(ns alias-target) (ns alias-other) (ns alias-user) (ns user)", None,
+        ).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let source = row["expression"].as_str().unwrap()
+                .replace("(create-ns ", "(the-ns ")
+                .replace("clojure.core", "suss.core")
+                .replace("(catch Throwable ", "(catch :default ")
+                .replace("(.getMessage e)", "(ex-message e)");
+            let value = session.eval_with_macros(&source, &mut macros).unwrap_or_else(|error| {
+                panic!("{}: {}", row["name"], suss_compile::portable_repl::error_display(&mut session, &error))
+            });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&forms[0])), "{} {:?}", row["name"], session.phase());
+            eprintln!("alias-primary-match {:?} {}", session.phase(), row["name"]);
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, value).unwrap()), canonical(expected(&forms[0])));
+        }
+    }
+}

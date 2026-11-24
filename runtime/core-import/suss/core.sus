@@ -10491,6 +10491,29 @@ reduces them without incurring seq initialization"
         (if (nil? found)
           (throw (ex-info (str "No namespace: " x " found") {}))
           found)))))
+;; BEGIN Clojure alias
+;; Copyright (c) Rich Hickey. All rights reserved.
+;; Eclipse Public License 1.0; see runtime/core-import/epl-v10.html.
+;; Pinned clojure.core/alias, with Namespace.addAlias adapted to the actual
+;; Namespace state array. Retain the public signature, documentation and metadata.
+(def ^:private add-namespace-alias!
+  (fn [ns alias target]
+    (if (symbol? alias) nil
+      (throw (suss.bootstrap/error "Alias must be a symbol")))
+    (let [state (.-state ns) aliases (aget state ns-aliases-slot)
+          name (.-name target) previous (get aliases alias)]
+      (if (if (nil? previous) false (not= previous name))
+        (throw (suss.bootstrap/error
+                 (str "Alias " alias " already exists in namespace " (.-name ns)
+                      ", aliasing " previous)))
+        (do (aset state ns-aliases-slot (assoc aliases alias name)) nil)))))
+(def ^{:doc "Add an alias in the current namespace to another
+  namespace. Arguments are two symbols: the alias to be used, and
+  the symbolic name of the target namespace. Use :as in the ns macro in preference
+  to calling this directly." :added "1.0" :static true} alias
+  (fn [alias namespace-sym]
+    (add-namespace-alias! *ns* alias (the-ns namespace-sym))))
+;; END Clojure alias
 (def ns-name
   (fn [ns] (.-name (the-ns ns))))
 (def all-ns

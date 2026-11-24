@@ -34591,3 +34591,18 @@ prefix failures. Row11 exposed a test-adaptation typo: the portable Error
 constructor is `js/Error.`, not the nonexistent `suss.core/Error.`. Correcting
 that constructor retains the original throw/message/catch control; no rows are
 removed. The next run is `macro-declaration-after-error-constructor-adaptation`.
+
+The declaration run at `b43de966` completed actual101 with frozen inputs: all18
+Runtime rows preceding public alias pass. Row19 reproduced the missing `alias`
+function. Its complete pinned Clojure signature/doc/metadata now delegates to a
+Namespace state adapter, retaining target validation, Symbol admission, atomic
+conflicts and nil returns. Fifteen fresh primary observations and the upstream
+form are under `results/m12-eval/alias-primary`; the native fixture creates the
+same namespaces through ns forms (public create-ns remains a separate gap).
+Native eval snapshots now import actual alias Symbols from the current validated
+Namespace before each compilation unit, through the original private slot reader
+retained at bootstrap. Both caller paths share this policy; no source replay.
+The first dirty development check caught moving out of a Drop form and was fixed
+using its ordinary into_parts API; no native pass is inferred. Run
+`alias-and-declaration-first-native --alias-and-declaration-only` through the
+external launcher with unchanged source and HEAD until terminal.

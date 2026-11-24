@@ -1301,6 +1301,14 @@ impl Environment {
         aliases.insert(namespace.into(), target.into());
         Ok(())
     }
+    /// Native eval takes aliases from the caller's actual Namespace object.
+    /// These are already admitted Symbol keys; unlike ns :as they may be empty
+    /// or qualified. Replacing this snapshot retains every other scope fact.
+    pub(crate) fn replace_evaluation_aliases(&mut self, phase: Phase, aliases: BTreeMap<String, String>) {
+        if self.scope(phase).aliases != aliases {
+            self.scope_mut(phase).aliases = aliases;
+        }
+    }
     pub fn alias(&mut self, phase: Phase, alias: &str, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(alias)?;
         valid_namespace(namespace)?;

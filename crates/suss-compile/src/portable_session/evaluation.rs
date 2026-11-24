@@ -26,6 +26,7 @@ struct NamespaceAccess {
     cell: Global,
     namespace: OwnedRooted<AnyRef>,
     symbol: OwnedRooted<AnyRef>,
+    namespace_slot: OwnedRooted<AnyRef>,
 }
 impl NamespaceAccess {
     fn capture(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
@@ -49,11 +50,87 @@ impl NamespaceAccess {
             let descriptor = session.data_descriptor(&value, true)?;
             Ok::<_, SessionError>(descriptor.object()?.clone())
         };
+        let namespace = descriptor("Namespace")?;
+        let symbol = descriptor("Symbol")?;
+        let slot_cell = session.core_cell("namespace-slot")?;
+        let namespace_slot = {
+            let mut roots = RootScope::new(&mut session.store);
+            let get = session.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = slot_cell.get(&mut roots);
+            call(
+                &mut roots,
+                session.runtime,
+                get,
+                &[cell],
+                session.identity,
+                &session.handles,
+            )?
+            .object()?
+            .clone()
+        };
         Ok(Self {
             cell,
-            namespace: descriptor("Namespace")?,
-            symbol: descriptor("Symbol")?,
+            namespace,
+            symbol,
+            namespace_slot,
         })
+    }
+    fn aliases(
+        &self,
+        session: &mut SessionHost<'_>,
+        bridge: &FormBridge,
+    ) -> Result<BTreeMap<String, String>, SessionError> {
+        // Validate the actual current Namespace and its canonical descriptor
+        // before invoking the original private slot accessor retained at boot.
+        self.read(session)?;
+        let (namespace, accessor) = {
+            let mut roots = RootScope::new(&mut session.store);
+            let get = session.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = self.cell.get(&mut roots);
+            let namespace = call(
+                &mut roots,
+                session.runtime,
+                get,
+                &[cell],
+                session.identity,
+                &session.handles,
+            )?;
+            let accessor = Val::AnyRef(Some(self.namespace_slot.to_rooted(&mut roots)));
+            let accessor = own(&mut roots, accessor, session.identity, &session.handles)?;
+            (namespace, accessor)
+        };
+        let index = bridge.quote(
+            session,
+            suss_reader::forms::Form {
+                span: 0..0,
+                metadata: vec![],
+                kind: suss_reader::forms::Kind::Long(0),
+            },
+        )?;
+        let value = session.invoke(&accessor, &[&namespace, &index])?;
+        let form = bridge.read(session, &value, 0..0)?;
+        let suss_reader::forms::Kind::Map(items) = form.into_parts().2 else {
+            return Err(wasmtime::Error::msg("Namespace aliases are not a map").into());
+        };
+        let mut aliases = BTreeMap::new();
+        for pair in items.chunks_exact(2) {
+            session.charge_host_work(1)?;
+            let (suss_reader::forms::Kind::Symbol(alias), suss_reader::forms::Kind::Symbol(target)) =
+                (&pair[0].kind, &pair[1].kind)
+            else {
+                return Err(wasmtime::Error::msg("Namespace alias entries must be symbols").into());
+            };
+            let text = |symbol: &suss_reader::Symbol| match &symbol.namespace {
+                Some(namespace) => format!("{namespace}/{}", symbol.name),
+                None => symbol.name.clone(),
+            };
+            let target = text(target);
+            aliases.insert(
+                text(alias),
+                portable::resolve::canonical(&target).to_owned(),
+            );
+        }
+        Ok(aliases)
     }
     fn read(&self, session: &mut SessionHost<'_>) -> Result<String, SessionError> {
         session.charge_host_work(16)?;
@@ -183,7 +260,7 @@ impl Evaluation {
         };
         let bridge = self.bridge(&mut view)?;
         let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
-        let namespace = registry_lock(&self.namespace)
+        let namespace_access = registry_lock(&self.namespace)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
         let authority = registry_lock(&self.own).clone();
@@ -195,7 +272,7 @@ impl Evaluation {
         let mut pending = vec![form];
         let mut result = None;
         while let Some(form) = pending.pop() {
-            let namespace = namespace.read(&mut view)?;
+            let namespace = namespace_access.read(&mut view)?;
             let mut snapshot = view.compilation_snapshot();
             let original = snapshot
                 .environment
@@ -205,16 +282,22 @@ impl Evaluation {
                 .environment
                 .enter_namespace(view.phase, &namespace)
                 .map_err(SessionError::Compile)?;
+            snapshot.environment.replace_evaluation_aliases(
+                view.phase,
+                namespace_access.aliases(&mut view, &bridge)?,
+            );
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = view.evaluation_updates_input_namespace()?;
             let allowance = view.operation_fuel_remaining()?;
-            let (prepared, spent) = service.prepare_evaluation(&snapshot, form, allowance, view.interrupt.clone())?;
+            let (prepared, spent) =
+                service.prepare_evaluation(&snapshot, form, allowance, view.interrupt.clone())?;
             // Release the isolated Macro lease before executing Runtime code.
             // Compilation and macro execution debit the caller cumulatively.
             view.charge_host_work(spent)?;
             match prepared? {
                 PreparedEvaluation::MacroDeclaration(form) => {
-                    let prepared = view.prepare_native_macro_declaration(&service, &snapshot, form)?;
+                    let prepared =
+                        view.prepare_native_macro_declaration(&service, &snapshot, form)?;
                     let outcome = view.eval_prepared(prepared);
                     result = Some(outcome?);
                 }
@@ -317,6 +400,17 @@ impl SessionHost<'_> {
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
         namespace.read(self)
+    }
+    pub(crate) fn evaluation_aliases(&mut self) -> Result<BTreeMap<String, String>, SessionError> {
+        let state = self
+            .evaluation
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native evaluation authority"))?;
+        let namespace = registry_lock(&state.namespace)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
+        let bridge = state.bridge(self)?;
+        namespace.aliases(self, &bridge)
     }
     fn core_cell(&self, name: &str) -> Result<Global, SessionError> {
         let compiler = registry_lock(&self.compiler);
