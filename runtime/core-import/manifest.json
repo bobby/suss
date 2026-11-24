@@ -8,7 +8,7 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "4eef8ed44d83dcf1d0fd4176db13584f607539011f60b248e4ea71d0a1787c4a",
+  "recipe-sha256": "f281f2968ab12f8d260b80b56e25a35d76074b08be66a55e1f59adf3ee402860",
   "reviews-sha256": "1beb00a3f66cd14edb1dc67fad76416d1e4843e1b0b3ca73821da0abebfba131",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -9174,8 +9174,8 @@
       "extracted": "extracted/0296.cljs",
       "extracted-sha256": "5a10565fa96f3976922a7d3a5668696d9db54e02cae46b84d8a83a21d1f55297",
       "patch": "docs/compatibility/patches/expression-symbol.json",
-      "patch-sha256": "c80573e95a105e04c28e3a2c09bfed680c1450752c07b633cff880096144728d",
-      "adapted-form-sha256": "8bf1163e4cbdb69d8f694239d429196c48bb09421ce049dd7b82015fbad1bf73",
+      "patch-sha256": "3d581896258c92e3826646f3d56fa7587bbfc3b68570b00aebee8def68ccbf30",
+      "adapted-form-sha256": "8a2af8d923cc6c90bee1b03075b05315e7cf73746fb160a32ade591e21032ea2",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15794,7 +15794,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "8d4409b9d034dbdee8b7376d725717abf1bf58f682203b2795b060e424013f4e"
+      "sha256": "bc4710c25babca03313be2560dbd2e13a3bf5b3a8a146cb5bbca1b7e60bb9df7"
     }
   },
   "files": {
@@ -16311,6 +16311,6 @@
     "extracted/0508.cljs": "77326b79c0347440e41ece228e7fe66e5693f05eaeb78d743dc5c5c35c1bf2a4",
     "extracted/0509.cljs": "6bbf109e23ed20487388fc3fc11b61608c9c066e1e7ebc213c92932a587d4fed",
     "extracted/0510.cljs": "4b1a77bb0f37cd6cb4e74dd708b1226a2a56defd6bab87e589a138e269191c71",
-    "suss/core.sus": "862a2bde1ba6d48630bfd437d7414970495e811bd56023d10a4ea26acd7f02b6"
+    "suss/core.sus": "ad36177b3f675249fd3d788b537441360f703918b56d7e3bcc1599b5b5148eff"
   }
 }

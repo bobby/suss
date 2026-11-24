@@ -34597,3 +34597,45 @@ known-failure comparison; update only measured reviewed baseline differences.
 Then run the exact two-thread workspace baseline, independent promotion review
 and final-head CI. No full numeric acceptance or ready status follows from the
 focused receipts alone.
+
+### Complete capture and newly executable Var/symbol bodies (2026-11-24)
+
+The frozen broader run at `59ee4f6a` passes the recorded24-test public target,
+the portable host group, all23 selected
+numeric/module/artifact/budget targets, the optimized random-effect guard and
+Java/Node-free bootstrap reproduction. Its complete unfiltered native capture
+returns actual101 after321s; the strict host review returns1 with unchanged
+HEAD/inputs/Binaryen. No process is killed and the original4GiB capture cap stays.
+The report `capture-before-symbol-repair-audit.json` retains5564 raw rows,
+5349host/106guest/110fail/1374unexecuted/63failed namespaces. All5346 prior
+comparable successes remain; every229 BigInt/Ratio and200 Decimal operand row
+is an independent host match. This is numeric-subset evidence, not acceptance
+of the five newly executable symbol mismatches or a workspace baseline.
+
+Real Vars let eval, symbol and var? namespaces load. The symbol body's61 rows
+expose five mismatches: core Var symbolic spelling and Clojure's strict
+String-or-nil admission for both parameters of two-argument symbol. The var?
+body executes all34 rows (26host+the original8 opaque judgments). ifn? still
+fails to load, now at the genuinely missing promise instead of var. The baseline
+is untouched; its scoped review must preserve that remaining failure explicitly.
+
+Twenty-seven fresh pinned symbol/Var observations retain complete upstream
+symbol source/JAR/stdout hashes. The public adaptation preserves the complete
+Clojure signature, doc and metadata, uses the existing portable Symbol storage
+and validates both two-argument inputs after ordinary argument evaluation.
+Var conversion constructs a fresh qualified Symbol without declaration metadata;
+core Vars use clojure.core for public source symbols while their canonical cell
+and metadata Namespace object remain suss.core. This extends the native Var
+decision without changing namespace identity or ns-refers' platform contract.
+The existing40-row identifier implementation corpus and its invocation guards
+remain unchanged. The complete original eval/symbol/var? bodies now have scoped
+supplemental checks with exact counts and original guest ordinals; the full
+harness and primary corpus remain unchanged.
+
+Run `symbol-and-var-complete-bodies-first-native --symbol-vars-only` through
+the external launcher, freeze source/HEAD until terminal, then rerun broader
+acceptance and the full capture. No five symbol failures are added to a reviewed
+baseline. Only after their complete original body passes should the strict
+capture review account for the newly enabled namespaces and unchanged ifn?
+blocker. The exact-workspace launcher is prepared externally but not started;
+its command remains cargo test --workspace --locked -- --test-threads=2.

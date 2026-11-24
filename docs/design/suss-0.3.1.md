@@ -622,4 +622,8 @@ return the same object across fragments and GC. Metadata belongs to that Var;
 redefinition retains identity while updating declaration metadata. Use the
 existing source-backed Var class and callable protocol machinery. This extends
 the earlier absence of runtime Vars; changing ns-refers' symbol-valued platform
-contract is separate work. Pure AOT does not acquire a hidden compiler service.
+contract is separate work. A core Var's public qualified Symbol uses
+`clojure.core`, matching literal source data and Clojure's `symbol`/Var printing;
+its canonical binding key and metadata namespace object remain `suss.core`.
+Converting a Var constructs a fresh qualified Symbol without copying declaration
+metadata. Pure AOT does not acquire a hidden compiler service.

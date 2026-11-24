@@ -1110,3 +1110,34 @@ fn failed_macro_replacement_preserves_live_metadata_and_successful_nested_effect
         }
     }
 }
+
+#[test]
+fn symbol_conversion_uses_public_var_names_and_clojure_two_argument_admission() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/symbol-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 27);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let source = row["expression"].as_str().unwrap().replace("(catch Throwable ", "(catch :default ");
+            let value = session.eval_with_macros(&source, &mut macros).unwrap_or_else(|error| {
+                panic!("{}: {}", row["name"], suss_compile::portable_repl::error_display(&mut session, &error))
+            });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&forms[0])), "{} {:?}", row["name"], session.phase());
+            eprintln!("symbol-primary-match {:?} {}", session.phase(), row["name"]);
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, value).unwrap()), canonical(expected(&forms[0])));
+        }
+    }
+}

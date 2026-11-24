@@ -2554,7 +2554,9 @@
 ;; intern the result; the getter is compiled directly against its live cell.
 (def ^:private make-binding-var
   (fn [getter namespace name metadata]
-    (Var. getter (symbol namespace name)
+    ;; Binding keys and namespace objects keep the platform's canonical core
+    ;; identity. Public Var symbols use Clojure's core spelling for source data.
+    (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
       (assoc metadata :name (symbol name)
                       :ns (the-ns (symbol namespace))))))
 (def ^:private update-binding-var-meta!

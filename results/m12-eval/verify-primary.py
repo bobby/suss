@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib,json,zipfile
 ROOT=Path(__file__).resolve().parents[2];BASE=Path(__file__).resolve().parent
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
-for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary',11),('namespace-primary',15),('review-corrections-primary',14),('var-implementation-primary',2),('macro-declaration-primary',22),('alias-primary',15),('macro-environment-primary',3),('macro-failure-primary',5)]:
+for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary',11),('namespace-primary',15),('review-corrections-primary',14),('var-implementation-primary',2),('macro-declaration-primary',22),('alias-primary',15),('macro-environment-primary',3),('macro-failure-primary',5),('symbol-primary',27)]:
  p=BASE/name;command=json.loads((p/'command.json').read_text());rows=json.loads((p/'cases.json').read_text())
  assert command['exit_code']==0 and command['controls']==count==len(rows)
  if 'legacy_corpus_sha256' in command:
@@ -17,6 +17,16 @@ for name,count in [('primary',24),('live-vars-primary',10),('do-boundary-primary
  assert actual==['(println (pr-str (pr-str '+row['expression']+')))' for row in rows]
  if (p/'macros.json').exists():
   assert all(definition in source.decode() for definition in json.loads((p/'macros.json').read_text()))
+ if name=='symbol-primary':
+  upstream=(p/'upstream-symbol.clj').read_bytes()
+  assert sha(upstream)==command['upstream_symbol_sha256']
+  jar=Path(next(path for path in command['jars'] if path.endswith('/clojure-1.12.6.jar')))
+  with zipfile.ZipFile(jar) as archive: assert upstream in archive.read('clojure/core.clj')
+  patch=json.loads((ROOT/'docs/compatibility/patches/expression-symbol.json').read_text())
+  record=json.loads((BASE/'symbol-source-provenance.json').read_text())
+  assert sha(patch['replacement'].encode())==record['adapted_sha256']
+  assert record['upstream_symbol_sha256']==command['upstream_symbol_sha256']
+  assert patch['replacement'].encode() in (ROOT/'runtime/core-import/suss/core.sus').read_bytes()
  if name=='alias-primary':
   upstream=(p/'upstream-alias.clj').read_bytes()
   assert sha(upstream)==command['upstream_alias_sha256']

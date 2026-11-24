@@ -1,7 +1,7 @@
 //! Complete original eval body, including all three remaining numeric rows.
 use super::*;
 
-fn check_body(stem: &str, namespace: &str, count: usize) {
+fn check_body(stem: &str, namespace: &str, test_leaf: &str, count: usize) {
     let repository = root();
     let workspace = tempfile::tempdir().unwrap();
     let source_root = workspace.path().join("src");
@@ -12,7 +12,7 @@ fn check_body(stem: &str, namespace: &str, count: usize) {
     let original = repository.join(format!(
         "vendor/clojure-test-suite/upstream/test/clojure/core_test/{stem}.cljc"));
     assert_eq!(std::fs::read(original).unwrap(), std::fs::read(source_file(&source_root, namespace)).unwrap());
-    let test = format!("{namespace}/test-{}", namespace.rsplit('.').next().unwrap());
+    let test = format!("{namespace}/{test_leaf}");
     let observed = Harness::new(&source_root).run(
         &json!({"namespaces":[namespace],"tests":[test]}), &source_root);
     let captured = workspace.path().join("observations.json");
@@ -29,7 +29,7 @@ import clojure_test_suite as suite
 raw=(root/'tests/oracle/clojure-test-suite-observations.json').read_bytes()
 assert hashlib.sha256(raw).hexdigest()=='449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7'
 reference=json.loads(raw);namespace=sys.argv[3];count=int(sys.argv[4])
-test=namespace+'/test-'+namespace.rsplit('.',1)[1]
+test=namespace+'/'+sys.argv[5]
 reference.update(namespaces=[namespace],tests=[test],
  assertions=[r for r in reference['assertions'] if r['test']==test],
  skips=[r for r in reference['skips'] if r['namespace']==namespace])
@@ -43,13 +43,19 @@ assert not any(failures[k] for k in ['tests','namespaces','assertions','skip-mis
 guests=[w['ordinal'] for w,a in zip(reference['assertions'],observed['assertions']) if suite.decide(w,a)[1]]
 # Preserve all five opaque function/Var judgments from the original primary.
 # The three exact numeric rows are independently comparable host observations.
-assert guests==[15,16,17,18,19]
-assert counts['pass']==29 and counts['guest-judged']==5
+if namespace=='clojure.core-test.eval':
+ assert guests==[15,16,17,18,19]
+ assert counts['pass']==29 and counts['guest-judged']==5
+ for ordinal in [5,6,7]:
+  assert suite.decide(reference['assertions'][ordinal-1],observed['assertions'][ordinal-1])==(None,False)
+elif namespace=='clojure.core-test.symbol':
+ assert guests==[] and counts['pass']==61 and counts['guest-judged']==0
+elif namespace=='clojure.core-test.var-qmark':
+ assert guests==list(range(1,9)) and counts['pass']==26 and counts['guest-judged']==8
+else: raise AssertionError('Unreviewed complete body')
 assert counts['fail']==counts['not-executed']==counts['skipped']==0
-for ordinal in [5,6,7]:
- assert suite.decide(reference['assertions'][ordinal-1],observed['assertions'][ordinal-1])==(None,False)
 print(json.dumps({'counts':counts,'guest_ordinals':guests,'ordered_ids_match':True}))
-"#).arg(repository).arg(captured).arg(namespace).arg(count.to_string()).output().unwrap();
+"#).arg(repository).arg(captured).arg(namespace).arg(count.to_string()).arg(test_leaf).output().unwrap();
     assert!(compared.status.success(), "{}\n{}", String::from_utf8_lossy(&compared.stdout),
         String::from_utf8_lossy(&compared.stderr));
     println!("{}", String::from_utf8_lossy(&compared.stdout));
@@ -57,5 +63,15 @@ print(json.dumps({'counts':counts,'guest_ordinals':guests,'ordered_ids_match':Tr
 
 #[test]
 fn complete_eval_body_keeps_exact_numeric_fields_as_host_matches() {
-    check_body("eval", "clojure.core-test.eval", 34);
+    check_body("eval", "clojure.core-test.eval", "test-eval", 34);
+}
+
+#[test]
+fn complete_symbol_body_uses_real_vars_and_strict_two_argument_conversion() {
+    check_body("symbol", "clojure.core-test.symbol", "test-symbol", 61);
+}
+
+#[test]
+fn complete_var_predicate_body_preserves_original_opaque_judgments() {
+    check_body("var_qmark", "clojure.core-test.var-qmark", "test-var?", 34);
 }
