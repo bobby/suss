@@ -27,6 +27,7 @@ mod frontend;
 pub use frontend::{AsyncDispatch, FutureState, FutureStatus};
 mod native_async;
 pub use native_async::{NativeRequest, NativeRequestId, NativeRequestQueue};
+mod installation;
 mod observation;
 #[cfg(test)]
 mod random_tests;
@@ -241,7 +242,9 @@ impl Drop for OperationBudgetScope {
 }
 fn end_operation_budget(depth: &AtomicUsize) {
     depth
-        .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+        .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
+            value.checked_sub(1)
+        })
         .expect("Operation budget scopes must be balanced");
 }
 struct PendingHostFuture {
@@ -319,8 +322,10 @@ impl CompilationSnapshot {
 /// short-lived runs. Deferred reference counting is not offered: it cannot
 /// collect cycles.
 pub fn configure_collector(config: &mut Config) -> Result<(), String> {
-    let (collector, initial) =
-        collector_settings(std::env::var("SUSS_GC"), std::env::var("SUSS_GC_INITIAL_MIB"))?;
+    let (collector, initial) = collector_settings(
+        std::env::var("SUSS_GC"),
+        std::env::var("SUSS_GC_INITIAL_MIB"),
+    )?;
     config.collector(collector);
     config.gc_heap_initial_size(initial);
     Ok(())
@@ -342,7 +347,11 @@ fn collector_settings(
         Err(NotPresent) => GC_HEAP_INITIAL_SIZE,
         Ok(text) => match text.parse::<u64>() {
             Ok(mib) if mib <= 1 << 20 => mib << 20,
-            _ => return Err(format!("SUSS_GC_INITIAL_MIB must be a size in MiB, not {text:?}")),
+            _ => {
+                return Err(format!(
+                    "SUSS_GC_INITIAL_MIB must be a size in MiB, not {text:?}"
+                ));
+            }
         },
         Err(_) => return Err("SUSS_GC_INITIAL_MIB must be a size in MiB".into()),
     };
@@ -375,10 +384,7 @@ fn engine() -> Result<Engine, SessionError> {
 /// The sentinel tag (`runtime_abi::NIL`, `FALSE`, `TRUE` or `UNDEFINED`) of
 /// nil, a null reference, or of a false, true or undefined struct; `None` for
 /// any other value. A sentinel is the only one-field `i32` struct.
-pub fn sentinel_tag(
-    mut store: impl AsContextMut,
-    value: &Val,
-) -> wasmtime::Result<Option<u32>> {
+pub fn sentinel_tag(mut store: impl AsContextMut, value: &Val) -> wasmtime::Result<Option<u32>> {
     let Some(reference) = value
         .anyref()
         .ok_or_else(|| wasmtime::Error::msg("Expected a reference Value"))?
@@ -448,7 +454,9 @@ fn own<C: AsContextMut<Data = ()>>(
     handles: &Arc<AtomicUsize>,
 ) -> Result<SessionValue, SessionError> {
     let value = match value.anyref() {
-        Some(object) => object.map(|object| object.to_owned_rooted(scope)).transpose()?,
+        Some(object) => object
+            .map(|object| object.to_owned_rooted(scope))
+            .transpose()?,
         None => return Err(wasmtime::Error::msg("Expected a runtime reference Value").into()),
     };
     handles.fetch_add(1, Ordering::Relaxed);
@@ -500,7 +508,10 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
             let current = current
                 .anyref()
                 .ok_or_else(|| wasmtime::Error::msg("Dynamic frame root is not a reference"))?;
-            let expected = checkpoint.frame.as_ref().map(|frame| frame.to_rooted(&mut *scope));
+            let expected = checkpoint
+                .frame
+                .as_ref()
+                .map(|frame| frame.to_rooted(&mut *scope));
             let Some(current) = current else {
                 if expected.is_none() {
                     return Ok(());
@@ -707,8 +718,7 @@ impl Session {
         // Failure propagates as a host error; no seed or constant substitutes it.
         let random = Func::wrap(&mut store, || -> wasmtime::Result<i64> {
             let mut bytes = [0; 8];
-            getrandom::fill(&mut bytes)
-                .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+            getrandom::fill(&mut bytes).map_err(|error| wasmtime::Error::msg(error.to_string()))?;
             Ok(i64::from_ne_bytes(bytes))
         });
         runtime
@@ -1164,8 +1174,12 @@ impl Session {
         Err(SessionError::ResetPending)
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
-        let mut replacement =
-            Self::with_engine_interrupt(self.engine.clone(), self.options.clone(), self.phase, self.interrupt.clone())?;
+        let mut replacement = Self::with_engine_interrupt(
+            self.engine.clone(),
+            self.options.clone(),
+            self.phase,
+            self.interrupt.clone(),
+        )?;
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
@@ -1205,7 +1219,12 @@ impl Session {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
         let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
-        let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+        let value = Val::AnyRef(
+            value
+                .value
+                .as_ref()
+                .map(|value| value.to_rooted(&mut scope)),
+        );
         let result = f(scope.as_context_mut(), value);
         let result = match result {
             Ok(_) if scope.as_context_mut().has_pending_exception() => Err(wasmtime::Error::msg(
@@ -1264,7 +1283,15 @@ impl Session {
                 .get_global(&mut store, "sentinel-undefined")
                 .expect("runtime undefined")
                 .get(&mut store);
-            f(store, value, args_new, invoke, closure_new, function, undefined)
+            f(
+                store,
+                value,
+                args_new,
+                invoke,
+                closure_new,
+                function,
+                undefined,
+            )
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {
@@ -1300,7 +1327,9 @@ impl Session {
     pub(crate) fn begin_operation_budget(&mut self) -> Result<(), SessionError> {
         let depth = self.operation_budget_depth.load(Ordering::SeqCst);
         let next = depth.checked_add(1).ok_or_else(|| {
-            SessionError::Host(wasmtime::Error::msg("Operation budget scope depth exhausted"))
+            SessionError::Host(wasmtime::Error::msg(
+                "Operation budget scope depth exhausted",
+            ))
         })?;
         if depth == 0 {
             self.budget()?;
@@ -1353,67 +1382,23 @@ impl Session {
         environment: Environment,
         cells: &[CellIdentity],
     ) -> Result<Vec<Instance>, SessionError> {
-        self.charge_host_work(0)?;
-        let mut compiled = Vec::new();
-        for bytes in bytes {
-            runtime_abi::verify_artifact(bytes, &runtime_abi::Manifest::default())
-                .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            portable::artifact_identity::verify(
-                bytes,
-                portable::artifact_identity::Expected {
-                    phase: Some(self.phase),
-                    ..Default::default()
-                },
-            )
-            .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))?;
-            let module = crate::portable_module_cache::compile(&self.engine, bytes)?;
-            self.charge_host_work(0)?;
-            compiled.push(module);
-        }
-        let mut linker = self.linker.clone();
-        let mut staged = BTreeMap::new();
-        for identity in cells {
-            if self.cells.contains_key(identity) || staged.contains_key(identity) {
-                continue;
-            }
-            let mut scope = RootScope::new(&mut self.store);
-            let mut result = [Val::null_any_ref()];
-            self.runtime
-                .get_func(&mut scope, "binding-unbound")
-                .unwrap()
-                .call(&mut scope, &[], &mut result)?;
-            let ty = result[0]
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&scope)?
-                .unwrap()
-                .ty(&scope)?;
-            let global = Global::new(
-                &mut scope,
-                GlobalType::new(
-                    ValType::Ref(RefType::new(false, ty.into())),
-                    Mutability::Const,
-                ),
-                result[0].clone(),
-            )?;
-            linker.define(
-                &scope,
-                identity.import_module(),
-                &identity.import_name(),
-                global,
-            )?;
-            staged.insert(identity.clone(), global);
-        }
-        let mut instances = Vec::new();
-        for module in compiled {
-            instances.push(linker.instantiate(&mut self.store, &module)?);
-        }
-        self.linker = linker;
-        self.cells.extend(staged);
+        let installed = installation::install(
+            self.store.as_context_mut(),
+            &self.engine,
+            self.runtime,
+            self.phase,
+            &self.linker,
+            &self.cells,
+            bytes,
+            cells,
+            &self.interrupt,
+        )?;
+        self.linker = installed.linker;
+        self.cells.extend(installed.cells);
         self.environment = environment;
-        self.resident.extend(instances.iter().copied());
-        self.artifact_bytes += bytes.iter().map(|bytes| bytes.len()).sum::<usize>();
-        Ok(instances)
+        self.resident.extend(installed.instances.iter().copied());
+        self.artifact_bytes += installed.artifact_bytes;
+        Ok(installed.instances)
     }
     fn eval_instance(&mut self, instance: Instance) -> Result<SessionValue, SessionError> {
         let mut scope = RootScope::new(&mut self.store);
@@ -1523,9 +1508,11 @@ impl Session {
                     .unwrap();
                 // A frame that held the cell since the checkpoint may still be
                 // reachable from a saved context, so the cell stays dynamic.
-                let dynamic = cell.field(&mut scope, 1)?.unwrap_i32() & crate::runtime_abi::CELL_DYNAMIC;
+                let dynamic =
+                    cell.field(&mut scope, 1)?.unwrap_i32() & crate::runtime_abi::CELL_DYNAMIC;
                 if let Some((value, bound)) = checkpoint.values.get(identity) {
-                    let value = Val::AnyRef(value.as_ref().map(|value| value.to_rooted(&mut scope)));
+                    let value =
+                        Val::AnyRef(value.as_ref().map(|value| value.to_rooted(&mut scope)));
                     cell.set_field(&mut scope, 0, value)?;
                     cell.set_field(&mut scope, 1, Val::I32(*bound | dynamic))?;
                 } else {
@@ -1553,27 +1540,44 @@ impl Session {
         source: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<SessionValue, SessionError> {
-        expander.begin_declarations().map_err(SessionError::Compile)?;
+        expander
+            .begin_declarations()
+            .map_err(SessionError::Compile)?;
         let mut linked = false;
         let result = self.eval_with_staged_macros(source, expander, &mut linked);
-        expander.end_declarations(linked).map_err(SessionError::Compile)?;
+        expander
+            .end_declarations(linked)
+            .map_err(SessionError::Compile)?;
         result
     }
     fn eval_with_staged_macros(
-        &mut self, source: &str, expander: &mut dyn portable::ExpansionHost, linked: &mut bool,
+        &mut self,
+        source: &str,
+        expander: &mut dyn portable::ExpansionHost,
+        linked: &mut bool,
     ) -> Result<SessionValue, SessionError> {
-        let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
+        let mut request = portable::ExpansionRequest::new(expander, 0..source.len())
+            .map_err(SessionError::Compile)?;
         let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
-            portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len()).map_err(|error| suss_reader::ParseError {
-                message: error.message, span: error.span, expected: vec![],
-            })
-        }).map_err(|error| {
+            portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len())
+                .map_err(|error| suss_reader::ParseError {
+                    message: error.message,
+                    span: error.span,
+                    expected: vec![],
+                })
+        })
+        .map_err(|error| {
             SessionError::Compile(Diagnostic {
                 span: error.span,
                 message: error.message,
             })
         })?;
-        portable::ExpansionHost::charge_expansion_work(&mut request, source.len() as u64, 0..source.len()).map_err(SessionError::Compile)?;
+        portable::ExpansionHost::charge_expansion_work(
+            &mut request,
+            source.len() as u64,
+            0..source.len(),
+        )
+        .map_err(SessionError::Compile)?;
         let prepared = self.compilation_snapshot().prepare_with_origin(
             forms,
             0..source.len(),
@@ -1610,7 +1614,9 @@ impl Session {
         self.eval_prepared_linked(prepared, &mut false)
     }
     fn eval_prepared_linked(
-        &mut self, prepared: portable::modules::PreparedInput, linked: &mut bool,
+        &mut self,
+        prepared: portable::modules::PreparedInput,
+        linked: &mut bool,
     ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
@@ -1701,17 +1707,31 @@ impl Session {
         let Some(expander) = expander else {
             return self.load_namespace_plan(namespace, provided, reloading, None, &mut false);
         };
-        expander.begin_declarations().map_err(SessionError::Compile)?;
+        expander
+            .begin_declarations()
+            .map_err(SessionError::Compile)?;
         let mut linked = false;
-        let result = self.load_namespace_plan(namespace, provided, reloading, Some(&mut *expander), &mut linked);
+        let result = self.load_namespace_plan(
+            namespace,
+            provided,
+            reloading,
+            Some(&mut *expander),
+            &mut linked,
+        );
         // Initializer failures retain installed state, as before. A preparation
         // or linking error must not publish compiler-only replacements.
-        expander.end_declarations(linked).map_err(SessionError::Compile)?;
+        expander
+            .end_declarations(linked)
+            .map_err(SessionError::Compile)?;
         result
     }
     fn load_namespace_plan(
-        &mut self, namespace: &str, provided: BTreeSet<ModuleIdentity>, reloading: bool,
-        expander: Option<&mut dyn portable::ExpansionHost>, linked: &mut bool,
+        &mut self,
+        namespace: &str,
+        provided: BTreeSet<ModuleIdentity>,
+        reloading: bool,
+        expander: Option<&mut dyn portable::ExpansionHost>,
+        linked: &mut bool,
     ) -> Result<Option<SessionValue>, SessionError> {
         let mut plan = if let Some(expander) = expander {
             portable::modules::prepare_modules_with_expander(
@@ -1773,14 +1793,38 @@ impl Session {
         literal: &portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         use portable::hir::Literal;
-        let ratio = if let Literal::Ratio { negative, numerator, denominator } = literal {
-            let numerator = self.data_scalar(&Literal::BigInt { negative: *negative, limbs: numerator.clone(), big_integer: false })?;
-            let denominator = self.data_scalar(&Literal::BigInt { negative: false, limbs: denominator.clone(), big_integer: false })?;
+        let ratio = if let Literal::Ratio {
+            negative,
+            numerator,
+            denominator,
+        } = literal
+        {
+            let numerator = self.data_scalar(&Literal::BigInt {
+                negative: *negative,
+                limbs: numerator.clone(),
+                big_integer: false,
+            })?;
+            let denominator = self.data_scalar(&Literal::BigInt {
+                negative: false,
+                limbs: denominator.clone(),
+                big_integer: false,
+            })?;
             Some((numerator, denominator))
-        } else { None };
-        let decimal = if let Literal::Decimal { negative, unscaled, .. } = literal {
-            Some(self.data_scalar(&Literal::BigInt { negative: *negative, limbs: unscaled.clone(), big_integer: true })?)
-        } else { None };
+        } else {
+            None
+        };
+        let decimal = if let Literal::Decimal {
+            negative, unscaled, ..
+        } = literal
+        {
+            Some(self.data_scalar(&Literal::BigInt {
+                negative: *negative,
+                limbs: unscaled.clone(),
+                big_integer: true,
+            })?)
+        } else {
+            None
+        };
         self.budget()?;
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
@@ -1790,7 +1834,11 @@ impl Session {
             ))),
             Literal::Nil => own(&mut scope, Val::AnyRef(None), self.identity, &self.handles),
             Literal::Bool(value) => {
-                let name = if *value { "sentinel-true" } else { "sentinel-false" };
+                let name = if *value {
+                    "sentinel-true"
+                } else {
+                    "sentinel-false"
+                };
                 let value = self
                     .runtime
                     .get_global(&mut scope, name)
@@ -1828,35 +1876,107 @@ impl Session {
             }
             Literal::Ratio { .. } => {
                 let (numerator, denominator) = ratio.expect("prebuilt Ratio children");
-                let arguments = [Val::AnyRef(Some(numerator.object()?.to_rooted(&mut scope))),
-                    Val::AnyRef(Some(denominator.object()?.to_rooted(&mut scope)))];
-                let function = self.runtime.get_func(&mut scope, "ratio-literal").expect("Ratio literal constructor");
-                call(&mut scope, self.runtime, function, &arguments, self.identity, &self.handles)
+                let arguments = [
+                    Val::AnyRef(Some(numerator.object()?.to_rooted(&mut scope))),
+                    Val::AnyRef(Some(denominator.object()?.to_rooted(&mut scope))),
+                ];
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "ratio-literal")
+                    .expect("Ratio literal constructor");
+                call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &arguments,
+                    self.identity,
+                    &self.handles,
+                )
             }
             Literal::Decimal { scale, .. } => {
                 let unscaled = decimal.expect("prebuilt Decimal child");
                 let argument = Val::AnyRef(Some(unscaled.object()?.to_rooted(&mut scope)));
-                let function = self.runtime.get_func(&mut scope, "decimal-literal").expect("Decimal literal constructor");
-                call(&mut scope, self.runtime, function, &[argument, Val::I32(*scale)], self.identity, &self.handles)
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "decimal-literal")
+                    .expect("Decimal literal constructor");
+                call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &[argument, Val::I32(*scale)],
+                    self.identity,
+                    &self.handles,
+                )
             }
-            Literal::BigInt { negative, limbs, big_integer } => {
-                let length = i32::try_from(limbs.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data BigInt exceeds runtime length")))?;
-                let allocate = self.runtime.get_func(&mut scope, "bigint-limbs-new").expect("BigInt limb allocator");
-                let value = call(&mut scope, self.runtime, allocate, &[Val::I32(length)], self.identity, &self.handles)?;
-                let array = value.object()?.to_rooted(&mut scope).as_array(&scope)?.expect("BigInt magnitude array");
+            Literal::BigInt {
+                negative,
+                limbs,
+                big_integer,
+            } => {
+                let length = i32::try_from(limbs.len()).map_err(|_| {
+                    SessionError::Host(wasmtime::Error::msg(
+                        "Compiler data BigInt exceeds runtime length",
+                    ))
+                })?;
+                let allocate = self
+                    .runtime
+                    .get_func(&mut scope, "bigint-limbs-new")
+                    .expect("BigInt limb allocator");
+                let value = call(
+                    &mut scope,
+                    self.runtime,
+                    allocate,
+                    &[Val::I32(length)],
+                    self.identity,
+                    &self.handles,
+                )?;
+                let array = value
+                    .object()?
+                    .to_rooted(&mut scope)
+                    .as_array(&scope)?
+                    .expect("BigInt magnitude array");
                 for (index, limb) in limbs.iter().enumerate() {
                     Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
                     array.set(&mut scope, index as u32, Val::I32(*limb as i32))?;
                 }
-                let sign = if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 };
-                let construct = self.runtime.get_func(&mut scope, "bigint-new").expect("BigInt constructor");
+                let sign = if limbs.is_empty() {
+                    0
+                } else if *negative {
+                    -1
+                } else {
+                    1
+                };
+                let construct = self
+                    .runtime
+                    .get_func(&mut scope, "bigint-new")
+                    .expect("BigInt constructor");
                 let argument = Val::AnyRef(Some(value.object()?.to_rooted(&mut scope)));
-                let result = call(&mut scope, self.runtime, construct, &[Val::I32(sign), argument, Val::I32(length)], self.identity, &self.handles)?;
+                let result = call(
+                    &mut scope,
+                    self.runtime,
+                    construct,
+                    &[Val::I32(sign), argument, Val::I32(length)],
+                    self.identity,
+                    &self.handles,
+                )?;
                 if *big_integer {
-                    let convert = self.runtime.get_func(&mut scope, "integer-biginteger").expect("BigInteger constructor");
+                    let convert = self
+                        .runtime
+                        .get_func(&mut scope, "integer-biginteger")
+                        .expect("BigInteger constructor");
                     let argument = Val::AnyRef(Some(result.object()?.to_rooted(&mut scope)));
-                    call(&mut scope, self.runtime, convert, &[argument], self.identity, &self.handles)
-                } else { Ok(result) }
+                    call(
+                        &mut scope,
+                        self.runtime,
+                        convert,
+                        &[argument],
+                        self.identity,
+                        &self.handles,
+                    )
+                } else {
+                    Ok(result)
+                }
             }
             Literal::String(units) => {
                 let length = i32::try_from(units.len()).map_err(|_| {
@@ -1930,7 +2050,12 @@ impl Session {
             .expect("runtime argument array");
         for (index, value) in values.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                value
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             array.set(&mut scope, index as u32, value)?;
         }
         let function = self
@@ -1960,15 +2085,30 @@ impl Session {
     }
     /// The interned keyword equal to `keyword`, as guest construction
     /// interns them (#361), so host-built keywords are identical to literals.
-    pub(crate) fn data_keyword_intern(&mut self, keyword: &SessionValue) -> Result<SessionValue, SessionError> {
+    pub(crate) fn data_keyword_intern(
+        &mut self,
+        keyword: &SessionValue,
+    ) -> Result<SessionValue, SessionError> {
         self.check(keyword)?;
         let mut scope = RootScope::new(&mut self.store);
         let function = self
             .runtime
             .get_func(&mut scope, "keyword-intern")
             .expect("shared runtime keyword interning");
-        let value = Val::AnyRef(keyword.value.as_ref().map(|value| value.to_rooted(&mut scope)));
-        call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)
+        let value = Val::AnyRef(
+            keyword
+                .value
+                .as_ref()
+                .map(|value| value.to_rooted(&mut scope)),
+        );
+        call(
+            &mut scope,
+            self.runtime,
+            function,
+            &[value],
+            self.identity,
+            &self.handles,
+        )
     }
     fn data_constructor_plan(
         &mut self,
@@ -1980,7 +2120,12 @@ impl Session {
                 .runtime
                 .get_func(&mut scope, "constructor-descriptor")
                 .expect("shared runtime class descriptor");
-            let value = Val::AnyRef(class.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                class
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             let descriptor = call(
                 &mut scope,
                 self.runtime,
@@ -1993,7 +2138,12 @@ impl Session {
                 .runtime
                 .get_func(&mut scope, "source-constructor-plan")
                 .expect("shared runtime constructor preflight");
-            let value = Val::AnyRef(descriptor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                descriptor
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             let plan = call(
                 &mut scope,
                 self.runtime,
@@ -2027,7 +2177,12 @@ impl Session {
             .unwrap();
         for (index, value) in arguments.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                value
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             array.set(&mut scope, index as u32, value)?;
         }
         let function = self
@@ -2121,10 +2276,20 @@ impl Session {
             .unwrap();
         for (index, value) in arguments.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                value
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             array.set(&mut scope, index as u32, value)?;
         }
-        let function = Val::AnyRef(function.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+        let function = Val::AnyRef(
+            function
+                .value
+                .as_ref()
+                .map(|value| value.to_rooted(&mut scope)),
+        );
         let invoke = self.runtime.get_func(&mut scope, "invoke").unwrap();
         call(
             &mut scope,
@@ -2143,11 +2308,16 @@ mod tests {
     #[test]
     fn namespace_local_macros_roll_back_on_real_link_failure() {
         let root = tempfile::tempdir().unwrap();
-        std::fs::write(root.path().join("app.sus"),
-            "(ns app) (defmacro answer [] 17) (def value (answer))").unwrap();
+        std::fs::write(
+            root.path().join("app.sus"),
+            "(ns app) (defmacro answer [] 17) (def value (answer))",
+        )
+        .unwrap();
         let mut session = Session::new_repl_with_options(SessionOptions {
-            source_paths: vec![root.path().to_owned()], ..SessionOptions::default()
-        }).unwrap();
+            source_paths: vec![root.path().to_owned()],
+            ..SessionOptions::default()
+        })
+        .unwrap();
         let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
         session.eval("(def keep 41)").unwrap();
         let before = session.stats();
@@ -2162,13 +2332,27 @@ mod tests {
         assert!(format!("{error:?}").contains("unknown import"), "{error:?}");
         assert_eq!(session.stats(), before);
         assert_eq!(session.current_namespace(), "user");
-        assert!(session.eval_with_macros("(app/answer)", &mut macros).is_err());
+        assert!(
+            session
+                .eval_with_macros("(app/answer)", &mut macros)
+                .is_err()
+        );
         assert!(session.eval("app/value").is_err());
         let keep = session.eval("keep").unwrap();
-        assert_eq!(crate::portable_repl::display(&mut session, &keep).unwrap(), "41");
-        session.load_namespace_with_macros("app", &mut macros).unwrap();
-        let answer = session.eval_with_macros("[app/value (app/answer)]", &mut macros).unwrap();
-        assert_eq!(crate::portable_repl::display(&mut session, &answer).unwrap(), "[17 17]");
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &keep).unwrap(),
+            "41"
+        );
+        session
+            .load_namespace_with_macros("app", &mut macros)
+            .unwrap();
+        let answer = session
+            .eval_with_macros("[app/value (app/answer)]", &mut macros)
+            .unwrap();
+        assert_eq!(
+            crate::portable_repl::display(&mut session, &answer).unwrap(),
+            "[17 17]"
+        );
     }
     fn legacy_construct(
         session: &mut Session,
@@ -2185,7 +2369,12 @@ mod tests {
                 .runtime
                 .get_func(&mut scope, "constructor-descriptor")
                 .expect("shared runtime class descriptor");
-            let value = Val::AnyRef(class.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                class
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             let descriptor = call(
                 &mut scope,
                 session.runtime,
@@ -2198,7 +2387,12 @@ mod tests {
                 .runtime
                 .get_func(&mut scope, "source-constructor-new")
                 .expect("shared runtime source constructor");
-            let value = Val::AnyRef(descriptor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(
+                descriptor
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             call(
                 &mut scope,
                 session.runtime,
@@ -2220,7 +2414,14 @@ mod tests {
         let mut scope = RootScope::new(&mut session.store);
         let arguments: Vec<_> = values
             .iter()
-            .map(|value| Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope))))
+            .map(|value| {
+                Val::AnyRef(
+                    value
+                        .value
+                        .as_ref()
+                        .map(|value| value.to_rooted(&mut scope)),
+                )
+            })
             .collect();
         let function = session.runtime.get_func(&mut scope, name).unwrap();
         call(
@@ -2421,7 +2622,8 @@ mod tests {
                         .unwrap()
                         .as_array(&store)?
                         .unwrap();
-                    let invalid = Val::AnyRef(a.value.as_ref().map(|value| value.to_rooted(&mut store)));
+                    let invalid =
+                        Val::AnyRef(a.value.as_ref().map(|value| value.to_rooted(&mut store)));
                     schema.set(&mut store, 2, invalid)
                 })
                 .unwrap();
@@ -2525,7 +2727,8 @@ mod tests {
                                     if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                         &store, entry, &original,
                                     )? {
-                                        let replacement = replacement.object().unwrap().to_rooted(&mut store);
+                                        let replacement =
+                                            replacement.object().unwrap().to_rooted(&mut store);
                                         cache.set(
                                             &mut store,
                                             index,
@@ -2570,7 +2773,8 @@ mod tests {
                                     if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                         &store, entry, &replaced,
                                     )? {
-                                        let original = class.object().unwrap().to_rooted(&mut store);
+                                        let original =
+                                            class.object().unwrap().to_rooted(&mut store);
                                         cache.set(
                                             &mut store,
                                             index,
@@ -2652,7 +2856,8 @@ mod tests {
                 let ty = original.ty(&scope).unwrap();
                 let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
                 let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
-                fields[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize] = Val::AnyRef(Some(invalid));
+                fields[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize] =
+                    Val::AnyRef(Some(invalid));
                 let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
                     .unwrap()
                     .to_anyref();
@@ -2792,22 +2997,26 @@ mod tests {
     fn operation_budget_host_exhaustion_and_next_request_recovery() {
         let mut session = Session::new().unwrap();
         session.set_operation_fuel(100);
-        let error = session.with_operation_budget(|session| {
-            for _ in 0..4 {
-                session.charge_host_work(25)?;
-            }
-            assert_eq!(session.store.get_fuel().unwrap(), 0);
-            session.charge_host_work(1)
-        }).unwrap_err();
+        let error = session
+            .with_operation_budget(|session| {
+                for _ in 0..4 {
+                    session.charge_host_work(25)?;
+                }
+                assert_eq!(session.store.get_fuel().unwrap(), 0);
+                session.charge_host_work(1)
+            })
+            .unwrap_err();
         assert!(matches!(error, SessionError::Trap(ref error)
             if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
         assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
-        session.with_operation_budget(|session| {
-            assert_eq!(session.store.get_fuel()?, 100);
-            session.charge_host_work(17)?;
-            assert_eq!(session.store.get_fuel()?, 83);
-            Ok(())
-        }).unwrap();
+        session
+            .with_operation_budget(|session| {
+                assert_eq!(session.store.get_fuel()?, 100);
+                session.charge_host_work(17)?;
+                assert_eq!(session.store.get_fuel()?, 83);
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
@@ -2816,13 +3025,17 @@ mod tests {
         session.set_operation_fuel(100);
         session.begin_operation_budget().unwrap();
         session.charge_host_work(7).unwrap();
-        session.with_operation_budget(|session| {
-            assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 2);
-            session.budget()?;
-            session.charge_host_work(11)
-        }).unwrap();
+        session
+            .with_operation_budget(|session| {
+                assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 2);
+                session.budget()?;
+                session.charge_host_work(11)
+            })
+            .unwrap();
         // Separate transformer calls inside the same prepare request cannot reset it.
-        session.with_operation_budget(|session| session.charge_host_work(13)).unwrap();
+        session
+            .with_operation_budget(|session| session.charge_host_work(13))
+            .unwrap();
         assert_eq!(session.store.get_fuel().unwrap(), 69);
         assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 1);
         session.end_operation_budget();
@@ -2837,32 +3050,43 @@ mod tests {
         let mut session = Session::new().unwrap();
         let function = session.eval("(fn [] 17)").unwrap();
         // Measure genuine helper consumption instead of assuming emitted instruction costs.
-        let cost = session.with_operation_budget(|session| {
-            let before = session.store.get_fuel()?;
-            session.invoke(&function, &[])?;
-            Ok(before - session.store.get_fuel()?)
-        }).unwrap();
+        let cost = session
+            .with_operation_budget(|session| {
+                let before = session.store.get_fuel()?;
+                session.invoke(&function, &[])?;
+                Ok(before - session.store.get_fuel()?)
+            })
+            .unwrap();
         assert!(cost > 0);
         session.set_operation_fuel(cost);
-        let error = session.with_operation_budget(|session| {
-            session.charge_host_work(cost)?;
-            session.invoke(&function, &[])
-        }).unwrap_err();
+        let error = session
+            .with_operation_budget(|session| {
+                session.charge_host_work(cost)?;
+                session.invoke(&function, &[])
+            })
+            .unwrap_err();
         assert!(matches!(error, SessionError::Trap(ref error)
             if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
-        assert_eq!(session.store.get_fuel().unwrap(), 0,
-            "dynamic restoration must preserve the exhausted operation's fuel");
+        assert_eq!(
+            session.store.get_fuel().unwrap(),
+            0,
+            "dynamic restoration must preserve the exhausted operation's fuel"
+        );
         session.set_operation_fuel(10_000_000);
-        session.with_operation_budget(|session| {
-            let before = session.store.get_fuel()?;
-            session.invoke(&function, &[])?;
-            let after_first = session.store.get_fuel()?;
-            session.invoke(&function, &[])?;
-            assert!(after_first < before);
-            assert!(session.store.get_fuel()? < after_first,
-                "a repeated invoke must not replenish helper fuel");
-            Ok(())
-        }).unwrap();
+        session
+            .with_operation_budget(|session| {
+                let before = session.store.get_fuel()?;
+                session.invoke(&function, &[])?;
+                let after_first = session.store.get_fuel()?;
+                session.invoke(&function, &[])?;
+                assert!(after_first < before);
+                assert!(
+                    session.store.get_fuel()? < after_first,
+                    "a repeated invoke must not replenish helper fuel"
+                );
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
@@ -2870,21 +3094,25 @@ mod tests {
         let mut session = Session::new().unwrap();
         session.set_operation_fuel(100);
         let interrupt = session.host_work_interrupt();
-        let error = session.with_operation_budget(|session| {
-            session.charge_host_work(7)?;
-            interrupt.store(true, Ordering::SeqCst);
-            session.with_operation_budget(|session| {
-                session.budget()?;
-                assert!(interrupt.load(Ordering::SeqCst));
-                Session::consume_host_work(session.store.as_context_mut(), 1, &interrupt)
-                    .map_err(Into::into)
+        let error = session
+            .with_operation_budget(|session| {
+                session.charge_host_work(7)?;
+                interrupt.store(true, Ordering::SeqCst);
+                session.with_operation_budget(|session| {
+                    session.budget()?;
+                    assert!(interrupt.load(Ordering::SeqCst));
+                    Session::consume_host_work(session.store.as_context_mut(), 1, &interrupt)
+                        .map_err(Into::into)
+                })
             })
-        }).unwrap_err();
+            .unwrap_err();
         assert!(error.is_interrupt());
         assert_eq!(session.store.get_fuel().unwrap(), 0);
         assert!(!interrupt.load(Ordering::SeqCst));
         assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
-        session.with_operation_budget(|session| session.charge_host_work(1)).unwrap();
+        session
+            .with_operation_budget(|session| session.charge_host_work(1))
+            .unwrap();
         assert_eq!(session.store.get_fuel().unwrap(), 99);
     }
 
@@ -2904,10 +3132,12 @@ mod tests {
         assert!(panic.is_err());
         assert_eq!(session.operation_budget_depth.load(Ordering::SeqCst), 0);
         assert_eq!(session.store.get_fuel().unwrap(), 64);
-        session.with_operation_budget(|session| {
-            assert_eq!(session.store.get_fuel()?, 100);
-            session.charge_host_work(1)
-        }).unwrap();
+        session
+            .with_operation_budget(|session| {
+                assert_eq!(session.store.get_fuel()?, 100);
+                session.charge_host_work(1)
+            })
+            .unwrap();
     }
 
     std::thread_local! {
@@ -2989,7 +3219,12 @@ mod tests {
                 array.set(&mut scope, index as u32, item).unwrap();
             }
             let continuation = value(&mut scope, runtime, "async-continuation-new", &[state]);
-            let resume = Val::AnyRef(resume.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+            let resume = Val::AnyRef(
+                resume
+                    .value
+                    .as_ref()
+                    .map(|value| value.to_rooted(&mut scope)),
+            );
             let token = value(
                 &mut scope,
                 runtime,
@@ -3026,9 +3261,7 @@ mod tests {
             let mut scope = RootScope::new(&mut session.store);
             let current = dynamic_checkpoint(&mut scope, runtime).unwrap();
             // Either root may be nil; two nils are the same root.
-            for (current, caller) in [
-                (&current.frame, &caller.frame),
-            ] {
+            for (current, caller) in [(&current.frame, &caller.frame)] {
                 let current = current.as_ref().map(|root| root.to_rooted(&mut scope));
                 let caller = caller.as_ref().map(|root| root.to_rooted(&mut scope));
                 match (current, caller) {
@@ -3358,8 +3591,16 @@ mod tests {
             collector_settings(setting("copying"), setting("256")),
             Ok((wasmtime::Collector::Copying, 268_435_456))
         ));
-        for (gc, initial) in [("drc", "1"), ("auto", "1"), ("copying", "-1"), ("copying", "1.5")] {
-            assert!(collector_settings(setting(gc), setting(initial)).is_err(), "{gc} {initial}");
+        for (gc, initial) in [
+            ("drc", "1"),
+            ("auto", "1"),
+            ("copying", "-1"),
+            ("copying", "1.5"),
+        ] {
+            assert!(
+                collector_settings(setting(gc), setting(initial)).is_err(),
+                "{gc} {initial}"
+            );
         }
     }
     #[test]
@@ -3433,7 +3674,9 @@ mod tests {
         );
         session.set_operation_fuel(100000);
         // A double, so the string conversion calls the numeric helper.
-        let output = session.eval("(suss.bootstrap/value-add 42.5 \"\")").unwrap();
+        let output = session
+            .eval("(suss.bootstrap/value-add 42.5 \"\")")
+            .unwrap();
         let units = session
             .inspect(&output, |mut scope, value| {
                 let array = value.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();
