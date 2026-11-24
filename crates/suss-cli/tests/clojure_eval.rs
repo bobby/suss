@@ -925,7 +925,7 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
             .unwrap();
         session
             .eval_with_macros(
-                "(eval '(defmacro raw-budget-once [] (suss.bootstrap/observe 1) 1))",
+                "(eval '(defmacro raw-budget-once [] (suss.harness.observation/capture 1) 1))",
                 &mut macros,
             )
             .unwrap();
@@ -935,7 +935,7 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
                 &mut macros,
             )
             .unwrap();
-        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (suss.bootstrap/observe 2) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
+        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (suss.harness.observation/capture 2) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
         let nil = session.eval("nil").unwrap();
         for (function, args) in [(&repeated, vec![]), (&looping, vec![&nil, &nil])] {
             observations.store(0, Ordering::SeqCst);
@@ -988,7 +988,7 @@ fn runtime_cancellation_reaches_an_isolated_macro_function_and_returns_the_lease
             Ok(0)
         })
         .unwrap();
-    let function = session.eval_with_macros("(do (eval '(defmacro raw-cancel-loop [] (suss.bootstrap/observe 77) (loop [] (recur)))) @(eval '(var raw-cancel-loop)))", &mut macros).unwrap();
+    let function = session.eval_with_macros("(do (eval '(defmacro raw-cancel-loop [] (suss.harness.observation/capture 77) (loop [] (recur)))) @(eval '(var raw-cancel-loop)))", &mut macros).unwrap();
     let nil = session.eval("nil").unwrap();
     session.set_operation_fuel(u64::MAX);
     macros.set_operation_fuel(u64::MAX);
@@ -1083,6 +1083,30 @@ fn evaluated_macro_environment_keeps_nil_top_level_and_actual_lexical_names() {
             let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
             decoder.refill(40_000);
             assert_eq!(canonical(decoder.decode_session(&mut session, value).unwrap()), canonical(expected(&forms[0])));
+        }
+    }
+}
+
+#[test]
+fn failed_macro_replacement_preserves_live_metadata_and_successful_nested_effects() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/macro-failure-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 3);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for row in &rows {
+            let source = row["expression"].as_str().unwrap().replace("(Exception. ", "(js/Error. ").replace("(catch Throwable ", "(catch :default ");
+            let value = session.eval_with_macros(&source, &mut macros).unwrap_or_else(|error| {
+                panic!("{}: {}", row["name"], suss_compile::portable_repl::error_display(&mut session, &error))
+            });
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            session.collect().unwrap();
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&forms[0])), "{} {:?}", row["name"], session.phase());
+            eprintln!("macro-failure-primary-match {:?} {}", session.phase(), row["name"]);
         }
     }
 }

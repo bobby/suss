@@ -112,6 +112,7 @@ impl MacroHost<'_> {
                 .enter_namespace(phase, &namespace)
                 .map_err(SessionError::Compile)?;
             snapshot.environment.replace_evaluation_aliases(phase, self.session.evaluation_aliases()?);
+            self.session.synchronize_evaluation_macros(&mut snapshot)?;
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = self.session.evaluation_updates_input_namespace()?;
             match self.prepare_native_evaluation(&snapshot, form)? {

@@ -34621,3 +34621,23 @@ Run `declaration-after-primary-env-contract --declaration-env-only` through the
 external launcher. Earlier failed22-row runs retain actual101, not acceptance.
 The alias run included five dirty provenance JSON updates in its frozen input
 hashes; those metadata-only changes are committed with this follow-up.
+
+The frozen run at `9b6b7edb` establishes all22 declaration rows and all3 lexical
+macro environment rows in both phases, including retained GC checks, plus the
+cancellation-before-commit namespace guard. The complete public target returns
+actual101:21pass,2fail. Both new lifecycle guards failed during setup because
+the observation call used a nonexistent name; they now call the actual installed
+`suss.harness.observation/capture`, retaining signal-only observers, original
+allowances, watchdogs and required typed outcomes.
+
+Fresh three-row Clojure failure controls establish that a failed ordinary
+initializer preserves a macro's metadata/expansion, a successful ordinary def
+clears macro status even for the same function root, and a successful nested def
+survives the enclosing initializer's failure. A development CLI probe reproduced
+the first mismatch and matched the other two, with actual exit codes retained
+outside the checkout. Native snapshots now reconcile overridden declaration
+revisions with the actual canonical phase Var's macro metadata, charging every
+inspected declaration and leaving runtime effects untouched. A successful nested
+ordinary def has false metadata and is never undone. No previous source replays.
+Run `macro-failure-and-lifecycle-first-native --macro-failure-and-lifecycle-only`
+through the external launcher, freezing source/HEAD through its terminal receipt.

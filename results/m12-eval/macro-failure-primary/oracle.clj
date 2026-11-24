@@ -1,0 +1,3 @@
+(println (pr-str (pr-str (do (eval '(defmacro fail-replacement [] 42)) (try (eval '(def fail-replacement (throw (Exception. "init")))) (catch Throwable _ nil)) [(:macro (meta (eval '(var fail-replacement)))) (eval '(fail-replacement))]))))
+(println (pr-str (pr-str (do (eval '(defmacro same-root [] 42)) (eval '(def same-root @(eval '(var same-root)))) [(:macro (meta (eval '(var same-root)))) (try (eval '(same-root)) (catch Throwable _ :arity))]))))
+(println (pr-str (pr-str (do (eval '(defmacro nested-replacement [] 42)) (try (eval '(def nested-replacement (do (eval '(def nested-replacement (fn [] 7))) (throw (Exception. "outer"))))) (catch Throwable _ nil)) [(:macro (meta (eval '(var nested-replacement)))) (eval '(nested-replacement))]))))

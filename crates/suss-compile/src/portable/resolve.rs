@@ -1184,10 +1184,20 @@ impl Environment {
     }
     /// One nominal Var per actual persistent source binding, phase-local and
     /// unresolvable by user source. The getter closes over the original cell.
-    pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
+    fn var_identity(target: &Global) -> Global {
         let identity = format!("{}/{}", target.namespace(), target.name());
         let name = identity.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
-        let global = Global { phase: target.phase, namespace: "suss.internal.vars".into(), name: format!("var-{name}").into() };
+        Global { phase: target.phase, namespace: "suss.internal.vars".into(), name: format!("var-{name}").into() }
+    }
+    pub(crate) fn existing_var_cell(&self, target: &Global) -> Option<Global> {
+        let global = Self::var_identity(target);
+        matches!(self.bindings.get(&global), Some(Binding::InternalCell(_))).then_some(global)
+    }
+    pub(crate) fn native_macro_declarations(&self) -> impl Iterator<Item = Global> + '_ {
+        self.macro_declarations.keys().cloned()
+    }
+    pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
+        let global = Self::var_identity(target);
         match self.bindings.get(&global) {
             Some(Binding::InternalCell(_)) => {},
             Some(_) => return Err(error("Var identity collides with a source binding")),

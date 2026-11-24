@@ -286,6 +286,7 @@ impl Evaluation {
                 view.phase,
                 namespace_access.aliases(&mut view, &bridge)?,
             );
+            view.synchronize_evaluation_macros(&mut snapshot)?;
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = view.evaluation_updates_input_namespace()?;
             let allowance = view.operation_fuel_remaining()?;
@@ -400,6 +401,102 @@ impl SessionHost<'_> {
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
         namespace.read(self)
+    }
+    /// A failed ordinary initializer installs analysis facts before execution,
+    /// but never clears its existing Var's macro metadata. Consult that actual
+    /// phase-owned Var on the next eval instead of rolling back prior effects.
+    pub(crate) fn synchronize_evaluation_macros(
+        &mut self,
+        snapshot: &mut CompilationSnapshot,
+    ) -> Result<(), SessionError> {
+        let mut overrides = Vec::new();
+        for global in snapshot.environment.native_macro_declarations() {
+            self.charge_host_work(
+                (global.namespace().len() + global.name().len()) as u64 * 4 + 16,
+            )?;
+            if global.phase() == self.phase
+                && snapshot.environment.source_macro_overridden(
+                    self.phase,
+                    global.namespace(),
+                    global.name(),
+                )
+            {
+                overrides.push(global);
+            }
+        }
+        if overrides.is_empty() {
+            return Ok(());
+        }
+        let state = self
+            .evaluation
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing evaluation authority"))?;
+        let descriptor = registry_lock(&state.var_class)
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing Var authority"))?;
+        let bridge = state.bridge(self)?;
+        let key = bridge.quote(
+            self,
+            suss_reader::forms::Form {
+                span: 0..0,
+                metadata: vec![],
+                kind: suss_reader::forms::Kind::Keyword(suss_reader::Keyword::new("macro")),
+            },
+        )?;
+        let false_value = bridge.quote(
+            self,
+            suss_reader::forms::Form {
+                span: 0..0,
+                metadata: vec![],
+                kind: suss_reader::forms::Kind::Bool(false),
+            },
+        )?;
+        for global in overrides {
+            let Some(cell) = snapshot.environment.existing_var_cell(&global) else {
+                continue;
+            };
+            if !registry_lock(&self.compiler).cells.contains_key(&cell) {
+                continue;
+            }
+            let variable = self.binding_value(&cell)?;
+            if variable.value.is_none() {
+                continue;
+            }
+            let actual = self.data_descriptor(&variable, false)?;
+            let matches = {
+                let mut roots = RootScope::new(&mut self.store);
+                let actual = actual.object()?.to_rooted(&mut roots);
+                let expected = descriptor.to_rooted(&mut roots);
+                wasmtime::Rooted::ref_eq(&roots, &actual, &expected)?
+            };
+            if !matches {
+                return Err(wasmtime::Error::msg("Macro Var has a foreign descriptor").into());
+            }
+            let fields = self.data_fields(&variable)?;
+            if fields.len() != 3 {
+                return Err(wasmtime::Error::msg("Macro Var has invalid fields").into());
+            }
+            let flag = self.invoke(&key, &[&fields[2]])?;
+            // The public isMacro getter uses Clojure truthiness, too. Looking
+            // up just this key avoids decoding unrelated opaque metadata.
+            let enabled = match flag.value.as_ref() {
+                None => false,
+                Some(flag) => {
+                    let mut roots = RootScope::new(&mut self.store);
+                    let flag = flag.to_rooted(&mut roots);
+                    let false_value = false_value.object()?.to_rooted(&mut roots);
+                    !wasmtime::Rooted::ref_eq(&roots, &flag, &false_value)?
+                }
+            };
+            if enabled {
+                snapshot.environment.record_macro_declaration(
+                    self.phase,
+                    global.namespace(),
+                    global.name(),
+                );
+            }
+        }
+        Ok(())
     }
     pub(crate) fn evaluation_aliases(&mut self) -> Result<BTreeMap<String, String>, SessionError> {
         let state = self
