@@ -50,45 +50,31 @@ mod tests {
         let profile = macros.reentry_profile();
         let calls = Arc::new(AtomicUsize::new(0));
         let observed = calls.clone();
-        macros.install_observation_hook(move |mut caller, value| {
-            // This is reached while a compiled macro is executing in this very
-            // Store, not from an idle/fresh macro host or a replayed definition.
+        let input = macros.bridge.quote(&mut macros.session,
+            read_forms("(twice 21)").unwrap().remove(0)).unwrap();
+        let result = macros.session.probe_evaluation(&input, move |mut caller, value| {
+            // An explicit evaluate-form caller is active in the same Macro
+            // Store. Observation hooks keep their non-reentrant contract.
             assert!(profile.catalog.try_lock().is_ok(), "no catalog guard across Wasm");
             observed.fetch_add(1, Ordering::SeqCst);
-            let argument = reader.read(caller.as_context_mut(), &value, 0..0)?;
+            let form = reader.read(caller.as_context_mut(), &value, 0..0)?;
             let mut view = profile.bind(caller);
             view.define("(defmacro made-in-callback [x] (list '+ x 1))")
                 .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
-            let call = Form {
-                span: 0..0,
-                metadata: vec![],
-                kind: Kind::List(vec![symbol("twice", 0..0), argument]),
-            };
             let snapshot = view.session.compilation_snapshot();
-            let prepared = snapshot.prepare_with_origin(vec![call], 0..0, &mut view, None)
+            let prepared = snapshot.prepare_with_origin(vec![form], 0..0, &mut view, None)
                 .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
-            let value = view.session.eval_prepared(prepared)
-                .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
-            let value = view.bridge.read(&mut view.session, &value, 0..0)
-                .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
-            match value.kind {
-                Kind::Long(value) => u32::try_from(value).map_err(wasmtime::Error::from),
-                _ => Err(wasmtime::Error::msg("expected a compiled long result")),
-            }
+            view.session.eval_prepared(prepared)
+                .map_err(|error| wasmtime::Error::msg(error.to_string()))
         }).unwrap();
-        macros.define(concat!(
-            "(defmacro reentrant [x] (list '+ ",
-            "(suss.harness.observation/capture x) ",
-            "(suss.harness.observation/capture 1)))",
-        )).unwrap();
+        macros.session.collect().unwrap();
+        assert!(matches!(macros.bridge.read(&mut macros.session, &result, 0..0).unwrap().kind,
+            Kind::Long(42)));
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
         let mut caller = Session::new_repl().unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        let result = caller.eval_with_macros("(reentrant 21)", &mut macros).unwrap();
-        caller.collect().unwrap();
-        assert!(matches!(bridge.read(&mut caller, &result, 0..0).unwrap().kind, Kind::Long(44)));
-        assert_eq!(calls.load(Ordering::SeqCst), 2);
         let result = caller.eval_with_macros("(made-in-callback 41)", &mut macros).unwrap();
         assert!(matches!(bridge.read(&mut caller, &result, 0..0).unwrap().kind, Kind::Long(42)));
-        assert_eq!(calls.load(Ordering::SeqCst), 2, "no reconstruction or replay");
+        assert_eq!(calls.load(Ordering::SeqCst), 1, "no reconstruction or replay");
     }
 }

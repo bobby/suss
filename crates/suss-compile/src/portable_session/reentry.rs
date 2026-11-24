@@ -269,3 +269,45 @@ mod tests {
         }
     }
 }
+
+// An executing test fixture for the explicit evaluation capability. Observation
+// hooks retain their non-reentrant contract and are not used as compiler ports.
+#[cfg(all(test, not(suss_generator)))]
+impl SessionHost<'_> {
+    pub(crate) fn probe_evaluation(
+        &mut self,
+        input: &SessionValue,
+        callback: impl for<'a> Fn(StoreContextMut<'a, ()>, Val) -> wasmtime::Result<SessionValue>
+            + Send + Sync + 'static,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(input)?;
+        self.budget()?;
+        let runtime = self.runtime;
+        let evaluate = runtime.get_func(&mut self.store, "evaluate-form")
+            .ok_or_else(|| wasmtime::Error::msg("missing evaluation capability"))?;
+        let identity = self.identity;
+        let signature = evaluate.ty(&self.store);
+        let native = Func::try_new(&mut self.store, signature,
+            move |mut caller, args, results| {
+                let value = callback(caller.as_context_mut(), args[0].clone())?;
+                if value.identity != identity {
+                    return Err(wasmtime::Error::msg("foreign evaluation callback result"));
+                }
+                results[0] = value.val(&mut caller.as_context_mut());
+                Ok(())
+            })?;
+        runtime.get_func(&mut self.store, "evaluation-source-install")
+            .ok_or_else(|| wasmtime::Error::msg("missing evaluation installer"))?
+            .call(&mut self.store, &[Val::FuncRef(Some(native))], &mut [])?;
+        let module = wasmtime::Module::new(&self.engine, r#"(module
+          (import "runtime" "evaluate-form" (func $evaluate (param eqref) (result eqref)))
+          (func (export "go") (param eqref) (result eqref) local.get 0 call $evaluate))"#)?;
+        let mut linker = Linker::new(&self.engine);
+        linker.instance(&mut self.store, "runtime", runtime)?;
+        let instance = linker.instantiate(&mut self.store, &module)?;
+        let go = instance.get_func(&mut self.store, "go").unwrap();
+        let mut roots = RootScope::new(&mut self.store);
+        let argument = input.val(&mut roots.as_context_mut());
+        call(&mut roots, runtime, go, &[argument], self.identity, &self.handles)
+    }
+}
