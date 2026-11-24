@@ -35596,3 +35596,32 @@ ordered source expressions, original21 primary pairs and the constructor control
 Keep earlier frozen divergence evidence unchanged. The complete native/Macro/AOT
 vector target and a fresh complete capture must validate the repaired head before
 publishing the combined checkpoint and replacing the numeric workspace queue.
+
+
+The completed CI45482784311 run also exposes a now-under-budget macro-effect
+batch, a computed Double/Object identity expectation, and the pinned CLJS
+NaN identity result in the portable matrix. Exact CI/source/local fuel101
+evidence is preserved under results/m12-num-api/ci5-repair-before. Fresh
+Clojure1.12.6/native identity controls both return [true 0 false false]. Keep
+the immutable397-case CLJS fixture and142 retarget count; use the measured
+Clojure override for symbolic NaN and computed-versus-Var Double identity.
+The macro-effect control retains its100000 fuel limit, single-call success,
+actual cumulative guest trap, retained effect and recovery checks;128 finite
+calls exceed the same budget where the former32 now fit. Production defaults
+and all1229 production inputs remain unchanged from7b71.
+
+Atb244f519, all eight CI-repair commands return0 with source/HEAD/Binaryen
+unchanged. The complete macro-fuel8/raw-AOT1 targets finish in
+83.192s; the complete portable22 target, including all397
+ordered source observations, finishes in1435.39s. Core import,
+eval provenance, original comparison contract and explicit-ledger checks pass.
+Fresh actual native0 finishes in672.661s and the strict integrated
+capture preserves5750 ordered observations, prior successful judgments and
+229 BigInt/Ratio plus200 Decimal host matches. The exact committed default26
+checker also returns0 on that fresh full capture, retaining23 host matches
+and3 explicit narrow-wrapper differences. See compressed receipts in
+results/m12-num-api/ci5-all-repairs-validation and the separate
+ci5-repaired-fullcapture-default26-review. Original primary/comparator/count/
+skip/opaque contracts and the132 explicit global failures are unchanged.
+Exact two-thread workspace, independent review and final-head CI remain gates;
+the superseded7b71 queue is replaced only with this validated repaired source.
