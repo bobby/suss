@@ -34884,3 +34884,44 @@ Start the exact cargo test --workspace --locked -- --test-threads=2 command via
 and HEAD through its terminal receipt. Publish this corrected checkpoint to the
 existing draft516, then require exact workspace0, independent promotion review
 and passing final-head CI before ready status. No merge is authorized.
+
+### Current-source AOT metadata constructor counterexample (2026-11-24)
+
+After37cf0d7c publication supersedes old CI45373118279, the now-downloadable
+cancelled shard7 log exposes another actual failure: the unchanged portable AOT
+option constructor/function-redefinition test traps during initialization. The
+job's preceding15 other option tests pass, but the target is not green; later
+interrupted targets have no inferred verdict. The current workspace freshly
+compiled that same original test executable with the current exact generated
+core embedded. Directly invoking the single unchanged case returns actual101
+in43.52s at37cf0d7c, with binary/source/HEAD unchanged. The original log, binary
+hash, exact command, frozen receipts and diagnostic recorder are preserved in
+results/m12-eval/ci-aot-option-core-metadata. No assertion is weakened.
+
+The exact workspace attempt is deliberately cancelled for this concrete current-
+source counterexample during compilation: actual-15 after308.98s, unchanged
+inputs/HEAD, drained scope. The corrected-head CI45385164552 is also cancelled
+for the same confirmed failure to avoid further superseded work. Its results
+do not certify this source; it is not an Actions budget refusal or a blind
+rerun of an unchanged source. The already-complete c394 native baseline0 and
+strict capture review remain valid only for their own measured scope.
+
+Compiler-generated Var metadata previously quoted argument-list vectors and
+keyword/map data through mutable public core roots. That newly exposed path
+can fail after PersistentVector or Keyword is replaced. Its data-only lowering
+now reads the original private core cells and temporarily excludes public
+:const substitutions. Both analyzer settings are restored before propagating
+a diagnostic or analyzing further user forms; declaration metadata remains
+data, never user expression evaluation. Ordinary source resolution is unchanged.
+A new Runtime/Macro regression replaces those constructors both ordinarily and
+as :const, keeps a real Var across nested metadata/root updates and GC, and
+checks that a following user initializer still calls the redefined count.
+
+Run `var-metadata-after-aot-constructor-ci --var-metadata-core-links-only`
+through the external launcher, freezing source/HEAD through the terminal receipt.
+It first tests the new native regression and exact unchanged AOT counterexample,
+then all original option/metadata/indexed/sealed targets and complete public
+eval/identity/stream targets. Compiler logic and one authored regression change;
+core source, numeric kernels, primary, upstream suite and accepted failure map
+do not. A fresh broader/native capture, exact workspace0, independent review
+and final-head CI remain required before ready status.

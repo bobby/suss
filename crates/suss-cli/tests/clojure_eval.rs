@@ -1174,3 +1174,42 @@ fn live_var_metadata_and_roots_survive_replacing_the_core_indexed_seq_constructo
         }
     }
 }
+
+#[test]
+fn var_metadata_uses_original_core_data_without_changing_user_resolution() {
+    for constant in ["", "^:const "] {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            session
+                .eval("(def ^{:probe [0 [0]]} metadata-target 0)")
+                .unwrap();
+            let retained = session.eval("(var metadata-target)").unwrap();
+            let observe = session.eval("(let [vector vector var? var? meta meta get get key :probe] (fn [v] (vector (var? v) @v (get (meta v) key))))").unwrap();
+            session.eval(&format!("(ns suss.core) (def count (fn [x] 99)) (def {constant}PersistentVector nil) (def {constant}Keyword nil)")).unwrap();
+            session.enter_namespace("user").unwrap();
+            for (root, metadata) in [(42, 17), (43, 18)] {
+                session.eval(&format!("(def ^{{:probe [{metadata} [{}]]}} metadata-target {root}) (def public-count-result (let [f count] (f 123)))", metadata + 2)).unwrap();
+                session.collect().unwrap();
+                let value = session.invoke(&observe, &[&retained]).unwrap();
+                decoder.refill(40_000);
+                assert_eq!(
+                    decoder.decode_session(&mut session, &value).unwrap(),
+                    Observation::Vector(vec![
+                        Observation::Bool(true),
+                        Observation::Long(root),
+                        Observation::Vector(vec![
+                            Observation::Long(metadata),
+                            Observation::Vector(vec![Observation::Long(metadata + 2)]),
+                        ]),
+                    ]),
+                    "{:?} {constant}", session.phase()
+                );
+                let ordinary = session.eval("public-count-result").unwrap();
+                assert_eq!(
+                    decoder.decode_session(&mut session, &ordinary).unwrap(),
+                    Observation::Long(99)
+                );
+            }
+        }
+    }
+}

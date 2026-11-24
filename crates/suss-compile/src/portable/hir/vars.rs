@@ -63,6 +63,19 @@ impl Analyzer<'_> {
             }),
         })
     }
+
+    fn quote_var_metadata(&mut self, metadata: &Form) -> Result<Hir, Diagnostic> {
+        // This materializes compiler-owned data, never a user expression.
+        // Use original core constructors/functions, without folding a user's
+        // :const replacement of Keyword, PersistentVector or another core name.
+        let privileged = std::mem::replace(&mut self.privileged, true);
+        let constants = std::mem::take(&mut self.constant_definitions);
+        let result = self.quote_data(metadata, 0);
+        self.constant_definitions = constants;
+        self.privileged = privileged;
+        result
+    }
+
     pub(super) fn binding_var(
         &mut self,
         form: &Form,
@@ -112,13 +125,12 @@ impl Analyzer<'_> {
                 kind: Kind::String(doc.clone()),
             });
         }
-        let metadata = self.quote_data(
+        let metadata = self.quote_var_metadata(
             &Form {
                 span: form.span.clone(),
                 metadata: vec![],
                 kind: Kind::Map(pairs),
             },
-            0,
         )?;
         // Metadata construction can contain its own HIR bindings. Evaluate it
         // once and refer to the local in both the initial and update paths;
