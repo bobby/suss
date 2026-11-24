@@ -311,6 +311,28 @@ fn user_forms_round_trip() {
 }
 
 #[test]
+fn macro_source_emission_keeps_attributes_without_redundant_runtime_flags() {
+    use suss_reader::edn::Value;
+    let source = r#"(ns macro.attributes)
+(defmacro plain [] 42)
+(defmacro ^{:private true :custom 17 :kept/macro 99} decorated [x] x)"#;
+    let path = root().join("scratch/macro_attributes.sus");
+    assert_round_trip(source, &path, &[]);
+    let document = hir_document(&analyze_source(source, &path, &[], None, None).unwrap(), &path).unwrap();
+    let definitions = asts(&document).iter().filter(|node| get(node, "op") == &Value::keyword("def")).collect::<Vec<_>>();
+    assert_eq!(definitions.len(), 2);
+    for node in definitions {
+        assert_eq!(get(get(node, "meta"), "macro"), &Value::Bool(true), "The actual macro flag remains an analysis fact");
+    }
+    let emitted = emitted_source(&document).unwrap();
+    assert!(emitted.contains("(suss.core/defmacro plain"), "{emitted}");
+    assert!(!emitted.contains(":macro true"), "defmacro already supplies the flag: {emitted}");
+    for attribute in [":private true", ":custom 17", ":kept/macro 99"] {
+        assert!(emitted.contains(attribute), "{attribute}: {emitted}");
+    }
+}
+
+#[test]
 fn local_macro_import_setup_keeps_one_node_per_source_declaration() {
     use suss_reader::edn::Value;
     let source = r#"(ns first (:require [clojure.edn :as edn]))

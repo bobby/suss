@@ -34700,3 +34700,23 @@ source rows and six :clj-only equality/boxing/class rows need explicit scope/
 acceptance treatment before claiming complete #338/#339 acceptance. Suss retains
 its :suss/:default reader policy and does not claim JVM primitive boxing interop.
 No extra skips, weakened criteria or regex/num shortcut is introduced here.
+
+### Exact workspace round-trip finding (2026-11-24)
+
+The exact two-thread workspace run at published `fb2761f1` is terminal101 after
+440.997s with unchanged HEAD/inputs. It builds the full target set and reaches
+4 target summaries before analyzer_edn reports15pass/1fail. The unchanged
+user_forms_round_trip guard rejects an emitted defmacro name carrying the newly
+injected :macro true flag. The data round-trip itself succeeds, but emitted
+source should use defmacro's implicit flag while preserving all other attributes.
+The source emitter now omits only that redundant flag in its defmacro branch;
+semantic AST metadata and real Var metadata keep the actual true value. A focused
+regression retains :private, custom and qualified/macro attributes and checks
+analysis/data round-trip; the existing failing assertion is unchanged.
+
+Run `analysis-macro-source-after-workspace-finding
+--analysis-macro-source-only` through the durable launcher, freezing source and
+HEAD to its terminal receipt. Then repeat the exact full workspace baseline;
+the earlier101 is never relabeled. Current-head CI45373118279 remains separate
+and is not rerun while its jobs are active. No core, eval, runtime or original
+corpus/baseline changes accompany this tooling emission repair.
