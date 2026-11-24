@@ -460,3 +460,30 @@ function identity, earlier top-level-do effects before nested metadata-function
 materialization failure, and existing captured-function top-level identity.
 No all-pass batch or completed eval issue is inferred. Function materialization,
 full validation, independent re-review and final-head CI still gate promotion.
+
+Function constant review controls use pinned Clojure 1.12.6 observations in
+`function-def-and-pool-primary` (five) and
+`function-pool-initialization-primary` (three). The former retains the original
+primary output and a separately recorded native adapter: `resolve`/`bound?` are
+replaced by evaluating the real Var and checking the bound function in these
+positive cases. No primary values or comparison rules change.
+
+The actual first eager-pool run preserves direct-def roots and separates source
+function pools, but fails construction timing. Its source overlay and terminal
+101 remain in `promotion-review-function-source-pools-first-refinement`.
+Private compiler-emitted initializer calls now run when each source function is
+constructed, sharing sites across arities and later inlining. They use the
+existing universal closure ABI, authenticated same-Store cells and the caller's
+budget. Unconstructed functions leave their pools inert. Captured and MetaFn
+constants fail before that function body; direct C.EVAL and top-level function
+values retain their actual roots. Class and Var values retain their identity.
+
+`promotion-review-function-construction-initializers-first` records source check,
+five context/pool controls, the six original function controls and three timing
+controls, all terminal 0 with source and HEAD unchanged. The subsequent
+`promotion-review-function-construction-complete-eval` records all 38
+`clojure_eval` tests (0, 298.55s including compilation) and all three borrowed
+installation tests (0, 150.06s), again with unchanged source and HEAD. Earlier
+Rust API, universal-closure-layout, setup and semantic negatives remain separate
+compressed receipts and exact source overlays. These focused results do not
+replace the broader compiler, complete native capture or exact workspace gates.

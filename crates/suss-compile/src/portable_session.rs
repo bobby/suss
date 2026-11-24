@@ -776,6 +776,7 @@ impl SessionHost<'_> {
                 linker,
                 environment,
                 cells: Arc::new(cells),
+                native_function_cells: Arc::new(BTreeMap::new()),
                 provided,
                 resident: Vec::new(),
                 artifact_bytes: 0,
@@ -1377,7 +1378,7 @@ impl SessionHost<'_> {
     ) -> Result<Vec<Instance>, SessionError> {
         compiler_state::install(
             &self.compiler, self.store.as_context_mut(), &self.engine,
-            self.runtime, self.phase, bytes, environment, cells, &self.interrupt,
+            self.runtime, self.phase, bytes, environment, cells, &self.interrupt, self.evaluation.as_ref(),
         )
     }
     fn eval_instance(&mut self, instance: Instance, input: bool) -> Result<SessionValue, SessionError> {

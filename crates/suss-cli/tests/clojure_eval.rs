@@ -1384,3 +1384,28 @@ fn eval_metadata_functions_preserve_top_roots_and_nested_unit_boundaries() {
         include_str!("../../../results/m12-eval/function-metadata-primary/cases.json"),
         include_str!("../../../results/m12-eval/function-metadata-primary/stdout.log"), "metadata-function-primary");
 }
+
+
+#[test]
+fn eval_function_pool_context_preserves_direct_def_and_distinct_nested_pools() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/function-def-and-pool-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 5);
+    let stdout = include_str!("../../../results/m12-eval/function-def-and-pool-primary/stdout.log");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    let adapters: Vec<serde_json::Value> = serde_json::from_str(include_str!("../../../results/m12-eval/function-def-and-pool-primary/native-adapter.json")).unwrap();
+    assert_eq!(adapters.len(), 5);
+    for (row, adapter) in rows.iter().zip(&adapters) { assert_eq!(row["name"], adapter["name"]); assert_eq!(row["observed_edn"], adapter["observed_edn"]); }
+    let source = format!("[{}]", adapters.iter().map(|row| format!("(try {} (catch :default unexpected :unexpected-native-error))", row["native_expression"].as_str().unwrap())).collect::<Vec<_>>().join(" "));
+    assert_eq!(include_str!("../../../results/m12-eval/function-def-and-pool-primary/adapted-stdout.log"), stdout);
+    promotion_review_controls("function-def-context-and-pools", &source, &primary, 5);
+}
+
+
+#[test]
+fn eval_function_pool_initialization_preserves_construction_effects_and_arity_sharing() {
+    independent_exception_function_primary(
+        include_str!("../../../results/m12-eval/function-pool-initialization-primary/cases.json"),
+        include_str!("../../../results/m12-eval/function-pool-initialization-primary/stdout.log"), "function-pool-construction-primary");
+}

@@ -16,9 +16,11 @@ pub(super) fn install(
     phase: Phase,
     linker: &Linker<()>,
     known_cells: &BTreeMap<CellIdentity, Global>,
+    native_function_cells: &BTreeMap<String, Global>,
     bytes: &[&[u8]],
     cells: &[CellIdentity],
     interrupt: &AtomicBool,
+    evaluation: Option<&Arc<evaluation::Evaluation>>,
 ) -> Result<Installation, SessionError> {
     Session::consume_host_work(store.as_context_mut(), 0, interrupt)?;
     let mut compiled = Vec::new();
@@ -40,6 +42,7 @@ pub(super) fn install(
     let mut linker = linker.clone();
     let mut staged = BTreeMap::new();
     for identity in cells {
+        if matches!(identity.namespace(),"suss.internal.eval-function-sites"|"suss.internal.eval-function-initializers") { continue; }
         if known_cells.contains_key(identity) || staged.contains_key(identity) {
             continue;
         }
@@ -73,6 +76,30 @@ pub(super) fn install(
     }
     let mut instances = Vec::new();
     for module in compiled {
+        // Source pool identities survive later inlining. Already initialized
+        // private site cells retain the same original function constant.
+        let mut initialized = BTreeSet::new();
+        let bindings = match phase { Phase::Runtime => "suss.bindings.runtime", Phase::Macro => "suss.bindings.macro" };
+        for import in module.imports() {
+            Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            if import.module() != bindings || !initialized.insert(import.name().to_owned()) { continue; }
+            let Some((site,original))=CellIdentity::native_site_import(phase,import.name()) else { continue; };
+            if known_cells.contains_key(&site) || staged.contains_key(&site) { continue; }
+            let source=known_cells.get(&original).ok_or_else(|| wasmtime::Error::msg("Unknown native function constant source"))?;
+            let mut scope = RootScope::new(&mut store);
+            let mut result = [Val::null_any_ref()];
+            runtime.get_func(&mut scope,"binding-unbound").unwrap().call(&mut scope,&[],&mut result)?;
+            let cell_type=result[0].unwrap_anyref().unwrap().as_struct(&scope)?.unwrap().ty(&scope)?;
+            let global=Global::new(&mut scope,GlobalType::new(ValType::Ref(RefType::new(false,cell_type.into())),Mutability::Const),result[0])?;
+            linker.define(&scope,site.import_module(),&site.import_name(),global)?;
+            drop(scope);
+            let init=site.native_site_initializer();
+            let initializer=evaluation::function_pool::initializer(store.as_context_mut(),runtime,evaluation,
+                *source,global,native_function_cells.contains_key(&original.import_name()))?;
+            linker.define(&store,init.import_module(),&init.import_name(),initializer)?;
+            staged.insert(init,initializer);
+            staged.insert(site,global);
+        }
         instances.push(linker.instantiate(&mut store, &module)?);
     }
     Ok(Installation {
@@ -123,9 +150,11 @@ mod tests {
                         phase,
                         &linker,
                         &cells,
+                        &BTreeMap::new(),
                         &[&fragment.wasm],
                         &fragment.cells,
                         &interrupt,
+                        None,
                     )
                     .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
                     let instance = installed.instances[0];
@@ -214,9 +243,11 @@ mod tests {
                         phase,
                         &linker,
                         &cells,
+                        &BTreeMap::new(),
                         &[&fragment.wasm],
                         &fragment.cells,
                         &interrupt,
+                        None,
                     )
                     .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
                     installed.instances[0]
@@ -318,6 +349,7 @@ mod tests {
                         fragment.environment,
                         &fragment.cells,
                         &interrupt,
+                        None,
                     )
                     .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
                     instances[0].get_func(&mut caller, "eval").unwrap().call(

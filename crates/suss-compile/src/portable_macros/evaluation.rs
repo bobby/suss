@@ -90,6 +90,15 @@ impl MacroHost<'_> {
             }
             Ok(PreparedEvaluation::TopLevelDo(forms))
         } else {
+            // Compiler.eval uses C.EVAL for collection heads whose symbol name
+            // starts with def, including ordinary user functions with that prefix.
+            // Other collections get a compiled wrapper function constant pool.
+            let direct = match &form.kind {
+                Kind::List(items) | Kind::Vector(items) | Kind::Set(items) =>
+                    matches!(items.first().map(|item| &item.kind), Some(Kind::Symbol(name)) if name.name.starts_with("def")),
+                _ => false,
+            };
+            let origin=origin.with_native_direct_constants(direct);
             snapshot
                 .prepare_with_origin(vec![form], span, self, Some(&origin))
                 .map(PreparedEvaluation::Fragment)

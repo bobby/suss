@@ -30,6 +30,25 @@ impl Global {
         Self { phase, namespace: "suss.internal.eval-constants".into(),
             name: format!("{owner:016x}-{index:016x}").into() }
     }
+    pub(crate) fn native_value(phase: Phase, owner: u64, index: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-values".into(), name: format!("{owner:016x}-{index:016x}").into() }
+    }
+    pub(crate) fn native_function_site(phase: Phase, owner: u64, index: u64, pool: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-function-sites".into(), name: format!("{owner:016x}-{index:016x}-{pool:016x}").into() }
+    }
+    pub(crate) fn native_site_initializer(&self) -> Self {
+        Self { phase: self.phase, namespace: "suss.internal.eval-function-initializers".into(), name: self.name.clone() }
+    }
+    pub(crate) fn native_site_import(phase: Phase, name: &str) -> Option<(Self, Self)> {
+        let name = name.strip_prefix("suss.internal.eval-function-sites/")
+            .or_else(|| name.strip_prefix("suss.internal.eval-function-initializers/"))?;
+        let parts = name.split('-').collect::<Vec<_>>();
+        if parts.len()!=3 || parts.iter().any(|part| part.len()!=16) { return None; }
+        let owner=u64::from_str_radix(parts[0],16).ok()?;
+        let index=u64::from_str_radix(parts[1],16).ok()?;
+        let pool=u64::from_str_radix(parts[2],16).ok()?;
+        Some((Self::native_function_site(phase,owner,index,pool), Self::native_constant(phase,owner,index)))
+    }
     /// The `suss.core` var a core link cell stands for (#360).
     pub(crate) fn core_var_of_link(&self) -> Option<Global> {
         (&*self.namespace == "suss.internal.core-link").then(|| Global {
@@ -1093,6 +1112,24 @@ impl Environment {
             self.source_changed();
         }
         cell
+    }
+    pub(crate) fn native_value(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+        let cell=Global::native_value(phase,owner,index);
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_site(&mut self, phase: Phase, owner: u64, index: u64, pool: u64) -> Global {
+        let cell=Global::native_function_site(phase,owner,index,pool);
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_initializer(&mut self, site: &Global) -> Global {
+        let cell=site.native_site_initializer();
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_pool(&mut self) -> u64 {
+        self.source_changed(); self.source_generation
     }
     /// A fresh, unresolvable cell for one constant declaration revision.
     pub(crate) fn constant_cell(&mut self, phase: Phase) -> Global {

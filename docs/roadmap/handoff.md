@@ -35204,3 +35204,24 @@ function identity, earlier top-level-do effects before nested metadata-function
 materialization failure, and existing captured-function top-level identity.
 No all-pass batch or completed eval issue is inferred. Function materialization,
 full validation, independent re-review and final-head CI still gate promotion.
+
+The function-constant review fix uses compiler-emitted calls through the existing
+universal closure ABI to initialize each original source function's constant
+pool at construction. Private site identities survive inlining and are shared
+across arities; direct C.EVAL def-prefix forms retain actual roots. The retained
+first eager-pool timing run exits101; the construction-time refinement passes
+all five context/pool, six original function and three timing primary controls
+in both phases. See `results/m12-eval/function-{def-and-pool,pool-initialization}-primary`
+and compressed receipts/source overlays under the `promotion-review-function-*`
+directories. No primary, baseline, count, skip or opaque rules change.
+
+Run `cargo test -p suss-cli --locked --offline --test clojure_eval -- --nocapture
+--test-threads=2`: all38 tests pass, actual0 in298.55s including compilation.
+Run `cargo test -p suss-compile --locked --offline --lib
+portable_session::installation::tests -- --nocapture --test-threads=2`: all3
+pass, actual0 in150.06s. Both commands finish with source and HEAD unchanged in
+`promotion-review-function-construction-complete-eval`. Provenance digests are
+refreshed separately under `provenance-refresh-after-review-fixes`, preserving
+upstream, adaptation, primary and historical frozen receipts. Broader compiler,
+complete native suite/capture and exact workspace validation must be rerun after
+these code changes; the earlier 3f79 workspace result is historical evidence.
