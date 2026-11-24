@@ -2902,8 +2902,8 @@ mod tests {
 
     #[test]
     fn session_lifecycle_secondary_interrupt_preserves_async_fuel_trap_and_retires_roots() {
-        fn value(
-            scope: &mut RootScope<&mut Store<()>>,
+        fn value<C: AsContextMut<Data = ()>>(
+            scope: &mut RootScope<C>,
             runtime: Instance,
             name: &str,
             args: &[Val],
