@@ -29,8 +29,8 @@ pub enum AsyncDispatch {
 
 const NATIVE_SCOPE: i32 = 0;
 
-fn export(
-    scope: &mut RootScope<StoreContextMut<'_, ()>>,
+fn export<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     name: &str,
 ) -> Result<Func, SessionError> {
@@ -39,8 +39,8 @@ fn export(
     })
 }
 
-fn nominal_status(
-    scope: &mut RootScope<&mut Store<()>>,
+fn nominal_status<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     value: Val,
 ) -> Result<Option<FutureStatus>, SessionError> {
@@ -279,7 +279,7 @@ impl SessionHost<'_> {
     fn frontend_scope<R>(
         &mut self,
         f: impl FnOnce(
-            &mut RootScope<&mut Store<()>>,
+            &mut RootScope<StoreContextMut<'_, ()>>,
             Instance,
             u64,
             &Arc<AtomicUsize>,
