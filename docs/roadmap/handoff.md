@@ -1,3 +1,92 @@
+## min-key bootstrap reproduction (2026-11-23)
+
+run-bootstrap-min-key.py returns0 on a16df2ac after227.037s, with inputs unchanged.
+Java and Node are absent from PATH. Runtime/Macro Wasm and EDN images reproduce
+byte-for-byte; compiled identity verification and all four original execution
+tests pass. The archived receipt/log identify the exact reviewed-baseline source.
+The exact workspace baseline remains a separate fresh execution.
+
+## Audited complete min-key capture and scoped baseline (2026-11-23)
+
+run-suite.py full-suite-after-shipped-min-key records5,357 actual rows on a374b92d,
+source inputs unchanged. The native comparison exits101 solely because min-key
+now loads and all49 assertions execute; its before-baseline discrepancy remains
+byte-exact. The complete capture has5,172 host matches/81 guest judgments/105
+failures/1,581 unexecuted/zero skips/69 failed namespaces. Both prior pass sets
+(4,917 baseline matches, including75 existing guest judgments, and4,932
+individually comparable rows) are preserved; the existing
+EDN297-row capture and19 reader failures remain unchanged.
+
+audit-suite.py and review-min-key-baseline.py verify the whole capture. The latter
+removes exactly the min-key namespace-load failure, with every other baseline
+entry, primary value, count and skip rule unchanged. Fresh host comparison returns0;
+the five adversarial baseline guard tests still pass after the write. Host
+comparison is not a fresh native/full workspace pass. BigInt/Ratio operands now
+have226/229 actual host matches (seven newly executed min-key rows), with two eval
+rows and one constantly/some-fn row still unexecuted. Decimal remains199/200 with
+its eval row unexecuted. Bootstrap and the exact two-thread workspace baseline
+require new frozen receipts on this reviewed baseline.
+
+## Shipped min-key primary execution (2026-11-23)
+
+`python3 results/m12-core-dependencies/test_min_key_baseline.py` passes five
+adversarial checks for the follow-up baseline guard: actual independently
+captured rows are used only as test fixtures, never as a full-suite result.
+The guard rejects a missing min-key row, changed operand, primary rewrite or
+unrelated failure removal. It requires a fresh source-frozen full capture before
+its optional write can remove only the min-key namespace-load failure.
+
+`run-min-key.py after-checked-comparison-capture` returns0 at9d501d71 after688.215s,
+inputs unchanged: all32 primary controls match in Runtime, isolated Macro and
+actual CLI AOT, plus both adversarial decoder tests. The original default AOT
+compile budget and eight-control components remain unchanged. The complete
+vendored body executes through `run-min-key-body.py`: all49 ordered assertions
+match the unchanged primary on the host, zero guest judgments/failures/skips,
+65.349s including build, inputs unchanged. Historical missing-function and
+coercing-comparison failures remain byte-exact gzip archives, alongside both
+passing receipts and the actual49-row capture. Full-suite capture/audit, its
+strictly scoped baseline change and broader gates require separate execution.
+`run-suite.py` accepts SUSS_SUITE_TARGET so the next source can use its own PT
+build directory without touching another frozen run's target.
+
+## Checked min-key comparison capture (2026-11-23)
+
+`run-min-key.py after-shipped-min-key` returns101 after524.158s with unchanged
+inputs: both decoder adversarial tests pass, but the Runtime/Macro matrix and
+actual AOT reject the import because nonnumeric String/vector keys incorrectly
+produce candidates instead of throwing. The receipt retains those failures.
+Shipped core comparison macros intentionally retain coercion for the pinned
+ClojureScript internals. The Clojure import now captures the existing checked
+numeric comparison function values as lexical `<` and `<=` bindings around its
+unchanged complete arity bodies. Historical prototype adaptations/receipts are
+retained unchanged; min-key-shipped.sus and its separate exact patch/provenance
+record describe this additional adaptation. No primary expectations, source
+body assertions, budgets or compiler comparisons change. New native validation
+is required before this repair is called passing.
+
+## Shipped min-key regression and complete-form import (2026-11-23)
+
+`run-min-key.py before-shipped-min-key
+ shipped_min_key_records_primary_values_and_key_effects_in_both_phases` terminates
+101 on809a0190 after403.599s, inputs unchanged. The first actual shipped-core
+control fails at `Unresolved Runtime name min-key` (bytes35..42); no missing value
+is counted as passing. The test independently decodes retained values/key traces
+after GC; a separate bounded actual-AOT route returns data for host comparison.
+
+The complete Clojure1.12.6 min-key form is imported through the existing bootstrap
+loader, with doc/attribute metadata and every arity body preserved by the retained
+defn-to-def/fn patch. The first pair uses<; subsequent candidates use<= and keep
+their cached key. Provenance verifies the pinned JAR/source, complete original
+form, exact adaptation, EPL notice and generated core bytes. The32 primary controls
+keep six already independently JVM-verified pure fixture materializations for
+unported map-indexed; min-key/key bodies and expected values are unchanged.
+
+The focused complete-body module requires all49 original ordered min-key assertions,
+no missing/skipped/guest-judged outcomes and unchanged primary/comparator/count
+rules. Its separate Rust module inclusion is precisely allowed by the suite audit;
+no vendored source or Runtime harness logic changes. Imported bytes alone do not
+establish native/AOT/full-suite or broader numeric acceptance.
+
 ## Executed review repairs and explicit raw-helper inventory (2026-11-23)
 
 `run-review-repair-gates.py after-review-repairs-clean-project-cache` passes all
@@ -33814,6 +33903,21 @@ plus cache-disabled retention of distinct errors/messages/nil data across20,000
 escaping vector allocations with a1MiB initial heap. That is allocation-pressure
 evidence, not a claim of observed GC event counts. Final-input-diff qualifies
 only documentation additions after frozen runs; production/tests/fixtures match.
+
+
+## Min-key full-workspace completion evidence (2026-11-24)
+
+The exact `cargo test --workspace --locked -- --test-threads=2` process at
+33382c1c terminated after all370 expected native/doc targets. Its log records
+2,473 passing tests,14 explicit ignores,zero failures andzero filtered tests;
+all recorded inputs and HEAD stayed unchanged. Cargo's exit status remains
+unknown because the original outer recorder detached. It is not reported as0.
+`results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit`
+retains the incomplete receipt, full log, initial/corrected audits and a
+standalone archive-only replay script. Metadata and366 Cargo fingerprints are
+preserved, so replay requires no live build target. The inventory correction
+includes rlib and package identities for duplicate integration target names.
+This evidence qualifies observed execution without changing tests or budgets.
 
 
 ## Reader full-workspace completion evidence (2026-11-23)

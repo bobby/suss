@@ -14,3 +14,27 @@ Earlier prototype failures (missing println, batch analysis fuel, unavailable
 map-indexed and an unsupported -e compilation option) remain terminal receipts
 with zero observed controls, never passes. No production budget is changed.
 
+
+The shipped import at9d501d71 has separate production evidence:
+`run-min-key.py after-checked-comparison-capture` passes all32 controls in Runtime,
+Macro and actual AOT, with retained host decoding and unchanged inputs (688.215s,
+four tests including two adversarial decoder tests). `run-min-key-body.py` passes
+all49 ordered assertions of the complete unchanged vendored body against the
+pinned primary (65.349s, zero guest judgments/failures/skips, inputs unchanged).
+The original missing-name before failure and the initial import's real
+nonnumeric-key failures remain archived with their own source identities.
+`min-key-shipped.sus`, `min-key-shipped.patch` and `min-key-shipped-adaptation.json` capture checked numeric comparison
+function values lexically; all complete upstream arity bodies are retained.
+The historical local-definition adaptation/prototype receipts remain untouched.
+Full capture/audit, baseline, workspace, bootstrap, CI and independent review
+remain separate gates; these focused results do not close the numeric issues.
+
+The full a374b92d capture contains5,357 actual rows and preserves both previous
+pass sets, with all49 min-key rows matching on the host. Its original native101
+receipt records the unexpected successful namespace load against the old baseline.
+The guarded baseline update removes only that load failure; unchanged host
+comparison then returns0. BigInt/Ratio has226/229 host matches; Decimal199/200.
+No unrelated failure or unknown row is replaced with success. Complete raw
+capture/audit/baseline-write evidence is archived in
+../m12-reader-followup/full-suite-after-shipped-min-key. Broader gates remain
+separate from this comparison.

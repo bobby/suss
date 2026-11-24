@@ -1,0 +1,31 @@
+--- clojure.core/min-key
++++ suss.core/min-key
+@@ -1,12 +1,14 @@
+-(defn min-key
+-  "Returns the x for which (k x), a number, is least.
++;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
++;; See runtime/core-import/epl-v10.html.
++(def ^{:doc "Returns the x for which (k x), a number, is least.
+ 
+-  If there are multiple such xs, the last one is returned."
+-  {:added "1.0"
+-   :static true}
+-  ([k x] x)
+-  ([k x y] (if (< (k x) (k y)) x y))
+-  ([k x y & more]
++  If there are multiple such xs, the last one is returned." :added "1.0"
++   :static true} min-key
++  (let [< < <= <=]
++  (fn
++([k x] x)
++([k x y] (if (< (k x) (k y)) x y))
++([k x y & more]
+    (let [kx (k x) ky (k y)
+          [v kv] (if (< kx ky) [x kx] [y ky])]
+      (loop [v v kv kv more more]
+@@ -16,4 +18,4 @@
+            (if (<= kw kv)
+              (recur w kw (next more))
+              (recur v kv (next more))))
+-         v)))))
++         v)))))))

@@ -1,0 +1,7 @@
+{
+  "name": "min-key",
+  "source_sha256": "c97ba6158455d924a1be046542a0b19464ac5f84285fe4c382023aa30c10d0e8",
+  "adapted_sha256": "096cd7f311566bc922e2a2da42ff60ee62f157312cfc797189c166bc30b5d7b9",
+  "patch_sha256": "7f05fadf098f0079d2e29bca5e3173c74e77d0206a5f51910928e2120c4ef3d0",
+  "rationale": "Expand defn to def/fn and capture the existing checked numeric comparison function values in lexical < and <= bindings. This avoids shipped core legacy coercing comparison macro lowering. All original arity bodies, key evaluation order, metadata and documentation are retained byte-for-byte. Historical local-definition adaptation and its prototype receipts remain unchanged."
+}

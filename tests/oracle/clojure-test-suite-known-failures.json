@@ -90,10 +90,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Unresolved Runtime name any? at bytes 237..4753"
   },
-  "clojure.core-test.min-key": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438"
-  },
   "clojure.core-test.nfirst": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.nfirst (Some(\"<root>/clojure/core_test/nfirst.cljc\")): Unresolved Runtime name nfirst at bytes 251..1279"
