@@ -230,3 +230,20 @@ no operator or expression body is interpreted on the host. Namespace mutation,
 capability/budget/cancellation checks and broader capture/validation remain
 separate acceptance gates. New pinned namespace controls are under
 `results/m12-eval/namespace-primary`; they are primary evidence only.
+
+
+## Eval dynamic namespace context (2026-11-24)
+
+Atd2d3e7fc, all15 fresh namespace controls match in Runtime and Macro and
+after GC (162.458s including build). Eval inherits the actual caller frame;
+scoped bindings restore, unscoped namespace directives persist to later inputs,
+and namespace prefix changes survive later compile errors. Dependencies retain
+ordinary load frames, and native eval policy is cleared before publishing
+catalogs. The complete public target returns0 with all8 tests (11.372s),
+rerunning all60 primary controls in both phases and the reentrant path. The
+complete original34-row body returns0 again (10.848s). All recorded inputs and
+HEAD remain unchanged; archives are under
+`results/m12-eval/namespace-after-rooted-checkpoint`. Earlier failing context
+and compile attempts remain archived without success reclassification. Capability,
+operation budget/cancellation, full capture, broader regression/workspace and
+review/CI gates retain their separate requirements.

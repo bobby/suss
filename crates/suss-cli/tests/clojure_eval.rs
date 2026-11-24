@@ -401,3 +401,243 @@ fn eval_namespace_changes_follow_real_caller_binding_frames() {
         }
     }
 }
+
+#[test]
+fn public_eval_function_result_survives_gc_and_reads_the_live_root() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("user").unwrap();
+        session
+            .eval_with_macros("(def eval-retained-root 1)", &mut macros)
+            .unwrap();
+        let function = session
+            .eval_with_macros("(eval '(fn [x] (+ eval-retained-root x)))", &mut macros)
+            .unwrap();
+        session
+            .eval_with_macros("(def eval-retained-root 41)", &mut macros)
+            .unwrap();
+        drop(macros);
+        session.collect().unwrap();
+        let argument = session.eval("1").unwrap();
+        let value = session.invoke(&function, &[&argument]).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        session.collect().unwrap();
+        assert_eq!(
+            decoder.decode_session(&mut session, &value).unwrap(),
+            Observation::Long(42)
+        );
+    }
+}
+
+#[test]
+fn actual_aot_public_eval_reports_the_missing_explicit_compiler_capability() {
+    use std::process::Command;
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("app.sus"),
+        "(ns eval-capability) (def report (fn [] (try (str (eval '(+ 1N 1/2))) (catch :default e (.-message e)))))").unwrap();
+    std::fs::write(
+        root.path().join("app.wit"),
+        "package test:eval-capability; world w { export report: func() -> string; }",
+    )
+    .unwrap();
+    let compiled = Command::new(env!("CARGO_BIN_EXE_suss"))
+        .current_dir(root.path())
+        .args([
+            "--no-cache",
+            "compile",
+            "app.sus",
+            "-w",
+            "app.wit",
+            "--export",
+            "report=eval-capability/report",
+            "-o",
+            "app.wasm",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        compiled.status.success(),
+        "{}",
+        String::from_utf8_lossy(&compiled.stderr)
+    );
+    let bytes = std::fs::read(root.path().join("app.wasm")).unwrap();
+    let mut depth = 0;
+    let mut component = false;
+    for payload in wasmparser::Parser::new(0).parse_all(&bytes) {
+        match payload.unwrap() {
+            wasmparser::Payload::Version { encoding, .. } => {
+                if depth == 0 {
+                    component = encoding == wasmparser::Encoding::Component;
+                }
+                depth += 1;
+            }
+            wasmparser::Payload::End(_) => depth -= 1,
+            wasmparser::Payload::ComponentImportSection(section) if depth == 1 => {
+                assert_eq!(
+                    section.count(),
+                    0,
+                    "the selected world has no compiler or other host imports"
+                );
+            }
+            _ => {}
+        }
+    }
+    assert!(component);
+    assert_eq!(depth, 0);
+    let executed = Command::new(env!("CARGO_BIN_EXE_suss"))
+        .current_dir(root.path())
+        .args(["--no-cache", "run", "app.wasm", "--invoke", "report"])
+        .output()
+        .unwrap();
+    assert!(
+        executed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&executed.stderr)
+    );
+    assert_eq!(
+        String::from_utf8(executed.stdout).unwrap().trim_end(),
+        "Compiled evaluation capability is unavailable"
+    );
+}
+
+#[test]
+fn public_eval_and_repeated_reentry_consume_the_original_operation_allowance() {
+    use std::{sync::mpsc, thread, time::Duration};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros("(eval 1)", &mut macros).unwrap();
+        let mut functions = Vec::new();
+        for source in [
+            "(fn [] (eval '(loop [] (recur))))",
+            "(fn [] (loop [] (eval 1) (recur)))",
+        ] {
+            functions.push(session.eval_with_macros(source, &mut macros).unwrap());
+        }
+        for function in functions {
+            session.set_operation_fuel(200_000);
+            let interrupt = session.interrupt_handle();
+            let (done, waiting) = mpsc::channel();
+            let watchdog = thread::spawn(move || {
+                if waiting.recv_timeout(Duration::from_secs(5)).is_err() {
+                    interrupt.interrupt();
+                }
+            });
+            let error = session.invoke(&function, &[]).unwrap_err();
+            let _ = done.send(());
+            watchdog.join().unwrap();
+            assert!(
+                matches!(&error, suss_compile::portable_session::SessionError::Trap(error)
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                "eval must exhaust the original allowance before the watchdog: {error}"
+            );
+            session.set_operation_fuel(10_000_000);
+            let value = session
+                .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
+                .unwrap();
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(
+                decoder.decode_session(&mut session, &value).unwrap(),
+                Observation::Ratio("3".into(), "2".into())
+            );
+        }
+    }
+}
+
+#[test]
+fn public_eval_cancels_running_guest_code_and_leaves_the_session_usable() {
+    use std::{sync::mpsc, thread, time::Duration};
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let (events, waiting) = mpsc::channel();
+    let entered = events.clone();
+    // Signal only: the observer never re-enters the Store or compiler.
+    session
+        .install_observation_hook(move |_, _| {
+            let _ = entered.send(true);
+            Ok(0)
+        })
+        .unwrap();
+    let function = session
+        .eval_with_macros(
+            "(fn [] (eval '(let [] (suss.harness.observation/capture 1) (loop [] (recur)))))",
+            &mut macros,
+        )
+        .unwrap();
+    // Cancellation is tested separately from the bounded allowance test above.
+    session.set_operation_fuel(u64::MAX);
+    let interrupt = session.interrupt_handle();
+    let controller = thread::spawn(move || match waiting.recv_timeout(Duration::from_secs(5)) {
+        Ok(true) => {
+            interrupt.interrupt();
+            true
+        }
+        Ok(false) => false,
+        Err(_) => {
+            interrupt.interrupt();
+            false
+        }
+    });
+    let error = session.invoke(&function, &[]).unwrap_err();
+    let _ = events.send(false);
+    assert!(
+        controller.join().unwrap(),
+        "the actual compiled eval body must reach its observer"
+    );
+    assert!(error.is_interrupt(), "{error}");
+    session.set_operation_fuel(10_000_000);
+    let value = session
+        .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
+        .unwrap();
+    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+    assert_eq!(
+        decoder.decode_session(&mut session, &value).unwrap(),
+        Observation::Ratio("3".into(), "2".into())
+    );
+}
+
+#[test]
+fn reentrant_macro_eval_cancels_in_its_own_store_and_returns_its_lease() {
+    use std::{sync::mpsc, thread, time::Duration};
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let (events, waiting) = mpsc::channel();
+    let entered = events.clone();
+    macros
+        .install_observation_hook(move |_, _| {
+            let _ = entered.send(true);
+            Ok(0)
+        })
+        .unwrap();
+    macros.define("(defmacro eval-cancel [] (eval '(let [] (suss.harness.observation/capture 1) (loop [] (recur)))))").unwrap();
+    macros.set_operation_fuel(u64::MAX);
+    let interrupt = macros.interrupt_handle();
+    let controller = thread::spawn(move || match waiting.recv_timeout(Duration::from_secs(5)) {
+        Ok(true) => {
+            interrupt.interrupt();
+            true
+        }
+        Ok(false) => false,
+        Err(_) => {
+            interrupt.interrupt();
+            false
+        }
+    });
+    let error = session
+        .eval_with_macros("(eval-cancel)", &mut macros)
+        .unwrap_err();
+    let _ = events.send(false);
+    assert!(
+        controller.join().unwrap(),
+        "the isolated compiled Macro eval body must execute"
+    );
+    assert!(error.to_string().contains("Interrupted"), "{error}");
+    macros.set_operation_fuel(10_000_000);
+    let value = session
+        .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
+        .unwrap();
+    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+    assert_eq!(
+        decoder.decode_session(&mut session, &value).unwrap(),
+        Observation::Ratio("3".into(), "2".into())
+    );
+}
