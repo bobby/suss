@@ -1034,9 +1034,9 @@ impl FormBridge {
     pub(crate) fn read_evaluation(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
         span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
-        instance_test: wasmtime::Func, var_class: wasmtime::OwnedRooted<AnyRef>,
+        class_test: wasmtime::Func, instance_test: wasmtime::Func, var_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, instance_test, var_class, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, var_class, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native))?;
         for (index, value) in constants { session.retain_native_constant(index, value)?; }
         Ok(form)
@@ -1221,11 +1221,13 @@ fn absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
     // Nil (0) and undefined (6) both satisfy the pinned nil? storage test.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
+// Functions, real class values and Vars retain authenticated same-Store roots.
 // This authority is installed only for a public native eval read. Ordinary
 // macro/display/source readers retain their strict nominal syntax whitelist.
 struct NativeRead {
     owner: u64,
     closure_test: wasmtime::Func,
+    class_test: wasmtime::Func,
     instance_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
     constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>)>,
@@ -1235,6 +1237,9 @@ impl NativeRead {
     fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<Kind>> {
         let mut result = [Val::I32(0)];
         self.closure_test.call(&mut *store, &[*value], &mut result)?;
+        if result[0].unwrap_i32() == 0 {
+            self.class_test.call(&mut *store, &[*value], &mut result)?;
+        }
         if result[0].unwrap_i32() == 0 {
             let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
             self.instance_test.call(&mut *store, &[class, *value], &mut result)?;

@@ -269,6 +269,21 @@ impl Evaluation {
         };
         let bridge = self.bridge(&mut view)?;
         let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
+        // Clojure evaluates a scalar literal to the actual argument object.
+        // Preserve its caller-owned root rather than reconstructing equal data.
+        if matches!(
+            &form.kind,
+            suss_reader::forms::Kind::Nil
+                | suss_reader::forms::Kind::Bool(_)
+                | suss_reader::forms::Kind::Long(_)
+                | suss_reader::forms::Kind::Number(_)
+                | suss_reader::forms::Kind::Exact(_)
+                | suss_reader::forms::Kind::String(_)
+                | suss_reader::forms::Kind::Keyword(_)
+                | suss_reader::forms::Kind::Uuid(_)
+        ) {
+            return Ok(value);
+        }
         let namespace_access = registry_lock(&self.namespace)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
@@ -706,6 +721,10 @@ impl SessionHost<'_> {
             .runtime
             .get_func(&mut self.store, "closure-value-test")
             .ok_or_else(|| wasmtime::Error::msg("Missing closure value classifier"))?;
+        let class_test = self
+            .runtime
+            .get_func(&mut self.store, "class-value-is")
+            .ok_or_else(|| wasmtime::Error::msg("Missing class value classifier"))?;
         let instance_test = self
             .runtime
             .get_func(&mut self.store, "object-instance")
@@ -723,6 +742,7 @@ impl SessionHost<'_> {
             span,
             self.identity,
             closure_test,
+            class_test,
             instance_test,
             var_class,
         )

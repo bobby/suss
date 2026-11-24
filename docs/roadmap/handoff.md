@@ -34987,6 +34987,125 @@ retained. The copy's Decimal implementation remains separate from this frozen
 eval source and has no claimed workspace integration or acceptance pass.
 
 
+### Existing scalar identity counterexample (2026-11-24)
+
+Atf17f7077 the current workspace-built CLI embeds the exact current core source
+and returns0 for the scalar eval probe, but its twelve identity observations are
+[true true true true true true false false false true true false]. Fresh pinned
+Clojure1.12.6 returns0 with all twelve true. The differences are actual BigInt,
+Ratio, Decimal and UUID inputs. Binary/core/HEAD stay unchanged; comparison101
+is separate from the JVM/native process exit codes. No artifact build or source
+mutation is involved in this diagnostic. Its exact source, outputs, hashes and
+commands are retained in results/m12-eval/scalar-identity-before.
+
+The required exact workspace run is deliberately stopped for this confirmed
+same-source semantic counterexample: actual-15 after4185.71s, source and HEAD
+unchanged, recorder retained and scope drained. Its successful completed prefix
+is evidence only for that prefix; the canceled run is not a pass. Current-head
+CI45392660131 is also canceled for the confirmed bug, with seven integration
+shards and foundation already successful. This is not an Actions budget refusal.
+
+A primary-backed regression now checks all twelve scalar identities, retained
+roots after GC in Runtime/Macro, and actual reentrant Macro execution. First run
+`scalar-identity-regression-before-fix --scalar-identity-before-only` against the
+unchanged implementation, freezing source/HEAD through its terminal receipt.
+Then preserve actual scalar argument roots while keeping executable form data on
+the existing compiled path; validate the exact regression, complete public and
+capability controls and definition/stream targets before a new broader capture,
+exact workspace baseline, independent review and final-head CI. No promotion or
+completion is inferred from the earlier passing scopes.
+
+
+### Scalar-root regression reproduced before the correction (2026-11-24)
+
+At3c45cf69 the new exact regression returns actual101, with unchanged source/HEAD,
+for the same four Runtime identity observations. The test body reports12 scalar
+results with BigInt/Ratio/Decimal/UUID false against the independent twelve-true
+primary vector. It fails semantically after successful compilation, not from a
+resource cap or unavailable dependency. Frozen receipts and logs are retained.
+
+The native callback now returns the caller-owned actual root for admitted scalar
+literal kinds after ordinary bounded decoding. It retains the existing compiled
+path for symbolic/executable/collection form data and the authenticated constant
+path for Functions/Vars. Source arithmetic, numeric kernels, persistent encodings,
+core/provenance, AOT capability imports and existing suite judgments do not change.
+The native regression also binds its expected output to the actual primary stdout
+and exact oracle expression, keeps the original object through GC in both phases,
+and executes the identity control inside a real isolated compiled macro.
+
+Run `scalar-identity-after-root-preservation --scalar-identity-only`, freezing
+source and HEAD through all terminal receipts. It first tests the exact regression,
+then complete public/capability and original definition/stream targets. Fresh
+broader/native capture, exact workspace baseline, independent promotion review and
+passing final-head CI remain required. No promotion or merge is claimed.
+
+
+### Scalar correction passes; generated numeric class data probe (2026-11-24)
+
+At5c1a135c all3 scalar validation commands return0, with unchanged source/HEAD:
+exact regression160.19s including compilation; complete public28/capability2
+59.96s; original import17/stream12 44.06s. These are59 complete-target tests;
+the exact check repeats one of them. Runtime, Macro, real reentrant Macro and
+retained-GC scalar identity observations pass. Receipts are preserved separately.
+
+A preflight for generated numeric forms finds another concrete transfer gap.
+Pinned Clojure1.12.6 returns0 with six [true true] class-identity/instance? pairs
+for Long, Double, BigInt, Ratio, Decimal and BigInteger values. The current CLI
+returns1: Invalid or unsupported compiled macro data: Unexpected structure layout.
+Binary/core/HEAD stay unchanged and the binary embeds the exact current core.
+Its direct source, commands and outputs are retained under class-data-before.
+No new workspace run has been started after this preflight.
+
+The class-data regression and primary fixture are added to the same eval branch.
+First run `class-data-regression-before-fix --class-data-before-only` against the
+unchanged bridge. After its actual terminal result, extend the existing native
+constant admission with the runtime's real class-value classifier, preserving
+same-Store owner/roots and strict ordinary macro/source/display readers. Keep
+all exact regression/public/capability/definition and broader/native/workspace/
+review/final-head CI gates. No class marker fixture or serialized fake is used.
+
+
+### Native eval class constants (2026-11-24)
+
+At7c64c12c the exact class-data regression returns101 after successful compilation
+(4.82s build, 2.05s test). Runtime raises the same actual unsupported-layout language
+exception; source and HEAD remain unchanged. No assertion or primary is rewritten.
+Its command/log/recorder receipts are retained in deterministic compressed form.
+
+Native eval constant admission now also calls the existing runtime class-value-is
+classifier before decoding ordinary syntax. Recognized actual class objects use
+the existing same-Store native-constant owner/index/root mechanism, including when
+nested inside generated forms. No symbolic name or reconstructed class marker is
+substituted. Functions and Vars keep their prior admission; ordinary macro/source/
+display readers retain their strict whitelist. Runtime ABI exports, numeric kernels,
+core source, dependencies and persistent encodings do not change.
+
+Run `class-data-after-native-constant-admission --class-data-only`, preserving
+source/HEAD through terminal receipts. It exercises actual class identity and
+numeric instance? forms across Runtime, Macro, retained GC and real reentrant Macro,
+then all public/capability and original import/stream controls. Fresh broader/native,
+exact workspace, independent review and final-head CI still gate promotion.
+
+
+### Scalar and class-root focused validation (2026-11-24)
+
+Atf789ea80 all3 class-data commands return actual0, source/HEAD unchanged. The
+exact new case passes in162.06s including compilation across Runtime/Macro, retained
+GC and actual reentrant Macro. Complete public29/capability2 passes in61.14s, and
+original import17/stream12 passes in43.89s:60 complete-target tests, with the exact
+check repeating one of them. The scalar identity correction remains covered in
+the full public target. Deterministic compressed receipts preserve each scope.
+
+Run `eval-broader-after-scalar-and-class-root-corrections
+--broader-current-baseline-only`, freezing source and HEAD. It must finish all
+seven commands, including fresh actual native0 and strict review against unchanged
+baseline/primary/skip/count/opaque rules. Then rerun the exact two-thread workspace
+command. Publish this validated correction checkpoint to existing draft516; keep
+Refs515/338/339 until local issue acceptance, independent promotion review and
+passing final-head CI satisfy the named issue's gates. Numeric source-form scope
+remains unchanged; no promotion, closure, milestone completion or merge is claimed.
+
+
 ### Exact native Decimal tooling follow-up (2026-11-24)
 
 The numeric completion branch is based on f17f7077 without modifying the frozen
