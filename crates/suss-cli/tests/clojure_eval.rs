@@ -811,7 +811,7 @@ fn evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion() 
                 .unwrap()
                 .replace("(catch Exception ", "(catch :default ")
                 .replace("(catch Throwable ", "(catch :default ")
-                .replace("(Exception. ", "(suss.core/Error. ");
+                .replace("(Exception. ", "(js/Error. ");
             let value = session
                 .eval_with_macros(&source, &mut macros)
                 .unwrap_or_else(|error| {

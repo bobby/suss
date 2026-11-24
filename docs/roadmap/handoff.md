@@ -34584,3 +34584,10 @@ refuses ordinary form-data decoding. The test now reads the actual live root
 separately, retaining every staged declaration and snapshot assertion. Run
 `macro-declaration-after-ci-test-adaptations --macro-declaration-only` next to
 reach the complete primary controls first, then rerun the remaining CI targets.
+
+The22-row declaration run at `34072b51` completed actual101 with frozen inputs.
+The first10 Runtime rows pass, including replacement, once-only expansion and
+prefix failures. Row11 exposed a test-adaptation typo: the portable Error
+constructor is `js/Error.`, not the nonexistent `suss.core/Error.`. Correcting
+that constructor retains the original throw/message/catch control; no rows are
+removed. The next run is `macro-declaration-after-error-constructor-adaptation`.
