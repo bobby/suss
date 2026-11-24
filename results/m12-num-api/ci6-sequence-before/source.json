@@ -1,0 +1,8 @@
+{
+  "head": "a4513977926dfc553779cd97acab5e68c6b634b6",
+  "files": {
+    "crates/suss-cli/tests/portable_sequences.rs": "acd513d6f813f9312ea1df8f4ff4881aee7f1d2b7bea58facd2348af81e6be6e",
+    "tests/oracle/sequence-cases.json": "577148621939029fe1a9f1fb22ddd15b848f887c7b3738284de20dbe6e8b4311"
+  },
+  "qualification": "Currenthead actualCI6 andlocal101 captured before helper repair. Originalequal-nan false is confirmed byClojure; baremanualcore context behaves asboxedfunctioncall, notcanonical directprimitiveinline."
+}

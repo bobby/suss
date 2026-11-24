@@ -1,0 +1,27 @@
+2026-11-24T23:17:28.3710645Z ---- sequence_foundations_match_independently_encoded_primary_observations stdout ----
+2026-11-24T23:17:28.3711285Z 
+2026-11-24T23:17:28.3712125Z thread 'sequence_foundations_match_independently_encoded_primary_observations' (4933) panicked at crates/suss-cli/tests/portable_sequences.rs:93:9:
+2026-11-24T23:17:28.3713345Z assertion `left == right` failed: equal-nan: (= ##NaN ##NaN)
+2026-11-24T23:17:28.3713999Z   left: Object {"tag": String("bool"), "value": Bool(true)}
+2026-11-24T23:17:28.3714645Z  right: Object {"tag": String("bool"), "value": Bool(false)}
+2026-11-24T23:17:28.3715411Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-24T23:17:28.3715934Z 
+2026-11-24T23:17:28.3715939Z 
+2026-11-24T23:17:28.3716904Z     sequence_foundations_match_independently_encoded_primary_observations
+2026-11-24T23:17:28.3717429Z 
+2026-11-24T23:17:28.3717882Z test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.93s
+2026-11-24T23:17:28.3718499Z 
+2026-11-24T23:17:28.4372534Z error: test failed, to rerun pass `-p suss-cli --test portable_sequences`
+2026-11-24T23:17:28.4373875Z      Running tests/portable_string_fields.rs (target/debug/build/suss-cli/9586dbc7bcb03b47/out/portable_string_fields-9586dbc7bcb03b47)
+2026-11-24T23:17:28.4391706Z 
+2026-11-24T23:17:28.4391991Z running 2 tests
+2026-11-24T23:17:31.6666476Z test sole_host_callable_retains_buffer_and_captured_values_across_gc ... ok
+2026-11-24T23:33:50.6907217Z                              output=stdout, stderr=stderr)
+2026-11-24T23:33:50.6915341Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'build_cache', '--test', 'clojure_biginteger_carrier', '--test', 'clojure_decimal_arithmetic', '--test', 'clojure_letfn', '--test', 'clojure_number_source_objects', '--test', 'clojure_primitive_method_types', '--test', 'clojure_unboxed_locals', '--test', 'compiled_aot', '--test', 'compiled_async_import_file', '--test', 'compiled_core_casts', '--test', 'compiled_macro_binding_records', '--test', 'compiled_macro_data_builders', '--test', 'compiled_macro_function_scopes', '--test', 'compiled_macro_large_finite', '--test', 'compiled_macro_quote_asts', '--test', 'compiled_macro_source_positions', '--test', 'compiled_optimize', '--test', 'compiled_record_default_budget', '--test', 'compiled_str_calls', '--test', 'core_sequence_interfaces', '--test', 'generated_async_bridge_journal', '--test', 'math_context_constructors', '--test', 'pattern_admission', '--test', 'portable_aot_wit_numbers', '--test', 'portable_atoms', '--test', 'portable_chunk_effects', '--test', 'portable_comparators', '--test', 'portable_default_hash', '--test', 'portable_exception_info', '--test', 'portable_i31_operations', '--test', 'portable_lazy_sequences', '--test', 'portable_modules', '--test', 'portable_nonescaping_vectors', '--test', 'portable_primitive_entries', '--test', 'portable_record_emitter_dependencies', '--test', 'portable_reduction_dispatch', '--test', 'portable_sequences', '--test', 'portable_string_fields', '--test', 'portable_type_method_scopes', '--test', 'public_compiled_command', '--test', 'record_factory_preservation', '--test', 'runtime_async_invocation_retiring', '--test', 'session_async_recovery_receipt', '--test', 'session_live_heap', '--test', 'toolchain_profile', '--test', 'vector_reads', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-11-24T23:33:50.7106494Z ##[error]Process completed with exit code 1.
+2026-11-24T23:33:50.7178623Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-24T23:33:50.7179381Z find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-24T23:33:50.7212637Z shell: /usr/bin/bash -e {0}
+2026-11-24T23:33:50.7212916Z env:
+2026-11-24T23:33:50.7213125Z   CARGO_BUILD_JOBS: 2
+2026-11-24T23:33:50.7213377Z   CARGO_HOME: /home/runner/.cargo

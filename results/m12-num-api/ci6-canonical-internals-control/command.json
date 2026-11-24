@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/suss",
+    "-e",
+    "(let [original (.-EMPTY cljs.core/List)] (try (do (set! (.-EMPTY cljs.core/List) nil) (nil? ())) (finally (set! (.-EMPTY cljs.core/List) original))))"
+  ],
+  "exit_code": 1,
+  "seconds": 4.7692811489105225,
+  "qualification": "Canonical user input probes an original CLJS implementation-internals control; honest private-field rejection is expected by accepted design, not a Clojure semantic counterexample."
+}

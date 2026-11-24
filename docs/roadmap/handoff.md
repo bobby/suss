@@ -35625,3 +35625,28 @@ ci5-repaired-fullcapture-default26-review. Original primary/comparator/count/
 skip/opaque contracts and the132 explicit global failures are unchanged.
 Exact two-thread workspace, independent review and final-head CI remain gates;
 the superseded7b71 queue is replaced only with this validated repaired source.
+
+
+CI45502526357 at a4513977 completes with seven integration jobs passing and
+integration6 failing the retained-source sequence NaN comparison. Exact CI
+and local101 evidence is under results/m12-num-api/ci6-sequence-before. Fresh
+Clojure1.12.6 distinguishes canonical primitive `(= ##NaN ##NaN)` (false)
+from the same objects passed through an ordinary `=` function binding (true).
+The normal native CLI agrees. Original nested-list NaNs compare true.
+The 135-case retained-source fixture includes implementation-internals controls,
+so its source-loading setup remains; canonical user input correctly rejects
+its private EMPTY-field control. Exploratory canonical-setup failures remain
+archived and are not reported as language compatibility counterexamples.
+
+Keep all 135 original source/expected rows immutable. Apply only measured
+Clojure boxed-profile NaN corrections in the owned comparison helper and add
+five canonical primitive/Object controls in Runtime and Macro phases. Both
+profiles retain their distinct observations; the canonical primitive false is
+not weakened to match boxed behavior. The other five retained-source tests
+remain. Complete portable_sequences7 and clojure_number_source_objects4
+(including actual AOT) return0 in184.199s with source/HEAD/Binaryen unchanged.
+All 1229 production inputs remain unchanged from7b71. See the fresh
+ci6-sequence-{nan-context,boxed}-primary and focused-repair receipts. Original
+fixture/count/coercion-correction/skip/opaque/ledger contracts are unchanged.
+Fresh provenance/complete-native/conservation checks, exact workspace,
+independent review and final-head CI remain required on the repaired branch.
