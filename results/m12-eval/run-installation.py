@@ -22,6 +22,8 @@ elif sys.argv[2:] == ["--borrowed-macro-only"]:
  commands=[('borrowed-macro-authority',['cargo','test','--workspace','--locked','--lib','portable_macros::reentry::tests','--','--nocapture','--test-threads=2']),('existing-macro-regressions',['cargo','test','--workspace','--locked','--lib','portable_macros::','--','--nocapture','--test-threads=2']),('inline-module-macros',['cargo','test','--workspace','--locked','--test','inline_module_macros','--','--nocapture','--test-threads=2'])]
 elif sys.argv[2:] == ["--macro-service-only"]:
  commands=[('runtime-macro-service',['cargo','test','--workspace','--locked','--lib','portable_macros::facade::tests','--','--nocapture','--test-threads=2']),('existing-macro-regressions',['cargo','test','--workspace','--locked','--lib','portable_macros::','--','--nocapture','--test-threads=2']),('inline-module-macros',['cargo','test','--workspace','--locked','--test','inline_module_macros','--','--nocapture','--test-threads=2']),('existing-session-library',['cargo','test','--workspace','--locked','--lib','portable_session::','--','--nocapture','--test-threads=2']),('isolated-observation-hooks',['cargo','test','--workspace','--locked','--test','session_observation_hook','--','--nocapture','--test-threads=2']),('java-node-free-bootstrap',['sh','scripts/verify-bootstrap.sh'])]
+elif sys.argv[2:] == ["--live-vars-only"]:
+ commands=[('live-vars-primary',['cargo','test','--workspace','--locked','--test','clojure_eval','vars_retain_real_live_cells_identity_metadata_and_callability','--','--nocapture','--test-threads=2']),('complete-public-controls',['cargo','test','--workspace','--locked','--test','clojure_eval','--','--nocapture','--test-threads=2'])]
 elif sys.argv[2:] == ["--public-entry-only"]:
  commands=[('reentrant-public-eval',['cargo','test','--workspace','--locked','--test','clojure_eval','compiled_eval_is_reentrant_inside_actual_compiled_macro_functions','--','--nocapture','--test-threads=2']),('complete-public-controls',['cargo','test','--workspace','--locked','--test','clojure_eval','--','--nocapture','--test-threads=2'])]
 else:assert len(sys.argv)==2,"Unknown installation gate selection"
@@ -31,5 +33,5 @@ for label,command in commands:
  with (out/(label+'.log')).open('w') as log:result=subprocess.run(command,cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT)
  entry={'label':label,'command':command,'exit_code':result.returncode,'seconds':time.time()-start};record['commands'].append(entry);save();announce(entry)
  if result.returncode:code=result.returncode;break
-record.update(complete=True,exit_code=code,inputs_unchanged=all((root/p).is_file() and sha(root/p)==h for p,h in inputs.items()));save();announce({k:v for k,v in record.items() if k not in ['inputs','commands']})
+record.update(complete=True,exit_code=code,head_unchanged=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()==record['head'],inputs_unchanged=all((root/p).is_file() and sha(root/p)==h for p,h in inputs.items()));save();announce({k:v for k,v in record.items() if k not in ['inputs','commands']})
 raise SystemExit(code)
