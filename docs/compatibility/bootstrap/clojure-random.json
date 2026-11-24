@@ -1,4 +1,5 @@
 {
+  "actual_public_api_controls": 16,
   "primary": {
     "upstream": "Clojure1.12.6",
     "jars": {
@@ -51,7 +52,11 @@
     "crates/suss-compile/src/runtime_abi/random.rs": "477224805d5dec5de5bbb3a270840e1e1aed10f7b324aedb887c55bd0d25b20f",
     "crates/suss-compile/src/portable/aot/random.rs": "a6908de9fc818415860130f933fc34f270481ed66ce012aa28a400be602155f5",
     "crates/suss-compile/src/portable_session/random_tests.rs": "ca5ed23b18c28bd6a8c1fb716e0c87a5d109e783fdc00c3ec51b6461e80ee620",
-    "crates/suss-compile/tests/runtime_random.rs": "b2bcff02357ed62c1f5aee91ca10e447f0df40beca73b8761cc7027372d36477",
-    "crates/suss-compile/tests/portable_random.rs": "c78872bfb489f3a083fc9a07d678e6196f33981fd498a4e99df19672e2addd35"
+    "crates/suss-compile/tests/runtime_random.rs": "1e305df622198fc5930b6a5459e24fde3aa71000c76aa952f8d7630ac0230c51",
+    "crates/suss-compile/tests/portable_random.rs": "0a876a8455c97e88b506819bf5356f7e5629c3d0607c611854a2a4f93fb6d103",
+    "crates/suss-cli/tests/clojure_random.rs": "128bb024b9da01c4ece8184082a8e0d6712350371634f11e0631515c89a2b9b2",
+    "results/m12-random/public-effects/cases.json": "c88881ba0f727eb0dc7f1e5db207ce1cbcbeb2a316ebf7731041899f11c6a933",
+    "results/m12-random/public-effects/command.json": "2bb6ead58d9955f184a05f2415deb5c9a3a60dfcfb75bbe1031547dc16d9b13e",
+    "results/m12-random/public-effects/oracle.clj": "4f67c1bb2f0ca5d932285a96d66983a1b6278ce6f5d077439c65e9f56ccf7ee6"
   }
 }

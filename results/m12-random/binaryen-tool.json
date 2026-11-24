@@ -1,0 +1,19 @@
+{
+  "retained_official_tool_provenance": {
+    "release": "version_133",
+    "url": "https://github.com/WebAssembly/binaryen/releases/download/version_133/binaryen-version_133-x86_64-linux.tar.gz",
+    "official_archive_sha256": "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489",
+    "actual_archive_sha256": "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489",
+    "tools": {
+      "wasm-opt": "8f25e9fd5db0fc5f210003aaa432922feb2e52d309e430def2f929e34da9466b",
+      "wasm-merge": "4b55992e09b833bcc6719dbc0540783dfdb05dba319c03eb1059ade20211c957"
+    }
+  },
+  "directory": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin",
+  "verified_tool_sha256": {
+    "wasm-opt": "8f25e9fd5db0fc5f210003aaa432922feb2e52d309e430def2f929e34da9466b",
+    "wasm-merge": "4b55992e09b833bcc6719dbc0540783dfdb05dba319c03eb1059ade20211c957"
+  },
+  "version": "wasm-opt version 133 (version_133)",
+  "qualification": "Tool identity/version verification only. New RNG optimized artifact execution remains a separate gate. The current frozen recorder has no SUSS_WASM_OPT configured; this does not change its environment or inputs."
+}

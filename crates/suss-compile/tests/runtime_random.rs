@@ -41,7 +41,7 @@ fn random_words_are_consumed_once_and_mapped_to_binary64() {
         .call(&mut store, &[Val::FuncRef(Some(provider))], &mut [])
         .unwrap();
     // The typed global must root the callback even after a collection.
-    store.gc(None);
+    store.gc(None).unwrap();
     for (index, expected) in expected.into_iter().enumerate() {
         assert_eq!(sample.call(&mut store, ()).unwrap().to_bits(), expected);
         assert_eq!(draws.load(Ordering::SeqCst), index + 1);
@@ -54,4 +54,33 @@ fn random_words_are_consumed_once_and_mapped_to_binary64() {
         .expect_err("absence cannot produce a constant fallback");
     assert!(error.is::<wasmtime::ThrownException>(), "{error:?}");
     assert_eq!(draws.load(Ordering::SeqCst), 4);
+}
+
+#[test]
+fn random_provider_failure_propagates_and_replacement_recovers() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let install = runtime
+        .get_func(&mut store, "random-source-install")
+        .unwrap();
+    let sample = runtime
+        .get_typed_func::<(), f64>(&mut store, "random-double-raw")
+        .unwrap();
+    let failing = Func::wrap(&mut store, || -> wasmtime::Result<i64> {
+        Err(wasmtime::Error::msg("intentional entropy provider failure"))
+    });
+    install
+        .call(&mut store, &[Val::FuncRef(Some(failing))], &mut [])
+        .unwrap();
+    let error = sample
+        .call(&mut store, ())
+        .expect_err("a failed provider cannot produce a value");
+    assert!(format!("{error:#}").contains("intentional entropy provider failure"));
+    let recovered = Func::wrap(&mut store, || i64::MIN);
+    install
+        .call(&mut store, &[Val::FuncRef(Some(recovered))], &mut [])
+        .unwrap();
+    assert_eq!(sample.call(&mut store, ()).unwrap(), 0.5);
 }

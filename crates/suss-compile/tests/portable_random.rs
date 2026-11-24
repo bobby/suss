@@ -27,7 +27,7 @@ fn component(import: bool, optimize: bool) -> Vec<u8> {
         )
         .unwrap();
     let source = format!(
-        "package test:random; world api {{ {} export sample: func() -> f64; }}",
+        "package test:random; world api {{ {} export sample: func() -> f64; export discarded: func() -> f64; }}",
         if import {
             "import wasi:random/random@0.3.1;"
         } else {
@@ -37,7 +37,10 @@ fn component(import: bool, optimize: bool) -> Vec<u8> {
     let package = resolve.push_str("api.wit", &source).unwrap();
     let world = resolve.packages[package].worlds["api"];
     let fragment = portable::prepare_fragment(
-        "(def sample (fn [] (suss.bootstrap/random-double)))",
+        "(def sample (fn [] (suss.bootstrap/random-double)))
+         (def discarded (fn [] (do (suss.bootstrap/random-double)
+                                   (suss.bootstrap/random-double)
+                                   (suss.bootstrap/random-double))))",
         &Environment::default(),
         Phase::Runtime,
     )
@@ -46,7 +49,10 @@ fn component(import: bool, optimize: bool) -> Vec<u8> {
         &[fragment],
         &resolve,
         world,
-        &[("sample".into(), Symbol::new("sample"))],
+        &[
+            ("sample".into(), Symbol::new("sample")),
+            ("discarded".into(), Symbol::new("discarded")),
+        ],
         optimize,
     )
     .unwrap()
@@ -89,9 +95,20 @@ fn execute(import: bool, optimize: bool) {
     if import {
         for expected in [0, 0x3fe0000000000000, 0x3fefffffffffffff] {
             assert_eq!(sample.call(&mut store, ()).unwrap().0.to_bits(), expected);
-            sample.post_return(&mut store).unwrap();
         }
         assert_eq!(draws.load(Ordering::SeqCst), 3);
+        let discarded = instance
+            .get_typed_func::<(), (f64,)>(&mut store, "discarded")
+            .unwrap();
+        assert_eq!(
+            discarded.call(&mut store, ()).unwrap().0.to_bits(),
+            0x3fefffffffffffff
+        );
+        assert_eq!(
+            draws.load(Ordering::SeqCst),
+            6,
+            "unused random results must still consume provider words"
+        );
     } else {
         assert!(
             sample.call(&mut store, ()).is_err(),
@@ -112,6 +129,7 @@ fn pure_world_keeps_its_import_contract_and_reports_missing_entropy() {
 }
 
 #[test]
+#[ignore = "requires Binaryen133 or later; run explicitly with --include-ignored and SUSS_WASM_OPT"]
 fn optimized_selected_random_import_preserves_draws() {
     execute(true, true);
 }

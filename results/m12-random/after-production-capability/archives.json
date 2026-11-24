@@ -1,0 +1,18 @@
+{
+  "source_head": "97a2d235df03166acc68f3a8409e5963bf984258",
+  "archives": {
+    "commands.json": {
+      "sha256": "761de3bbdc9209331c7a62ab2cfd8ddd003e041feca5c81cfbaf45f6c12a4a13",
+      "gzip_sha256": "c9111a236494eaeed8a9bed2a441e963b72dda1c2f40ad1d6de20ca5721c9d24"
+    },
+    "runtime-entropy.log": {
+      "sha256": "71ca7eec13f2e30015b7abc6394e541b184e7642d60b2159be8cb8c88dd9ae26",
+      "gzip_sha256": "bbe7cc881a83b434104f85ec6d408389d5f851bcce91a9da901485ee61448e80"
+    },
+    "selected-wit-aot.log": {
+      "sha256": "fb6cf2142bc5c0d2272fdae13b484a35b51438da1e794db4ec2201dccc5785f3",
+      "gzip_sha256": "a785052d48ee0512f0640d48833197448eb66f22b3d254df16f5cd0d10d08203"
+    }
+  },
+  "qualification": "Production entropy endpoint passes; ordinary selected-WIT and pure missing-provider AOT cases pass. Optimized case fails because the recorder environment has no Binaryen executable. Original overall exit101 is preserved; public-core command was not reached."
+}

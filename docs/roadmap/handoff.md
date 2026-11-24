@@ -1,3 +1,31 @@
+## Entropy boundary execution and explicit optimization tool (2026-11-23)
+
+On97a2d235, the production runtime entropy test returns0 after2265.436s
+(including a dependency rebuild), inputs unchanged. Ordinary selected-WIT AOT
+and pure-world missing-capability cases pass. The optimized case fails101
+because wasm-opt is absent from that recorder's environment; the combined
+recorder stops before its public-core command. These original receipts/logs
+remain archived without relabeling the overall failure.
+
+The retained Binaryen133 tools match their original official-download hashes.
+Fresh focused runs explicitly select SUSS_WASM_OPT and include the named optional
+optimization test. Normal CI reports that new external-tool test as ignored;
+manual execution remains required evidence. New boundary coverage also requires
+unused draws to retain effects, and provider failure/replacement to remain honest.
+The new public target executes16 actual-API primary controls,126 controlled
+transformations through one real compiled AOT component, and fresh actual CLI
+WASI streams. These are test requirements until fresh receipts establish results.
+
+## Compiled eval primary observations (2026-11-23)
+
+results/m12-eval/primary retains24 fresh Clojure1.12.6 observations and the complete
+upstream eval form/EPL notice. The primary command returns0 in2.628s. A top-level
+eval do preserves a prefix effect before a later form's compile error; a throwing
+definition initializer preserves its prior root. Namespace/Var identity, generated
+calls, functions, macros, recursion, laziness and dynamic math context are observed.
+These are primary semantic controls for#515, not native implementation or affected
+34-body/numeric acceptance passes. The original primary fixture remains unchanged.
+
 ## Execution-time random capability candidate (2026-11-23)
 
 The private runtime now has a typed entropy callback outside the pinned ABI

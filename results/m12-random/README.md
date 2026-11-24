@@ -25,3 +25,18 @@ SUSS_RANDOM_TARGET and disk-backed TMPDIR. run-focused.py records the frozen
 input hashes, exact native commands, exit codes and terminal input recheck.
 Complete original constantly/some-fn bodies, full workspace, bootstrap and actual
 CLI/WASI public API coverage remain separate acceptance gates.
+
+At97a2d235, the raw production entropy target returns0. Ordinary selected-WIT
+and pure missing-provider AOT cases pass; the optimized case fails because
+wasm-opt was not configured, preserving overall101 and unchanged inputs. The
+public-core command was not reached. The retained Binaryen133 tools match their
+original official archive/tool provenance. Fresh focused runs select the tool
+explicitly and run the optional optimization test with --include-ignored. No
+optimization pass is inferred from default CI's named ignore.
+
+Public-effects retains16 fresh actual-API primary properties. The new public
+target adds126 controlled transforms through one real compiled AOT component
+and actual CLI/WASI streams with fresh-instance checks. Provider failure,
+replacement recovery and unused draw effects have explicit boundary tests.
+These new requirements need separate native receipts. run-public.py uses the
+workspace feature graph and captures both complete original bodies.
