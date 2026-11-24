@@ -109,3 +109,25 @@ hook's non-reentrant contract and is explicitly unsuitable as capability
 validation. The replacement uses evaluate-form directly; observation hooks
 retain their contract. Public eval, the Runtime service handle, real Vars and
 complete primary/body acceptance remain required.
+
+At 61e24bef, the native Macro service owns the existing phase Store through
+an exclusive owned lease. Preparation reuses its loaded macros and catalog;
+the lease returns before Runtime execution and on request unwind. The direct
+Runtime callback test expands the original user macro once per input, returns
+a callable function across GC after dropping the public owner, and preserves
+the existing macro-side effect counter without replay. The interruption handle
+remains available while the host is lent. No Session pointer or self-borrowing
+mutex guard is captured.
+
+`run-installation.py runtime-macro-service-after-owned-form-api
+--macro-service-only` returns 0 with unchanged inputs. There are 68 distinct
+passing regressions: 14 macro-library, nine inline-module, 37 session-library,
+four observation and four original bootstrap execution tests. The focused
+service test is also run separately (464.193 seconds including build); the
+subsequent command times are 15.200, 117.565, 24.929, 4.516 and 115.161 seconds.
+Java/Node-free double bootstrap and compiler identity verification pass. Full
+receipts/logs are retained under
+`results/m12-eval/runtime-macro-service-after-owned-form-api`. The missing
+inline forwarding method and test-only owned-form API compile failures remain
+archived. Public eval, request-scoped callback installation, real Vars and the
+complete primary/body acceptance still remain required.
