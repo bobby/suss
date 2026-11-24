@@ -8,7 +8,8 @@ scope=os.environ['SUSS_DURABLE_SCOPE'];assert scope in Path('/proc/self/cgroup')
 env=os.environ|{'CARGO_TARGET_DIR':os.environ['SUSS_EVAL_TARGET'],'CARGO_BUILD_JOBS':'1','RUSTUP_TOOLCHAIN':'stable'}
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=root).decode().split('\0')
-inputs={p:sha(root/p) for p in paths if p and not p.startswith('results/') and (root/p).is_file()}
+tracked=set(subprocess.check_output(['git','ls-files','--cached','-z'],cwd=root).decode().split('\0'))
+inputs={p:sha(root/p) for p in paths if p and (p in tracked or not p.startswith('results/')) and (root/p).is_file()}
 record={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'inputs':inputs,'runner_sha256':sha(Path(__file__)),'scope':scope,'recorder_pid':os.getpid(),'commands':[],'complete':False}
 def announce(value):
  with (out/"recorder.log").open("a") as progress:print(value,file=progress,flush=True)

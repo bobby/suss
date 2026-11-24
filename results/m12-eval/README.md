@@ -157,3 +157,39 @@ under `results/m12-eval/public-eval-function-and-namespace-context`.
 Real live-cell Vars, top-level failure/effect boundaries, all34 unchanged
 original eval assertions, capability/budget/GC regressions and full validation
 remain required before claiming issue515 acceptance.
+
+
+## Native live Vars and complete eval body (2026-11-24)
+
+At6a82a270, all10 fresh Clojure1.12.6 live-Var controls match in both
+Runtime and Macro, including independent retained comparisons after GC.
+The focused Cargo command returns0 (159.481s including build). Canonical
+phase binding identities intern actual nominal Vars; their compiled getters
+read live public/dynamic cells without constant substitution. Definition
+results, redefinition, metadata, callable references, eval identity, failed
+initializers and const-root reads are covered. Source/primary verification is
+`python3 results/m12-eval/verify-live-vars.py`; all22 inherited IFn signatures
+remain explicit in the retained source adaptation.
+
+The complete unchanged original34-assertion eval body also returns0
+(11.231s including Cargo):29 host matches and the original five opaque
+function/Var judgments at ordinals15–19, with no failed, missing or skipped
+rows. Exact numeric ordinals5–7 are independent host matches. The full
+public target still returns101 (6.916s):5 tests pass and1 fails at the
+primary do-prefix-effects-before-compile-error control. Its observed prefix
+trace is empty; the primary requires[:prefix]. Later fixture rows remain
+unexecuted. All recorded production/test inputs and HEAD remain unchanged.
+Receipts and complete logs are under
+`results/m12-eval/live-vars-after-canonical-descriptor`; earlier compile,
+metadata-binding, special-form and descriptor errors are preserved separately.
+
+This extends focused execution evidence, not a complete eval/numeric issue or
+full-suite acceptance claim. Macro-expanded top-level do boundaries, additional
+namespace/capability/budget/GC regressions, complete-capture preservation,
+bootstrap, exact full workspace validation, independent review and final CI
+remain required. The next durable recorder also hashes every tracked fixture
+and evidence input; untracked result outputs alone stay excluded.
+
+Reconciling parent974ed7e7 changes ancestry only: its tree equals the
+previously reviewed parent8d81cf3c, and the merge index equals6a82a270's
+complete tree before these evidence/doc additions.

@@ -15,7 +15,11 @@ storage/effect observations cover controlled bounds, conversion errors, GC and
 fresh streams. See [random-provider evidence](../../results/m12-random/README.md).
 The original16 some-fn,31 constantly and31 lazy-seq rows execute; their existing
 zero/two/ten guest judgments stay explicit. All prior comparable observations
-remain valid. Numeric operands still blocked by eval remain unexecuted.
+remain valid. Focused native eval now executes all34 unchanged original assertions with29
+host matches and five explicit opaque function/Var judgments. Its three exact
+numeric rows match on the host. Full-capture preservation and the remaining
+public eval failure/effect criteria retain separate gates; see
+[eval evidence](../../results/m12-eval/README.md).
 
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate

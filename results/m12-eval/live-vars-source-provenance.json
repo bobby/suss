@@ -1,0 +1,78 @@
+{
+  "upstream": {
+    "commit": "c4295f303100bbf5afac449242d30bca1126f1a1",
+    "entry": {
+      "id": "runtime:Var:1187",
+      "name": "Var",
+      "kind": "deftype",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 1187,
+      "end-line": 1253,
+      "byte-start": 35340,
+      "byte-end": 37308,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5ca19b6580d26841019772cf2abbe7d925e6280785f44dbb93c82d398349e265",
+      "extracted": "extracted/0294.cljs",
+      "extracted-sha256": "951bc46c6470247cb417a6c9e49205b87f6048050420ca06f02f6e935718232f",
+      "patch": "docs/compatibility/patches/expression-Var.json",
+      "patch-sha256": "304260bb05ffbe0e532f68680cbd5a6aff426dd169162a0dedf88d15fa4cb0e3",
+      "adapted-form-sha256": "92bb3c2974266f84923949b36c5b1798a144c23580be59edf4243c989d7c7f40",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "Object.isMacro/toString",
+        "IDeref/IMeta/IWithMeta/IEquiv/IHash/Fn/IFn",
+        "Symbol/hash-symbol/str_/apply",
+        "nominal descriptors and closure-property storage"
+      ],
+      "semantic-tests": [
+        "crates/suss-compile/tests/portable_symbol_conversion.rs"
+      ]
+    }
+  },
+  "primary": {
+    "command": [
+      "java",
+      "-Xmx512m",
+      "-cp",
+      "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+      "clojure.main",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/live-vars-primary/oracle.clj"
+    ],
+    "exit_code": 0,
+    "seconds": 0.8525208379141986,
+    "jars": {
+      "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+      "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+      "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+    },
+    "source_sha256": "ef024b40f58963fec51d81eb925155c5cffac7c6985fbddfa4dc0135689f60c5",
+    "stdout_sha256": "cd54ce0120ffa1fa9a499cf094e70446ebfccbdd1856abcaeded48b3fe231c18",
+    "controls": 10,
+    "qualification": "Fresh pinned primary observations only; no native Var acceptance claim."
+  },
+  "source_files": {
+    "crates/suss-compile/src/portable/hir/vars.rs": "b86541510293937676b5571c843cda75c1b5de42f332e69668027298608f26d5",
+    "crates/suss-compile/src/portable/hir.rs": "4de6aa07a817b9f7c8e96bbc8cd2b6e5abf0f7610970be2cbfd3e954e0574f88",
+    "crates/suss-compile/src/portable/ir.rs": "45076f706c4458a2cb5a0c03419a758b079acad2e6a1618101c5ed215c24c46c",
+    "crates/suss-compile/src/portable/resolve.rs": "12500d13017a98a14fa2807b22d10f5c6feb6b3c3c3025f387a28ba6b9e665ec",
+    "crates/suss-compile/src/portable_session/evaluation.rs": "297ad86a3dc1ba59c087f868060410532bfe74c906b06e6d735b6c5d90406588",
+    "crates/suss-compile/src/portable_macros.rs": "77df5171406cbb5f052d536165a71f11ee4ffcaaa6d905496e26b63fdbbbaf35",
+    "crates/suss-compile/src/portable_session.rs": "17b268a48df89b4667b0cd0f1ce3b6fd0cbd332aabfb8a48a345e920c19a5167",
+    "docs/compatibility/bootstrap/exact-integers.sus": "487123d3fae7597da9b78cb81b1b7ceb727a338eb1ab62627e05a3227506acb2",
+    "docs/compatibility/patches/expression-Var.json": "304260bb05ffbe0e532f68680cbd5a6aff426dd169162a0dedf88d15fa4cb0e3",
+    "docs/compatibility/core-import.json": "e045f241c0f71f29d0ed0d486c8231749de03f8daa331ac9a12ef9efdfbed03e",
+    "runtime/core-import/manifest.json": "e08428cdd19c1734dc1287c38af550d20bfef178465ef3084fcad41b4d3eda63",
+    "runtime/core-import/suss/core.sus": "02e39e8d85e376e6d44b43158b4c7ffa48cc11047714d359dcaaf733ee7c9455",
+    "crates/suss-cli/tests/clojure_eval.rs": "faccdb3186dff4375750cc63032b806d21628b41af87f932dabee4da1f396017",
+    "crates/suss-compile/tests/support/pinned_eval_body.rs": "9424ad245ee5b9243b046ac5adf34130dfb20585a07f0f4801fe2e5734db7c58",
+    "results/m12-eval/live-vars-primary/cases.json": "ee46f06327bdfa0e11696452e6d7e24f7a7f0903099a452df0f33d464efd64a0",
+    "results/m12-eval/live-vars-primary/setup.sus": "0660d764a10d062a1f53571c5613ad9be16d9910c37cb16694ddfa7289494336"
+  },
+  "license": "runtime/core-import/epl-v10.html",
+  "adaptation": "Retain the pinned Var getter, symbol, metadata, Object/toString, dereference and all twenty-two IFn invocation signatures. Native compiler-generated getters read actual persistent binding cells and compiler-owned cells intern one Var per canonical phase binding. Adapt identity/equality/hash, mutable declaration metadata and macro metadata to Clojure Var semantics; omit the ClojureScript Fn marker and IWithMeta copying because a Clojure Var is an identity-bearing reference, not a function or metadata-copying value. Primary/native controls remain separate acceptance evidence.",
+  "qualification": "Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance."
+}
