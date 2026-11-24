@@ -34141,3 +34141,17 @@ checkout-independent compiler identity and all four original execution tests
 also return0 (452.479s). Receipts and full logs are under
 `results/m12-random/complete-capture-and-bootstrap` and
 `results/m12-reader-followup/full-suite-after-random-and-assert`.
+
+
+## Compiled-host reentry and form-data transport (2026-11-24)
+
+`results/m12-eval/run-installation.py borrowed-nominal-forms-first-native`
+returns0 at4196f081, inputs unchanged: one private runtime capability/GC test
+and two real compiler-reentry tests pass in Runtime/Macro. Actual nominal
+form data is decoded directly and compiled while its Wasm caller remains
+live, sharing existing binding cells and retaining numeric results across GC.
+The native executions take3.35s and44.13s (249.851/539.219s including builds).
+The earlier compile101 and original incomplete receipt stay preserved with a
+posthoc input check; no failed attempt is relabeled. Persistent publication,
+macro expansion, real Vars, public eval and complete primary/body acceptance
+remain separate requirements. The runtime capability alone implements no eval.

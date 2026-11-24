@@ -18,3 +18,20 @@ scope, freezes test/fixture inputs and hashes the selected libraries before/afte
 It writes no Cargo cache. A native missing-name failure is a counterexample,
 never a Cargo or post-implementation pass. The full34-assertion original body,
 source publication and remaining issue acceptance have separate gates.
+
+At4196f081 the durable private-capability gate returns0, inputs unchanged.
+The real import-free runtime capability/GC/identity test passes (249.851s
+including build; native execution3.35s). Two borrowed-Store compiler tests pass
+in both Runtime and Macro (539.219s including additional workspace-feature
+builds; native execution44.13s). They invoke the real compiler while a Wasm
+caller is live, share existing binding cells and compile actual nominal form
+data directly into Ratio/BigInt results; retained results survive GC. Neither
+test supplies an eval binding or a fabricated language result.
+
+The original1630.162s compile101 is retained with its incomplete recorder and
+posthoc unchanged-input check; it contains two test API mistakes (F64 bits and
+an extra ref_eq reference), fixed before the successful gate. The new recorder
+writes progress to its owned log so detached stdout cannot interrupt its final
+receipt. Persistent compiler publication, user macros, real Vars, namespace/
+dynamic context, public eval, the24 primary controls and original34-row body
+remain required. These private tests establish no public eval acceptance.
