@@ -34606,3 +34606,18 @@ The first dirty development check caught moving out of a Drop form and was fixed
 using its ordinary into_parts API; no native pass is inferred. Run
 `alias-and-declaration-first-native --alias-and-declaration-only` through the
 external launcher with unchanged source and HEAD until terminal.
+
+At `4be9fb03`, all15 alias primary rows pass in Runtime and Macro, including
+GC-retained observations. All19 declaration rows through the alias case then
+pass; row20 exposes the primary top-level &env=nil contract. The native eval
+path now supplies nil for no lexical names, and a Symbol-keyed map of actual
+lexical bindings in a body; explicit Suss compiler-catalog requests retain their
+separate graph schema. Three fresh pinned observations cover top-level nil,
+lexical presence/count and shadowed names. Regular source macro graph transport
+is unchanged. A focused cancellation guard also checks namespace restoration
+when cancellation occurs after declaration preparation, before commit. Its
+failure path restores the original host namespace before returning the lease.
+Run `declaration-after-primary-env-contract --declaration-env-only` through the
+external launcher. Earlier failed22-row runs retain actual101, not acceptance.
+The alias run included five dirty provenance JSON updates in its frozen input
+hashes; those metadata-only changes are committed with this follow-up.

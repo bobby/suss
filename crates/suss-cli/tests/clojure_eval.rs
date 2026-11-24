@@ -1058,3 +1058,31 @@ fn public_alias_preserves_primary_state_errors_and_argument_order() {
         }
     }
 }
+
+#[test]
+fn evaluated_macro_environment_keeps_nil_top_level_and_actual_lexical_names() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/macro-environment-primary/cases.json"
+    )).unwrap();
+    assert_eq!(rows.len(), 3);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let mut retained = Vec::new();
+        for row in &rows {
+            let value = session.eval_with_macros(row["expression"].as_str().unwrap(), &mut macros).unwrap();
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            assert_eq!(forms.len(), 1);
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&forms[0])), "{} {:?}", row["name"], session.phase());
+            eprintln!("macro-environment-primary-match {:?} {}", session.phase(), row["name"]);
+            retained.push(value);
+        }
+        session.collect().unwrap();
+        for (row, value) in rows.iter().zip(&retained) {
+            let forms = suss_reader::forms::read_forms(row["expected"].as_str().unwrap()).unwrap();
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, value).unwrap()), canonical(expected(&forms[0])));
+        }
+    }
+}

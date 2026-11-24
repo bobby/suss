@@ -131,7 +131,13 @@ impl MacroService {
                 return Ok((Err(error), 0));
             }
         };
-        let before = host.session.cap_operation_fuel(remaining)?;
+        let before = match host.session.cap_operation_fuel(remaining) {
+            Ok(before) => before,
+            Err(error) => {
+                host.enter_namespace(&original)?;
+                return Err(error);
+            }
+        };
         let committed = host.commit_macro_definition(pending);
         let spent = before.saturating_sub(host.session.operation_fuel_remaining()?);
         let committed = committed
@@ -198,5 +204,32 @@ impl MacroHost<'_> {
         self.session.invoke(&self.namespace_setter, &[&object])?;
         catalog(&self.catalog).macro_namespace = Some(namespace.to_owned());
         Ok(())
+    }
+}
+
+#[cfg(all(test, not(suss_generator)))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn declaration_cancellation_restores_namespace_before_returning_the_lease() {
+        let mut macros = CompiledMacros::new().unwrap();
+        let service = macros.service();
+        let original = macros.current_namespace();
+        let interrupt = macros.interrupt_handle();
+        let form = suss_reader::forms::read_forms("(defmacro cancelled-declaration [] 42)").unwrap().pop().unwrap();
+        let result = service.declare_evaluation(
+            form, "cancelled-namespace", 400_000_000,
+            Arc::new(AtomicBool::new(false)),
+            move |_, _, _, _| {
+                // Cancel after preparation, precisely at the cap before commit.
+                interrupt.interrupt();
+                Ok(((), u64::MAX))
+            },
+        );
+        assert!(matches!(result, Err(ref error) if error.is_interrupt()));
+        assert_eq!(macros.current_namespace(), original);
+        macros.define("(defmacro recovered-declaration [] 42)").unwrap();
+        assert_eq!(macros.current_namespace(), original);
     }
 }

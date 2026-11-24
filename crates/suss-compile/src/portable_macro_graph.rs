@@ -1260,6 +1260,32 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
             portable::AnalysisContext::Return => "return",
         })
     }
+    /// Clojure Compiler.eval supplies nil at top level and a Symbol-keyed
+    /// lexical environment inside a compiled body. Explicit Suss compiler
+    /// catalog requests retain their separate graph interface.
+    pub(crate) fn native_evaluation_locals(
+        &mut self, context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
+        self.charge(context.locals.len().saturating_add(context.fields.len()))?;
+        let root = if context.locals.is_empty() && context.fields.is_empty() {
+            self.scalar(Literal::Nil)?
+        } else {
+            let mut entries = BTreeMap::new();
+            for (name, field) in context.fields {
+                self.charge(name.len().saturating_add(1))?;
+                entries.insert(name.clone(), self.field(field, 1)?);
+            }
+            for (name, local) in context.locals {
+                self.charge(name.len().saturating_add(1))?;
+                entries.insert(name.clone(), self.local(local, 1)?);
+            }
+            let entries = entries.into_iter().map(|(name, value)| {
+                Ok((self.symbol(&name)?, value))
+            }).collect::<Result<Vec<_>>>()?;
+            self.map_values(entries)?
+        };
+        self.materialize(root)
+    }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
         self.expansion_catalog(context, false, false)
     }

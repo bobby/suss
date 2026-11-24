@@ -1009,6 +1009,7 @@ impl ExpansionHost for MacroHost<'_> {
                     Some(CompilerCatalogMode::RecordBindings) => {
                         graph.expansion_with_record_catalog(context)?
                     }
+                    None if native_owner.is_some() => graph.native_evaluation_locals(context)?,
                     None => graph.expansion(context)?,
                 }
             };
