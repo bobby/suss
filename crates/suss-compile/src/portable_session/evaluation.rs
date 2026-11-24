@@ -418,22 +418,17 @@ impl SessionHost<'_> {
         &mut self,
         snapshot: &mut CompilationSnapshot,
     ) -> Result<(), SessionError> {
-        let mut overrides = Vec::new();
+        snapshot.environment.clear_native_macro_status();
+        let mut declarations = Vec::new();
         for global in snapshot.environment.native_macro_declarations() {
             self.charge_host_work(
                 (global.namespace().len() + global.name().len()) as u64 * 4 + 16,
             )?;
-            if global.phase() == self.phase
-                && snapshot.environment.source_macro_overridden(
-                    self.phase,
-                    global.namespace(),
-                    global.name(),
-                )
-            {
-                overrides.push(global);
+            if global.phase() == self.phase {
+                declarations.push(global);
             }
         }
-        if overrides.is_empty() {
+        if declarations.is_empty() {
             return Ok(());
         }
         let state = self
@@ -468,7 +463,7 @@ impl SessionHost<'_> {
                 kind: suss_reader::forms::Kind::Bool(false),
             },
         )?;
-        for global in overrides {
+        for global in declarations {
             let Some(cell) = snapshot.environment.existing_var_cell(&global) else {
                 continue;
             };
@@ -505,13 +500,9 @@ impl SessionHost<'_> {
                     !wasmtime::Rooted::ref_eq(&roots, &flag, &false_value)?
                 }
             };
-            if enabled {
-                snapshot.environment.record_macro_declaration(
-                    self.phase,
-                    global.namespace(),
-                    global.name(),
-                );
-            }
+            snapshot
+                .environment
+                .record_native_macro_status(global, enabled);
         }
         Ok(())
     }

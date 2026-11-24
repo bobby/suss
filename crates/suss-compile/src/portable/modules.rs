@@ -820,6 +820,7 @@ pub fn prepare_input_forms_with_origin<P: AsRef<Path>>(
     let dependency_environment = if environment.native_evaluation_namespace {
         ordinary = environment.clone();
         ordinary.native_evaluation_namespace = false;
+        ordinary.clear_native_macro_status();
         &ordinary
     } else { environment };
     let (modules, mut snapshot) =

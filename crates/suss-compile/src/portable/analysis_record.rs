@@ -88,6 +88,7 @@ pub(super) fn fragment(
     let mut environment = environment.clone();
     environment.ordered_namespace_initialization = false;
     environment.native_evaluation_namespace = false;
+    environment.clear_native_macro_status();
     let fragment = RecordedFragment {
         phase,
         origin: origin.cloned(),

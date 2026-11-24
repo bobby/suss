@@ -34649,3 +34649,15 @@ Metadata reconciliation now invokes the original core get function retained at
 bootstrap, reading only the :macro entry without serializing opaque metadata.
 No ABI or guest intrinsic is added. Repeat with
 `macro-failure-after-original-lookup --macro-failure-and-lifecycle-only`.
+
+At `ea2941ec`, failed ordinary initialization now preserves the macro42, but
+same-root ordinary replacement incorrectly expands that macro (42 versus the
+primary arity error). A nested initializer eval had rewritten declaration
+history before the outer ordinary def completed. Live macro status is now a
+transient snapshot fact for all actual canonical Vars, separate from immutable
+source declaration revisions. Normal publication, source records and dependency
+compilation clear that observation alongside the existing native eval frame flag.
+Explicit new macro declarations supersede the transient observation. This retains
+actual compile-time macro availability while ordinary same-root replacement and
+nested successful effects are checked anew against live metadata at the next
+native unit. Repeat `macro-failure-with-transient-status` using the same gate.

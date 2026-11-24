@@ -354,6 +354,7 @@ pub(crate) fn prepare_selected_fragment_with_origin(
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
     let mut environment = analyzed.environment;
     environment.native_evaluation_namespace = false;
+    environment.clear_native_macro_status();
     Ok(PreparedFragment { wasm, environment,
         cells: analyzed.cells, namespace_directive: analyzed.namespace_directive,
         definition: hir::result_definition(&analyzed.hir) })

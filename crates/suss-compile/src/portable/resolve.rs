@@ -322,6 +322,9 @@ pub struct Environment {
     // later ordinary def hides that transformer; namespace imports do not
     // silently turn it back into a macro. Persistent snapshots share revisions.
     macro_declarations: PersistentMap<Global, Option<std::sync::Arc<DefinitionInfo>>>,
+    // Actual Var metadata for one native eval analysis only. Never publish this
+    // live observation as declaration history or source-analysis authority.
+    native_macro_status: BTreeMap<Global, bool>,
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
     /// Protocols whose current definition is shipped core's (#279).
@@ -498,6 +501,7 @@ impl Environment {
             identities: BTreeMap::new(),
             macro_exports: BTreeSet::new(),
             macro_declarations: PersistentMap::default(),
+            native_macro_status: BTreeMap::new(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
@@ -1422,14 +1426,23 @@ impl Environment {
             self.record_definition(global, info);
         }
     }
+    pub(crate) fn clear_native_macro_status(&mut self) {
+        self.native_macro_status.clear();
+    }
+    pub(crate) fn record_native_macro_status(&mut self, global: Global, enabled: bool) {
+        self.native_macro_status.insert(global, enabled);
+        self.source_changed();
+    }
     pub(crate) fn record_macro_declaration(&mut self, phase: Phase, namespace: &str, name: &str) {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
         let revision = self.shared_definition_info(&global).cloned();
+        self.native_macro_status.remove(&global);
         self.macro_declarations.insert(global, revision);
         self.source_changed();
     }
     pub(crate) fn source_macro_overridden(&self, phase: Phase, namespace: &str, name: &str) -> bool {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some(enabled) = self.native_macro_status.get(&global) { return !enabled; }
         let Some(declared) = self.macro_declarations.get(&global) else { return false };
         match (declared, self.shared_definition_info(&global)) {
             (None, None) => false,
