@@ -35085,3 +35085,22 @@ source/HEAD through terminal receipts. It exercises actual class identity and
 numeric instance? forms across Runtime, Macro, retained GC and real reentrant Macro,
 then all public/capability and original import/stream controls. Fresh broader/native,
 exact workspace, independent review and final-head CI still gate promotion.
+
+
+### Scalar and class-root focused validation (2026-11-24)
+
+Atf789ea80 all3 class-data commands return actual0, source/HEAD unchanged. The
+exact new case passes in162.06s including compilation across Runtime/Macro, retained
+GC and actual reentrant Macro. Complete public29/capability2 passes in61.14s, and
+original import17/stream12 passes in43.89s:60 complete-target tests, with the exact
+check repeating one of them. The scalar identity correction remains covered in
+the full public target. Deterministic compressed receipts preserve each scope.
+
+Run `eval-broader-after-scalar-and-class-root-corrections
+--broader-current-baseline-only`, freezing source and HEAD. It must finish all
+seven commands, including fresh actual native0 and strict review against unchanged
+baseline/primary/skip/count/opaque rules. Then rerun the exact two-thread workspace
+command. Publish this validated correction checkpoint to existing draft516; keep
+Refs515/338/339 until local issue acceptance, independent promotion review and
+passing final-head CI satisfy the named issue's gates. Numeric source-form scope
+remains unchanged; no promotion, closure, milestone completion or merge is claimed.
