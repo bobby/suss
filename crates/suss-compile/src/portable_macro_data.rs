@@ -1,7 +1,7 @@
 //! Bounded native transport between reader forms and real compiled macro values.
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable::Diagnostic;
-use crate::portable_session::{RuntimeNumber, Session, SessionError, SessionValue, runtime_number};
+use crate::portable_session::{RuntimeNumber, Session, SessionHost, SessionError, SessionValue, runtime_number};
 use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
@@ -9,7 +9,7 @@ use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 mod borrowed_reader;
 
 pub(crate) fn normalized_reader_metadata(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     form: &Form,
 ) -> Result<Vec<Form>, SessionError> {
     crate::portable::hir::reader_metadata_pairs_metered(form, &mut |work| {
@@ -150,7 +150,7 @@ impl DisplayCalls {
         })
     }
 }
-fn display_calls(session: &mut Session) -> Result<DisplayCalls, SessionError> {
+fn display_calls(session: &mut SessionHost<'_>) -> Result<DisplayCalls, SessionError> {
     let (future_is, future_status, stream_kind) = session.display_runtime_exports()?;
     Ok(DisplayCalls {
         future_is,
@@ -159,7 +159,7 @@ fn display_calls(session: &mut Session) -> Result<DisplayCalls, SessionError> {
     })
 }
 pub(crate) fn display_leaf(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     value: &SessionValue,
 ) -> Result<Option<DisplayLeaf>, SessionError> {
     let calls = display_calls(session)?;
@@ -234,7 +234,7 @@ pub struct FormBridge {
 impl FormBridge {
     fn construct(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         class: Class,
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
@@ -246,28 +246,28 @@ impl FormBridge {
     }
     fn array(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.data_array(values)
     }
     fn object_array(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.data_object_array(values)
     }
     fn seed(
         &self,
-        _session: &mut Session,
+        _session: &mut SessionHost<'_>,
         name: &'static str,
     ) -> Result<SessionValue, SessionError> {
         Ok(self.core.factories[name].clone())
     }
     pub(crate) fn with_form_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         shape: MetadataShape,
         value: &SessionValue,
         metadata: &SessionValue,
@@ -290,7 +290,7 @@ impl FormBridge {
             &fields.iter().collect::<Vec<_>>(),
         )
     }
-    pub fn new(session: &mut Session) -> Result<Self, SessionError> {
+    pub fn new(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
@@ -341,7 +341,7 @@ impl FormBridge {
             core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
         })
     }
-    fn check(&self, session: &mut Session) -> Result<(), SessionError> {
+    fn check(&self, session: &mut SessionHost<'_>) -> Result<(), SessionError> {
         for root in &self.core.roots {
             session.inspect(root, |_, _| Ok(()))?;
         }
@@ -351,7 +351,7 @@ impl FormBridge {
     /// Inputs and factories are rooted in this Store; no source is interpreted.
     pub fn scalar(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         literal: &crate::portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -359,7 +359,7 @@ impl FormBridge {
     }
     pub fn map_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -367,7 +367,7 @@ impl FormBridge {
     }
     fn map_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         if entries.is_empty() {
@@ -477,7 +477,7 @@ impl FormBridge {
     // globals. Other user values retain the captured observable key-test path.
     fn identifier_key(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
     ) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
         let interrupt = session.host_work_interrupt();
@@ -534,7 +534,7 @@ impl FormBridge {
     }
     fn map_node(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         pairs: &[(u32, SessionValue, SessionValue)],
         shift: u32,
         nil: &SessionValue,
@@ -591,7 +591,7 @@ impl FormBridge {
 
     pub fn set_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -599,7 +599,7 @@ impl FormBridge {
     }
     fn set_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -611,7 +611,7 @@ impl FormBridge {
     }
     fn set_with_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         metadata: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
@@ -630,7 +630,7 @@ impl FormBridge {
     /// The queue `#queue [items...]` reads as, with `metadata` unless nil.
     pub fn queue_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
@@ -649,7 +649,7 @@ impl FormBridge {
     }
     pub fn vector_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -657,7 +657,7 @@ impl FormBridge {
     }
     fn vector_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -683,7 +683,7 @@ impl FormBridge {
     }
     fn vector_node(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         shift: u32,
         nil: &SessionValue,
@@ -708,7 +708,7 @@ impl FormBridge {
 
     pub fn list_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -716,7 +716,7 @@ impl FormBridge {
     }
     fn list_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -736,7 +736,7 @@ impl FormBridge {
     }
     pub fn identifier(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         namespace: Option<&str>,
         name: &str,
         keyword: bool,
@@ -784,18 +784,18 @@ impl FormBridge {
             )
         }
     }
-    pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
+    pub fn quote(&self, session: &mut SessionHost<'_>, form: Form) -> Result<SessionValue, SessionError> {
         self.quote_ref(session, &form)
     }
     pub(crate) fn quote_ref(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         form: &Form,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
         session.with_operation_budget(|session| self.form_value(session, &form))
     }
-    fn form_value(&self, session: &mut Session, form: &Form) -> Result<SessionValue, SessionError> {
+    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
         enum Task<'a> {
             Visit(&'a Form),
@@ -1007,7 +1007,7 @@ impl FormBridge {
     /// expansion data to the supplied macro call site; never invent source bytes.
     pub fn read(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
         span: Range<usize>,
     ) -> Result<Form, SessionError> {
@@ -1015,7 +1015,7 @@ impl FormBridge {
     }
     fn read_with_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
         span: Range<usize>,
         include_metadata: bool,

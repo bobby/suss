@@ -5,7 +5,7 @@ use wasmtime::{Caller, HeapType};
 const NAMESPACE: &str = "suss.harness.observation";
 const NAME: &str = "capture";
 
-impl Session {
+impl SessionHost<'_> {
     /// Install the fixed Runtime-only harness observer. The callback runs inline
     /// with the guest call and receives the single ABI2 argument as a rooted Val.
     /// It has no Session reference and must not re-enter the Store.

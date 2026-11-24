@@ -135,7 +135,7 @@ fn host_value(
     })
 }
 
-impl Session {
+impl SessionHost<'_> {
     /// Install an explicit Runtime-only native-profile function with fixed arity.
     /// Filesystem source must be absent; errors and ambiguity never select native
     /// fallback. The returned controller survives reset with fresh Store roots.
@@ -179,8 +179,7 @@ impl Session {
                 wasmtime::Error::msg("Native profile cannot replace filesystem source").into(),
             );
         }
-        let own_namespace = self
-            .native_factories
+        let own_namespace = registry_lock(&self.native_factories)
             .iter()
             .any(|p| p.symbol.namespace.as_deref() == Some(namespace));
         if !own_namespace
@@ -191,8 +190,7 @@ impl Session {
             )
             .into());
         }
-        if self
-            .native_factories
+        if registry_lock(&self.native_factories)
             .iter()
             .any(|p| p.symbol == profile.symbol)
         {
@@ -206,7 +204,7 @@ impl Session {
                 wasmtime::Error::msg("Native factory target already has a source binding").into(),
             );
         }
-        self.native_factories
+        registry_lock(&self.native_factories)
             .try_reserve(1)
             .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
         self.budget()?;
@@ -366,7 +364,7 @@ impl Session {
             code.environment = environment;
             code.provided.insert(provided);
         }
-        self.native_factories.push(profile);
+        registry_lock(&self.native_factories).push(profile);
         Ok(())
     }
     /// Cancel producerless host requests only once source tasks and their
@@ -463,14 +461,14 @@ impl Session {
         )
     }
     pub(super) fn sweep_native_requests(&self) {
-        for profile in &self.native_factories {
+        for profile in registry_lock(&self.native_factories).clone() {
             registry_lock(&profile.queue.0)
                 .requests
                 .retain(|request| !request.is_cancelled());
         }
     }
     pub(super) fn discard_native_requests(&self) {
-        for profile in &self.native_factories {
+        for profile in registry_lock(&self.native_factories).clone() {
             profile.queue.discard(self.identity);
         }
     }
@@ -478,8 +476,9 @@ impl Session {
 
 // Cancel native producers and release registry/queued roots before Store field
 // destruction. This performs no Wasm or source cleanup: reset uses retirement.
-impl Drop for Session {
+impl Drop for SessionHost<'_> {
     fn drop(&mut self) {
+        if self.store.is_borrowed() { return; }
         let requests = registry_lock(&self.pending_host_futures).clone();
         for request in requests {
             if let Some(hook) = request.take_cancel() {
@@ -518,7 +517,7 @@ mod tests {
                             !registry_lock(&session.compiler).environment
                                 .has_namespace(Phase::Runtime, "native.factory")
                         );
-                        assert!(session.native_factories.is_empty());
+                        assert!(registry_lock(&session.native_factories).is_empty());
                         assert!(!registry_lock(&session.compiler).provided.contains(
                             &ModuleIdentity::new(Phase::Runtime, "native.factory").unwrap()
                         ));
@@ -586,14 +585,14 @@ pub(super) fn recovered_owner(
     }
     Ok(owner)
 }
-impl Session {
+impl SessionHost<'_> {
     /// Evidence that the last turn failed an exact owner, retired its scheduler
     /// work and restored the caller without a pending exception. Cleared on entry.
     pub fn last_async_turn_recovered(&self) -> bool {
-        self.last_async_recovered_owner.is_some()
+        registry_lock(&self.last_async_recovered_owner).is_some()
     }
     pub fn last_async_turn_recovered_owner(&self) -> Option<SessionValue> {
-        self.last_async_recovered_owner.as_ref().map(|owner| {
+        registry_lock(&self.last_async_recovered_owner).as_ref().map(|owner| {
             self.handles.fetch_add(1, Ordering::Relaxed);
             SessionValue {
                 identity: self.identity,

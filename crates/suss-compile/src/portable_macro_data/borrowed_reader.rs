@@ -14,7 +14,7 @@ pub(crate) struct BorrowedFormReader {
 impl FormBridge {
     pub(crate) fn borrowed_reader(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
     ) -> Result<BorrowedFormReader, SessionError> {
         self.check(session)?;
         let interrupt = session.host_work_interrupt();

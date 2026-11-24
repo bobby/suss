@@ -68,7 +68,7 @@ fn count(value: Val) -> Result<usize, SessionError> {
         .map_err(|_| wasmtime::Error::msg("Negative runtime async count").into())
 }
 
-impl Session {
+impl SessionHost<'_> {
     /// Display-only nominal leaf probes, called inside the decoder's existing
     /// rooted inspection scope. No payload roots or source callbacks are made.
     pub(crate) fn display_runtime_exports(&mut self) -> Result<(Func, Func, Func), SessionError> {

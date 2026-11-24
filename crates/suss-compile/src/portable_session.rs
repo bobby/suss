@@ -31,6 +31,9 @@ mod observation;
 mod installation;
 mod compiler_state;
 use compiler_state::{CompilerState, SharedCompiler};
+mod store_access;
+mod reentry;
+pub(crate) use reentry::ReentryProfile;
 #[cfg(test)]
 mod random_tests;
 
@@ -211,7 +214,9 @@ pub struct SessionStats {
     pub numeric_memory_capacity: usize,
 }
 
-pub struct Session {
+/// An owned persistent host. Borrowed native views use the same implementation.
+pub type Session = SessionHost<'static>;
+pub struct SessionHost<'store> {
     engine: Engine,
     phase: Phase,
     options: SessionOptions,
@@ -219,15 +224,15 @@ pub struct Session {
     handles: Arc<AtomicUsize>,
     interrupt: Arc<AtomicBool>,
     operation_budget_depth: Arc<AtomicUsize>,
-    store: Store<()>,
+    store: store_access::StoreAccess<'store>,
     runtime: Instance,
     numeric_memory: Memory,
     compiler: SharedCompiler,
     base_runtime_artifact_bytes: usize,
     bootstrap_core: bool,
     pending_host_futures: SharedPendingRegistry,
-    native_factories: Vec<native_async::FactoryProfile>,
-    last_async_recovered_owner: Option<OwnedRooted<AnyRef>>,
+    native_factories: Arc<Mutex<Vec<native_async::FactoryProfile>>>,
+    last_async_recovered_owner: Arc<Mutex<Option<OwnedRooted<AnyRef>>>>,
 }
 // Own the depth rather than borrowing Session, so the closure can use &mut Session
 // and unwinding still retires the scope without unsafe pointers or panic catching.
@@ -574,11 +579,11 @@ fn execution_error<C: AsContextMut<Data = ()>>(
     }
 }
 
-impl Session {
+impl SessionHost<'_> {
     pub(crate) fn execute_expression_artifact<T>(
         &mut self,
         artifact: crate::portable_expression::ExpressionArtifact,
-        core_ready: impl FnOnce(&mut Session) -> Result<T, SessionError>,
+        core_ready: impl FnOnce(&mut Self) -> Result<T, SessionError>,
     ) -> Result<(Option<SessionValue>, T), SessionError> {
         if self.phase != Phase::Runtime || !registry_lock(&self.compiler).resident.is_empty() {
             return Err(SessionError::Host(wasmtime::Error::msg(
@@ -757,7 +762,7 @@ impl Session {
             handles: Arc::new(AtomicUsize::new(0)),
             interrupt,
             operation_budget_depth: Arc::new(AtomicUsize::new(0)),
-            store,
+            store: store_access::StoreAccess::Owned(store),
             runtime,
             numeric_memory,
             compiler: Arc::new(Mutex::new(CompilerState {
@@ -771,8 +776,8 @@ impl Session {
             base_runtime_artifact_bytes: runtime_bytes.len() + bindings.wasm.len(),
             bootstrap_core: false,
             pending_host_futures: Arc::new(Mutex::new(Vec::new())),
-            native_factories: Vec::new(),
-            last_async_recovered_owner: None,
+            native_factories: Arc::new(Mutex::new(Vec::new())),
+            last_async_recovered_owner: Arc::new(Mutex::new(None)),
         })
     }
     pub fn phase(&self) -> Phase {
@@ -820,20 +825,7 @@ impl Session {
             .enter_namespace(self.phase, namespace)
             .map_err(SessionError::Compile)
     }
-    pub fn stats(&self) -> SessionStats {
-        let code = registry_lock(&self.compiler);
-        SessionStats {
-            resident_fragments: code.resident.len(),
-            base_runtime_artifact_bytes: self.base_runtime_artifact_bytes,
-            resident_artifact_bytes: code.artifact_bytes,
-            binding_cells: code.cells.len(),
-            loaded_modules: code.provided.len() - 1,
-            external_value_handles: self.handles.load(Ordering::Relaxed),
-            pending_host_requests: registry_lock(&self.pending_host_futures).len(),
-            gc_heap_capacity: self.store.gc_heap_capacity(),
-            numeric_memory_capacity: self.numeric_memory.data_size(&self.store),
-        }
-    }
+
     /// A thread-safe handle that interrupts this session's running operation.
     pub fn interrupt_handle(&self) -> InterruptHandle {
         InterruptHandle {
@@ -845,7 +837,7 @@ impl Session {
     /// A runtime trap is returned after finite scheduler recovery; source effects
     /// are never replayed by recovery and the original trap remains observable.
     pub fn run_async_turn(&mut self) -> Result<bool, SessionError> {
-        self.last_async_recovered_owner = None;
+        *registry_lock(&self.last_async_recovered_owner) = None;
         self.budget()?;
         #[cfg(all(test, not(suss_generator)))]
         let recovery_interrupt = self.interrupt_handle();
@@ -913,7 +905,7 @@ impl Session {
         };
         let restoration = restore_dynamic(&mut scope, runtime, &checkpoint);
         if restoration.is_ok() && !scope.as_context_mut().has_pending_exception() {
-            self.last_async_recovered_owner = recovered_owner;
+            *registry_lock(&self.last_async_recovered_owner) = recovered_owner;
         }
         let outcome = match outcome {
             Err(original) => Err(original),
@@ -922,7 +914,7 @@ impl Session {
         drop(scope);
         let retirement = self.retire_host_futures();
         if retirement.is_err() {
-            self.last_async_recovered_owner = None;
+            *registry_lock(&self.last_async_recovered_owner) = None;
         }
         match outcome {
             Err(original) => Err(original),
@@ -1068,6 +1060,9 @@ impl Session {
     /// Create the replacement before discarding the old Store. No replay or retained
     /// fragment state crosses reset, and old/foreign handles are checked before use.
     pub fn reset(&mut self) -> Result<(), SessionError> {
+        if self.store.is_borrowed() {
+            return Err(wasmtime::Error::msg("A borrowed phase cannot reset its owner").into());
+        }
         let replacement = self.replacement()?;
         self.retire_for_reset()?;
         self.discard_native_requests();
@@ -1166,13 +1161,17 @@ impl Session {
         Err(SessionError::ResetPending)
     }
     pub(crate) fn replacement(&self) -> Result<Self, SessionError> {
+        if self.store.is_borrowed() {
+            return Err(wasmtime::Error::msg("A borrowed phase cannot replace its owner").into());
+        }
         let mut replacement =
             Self::with_engine_interrupt(self.engine.clone(), self.options.clone(), self.phase, self.interrupt.clone())?;
         if self.bootstrap_core {
             replacement.provision_core()?;
         }
-        for profile in &self.native_factories {
-            replacement.install_native_profile(profile.clone())?;
+        let profiles = registry_lock(&self.native_factories).clone();
+        for profile in profiles {
+            replacement.install_native_profile(profile)?;
         }
         Ok(replacement)
     }
@@ -1270,6 +1269,9 @@ impl Session {
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {
+        if self.store.is_borrowed() {
+            return Self::consume_host_work(self.store.as_context_mut(), 0, &self.interrupt);
+        }
         if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
             return Ok(());
         }
@@ -2086,6 +2088,23 @@ impl Session {
             self.identity,
             &self.handles,
         )
+    }
+}
+
+impl SessionHost<'static> {
+    pub fn stats(&self) -> SessionStats {
+        let code = registry_lock(&self.compiler);
+        SessionStats {
+            resident_fragments: code.resident.len(),
+            base_runtime_artifact_bytes: self.base_runtime_artifact_bytes,
+            resident_artifact_bytes: code.artifact_bytes,
+            binding_cells: code.cells.len(),
+            loaded_modules: code.provided.len() - 1,
+            external_value_handles: self.handles.load(Ordering::Relaxed),
+            pending_host_requests: registry_lock(&self.pending_host_futures).len(),
+            gc_heap_capacity: self.store.owned().expect("Session stats require an owner").gc_heap_capacity(),
+            numeric_memory_capacity: self.numeric_memory.data_size(&self.store),
+        }
     }
 }
 
