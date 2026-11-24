@@ -34095,3 +34095,27 @@ execute; the Ratio is an actual host match and both existing guest judgments
 remain explicit. The prior successful direct-storage126-control run per native
 phase remains source-qualified to be02889d. Full capture/baseline review,
 bootstrap and full workspace validation are still separate requirements.
+
+
+## Full higher-order capture and entropy bootstrap (2026-11-23)
+
+At201a7bcf, `run-integration.py complete-capture-and-bootstrap` returns0
+with recorded inputs unchanged. The original exact suite target returns101
+against the previous baseline after664.706s; its complete5,435-row capture
+and independent audit preserve all prior comparable successes. Counts:
+5,238 host matches,93 guest judgments,105 failures,1,503 unexecuted,zero skips
+and66 failed namespaces. Newly loaded some-fn/constantly/lazy-seq bodies
+contribute16/31/31 rows, retaining their0/2/10 existing guest judgments. The
+constantly Ratio independently matches; remaining numeric subsets are
+BigInt/Ratio227/229 and Decimal199/200, with2+1 rows blocked by eval.
+
+Seven adversarial baseline controls pass. `review-random-baseline.py ...
+--write` removes only the three observed namespace-load failures; all other
+baseline entries, original primary, count/skip rules and guest judgments stay
+unchanged. The original native101 and old baseline remain retained. The
+subsequent `scripts/clojure_test_suite.py compare --observations ...` returns0,
+which is host review, not a native rerun. Java/Node-free double bootstrap,
+checkout-independent compiler identity and all four original execution tests
+also return0 (452.479s). Receipts and full logs are under
+`results/m12-random/complete-capture-and-bootstrap` and
+`results/m12-reader-followup/full-suite-after-random-and-assert`.

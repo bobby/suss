@@ -1,0 +1,46 @@
+{
+  "old_sha256": "ffc011e8aee7bb7439955a551c25ed75f83f7799092eba1305f1956de27435d0",
+  "new_sha256": "6fedd3e20fe35172c12e45c7760d6ce6e1859980e15ad3c6e2f25f4646f1992e",
+  "capture_sha256": "926f27f1becc38f75bba59956eefbe53a9d99b0a9a15f0886620a228e7639971",
+  "counts": {
+    "pass": 5238,
+    "guest-judged": 93,
+    "fail": 105,
+    "not-executed": 1503,
+    "skipped": 0,
+    "namespaces-failed": 66
+  },
+  "complete_bodies": {
+    "clojure.core-test.some-fn": {
+      "actual_rows": 16,
+      "host_matches": 16,
+      "guest_ordinals": []
+    },
+    "clojure.core-test.constantly": {
+      "actual_rows": 31,
+      "host_matches": 29,
+      "guest_ordinals": [
+        1,
+        31
+      ]
+    },
+    "clojure.core-test.lazy-seq": {
+      "actual_rows": 31,
+      "host_matches": 21,
+      "guest_ordinals": [
+        1,
+        5,
+        9,
+        12,
+        13,
+        15,
+        17,
+        18,
+        19,
+        20
+      ]
+    }
+  },
+  "original_native_capture_exit_code": 101,
+  "qualification": "Only the three proven namespace-load failures are removed. All previous outcomes, primary/count/skip rules and original guest judgments remain. Host review is not a native rerun or workspace pass."
+}

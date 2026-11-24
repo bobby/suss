@@ -67,3 +67,25 @@ match on the host; all31 constantly assertions execute with its Ratio as a
 strict host match and its two original guest judgments retained. No original
 body, primary, count, skip or budget changed. Complete workspace/capture and
 bootstrap acceptance remain separate.
+
+At201a7bcf, the complete actual capture records5,435 rows and preserves all
+prior comparable successes:5,238 host matches,93 explicit guest judgments,
+105 retained failures,1,503 unexecuted,zero skips and66 failed namespaces.
+The three newly loaded original bodies contribute78 rows:some-fn16 host;
+constantly29 host/two guest;lazy-seq21 host/ten guest. The Ratio row remains a
+strict host match. BigInt/Ratio has227/229 matches and Decimal199/200; the
+remaining2+1 rows are all unresolved eval, not new numeric successes.
+
+The native capture retains its original101 discrepancy against the preceding
+baseline (664.706s). Its independent unchanged-primary/count/skip audit returns0.
+Seven adversarial guard checks pass; review-random-baseline.py removes only
+the three proven namespace-load failures, preserving every other baseline
+entry and explicit guest judgment. The subsequent host comparison returns0;
+this is not a native rerun or a full workspace pass. The old baseline, original
+receipt/log, proposed result and reviewed write are retained separately.
+
+Java/Node-free double bootstrap reproduction, checkout-independent identity
+verification and all four original bootstrap execution tests return0 at the
+same frozen201a7bcf (452.479s, inputs unchanged). The enclosing durable capture/
+audit/bootstrap recorder returns0 with unchanged inputs. Full workspace and
+independent final-head review/CI remain separate requirements.

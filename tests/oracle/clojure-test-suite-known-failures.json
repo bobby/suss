@@ -34,10 +34,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.comment (Some(\"<root>/clojure/core_test/comment.cljc\")): Unresolved Runtime name comment at bytes 237..443"
   },
-  "clojure.core-test.constantly": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unresolved Runtime name some-fn at bytes 240..1477"
-  },
   "clojure.core-test.distinct": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Unresolved Runtime name distinct at bytes 244..1776"
@@ -81,10 +77,6 @@
   "clojure.core-test.intern": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.intern (Some(\"<root>/clojure/core_test/intern.cljc\")): Unresolved Runtime name intern at bytes 230..946"
-  },
-  "clojure.core-test.lazy-seq": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Unresolved Runtime name assert at bytes 244..4118"
   },
   "clojure.core-test.merge": {
    "stage": "namespace",
@@ -189,10 +181,6 @@
   "clojure.core-test.shuffle": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.shuffle (Some(\"<root>/clojure/core_test/shuffle.cljc\")): Unresolved Runtime name shuffle at bytes 239..1519"
-  },
-  "clojure.core-test.some-fn": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.some-fn (Some(\"<root>/clojure/core_test/some_fn.cljc\")): Unresolved Runtime name some-fn at bytes 237..1324"
   },
   "clojure.core-test.sort-by": {
    "stage": "namespace",

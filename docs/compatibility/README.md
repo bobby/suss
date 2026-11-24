@@ -7,6 +7,16 @@ JVM expectations and authored native controls cover messages, effects,
 fresh errors, lexical shadowing and compiler-phase disabling. Native
 execution requires its own receipts; source/provenance is not a pass claim.
 
+Clojure `some-fn`, compiled `assert` and execution-time `rand`/`rand-int`
+now use shipped core with retained Clojure1.12.6/EPL source adaptations.
+Native phases use operating-system entropy; actual AOT uses an explicitly
+selected standard WASI provider. Missing providers fail honestly. Independent
+storage/effect observations cover controlled bounds, conversion errors, GC and
+fresh streams. See [random-provider evidence](../../results/m12-random/README.md).
+The original16 some-fn,31 constantly and31 lazy-seq rows execute; their existing
+zero/two/ten guest judgments stay explicit. All prior comparable observations
+remain valid. Numeric operands still blocked by eval remain unexecuted.
+
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate
 values and key-effect traces. All49 ordered assertions of the unchanged vendored
