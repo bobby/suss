@@ -941,8 +941,24 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
             observations.store(0, Ordering::SeqCst);
             session.set_operation_fuel(200_000);
             let start = std::time::Instant::now();
+            let interrupt = session.interrupt_handle();
+            let (done, waiting) = std::sync::mpsc::channel();
+            let watchdog = std::thread::spawn(move || {
+                if waiting
+                    .recv_timeout(std::time::Duration::from_secs(5))
+                    .is_err()
+                {
+                    interrupt.interrupt();
+                }
+            });
             let error = session.invoke(function, &args).unwrap_err();
-            assert!(error.to_string().to_lowercase().contains("fuel"), "{error}");
+            let _ = done.send(());
+            watchdog.join().unwrap();
+            assert!(
+                matches!(&error, suss_compile::portable_session::SessionError::Trap(error)
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                "the original caller allowance must exhaust before the watchdog: {error}"
+            );
             assert!(start.elapsed() < std::time::Duration::from_secs(5));
             assert!(
                 observations.load(Ordering::SeqCst) > 0,

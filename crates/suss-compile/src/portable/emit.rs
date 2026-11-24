@@ -920,7 +920,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-getter" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
