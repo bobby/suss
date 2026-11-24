@@ -1,0 +1,57 @@
+[
+  {
+    "name": "empty-do",
+    "expression": "(eval '(do))",
+    "expected": "nil"
+  },
+  {
+    "name": "last-value-retains-category",
+    "expression": "(eval '(do 1N 1/2))",
+    "expected": "1/2"
+  },
+  {
+    "name": "prefix-before-compile-error",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(do (swap! user/eval-do-effects conj :prefix) eval-do-missing)) (catch Throwable e :compile))] [result @eval-do-effects])",
+    "expected": "[:compile [:prefix]]"
+  },
+  {
+    "name": "macro-produced-do-boundary",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(eval-do-top-macro)) (catch Throwable e :compile))] [result @eval-do-effects])",
+    "expected": "[:compile [:macro]]"
+  },
+  {
+    "name": "nested-top-level-do-boundary",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(do (swap! user/eval-do-effects conj :outer) (do (swap! user/eval-do-effects conj :inner) eval-do-missing))) (catch Throwable e :compile))] [result @eval-do-effects])",
+    "expected": "[:compile [:outer :inner]]"
+  },
+  {
+    "name": "lexical-body-compiles-before-effects",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(let [x (swap! user/eval-do-effects conj :lexical)] eval-do-missing)) (catch Throwable e :compile))] [result @eval-do-effects])",
+    "expected": "[:compile []]"
+  },
+  {
+    "name": "runtime-throw-stops-later-units",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(do (swap! user/eval-do-effects conj :before) (throw (ex-info \"stop\" {})) (swap! user/eval-do-effects conj :after))) (catch Throwable e :throw))] [result @eval-do-effects])",
+    "expected": "[:throw [:before]]"
+  },
+  {
+    "name": "definition-survives-later-compile-error",
+    "expression": "(let [result (try (eval '(do (def eval-do-created 29) eval-do-missing)) (catch Throwable e :compile))] [result (eval 'user/eval-do-created)])",
+    "expected": "[:compile 29]"
+  },
+  {
+    "name": "throwing-initializer-keeps-old-root-and-prefix",
+    "expression": "(let [_ (reset! eval-do-effects []) result (try (eval '(do (swap! user/eval-do-effects conj :prefix) (def eval-do-root (throw (ex-info \"stop\" {}))) (swap! user/eval-do-effects conj :after))) (catch Throwable e :throw))] [result @eval-do-effects eval-do-root])",
+    "expected": "[:throw [:prefix] 99]"
+  },
+  {
+    "name": "macro-expands-once-through-persistent-authority",
+    "expression": "(let [value (eval '(eval-do-once))] [value (eval '(eval-do-read-counter))])",
+    "expected": "[:two 1]"
+  },
+  {
+    "name": "compiled-macro-reentrant-do-boundary",
+    "expression": "(eval-do-reentrant)",
+    "expected": "[:compile [:inside]]"
+  }
+]

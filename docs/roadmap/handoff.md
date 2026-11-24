@@ -34375,3 +34375,18 @@ and evidence input; untracked result outputs alone stay excluded.
 Reconciling parent974ed7e7 changes ancestry only: its tree equals the
 previously reviewed parent8d81cf3c, and the merge index equals6a82a270's
 complete tree before these evidence/doc additions.
+
+
+## Existing host and bootstrap regressions after live Vars (2026-11-24)
+
+At6be4ee43, `run-installation.py after-live-vars-existing-regressions
+--macro-service-only` returns0. All7,702 recorded inputs, including tracked
+fixtures/evidence, and checked-out HEAD remain unchanged. The focused service
+test passes (134.052s including library build), followed by14 macro-library,
+nine inline-module,37 session-library, four observation and four original
+bootstrap execution tests:68 distinct regressions. Command times are7.433,
+36.812,11.081,3.205 and69.960 seconds. Java/Node-free double bootstrap and
+compiler identity reproduction pass. Receipts/logs are retained under
+`results/m12-eval/after-live-vars-existing-regressions`. The separately recorded
+public do-prefix failure remains101; this gate does not relabel it or establish
+full eval/numeric acceptance.

@@ -1,0 +1,7 @@
+[
+  "(defmacro eval-do-top-macro [] '(do (swap! user/eval-do-effects conj :macro) eval-do-missing))",
+  "(defmacro eval-do-init-counter [] (do (def eval-do-expansions (atom 0)) nil))",
+  "(defmacro eval-do-once [] (swap! eval-do-expansions inc) '(do :one :two))",
+  "(defmacro eval-do-read-counter [] @eval-do-expansions)",
+  "(defmacro eval-do-reentrant [] (def eval-do-own-effects (atom [])) (let [result (try (eval '(do (swap! user/eval-do-own-effects conj :inside) eval-do-missing)) (catch Throwable e :compile))] [result @eval-do-own-effects]))"
+]
