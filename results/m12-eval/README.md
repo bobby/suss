@@ -72,3 +72,13 @@ consumed-request/zero-fuel contract; production consume_host_work is unchanged.
 All failures remain archived. Existing session/module/observation/bootstrap
 checks must pass before publishing this interface change as a new checkpoint.
 No public eval or borrowed user-macro authority is claimed.
+
+The broader borrowed-interface gate at e403e68d returns 0 with unchanged
+inputs: 37 session library tests, nine inline module macro tests, four
+isolated observation tests and four original bootstrap execution tests pass.
+The Java/Node-free double bootstrap and compiler identity checks also pass.
+Command times are 21.942, 86.937, 4.945 and 85.704 seconds respectively.
+Full receipts and logs are retained in
+`results/m12-eval/after-borrowed-session-interface`. These 54 regressions
+validate the borrowed interface while public eval, shared macro authority,
+real Vars and complete primary/body acceptance remain required.
