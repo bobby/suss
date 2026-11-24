@@ -34566,3 +34566,13 @@ primary test. That last control retains separate acceptance: namespace aliases
 and other later cases have not yet been established. The focused public regression
 command filters only that new22-row test before executing it separately in full;
 no original fixture, assertion count, skip list or allowance is changed.
+
+The frozen `ci-and-macro-after-getter-import-signature` run at `4d6cb0e3`
+completed with actual101 and unchanged HEAD/inputs. All-target compilation and
+all116 portable host tests passed; all15 chunk and all15 UUID controls passed,
+including ordinary source-core loading in both phases. The catch collision test
+then failed on one remaining hardcoded name in its original initializer-local
+assertion. It now checks the same observed collision candidate as the rest of
+the test, preserving source-scope and hidden-payload guards. Continue with
+`macro-ci-remaining-after-catch-candidate --macro-ci-remaining-only` through the
+external launcher; the earlier passing targets are retained in their own receipt.

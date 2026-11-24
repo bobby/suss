@@ -122,7 +122,7 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         assert_eq!(outside[&candidate].id, caught[&candidate].id);
         let original = caught["x"].initializer.as_ref().unwrap().source.as_ref().unwrap();
         assert_eq!(original.context, portable::AnalysisContext::Expression);
-        assert!(original.locals.contains_key("$exception2"));
+        assert!(original.locals.contains_key(&candidate));
         assert!(!original.locals.contains_key("x"));
         assert!(!original.locals.contains_key(&name.name));
         let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };
