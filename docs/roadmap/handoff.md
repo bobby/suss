@@ -34661,3 +34661,24 @@ Explicit new macro declarations supersede the transient observation. This retain
 actual compile-time macro availability while ordinary same-root replacement and
 nested successful effects are checked anew against live metadata at the next
 native unit. Repeat `macro-failure-with-transient-status` using the same gate.
+
+The frozen `macro-failure-with-transient-status` run at `eb917160` passes all
+five commands, with unchanged HEAD/inputs:3 failure-boundary rows in both phases,
+all24 public tests including actual Macro RPC fuel/cancellation guards, all9
+remaining CI targets, runtime/Var/namespace guards and all34 unchanged eval rows
+(29host+original5guest, numeric5–7 strict host). The earlier116 host and30
+chunk/UUID controls retain separate source-qualified receipts.
+
+Two further fresh primary lexical controls expose a root-preparation boundary:
+Runtime CLI probes return an arity error and [7 7], versus primary42 and [42 7].
+Dependency compilation correctly cleared transient live macro status, but the
+caller's root fragment did not restore it. It now inherits that immutable
+one-analysis map after dependency preparation, like the existing native frame
+policy, and publication still clears both. The failure fixture preserves its
+first3 rows and adds these2 independently recorded controls. A legacy source
+snapshot test now reads each initialized root immediately after def, retaining
+its original snapshot/catalog assertions rather than decoding a live Var as
+an initializer vector. Run `lexical-macro-publication-checkpoint
+--lexical-macro-review-only` through the external durable launcher. No full
+capture, workspace or independent promotion acceptance is inferred from this
+focused checkpoint.

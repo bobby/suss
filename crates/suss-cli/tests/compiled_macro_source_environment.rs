@@ -145,8 +145,8 @@ fn compiled_source_macro_environment_keeps_snapshot_documents_separate_from_stag
         session.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.enter_namespace("suss-oracle.source-environment-runner").unwrap();
         macros.define(definition).unwrap();
-        let first = session.eval_with_macros("(def tracked \"first\" (snapshot-facts))", &mut macros).unwrap();
-        let second = session.eval_with_macros("(def tracked \"second\" (snapshot-facts))", &mut macros).unwrap();
+        let first = session.eval_with_macros("(def tracked \"first\" (snapshot-facts)) tracked", &mut macros).unwrap();
+        let second = session.eval_with_macros("(def tracked \"second\" (snapshot-facts)) tracked", &mut macros).unwrap();
         let after = session.eval_with_macros("(snapshot-facts)", &mut macros).unwrap();
         for (index, value) in [&first, &second, &after].into_iter().enumerate() {
             let Kind::Vector(items) = read(&mut session, value).into_parts().2 else { panic!("snapshot facts") };

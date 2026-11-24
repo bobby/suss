@@ -8,14 +8,14 @@
     "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/macro-failure-primary/oracle.clj"
   ],
   "exit_code": 0,
-  "seconds": 0.5813486576080322,
+  "seconds": 0.7067878246307373,
   "jars": {
     "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
     "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
     "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
   },
-  "controls": 3,
-  "source_sha256": "0c3c89dca74e2450892a1f05491601c71ff23ef17903d1444652d0efcbc26f9e",
-  "stdout_sha256": "ac10417badda7abffa1d6e3e2e7411cc8b995cb75e72ce72e045bf3da68f17ee",
+  "controls": 5,
+  "source_sha256": "31780d6a116be7ca9ed1ef3257be6c8e6ea1f79426f3ec4db2fe491c7d4b2263",
+  "stdout_sha256": "5ddded1ba0d08aec06dad034ce1be426798f7aca5381471bc10657211c309781",
   "qualification": "Pinned primary only; native failure boundary regressions have separate receipts. Prior research CLI probes are retained outside the repository."
 }

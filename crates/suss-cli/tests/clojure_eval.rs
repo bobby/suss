@@ -1092,7 +1092,7 @@ fn failed_macro_replacement_preserves_live_metadata_and_successful_nested_effect
     let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-eval/macro-failure-primary/cases.json"
     )).unwrap();
-    assert_eq!(rows.len(), 3);
+    assert_eq!(rows.len(), 5);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();

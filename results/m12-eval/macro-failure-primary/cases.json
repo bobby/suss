@@ -13,5 +13,15 @@
     "name": "nested-success-before-outer-failure",
     "expression": "(do (eval '(defmacro nested-replacement [] 42)) (try (eval '(def nested-replacement (do (eval '(def nested-replacement (fn [] 7))) (throw (Exception. \"outer\"))))) (catch Throwable _ nil)) [(:macro (meta (eval '(var nested-replacement)))) (eval '(nested-replacement))])",
     "expected": "[nil 7]"
+  },
+  {
+    "name": "failed-root-in-lexical-body",
+    "expression": "(do (eval '(defmacro failed-lexical [] 42)) (try (eval '(def failed-lexical (throw (Exception. \"init\")))) (catch Throwable _ nil)) (eval '(let [local 1] (failed-lexical))))",
+    "expected": "42"
+  },
+  {
+    "name": "staged-ordinary-def-does-not-rewrite-compile-time-macro",
+    "expression": "(do (eval '(defmacro staged-lexical [] 42)) [(eval '(let [] (def staged-lexical (fn [] 7)) (staged-lexical))) (eval '(staged-lexical))])",
+    "expected": "[42 7]"
   }
 ]

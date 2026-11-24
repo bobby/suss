@@ -1426,6 +1426,9 @@ impl Environment {
             self.record_definition(global, info);
         }
     }
+    pub(crate) fn inherit_native_macro_status(&mut self, caller: &Self) {
+        self.native_macro_status = caller.native_macro_status.clone();
+    }
     pub(crate) fn clear_native_macro_status(&mut self) {
         self.native_macro_status.clear();
     }
