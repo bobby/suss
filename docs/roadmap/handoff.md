@@ -35220,3 +35220,32 @@ Do not manufacture passing NaN special cases: source overloads, raw locals, actu
 boxed values, literal sites, collection construction and returned constants must
 follow independently observed Clojure behavior. Preserve the isolated frozen eval
 workspace run independently; do not cancel it for unrelated old numeric gaps.
+
+
+### Exact literal sites survive calls, GC and inlining (2026-11-24)
+
+Actual primary controls expose fresh BigInt/Ratio/Decimal literal objects on each
+compiled call. The regression returns101 in both phases and independently fails
+retained reference identity. Lazy module-owned exact-number cache globals retain
+one immutable object per original site, publish only after construction and add
+no session binding history, numeric fields or kernel changes. A compiler-local
+IR site token survives inlining/continuation clones; source-free synthetic
+instructions keep fresh construction. Only deterministic indices are emitted.
+
+The intermediate per-emitted-instruction cache returns101: retained cross-fragment
+roots work, but inlining duplicates the original site's cache. Exact failure inputs
+and successful prefix are preserved. After keeping original site identities, the
+expanded frozen command returns0 for33 tests in537.85s. It covers8 primary exact
+literal cases in Runtime/Macro and actual AOT, independent retained references
+across calls/fragments/GC, all18 analyzer tests and existing BigInteger/BigInt/
+Ratio/Decimal targets. See results/m12-numeric-literal-identity for commands and
+before/after receipts. Primitive boxing/NaN semantics, IR/API/resource/continuation
+and artifact guards, broader/workspace/review/CI retain separate evidence.
+
+The strict original142-row eq/not-eq gate still has3 actual boxed-NaN failures.
+Fresh development-only JVM fixture bytecode confirms Object/Object, Double/Double
+and mixed Object/Double equality overloads differ, as do primitive boxing and
+object constant pools. Generic list literals reuse a boxed constant, while
+primitive vector elements box separately. Do not patch NaN outcomes directly;
+implement source-selected primitive/Object equality and literal object context,
+keeping source hints separate from physical storage and WIT specialization.

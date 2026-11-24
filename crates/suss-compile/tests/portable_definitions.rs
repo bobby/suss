@@ -459,11 +459,13 @@ fn verifier_rejects_malformed_global_writes_and_bound_checks() {
             parameters: vec![],
             instructions: vec![
                 Instruction {
+                    literal_site: None,
                     result: ValueId(0),
                     operation: Operation::Literal(Literal::Number(7.0)),
                     span: 0..1,
                 },
                 Instruction {
+                    literal_site: None,
                     result: ValueId(1),
                     operation,
                     span: 0..1,

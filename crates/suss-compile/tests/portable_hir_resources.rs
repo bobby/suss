@@ -49,7 +49,7 @@ fn nested_ir(depth: usize) -> suss_compile::portable::ir::Function {
         values: vec![Value { ty: Type::Nil, span: 12..15 }],
         blocks: vec![Block {
             parameters: vec![],
-            instructions: vec![Instruction { result: ValueId(0), operation: Operation::Literal(Literal::Nil), span: 12..15 }],
+            instructions: vec![Instruction { literal_site: None, result: ValueId(0), operation: Operation::Literal(Literal::Nil), span: 12..15 }],
             terminator: Terminator::Return(ValueId(0)),
         }],
         span: 12..15,
@@ -60,6 +60,7 @@ fn nested_ir(depth: usize) -> suss_compile::portable::ir::Function {
             blocks: vec![Block {
                 parameters: vec![],
                 instructions: vec![Instruction {
+                    literal_site: None,
                     result: ValueId(0),
                     operation: Operation::MakeClosure {
                         body: Box::new(ClosureBody {
@@ -159,6 +160,7 @@ fn verifier_dominance_crosses_word_boundaries_and_rejects_bypassed_definitions()
         blocks.push(Block {
             parameters: vec![],
             instructions: if index < 2 { vec![Instruction {
+                literal_site: None,
                 result: ValueId(index), operation: Operation::Literal(Literal::Nil), span: 0..1,
             }] } else { vec![] },
             terminator: if index == 129 { Terminator::Return(ValueId(1)) }

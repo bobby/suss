@@ -1158,6 +1158,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // String literals and closure display names (#442): one global per
     // distinct value, after the keyword caches.
     let mut literal_list = std::collections::BTreeSet::new();
+    // Exact numbers are immutable objects. One cache per emitted literal site
+    // retains its identity across function calls; equal text at other sites
+    // remains distinct. Indices follow traversal order, never process addresses.
+    let mut exact_literal_sites = std::collections::HashMap::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
@@ -1165,6 +1169,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             match &inst.operation {
                 Operation::Literal(Literal::String(units)) => {
                     literal_list.insert(units.clone());
+                }
+                Operation::Literal(Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) => {
+                    if let Some(site) = &inst.literal_site {
+                        let next = exact_literal_sites.len();
+                        exact_literal_sites.entry(std::sync::Arc::as_ptr(site) as usize).or_insert(next);
+                    }
                 }
                 Operation::Nominal { operation: Nominal::CheckNumericCallee, .. } => {
                     literal_list.insert("Not callable".encode_utf16().collect());
@@ -1179,7 +1189,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let literals = literal_list.iter().enumerate()
         .map(|(index, units)| (units.clone(), first_literal + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
-    let first_construct_site = first_literal + literal_list.len() as u32;
+    let first_exact_literal = first_literal + literal_list.len() as u32;
+    let exact_literals = exact_literal_sites.iter()
+        .map(|(site, index)| (*site, first_exact_literal + *index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
+    let first_construct_site = first_exact_literal + exact_literal_sites.len() as u32;
     let construct_sites = construct_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_construct_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -1222,7 +1236,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global, not_callable_global };
+        literals: &literals, exact_literals: &exact_literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global, not_callable_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1363,6 +1377,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         let (ty, init) = literal_global(units);
         code_globals.global(ty, &init);
     }
+    // A lazy cache roots the exact object in its owning module instance. Failed
+    // construction leaves null; no external binding cells or history are added.
+    for _ in 0..exact_literal_sites.len() {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        );
+    }
     for _ in 0..3 * construct_site_list.len() {
         code_globals.global(
             GlobalType { val_type: VALUE, mutable: true, shared: false },
@@ -1442,7 +1464,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() || rest_site_used {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !exact_literal_sites.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() || rest_site_used {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1575,6 +1597,9 @@ struct Context<'a> {
     keyword_caches: &'a std::collections::HashMap<usize, u32>,
     /// String literals, by their units: their global (#442).
     literals: &'a std::collections::HashMap<Vec<u16>, u32>,
+    /// Exact-number caches by shared original IR site, retained through inlining.
+    /// Keys are emission-local; only deterministic indices enter the artifact.
+    exact_literals: &'a std::collections::HashMap<usize, u32>,
     /// Cached closure call sites: their first global (#378).
     call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached `instance?` sites: their first global (#378).
@@ -2600,33 +2625,47 @@ fn emit_function(
                     };
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
-                Operation::Literal(Literal::BigInt { negative, limbs, big_integer }) => {
-                    function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
-                    for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
-                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
-                        array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "BigInt literal exceeds Wasm array length".into() })? });
-                    function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
-                    if *big_integer { function.instruction(&Call(index("integer-biginteger"))); }
-                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
-                }
-                Operation::Literal(Literal::Ratio { negative, numerator, denominator }) => {
-                    for (negative, limbs) in [(*negative, numerator), (false, denominator)] {
-                        function.instruction(&I32Const(if negative {-1} else {1}));
-                        for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
-                        function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
-                            array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Ratio literal exceeds Wasm array length".into() })? });
-                        function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                Operation::Literal(literal @ (Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. })) => {
+                    let cache = inst.literal_site.as_ref().and_then(|site|
+                        context.exact_literals.get(&(std::sync::Arc::as_ptr(site) as usize))).copied();
+                    if let Some(cache) = cache {
+                        function.instruction(&GlobalGet(cache)).instruction(&RefIsNull).instruction(&If(BlockType::Empty));
                     }
-                    function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
-                }
-                Operation::Literal(Literal::Decimal { negative, unscaled, scale }) => {
-                    function.instruction(&I32Const(if unscaled.is_empty() { 0 } else if *negative { -1 } else { 1 }));
-                    for limb in unscaled { function.instruction(&I32Const(*limb as i32)); }
-                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
-                        array_size: u32::try_from(unscaled.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Decimal literal exceeds Wasm array length".into() })? });
-                    function.instruction(&I32Const(unscaled.len() as i32)).instruction(&Call(index("bigint-new")));
-                    function.instruction(&I32Const(*scale)).instruction(&Call(index("decimal-literal")));
-                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    match literal {
+                        Literal::BigInt { negative, limbs, big_integer } => {
+                            function.instruction(&I32Const(if limbs.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                            for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                            function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                                array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "BigInt literal exceeds Wasm array length".into() })? });
+                            function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                            if *big_integer { function.instruction(&Call(index("integer-biginteger"))); }
+                            function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
+                        Literal::Ratio { negative, numerator, denominator } => {
+                            for (negative, limbs) in [(*negative, numerator), (false, denominator)] {
+                                function.instruction(&I32Const(if negative {-1} else {1}));
+                                for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                                function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                                    array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Ratio literal exceeds Wasm array length".into() })? });
+                                function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                            }
+                            function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
+                        Literal::Decimal { negative, unscaled, scale } => {
+                            function.instruction(&I32Const(if unscaled.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                            for limb in unscaled { function.instruction(&I32Const(*limb as i32)); }
+                            function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                                array_size: u32::try_from(unscaled.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Decimal literal exceeds Wasm array length".into() })? });
+                            function.instruction(&I32Const(unscaled.len() as i32)).instruction(&Call(index("bigint-new")));
+                            function.instruction(&I32Const(*scale)).instruction(&Call(index("decimal-literal")));
+                            function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
+                        _ => unreachable!("exact literal cache"),
+                    }
+                    if let Some(cache) = cache {
+                        function.instruction(&LocalGet(inst.result.0 as u32 + offset)).instruction(&GlobalSet(cache));
+                        function.instruction(&End).instruction(&GlobalGet(cache)).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
                 }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;

@@ -606,6 +606,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
         Type::Number,
     ];
     let literal = |result, value| Instruction {
+        literal_site: None,
         result: ValueId(result),
         operation: Operation::Literal(value),
         span: 0..1,
@@ -649,6 +650,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
             Block {
                 parameters: vec![],
                 instructions: vec![Instruction {
+                    literal_site: None,
                     result: ValueId(7),
                     operation: Operation::Arithmetic {
                         operator: Arithmetic::Subtract,

@@ -95,6 +95,10 @@ pub enum Operation {
 }
 #[derive(Debug, Clone)]
 pub struct Instruction {
+    /// Identity of an immutable source constant's allocation site. IR cloning
+    /// (including closure inlining and continuation splitting) preserves it.
+    /// This is compiler-local lifetime information, never serialized authority.
+    pub literal_site: Option<std::sync::Arc<()>>,
     pub result: ValueId,
     pub operation: Operation,
     pub span: Range<usize>,
@@ -331,6 +335,7 @@ impl<'a> Lowerer<'a> {
         self.function.blocks[self.current]
             .instructions
             .push(Instruction {
+                literal_site: None,
                 result,
                 operation,
                 span,
@@ -452,7 +457,15 @@ impl<'a> Lowerer<'a> {
                 ];
                 self.emit(Operation::Try { regions }, Type::Value, hir.span.clone())?
             }
-            Expression::Literal(value) => self.literal(value.clone(), hir.span.clone())?,
+            Expression::Literal(value) => {
+                let result = self.literal(value.clone(), hir.span.clone())?;
+                if matches!(value, Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) {
+                    self.charge(1, &hir.span)?;
+                    self.function.blocks[self.current].instructions.last_mut()
+                        .expect("just emitted a source literal").literal_site = Some(std::sync::Arc::new(()));
+                }
+                result
+            },
             Expression::GlobalCell(global) => {
                 if hir.ty != Type::Value {
                     return Err(Diagnostic {
