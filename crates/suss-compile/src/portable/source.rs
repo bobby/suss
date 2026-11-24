@@ -44,7 +44,8 @@ pub(crate) fn resolve_auto_keywords(
                 pending.push(operator);
                 pending.push(target);
             }
-            Kind::Nil
+            Kind::NativeConstant { .. }
+            | Kind::Nil
             | Kind::Bool(_)
             | Kind::Number(_)
             | Kind::Long(_)

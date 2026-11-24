@@ -152,6 +152,7 @@ impl Analyzer<'_> {
             return self.attach_data_metadata(form, value, depth, reader_data);
         }
         match &form.kind {
+            Kind::NativeConstant { owner, index } => self.native_constant(form, *owner, *index),
             Kind::Symbol(value) => {
                 self.identifier_literal(form, value.namespace.as_deref(), &value.name, false)
             }

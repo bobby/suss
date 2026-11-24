@@ -179,37 +179,8 @@ impl Evaluation {
             let mut roots = RootScope::new(&mut view.store);
             own(&mut roots, input, view.identity, &view.handles)?
         };
-        // Existing function objects are compiler constants, not syntax. Keep
-        // their actual root/identity; every executable data form still compiles.
-        let predicate = view
-            .runtime
-            .get_func(&mut view.store, "closure-value-test")
-            .ok_or_else(|| wasmtime::Error::msg("Missing closure value classifier"))?;
-        let argument = value.val(&mut view.store.as_context_mut());
-        let mut is_function = [Val::I32(0)];
-        predicate.call(&mut view.store, &[argument], &mut is_function)?;
-        if is_function[0].unwrap_i32() != 0 {
-            return Ok(value);
-        }
-        // Vars are self-evaluating reference objects too. Classify against the
-        // actual canonical class captured during core provision, never a user
-        // predicate or an arbitrary decoder failure.
-        let var_class = registry_lock(&self.var_class)
-            .clone()
-            .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
-        let predicate = view
-            .runtime
-            .get_func(&mut view.store, "object-instance")
-            .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
-        let class = Val::AnyRef(Some(var_class.to_rooted(&mut view.store)));
-        let input = value.val(&mut view.store.as_context_mut());
-        let mut is_var = [Val::I32(0)];
-        predicate.call(&mut view.store, &[class, input], &mut is_var)?;
-        if is_var[0].unwrap_i32() != 0 {
-            return Ok(value);
-        }
         let bridge = self.bridge(&mut view)?;
-        let form = bridge.read(&mut view, &value, 0..0)?;
+        let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
         let namespace = registry_lock(&self.namespace)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
@@ -495,5 +466,44 @@ fn native_error(error: SessionError) -> wasmtime::Error {
     match error {
         SessionError::Trap(error) | SessionError::Host(error) => error,
         error => wasmtime::Error::msg(error.to_string()),
+    }
+}
+
+impl SessionHost<'_> {
+    pub(crate) fn native_owner(&self) -> u64 { self.identity }
+    pub(crate) fn read_native_evaluation(&mut self, bridge: &FormBridge, value: &SessionValue, span: std::ops::Range<usize>) -> Result<suss_reader::forms::Form, SessionError> {
+        let closure_test = self.runtime.get_func(&mut self.store, "closure-value-test")
+            .ok_or_else(|| wasmtime::Error::msg("Missing closure value classifier"))?;
+        let instance_test = self.runtime.get_func(&mut self.store, "object-instance")
+            .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
+        let evaluation = self.evaluation.as_ref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native evaluation authority"))?;
+        let var_class = registry_lock(&evaluation.var_class).clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        bridge.read_evaluation(self, value, span, self.identity, closure_test, instance_test, var_class)
+    }
+    pub(crate) fn retain_native_constant(&mut self, index: u64, value: OwnedRooted<AnyRef>) -> Result<(), SessionError> {
+        self.charge_host_work(1)?;
+        let identity = CellIdentity::native_constant(self.phase, self.identity, index);
+        let global = {
+            let mut roots = RootScope::new(&mut self.store);
+            let value = Val::AnyRef(Some(value.to_rooted(&mut roots)));
+            let mut result = [Val::null_any_ref()];
+            self.runtime.get_func(&mut roots, "binding-new").unwrap()
+                .call(&mut roots, &[value], &mut result)?;
+            let ty = result[0].unwrap_anyref().unwrap().as_struct(&roots)?.unwrap().ty(&roots)?;
+            Global::new(&mut roots, GlobalType::new(ValType::Ref(RefType::new(false, ty.into())), Mutability::Const), result[0])?
+        };
+        // No compiler guard is held across a guest call or instantiation.
+        let mut state = registry_lock(&self.compiler);
+        state.linker.define(&self.store, identity.import_module(), &identity.import_name(), global)?;
+        Arc::make_mut(&mut state.cells).insert(identity, global);
+        Ok(())
+    }
+    pub(crate) fn native_constant_value(&mut self, owner: u64, index: u64) -> Result<SessionValue, SessionError> {
+        if owner != self.identity {
+            return Err(wasmtime::Error::msg("Native constant cannot cross phase Store ownership").into());
+        }
+        self.binding_value(&CellIdentity::native_constant(self.phase, owner, index))
     }
 }

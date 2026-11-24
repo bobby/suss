@@ -34452,3 +34452,31 @@ eval/Var additions; their actual adapted forms and primary fixtures are unchange
 These metadata updates do not reclassify old frozen receipts. The new broader
 gate hashes every tracked input and keeps a separate strict capture review before
 any baseline update.
+
+### 2026-11-24: native eval review corrections
+
+The broader native run at `b7d344dfdbc5b674b6cb0ba7b7736528d0503492`
+ended with actual exit 101. Public eval controls and portable host regressions
+passed; `runtime_namespaces::aot_namespace_frame_size_is_bounded_per_form`
+rejected the additional Var construction code. Its frozen-input receipt and logs
+are retained in `results/m12-eval/complete-eval-broader-acceptance/`; both Binaryen
+executables were checked unchanged after the terminal result. The original size
+limits and all original suite bodies, primary fixtures and budgets remain intact.
+
+The next source checkpoint retains nested function/Var values in private,
+phase-owned cells through analysis, quotation and emission. Ordinary macro/EDN
+transport rejects these opaque constants. Vars capture their real binding cell
+through one shared core getter, and `isMacro` returns a Boolean. Fresh pinned
+Clojure controls are in `results/m12-eval/review-corrections-primary/`; four
+macro-declaration controls there are research, with no native pass claimed.
+The evaluated macro-declaration review finding still requires a publication
+path through the persistent Macro authority without duplicate expansion effects.
+
+Run the focused correction gate using the external durable launcher with
+`constant-var-review-first-native --constant-var-review-only`. It runs the
+capability/owner guards, new nested-constant controls, all public eval controls,
+retained symbol/Var arity guards, the unchanged AOT namespace size test and the
+complete original eval body. Source and HEAD must stay frozen through its
+terminal receipt. Passing this gate alone does not establish issue or PR
+acceptance; broader capture, full baseline and final independent review remain
+required. Do not merge without the user's later explicit instruction.

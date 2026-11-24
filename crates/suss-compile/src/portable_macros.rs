@@ -1122,10 +1122,16 @@ impl ExpansionHost for MacroHost<'_> {
             // Keep complete provenance for explicit arguments and &env. Only
             // the unused implicit parameter can be replaced with nil. Any
             // source expansion while compiling the body disables this proof.
+            let native_owner = context.origin.and_then(|origin| origin.native_owner());
+            let quote = |session: &mut SessionHost<'_>, form: &Form| {
+                if let Some(owner) = native_owner {
+                    self.bridge.quote_evaluation_ref(session, form, owner)
+                } else { self.bridge.quote_ref(session, form) }
+            };
             let caller_form = if catalog(&self.catalog).caller_form_free.contains(&target) {
                 self.bridge.quote(session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
             } else {
-                self.bridge.quote_ref(session, &caller_data)?
+                quote(session, &caller_data)?
             };
             trace_fuel(session, &target, "caller-form")?;
             // A macro that cannot read &env receives nil instead of a
@@ -1161,7 +1167,7 @@ impl ExpansionHost for MacroHost<'_> {
             };
             for (index, argument) in caller_items[1..].iter().enumerate() {
                 stage = format!("explicit argument {} input transport", index + 1);
-                arguments.push(self.bridge.quote_ref(session, argument)?);
+                arguments.push(quote(session, argument)?);
             }
             trace_fuel(session, &target, "arguments")?;
             let arguments = arguments.iter().collect::<Vec<_>>();
@@ -1212,7 +1218,9 @@ impl ExpansionHost for MacroHost<'_> {
             };
             trace_fuel(session, &target, "invoked")?;
             stage = "expanded result transport".into();
-            let expanded = self.bridge.read(session, &result, form.span.clone())?;
+            let expanded = if native_owner == Some(session.native_owner()) {
+                session.read_native_evaluation(&self.bridge, &result, form.span.clone())?
+            } else { self.bridge.read(session, &result, form.span.clone())? };
             trace_fuel(session, &target, "decoded")?;
             Ok(expanded)
         });

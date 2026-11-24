@@ -26,6 +26,10 @@ pub struct Global {
     name: std::sync::Arc<str>,
 }
 impl Global {
+    pub(crate) fn native_constant(phase: Phase, owner: u64, index: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-constants".into(),
+            name: format!("{owner:016x}-{index:016x}").into() }
+    }
     /// The `suss.core` var a core link cell stands for (#360).
     pub(crate) fn core_var_of_link(&self) -> Option<Global> {
         (&*self.namespace == "suss.internal.core-link").then(|| Global {
@@ -1068,6 +1072,14 @@ impl Environment {
             self.source_changed();
         }
         global
+    }
+    pub(crate) fn native_constant(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+        let cell = Global::native_constant(phase, owner, index);
+        if !self.bindings.contains_key(&cell) {
+            self.bind(cell.clone(), Binding::InternalCell(cell.clone()));
+            self.source_changed();
+        }
+        cell
     }
     /// A fresh, unresolvable cell for one constant declaration revision.
     pub(crate) fn constant_cell(&mut self, phase: Phase) -> Global {

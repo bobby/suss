@@ -273,6 +273,7 @@ pub(crate) struct BindingCheckpoint {
 /// Store while preparation reads an immutable namespace/module snapshot.
 pub(crate) struct CompilationSnapshot {
     pub(crate) environment: Environment,
+    pub(crate) native_owner: Option<u64>,
     phase: Phase,
     pub(crate) source_paths: Vec<PathBuf>,
     pub(crate) provided: BTreeSet<ModuleIdentity>,
@@ -286,6 +287,7 @@ impl CompilationSnapshot {
     ) -> Self {
         Self {
             environment,
+            native_owner: None,
             phase,
             source_paths,
             provided,
@@ -1512,6 +1514,7 @@ impl SessionHost<'_> {
         let code = registry_lock(&self.compiler);
         CompilationSnapshot {
             environment: code.environment.clone(),
+            native_owner: Some(self.identity),
             phase: self.phase,
             source_paths: self.options.source_paths.clone(),
             provided: code.provided.clone(),

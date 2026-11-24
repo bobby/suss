@@ -252,6 +252,10 @@ impl ExactNumber {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
+    /// Opaque, phase-owned compiler constant. Never produced by a text reader
+    /// or admitted to portable syntax transport. Native compilation must
+    /// authenticate its owner before referring to the retained binding.
+    NativeConstant { owner: u64, index: u64 },
     Nil,
     Bool(bool),
     /// A double.

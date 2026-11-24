@@ -519,6 +519,7 @@ impl FormBridge {
             }
             let mut budget = Budget {
                 display: None,
+                native: None,
                 source_valid: None,
                 include_metadata: true,
                 interrupt,
@@ -793,9 +794,13 @@ impl FormBridge {
         form: &Form,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        session.with_operation_budget(|session| self.form_value(session, &form))
+        session.with_operation_budget(|session| self.form_value(session, &form, None))
     }
-    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form) -> Result<SessionValue, SessionError> {
+    pub(crate) fn quote_evaluation_ref(&self, session: &mut SessionHost<'_>, form: &Form, owner: u64) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.with_operation_budget(|session| self.form_value(session, form, Some(owner)))
+    }
+    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form, native_owner: Option<u64>) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
         enum Task<'a> {
             Visit(&'a Form),
@@ -897,6 +902,10 @@ impl FormBridge {
                     let start = values.len() - take;
                     let built = values.split_off(start);
                     let mut result = match &form.kind {
+                        Kind::NativeConstant { owner, index } => {
+                            if native_owner != Some(*owner) { return Err(failure(form, "Native constants are not portable macro syntax")); }
+                            session.native_constant_value(*owner, *index)?
+                        },
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
                         Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
@@ -968,7 +977,7 @@ impl FormBridge {
                             kind: Kind::Map(pairs),
                         };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.form_value(session, &metadata_form)
+                            self.form_value(session, &metadata_form, native_owner)
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;
@@ -1020,6 +1029,22 @@ impl FormBridge {
         span: Range<usize>,
         include_metadata: bool,
     ) -> Result<Form, SessionError> {
+        self.read_with_context(session, value, span, include_metadata, None).map(|(form, _)| form)
+    }
+    pub(crate) fn read_evaluation(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+        span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
+        instance_test: wasmtime::Func, var_class: wasmtime::OwnedRooted<AnyRef>,
+    ) -> Result<Form, SessionError> {
+        let native = NativeRead { owner, closure_test, instance_test, var_class, constants: vec![] };
+        let (form, constants) = self.read_with_context(session, value, span, true, Some(native))?;
+        for (index, value) in constants { session.retain_native_constant(index, value)?; }
+        Ok(form)
+    }
+    fn read_with_context(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+        span: Range<usize>, include_metadata: bool, native: Option<NativeRead>,
+    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>)>), SessionError> {
         self.check(session)?;
         session.with_operation_budget(|session| {
             let interrupt = session.host_work_interrupt();
@@ -1030,6 +1055,7 @@ impl FormBridge {
                     |mut store, value, args_new, invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
+                native,
                             source_valid: None,
                             include_metadata,
                             interrupt,
@@ -1048,7 +1074,7 @@ impl FormBridge {
                         if budget.profile {
                             eprintln!("macro-decode host-fuel={} lazy-calls={} success={}", budget.host_fuel.get(), budget.lazy_calls.get(), result.is_ok());
                         }
-                        result
+                        result.map(|form| (form, budget.native.map(|native| native.constants).unwrap_or_default()))
                     },
                 )
                 .map_err(|failure| match failure {
@@ -1195,6 +1221,34 @@ fn absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
     // Nil (0) and undefined (6) both satisfy the pinned nil? storage test.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
+// This authority is installed only for a public native eval read. Ordinary
+// macro/display/source readers retain their strict nominal syntax whitelist.
+struct NativeRead {
+    owner: u64,
+    closure_test: wasmtime::Func,
+    instance_test: wasmtime::Func,
+    var_class: wasmtime::OwnedRooted<AnyRef>,
+    constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>)>,
+}
+static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+impl NativeRead {
+    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<Kind>> {
+        let mut result = [Val::I32(0)];
+        self.closure_test.call(&mut *store, &[*value], &mut result)?;
+        if result[0].unwrap_i32() == 0 {
+            let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
+            self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
+            if result[0].unwrap_i32() == 0 { return Ok(None); }
+        }
+        let index = NEXT_NATIVE_CONSTANT.fetch_update(
+            std::sync::atomic::Ordering::Relaxed, std::sync::atomic::Ordering::Relaxed,
+            |index| index.checked_add(1),
+        ).map_err(|_| error("Native constant identity exhausted"))?;
+        let root = reference(value)?.to_owned_rooted(&mut *store)?;
+        self.constants.push((index, root));
+        Ok(Some(Kind::NativeConstant { owner: self.owner, index }))
+    }
+}
 struct ReadCalls {
     args_new: wasmtime::Func,
     invoke: wasmtime::Func,
@@ -1202,6 +1256,7 @@ struct ReadCalls {
 }
 struct Budget {
     display: Option<DisplayCalls>,
+    native: Option<NativeRead>,
     include_metadata: bool,
     // None for ordinary macro/display reads. Compiler source checks accumulate
     // invariant mismatches without treating them as a new source certificate.
@@ -1310,6 +1365,11 @@ fn decode_datum_inner<T: DatumTarget>(
     budget: &mut Budget,
 ) -> wasmtime::Result<T> {
     spend(store, budget)?;
+    if let Some(native) = &mut budget.native {
+        if let Some(kind) = native.constant(store, value)? {
+            return Ok(T::plain(Form { span: span.clone(), metadata: vec![], kind }));
+        }
+    }
     if let Some(calls) = budget.display {
         if let Some(leaf) = calls.read(store, *value)? {
             return T::opaque(leaf);

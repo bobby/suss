@@ -2530,10 +2530,10 @@
 ;; Original native Var construction adapters. Compiler-owned hidden cells
 ;; intern the result; the getter is compiled directly against its live cell.
 (def ^:private make-binding-var
-  (fn [getter sym metadata]
-    (Var. getter sym
-      (assoc metadata :name (symbol (name sym))
-                      :ns (the-ns (symbol (namespace sym)))))))
+  (fn [cell namespace name metadata]
+    (Var. (fn [] (suss.bootstrap/binding-cell-value cell)) (symbol namespace name)
+      (assoc metadata :name (symbol name)
+                      :ns (the-ns (symbol namespace))))))
 (def ^:private update-binding-var-meta!
   (fn [v metadata]
     (set! (.-_meta v)

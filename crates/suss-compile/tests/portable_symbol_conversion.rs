@@ -115,14 +115,14 @@ fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities
         check(
             &mut session,
             &mut decoder,
-            "(let [a (atom 1) v (new suss.core/Var (fn [] @a) 'a/b {:m 17}) w (with-meta v {:m 19})] (reset! a 42) [@v @w (meta v) (meta w) (= v w) (= (hash v) (hash w))])",
-            "[42 42 {:m 17} {:m 19} true true]",
+            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
+            "[42 nil true true false true true]",
         );
         check(
             &mut session,
             &mut decoder,
-            "(let [target (fn [] 42)] (set! (.-cljs$lang$macro target) true) (.isMacro (new suss.core/Var (fn [] target) 'a/b nil)))",
-            "true",
+            "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (boolean? (.isMacro (var review-ordinary-var)))])",
+            "[false true]",
         );
         for arity in 0..=20 {
             let parameters = (0..arity)

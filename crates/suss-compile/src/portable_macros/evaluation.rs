@@ -16,7 +16,9 @@ impl MacroHost<'_> {
         mut form: Form,
     ) -> Result<PreparedEvaluation, SessionError> {
         let span = form.span.clone();
-        let origin = crate::portable::SourceOrigin::new("", None);
+        let origin = crate::portable::SourceOrigin::native_evaluation(
+            snapshot.native_owner.ok_or_else(|| wasmtime::Error::msg("Missing native compilation owner"))?
+        );
         {
             let mut request = crate::portable::ExpansionRequest::new(self, span.clone())
                 .map_err(SessionError::Compile)?;

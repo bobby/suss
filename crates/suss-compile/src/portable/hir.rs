@@ -684,6 +684,8 @@ pub enum Nominal {
     CallableKeyRegister,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
+    /// Compiler-only access to a binding cell captured by a native Var.
+    BindingValue,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -853,7 +855,7 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
+                Self::BindingDefined | Self::BindingValue | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
@@ -1779,6 +1781,7 @@ impl Analyzer<'_> {
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
+            Kind::NativeConstant { owner, index } => return self.native_constant(form, *owner, *index),
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
@@ -3514,6 +3517,14 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            if symbol.name == "binding-cell-value" {
+                if !self.privileged {
+                    return Err(fail(form.span.clone(), "Binding cell reads require compiler-owned core"));
+                }
+                if args.len() != 1 { return Err(fail(form.span.clone(), "Binding cell read requires one argument")); }
+                let value = self.form(&args[0])?;
+                return Ok(self.nominal(form, Nominal::BindingValue, vec![value]));
+            }
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));

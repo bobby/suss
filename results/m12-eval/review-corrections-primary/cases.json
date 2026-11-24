@@ -1,0 +1,72 @@
+[
+  {
+    "name": "function-callee",
+    "expression": "(eval (list + 1 2))",
+    "expected": "3"
+  },
+  {
+    "name": "function-in-vector",
+    "expression": "(let [f (fn [x] x)] ((first (eval [f])) 42))",
+    "expected": "42"
+  },
+  {
+    "name": "var-in-vector",
+    "expression": "(identical? (var map) (first (eval [(var map)])))",
+    "expected": "true"
+  },
+  {
+    "name": "quoted-function",
+    "expression": "(let [f (fn [x] x)] ((eval (list 'quote f)) 42))",
+    "expected": "42"
+  },
+  {
+    "name": "quoted-var",
+    "expression": "(identical? (var map) (eval (list 'quote (var map))))",
+    "expected": "true"
+  },
+  {
+    "name": "function-in-map",
+    "expression": "(let [f (fn [x] x)] ((get (eval {:callback f}) :callback) 42))",
+    "expected": "42"
+  },
+  {
+    "name": "quoted-function-in-list",
+    "expression": "(let [f (fn [x] x)] ((first (eval (list 'quote (list f)))) 42))",
+    "expected": "42"
+  },
+  {
+    "name": "retained-constant-function",
+    "expression": "(let [f (fn [x] (+ x 1))] ((eval (list 'fn [] (list f 41)))))",
+    "expected": "42"
+  },
+  {
+    "name": "evaluated-macro",
+    "expression": "(do (eval '(defmacro review-eval-macro [] 42)) (eval '(review-eval-macro)))",
+    "expected": "42"
+  },
+  {
+    "name": "evaluated-macro-argument",
+    "expression": "(do (eval '(defmacro review-eval-add [x] (list '+ x 1))) (eval '(review-eval-add 41)))",
+    "expected": "42"
+  },
+  {
+    "name": "evaluated-macro-var",
+    "expression": "(let [v (eval '(defmacro review-eval-var [] 42))] [(var? v) (.isMacro v) (:macro (meta v)) (identical? v (eval '(var review-eval-var)))])",
+    "expected": "[true true true true]"
+  },
+  {
+    "name": "macro-prefix-survives-error",
+    "expression": "(do (try (eval '(do (defmacro review-prefix [] 42) missing-review)) (catch Exception _ nil)) (eval '(review-prefix)))",
+    "expected": "42"
+  },
+  {
+    "name": "ordinary-var-macro-boolean",
+    "expression": "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (boolean? (.isMacro (var review-ordinary-var)))])",
+    "expected": "[false true]"
+  },
+  {
+    "name": "var-identity-metadata",
+    "expression": "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch ClassCastException _ true))]))",
+    "expected": "[42 nil true true false true true]"
+  }
+]

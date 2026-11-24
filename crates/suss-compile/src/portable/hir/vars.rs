@@ -3,6 +3,15 @@ use super::*;
 use suss_reader::Symbol;
 
 impl Analyzer<'_> {
+    pub(super) fn native_constant(&mut self, form: &Form, owner: u64, index: u64) -> Result<Hir, Diagnostic> {
+        if self.origin.as_ref().and_then(|origin| origin.native_owner()) != Some(owner) {
+            return Err(fail(form.span.clone(), "Native constant belongs to another compilation owner"));
+        }
+        let cell = self.environment.native_constant(self.phase, owner, index);
+        Ok(Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Global(cell)) })
+    }
+
     fn var_core_call(
         &mut self,
         form: &Form,
@@ -54,21 +63,12 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: std::sync::Arc::new(kind),
         };
-        // Bypass literal substitution, inlining and core direct links: a Var
-        // reads its actual public root/dynamic cell even when ordinary source
-        // references were compiled with :const or direct linking.
-        let getter = node(Expression::Function {
-            parameters: vec![],
-            captures: vec![],
-            body: Box::new(node(Expression::Global(target.clone()))),
-        });
-        let clean = Form {
-            span: form.span.clone(),
-            metadata: vec![],
-            kind: Kind::Nil,
-        };
-        let symbol =
-            self.identifier_literal(&clean, Some(target.namespace()), target.name(), false)?;
+        // Capture the actual cell, bypassing const substitution/direct links.
+        // Core shares one getter body across all Vars, so AOT code stays bounded
+        // per definition while dynamic bindings and root replacement stay live.
+        let target_cell = node(Expression::GlobalCell(target.clone()));
+        let namespace = self.literal_form(form, Literal::String(target.namespace().encode_utf16().collect()));
+        let name = self.literal_form(form, Literal::String(target.name().encode_utf16().collect()));
         let info = self.environment.definition_info(target).cloned();
         let mut pairs = info
             .as_ref()
@@ -103,7 +103,7 @@ impl Analyzer<'_> {
         let construction = self.var_core_call(
             form,
             "make-binding-var",
-            vec![getter, symbol, metadata_value.clone()],
+            vec![target_cell, namespace, name, metadata_value.clone()],
         )?;
         let initialize = node(Expression::Definition {
             result: None,

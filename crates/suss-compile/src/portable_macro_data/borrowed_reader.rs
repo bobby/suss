@@ -57,6 +57,7 @@ impl BorrowedFormReader {
         );
         let mut budget = Budget {
             display: None,
+            native: None,
             source_valid: None,
             include_metadata: true,
             interrupt: self.interrupt.clone(),
