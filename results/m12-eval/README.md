@@ -35,3 +35,14 @@ writes progress to its owned log so detached stdout cannot interrupt its final
 receipt. Persistent compiler publication, user macros, real Vars, namespace/
 dynamic context, public eval, the24 primary controls and original34-row body
 remain required. These private tests establish no public eval acceptance.
+
+Atadb66ae9 the private runtime capability and all three borrowed-Store compiler
+tests return0 (162.507/238.981s including builds), inputs unchanged. One shared
+authoritative compiler catalog/cell map now serves owned inputs and callbacks;
+no metadata lock crosses compilation-instantiation or source execution. The
+new test publishes a callback-created binding to later owned inputs, sees later
+owned definitions in a callback, and retains a compiled function over GC and
+live root redefinition in both phases. The namespace getter returns an owned
+snapshot rather than borrowing through the metadata lock. Existing session,
+module, observation and bootstrap behavior needs broader regression checks.
+Public eval, macro authority and real Var acceptance remain unimplemented.
