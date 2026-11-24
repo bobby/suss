@@ -34209,3 +34209,21 @@ analysis-graph regressions also pass (393.767 seconds including the build for
 the callback test; 8.329 seconds for the graph target). Full receipts/logs are
 under `results/m12-eval/borrowed-analysis-first-native`. Shared user-macro
 authority and public eval acceptance remain required.
+
+At 5e89daf1, borrowed Macro authority uses one authoritative shared catalog
+for definitions, provenance, loading, caches and declaration transactions. The
+explicit typed evaluation-capability fixture expands an existing user macro
+in the active Macro Store, publishes a callback-defined macro to later owned
+inputs, and retains its result across GC. The gate returns 0 with unchanged
+inputs: all 13 macro-library tests (including that fixture) and nine original
+inline-module tests pass. Command times are 358.885 seconds including build
+for the focused fixture, 12.016 seconds for the macro library and 121.126
+seconds for inline modules. Full receipts/logs are retained under
+`results/m12-eval/borrowed-macro-through-evaluation-capability`.
+
+The initial duplicate-import compile failure remains archived. The subsequent
+research run also returned 0, but its observation-hook fixture violated that
+hook's non-reentrant contract and is explicitly unsuitable as capability
+validation. The replacement uses evaluate-form directly; observation hooks
+retain their contract. Public eval, the Runtime service handle, real Vars and
+complete primary/body acceptance remain required.
