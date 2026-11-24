@@ -1,0 +1,26 @@
+{
+  "source_head": "1d4f2fa38bdf3a52f0944ce80d33ca21d4964220",
+  "archives": {
+    "command.json": {
+      "raw_sha256": "70ee91462b056adad96059df2d682b79da7dd6fc25a63e85e50fd6e92d678090",
+      "gzip_sha256": "c7198646ed5b6ce526e905eb34d2b1f2c356454107f55ed06b68bf471e6c2841"
+    },
+    "build.stdout": {
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "build.stderr": {
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "native-regressions.stdout": {
+      "raw_sha256": "02d8ac1095956496599c1b79aafa77ff6a6e5b5e4ebad3f0416d4eb28e26f673",
+      "gzip_sha256": "93b41568127e2e1ec375362c3b86235d0bdf1e4c0a7b4c937c184ae48cb779e0"
+    },
+    "native-regressions.stderr": {
+      "raw_sha256": "270b3f967e9fe6d3c7ad10bd04d7471cdb5bc002935a3424b2a91a1b264feada",
+      "gzip_sha256": "28407ce39522add09923f6ec1bf9e863bb90e6cde5d3c1344c6cddd898d4d857"
+    }
+  },
+  "qualification": "The exact test source builds against immutable producer libraries. All three native groups fail101 at unresolved eval in Runtime/Macro, after ordinary fixture setup; inputs and libraries remain unchanged. No language eval or post-implementation pass is inferred."
+}

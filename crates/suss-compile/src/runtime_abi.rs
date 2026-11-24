@@ -45,6 +45,7 @@ mod numeric_hash;
 mod case_hash;
 mod numeric_operands;
 mod random;
+mod evaluation;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
@@ -2710,6 +2711,7 @@ fn build_module() -> Vec<u8> {
     decimals::append_global(&mut globals, decimal_double_type, decimal_double,
         decimal_context_type, b.names["decimal-context-impl"]);
     random::append(&mut b, &mut globals);
+    evaluation::append(&mut b, &mut globals);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

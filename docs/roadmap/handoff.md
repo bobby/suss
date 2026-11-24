@@ -20,6 +20,28 @@ workspace-feature target after verifying no active source/target processes,
 avoiding a duplicate dependency rebuild. The existing isolated private target
 retains its separate receipts; no source inputs are changed during native runs.
 
+
+## Compiled eval before-regressions and private capability slot (2026-11-23)
+
+The idle13189154 checkout is reused at1d4f2fa3 after all59 untracked evidence
+files are copied/hash-verified under cleanup/suss-20261123/eval-reuse-case-budget.
+Its original branch and a backup ref preserve tracked inputs. No extra checkout
+or Cargo target is allocated for this step.
+
+run-before.py links the actual clojure_eval.rs source against exact immutable
+PR507 producer libraries, without writing that Cargo target. Build returns0
+in4.749s. All three native groups return101 in127.305s at unresolved eval in
+Runtime/Macro; ordinary namespace fixture setup succeeds. Exact input and
+library hashes remain unchanged. Complete raw receipts/logs are archived.
+
+The runtime now appends a nullable typed evaluation callback outside its shared
+ABI prelude and existing global indices. Its missing-capability branch throws
+an ordinary language error. The private endpoint transports a same-Store GC
+value to a supplied compiler callback; it does not add a public eval binding or
+interpret data. The new boundary test requires explicit installation, payload
+identity across GC, nil transport and clearing. It is a test requirement until
+native execution; the persistent/reentrant compiler host remains the next step.
+
 ## Public rand-int Object-overload fixture correction (2026-11-23)
 
 The1ded898d focused run passes all five boundary tests, including actual Binaryen
