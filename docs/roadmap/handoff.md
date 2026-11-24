@@ -34827,3 +34827,24 @@ existing dea5db93 baseline, protects exact comparator/harness hashes, retains al
 It accepts no new failure/skip/guest change and writes no baseline. Numeric
 source-form acceptance scope, exact workspace, independent review and final-head
 CI remain separate gates.
+
+### Fixed-symbol Var helper focused result (2026-11-24)
+
+At1876f27d, all3 focused commands return0 with unchanged HEAD/inputs. Complete
+sealed built-in7, source metadata10, indexed-data4, core import17, stream12 and
+public eval26 targets pass:76 tests total. The unchanged IndexedSeq constructor-
+retention guard now passes. The new live-Var metadata/root regression executes
+in Runtime and Macro through GC and root/metadata replacement. All27 unchanged
+primary symbol controls match in both phases, including nil names and argument
+effects. The earlier ad61 native101 remains preserved. This follow-up adds only
+evidence/handoff and two existing targets to the broader runner; executable core,
+compiler and native tests remain identical to validated1876f27d.
+
+Start `eval-broader-after-indexed-seq-repair --broader-current-baseline-only`
+via the external launcher and freeze source/HEAD through its terminal receipt.
+The selected target group now includes the complete analyzer EDN and six legacy
+symbol-conversion regressions, alongside the prior23 numeric/module/artifact/
+budget targets. Native current-baseline suite0 and strict full-capture review
+are required separately from outer producer0. No baseline, original primary,
+skip, opaque-judgment or failure-count rule is changed. Exact workspace,
+independent promotion review and final-head CI remain required.
