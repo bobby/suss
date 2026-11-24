@@ -34513,172 +34513,87 @@ core and tests; added evidence/handoff/verifier files are not a new full baselin
 The remaining macro-declaration finding still precedes broader capture, exact
 workspace validation, bootstrap reproduction and independent promotion review.
 
-### Native macro declaration preparation (2026-11-24)
+### Native evaluated macro declarations and live namespace facts (2026-11-24)
 
-The next source experiment separates macro declaration preparation from binding
-publication. The actual Macro body is analyzed once; the caller compiles only
-the declaration prefix and a private constant containing a native closure.
-That closure retains the actual old Macro function root and its owning service,
-uses the existing universal closure ABI and transfers only supported form data.
-No new runtime import or public handle is introduced. A cancellation relay uses
-engine/flag handles, never Store pointers, and joins before the exclusive Macro
-lease returns. Source and evaluated declarations share preparation/publication.
+Source and evaluated declarations share one preparation/publication path. The
+actual function body is analyzed once in its owning Macro Store. A caller-side
+closure retains that real function root and owning service, using the existing
+universal closure ABI and supported form-data transport. Its initializer is an
+authenticated native constant, excluded from public Runtime source initializer
+facts; the body retains genuine Macro-phase analysis. No second body compilation,
+new runtime import, public handle registry or source replay is introduced. Raw
+calls return data, and captured old roots survive redefinition, GC, owner drop
+and a replacement public macro service. Opaque roots cannot cross Stores.
 
-Fresh Clojure primary controls are retained at
-`results/m12-eval/macro-declaration-primary/` (22 observations), including raw
-function return data, captured roots/redefinition, expansion count, ordinary def
-replacement, namespace aliases, implicit parameters, exact numeric data, failures,
-metadata and arities. `cargo check --workspace --locked` completed on the dirty
-source experiment; that development check is not native acceptance evidence.
-Run `macro-declaration-first-native --macro-declaration-only` with the external
-durable launcher and freeze source/HEAD until its terminal receipt. Runtime
-ordinary def replacement and namespace/alias publication require explicit
-validation; no passing declaration acceptance is claimed by this source change.
+Macro operations use cumulative caller allowances and exclusive owned leases.
+A signal-only cancellation relay uses engine/flag handles, never Store pointers,
+and joins before returning the lease. Cancellation immediately before commit
+restores the host namespace. Top-level native macro expansion supplies nil &env;
+lexical bodies supply actual Symbol-keyed bindings. Explicit compiler-catalog
+requests and regular source analysis retain their existing graph interface.
 
-The first macro-declaration run at `43944fc7` returned actual101 after six
-Runtime primary matches, reproducing stale macro expansion after ordinary def.
-The next run at `188de06f` also returned101: seven Runtime controls matched,
-including ordinary replacement, before compiler-data transport encountered the
-private native proxy in a declaration initializer. Both frozen-input receipts
-and complete logs remain archived in their respective `results/m12-eval/` run
-directories. Declaration revision tracking now distinguishes later ordinary def
-from the earlier macro; the adapter closure is excluded from public Runtime
-source initializers while retaining the actual macro declaration source. Its body
-has genuine Macro-phase analysis, not a fabricated Runtime function AST.
+Stable Var getters now share one Wasm runtime body, keeping source core generic
+and avoiding one function per definition. Actual Var metadata determines macro
+availability for one native analysis. That transient snapshot is restored for
+the root after ordinary dependency preparation, then cleared on publication and
+source records. It never rewrites immutable declaration revisions or rolls back
+successful nested effects. New explicit macro declarations supersede it. Public
+alias retains pinned Clojure signature/doc/metadata and mutates the actual
+Namespace alias table atomically. Each eval unit snapshots actual current aliases
+through the original private accessor captured at bootstrap. The alias test
+fixture establishes namespaces through ns forms; public create-ns remains a gap.
 
-Remote CI for published `d2e759fa` also reported test-only non-exhaustive Kind
-matches, ordinary source-core load failures from the privileged cell-read source
-helper, and a private catch-name test that no longer selected an actual collision.
-The next source experiment moves the shared getter into the existing Wasm runtime,
-keeps the source helper generic, handles opaque leaves in the private key oracle
-and source visitor, and makes the hygiene guard deliberately collide with the
-observed candidate instead of depending on unrelated binding-ID allocation.
-`cargo check --workspace --all-targets --locked` completes after regenerating the
-core import. The initial dirty development check correctly failed against stale
-generated source; it is not native acceptance evidence.
+Run the primary/source verifiers:
 
-Run `ci-and-macro-declaration-corrections --ci-macro-corrections-only` through the
-external durable launcher. It compiles all targets, executes portable host/unit
-regressions and the actual CI source-core/hygiene targets, then runtime/Var/AOT
-size guards, existing public controls plus new macro lifecycle/cancellation/budget
-guards, the unchanged original eval body and the complete new22-row declaration
-primary test. That last control retains separate acceptance: namespace aliases
-and other later cases have not yet been established. The focused public regression
-command filters only that new22-row test before executing it separately in full;
-no original fixture, assertion count, skip list or allowance is changed.
+```sh
+python3 results/m12-eval/verify-primary.py
+python3 results/m12-eval/verify-live-vars.py
+python3 scripts/core_import.py --check
+```
 
-The frozen `ci-and-macro-after-getter-import-signature` run at `4d6cb0e3`
-completed with actual101 and unchanged HEAD/inputs. All-target compilation and
-all116 portable host tests passed; all15 chunk and all15 UUID controls passed,
-including ordinary source-core loading in both phases. The catch collision test
-then failed on one remaining hardcoded name in its original initializer-local
-assertion. It now checks the same observed collision candidate as the rest of
-the test, preserving source-scope and hidden-payload guards. Continue with
-`macro-ci-remaining-after-catch-candidate --macro-ci-remaining-only` through the
-external launcher; the earlier passing targets are retained in their own receipt.
+Primary recordings retain24 base,10 Var,11 top-level do,15 namespace,14 review,
+2 legacy-Var adaptation,22 macro-declaration,15 alias,3 lexical-environment and
+5 failure-boundary observations. Review declarations overlap the complete22;
+these are not summed as independent coverage. JAR/source/stdout hashes and
+complete upstream adaptations are verified. The last5 preserve the original3
+failure rows and add2 lexical controls; no upstream corpus/count/skip is changed.
 
-The remaining-CI run at `25eee409` completed actual101 with frozen inputs.
-All8 binding-record guards pass. A declaration-function test then tried to decode
-the return of `def` as its initializer vector; the new real Var return correctly
-refuses ordinary form-data decoding. The test now reads the actual live root
-separately, retaining every staged declaration and snapshot assertion. Run
-`macro-declaration-after-ci-test-adaptations --macro-declaration-only` next to
-reach the complete primary controls first, then rerun the remaining CI targets.
+At `721631738b654ba1411153731094fc304e5d9578`, the frozen
+`lexical-macro-publication-checkpoint --lexical-macro-review-only` run passes all
+four commands, with unchanged HEAD/inputs:
 
-The22-row declaration run at `34072b51` completed actual101 with frozen inputs.
-The first10 Runtime rows pass, including replacement, once-only expansion and
-prefix failures. Row11 exposed a test-adaptation typo: the portable Error
-constructor is `js/Error.`, not the nonexistent `suss.core/Error.`. Correcting
-that constructor retains the original throw/message/catch control; no rows are
-removed. The next run is `macro-declaration-after-error-constructor-adaptation`.
+- All5 failure-boundary rows execute in Runtime and Macro, retaining real old
+  macro roots after failure, clearing status on same-root ordinary replacement,
+  preserving nested success and compile-time lexical expansion.
+- All24 public eval tests pass, including the complete22-row declaration matrix,
+  alias/environment controls, actual reentrant Macro eval, captured-root/GC
+  lifetimes, original allowance exhaustion and cancellation through isolated RPC.
+- All3 source-environment guards pass, retaining snapshot/catalog/source scope
+  assertions. Legacy declaration tests read the live root immediately after def;
+  def's real Var return is checked by the dedicated primary controls.
+- All34 original eval assertions execute:29 independent host matches, precisely
+  the original5 guest judgments at ordinals15–19, and no failures/unexecuted/skips.
+  Numeric ordinals5–7 are host matches.
 
-The declaration run at `b43de966` completed actual101 with frozen inputs: all18
-Runtime rows preceding public alias pass. Row19 reproduced the missing `alias`
-function. Its complete pinned Clojure signature/doc/metadata now delegates to a
-Namespace state adapter, retaining target validation, Symbol admission, atomic
-conflicts and nil returns. Fifteen fresh primary observations and the upstream
-form are under `results/m12-eval/alias-primary`; the native fixture creates the
-same namespaces through ns forms (public create-ns remains a separate gap).
-Native eval snapshots now import actual alias Symbols from the current validated
-Namespace before each compilation unit, through the original private slot reader
-retained at bootstrap. Both caller paths share this policy; no source replay.
-The first dirty development check caught moving out of a Drop form and was fixed
-using its ordinary into_parts API; no native pass is inferred. Run
-`alias-and-declaration-first-native --alias-and-declaration-only` through the
-external launcher with unchanged source and HEAD until terminal.
+The preceding frozen run at `eb917160` passes all9 CI source/hygiene/hash/vector
+regression targets and18 runtime capability/Var/namespace controls, including
+unchanged AOT size guards. `4d6cb0e3` passes all116 portable host regressions and
+all15 chunk/all15 UUID controls, including ordinary source-core loading in both
+phases. These retain separate source-qualified receipts; they are not a final
+workspace baseline. Failed attempts keep actual101 receipts and logs in their
+named result directories, including stale macro revision/transport, test helper,
+constructor/observer setup, lookup ABI and lexical snapshot mismatches.
 
-At `4be9fb03`, all15 alias primary rows pass in Runtime and Macro, including
-GC-retained observations. All19 declaration rows through the alias case then
-pass; row20 exposes the primary top-level &env=nil contract. The native eval
-path now supplies nil for no lexical names, and a Symbol-keyed map of actual
-lexical bindings in a body; explicit Suss compiler-catalog requests retain their
-separate graph schema. Three fresh pinned observations cover top-level nil,
-lexical presence/count and shadowed names. Regular source macro graph transport
-is unchanged. A focused cancellation guard also checks namespace restoration
-when cancellation occurs after declaration preparation, before commit. Its
-failure path restores the original host namespace before returning the lease.
-Run `declaration-after-primary-env-contract --declaration-env-only` through the
-external launcher. Earlier failed22-row runs retain actual101, not acceptance.
-The alias run included five dirty provenance JSON updates in its frozen input
-hashes; those metadata-only changes are committed with this follow-up.
-
-The frozen run at `9b6b7edb` establishes all22 declaration rows and all3 lexical
-macro environment rows in both phases, including retained GC checks, plus the
-cancellation-before-commit namespace guard. The complete public target returns
-actual101:21pass,2fail. Both new lifecycle guards failed during setup because
-the observation call used a nonexistent name; they now call the actual installed
-`suss.harness.observation/capture`, retaining signal-only observers, original
-allowances, watchdogs and required typed outcomes.
-
-Fresh three-row Clojure failure controls establish that a failed ordinary
-initializer preserves a macro's metadata/expansion, a successful ordinary def
-clears macro status even for the same function root, and a successful nested def
-survives the enclosing initializer's failure. A development CLI probe reproduced
-the first mismatch and matched the other two, with actual exit codes retained
-outside the checkout. Native snapshots now reconcile overridden declaration
-revisions with the actual canonical phase Var's macro metadata, charging every
-inspected declaration and leaving runtime effects untouched. A successful nested
-ordinary def has false metadata and is never undone. No previous source replays.
-Run `macro-failure-and-lifecycle-first-native --macro-failure-and-lifecycle-only`
-through the external launcher, freezing source/HEAD through its terminal receipt.
-
-At `7af321e5`, the new failure-boundary gate returns actual101 with frozen
-inputs: the host tried to invoke a keyword through the generic native function
-ABI and received Not callable. Keyword application belongs to compiler lowering.
-Metadata reconciliation now invokes the original core get function retained at
-bootstrap, reading only the :macro entry without serializing opaque metadata.
-No ABI or guest intrinsic is added. Repeat with
-`macro-failure-after-original-lookup --macro-failure-and-lifecycle-only`.
-
-At `ea2941ec`, failed ordinary initialization now preserves the macro42, but
-same-root ordinary replacement incorrectly expands that macro (42 versus the
-primary arity error). A nested initializer eval had rewritten declaration
-history before the outer ordinary def completed. Live macro status is now a
-transient snapshot fact for all actual canonical Vars, separate from immutable
-source declaration revisions. Normal publication, source records and dependency
-compilation clear that observation alongside the existing native eval frame flag.
-Explicit new macro declarations supersede the transient observation. This retains
-actual compile-time macro availability while ordinary same-root replacement and
-nested successful effects are checked anew against live metadata at the next
-native unit. Repeat `macro-failure-with-transient-status` using the same gate.
-
-The frozen `macro-failure-with-transient-status` run at `eb917160` passes all
-five commands, with unchanged HEAD/inputs:3 failure-boundary rows in both phases,
-all24 public tests including actual Macro RPC fuel/cancellation guards, all9
-remaining CI targets, runtime/Var/namespace guards and all34 unchanged eval rows
-(29host+original5guest, numeric5–7 strict host). The earlier116 host and30
-chunk/UUID controls retain separate source-qualified receipts.
-
-Two further fresh primary lexical controls expose a root-preparation boundary:
-Runtime CLI probes return an arity error and [7 7], versus primary42 and [42 7].
-Dependency compilation correctly cleared transient live macro status, but the
-caller's root fragment did not restore it. It now inherits that immutable
-one-analysis map after dependency preparation, like the existing native frame
-policy, and publication still clears both. The failure fixture preserves its
-first3 rows and adds these2 independently recorded controls. A legacy source
-snapshot test now reads each initialized root immediately after def, retaining
-its original snapshot/catalog assertions rather than decoding a live Var as
-an initializer vector. Run `lexical-macro-publication-checkpoint
---lexical-macro-review-only` through the external durable launcher. No full
-capture, workspace or independent promotion acceptance is inferred from this
-focused checkpoint.
+Main's merged #513 tree is byte-identical to prerequisite `974ed7e7`; the
+no-content ancestry merge preserves the entire evaluated source tree. This
+follow-up adds evidence and handoff only, source-equivalent to tested72163173 for
+compiler/core/tests/manifests/lockfiles. The next durable command is
+`eval-broader-after-live-macro-publication --broader-eval-only`, through the
+external launcher. Freeze source/HEAD through its terminal receipt. It runs
+public/unit/numeric/module/artifact/budget guards, optimized random effects,
+Java/Node-free bootstrap reproduction, the complete unfiltered suite capture
+and strict conservation review. Preserve actual inner native101 from the old
+known-failure comparison; update only measured reviewed baseline differences.
+Then run the exact two-thread workspace baseline, independent promotion review
+and final-head CI. No full numeric acceptance or ready status follows from the
+focused receipts alone.
