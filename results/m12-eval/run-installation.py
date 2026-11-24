@@ -14,6 +14,9 @@ def announce(value):
  with (out/"recorder.log").open("a") as progress:print(value,file=progress,flush=True)
 def save():(out/'commands.json').write_text(json.dumps(record,indent=2)+'\n')
 commands=[('runtime-capability',['cargo','test','--workspace','--locked','--test','runtime_evaluation','--','--nocapture','--test-threads=2']),('borrowed-store-compiler-reentry',['cargo','test','--workspace','--locked','--lib','borrowed_store_','--','--nocapture','--test-threads=2'])]
+if sys.argv[2:] == ["--borrowed-session-only"]:
+ commands=[('borrowed-session-view',['cargo','test','--workspace','--locked','--lib','portable_session::reentry::tests','--','--nocapture','--test-threads=2'])]
+else:assert len(sys.argv)==2,"Unknown installation gate selection"
 save();code=0
 for label,command in commands:
  start=time.time()
