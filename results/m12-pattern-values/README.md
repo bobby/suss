@@ -37,3 +37,13 @@ Runtime/Macro/AOT/GC/ownership controls, and execution of the complete numeric
 source bodies still require implementation and validation. Matching APIs are a
 separate compatibility surface. This evidence proves neither compiled Pattern
 values nor completion of the numeric acceptance gates.
+
+
+`macro-identity-primary/` adds eight research observations about compilation
+contexts. A retained macro pattern used directly in two bindings shares identity,
+while the same input object repeated in an eval vector or quoted vector is
+reconstructed into distinct pattern objects. A compiled literal site remains
+stable across closures, while separate literal sites are distinct. These actual
+observations rule out pooling by pattern text and require care with constant
+collection contexts; they are not native Pattern pass claims. Compiler-data
+identity remains subject to the accepted design's guarantees.

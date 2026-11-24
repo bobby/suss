@@ -1,0 +1,8 @@
+macro-duplicates-one-object false
+same-macro-root-in-one-compilation true
+distinct-macro-created-objects false
+eval-container-repeated-object [false false]
+separate-eval-compilations false
+eval-quoted-repeated-object [false false]
+same-compiled-site-across-closures true
+separate-compiled-sites false
