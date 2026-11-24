@@ -34119,3 +34119,56 @@ checkout-independent compiler identity and all four original execution tests
 also return0 (452.479s). Receipts and full logs are under
 `results/m12-random/complete-capture-and-bootstrap` and
 `results/m12-reader-followup/full-suite-after-random-and-assert`.
+
+## Min-key full-workspace completion evidence (2026-11-24)
+
+The exact `cargo test --workspace --locked -- --test-threads=2` process at
+33382c1c terminated after all370 expected native/doc targets. Its log records
+2,473 passing tests,14 explicit ignores,zero failures andzero filtered tests;
+all recorded inputs and HEAD stayed unchanged. Cargo's exit status remains
+unknown because the original outer recorder detached. It is not reported as0.
+`results/m12-reader-followup/workspace-after-shipped-min-key/completion-audit`
+retains the incomplete receipt, full log, initial/corrected audits and a
+standalone archive-only replay script. Metadata and366 Cargo fingerprints are
+preserved, so replay requires no live build target. The inventory correction
+includes rlib and package identities for duplicate integration target names.
+This evidence qualifies observed execution without changing tests or budgets.
+
+
+## Reader full-workspace completion evidence (2026-11-23)
+
+The original `cargo test --workspace --locked -- --test-threads=2` process at
+`9f1cf726` terminated after executing all369 native/doc targets. The frozen log
+records2,468 passing tests,14 explicitly ignored,zero failures andzero filtered.
+All recorded inputs and HEAD remained unchanged. Cargo's exit status was lost
+when its outer recorder detached; it remains unknown and is not reported as0.
+`results/m12-reader-followup/workspace-with-disk-temporary/completion-audit`
+retains the original incomplete receipt, log, initial observer and corrected
+audit. The correction includes explicit rlib targets and identifies duplicate
+integration-target names using Cargo package fingerprints; none are missing or
+unexpected. This qualifies the evidence, without changing tests or budgets.
+
+
+## Frozen randomness workspace and optimizer validation (2026-11-24)
+
+At61397661, `cargo test --workspace --locked -- --test-threads=2` returns0
+after11,089.347s. The durable recorder observes unchanged tracked inputs and
+HEAD. Archive-only replay verifies all375 expected native/doc targets:
+2,496 passed,15 explicit ignores,zero failed andzero filtered. This reruns
+the shipped some-fn, assert, public randomness and complete original body
+guards along with the original numeric, record, artifact, import and size
+suites. Full receipts, logs, metadata, fingerprints and replay are under
+`results/m12-random/full-workspace-after-reviewed-random-baseline/completion-audit`.
+
+The ignored `optimized_selected_random_import_preserves_draws` is separately
+executed with the hash-verified official Binaryen133 tools:1pass,0failed
+(1.631s including Cargo), unchanged inputs/HEAD/tools. Its receipt and log
+are under `results/m12-random/optimized-after-final-baseline`. Other ignores
+retain their original unsupported/manual/doc qualifications.
+
+Reconciling the rebased min-key parent8e05f09c preserves every pre-existing
+implementation, test, fixture, manifest and evidence blob exactly; only
+handoff prose changes and historical parent completion archives are added.
+The qualification records this comparison before the new completion notes
+and archives. Real eval and the remaining numeric umbrella requirements
+remain separate work; these command results establish no eval acceptance.

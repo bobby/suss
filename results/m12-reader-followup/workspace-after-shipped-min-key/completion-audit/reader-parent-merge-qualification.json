@@ -1,0 +1,15 @@
+{
+  "before": "3b9ab29899ebb340f76ad94d6b011f7fe19467cd",
+  "reader_parent": "df715aee1efb7ae09494878f019912f392aa2adc",
+  "changed_paths": [
+    "docs/roadmap/handoff.md",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/README.md",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/audit-completed.py",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/corrected-target-audit.json",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/original-command.json.gz",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/original-observation.json.gz",
+    "results/m12-reader-followup/workspace-with-disk-temporary/completion-audit/run.log.gz"
+  ],
+  "production_tests_fixtures_manifests_unchanged": true,
+  "qualification": "Merge resolves only appended handoff evidence and adds the reader completion archives. Min-key source/test/fixture/manifest bytes retain the independently reviewed3b9ab298 content, source-qualified to33382c1c."
+}

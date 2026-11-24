@@ -89,3 +89,28 @@ verification and all four original bootstrap execution tests return0 at the
 same frozen201a7bcf (452.479s, inputs unchanged). The enclosing durable capture/
 audit/bootstrap recorder returns0 with unchanged inputs. Full workspace and
 independent final-head review/CI remain separate requirements.
+
+
+## Frozen randomness workspace and optimizer validation (2026-11-24)
+
+At61397661, `cargo test --workspace --locked -- --test-threads=2` returns0
+after11,089.347s. The durable recorder observes unchanged tracked inputs and
+HEAD. Archive-only replay verifies all375 expected native/doc targets:
+2,496 passed,15 explicit ignores,zero failed andzero filtered. This reruns
+the shipped some-fn, assert, public randomness and complete original body
+guards along with the original numeric, record, artifact, import and size
+suites. Full receipts, logs, metadata, fingerprints and replay are under
+`results/m12-random/full-workspace-after-reviewed-random-baseline/completion-audit`.
+
+The ignored `optimized_selected_random_import_preserves_draws` is separately
+executed with the hash-verified official Binaryen133 tools:1pass,0failed
+(1.631s including Cargo), unchanged inputs/HEAD/tools. Its receipt and log
+are under `results/m12-random/optimized-after-final-baseline`. Other ignores
+retain their original unsupported/manual/doc qualifications.
+
+Reconciling the rebased min-key parent8e05f09c preserves every pre-existing
+implementation, test, fixture, manifest and evidence blob exactly; only
+handoff prose changes and historical parent completion archives are added.
+The qualification records this comparison before the new completion notes
+and archives. Real eval and the remaining numeric umbrella requirements
+remain separate work; these command results establish no eval acceptance.

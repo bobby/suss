@@ -1,0 +1,17 @@
+{
+  "source_head": "33382c1cd8b4c70f5ef8811809441364bace8c49",
+  "expected_count": 370,
+  "observed_count": 370,
+  "passed_tests": 2473,
+  "ignored_tests": 14,
+  "all_native_and_doc_targets_pass": true,
+  "cargo_exit_code": null,
+  "qualification": "Replay native target coverage from archived inputs, without live build files.\n\nThis verifies target inventory/results only. It cannot recover Cargo's exit\nstatus or independently observe source hashes at the original process boundary.\nThe original post-termination source audit is retained separately.",
+  "inputs_sha256": {
+    "original-command.json.gz": "09abd693f9dfce3acc9b7f4027ee6a137718f3118e5c51b85b536e7c36e52c8d",
+    "original-observation.json.gz": "d557cad2f5918ccd6a0dc574a20db1f9b29071cf53213ef04b2afe32a67c57c6",
+    "run.log.gz": "265bbe7163da09168701be569e48a334209be5aa022be26e106600d3b935c4fa",
+    "cargo-metadata.json.gz": "1d0df427bbe4d7aa607b3dca5a3bfd20cd55c61ee817d234b6ec4da0d7390066",
+    "cargo-fingerprints.json.gz": "5d8547b765f4b79493b9ac9f8d90a345616087feb212032ad81ef2f6b10db29c"
+  }
+}

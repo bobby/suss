@@ -1,0 +1,6296 @@
+{
+  "head": "9f1cf7269dfc531eff77859a61f2b42e509eb170",
+  "head_unchanged": true,
+  "inputs_unchanged": true,
+  "changed_inputs": [],
+  "cargo_exit_code": null,
+  "qualification": "The original outer recorder detached. This observer checks the existing process, every expected native/doc target and all recorded inputs after termination. It cannot recover the Cargo exit status and never substitutes the observer exit status for Cargo.",
+  "corrections": [
+    "Include explicit rlib Cargo library kind in native and doctest inventory.",
+    "Disambiguate same-named integration targets using Cargo binary fingerprint package identities."
+  ],
+  "original_observation_sha256": "12ff3a963efcefe89573e08ac9228763fa1b9bf4d46501743ffdbf55a9240a29",
+  "auditor_sha256": "cd2b4c5fa95fad239f4d32ac7be7440246f44580e1207f03cb4a0374bfd1c627",
+  "expected_count": 369,
+  "observed_count": 369,
+  "missing": [],
+  "unexpected": [],
+  "all_native_and_doc_targets_pass": true,
+  "passed_tests": 2468,
+  "ignored_tests": 14,
+  "observed": [
+    {
+      "package": "suss-cli",
+      "name": "suss_cli",
+      "doc": false,
+      "source": "crates/suss-cli/src/lib.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-da7923a4a246c80e",
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "suss",
+      "doc": false,
+      "source": "crates/suss-cli/src/main.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-96b3da8dcb632a45",
+      "summaries": [
+        [
+          "ok",
+          "36",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "suss-bootstrap",
+      "doc": false,
+      "source": "crates/suss-cli/src/bin/suss-bootstrap.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-036b14dfd5b72ed3",
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "analyzer_edn",
+      "doc": false,
+      "source": "crates/suss-cli/tests/analyzer_edn.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-68e7b87aacd37105",
+      "summaries": [
+        [
+          "ok",
+          "16",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "aot_source_preparation",
+      "doc": false,
+      "source": "crates/suss-cli/tests/aot_source_preparation.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ee0e2def41547983",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "apply_fixed_arity",
+      "doc": false,
+      "source": "crates/suss-cli/tests/apply_fixed_arity.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bbefa3ea42ebf0ac",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "build_cache",
+      "doc": false,
+      "source": "crates/suss-cli/tests/build_cache.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-80df111942018220",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "builtin_construction_sealed",
+      "doc": false,
+      "source": "crates/suss-cli/tests/builtin_construction_sealed.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3ad224016bad0972",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "builtin_internals_sealed",
+      "doc": false,
+      "source": "crates/suss-cli/tests/builtin_internals_sealed.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b82f2888bf411b77",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "builtin_protocol_aliasing",
+      "doc": false,
+      "source": "crates/suss-cli/tests/builtin_protocol_aliasing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9b283937a13ae498",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "builtin_protocols_closed",
+      "doc": false,
+      "source": "crates/suss-cli/tests/builtin_protocols_closed.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3f267793148131cc",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "captured_fn_calls",
+      "doc": false,
+      "source": "crates/suss-cli/tests/captured_fn_calls.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-390529da2b47a75e",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_bigint_integers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_bigint_integers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-4dcb6def4fe06044",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_biginteger_carrier",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_biginteger_carrier.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3ecbd5bdc4fbade0",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_bigints",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_bigints.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c28010ae60e36744",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_calling_convention",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_calling_convention.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b17c96b388b3c7a9",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_case_dispatch",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_case_dispatch.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-49ce3f59640731ee",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_char",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_char.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2b9887f7960f3325",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_chunk_effects",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_chunk_effects.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-207d98267dffaea9",
+      "summaries": [
+        [
+          "ok",
+          "15",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_constant_definitions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_constant_definitions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-08d09ab8ad9806b3",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_core_predicates",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_core_predicates.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1cc73ef5437d9730",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_decimal_arithmetic",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_decimal_arithmetic.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ff4c4c57fed0be55",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_decimal_constructors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_decimal_constructors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-38693a500596975e",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_decimal_conversions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_decimal_conversions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9f767c9a96c1c938",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_decimal_values",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_decimal_values.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-add4c687fb247971",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_division_overloads",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_division_overloads.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d7739722c627dad8",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_equality_bitwise",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_equality_bitwise.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-705f37351a695429",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_exact_inline",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_exact_inline.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1e2f5887bae5ca82",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_letfn",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_letfn.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-df2bf4c980dad2f1",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_local_numeric_hints",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_local_numeric_hints.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ff9fb880295f6a71",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_longs_doubles",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_longs_doubles.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b20af55549af3a5c",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_nonescaping_closures",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_nonescaping_closures.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-eca119f52b94d8a1",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_nonescaping_map_entries",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_nonescaping_map_entries.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-0bb3d43066b3b898",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_nonescaping_vectors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_nonescaping_vectors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bb22d22335216a18",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_numeric_box_reuse",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_numeric_box_reuse.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a3060681a3a0a766",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_numeric_captures",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_numeric_captures.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6c8a8b31bd97e2bf",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_numeric_classes",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_numeric_classes.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-934e6d9b058bb0e3",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_numeric_extrema",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_numeric_extrema.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-5cef05d5f0fdf811",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_packed_arrays",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_packed_arrays.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b78fbe09447fb401",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_primitive_method_types",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_primitive_method_types.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c5ca8037cd919178",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_ratios",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_ratios.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-636cb7c2021547ed",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_raw_bits_and_casts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_raw_bits_and_casts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-125577e13d1b01d5",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_raw_numeric_core",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_raw_numeric_core.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-adef0af7f969bf49",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_stable_sort",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_stable_sort.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-91c5407931d98242",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_unboxed_locals",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_unboxed_locals.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-67ac12a7b57e950c",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_unchecked_ratios",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_unchecked_ratios.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-49caaee40ba254a6",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_uuid",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_uuid.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-064b79c9fed9f74a",
+      "summaries": [
+        [
+          "ok",
+          "15",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "clojure_vector_of",
+      "doc": false,
+      "source": "crates/suss-cli/tests/clojure_vector_of.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d88e126df792fd88",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "collection_invoke",
+      "doc": false,
+      "source": "crates/suss-cli/tests/collection_invoke.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b105653cc8b84aa5",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "collection_printing",
+      "doc": false,
+      "source": "crates/suss-cli/tests/collection_printing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-8fe9f845ff437d28",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "comparison_operand_evaluation",
+      "doc": false,
+      "source": "crates/suss-cli/tests/comparison_operand_evaluation.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-291129801e35907d",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ecddde0232909ddd",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_async_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_async_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-18fe59ba7a45fd15",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-93c0996f593ea13e",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_compile_fuel",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_compile_fuel.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-cbaf26c18d305a95",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_direct_linking",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_direct_linking.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-286aa8b21867aad7",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_namespace_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_namespace_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-37ffa14038045419",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_aot_project_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_aot_project_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bb54f668c849ae50",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_artifact_identities",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_artifact_identities.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ee978ef8e56b8e53",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_bootstrap",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_bootstrap.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-759510bfa36f85b7",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_boxed_longs",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_boxed_longs.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b48a770e2867049e",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_call_sites",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_call_sites.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6c7b0cd01f265bf2",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_core_casts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_core_casts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-490047d0859fa9b7",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_equiv_hash_fast",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_equiv_hash_fast.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-72e1dc33cabaab97",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_export_metadata",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_export_metadata.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d203ee6fc004450a",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_export_param_hints",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_export_param_hints.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9215289a24183820",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_keyword_literals",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_keyword_literals.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-366da88049a5fc6c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_let_destructuring",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_let_destructuring.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-5e63a95fea28a6c3",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_analysis_context",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_analysis_context.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-4fb10aad204cc0d4",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_analysis_graph",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_analysis_graph.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7ac9ccc645c64bd8",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_binding_records",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_binding_records.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e984eb169e3d1652",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_collection_source_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_collection_source_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1445730a9a90f0f0",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_compiler_catalog",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_compiler_catalog.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-dece105c55521718",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_constant_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_constant_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1ebb3329c0dbaa24",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_constructor_source_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7a359fc340158ff1",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_control_source_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_control_source_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c27fdb3e845f3536",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_core_environment",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_core_environment.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1c4359e1ce9d9c67",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_cumulative_fuel",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1cd2e2714605e76a",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_data_builders",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_data_builders.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-260f8394783c959d",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_declaration_functions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_declaration_functions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a79b3836f8ed166c",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_declaration_metadata",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_declaration_metadata.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-f46e0954a6ac830c",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_definitions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_definitions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3c28ea29cecb4ffa",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_field_records",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_field_records.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-573b9676b57f78e0",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_field_reference_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_field_reference_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a49316224a1873ae",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_form_source_metadata",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_form_source_metadata.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e64dd6ca873599d8",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_forms",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_forms.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-81f729ee6c3a83e8",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_function_scopes",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_function_scopes.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bfda9236ecf199e8",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_global_reference_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_global_reference_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-0789c544f505daa8",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_hamt_lookup",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_hamt_lookup.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-f8c6ef9bddcba96b",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_hamt_sequences",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_hamt_sequences.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-05a5e6fe9c46090e",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_hash_maps",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_hash_maps.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-46f30530db6e2d1e",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_imports",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_imports.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-46f34d707a0b84c5",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_indexed_data",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_indexed_data.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-817368b3510cc633",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_initializer_plan",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_initializer_plan.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6371bafe2d4eab9a",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_large_finite",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_large_finite.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b99cf0bb0a85c562",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_large_form_transport",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_large_form_transport.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bfe0aa7df41c7e5e",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_letfn_source",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_letfn_source.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2f0472457515ab61",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_local_reference_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_local_reference_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-632639e2611d7a04",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_maps",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_maps.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3a211d59f7c25474",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_metadata",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_metadata.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-40a1f7b5e153c14d",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_method_roles",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_method_roles.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ab2ad495e667c059",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_publication_cells",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_publication_cells.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e2a77313e0f2f7c1",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_quote_asts",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_quote_asts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b466e31cfcc6d8b5",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_reload",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_reload.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d05058cd23e12fdc",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_repeated_declarations",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_repeated_declarations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-4f6ed90c9dd4d2b5",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_self_local_methods",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_self_local_methods.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6bae64f39eacddfc",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_set_oracle",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_set_oracle.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7bb4dac415f7fc7d",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_sets",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_sets.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-437c7f369f288c48",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_source_environment",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_source_environment.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-455fb3527780a682",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_source_hint_boundaries",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_source_hint_boundaries.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e3bb460a7e6501bf",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_source_positions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_source_positions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7443eb0254fa1e11",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_source_tags",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_source_tags.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-54a0b11215395584",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_syntax_quote",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_syntax_quote.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c4fd346dab708324",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_macro_vectors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_macro_vectors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3a51f673c0bc2872",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_module_cache",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_module_cache.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-554d3e5e5daa02ac",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_namespace_acceptance",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_namespace_acceptance.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1092d11ce23d4385",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_native_entrypoints",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9e06f30bab455c97",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_official_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_official_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b291494b7d545089",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_optimize",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_optimize.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-295d75ba74344062",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_packed_hints",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_packed_hints.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-0e940f4005316501",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_phase_session",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_phase_session.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-81fd98fc5cb01c4f",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_primitive_params",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_primitive_params.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b27d9dd2c1f8f8c7",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_protocol_sites",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_protocol_sites.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7d305e00de7be54c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_public_records",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_public_records.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c90b1728e492e32b",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_raw_value_uses",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_raw_value_uses.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-863bd2e8e151fb76",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_record_default_budget",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_record_default_budget.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1e3c35bc33455888",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_record_factories",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_record_factories.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-37755546fa2bf5c4",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_record_labels",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_record_labels.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-253d1677a341f78a",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_record_protocol_projection",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_record_protocol_projection.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6e71a0ebe99938d8",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_record_type_boundary",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_record_type_boundary.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-173f08211e541c91",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_repl_macros",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_repl_macros.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1d8e89646c2fe5d8",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_source_artifact_cache",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_source_artifact_cache.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-fe7ebe892d31700b",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_source_macros",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_source_macros.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-aabf4254fb34839c",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_str_calls",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_str_calls.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e22e96a75b199582",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_vector_nth",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_vector_nth.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-262aa0163d43978d",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "compiled_when_let",
+      "doc": false,
+      "source": "crates/suss-cli/tests/compiled_when_let.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d7f26083101638fa",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "construction_sites",
+      "doc": false,
+      "source": "crates/suss-cli/tests/construction_sites.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b03bd7f639005627",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "core_comparator_foundations",
+      "doc": false,
+      "source": "crates/suss-cli/tests/core_comparator_foundations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-933c52357e1ea456",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "core_import",
+      "doc": false,
+      "source": "crates/suss-cli/tests/core_import.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c5fc0c2f2afadf3e",
+      "summaries": [
+        [
+          "ok",
+          "17",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "core_sequence_interfaces",
+      "doc": false,
+      "source": "crates/suss-cli/tests/core_sequence_interfaces.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6d23272e8790a01f",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "core_sorted_interfaces",
+      "doc": false,
+      "source": "crates/suss-cli/tests/core_sorted_interfaces.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bcf633986b5a5f01",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "dispatch_paths",
+      "doc": false,
+      "source": "crates/suss-cli/tests/dispatch_paths.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e974674815088377",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "inline_module_macros",
+      "doc": false,
+      "source": "crates/suss-cli/tests/inline_module_macros.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b8319c7a7102b0b8",
+      "summaries": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "loop_invariant_reads",
+      "doc": false,
+      "source": "crates/suss-cli/tests/loop_invariant_reads.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-be75aeb345c39279",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "map_lookups",
+      "doc": false,
+      "source": "crates/suss-cli/tests/map_lookups.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6bb0c2a9eb153e59",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "namespace_session",
+      "doc": false,
+      "source": "crates/suss-cli/tests/namespace_session.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2259b8fb2df631b7",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "native_repl_async_io",
+      "doc": false,
+      "source": "crates/suss-cli/tests/native_repl_async_io.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bbddd0c18f422cc5",
+      "summaries": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "native_repl_async_pty",
+      "doc": false,
+      "source": "crates/suss-cli/tests/native_repl_async_pty.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-853d701995cdb949",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "numeric_operand_types",
+      "doc": false,
+      "source": "crates/suss-cli/tests/numeric_operand_types.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1228fb8d0a0077e7",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "object_printing",
+      "doc": false,
+      "source": "crates/suss-cli/tests/object_printing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-785028889e3056c1",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "persistent_repl",
+      "doc": false,
+      "source": "crates/suss-cli/tests/persistent_repl.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-cd0ece42ae870004",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "persistent_session",
+      "doc": false,
+      "source": "crates/suss-cli/tests/persistent_session.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-67d6ce8c9309bbea",
+      "summaries": [
+        [
+          "ok",
+          "35",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_apply_sequences",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_apply_sequences.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2e83da75ba5bbeb6",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_array_bulk_copy",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_array_bulk_copy.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3e0645666c3942ae",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_arrays",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_arrays.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-05464cbfe6b87e4e",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_aset_dense",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_aset_dense.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-686f008da686b484",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_atoms",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_atoms.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9d05957c13ef3400",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_bitwise_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_bitwise_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-739755cdced56514",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_caching_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_caching_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-229fde1ec436fa8d",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_callable_metadata",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_callable_metadata.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-97a376bc73ec58d4",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_case",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_case.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-45bf1260c522a7af",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_chunk_effects",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_chunk_effects.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-f508c0de8561dc66",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_closure_receivers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_closure_receivers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-97af94f1d2e9c5c7",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_collection_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_collection_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-74ce59b799bee850",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_collection_literals",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_collection_literals.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-34d60dff71a27f62",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_comparators",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_comparators.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-97f32fc27ffa1196",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_comparisons",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_comparisons.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a22e3c6c17863ebb",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_control_flow",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_control_flow.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d376d1b70dbfab56",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_core_receiver_layout",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_core_receiver_layout.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-eb27121631918256",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_default_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_default_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9db8bb600ffb26a6",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_drop",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_drop.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bd9b1ee488ffb18f",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_dynamic_bindings",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_dynamic_bindings.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1a7aa46ebdd56173",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_empty",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_empty.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b898121a69a6404d",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_error_constructors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_error_constructors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-770b46f581ee82f1",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_error_predicate",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_error_predicate.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-dd3e113752f48164",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_exception_info",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_exception_info.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-cb4a3601f727634f",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_exceptions",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_exceptions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-66af22f4f9113322",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_forward_declarations",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_forward_declarations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-11abe9d644fe0758",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_function_parameters",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_function_parameters.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-0c461169e50345f2",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_hash_map_sharing",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_hash_map_sharing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3767cb7fa91e588f",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_hash_numeric_boundaries",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_hash_numeric_boundaries.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d79351a7f9a953f4",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_i31_operations",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_i31_operations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e8d8cac2abc3f476",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_identity_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_identity_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6d3f9183b2f82745",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_implements",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_implements.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-689d477d18e7eb91",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_indexed_strings",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_indexed_strings.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1b351b8d5f48fa1a",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_indexing",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_indexing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-23e30bfd5e47819e",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_iteration",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_iteration.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c76d2203383645e5",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_lazy_sequences",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_lazy_sequences.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ec7dda23325c7297",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_lazy_transformations",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_lazy_transformations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-55139dd90958c770",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_let_star",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_let_star.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c4423f7415f02a08",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_map_mutation_helpers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_map_mutation_helpers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e9a21a4b599f8aec",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_method_cache",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_method_cache.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-985a1ac69fa7749f",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_murmur_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_murmur_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-26f39be6e53c87fd",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_mutable_fields",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_mutable_fields.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7ed61d263a7290ce",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_named_properties",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_named_properties.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-ecd29021626ad651",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_native_objects",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_native_objects.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-8efd107ed4bf4732",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_native_protocols",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_native_protocols.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c8e096c287535d91",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_numeric_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_numeric_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d02c3655afd1c7eb",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_object_coercion",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_object_coercion.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-54e115682c639e54",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_object_methods",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_object_methods.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-30e6e33940fc5d71",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_packed_aget",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_packed_aget.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e5d5a64adb3c2e5c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_public_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_public_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6673546bee5f0a40",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_queues",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_queues.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6e703453027bc403",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_quoted_identifiers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_quoted_identifiers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bd9efa6c74e3a935",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_ranges",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_ranges.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6956ed078faad885",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_reader_constructors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_reader_constructors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-feba64cec9093cc8",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_realized",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_realized.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-f743625b7be69e4a",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_record_emitter_dependencies",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_record_emitter_dependencies.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a3cf2697f168d4a1",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_record_graph_runtime",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_record_graph_runtime.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-de0a53b54e797eae",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_record_helpers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_record_helpers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-730b819f6c649f51",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_record_iteration",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_record_iteration.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-6707b8e2249160a0",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_record_sequence_dependencies",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_record_sequence_dependencies.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1a8a287314eed4c0",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_reduce_kv_fallback",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_reduce_kv_fallback.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b618d57cb9672a42",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_reduction",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_reduction.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2abff07b5b2adc72",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_reduction_dispatch",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_reduction_dispatch.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7ae6bace7a58b25c",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_reify",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_reify.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9146f563de6ca698",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_repeat_coercion",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_repeat_coercion.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7aca18b55955d94d",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_scalar_predicates",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_scalar_predicates.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-082f4bce9e40528b",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_seqable",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_seqable.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-5c1cbaea9cb9d920",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_sequences",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_sequences.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-37024fc6c51a20f8",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_sorted_comparator_prerequisites",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_sorted_comparator_prerequisites.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3f7b43800ef77ae9",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_sorted_tree_collections",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_sorted_tree_collections.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-14194cca8e5e7960",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_sorted_tree_nodes",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_sorted_tree_nodes.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-18a07d61678a2b27",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_source_apply",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_source_apply.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3aa5e1b4cb3ee2b0",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_str_concat",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_str_concat.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-d4f9cf821f1151d0",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_string_char_at",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_string_char_at.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3d12a9f5a968e2e2",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_string_fields",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_string_fields.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1fa3d512924e09bd",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_string_hash",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_string_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-88eeda2c879debbd",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_subvector",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_subvector.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-317f627235b5d3c6",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_take_nth",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_take_nth.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-271355ca529b5af8",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_transducers",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_transducers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-42bf3bdc63066fa7",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_transient_errors",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_transient_errors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-c9ecce09925019c5",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_type_method_scopes",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_type_method_scopes.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a276e1a967061a6d",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "portable_vector_trie",
+      "doc": false,
+      "source": "crates/suss-cli/tests/portable_vector_trie.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-9d83d7d28f0630b2",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "printer_options",
+      "doc": false,
+      "source": "crates/suss-cli/tests/printer_options.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-f103779534134059",
+      "summaries": [
+        [
+          "ok",
+          "18",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "printing_chunks",
+      "doc": false,
+      "source": "crates/suss-cli/tests/printing_chunks.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-5fd87aa351396960",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "program_paths",
+      "doc": false,
+      "source": "crates/suss-cli/tests/program_paths.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-23d51d2a61a9ca86",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "protocol_call_caches",
+      "doc": false,
+      "source": "crates/suss-cli/tests/protocol_call_caches.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-2d0e9ef45331a936",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "public_compiled_command",
+      "doc": false,
+      "source": "crates/suss-cli/tests/public_compiled_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-329bd98114fb59fe",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "queue_literal",
+      "doc": false,
+      "source": "crates/suss-cli/tests/queue_literal.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-bb5e5ed982ab2492",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "read_string",
+      "doc": false,
+      "source": "crates/suss-cli/tests/read_string.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-5b8c1f93159a4a82",
+      "summaries": [
+        [
+          "ok",
+          "16",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "record_factory_preservation",
+      "doc": false,
+      "source": "crates/suss-cli/tests/record_factory_preservation.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-e1452a5850ef4eb3",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "record_label_preservation",
+      "doc": false,
+      "source": "crates/suss-cli/tests/record_label_preservation.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-b1b82f241d24cbd5",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "reduce_paths",
+      "doc": false,
+      "source": "crates/suss-cli/tests/reduce_paths.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-76ff33e79b9fe44d",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "repl_default_budgets",
+      "doc": false,
+      "source": "crates/suss-cli/tests/repl_default_budgets.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-372d88f5b3bab970",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "repl_interrupt",
+      "doc": false,
+      "source": "crates/suss-cli/tests/repl_interrupt.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1c520b9c5da160c2",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "repl_value_display",
+      "doc": false,
+      "source": "crates/suss-cli/tests/repl_value_display.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7b3decc429f4a3a6",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "runtime_namespaces",
+      "doc": false,
+      "source": "crates/suss-cli/tests/runtime_namespaces.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-1021007877323199",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "syntax_quote_live_binding",
+      "doc": false,
+      "source": "crates/suss-cli/tests/syntax_quote_live_binding.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3868f7cc27295d3a",
+      "summaries": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "transient_map_storage",
+      "doc": false,
+      "source": "crates/suss-cli/tests/transient_map_storage.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-21c3e79d16146907",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "transient_vector_append",
+      "doc": false,
+      "source": "crates/suss-cli/tests/transient_vector_append.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-33b9c6b3a7b1c85e",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "update_paths",
+      "doc": false,
+      "source": "crates/suss-cli/tests/update_paths.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-44353b76d75513e2",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "user_named_sites",
+      "doc": false,
+      "source": "crates/suss-cli/tests/user_named_sites.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-3c7d0adcdedea78a",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "user_type_field_privacy",
+      "doc": false,
+      "source": "crates/suss-cli/tests/user_type_field_privacy.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-7d2e6089e9e6ed8e",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "vector_reads",
+      "doc": false,
+      "source": "crates/suss-cli/tests/vector_reads.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-cli-a287d6b37cda4b60",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "suss_compile",
+      "doc": false,
+      "source": "crates/suss-compile/src/lib.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-9442daf0cd61c997",
+      "summaries": [
+        [
+          "ok",
+          "219",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "analyzer_edn_core",
+      "doc": false,
+      "source": "crates/suss-compile/tests/analyzer_edn_core.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-8d4d42231c6fcd44",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "bigint_helper",
+      "doc": false,
+      "source": "crates/suss-compile/tests/bigint_helper.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-fa1641171addf651",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "clojure_test_suite",
+      "doc": false,
+      "source": "crates/suss-compile/tests/clojure_test_suite.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a012f065a4b1ac2c",
+      "summaries": [
+        [
+          "ok",
+          "16",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compile_expr",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compile_expr.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-26d1f6d0eb3d2c5f",
+      "summaries": [
+        [
+          "ok",
+          "305",
+          "0",
+          "10",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_async_import_file",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_async_import_file.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-3f0f2aab6e4248bd",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_async_library",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_async_library.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-bed8430107fb6de4",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_async_runtime_api",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_async_runtime_api.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a1fe9f2e7a981f38",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_async_streams",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_async_streams.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-ac8d6c7bcd3c3532",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_core_bindings",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_core_bindings.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-b5d84f583306cecc",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "compiled_printing",
+      "doc": false,
+      "source": "crates/suss-compile/tests/compiled_printing.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-ac30115af7348b9f",
+      "summaries": [
+        [
+          "ok",
+          "15",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "component",
+      "doc": false,
+      "source": "crates/suss-compile/tests/component.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-766e5d3e11581a74",
+      "summaries": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "conformance",
+      "doc": false,
+      "source": "crates/suss-compile/tests/conformance.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-c667ca92d1712896",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "2",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "core_state",
+      "doc": false,
+      "source": "crates/suss-compile/tests/core_state.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-91fbdcf1d5f13637",
+      "summaries": [
+        [
+          "ok",
+          "21",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "decimal_values",
+      "doc": false,
+      "source": "crates/suss-compile/tests/decimal_values.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-0b1ee0880aac06d6",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "generated_async_bridge_journal",
+      "doc": false,
+      "source": "crates/suss-compile/tests/generated_async_bridge_journal.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-0db1e6b5dbfd54d1",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "generated_async_export_boundary",
+      "doc": false,
+      "source": "crates/suss-compile/tests/generated_async_export_boundary.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-f6992d9315b8534c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "generated_async_import_bridge",
+      "doc": false,
+      "source": "crates/suss-compile/tests/generated_async_import_bridge.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-8f545a44483cf21e",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "generated_async_import_io_cancel",
+      "doc": false,
+      "source": "crates/suss-compile/tests/generated_async_import_io_cancel.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-2d72af358261b644",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "generated_async_import_order",
+      "doc": false,
+      "source": "crates/suss-compile/tests/generated_async_import_order.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-4be2888ab3077b50",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "math_context_constructors",
+      "doc": false,
+      "source": "crates/suss-compile/tests/math_context_constructors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-85e3c333804ebc34",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "native_compiled_host",
+      "doc": false,
+      "source": "crates/suss-compile/tests/native_compiled_host.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a40f143230595395",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "oracle",
+      "doc": false,
+      "source": "crates/suss-compile/tests/oracle.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-78cd9be447442459",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d1c983d569cff44b",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot_async",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot_async.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-79f654b4dfacf588",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot_lists",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot_lists.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-0003eb7eb24c948e",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot_options",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot_options.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-de51a3e306aba5ab",
+      "summaries": [
+        [
+          "ok",
+          "16",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot_strings",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot_strings.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-eac7ca92dd711f49",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_aot_wit_numbers",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_aot_wit_numbers.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-684866c35d8fb6ea",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_arrays",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_arrays.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a8d1310eceaeaef1",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_async_analysis",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_async_analysis.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-e20de16f30fc64c6",
+      "summaries": [
+        [
+          "ok",
+          "10",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_async_execution",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_async_execution.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-bd06649e26b2facd",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_async_fairness",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_async_fairness.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-c3210215018ddcf1",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_bitwise",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_bitwise.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-4e4328792936f30b",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_call_site_size",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_call_site_size.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-bd1e9c0ef39fc455",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_calling_convention",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_calling_convention.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-aad24cb78f3f0883",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_case",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_case.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-fad19bd02c60da8c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_closures",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_closures.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d37aa74e4754122a",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_collection_source_analysis",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_collection_source_analysis.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-1b0139ea84afc17b",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_command",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_command.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-87ec2aa320aadb03",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_comparator_foundations",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_comparator_foundations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-9d9608346cb8bf1e",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_comparisons",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_comparisons.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-acc091fe71cb31ac",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_constructor_source_analysis",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_constructor_source_analysis.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-ed5494277f0f68ea",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_continuation_liveness",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_continuation_liveness.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-6944a4974a78789d",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_control_source_analysis",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_control_source_analysis.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-759b605e62fc1bfa",
+      "summaries": [
+        [
+          "ok",
+          "12",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_core_expression_dependencies",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_core_expression_dependencies.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-3b31f61fa7bef597",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_default_hash",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_default_hash.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-b356fd19ba969a50",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_definitions",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_definitions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-92a93aac29b0b106",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_dynamic_bindings",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_dynamic_bindings.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d29627d9fa5fb79f",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_exceptions",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_exceptions.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-3ac45a2d4a0cec63",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_expression_conformance",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_expression_conformance.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-9f80a7766dee7dc0",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_hir_resources",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_hir_resources.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-5c6151be2ff5ffc0",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_if_let",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_if_let.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-55455cfac1619c1c",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_inline_predicates",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_inline_predicates.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-279cc749ca26ba6f",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_letfn",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_letfn.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-b139b5cd8b7c4b38",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_literal_allocation",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_literal_allocation.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-ba08162372bdf2f3",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_module_discovery_budget",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_module_discovery_budget.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-9bd4248918557d4b",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_modules",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_modules.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-b7ac19862e2f964a",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_murmur",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_murmur.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-c9373f664bc66134",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_nominal",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_nominal.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-62ed5f3e8c0a8368",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_nonescaping_vectors",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_nonescaping_vectors.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-c2c27847bb64f114",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_numeric_captures",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_numeric_captures.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-863c73090cff2a93",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_phase_modules",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_phase_modules.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-f911e0dba679e5db",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_pipeline",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_pipeline.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-671e75c27085138e",
+      "summaries": [
+        [
+          "ok",
+          "22",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_primitive_entries",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_primitive_entries.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-08c49189e22e77fb",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_record_identity",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_record_identity.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a56f345587c7baf7",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_resolution",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_resolution.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-79d37922f87ce454",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_sequence_observations",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_sequence_observations.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-6680788c71b869eb",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_sequence_projection",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_sequence_projection.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-ff543bf9335aec28",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_stdlib_discovery",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_stdlib_discovery.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-7b89bbf32deb9b01",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_structured_control",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_structured_control.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-1d065051ce1e9465",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_symbol_conversion",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-5088cfce313dd476",
+      "summaries": [
+        [
+          "ok",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_unboxed_locals",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_unboxed_locals.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-62894b1b9e3a10d5",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "portable_value_decoder",
+      "doc": false,
+      "source": "crates/suss-compile/tests/portable_value_decoder.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-bdff15d92878dc0e",
+      "summaries": [
+        [
+          "ok",
+          "30",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "public_compiled_files",
+      "doc": false,
+      "source": "crates/suss-compile/tests/public_compiled_files.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-0874c0a8c6213eda",
+      "summaries": [
+        [
+          "ok",
+          "14",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "public_compiled_pipeline",
+      "doc": false,
+      "source": "crates/suss-compile/tests/public_compiled_pipeline.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-4bbae78acd52aaed",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "public_expression_artifacts",
+      "doc": false,
+      "source": "crates/suss-compile/tests/public_expression_artifacts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-58e500c04285d37d",
+      "summaries": [
+        [
+          "ok",
+          "11",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "reader_runtime",
+      "doc": false,
+      "source": "crates/suss-compile/tests/reader_runtime.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-89d14e3ed9f1ffdb",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "record_compiler_facts",
+      "doc": false,
+      "source": "crates/suss-compile/tests/record_compiler_facts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-f691a85c0951f0eb",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_abi",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_abi.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-7b8deb95f2cab4f5",
+      "summaries": [
+        [
+          "ok",
+          "59",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_async_future",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_async_future.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-6f9296d6b05d6232",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_async_invocation_retiring",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_async_invocation_retiring.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-461a1f2cbc13bf34",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_async_invocation_scope",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_async_invocation_scope.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-7c55603e6e8ce41e",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_async_scheduler",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_async_scheduler.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-52b781839ee6ddfe",
+      "summaries": [
+        [
+          "ok",
+          "25",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_async_streams",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_async_streams.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-8852d4ddaf628c42",
+      "summaries": [
+        [
+          "ok",
+          "9",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "runtime_dynamic_switch",
+      "doc": false,
+      "source": "crates/suss-compile/tests/runtime_dynamic_switch.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-de693e9b0fd2e6ba",
+      "summaries": [
+        [
+          "ok",
+          "5",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_async_recovery_receipt",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_async_recovery_receipt.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d314ebbd3b608525",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_future_display",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_future_display.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-93714c68fcb5f563",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_interrupt",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_interrupt.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d0fb03b9fdad6336",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_lifecycle_host_cancel_hook",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_lifecycle_host_cancel_hook.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-7095c12f6f639767",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_lifecycle_native_publication_fuel",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_lifecycle_native_publication_fuel.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-7768d7f813c5da17",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_lifecycle_reset_interruption",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_lifecycle_reset_interruption.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-eb4c81aed694cee2",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_lifecycle_reset_pending",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_lifecycle_reset_pending.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-8130681dcf7ca128",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_lifecycle_source_futures",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_lifecycle_source_futures.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-aa6ba9e978157a02",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_live_heap",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_live_heap.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-9ab75210e05b4008",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_live_heap_streams",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_live_heap_streams.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d3f98e62e489252b",
+      "summaries": [
+        [
+          "ok",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_live_heap_suspended_tasks",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_live_heap_suspended_tasks.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-2c9621bc2c12be36",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_native_future_factory",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_native_future_factory.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-29c756b12b663783",
+      "summaries": [
+        [
+          "ok",
+          "7",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "session_observation_hook",
+      "doc": false,
+      "source": "crates/suss-compile/tests/session_observation_hook.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-b237897c141a6944",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "shared_runtime",
+      "doc": false,
+      "source": "crates/suss-compile/tests/shared_runtime.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-a0ab13bef594afaf",
+      "summaries": [
+        [
+          "ok",
+          "3",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "toolchain_async",
+      "doc": false,
+      "source": "crates/suss-compile/tests/toolchain_async.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-d67a65c735747620",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "toolchain_profile",
+      "doc": false,
+      "source": "crates/suss-compile/tests/toolchain_profile.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-5634ee2d08739f0b",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "uncached_expression_artifacts",
+      "doc": false,
+      "source": "crates/suss-compile/tests/uncached_expression_artifacts.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-compile-861242e8c198b780",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-core",
+      "name": "suss_core",
+      "doc": false,
+      "source": "crates/suss-core/src/lib.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-core-3023f6e05d313652",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "suss_reader",
+      "doc": false,
+      "source": "crates/suss-reader/src/lib.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-3ff94c2542984d2c",
+      "summaries": [
+        [
+          "ok",
+          "36",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "biginteger_carrier",
+      "doc": false,
+      "source": "crates/suss-reader/tests/biginteger_carrier.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-065085db92501397",
+      "summaries": [
+        [
+          "ok",
+          "2",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "edn",
+      "doc": false,
+      "source": "crates/suss-reader/tests/edn.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-be6c48e60a3d369a",
+      "summaries": [
+        [
+          "ok",
+          "13",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "exact_edn",
+      "doc": false,
+      "source": "crates/suss-reader/tests/exact_edn.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-dea0eb497e39c3f0",
+      "summaries": [
+        [
+          "ok",
+          "4",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "forms",
+      "doc": false,
+      "source": "crates/suss-reader/tests/forms.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-775f30d4a38fae0e",
+      "summaries": [
+        [
+          "ok",
+          "22",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "portable_dispatch",
+      "doc": false,
+      "source": "crates/suss-reader/tests/portable_dispatch.rs",
+      "fingerprint": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-review-repair-target/debug/.fingerprint/suss-reader-3e308c9d7259eb4c",
+      "summaries": [
+        [
+          "ok",
+          "8",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-cli",
+      "name": "suss_cli",
+      "doc": true,
+      "source": null,
+      "fingerprint": null,
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-compile",
+      "name": "suss_compile",
+      "doc": true,
+      "source": null,
+      "fingerprint": null,
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "1",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-core",
+      "name": "suss_core",
+      "doc": true,
+      "source": null,
+      "fingerprint": null,
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    },
+    {
+      "package": "suss-reader",
+      "name": "suss_reader",
+      "doc": true,
+      "source": null,
+      "fingerprint": null,
+      "summaries": [
+        [
+          "ok",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ]
+    }
+  ]
+}
