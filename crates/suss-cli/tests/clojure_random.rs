@@ -72,7 +72,7 @@ fn public_aot_numeric_transformations_use_each_controlled_provider_word() {
         component::{Component, Linker},
     };
     let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
-        "../../../results/m12-random/controlled-transformations.json"
+        "../../../results/m12-random/object-transformations-boxed/cases.json"
     ))
     .unwrap();
     assert_eq!(rows.len(), 126);

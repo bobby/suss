@@ -40,3 +40,13 @@ and actual CLI/WASI streams with fresh-instance checks. Provider failure,
 replacement recovery and unused draw effects have explicit boundary tests.
 These new requirements need separate native receipts. run-public.py uses the
 workspace feature graph and captures both complete original bodies.
+
+The1ded898d fixed-draw comparison exposes a fixture overload mismatch at the
+upper int fraction. Actual rand-int bytecode calls RT.intCast(Object), whereas
+the original literal-only int expression selects the primitive overload. The
+separate object-transformations-boxed corpus retains126 fresh Object controls
+and a generated JVM bytecode proof with the same multiply(Object,Object) and
+intCast(Object) signatures. Exactly one expected value differs:2147483647
+rather than an error. Original literals/receipts remain unchanged; the initial
+hint-only probe failure is also retained. Public tests select the Object corpus;
+production numeric code is unchanged. Fresh native comparison remains required.

@@ -1,4 +1,15 @@
 {
+  "object_overload_bytecode": true,
+  "public_object_transformations": 126,
+  "overload_differences": [
+    {
+      "operation": "rand-int",
+      "bound": "2147483648",
+      "draw": "0.9999999999999999",
+      "literal_expected": "[:error]",
+      "object_expected": "[:value \"2147483647\" :integer]"
+    }
+  ],
   "actual_public_api_controls": 16,
   "primary": {
     "upstream": "Clojure1.12.6",
@@ -43,7 +54,7 @@
   },
   "adaptation": "Retain both public arities, doc/metadata and multiply-then-checked-int steps. Replace Math.random with a private execution-time entropy intrinsic. Lexically capture the existing checked multiplication/int function values so core legacy coercing macros do not change the primary Object overloads. Standard random imports are selected explicitly from the resolved world and encoded with the generic WIT type encoder. Native sessions install OS entropy. No constant or compilation-time seed fallback.",
   "controlled_primary_transformations": 126,
-  "qualification": "The primary rows isolate the deterministic transformations at fixed draws, not JVM random-stream goldens. Provider feasibility is separate from production/public API acceptance; fresh native receipts are required.",
+  "qualification": "The original direct-literal transformations are retained as a distinct overload study. Public-API goldens use fresh explicitly boxed/Object multiplication and int casts matching retained rand/rand-int bytecode; one upper-fraction int result differs. They are controlled transformations, not JVM random-stream goldens. Provider feasibility is separate from production/public API acceptance; fresh native receipts are required.",
   "files": {
     "docs/compatibility/bootstrap/exact-integers.sus": "38e96c5694e328c565e4406a3de4f88aafe9de59d5ee76ba5809af772a0aa2e2",
     "docs/compatibility/core-import.json": "3ab0f93e33b0b40061ec90f4722315b99fdd4443df8568dbc0ca5c59ac720936",
@@ -51,12 +62,15 @@
     "runtime/core-import/manifest.json": "94cdeacc65e243e592142bd46eae0c7be9adcac3cf5470eaf75ee5464c8c336b",
     "crates/suss-compile/src/runtime_abi/random.rs": "477224805d5dec5de5bbb3a270840e1e1aed10f7b324aedb887c55bd0d25b20f",
     "crates/suss-compile/src/portable/aot/random.rs": "a6908de9fc818415860130f933fc34f270481ed66ce012aa28a400be602155f5",
-    "crates/suss-compile/src/portable_session/random_tests.rs": "ca5ed23b18c28bd6a8c1fb716e0c87a5d109e783fdc00c3ec51b6461e80ee620",
+    "crates/suss-compile/src/portable_session/random_tests.rs": "67e41f503be9ebf29b8a32b489dc578ffe76cd0464bedc01ac3355cee03f6c30",
     "crates/suss-compile/tests/runtime_random.rs": "1e305df622198fc5930b6a5459e24fde3aa71000c76aa952f8d7630ac0230c51",
     "crates/suss-compile/tests/portable_random.rs": "0a876a8455c97e88b506819bf5356f7e5629c3d0607c611854a2a4f93fb6d103",
-    "crates/suss-cli/tests/clojure_random.rs": "128bb024b9da01c4ece8184082a8e0d6712350371634f11e0631515c89a2b9b2",
+    "crates/suss-cli/tests/clojure_random.rs": "75c381b19637fdbc7a6508e1248a895772acaf6c807ed02dcd5211726f3c4202",
     "results/m12-random/public-effects/cases.json": "c88881ba0f727eb0dc7f1e5db207ce1cbcbeb2a316ebf7731041899f11c6a933",
     "results/m12-random/public-effects/command.json": "2bb6ead58d9955f184a05f2415deb5c9a3a60dfcfb75bbe1031547dc16d9b13e",
-    "results/m12-random/public-effects/oracle.clj": "4f67c1bb2f0ca5d932285a96d66983a1b6278ce6f5d077439c65e9f56ccf7ee6"
+    "results/m12-random/public-effects/oracle.clj": "4f67c1bb2f0ca5d932285a96d66983a1b6278ce6f5d077439c65e9f56ccf7ee6",
+    "results/m12-random/object-transformations-boxed/cases.json": "ae0d6ebcfa588ef52b486cc541e060bbfca62262e5c41d67dc0a407522bc022f",
+    "results/m12-random/object-transformations-boxed/command.json": "4571297668226108402bbb6d6faa88125e224e91f97264063565398ceb5302e6",
+    "results/m12-random/object-transformations-boxed/oracle.clj": "c37713019d9f8915f382b08e9cbf037c6bf368a856d91a91f9fd9c02be03273d"
   }
 }

@@ -1,0 +1,5 @@
+Syntax error (UnsupportedOperationException) compiling let* at (results/m12-random/object-transformations/oracle.clj:2:31).
+Can't type hint a local with a primitive initializer
+
+Full report at:
+/tmp/clojure-11011323366849566936.edn

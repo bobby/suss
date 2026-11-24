@@ -1,0 +1,40 @@
+Compiled from "rand_object_proof.clj"
+public final class rand_object_proof$compute extends clojure.lang.AFunction {
+  public rand_object_proof$compute();
+    Code:
+       0: aload_0
+       1: invokespecial #9                  // Method clojure/lang/AFunction."<init>":()V
+       4: return
+
+  public static java.lang.Object invokeStatic(java.lang.Object, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: astore_0
+       3: aload_1
+       4: aconst_null
+       5: astore_1
+       6: invokestatic  #17                 // Method clojure/lang/Numbers.multiply:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Number;
+       9: astore_2
+      10: aload_2
+      11: aconst_null
+      12: astore_2
+      13: invokestatic  #23                 // Method clojure/lang/RT.intCast:(Ljava/lang/Object;)I
+      16: invokestatic  #29                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      19: areturn
+
+  public java.lang.Object invoke(java.lang.Object, java.lang.Object);
+    Code:
+       0: aload_1
+       1: aconst_null
+       2: astore_1
+       3: aload_2
+       4: aconst_null
+       5: astore_2
+       6: invokestatic  #36                 // Method invokeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       9: areturn
+
+  public static {};
+    Code:
+       0: return
+}

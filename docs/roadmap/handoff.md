@@ -1,3 +1,22 @@
+## Public rand-int Object-overload fixture correction (2026-11-23)
+
+The1ded898d focused run passes all five boundary tests, including actual Binaryen
+optimization/effect retention, and normal Runtime/Macro entropy. Fixed-draw host
+comparison fails on2147483648 times0.9999999999999999: the original direct-literal
+primary int expression selects a primitive overload and throws, while Suss returns
+2147483647. Original overall101, logs and unchanged source/tool checks remain
+archived; no full fixed-draw Macro/Runtime pass is inferred.
+
+Retained JVM bytecode confirms actual rand multiplies Object/Object and returns
+Object; rand-int invokes RT.intCast(Object). A fresh126-row boxed/Object oracle
+returns0 in2.478s and differs on exactly that single expected value, agreeing with
+the native result. The first hint-only oracle attempt fails before observations
+because Clojure disallows Object hints on primitive initializers; its complete
+failure/report is retained. Identity calls box the corrected oracle initializers.
+The original126-row literal fixture and original suite primary remain unchanged.
+Public tests now select the separate Object corpus; production numeric code is
+unchanged. Fresh native comparison and actual CLI/AOT execution remain required.
+
 ## Entropy boundary execution and explicit optimization tool (2026-11-23)
 
 On97a2d235, the production runtime entropy test returns0 after2265.436s

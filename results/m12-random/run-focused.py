@@ -10,7 +10,7 @@ assert os.environ.get("SUSS_RANDOM_TARGET"),"Select the isolated owned target"
 paths=subprocess.check_output(["git","ls-files","--cached","--others","--exclude-standard","-z"],cwd=ROOT).decode().split("\0")
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
 inputs={p:sha((ROOT/p).read_bytes()) for p in paths if p and not p.startswith("results/") and (ROOT/p).is_file()}
-for name in ["controlled-transformations.json","command.json","oracle.clj","upstream-rand.clj","upstream-rand-int.clj","rand-adapted.sus","rand-int-adapted.sus","rand.patch","rand-int.patch","public-effects/cases.json","public-effects/command.json","public-effects/oracle.clj"]:
+for name in ["controlled-transformations.json","object-transformations-boxed/cases.json","object-transformations-boxed/command.json","object-transformations-boxed/oracle.clj","command.json","oracle.clj","upstream-rand.clj","upstream-rand-int.clj","rand-adapted.sus","rand-int-adapted.sus","rand.patch","rand-int.patch","public-effects/cases.json","public-effects/command.json","public-effects/oracle.clj"]:
  p=BASE/name;inputs[str(p.relative_to(ROOT))]=sha(p.read_bytes())
 env=os.environ|{"CARGO_TARGET_DIR":os.environ["SUSS_RANDOM_TARGET"],"CARGO_BUILD_JOBS":"1","RUSTUP_TOOLCHAIN":"stable","XDG_RUNTIME_DIR":"/run/user/1000"}
 tool=Path(os.environ["SUSS_WASM_OPT"]).resolve()
@@ -22,6 +22,8 @@ commands=[
  ("runtime-entropy",["cargo","test","-p","suss-compile","--locked","--test","runtime_random","--","--nocapture","--test-threads=2"]),
  ("selected-wit-aot",["cargo","test","-p","suss-compile","--locked","--test","portable_random","--","--include-ignored","--nocapture","--test-threads=2"]),
  ("public-core-both-phases",["cargo","test","-p","suss-compile","--locked","--lib","random_tests","--","--nocapture","--test-threads=2"])]
+if sys.argv[2:] == ["--core-only"]:commands=commands[-1:]
+else:assert len(sys.argv)==2,"Unknown focused gate selection"
 save();exit_code=0
 for label,command in commands:
  start=time.time()

@@ -1,0 +1,22 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-followup-source/results/m12-random/object-transformations-boxed/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 2.4779722690582275,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "c37713019d9f8915f382b08e9cbf037c6bf368a856d91a91f9fd9c02be03273d",
+  "stdout_sha256": "ab362cb8ec79602829a2714f111aae7cc6598509ef1a15b7b29843e3b2cb9f72",
+  "original_fixture_sha256": "145e2add734a88785abc297382bfbdd269e88ec2e21a797652630a8e08c9cccc",
+  "controls": 126,
+  "qualification": "Retained rand bytecode calls Numbers.multiply(Object,Object), returning Object; rand-int then calls RT.intCast(Object). Identity calls box initializers and explicit Object locals reproduce these overloads. The first hint-only probe fails compilation and remains separately retained. The earlier direct-literal transformations and their native comparison failure remain unchanged. This primary recording alone is not a native pass."
+}

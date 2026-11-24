@@ -1,0 +1,22 @@
+{
+  "head": "1ded898daa3627fc754343e8dfdfbcb10ee422ac",
+  "archives": {
+    "commands.json": {
+      "sha256": "63a01efc1be4bbb35741fd60fe4262088cc951c2595e0ef7452863cca42d993b",
+      "gzip_sha256": "c5ca5cedb446a87ba9f9642133ed477e6a7def50be4ade7cbd8fc9bc22adf994"
+    },
+    "runtime-entropy.log": {
+      "sha256": "5dd9612c6516938b060742355777a523f0bfd8ccab5742f34010a34db6684a6a",
+      "gzip_sha256": "e6f581695ee794819ff56145808fe324cd8e24320e7cf639b0a38f36f2ec69e4"
+    },
+    "selected-wit-aot.log": {
+      "sha256": "36bfcd4982159b6b4e63aa5c6e3ddeca4f29c4148bec2d34b5deda18bbab946c",
+      "gzip_sha256": "d12bd17b778801165ee8b764eb04b03d12e315bf00a805c6406f68c9e717a7d5"
+    },
+    "public-core-both-phases.log": {
+      "sha256": "9971f2c9267c71d4c4a186f286ea5b98517053357278c5326bada83a43e5f734",
+      "gzip_sha256": "9fdd13c2fbb31126d905bea14f27da1b08c60d9df145e721db6a35bd03efe374"
+    }
+  },
+  "qualification": "Five boundary tests and the normal-provider Runtime/Macro test pass. The fixed-draw comparison fails on the Runtime upper-fraction rand-int row: direct-literal primary selected a primitive int cast, whereas actual rand-int bytecode selects RT.intCast(Object). The original overall101 and unchanged input/tool checks are preserved. No full126-per-phase comparison pass is inferred."
+}
