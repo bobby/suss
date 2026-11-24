@@ -34661,3 +34661,42 @@ the external durable launcher and freeze source/HEAD to its terminal receipt.
 This follow-up changes review/evidence/handoff only; executable source and tests
 remain identical to validated7fde2815. Exact workspace, independent promotion
 review and final-head CI remain separate required gates.
+
+### Reviewed complete native capture and exact workspace command (2026-11-24)
+
+The frozen `eval-broader-after-symbol-and-var-contract` run at `cfdd013d`
+passes all7 recorder commands, with unchanged source/HEAD/Binaryen. The full
+native suite still returns its actual101 against the former baseline; its
+318.58s raw capture is retained. Strict review returns0 and independently
+preserves all5346 prior comparable successes. All5564 rows remain, including
+34eval/61symbol/34var? assertions with29/61/26host matches and original5/0/8
+guest ordinals. All229 BigInt/Ratio and200 Decimal tagged-operand observations
+are strict host matches. The earlier five symbol failures remain historical101
+receipts; they are not accepted as new known failures.
+
+The scoped baseline update removes only eval, symbol and var? namespace-load
+failures. It changes ifn?'s remaining diagnostic from var to promise at the same
+source span; assertion/test/skip failure maps are unchanged. All other original
+failures remain. Baseline SHA changes6fedd3e2 ->dea5db93; exact write qualification
+and the unchanged host comparator's actual0 are retained in the capture folder.
+Nine adversarial host-review controls pass, rejecting changed numeric storage
+under a pass verdict, missing/reordered body rows, guest verdict changes, erased
+unrelated failures, changed primary bytes, an invented ifn? blocker and the actual
+previous five-symbol-failure capture. These host checks are not a native rerun.
+
+Native behavior, core, compiler and native tests are source-equivalent to tested
+cfdd013d; this publication adds only evidence/docs/review guards and the measured
+baseline. Start the exact command through the prepared external
+`launch-eval-workspace.py full-workspace-after-reviewed-eval-baseline` launcher.
+It uses the existing unchanged durable workspace recorder with an absolute
+results/m12-eval output path, the warmed target and the exact command
+`cargo test --workspace --locked -- --test-threads=2`. Freeze source/HEAD through
+its terminal receipt. Final-head CI and independent promotion review remain
+required; no merge is authorized.
+
+Numeric operand-subset completion is distinguished from the remaining source-form
+candidates: eq/not-eq/num stay regex-blocked. The two common Decimal equality
+source rows and six :clj-only equality/boxing/class rows need explicit scope/
+acceptance treatment before claiming complete #338/#339 acceptance. Suss retains
+its :suss/:default reader policy and does not claim JVM primitive boxing interop.
+No extra skips, weakened criteria or regex/num shortcut is introduced here.

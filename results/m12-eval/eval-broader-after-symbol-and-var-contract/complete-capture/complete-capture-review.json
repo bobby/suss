@@ -1,0 +1,61 @@
+{
+  "baseline_written": false,
+  "capture_sha256": "298d8edf0785f7cc5b2f3fe2691415be3b538baa8959d7cc6bf5b05e6c4902df",
+  "complete_bodies": {
+    "clojure.core-test.eval": {
+      "actual_rows": 34,
+      "guest_ordinals": [
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "host_matches": 29
+    },
+    "clojure.core-test.symbol": {
+      "actual_rows": 61,
+      "guest_ordinals": [],
+      "host_matches": 61
+    },
+    "clojure.core-test.var-qmark": {
+      "actual_rows": 34,
+      "guest_ordinals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "host_matches": 26
+    }
+  },
+  "counts": {
+    "fail": 105,
+    "guest-judged": 106,
+    "namespaces-failed": 63,
+    "not-executed": 1374,
+    "pass": 5354,
+    "skipped": 0
+  },
+  "numeric_subsets": {
+    "bigint-ratio": {
+      "primary_rows": 229,
+      "strict_host_matches": 229
+    },
+    "decimal": {
+      "primary_rows": 200,
+      "strict_host_matches": 200
+    }
+  },
+  "original_native_exit_code": 101,
+  "parent_baseline_sha256": "6fedd3e20fe35172c12e45c7760d6ce6e1859980e15ad3c6e2f25f4646f1992e",
+  "parent_capture_sha256": "926f27f1becc38f75bba59956eefbe53a9d99b0a9a15f0886620a228e7639971",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "prior_comparable_successes_preserved": 5346,
+  "qualification": "Host review of an observed native101. Only the completely executed eval/symbol/var? namespace failures are removed and the still-blocked ifn? diagnostic advances from var to promise. All previous comparable successes and all other failures remain. Native rerun/workspace acceptance remain separate.",
+  "raw_rows": 5564
+}

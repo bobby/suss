@@ -46,10 +46,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
   },
-  "clojure.core-test.eval": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071"
-  },
   "clojure.core-test.ffirst": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.ffirst (Some(\"<root>/clojure/core_test/ffirst.cljc\")): Unresolved Runtime name ffirst at bytes 251..1277"
@@ -72,7 +68,7 @@
   },
   "clojure.core-test.ifn-qmark": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name var at bytes 352..1464"
+   "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name promise at bytes 352..1464"
   },
   "clojure.core-test.intern": {
    "stage": "namespace",
@@ -194,10 +190,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.subs (Some(\"<root>/clojure/core_test/subs.cljc\")): Unresolved Runtime name subs at bytes 228..2414"
   },
-  "clojure.core-test.symbol": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.symbol (Some(\"<root>/clojure/core_test/symbol.cljc\")): Unresolved Runtime name var at bytes 234..3104"
-  },
   "clojure.core-test.take-last": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.take-last (Some(\"<root>/clojure/core_test/take_last.cljc\")): Unresolved Runtime name take-last at bytes 245..1135"
@@ -209,10 +201,6 @@
   "clojure.core-test.uuid-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unresolved Runtime name parse-uuid at bytes 231..1206"
-  },
-  "clojure.core-test.var-qmark": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.var-qmark (Some(\"<root>/clojure/core_test/var_qmark.cljc\")): Unresolved Runtime name var at bytes 517..1919"
   },
   "clojure.core-test.when-first": {
    "stage": "namespace",

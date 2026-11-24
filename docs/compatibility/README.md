@@ -15,11 +15,15 @@ storage/effect observations cover controlled bounds, conversion errors, GC and
 fresh streams. See [random-provider evidence](../../results/m12-random/README.md).
 The original16 some-fn,31 constantly and31 lazy-seq rows execute; their existing
 zero/two/ten guest judgments stay explicit. All prior comparable observations
-remain valid. Focused native eval now executes all34 unchanged original assertions with29
-host matches and five explicit opaque function/Var judgments. Its three exact
-numeric rows match on the host. Full-capture preservation and the remaining
-public eval failure/effect criteria retain separate gates; see
-[eval evidence](../../results/m12-eval/README.md).
+remain valid. Native compiled eval and real binding-cell Vars now execute all34
+unchanged eval assertions (29host+5originalguest), all61 symbol assertions and
+all34 var? assertions (26host+8originalguest). Fresh phase/GC/failure/cancellation
+controls and a full5564-row capture preserve every prior comparable success.
+The reviewed baseline removes only these completed namespace-load failures and
+keeps ifn?'s actual missing-promise blocker. All229 BigInt/Ratio and200 Decimal
+tagged-operand rows match independently; these subsets do not establish whole
+numeric source-form conformance. Exact workspace, review and final-head CI retain
+separate gates; see [eval evidence](../../results/m12-eval/README.md).
 
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate

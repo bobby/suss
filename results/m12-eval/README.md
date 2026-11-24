@@ -1,4 +1,50 @@
-# Compiled eval dependency
+# Compiled public eval and real Vars
+
+Native Runtime and isolated Macro sessions compile form data through their own
+persistent analyzer/emitter and live binding cells. Public eval supports recursive
+reentry, actual functions and Vars (including nested/quoted constants), dynamic
+namespace/math context, top-level do failure boundaries and evaluated macros.
+Macro declarations compile their real body once in the owning Macro Store;
+captured roots survive redefinition, GC and public owner replacement. Cumulative
+allowances and cancellation cover compilation and isolated calls. Pure AOT
+retains the explicit missing-compiler-capability error and its import contract.
+
+At `7fde2815`, all25 public target tests pass, including27 fresh symbol controls
+in both phases, and all6 retained identifier tests execute the original40-row
+implementation corpus and every fixed/spread invocation guard. The complete
+original eval, symbol and var? bodies execute34/61/34 ordered rows. Their host/
+guest results are29/5,61/0 and26/8, with precisely the original opaque judgments,
+zero failures/unexecuted/skips and strict host matches for eval's numeric rows.
+
+The frozen broader run at `cfdd013d` passes the public/unit group, all23 selected
+numeric/module/artifact/budget targets, optimized random effects and Java/Node-free
+bootstrap reproduction. Its318.58s native suite capture returns the original101
+against the former baseline. Strict host review then proves all5564 raw rows,
+all5346 prior comparable successes, exactly129 newly executed rows and unchanged
+primary/count/skip/guest rules. The five symbol failures from the earlier capture
+are fixed, not added to the baseline. The measured update removes only the three
+completed namespace failures and advances ifn?'s remaining failure from var to
+promise. The unchanged host comparator returns0 against that reviewed update.
+
+[Capture review](eval-broader-after-symbol-and-var-contract/complete-capture/complete-capture-review.json),
+[baseline write qualification](eval-broader-after-symbol-and-var-contract/complete-capture/reviewed-eval-baseline-write.json),
+[original native101 receipt](eval-broader-after-symbol-and-var-contract/complete-capture/suite-commands.json.gz),
+and [adversarial review controls](test_complete_capture_review.py) retain the exact
+evidence. Nine guard controls reject altered operands even with a pass verdict,
+missing/reordered rows, changed guest verdicts, erased unrelated failures,
+changed primary bytes and an invented remaining blocker. The actual earlier
+five-symbol-failure capture is also rejected.
+
+All229 BigInt/Ratio and200 Decimal tagged-operand observations independently
+match. These are operand-subset results, not a claim of all numeric source-form
+or whole-language conformance. Regex-blocked eq/not-eq and num namespaces remain
+explicit in the baseline; numeric issue completion requires a separate scope/
+acceptance audit. The exact two-thread workspace baseline, independent promotion
+review and final-head CI remain separate required gates. No merge is authorized.
+
+Historical development receipts follow. Each belongs to its recorded source and
+does not replace the current complete-capture or workspace requirements.
+
 
 Primary contains24 actual Clojure1.12.6 observations, the complete eval form,
 EPL notice, exact JAR/entry/source/stdout hashes and original expressions.
