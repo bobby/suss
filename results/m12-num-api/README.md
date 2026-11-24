@@ -55,3 +55,23 @@ actual AOT checks18 values plus2 compile-stage failures. Original eq/not-eq keep
 the same3 explicit narrow-number platform differences. Source/HEAD unchanged.
 Broader compiler/hint/WIT/cache/budget guards, complete capture, exact workspace,
 independent review and final-head CI remain separate requirements.
+
+
+### Source floating Objects retain boxed replacement dispatch (2026-11-24)
+
+The broader source-hint command returns101 at clean5b0a9726: original ADR-0004
+raw-core Runtime/Macro and actual AOT controls trap when raw-double is replaced
+by a boxed Long function. These controls are explicitly Suss's primitive-entry
+fallback contract; no primary or test expectation changes. Four earlier source
+hint/overload/method targets pass; later command stages do not execute.
+
+The physical floating Object materializer now tests the actual value before
+copying Double fields. Definite primitive Doubles retain the raw path; actual
+boxed Doubles get a fresh Object; other boxed replacements retain their actual
+value for ordinary numeric dispatch or language errors. The previous blind
+Double cast caused the trap. The frozen focused gate returns0 for all three
+commands: original raw-core, complete Num/Object native and AOT targets, and
+strict complete numeric bodies. All20 Num API and16 Object-context controls,
+142 equality host matches and26 default-num rows retain their earlier results.
+Source/HEAD unchanged; individual seconds and receipts are retained. Wider
+compiler/resource/WIT/cache/budget/bootstrap and final acceptance remain separate.

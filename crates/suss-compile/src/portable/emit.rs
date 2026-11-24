@@ -2429,13 +2429,23 @@ fn emit_function(
                     continue;
                 }
                 if locals.of(arguments[0]) == unboxed::Repr::Double {
-                    code.push(LocalGet(locals.raw(arguments[0])));
+                    code.extend([LocalGet(locals.raw(arguments[0])), StructNew(runtime_abi::NUMBER)]);
                 } else {
+                    // ADR-0004 preserves an actual boxed replacement when a
+                    // hinted callee loses its primitive entry. Only an actual
+                    // Double needs a fresh floating Object; retain other values
+                    // for the ordinary boxed consumer and its language errors.
+                    locals.push_boxed(&mut code, arguments[0]);
+                    code.extend([RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                        If(BlockType::Result(VALUE))]);
                     locals.push_boxed(&mut code, arguments[0]);
                     code.extend([RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }]);
+                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 },
+                        StructNew(runtime_abi::NUMBER), Else]);
+                    locals.push_boxed(&mut code, arguments[0]);
+                    code.push(End);
                 }
-                code.extend([StructNew(runtime_abi::NUMBER), LocalSet(inst.result.0 as u32 + offset)]);
+                code.push(LocalSet(inst.result.0 as u32 + offset));
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }

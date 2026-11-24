@@ -26,7 +26,7 @@
   "inline_implementation": {
     "crates/suss-compile/src/portable/hir.rs": "633565e84fea96e51f3414ea35e432defe457f8b06a8b2030b3f796a48ae4653",
     "crates/suss-compile/src/portable/hir/local_hints.rs": "40d37d2df2633bc884f47c439e925103b07e9fa17e278e4f65ebf14fe44d6755",
-    "crates/suss-compile/src/portable/emit.rs": "61ca9da581408dc39a349173e9269771a14ae927683149d1657e6236aaa1d784",
+    "crates/suss-compile/src/portable/emit.rs": "c20238b809221bb64dbd2e987b3ec0ed434bdd66e4c16d48cc29628e1cd7c49c",
     "crates/suss-compile/src/portable/ir.rs": "2a020fdef0819b3b16e68b2897b356010e852928e2a3f1ef1e8ccea7a039b08c"
   },
   "inline_evidence": "results/m12-num-api"
