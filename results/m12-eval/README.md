@@ -360,3 +360,32 @@ eval/Var additions; their actual adapted forms and primary fixtures are unchange
 These metadata updates do not reclassify old frozen receipts. The new broader
 gate hashes every tracked input and keeps a separate strict capture review before
 any baseline update.
+
+
+### Eval validation at the frozen scalar/class correction (2026-11-24)
+
+At3f79ff38 the exact baseline `cargo test --workspace --locked --
+--test-threads=2` returns0 in14,291.917s. The durable scope terminates normally;
+all recorded inputs and checked-out HEAD remain unchanged. Compressed full log
+and source receipt are retained under
+`results/m12-eval/full-workspace-after-scalar-and-class-root-corrections`.
+
+The preceding seven-command broader gate also returns0, including public eval,
+existing hosts, numeric/module/artifact/budget guards, the optimized random
+effect check, Java/Node-free double-bootstrap reproduction, fresh actual native
+suite capture and unchanged strict capture review. Complete eval retains34 rows:
+29 host matches and the same five guest judgments at ordinals15-19; all three
+numeric eval rows match independently. Symbol61 and Var34 retain their exact
+counts/judgments. All5,346 prior comparable successes are conserved; no baseline,
+primary, skip/count/opaque rule or original suite bytes change. Numeric tagged
+subsets match229/229 and200/200; full #338/#339 source-form acceptance remains a
+separate requirement.
+
+Remote foundation, all eight integration shards and aggregate pass on3f79ff38
+in run45411802198. The primary verifier passes again after the workspace terminal.
+The live-Var verifier first detects three stale source digests from the scalar/
+class corrections. Refreshing only those digests makes it pass; upstream, primary,
+adaptation, verifier and frozen native receipts are unchanged. The old record and
+actual before/after exits are kept under provenance-refresh-after-scalar-class-roots.
+Independent review and passing CI on the final published head still gate ready
+status. No merge is authorized.
