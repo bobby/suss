@@ -155,3 +155,32 @@ terminals finish: it requires native0 against the explicit ledger, unchanged
 complete row identities/classifications, preserved earlier successful judgments
 and229/200 independently matching numeric tagged rows. API/AOT, default26,
 workspace, independent review and final-head CI remain separate gates.
+
+### Reader and record-test alignment after full CI (2026-11-24)
+
+At7b71, CI45482784311 integration3 reports two owned reader-test failures:
+its structural NaN detector uses `(not= x x)`, and a direct reader check expects
+that expression to be true for a retained boxed NaN. Integration6 fails Rust
+exhaustiveness checking because the record-factory span eraser lacks the new
+Pattern leaf. The actual logs and exact source-before overlay are retained in
+`ci-reader-pattern-repair-before`; these are source/test diagnostics, not an
+Actions budget refusal or a native numeric-kernel failure.
+
+Fresh pinned Clojure1.12.6 and the existing native binary agree on all three
+reader controls: the same NaN object has `=` true, `not=` false and numeric `==`
+false; repeated special-token reads retain the actual root; numeric `==` detects
+NaN without depending on generic Object equality. See `reader-nan-ci-primary`.
+The conformance helper now uses numeric `==` for NaN detection. Direct assertions
+check the observed Object and numeric behavior, including repeated-read identity.
+The immutable shared corpus, original suite primary/count/skip/opaque rules and
+numeric production code are unchanged. The record span eraser treats Pattern as
+a leaf while retaining every existing byte-pinned factory comparison.
+
+The current arithmetic page also replaces its stale statements that integer
+fractions return doubles and promoting arithmetic awaits BigInt. That prose
+follows the accepted ADR and retained exact numeric controls; the historical
+ABI-v3 record remains unchanged. These edits occur after the numeric14-stage
+terminal, before a replacement numeric workspace baseline. The old queued7b71
+baseline is superseded; #516's live9a026 workspace is untouched. Fresh compilation
+of all tests and execution of the affected targets are required before publishing
+this repair checkpoint. Earlier7b71 receipts retain their exact source identity.

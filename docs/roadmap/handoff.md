@@ -35568,3 +35568,19 @@ validation are required on this integrated source. The integrated capture
 reviewer requires actual inner native0, all prior observation identities and
 successful decisions, plus229/200 tagged numeric matches against the unchanged
 primary; outer producer0 alone is insufficient.
+
+CI45482784311 at7b71 exposes two reader-test NaN assumptions and a missing
+Pattern leaf in the record-factory span eraser. Exact source/logs are retained
+under results/m12-num-api/ci-reader-pattern-repair-before. The fresh pinned
+reader-nan-ci-primary controls and existing native binary both return
+[[true false false] [true true false] [true true true]]: same-object Object
+equality is reflexive for NaN, numeric == is not, and repeated special-token
+reads retain the root. Use numeric == for the structural NaN detector; retain
+explicit Object/numeric and repeated-read checks. Add Pattern as a leaf to the
+span eraser without changing golden factory bytes or the shared reader corpus.
+Only owned test helpers and arithmetic documentation change; numeric production,
+original primary, suite/count/skip/opaque rules and explicit ledger stay intact.
+The numeric14-stage terminal is already complete, so its queued7b71 full baseline
+must be replaced after these repairs are validated. Keep the active9a026 eval
+workspace untouched; its result remains independent. The old controller's numeric
+head guard must refuse the superseded head before launching any old baseline.

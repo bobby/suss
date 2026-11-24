@@ -88,11 +88,13 @@ fn sessions() -> Vec<(Session, CompiledMacros)> {
 /// Structural equality as the Rust conformance test checks it: lists and
 /// vectors differ, numbers compare with their kind (long or double) and sign
 /// and NaN equals NaN, and metadata must be equal at every level.
+/// Numeric `==` detects NaN: ordinary `=` can be reflexive for the same boxed
+/// object, as the pinned Clojure reader controls demonstrate.
 const SAME: &str = "(defn same? [a b]
   (and (= (meta a) (meta b))
        (cond
          (number? a) (and (number? b)
-                          (or (and (not= a a) (not= b b))
+                          (or (and (not (== a a)) (not (== b b)))
                               (and (== a b) (= (str a) (str b)))))
          (map? a) (and (map? b) (= (count a) (count b))
                        (every? (fn [e] (and (contains? b (key e)) (same? (val e) (get b (key e))))) a))
@@ -293,7 +295,8 @@ fn read_string_follows_clojure() {
             // Characters are one-unit strings; numbers have the spec's diagnostics.
             "(= \"a\" (read-string \"\\\\a\"))",
             "(= \"Divide by zero\" (try (read-string \"1/0\") (catch :default e (ex-message e))))",
-            "(let [x (read-string \"##NaN\")] (not= x x))",
+            "(let [x (read-string \"##NaN\")] (and (= x x) (not (not= x x)) (not (== x x))))",
+            "(let [a (read-string \"##NaN\") b (read-string \"##NaN\")] (and (= a b) (identical? a b) (not (== a b))))",
             "(== 9007199254740991 (read-string \"9007199254740991\"))",
             "(== 2 (read-string \"4/2\"))",
         ] {

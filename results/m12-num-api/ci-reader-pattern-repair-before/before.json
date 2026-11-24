@@ -1,0 +1,15 @@
+{
+  "head": "7b71a47b8b60c3b47e69ebb3eabe098270521725",
+  "inputs": {
+    "crates/suss-cli/tests/record_factory_preservation.rs": "52896e1e51eb5355a25f7dc26b48452afabcbdf99de3a920d1b4e918fa461698",
+    "crates/suss-cli/tests/read_string.rs": "b6dae34754addb6213b702e2188b7f400ff1ee5a52857a0a48b80fb916cee59c",
+    "docs/runtime/arithmetic-values.md": "5119fcd787fa4818a897e945cd72603f8d6f8c3c146e39a76d6103b7912fbdd8"
+  },
+  "ci_run": 45482784311,
+  "failed_jobs": {
+    "integration3": 138760058500,
+    "integration6": 138760058312
+  },
+  "reader_nan_primary_and_native_match": true,
+  "source_validation_state": "F14 actual terminal/all0 already complete; no active local F validator. J workspace remains active/unchanged. The queued F7b71 baseline is superseded by confirmed CI test-helper defects; old chain has a strict head guard and must not launch an old baseline. After J terminal, expect that stale numeric guard to refuse the new head; use a new numeric baseline launcher after focused repair validation."
+}
