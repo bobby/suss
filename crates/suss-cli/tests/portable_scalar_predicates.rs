@@ -54,7 +54,7 @@ fn primitive_predicates_preserve_nil_boolean_numeric_and_utf16_distinctions() {
     }
 }
 #[test]
-fn identical_compares_primitive_values_and_nominal_references() {
+fn identical_preserves_scalar_representations_and_object_references() {
     let mut s = Session::new().unwrap();
     s.eval("(deftype Item [value]) (def item (Item. 7)) (def f (fn [] 7))")
         .unwrap();
@@ -63,8 +63,11 @@ fn identical_compares_primitive_values_and_nominal_references() {
         ("(identical? 7 8)", false),
         // A long and a double are distinct values, as in Clojure.
         ("(identical? 0 -0.0)", false),
-        ("(identical? ##NaN ##NaN)", false),
+        ("(identical? ##NaN ##NaN)", true),
         ("(let [n ##NaN] (identical? n n))", false),
+        ("(let [n ((fn [x] x) ##NaN)] (identical? n n))", true),
+        ("(identical? 1.5 1.5)", false),
+        ("(identical? 0.0 -0.0)", false),
         ("(identical? ##Inf ##Inf)", true),
         ("(identical? 0 false)", false),
         ("(identical? nil false)", false),

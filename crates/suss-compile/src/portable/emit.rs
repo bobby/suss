@@ -2419,6 +2419,14 @@ fn emit_function(
                 continue;
             }
             if let Operation::Nominal { operation: Nominal::BoxDoubleObject, arguments } = &inst.operation {
+                if locals.of(inst.result) == unboxed::Repr::Double {
+                    // A fresh logical Object, materialized only if needed.
+                    // Its own SSA slot/cache keeps aliases shared and distinct
+                    // source uses separate, without boxing a typed raw call.
+                    code.extend([LocalGet(locals.raw(arguments[0])), LocalSet(locals.raw(inst.result))]);
+                    for instruction in code.drain(..) { function.instruction(&instruction); }
+                    continue;
+                }
                 if locals.of(arguments[0]) == unboxed::Repr::Double {
                     code.push(LocalGet(locals.raw(arguments[0])));
                 } else {

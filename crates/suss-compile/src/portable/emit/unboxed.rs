@@ -307,6 +307,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
             if matches!(
                 instruction.operation,
                 Operation::Literal(Literal::Long(_) | Literal::Number(_))
+                    | Operation::Nominal { operation: super::super::hir::Nominal::BoxDoubleObject, .. }
                     | Operation::Arithmetic { .. }
                     | Operation::Comparison { .. }
                     | Operation::Bitwise { .. }
@@ -348,6 +349,17 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                     let next = match &instruction.operation {
                         Operation::Literal(Literal::Long(_)) => Lattice::Known(Repr::Long),
                         Operation::Literal(_) => Lattice::Known(Repr::Double),
+                        // Preserve a distinct source Object SSA value without
+                        // allocating when only a raw numeric consumer needs it.
+                        // Ordinary materialization caches its eventual box;
+                        // other source Object uses have distinct SSA results.
+                        Operation::Nominal { operation: super::super::hir::Nominal::BoxDoubleObject, arguments } => {
+                            match state[arguments[0].0] {
+                                Lattice::Top => Lattice::Top,
+                                Lattice::Known(Repr::Double) => Lattice::Known(Repr::Double),
+                                _ => Lattice::Known(Repr::Boxed),
+                            }
+                        }
                         Operation::Arithmetic { operator, arguments, coercing, primitive_overload } => {
                             arithmetic(*operator, &operands(arguments), *coercing, *primitive_overload)
                         }
@@ -408,7 +420,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
             if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &instruction.operation {
                 for argument in arguments { raw_use[argument.0] = true; }
             }
-            if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
+            if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast | Nominal::BoxDoubleObject, arguments } = &instruction.operation
                 && repr[arguments[0].0].definite().numeric()
             {
                 raw_use[arguments[0].0] = true;

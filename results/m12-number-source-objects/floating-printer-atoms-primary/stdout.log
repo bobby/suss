@@ -1,0 +1,8 @@
+"##Inf"
+"##-Inf"
+"##NaN"
+[false "##NaN"]
+[true :updated]
+[false "##NaN"]
+[true :updated]
+[:updated :updated]

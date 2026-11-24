@@ -83,8 +83,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small
   integers and the small-integer test read raw operands without boxing them:
-  a raw long is identical to an i31 or long box of its value, and a raw
-  double to a boxed double that compares equal.
+  a raw long is identical to an i31 or long box of its value. Floating
+  identity consumes actual source Objects; physical raw storage never selects
+  its equality/boxing semantics.
 - **Hinted arrays.** `(aget ^longs a i)` and `(aset ^longs a i v)`, and the
   other packed hints, cast `a` to a packed array of the hinted kind (#389).
   That's a checked cast, as Clojure's hint is: a wrong hint throws a language
@@ -223,10 +224,15 @@ copy. Entering a defining block invalidates its result and parameter caches;
 values defined outside the cycle retain one copy. No allocation moves before
 its first use. Inline arithmetic's throwing paths and a single return do not
 by themselves add cache flags to the hot loop.
-Results don't change, since `identical?` compares numbers by value
-([scalar predicates](scalar-predicates.md)). A long boxes to an i31 when it
-fits and to a `LONG` struct otherwise, and a double to a `NUMBER` struct; both
-are inline, without a runtime call.
+Source typing first distinguishes primitive floating consumption from existing
+Object values. Distinct Object uses create distinct logical SSA values; their
+own eventual materializations may be cached without merging source Objects.
+Known typed numeric consumers can retain raw floating values until an actual
+Object consumer needs the box. Floating identity then compares real references,
+while integral/UTF-16 identity keeps its platform rules
+([scalar predicates](scalar-predicates.md)). A long boxes to an i31 when it fits
+and to a LONG struct otherwise, and a double to a NUMBER struct; both are
+inline, without a runtime call.
 
 Long `+`, `-`, `*` and negation check for overflow inline. When the check
 fails, the compiler calls the boxed runtime operation on boxed copies of the
@@ -334,7 +340,10 @@ still checked on every invocation. The bounded pass handles one eligible
 1–31-element vector per function and leaves unknown indices, escapes and
 normalized async/future plans conservative. Source, failing probes, execution and
 allocation/instruction receipts are in [vector evidence](../../results/m12-vectors/README.md).
-The retained aliased-NaN difference is not a JVM compatibility success.
+Fresh source-context controls now match primitive/Object NaN distinctions in
+Runtime, Macro and actual AOT. The original142 eq/not-eq assertions host-match
+without guest/skip judgments; commands and scope remain in
+[source Object evidence](../../results/m12-number-source-objects/README.md).
 
 
 For the genuine shipped `nth`, its indexed miss also uses the owned core

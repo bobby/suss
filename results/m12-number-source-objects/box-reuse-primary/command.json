@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/numeric-box-reuse-and-predicate-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8176937103271484,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "c91e002dd7403ab10cb7148211a879687f971d32e9d43a5447a58fbfc7c0d757",
+  "stdout_sha256": "12622f837c5f6d4119705d37d27db1e27b19fbe89565a50956fc1294a7a4ae25",
+  "original_test_source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/crates/suss-cli/tests/clojure_numeric_box_reuse.rs",
+  "original_test_sha256": "12f6895c621610347dc717a6308df66ae9b7662b3cd4d05ed821a51d15c392dd"
+}

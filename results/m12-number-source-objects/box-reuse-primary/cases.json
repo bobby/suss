@@ -1,0 +1,62 @@
+[
+  {
+    "name": "box-reuse-1",
+    "expression": "(let [x (* -0.0 1.0) y (+ 3000000000 5) f (fn [v] v)] (loop [i 0 out []] (if (< i 4) (let [a (f x) b (if (zero? (bit-and i 1)) (f y) (identity y))] (recur (inc i) (conj out [a b]))) [x y out])))",
+    "old_suss_expected": "[-0.0 3000000005 [[-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005]]]",
+    "observed_edn": "[-0.0 3000000005 [[-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005]]]"
+  },
+  {
+    "name": "box-reuse-2",
+    "expression": "(let [f (fn [v] v)] (loop [i 0 d 1.5 w 3000000000 out []] (if (< i 4) (let [a (f d) b (f w) a2 (if (zero? (bit-and i 1)) (f d) (identity d)) b2 (f w)] (recur (inc i) (+ d 0.5) (+ w 2) (conj out [a b a2 b2]))) out)))",
+    "old_suss_expected": "[[1.5 3000000000 1.5 3000000000] [2.0 3000000002 2.0 3000000002] [2.5 3000000004 2.5 3000000004] [3.0 3000000006 3.0 3000000006]]",
+    "observed_edn": "[[1.5 3000000000 1.5 3000000000] [2.0 3000000002 2.0 3000000002] [2.5 3000000004 2.5 3000000004] [3.0 3000000006 3.0 3000000006]]"
+  },
+  {
+    "name": "box-reuse-3",
+    "expression": "(let [f (fn [v] v) x (+ 1.25 0.5)] [(if true (f x) :unused) (if false :unused (f x)) (f x) (identical? (f x) (f x))])",
+    "old_suss_expected": "[1.75 1.75 1.75 true]",
+    "observed_edn": "[1.75 1.75 1.75 false]"
+  },
+  {
+    "name": "box-reuse-4",
+    "expression": "(let [x (+ ##NaN 0.0) f (fn [v] v) same (identity identical?) a (if (identity true) (f x) nil) b (if (identity false) nil (f x))] [(= a b) (== a b) (identical? a b) (same a b) (count (hash-set a b)) (get {a 1} b :miss)])",
+    "old_suss_expected": "[false false false false 2 :miss]",
+    "observed_edn": "[false false false false 2 :miss]"
+  },
+  {
+    "name": "direct-nan-object-identity",
+    "expression": "(identical? ##NaN ##NaN)",
+    "old_suss_expected": null,
+    "observed_edn": "true"
+  },
+  {
+    "name": "raw-nan-local-identity",
+    "expression": "(let [n ##NaN] (identical? n n))",
+    "old_suss_expected": null,
+    "observed_edn": "false"
+  },
+  {
+    "name": "object-nan-local-identity",
+    "expression": "(let [n (identity ##NaN)] (identical? n n))",
+    "old_suss_expected": null,
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-finite-double",
+    "expression": "(identical? 1.5 1.5)",
+    "old_suss_expected": null,
+    "observed_edn": "false"
+  },
+  {
+    "name": "signed-zero-identity",
+    "expression": "(identical? 0.0 -0.0)",
+    "old_suss_expected": null,
+    "observed_edn": "false"
+  },
+  {
+    "name": "lambda-object-nan-local-identity",
+    "expression": "(let [n ((fn [x] x) ##NaN)] (identical? n n))",
+    "old_suss_expected": null,
+    "observed_edn": "true"
+  }
+]

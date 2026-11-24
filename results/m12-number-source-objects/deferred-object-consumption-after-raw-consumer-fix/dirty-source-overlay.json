@@ -1,0 +1,14 @@
+{
+  "head": "e487f97348f384f7f6f1b3790e012279d97601b6",
+  "files": {
+    "crates/suss-cli/tests/clojure_numeric_box_reuse.rs": "0d90afa5efea81ee094707523c8be4cf2fa37d348e9c5a49c0b88ff2682a5d1a",
+    "crates/suss-cli/tests/portable_scalar_predicates.rs": "2164bd19e0120c1d1ff26d64479782fcfb6de031035845bc910b11ba106d7077",
+    "crates/suss-compile/src/portable/emit.rs": "74c70ddb0f092dec4b7b5cc2b3b3a89c69224822eb10163071665f8ec30e7ae2",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "6aed3e053dcb76a7f0b4ad3723c572e9a6432c5543b301bf72e2a6dbffeb831c",
+    "crates/suss-compile/tests/portable_primitive_entries.rs": "43547ae605162b2ee7895b67199d77331db59cb2f10d920f10ebb7ad255ba1bb",
+    "docs/runtime/scalar-predicates.md": "11cc5d18d56dcf7e667ee7366553237ea6c9f4a2997f84b59499193e228975e7",
+    "docs/runtime/unboxed-locals.md": "1faeeaa5ed9f9e631bcd9cf5385ef2f24b7cf6c20585826835a0b1c3b3096cac",
+    "results/m12-number-source-objects/box-reuse-primary/cases.json": "b88a63859f7d9ad14dfa494d4010b22268248c375c0ada3fa5199c1fc1477902"
+  },
+  "reason": "Actual unchanged-source terminal101: numeric captures print computed infinity as -Infinity after floating reference identity correction; all20 raw tests and4 source-object tests and2 box-reuse tests terminal0."
+}

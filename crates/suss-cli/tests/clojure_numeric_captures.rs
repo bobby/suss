@@ -3,23 +3,95 @@ use suss_cli::portable_session::Session;
 
 const CASES: &[(&str, &str)] = &[
     ("(let [x 1.25 f (fn [] (+ x 2.0))] ((identity f)))", "3.25"),
-    ("(let [x 3000000000 f (fn again [n] (if (= n 0) (+ x 1) (again (- n 1))))] (f 3))", "3000000001"),
-    ("(let [x 3000000000 f (fn ([] (+ x 1)) ([a] (+ x 2)))] [(f) (f :unused)])", "[3000000001 3000000002]"),
-    ("(let [x 1.25 f (fn [& xs] (+ x 2.0))] [(f) (f :a :b)])", "[3.25 3.25]"),
-    ("(let [x 1.25 f (fn ^double [] (+ x 2.0))] [(f) ((identity f))])", "[3.25 3.25]"),
-    ("(let [x -0.0 f (fn [] (* x 2.0))] [(f) (/ 1.0 (f))])", "[-0.0 ##-Inf]"),
-    ("(let [x ##NaN f (fn [] (+ x 1.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])", "[false false false]"),
-    ("(let [x 9223372036854775807 f (fn [] (+ x 1))] (try (f) (catch :default e (ex-message e))))", "\"long overflow\""),
+    (
+        "(let [x 3000000000 f (fn again [n] (if (= n 0) (+ x 1) (again (- n 1))))] (f 3))",
+        "3000000001",
+    ),
+    (
+        "(let [x 3000000000 f (fn ([] (+ x 1)) ([a] (+ x 2)))] [(f) (f :unused)])",
+        "[3000000001 3000000002]",
+    ),
+    (
+        "(let [x 1.25 f (fn [& xs] (+ x 2.0))] [(f) (f :a :b)])",
+        "[3.25 3.25]",
+    ),
+    (
+        "(let [x 1.25 f (fn ^double [] (+ x 2.0))] [(f) ((identity f))])",
+        "[3.25 3.25]",
+    ),
+    (
+        "(let [x -0.0 f (fn [] (* x 2.0))] [(f) (/ 1.0 (f))])",
+        "[-0.0 ##-Inf]",
+    ),
+    (
+        "(let [x ##NaN f (fn [] (+ x 1.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])",
+        "[false false false]",
+    ),
+    (
+        "(let [x 9223372036854775807 f (fn [] (+ x 1))] (try (f) (catch :default e (ex-message e))))",
+        "\"long overflow\"",
+    ),
     ("(let [x 127.1 f (fn [] x)] (byte ((identity f))))", "127"),
-    ("(let [x 2147483648.0 f (fn [] (+ x 0.0))] (try (int ((identity f))) (catch :default e :error)))", ":error"),
-    ("(let [x (identity 3000000000) f (fn [] x)] (identical? ((identity f)) ((identity f))))", "true"),
-    ("(let [x 1.5 f (fn [b] (if b x x))] [(f true) (f false)])", "[1.5 1.5]"),
-    ("(let [x (identity 3000000000) f (fn ([] (+ x 1)) ([a] x))] [(f) (identical? (f :a) (f :b))])", "[3000000001 true]"),
-    ("(let [x (identity 3000000000) f (fn [] (fn [] x)) g ((identity f))] [(g) (identical? (g) (g))])", "[3000000000 true]"),
-    ("(let [x 1.5 f (with-meta (fn [] (+ x 2.0)) {:tag :kept})] [(f) (:tag (meta f))])", "[3.5 :kept]"),
-    ("(let [events (atom []) x (do (swap! events conj :capture) 1.5) f (fn [] (do (swap! events conj :body) (+ x 2.0)))] [(f) (f) @events])", "[3.5 3.5 [:capture :body :body]]"),
-    ("(let [x 1.5 f (fn [] (+ x 2.0))] [(f) (try (f 1) (catch :default e :arity)) (f)])", "[3.5 :arity 3.5]"),
-    ("(let [x 1.5 f (fn [] (+ x 2.0)) out (atom f)] [(@out) (fn? @out)])", "[3.5 true]"),
+    (
+        "(let [x 2147483648.0 f (fn [] (+ x 0.0))] (try (int ((identity f))) (catch :default e :error)))",
+        ":error",
+    ),
+    (
+        "(let [x (identity 3000000000) f (fn [] x)] (identical? ((identity f)) ((identity f))))",
+        "true",
+    ),
+    (
+        "(let [x 1.5 f (fn [b] (if b x x))] [(f true) (f false)])",
+        "[1.5 1.5]",
+    ),
+    (
+        "(let [x (identity 3000000000) f (fn ([] (+ x 1)) ([a] x))] [(f) (identical? (f :a) (f :b))])",
+        "[3000000001 true]",
+    ),
+    (
+        "(let [x (identity 3000000000) f (fn [] (fn [] x)) g ((identity f))] [(g) (identical? (g) (g))])",
+        "[3000000000 true]",
+    ),
+    (
+        "(let [x 1.5 f (with-meta (fn [] (+ x 2.0)) {:tag :kept})] [(f) (:tag (meta f))])",
+        "[3.5 :kept]",
+    ),
+    (
+        "(let [events (atom []) x (do (swap! events conj :capture) 1.5) f (fn [] (do (swap! events conj :body) (+ x 2.0)))] [(f) (f) @events])",
+        "[3.5 3.5 [:capture :body :body]]",
+    ),
+    (
+        "(let [x 1.5 f (fn [] (+ x 2.0))] [(f) (try (f 1) (catch :default e :arity)) (f)])",
+        "[3.5 :arity 3.5]",
+    ),
+    (
+        "(let [x 1.5 f (fn [] (+ x 2.0)) out (atom f)] [(@out) (fn? @out)])",
+        "[3.5 true]",
+    ),
+    // Clojure 1.12.6 observations: results/m12-number-source-objects/floating-printer-atoms-primary.
+    ("(pr-str (/ 1.0 0.0))", "\"##Inf\""),
+    ("(pr-str (/ -1.0 0.0))", "\"##-Inf\""),
+    ("(pr-str (/ 0.0 0.0))", "\"##NaN\""),
+    (
+        "(let [x ##NaN a (atom x)] [(compare-and-set! a x :updated) (pr-str @a)])",
+        "[false \"##NaN\"]",
+    ),
+    (
+        "(let [x (identity ##NaN) a (atom x)] [(compare-and-set! a x :updated) @a])",
+        "[true :updated]",
+    ),
+    (
+        "(let [a (atom (/ 0.0 0.0))] [(compare-and-set! a (/ 0.0 0.0) :updated) (pr-str @a)])",
+        "[false \"##NaN\"]",
+    ),
+    (
+        "(let [a (atom ##NaN)] [(compare-and-set! a ##NaN :updated) @a])",
+        "[true :updated]",
+    ),
+    (
+        "(let [a (atom (/ 0.0 0.0))] [(swap! a (fn [x] :updated)) @a])",
+        "[:updated :updated]",
+    ),
 ];
 
 fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {

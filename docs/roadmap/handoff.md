@@ -35304,3 +35304,33 @@ Receipts and qualifications are under results/m12-number-source-objects.
 Next align legacy floating identity expectations with the pinned primary and run
 broader predicate/hint/WIT/raw-lane/budget/bootstrap/artifact checks. The separate
 frozen eval workspace run retains its own source/HEAD and terminal evidence.
+
+
+### Deferred source Objects, exceptional printing and atom identity (2026-11-24)
+
+A typed local Double call exposed eager Object allocation inside its numeric
+loop: the corrected emitted-code check first returns101 in2.14s, then0 in172.14s
+after deferring physical materialization of the distinct source Object SSA value.
+The first broader check finds a missing raw-consumer classification and panics;
+its exact pre-correction source is retained. After that fix all20 raw primitive/
+local/capture layout tests pass, along with Object and box-reuse targets.
+
+The next actual failure is computed negative infinity printing -Infinity instead
+of ##-Inf: literal reference identity no longer stands in for numeric comparison.
+The printer now uses numeric comparisons for both infinities. Atom identity drops
+the obsolete JavaScript NaN fallback. Eight fresh Clojure1.12.6 controls retain
+computed exceptional printing and primitive/shared/distinct NaN atom behavior.
+
+The frozen deferred-object-consumption-after-printer-fix gate returns0 for all
+eight commands, source and HEAD unchanged. It runs6 capture/atom tests (original18
+capture programs plus8 new primary controls in Runtime/Macro and actual AOT),
+15 Object/literal/predicate/box-reuse target tests, strict complete142-row original
+eq/not-eq bodies and all26 default-num rows (23 host matches, the same three
+explicit narrow-number differences), Java/Node-free double bootstrap and4
+bootstrap execution tests, core-import/sequence/numeric provenance and unchanged
+upstream contract. Individual actual receipts, earlier failures, source overlays
+and independent primary outputs are under results/m12-number-source-objects.
+
+Public num inline boundaries still need their own regression/correction. Full
+numeric issue acceptance, exact workspace, independent review and final-head CI
+remain separate gates; original suite/primary/count/skip/opaque rules do not change.

@@ -76,3 +76,59 @@ native observations are retained. All current source and HEAD hashes remain
 unchanged through the actual terminal batch. Broader compiler/predicate/hint/WIT/
 budget/cache/bootstrap checks, full workspace, independent review and final-head
 CI require separate evidence.
+
+## Typed numeric consumption and legacy predicate controls
+
+A focused emitted-loop check exposes an allocation after the semantic correction:
+a known local typed Double function received an eagerly materialized Object on
+each iteration. Its corrected test discovers the shared immutable one-f64-field
+box type instead of accessing a private Rust constant. The earlier test setup
+compile error is retained separately and is not the semantic counterexample.
+
+The actual before check returns101 in2.14s. Definite floating input now remains a
+distinct logical Object SSA value represented raw until Object materialization.
+A typed numeric consumer can use that raw value; aliases of the logical Object
+retain their eventual cache and separate source Objects retain separate SSA
+values. Other inputs keep their boxed path. The allocation check returns0
+in172.14s including recompilation, with source/HEAD unchanged. Native identity
+and strict body checks must be re-run after this representation change.
+
+The new10-control Clojure primary under box-reuse-primary independently checks
+all4 original box-reuse programs and floating predicate contexts. One legacy
+Suss-only expected result changes from [1.75 1.75 1.75 true] to the actual JVM
+[1.75 1.75 1.75 false]; the other3 programs are unchanged. Direct symbolic NaN
+identity is true, primitive-local NaN identity false, Object-local NaN identity
+true, and separate finite/signed-zero Double identity false. Updated tests retain
+all prior programs and add the observed distinctions. These corrections replace
+the old JavaScript-style Double value identity; Long/UTF-16 scalar choices remain
+explicit. No original suite, primary count/comparator or opaque/skip rule changes.
+
+
+### Deferred source Objects, exceptional printing and atom identity (2026-11-24)
+
+A typed local Double call exposed eager Object allocation inside its numeric
+loop: the corrected emitted-code check first returns101 in2.14s, then0 in172.14s
+after deferring physical materialization of the distinct source Object SSA value.
+The first broader check finds a missing raw-consumer classification and panics;
+its exact pre-correction source is retained. After that fix all20 raw primitive/
+local/capture layout tests pass, along with Object and box-reuse targets.
+
+The next actual failure is computed negative infinity printing -Infinity instead
+of ##-Inf: literal reference identity no longer stands in for numeric comparison.
+The printer now uses numeric comparisons for both infinities. Atom identity drops
+the obsolete JavaScript NaN fallback. Eight fresh Clojure1.12.6 controls retain
+computed exceptional printing and primitive/shared/distinct NaN atom behavior.
+
+The frozen deferred-object-consumption-after-printer-fix gate returns0 for all
+eight commands, source and HEAD unchanged. It runs6 capture/atom tests (original18
+capture programs plus8 new primary controls in Runtime/Macro and actual AOT),
+15 Object/literal/predicate/box-reuse target tests, strict complete142-row original
+eq/not-eq bodies and all26 default-num rows (23 host matches, the same three
+explicit narrow-number differences), Java/Node-free double bootstrap and4
+bootstrap execution tests, core-import/sequence/numeric provenance and unchanged
+upstream contract. Individual actual receipts, earlier failures, source overlays
+and independent primary outputs are under results/m12-number-source-objects.
+
+Public num inline boundaries still need their own regression/correction. Full
+numeric issue acceptance, exact workspace, independent review and final-head CI
+remain separate gates; original suite/primary/count/skip/opaque rules do not change.
