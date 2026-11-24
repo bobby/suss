@@ -279,9 +279,12 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
             (list 'quote [(get old :fn-var) (contains? pending :fn-var)])))"#,
             )
             .unwrap();
-        let value = session
+        // def now returns its real Var, as Clojure does. Inspect the staged
+        // initializer through the live root; keep all declaration assertions.
+        session
             .eval_with_macros("(def fixed (staged-function-facts))", &mut macros)
             .unwrap();
+        let value = session.eval("fixed").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {

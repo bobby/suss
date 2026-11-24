@@ -34576,3 +34576,11 @@ assertion. It now checks the same observed collision candidate as the rest of
 the test, preserving source-scope and hidden-payload guards. Continue with
 `macro-ci-remaining-after-catch-candidate --macro-ci-remaining-only` through the
 external launcher; the earlier passing targets are retained in their own receipt.
+
+The remaining-CI run at `25eee409` completed actual101 with frozen inputs.
+All8 binding-record guards pass. A declaration-function test then tried to decode
+the return of `def` as its initializer vector; the new real Var return correctly
+refuses ordinary form-data decoding. The test now reads the actual live root
+separately, retaining every staged declaration and snapshot assertion. Run
+`macro-declaration-after-ci-test-adaptations --macro-declaration-only` next to
+reach the complete primary controls first, then rerun the remaining CI targets.
