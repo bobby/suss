@@ -18,6 +18,8 @@ if sys.argv[2:] == ["--borrowed-session-only"]:
  commands=[('borrowed-session-view',['cargo','test','--workspace','--locked','--lib','portable_session::reentry::tests','--','--nocapture','--test-threads=2'])]
 elif sys.argv[2:] == ["--borrowed-analysis-only"]:
  commands=[('borrowed-analysis-view',['cargo','test','--workspace','--locked','--lib','portable_session::reentry::tests','--','--nocapture','--test-threads=2']),('analysis-graph-regressions',['cargo','test','--workspace','--locked','--lib','portable_macro_graph::','--','--nocapture','--test-threads=2'])]
+elif sys.argv[2:] == ["--borrowed-macro-only"]:
+ commands=[('borrowed-macro-authority',['cargo','test','--workspace','--locked','--lib','portable_macros::reentry::tests','--','--nocapture','--test-threads=2']),('existing-macro-regressions',['cargo','test','--workspace','--locked','--lib','portable_macros::','--','--nocapture','--test-threads=2']),('inline-module-macros',['cargo','test','--workspace','--locked','--test','inline_module_macros','--','--nocapture','--test-threads=2'])]
 else:assert len(sys.argv)==2,"Unknown installation gate selection"
 save();code=0
 for label,command in commands:
