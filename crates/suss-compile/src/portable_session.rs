@@ -466,7 +466,7 @@ fn own<C: AsContextMut<Data = ()>>(
     })
 }
 // Either root may be nil (None) when no frame or join is active.
-struct DynamicCheckpoint {
+pub(crate) struct DynamicCheckpoint {
     frame: Option<OwnedRooted<AnyRef>>,
 }
 // Snapshot the caller's rooted dynamic context, including native interop calls.

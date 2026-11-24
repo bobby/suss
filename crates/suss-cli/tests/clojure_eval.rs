@@ -1336,3 +1336,25 @@ fn evaluated_macro_calls_inherit_the_primary_caller_math_context() {
         include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/expression.sus"),
         include_str!("../../../results/m12-eval/promotion-review-findings/macro-math-context/primary.stdout"), 3);
 }
+
+
+fn supplemental_materialization_context_controls(start: usize, end: usize) {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/materialization-and-context-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 8);
+    let stdout = include_str!("../../../results/m12-eval/materialization-and-context-primary/stdout.log");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let source = format!("[{}]", rows[start..end].iter().map(|row| row["expression"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    let primary = format!("[{}]", rows[start..end].iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    promotion_review_controls("supplemental-materialization-context", &source, &primary, end-start);
+}
+
+#[test]
+fn eval_math_context_scopes_preserve_rounding_nil_and_exception_restoration() {
+    supplemental_materialization_context_controls(5, 8);
+}
+
+#[test]
+fn eval_function_constant_initialization_preserves_unit_effects_and_aliases() {
+    supplemental_materialization_context_controls(0, 5);
+}

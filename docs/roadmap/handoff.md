@@ -35154,3 +35154,27 @@ The prior complete workspace result remains valid evidence for its frozen source
 but does not cover these controls. CI45460496718 is canceled for these confirmed
 defects, not a budget refusal. Keep the same draft PR; fix, validate, independently
 review and require passing final-head CI before ready status.
+
+
+### Isolated eval MathContext inheritance and restoration (2026-11-24)
+
+The first correction transfers only validated precision/rounding scalars between
+Stores, preserving nil separately from an unlimited MathContext. The leased Macro
+host binds its own real *math-context* cell in a scoped dynamic frame. Preparation,
+evaluated macro declaration and raw invocation receive the actual caller context;
+restoration covers ordinary errors and uncatchable traps without refilling caller
+fuel. No MathContext object, Store pointer or frame crosses phase ownership.
+
+The first frozen gate returns0 for source check and the original3 primary controls
+in Runtime/Macro. A separate8-control primary records function constant alias/unit
+boundaries and three context rounding/nil/error-recovery controls. The subsequent
+frozen gate returns0 for both context tests, existing public eval budget/capability/
+cancellation controls, isolated-function cumulative budget and cancellation
+recovery. Its final command deliberately runs the still-unfixed five function
+constant/unit controls and returns101. This mixed-result batch is not all-pass
+evidence. All source/HEAD hashes remain unchanged; exact receipts are retained.
+
+The context values match the primary across rounding modes, nil/unlimited context
+and a throwing macro call. Function constant materialization and ExceptionInfo
+transfer remain separate review fixes, followed by fresh whole validation/review/
+final-head CI. Keep the same draft PR and do not merge.

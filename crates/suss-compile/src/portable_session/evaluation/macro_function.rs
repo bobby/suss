@@ -52,6 +52,7 @@ impl SessionHost<'_> {
             form,
             &namespace,
             allowance,
+            self.evaluation_math_context()?,
             self.interrupt.clone(),
             |mut template, source, names, spent| {
                 self.charge_host_work(spent)?;
@@ -209,6 +210,7 @@ impl SessionHost<'_> {
             &namespace,
             forms,
             self.operation_fuel_remaining()?,
+            self.evaluation_math_context()?,
             self.interrupt.clone(),
         )?;
         self.charge_host_work(spent)?;
