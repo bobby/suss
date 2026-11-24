@@ -34720,3 +34720,19 @@ HEAD to its terminal receipt. Then repeat the exact full workspace baseline;
 the earlier101 is never relabeled. Current-head CI45373118279 remains separate
 and is not rerun while its jobs are active. No core, eval, runtime or original
 corpus/baseline changes accompany this tooling emission repair.
+
+### Canonical macro-source focused validation (2026-11-24)
+
+At bbf77597, `analysis-macro-source-after-workspace-finding` completes all3
+commands with actual0 and unchanged HEAD/inputs. All17 analyzer EDN tests pass,
+including the unchanged original user_forms_round_trip assertion and the new
+attribute-preservation regression. The four source-environment/declaration targets
+pass all16 tests, and the complete public eval target passes all25. Deterministic
+compressed logs and source/command receipts are retained in that result folder.
+
+This follow-up adds evidence and this handoff only; executable source and tests
+are identical to validated bbf77597. Retry the exact workspace command through
+`launch-eval-workspace.py full-workspace-after-canonical-macro-source`, freezing
+source and HEAD through its terminal receipt. The earlier workspace101 and its
+actual failing assertion remain preserved; this focused0 does not replace the
+full baseline or final-head CI. No issue closure or merge is claimed.
