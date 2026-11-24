@@ -14,7 +14,14 @@ def review(primary_raw,baseline_raw,previous_raw,observed_raw):
  reference,baseline,previous,observed=map(json.loads,[primary_raw,baseline_raw,previous_raw,observed_raw])
  before_counts,before_failures=suite.compare(reference,previous);assert before_failures==baseline
  counts,measured=suite.compare(reference,observed)
- expected=copy.deepcopy(baseline);assert expected['namespaces'].pop('clojure.core-test.eval')['stage']=='namespace'
+ expected=copy.deepcopy(baseline)
+ for namespace in ['clojure.core-test.eval','clojure.core-test.symbol','clojure.core-test.var-qmark']:
+  assert expected['namespaces'].pop(namespace)['stage']=='namespace'
+ # The same ifn? namespace remains blocked; real Var support exposes promise.
+ # Preserve the precise independently observed remaining diagnostic.
+ blocker=expected['namespaces']['clojure.core-test.ifn-qmark']
+ assert blocker['stage']=='namespace' and blocker['diagnostic'].count('Unresolved Runtime name var at bytes 352..1464')==1
+ blocker['diagnostic']=blocker['diagnostic'].replace('Unresolved Runtime name var at bytes 352..1464','Unresolved Runtime name promise at bytes 352..1464')
  assert measured==expected,'unexpected failure change; inspect the complete proposed baseline'
  assert [r['namespace'] for r in observed['namespaces']]==reference['namespaces']
  refs={row['id']:row for row in reference['assertions']}
@@ -26,20 +33,27 @@ def review(primary_raw,baseline_raw,previous_raw,observed_raw):
   if suite.decide(refs[key],row)[0] is None:
    assert key in actual and suite.decide(refs[key],actual[key])[0] is None,key
    prior+=1
- test='clojure.core-test.eval/test-eval'
- body=[row for row in observed['assertions'] if row['test']==test]
- assert [row['ordinal'] for row in body]==list(range(1,35))
- assert next(row for row in observed['namespaces'] if row['namespace']=='clojure.core-test.eval')=={'namespace':'clojure.core-test.eval','status':'loaded'}
- guests=[]
- for row in body:
-  key=row['test']+'#'+str(row['ordinal']);reason,guest=suite.decide(refs[key],row);assert reason is None,(key,reason)
-  if guest:guests.append(row['ordinal'])
- assert guests==[15,16,17,18,19]
- for ordinal in [5,6,7]:assert suite.decide(refs[test+'#'+str(ordinal)],body[ordinal-1])==(None,False)
+ bodies={}
+ for namespace,leaf,count,guest_ordinals,host_matches in [
+  ('clojure.core-test.eval','test-eval',34,[15,16,17,18,19],29),
+  ('clojure.core-test.symbol','test-symbol',61,[],61),
+  ('clojure.core-test.var-qmark','test-var?',34,list(range(1,9)),26)]:
+  test=namespace+'/'+leaf
+  body=[row for row in observed['assertions'] if row['test']==test]
+  assert [row['ordinal'] for row in body]==list(range(1,count+1))
+  assert next(row for row in observed['namespaces'] if row['namespace']==namespace)=={'namespace':namespace,'status':'loaded'}
+  guests=[]
+  for row in body:
+   key=test+'#'+str(row['ordinal']);reason,guest=suite.decide(refs[key],row);assert reason is None,(key,reason)
+   if guest:guests.append(row['ordinal'])
+  assert guests==guest_ordinals and count-len(guests)==host_matches
+  if namespace=='clojure.core-test.eval':
+   for ordinal in [5,6,7]:assert suite.decide(refs[test+'#'+str(ordinal)],body[ordinal-1])==(None,False)
+  bodies[namespace]={'actual_rows':count,'host_matches':host_matches,'guest_ordinals':guests}
  wanted=before_counts.copy()
- for key,change in [('pass',29),('guest-judged',5),('not-executed',-34),('namespaces-failed',-1)]:wanted[key]+=change
+ for key,change in [('pass',116),('guest-judged',13),('not-executed',-129),('namespaces-failed',-3)]:wanted[key]+=change
  assert counts==wanted,'primary/count/skip/guest rules changed'
- assert len(observed['assertions'])==len(previous['assertions'])+34
+ assert len(observed['assertions'])==len(previous['assertions'])+129
  def tagged(node,tags):
   if isinstance(node,dict):return node.get('tag') in tags or any(tagged(v,tags) for v in node.values())
   if isinstance(node,list):return any(tagged(v,tags) for v in node)
@@ -50,7 +64,7 @@ def review(primary_raw,baseline_raw,previous_raw,observed_raw):
   for row in selected:
    assert row['id'] in actual and suite.decide(row,actual[row['id']])==(None,False),row['id']
   numeric[name]={'primary_rows':total,'strict_host_matches':total}
- return {'counts':counts,'raw_rows':len(actual),'prior_comparable_successes_preserved':prior,'eval':{'actual_rows':34,'host_matches':29,'guest_ordinals':guests},'numeric_subsets':numeric,'proposed_baseline':expected}
+ return {'counts':counts,'raw_rows':len(actual),'prior_comparable_successes_preserved':prior,'complete_bodies':bodies,'numeric_subsets':numeric,'proposed_baseline':expected}
 
 def main():
  out=Path(sys.argv[1]).resolve();receipt=json.loads((out/'suite-commands.json').read_text())
@@ -69,7 +83,7 @@ def main():
  baseline=(ROOT/'tests/oracle/clojure-test-suite-known-failures.json').read_bytes()
  report=review((ROOT/'tests/oracle/clojure-test-suite-observations.json').read_bytes(),baseline,previous,raw)
  proposed=report.pop('proposed_baseline')
- report.update(primary_sha256=PRIMARY_SHA,parent_baseline_sha256=BASELINE_SHA,parent_capture_sha256=PREVIOUS_SHA,capture_sha256=sha(raw),original_native_exit_code=101,baseline_written=False,qualification='Host review of an observed native101. Only the completed eval namespace failure is removed; native rerun/workspace acceptance remain separate.')
+ report.update(primary_sha256=PRIMARY_SHA,parent_baseline_sha256=BASELINE_SHA,parent_capture_sha256=PREVIOUS_SHA,capture_sha256=sha(raw),original_native_exit_code=101,baseline_written=False,qualification='Host review of an observed native101. Only the completely executed eval/symbol/var? namespace failures are removed and the still-blocked ifn? diagnostic advances from var to promise. All previous comparable successes and all other failures remain. Native rerun/workspace acceptance remain separate.')
  for name,value in [('complete-capture-review.json',report),('proposed-known-failures.json',proposed)]:
   path=out/name;assert not path.exists();path.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n')
  (out/'parent-random-baseline.json.gz').write_bytes(gzip.compress(baseline,mtime=0))

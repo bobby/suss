@@ -34639,3 +34639,25 @@ baseline. Only after their complete original body passes should the strict
 capture review account for the newly enabled namespaces and unchanged ifn?
 blocker. The exact-workspace launcher is prepared externally but not started;
 its command remains cargo test --workspace --locked -- --test-threads=2.
+
+At `7fde2815`, `symbol-and-var-complete-bodies-first-native` passes all4
+commands with frozen HEAD/inputs:27 fresh symbol observations in both phases
+and after GC, all25 public target tests, all6 retained symbol/Var tests (original
+40-row implementation corpus and all fixed/spread arity guards), and complete
+unaltered eval/symbol/var? bodies. Their counts are29host+5originalguest,
+61host+0guest, and26host+8originalguest, respectively; no failures/unexecuted/
+skips. The Var conversion identity control correctly follows fresh Clojure's
+false result, and original Symbol identity remains intact.
+
+The strict complete-capture reviewer now accounts for exactly129 newly executed
+rows across those3 namespaces, with116host/13originalguest judgments. It preserves
+all previous comparable successes and all unrelated failures. The still-blocked
+ifn? diagnostic changes only from missing var to missing promise at the same
+source span. The review requires exact failure/count equality, untouched primary/
+comparator/full harness, and229/229 plus200/200 strict numeric matches. A negative
+check still rejects the actual five-symbol-failure capture; no baseline is written.
+Repeat `eval-broader-after-symbol-and-var-contract --broader-eval-only` through
+the external durable launcher and freeze source/HEAD to its terminal receipt.
+This follow-up changes review/evidence/handoff only; executable source and tests
+remain identical to validated7fde2815. Exact workspace, independent promotion
+review and final-head CI remain separate required gates.
