@@ -35584,3 +35584,15 @@ The numeric14-stage terminal is already complete, so its queued7b71 full baselin
 must be replaced after these repairs are validated. Keep the active9a026 eval
 workspace untouched; its result remains independent. The old controller's numeric
 head guard must refuse the superseded head before launching any old baseline.
+
+Atc526ae71, compile-all-tests returns0 in774.960s, complete reader16 plus original
+record-factory preservation1 return0 in79.785s, and all remaining repair metadata
+checks return0, with source/HEAD/Binaryen unchanged. See compressed receipts under
+results/m12-num-api/ci-reader-pattern-repair-validation. CI integration4 also
+exposes the owned vector control's documented historical boxed-NaN divergence.
+Fresh pinned/native2 controls agree on retained [true false true] versus computed
+[false false false]. Promote only the old gap's expected value; preserve all23
+ordered source expressions, original21 primary pairs and the constructor control.
+Keep earlier frozen divergence evidence unchanged. The complete native/Macro/AOT
+vector target and a fresh complete capture must validate the repaired head before
+publishing the combined checkpoint and replacing the numeric workspace queue.

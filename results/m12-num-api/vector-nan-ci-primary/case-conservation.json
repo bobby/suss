@@ -1,0 +1,15 @@
+{
+  "target": "crates/suss-cli/tests/clojure_nonescaping_vectors.rs",
+  "before_sha256": "6d69320991bb415121e74bc05901a2bdbf7a0eef445a851c75ab96c373eeca6b",
+  "candidate": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/clojure_nonescaping_vectors-after-primary.rs",
+  "candidate_sha256": "ecaca14edf39e6983d9378a48f61cc7dfb5a186ff60bf3df89ccc879834e4e30",
+  "ordered_case_count": 23,
+  "ordered_expressions_unchanged": true,
+  "changed_expected_indices_zero_based": [
+    21
+  ],
+  "original_21_primary_pairs_unchanged": true,
+  "constructor_control_unchanged": true,
+  "primary_native_match": true,
+  "apply_after": "Actual terminal of current C526 six-command repair gate; do not modify frozen F while it runs. Then add fresh primary/CI4 logs and validate complete native/Macro/AOT vector target before fresh numeric full capture/workspace."
+}

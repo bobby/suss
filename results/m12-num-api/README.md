@@ -184,3 +184,22 @@ terminal, before a replacement numeric workspace baseline. The old queued7b71
 baseline is superseded; #516's live9a026 workspace is untouched. Fresh compilation
 of all tests and execution of the affected targets are required before publishing
 this repair checkpoint. Earlier7b71 receipts retain their exact source identity.
+
+Atc526ae71, all six reader/Pattern repair commands return0 with source, HEAD and
+Binaryen unchanged. Every workspace test target compiles (774.960s); all16 reader
+tests and the byte-pinned record-factory preservation test pass (79.785s total),
+as do source/provenance/comparison/ledger checks. Production-input conservation
+checks1,229 files against the earlier7b71 numeric capture. Exact compressed
+commands/logs are under `ci-reader-pattern-repair-validation`.
+
+CI integration4 additionally exposes the explicitly documented old Suss boxed
+NaN vector control. Fresh pinned/native observations in `vector-nan-ci-primary`
+return [true false true] for the retained destructured object and
+[false false false] for the computed distinct NaN. The owned matrix now promotes
+the former gap to Clojure conformance. All23 ordered source expressions are
+preserved: the original21 primary pairs are unchanged, only the old gap's expected
+value changes, and the Suss-specific mutable-constructor control remains intact.
+Earlier frozenf5056ffe divergence evidence stays archived. Complete Runtime/Macro
+and actual AOT matrix validation, followed by fresh full capture on this repaired
+head, are separate required terminals. No production, original primary/corpus,
+comparison/count/skip/opaque rule or explicit ledger changes.

@@ -1,7 +1,9 @@
 //! Temporary vector elimination preserves source conversions, identity and effects (#351).
 use suss_cli::portable_session::Session;
 
-// The 21 exact value pairs in results/m12-vector-nth-oracle/cases.json match fresh JVM.
+// The original 21 pairs in results/m12-vector-nth-oracle/cases.json remain unchanged.
+// The retained boxed-NaN control now also matches the fresh pinned primary in
+// results/m12-num-api/vector-nan-ci-primary; its former divergence stays archived.
 const CASES: &[(&str, &str)] = &[
     ("(let [[a b] [3000000000 1.5]] (+ a b))", "3.0000000015E9"),
     (
@@ -63,19 +65,16 @@ const CASES: &[(&str, &str)] = &[
         "(with-redefs [nth (fn [& xs] 7)] (let [[a b] (MapEntry. 1 2 nil)] (+ a b)))",
         "3",
     ),
-];
-
-// This is a recorded boxed-path control, NOT a JVM-conformance assertion.
-// JVM gives [true false true]; the frozen f5056ffe Suss binary and current
-// documented scalar predicates give [false false false]. Preserve the failed
-// JVM assertion and the independent baseline probe in results/m12-vectors.
-// The constructor control uses Suss's class binding, which JVM cannot rebind.
-// Its result comes from the frozen compiler, not a JVM value assertion.
-const BOXED_BASELINE_CONTROLS: &[(&str, &str)] = &[
     (
         "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])",
-        "[false false false]",
+        "[true false true]",
     ),
+];
+
+// The constructor control uses Suss's class binding, which JVM cannot rebind.
+// Its result remains a Suss-specific control from the frozen compiler. Earlier
+// NaN divergence and frozen baseline evidence remain under results/m12-vectors.
+const SUSS_CONSTRUCTOR_CONTROLS: &[(&str, &str)] = &[
     (
         "(let [f (fn [] (let [[a b] [3000000000 1.5]] (+ a b)))] [(f) (with-redefs [PersistentVector nil] (try (f) (catch :default e :ctor-error))) (f)])",
         "[3.0000000015E9 :ctor-error 3.0000000015E9]",
@@ -83,7 +82,7 @@ const BOXED_BASELINE_CONTROLS: &[(&str, &str)] = &[
 ];
 
 fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
-    CASES.iter().chain(BOXED_BASELINE_CONTROLS.iter())
+    CASES.iter().chain(SUSS_CONSTRUCTOR_CONTROLS.iter())
 }
 
 fn observed(source: &str) -> String {
