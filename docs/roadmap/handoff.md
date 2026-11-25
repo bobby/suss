@@ -35282,3 +35282,34 @@ this source change. Fresh full native capture and strict conservation,
 Java/Node-free bootstrap, exact two-thread workspace validation, independent
 follow-up review and passing final-head CI retain separate gates. No primary,
 baseline, count/skip/opaque or unrelated suite judgments change.
+
+
+Caller math-context snapshot work now precedes child-allowance selection in
+native eval preparation, macro declaration and raw macro invocation. An
+independent resource-ledger regression measures actual caller snapshot cost,
+direct-child first-effect cost and public-entry first-effect cost. All four
+Runtime/Macro controls fail before the fix (256/1024 datum contexts); after
+the fix the public effect boundary covers both measured costs. No production
+fuel limit or arbitrary fixed instruction threshold changes.
+
+Run the source-frozen host-library controls and complete public eval: all
+118 matching host-library tests and all40 public-eval tests return0.
+These include the new ledger, cancellation, ownership and borrowed installation,
+and the unchanged20 primary math-context controls. Exact positive/negative
+receipts and source overlays are under context-fuel-accounting-focused,
+context-fuel-ledger-before and context-fuel-audit-before in results/m12-eval.
+The budget checkpoint verifier preserves each receipt's actual source HEAD
+and proves committed-source conservation rather than relabeling history.
+
+The A482 source's ten preceding provenance/bootstrap/native/conservation
+commands really pass, including native0 in315.614s and all5564 ordered rows,
+prior5346 successes and229/200 tagged host matches. Its exact workspace was
+intentionally interrupted for the confirmed fuel defect: real Cargo101 in
+747.609s, with unchanged inputs/HEAD. The historical recorder returns outer0
+after saving that inner101, so the new checked wrapper explicitly propagates
+and verifies the real Cargo terminal. Real historical101 and0 receipts test
+this propagation without rerunning or fabricating a baseline. The earlier
+workspace run is not an all-pass gate. Fresh bootstrap/native/full workspace,
+independent follow-up review and passing final-head CI remain required after
+this source change. Primary, baseline, count/skip/opaque and unrelated failed
+judgments remain unchanged; source-specific earlier verifiers stay historical.

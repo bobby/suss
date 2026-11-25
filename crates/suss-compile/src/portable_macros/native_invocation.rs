@@ -235,4 +235,87 @@ mod tests {
         macros.define("(defmacro recovered-declaration [] 42)").unwrap();
         assert_eq!(macros.current_namespace(), original);
     }
+    /// Find an observable compiled effect boundary; successful return is not
+    /// required because a later trap cannot undo the observation.
+    fn first_effect_fuel(mut run: impl FnMut(u64) -> bool) -> u64 {
+        let mut high = 1024u64;
+        while !run(high) {
+            high = high.checked_mul(2).unwrap();
+            assert!(high < 400_000_000, "finite marker must fit the normal operation allowance");
+        }
+        let mut low = 0;
+        while high - low > 1 {
+            let middle = low + (high - low) / 2;
+            if run(middle) { high = middle; } else { low = middle; }
+        }
+        assert!(run(high));
+        high
+    }
+
+    #[test]
+    fn macro_context_snapshot_work_is_debited_before_child_allowance() {
+        use crate::portable_session::EvaluationMathContext;
+        use std::sync::atomic::AtomicUsize;
+        let mut failures = Vec::new();
+        for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let phase = caller.phase();
+            let mut macros = CompiledMacros::new().unwrap();
+            let observations = Arc::new(AtomicUsize::new(0));
+            let seen = observations.clone();
+            macros.install_observation_hook(move |_, _| {
+                seen.fetch_add(1, Ordering::SeqCst);
+                Ok(0)
+            }).unwrap();
+            caller.eval_with_macros("(eval '(defmacro context-ledger-marker [] (suss.harness.observation/capture 1) 42))", &mut macros).unwrap();
+            let wrapper = caller.eval_with_macros("(let [f @(eval '(var context-ledger-marker))] (fn [context] (binding [*math-context* context] (f nil nil))))", &mut macros).unwrap();
+            let namespace = caller.current_namespace();
+            let service = macros.service();
+            let root = {
+                let mut lease = service.lease();
+                let values = catalog(&lease.host().catalog);
+                values.definitions.get(&(namespace.clone(), "context-ledger-marker".to_owned())).unwrap().clone()
+            };
+            let bridge = FormBridge::new(&mut caller).unwrap();
+            for count in [256usize, 1024] {
+                caller.set_operation_fuel(400_000_000);
+                let form = Form { span: 0..0, metadata: vec![], kind: Kind::Vector((0..count).map(|n| Form { span: 0..0, metadata: vec![], kind: Kind::Long(n as i64) }).collect()) };
+                let context = bridge.quote(&mut caller, form.clone()).unwrap();
+                // Measure actual caller-side transport work independently of
+                // child execution. No fixed instruction count is assumed.
+                let snapshot_cost = {
+                    let _budget = caller.operation_budget_scope().unwrap();
+                    let checkpoint = caller.enter_evaluation_math_context(EvaluationMathContext::Data(form.clone()), &bridge).unwrap();
+                    let before = caller.operation_fuel_remaining().unwrap();
+                    let transported = caller.evaluation_math_context().unwrap();
+                    let after = caller.operation_fuel_remaining().unwrap();
+                    assert!(matches!(transported, EvaluationMathContext::Data(_)));
+                    caller.leave_evaluation_math_context(&checkpoint).unwrap();
+                    before.checked_sub(after).unwrap()
+                };
+                assert!(snapshot_cost > 0);
+                let nil = Form { span: 0..0, metadata: vec![], kind: Kind::Nil };
+                let child_minimum = first_effect_fuel(|fuel| {
+                    observations.store(0, Ordering::SeqCst);
+                    let _ = service.invoke_root(&root, &namespace, vec![nil.clone(), nil.clone()], fuel,
+                        EvaluationMathContext::Data(form.clone()), Arc::new(AtomicBool::new(false)));
+                    observations.load(Ordering::SeqCst) != 0
+                });
+                let public_minimum = first_effect_fuel(|fuel| {
+                    caller.set_operation_fuel(fuel);
+                    observations.store(0, Ordering::SeqCst);
+                    let _ = caller.invoke(&wrapper, &[&context]);
+                    observations.load(Ordering::SeqCst) != 0
+                });
+                // The public entry must pay at least the independently
+                // measured caller snapshot plus the direct child's real work.
+                // All remaining parent work is nonnegative. This remains true
+                // when legitimate optimizations change either measured cost.
+                let minimum = child_minimum.checked_add(snapshot_cost).unwrap();
+                eprintln!("context-budget-ledger {phase:?} elements={count} snapshot={snapshot_cost} child={child_minimum} public={public_minimum} lower-bound={minimum}");
+                if public_minimum < minimum { failures.push(format!("{phase:?} elements={count}: child effect at {public_minimum}, below caller+child lower bound {minimum}")); }
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
 }

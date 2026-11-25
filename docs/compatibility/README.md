@@ -1,3 +1,10 @@
+Native eval charges context transport before choosing the isolated Macro
+allowance. Independent caller/direct-child/public-entry resource measurements
+pass in both phases without raising budgets. New focused evidence is under
+[eval receipts](../../results/m12-eval/context-fuel-accounting-focused/commands.json.gz).
+Prior A482 workspace is an intentional101, not a pass; fresh full validation,
+review and CI retain separate gates.
+
 Native eval defers invalid math-context validation until consumption and keeps
 unused lazy/function bindings inert. Private frame snapshots preserve deferred
 values while macros override and restore context. Twenty fresh primary controls

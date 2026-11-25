@@ -1,3 +1,11 @@
+Fuel-accounting controls pass: 118 host-library and all40 public-eval tests,
+including four independently measured whole-budget cases in Runtime/Macro. See
+[receipts](context-fuel-accounting-focused/commands.json.gz) and
+[checkpoint conservation](verify-context-fuel-checkpoint.py). Earlier A482
+workspace was intentionally interrupted, actualCargo101; its preceding ten
+guards/native capture pass on their recorded source. Fresh broader/workspace/
+review/final CI remain separate gates.
+
 Fresh lazy-context validation records20 pinned controls, all40 public-eval,
 all60 runtime ABI and all3 borrowed-installation tests at actual0. See
 [lazy-context terminals](lazy-math-context-frame-focused/commands.json.gz) and
