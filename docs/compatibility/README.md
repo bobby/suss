@@ -1733,3 +1733,10 @@ native tests, including both phases/actual macros and real pending-await/GC
 regressions. Original suite primary, baseline and judgment rules stay unchanged.
 See `results/m12-eval/README.md` and `docs/runtime/dynamic-bindings.md` for commands,
 negative evidence and limits. Fresh broader/full/review/CI gates remain separate.
+
+Root redefinitions now retain the distinct Clojure semantics of `with-redefs`
+and `binding`, including existing thread-binding priority, root restoration,
+GC/fork ownership, pending async return/cancellation and trap recovery. Twelve
+fresh primary controls and318 focused native tests pass. Reproduction and
+limits are in `results/m12-eval/README.md` and `docs/runtime/dynamic-bindings.md`;
+full workspace, independent review and final-head CI remain separate gates.

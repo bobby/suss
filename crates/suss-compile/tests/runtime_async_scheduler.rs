@@ -1822,3 +1822,34 @@ fn suspended_binding_body_keeps_root_definition_and_selected_frame_after_gc() {
     assert_eq!(h.decode(&root), expected[1], "frame cleanup preserves the root definition");
     assert_eq!(h.counts(), (0, 0));
 }
+
+#[test]
+fn pending_root_redefinitions_are_global_and_restore_on_return_or_cancellation_after_gc() {
+    // Sequential primary redefs-definition-body is [2 1]. The pending await
+    // observes global root2 before the owning scope restores root1.
+    for cancel in [false, true] {
+        let mut h = Harness::new();
+        h.install("(def ^:dynamic *x* 1)");
+        let dependency = h.value("future-pending-new", &[]);
+        h.bind("dependency", dependency.clone());
+        let owner = h.source("(suss.async/future* (with-redefs [*x* 3] (def ^:dynamic *x* 2) (t/emit *x*) (suss.async/await* dependency) (t/emit *x*)))");
+        assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+        assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+        assert_eq!(h.trace(), [2]);
+        h.store.gc(None).unwrap();
+        let cell = h.cells["user/*x*"].get(&mut h.store);
+        let value = h.value("binding-get", &[cell]);
+        assert_eq!(h.decode(&value), 2, "root effects remain globally visible while the lease is pending");
+        if cancel { assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 1); }
+        let nil = h.value("nil", &[]);
+        assert_eq!(h.integer("future-resolve", &[dependency, nil]), 1);
+        assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+        assert_eq!(h.integer("future-status", &[owner]), if cancel { 3 } else { 1 });
+        h.store.gc(None).unwrap();
+        assert_eq!(h.trace(), if cancel { vec![2] } else { vec![2, 2] });
+        let cell = h.cells["user/*x*"].get(&mut h.store);
+        let value = h.value("binding-get", &[cell]);
+        assert_eq!(h.decode(&value), 1, "owning return/cancellation restores the original root");
+        assert_eq!(h.counts(), (0, 0));
+    }
+}

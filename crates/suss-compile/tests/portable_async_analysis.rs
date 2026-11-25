@@ -90,7 +90,7 @@ fn async_try_and_dynamic_regions_retain_executable_bodies_and_handler_scope() {
         region.source.as_ref().unwrap().node.as_deref(),
         Some(SourceNode::Try { .. })
     ));
-    let Expression::AsyncDynamicScope { bindings, body } = &*single(body).kind else {
+    let Expression::AsyncDynamicScope { bindings, body, .. } = &*single(body).kind else {
         panic!("async dynamic")
     };
     await_local(&bindings[0].1, x);

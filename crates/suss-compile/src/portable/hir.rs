@@ -1144,6 +1144,8 @@ pub enum Expression {
         payload: Option<Parameter>,
     },
     AsyncDynamicScope {
+        /// Root replacement for with-redefs; false for thread binding.
+        roots: bool,
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
     },
@@ -1162,6 +1164,8 @@ pub enum Expression {
         arguments: Vec<Hir>,
     },
     DynamicScope {
+        /// Root replacement for with-redefs; false for thread binding.
+        roots: bool,
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
     },
@@ -4187,8 +4191,8 @@ impl Analyzer<'_> {
                 }),
             });
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
-            return self.dynamic_scope(form, args, context);
+        if let Some(ResolvedBinding::BootstrapBinding(global)) = &resolved {
+            return self.dynamic_scope(form, args, context, global.name() == "with-redefs");
         }
         if bare && symbol.name == "throw" {
             if args.len() != 1 {
@@ -4622,8 +4626,8 @@ impl Analyzer<'_> {
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &*hir.kind {
         Expression::Assign { value, .. } => free_bindings(value, bound, free),
-        Expression::DynamicScope { bindings, body }
-        | Expression::AsyncDynamicScope { bindings, body } => {
+        Expression::DynamicScope { bindings, body, .. }
+        | Expression::AsyncDynamicScope { bindings, body, .. } => {
             for (_, value) in bindings {
                 free_bindings(value, bound, free);
             }

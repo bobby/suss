@@ -1523,3 +1523,31 @@ fn actual_macro_eval_preserves_binding_body_root_definitions() {
         assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
     }
 }
+
+#[test]
+fn root_redefinitions_restore_roots_and_respect_existing_thread_bindings() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/with-redefs-root-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 12);
+    let stdout = include_str!("../../../results/m12-eval/with-redefs-root-primary/primary.stdout");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", stdout.lines().collect::<Vec<_>>().join(" "));
+    promotion_review_controls("with-redefs-roots",
+        include_str!("../../../results/m12-eval/with-redefs-root-primary/expression.sus"), &primary, 12);
+}
+
+#[test]
+fn actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings() {
+    let primary = format!("[{}]", include_str!("../../../results/m12-eval/with-redefs-root-primary/primary.stdout").lines().collect::<Vec<_>>().join(" "));
+    let forms = suss_reader::forms::read_forms(&primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/with-redefs-root-primary/expression.sus");
+        macros.define(&format!("(defmacro redefs-roots-in-actual-macro [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(redefs-roots-in-actual-macro)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}

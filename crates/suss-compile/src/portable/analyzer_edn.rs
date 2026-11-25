@@ -664,7 +664,7 @@ fn lowered_children(kind: &Expression) -> Vec<&Hir> {
         Expression::Call { callee, arguments } => std::iter::once(callee.as_ref()).chain(arguments.iter()).collect(),
         Expression::Function { body, .. } => vec![body],
         Expression::GeneralFunction { methods, .. } => methods.iter().map(|m| m.body.as_ref()).collect(),
-        Expression::AsyncDynamicScope { bindings, body } | Expression::DynamicScope { bindings, body } => bindings
+        Expression::AsyncDynamicScope { bindings, body, .. } | Expression::DynamicScope { bindings, body, .. } => bindings
             .iter()
             .map(|(_, v)| v)
             .chain(std::iter::once(body.as_ref()))

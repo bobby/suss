@@ -90,3 +90,31 @@ and forced GC before checking the same binding/root effects. The unchanged fuel
 sweep ranges check interruption recovery while preserving prior root definitions.
 This correction does not turn the historical broader workspace results into
 current-source validation or change the original suite's reviewed baseline.
+
+## Root redefinition leases
+
+`with-redefs` is a root operation. Its initializers run once in source order;
+entry then captures actual roots and their bound bits before replacing them.
+An active thread binding keeps priority. Definitions in the body change the
+root immediately; normal return, exceptions and recovery restore only the
+selected roots. Unrelated definitions/effects remain. `binding` keeps its
+separate thread-frame semantics, including persistent root definitions.
+
+The compiler carries the scope kind into synchronous and async IR. Root entry
+uses nil old-value placeholders and captures the actual roots itself. A private
+GC-owned binding wrapper records the real cell and old bound bit. The complete
+storage and wrappers are validated before publication. The unwind frame is
+rooted before the first root write; interrupted reverse restoration can retry
+idempotently. Bound nil/false and an unbound root are distinguished by the bit.
+No public value or Var is fabricated, and the shared frame/cell layout stays
+unchanged. A pending async scope retains the globally visible root replacement
+until its own return/cancellation. Forks omit root leases and copy thread binding
+storage, so descendants cannot restore a parent's roots.
+
+Twelve actual Clojure1.12.6 controls are retained under
+`results/m12-eval/with-redefs-root-primary`. Both phases and actual compiled
+macros compare them after GC. Native root-lease ownership, pending-await/cancel
+and2000-step fuel tests pass with all earlier binding guards (318 focused tests
+total). Earlier wrong-value and IR-admission failures remain source-qualified;
+`verify-root-redefs-checkpoint.py` conserves the executed source and receipts.
+Broader/full/review/final-head CI remain required on this compiler change.
