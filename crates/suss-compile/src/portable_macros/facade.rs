@@ -45,7 +45,7 @@ impl MacroService {
         snapshot: &crate::portable_session::CompilationSnapshot,
         form: Form,
         fuel: u64,
-        context: Option<(i32, i32)>,
+        context: crate::portable_session::EvaluationMathContext,
         interrupt: Arc<std::sync::atomic::AtomicBool>,
     ) -> Result<
         (
@@ -69,11 +69,12 @@ impl MacroService {
     }
 }
 impl MacroLease {
-    pub(super) fn with_math_context<T>(&mut self, context: Option<(i32, i32)>,
+    pub(super) fn with_math_context<T>(&mut self, context: crate::portable_session::EvaluationMathContext,
         operation: impl FnOnce(&mut MacroHost<'static>) -> Result<T, SessionError>) -> Result<T, SessionError>
     {
         let _budget = self.host().session.operation_budget_scope()?;
-        let checkpoint = self.host().session.enter_evaluation_math_context(context)?;
+        let bridge = self.host().bridge.clone();
+        let checkpoint = self.host().session.enter_evaluation_math_context(context, &bridge)?;
         let result = operation(self.host());
         let restoration = self.host().session.leave_evaluation_math_context(&checkpoint);
         match result { Err(error) => Err(error), Ok(value) => restoration.map(|()| value) }

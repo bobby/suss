@@ -1,3 +1,10 @@
+Native eval defers invalid math-context validation until consumption and keeps
+unused lazy/function bindings inert. Private frame snapshots preserve deferred
+values while macros override and restore context. Twenty fresh primary controls
+and focused40+60+3 tests pass; see [receipts](../../results/m12-eval/lazy-math-context-frame-focused/commands.json.gz).
+Historical workspace evidence below predates this source change; new broader
+validation, independent review and final CI remain separate gates.
+
 The complete Clojure assert form has a compiled source adaptation in
 [assert provenance](bootstrap/clojure-assert.json). Its original arities,
 compile-time flag checks, branches and message expressions are retained;

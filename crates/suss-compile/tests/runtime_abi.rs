@@ -6976,3 +6976,38 @@ fn runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries(
         expect(&mut store, runtime, &descriptor, &missing, None);
     }
 }
+
+#[test]
+fn private_deferred_binding_reports_on_read_survives_gc_and_preserves_ordinary_cells() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let units = "Unsupported dynamic context transport".encode_utf16().collect::<Vec<_>>();
+    let mut output = [Val::null_any_ref()];
+    runtime.get_func(&mut store, "string-new").unwrap().call(&mut store, &[Val::I32(units.len() as i32)], &mut output).unwrap();
+    let string = output[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    for (index, unit) in units.iter().enumerate() { string.set(&mut store, index as u32, Val::I32(i32::from(*unit))).unwrap(); }
+    runtime.get_func(&mut store, "binding-delay-error").unwrap().call(&mut store, &[output[0]], &mut output).unwrap();
+    let binding = runtime.get_func(&mut store, "binding-new").unwrap();
+    binding.call(&mut store, &[output[0]], &mut output).unwrap();
+    let cell = output[0];
+    let getter = runtime.get_func(&mut store, "binding-get").unwrap();
+    for _ in 0..2 {
+        store.gc(None).unwrap();
+        let error = getter.call(&mut store, &[cell], &mut output).unwrap_err();
+        assert!(error.is::<wasmtime::ThrownException>());
+        let exception = store.take_pending_exception().unwrap();
+        let payload = exception.field(&mut store, 0).unwrap();
+        let fields = payload.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+        let message = fields.field(&mut store, 1).unwrap().unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        let observed = (0..message.len(&store).unwrap()).map(|i| message.get(&mut store, i).unwrap().unwrap_i32() as u16).collect::<Vec<_>>();
+        assert_eq!(observed, units);
+    }
+    let value = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::wrapping_u32(17))));
+    binding.call(&mut store, &[value], &mut output).unwrap();
+    let inner = output[0];
+    binding.call(&mut store, &[inner], &mut output).unwrap();
+    getter.call(&mut store, &[output[0]], &mut output).unwrap();
+    assert!(wasmtime::Rooted::ref_eq(&store, inner.unwrap_anyref().unwrap(), output[0].unwrap_anyref().unwrap()).unwrap());
+}

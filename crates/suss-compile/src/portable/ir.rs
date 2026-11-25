@@ -388,7 +388,8 @@ impl<'a> Lowerer<'a> {
                 for (global, _) in bindings {
                     globals.push(self.clone_global(global, &hir.span)?);
                     let global = self.clone_global(global, &hir.span)?;
-                    operands.push(self.emit(Operation::GlobalRead(global), Type::Value, hir.span.clone())?);
+                    let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
+                    operands.push(self.emit(Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] }, Type::Value, hir.span.clone())?);
                 }
                 for (_, value) in bindings { operands.push(operand!(value)); }
                 let frame = self.emit(Operation::AsyncDynamicEnter { globals, operands }, Type::Value, hir.span.clone())?;
@@ -422,8 +423,11 @@ impl<'a> Lowerer<'a> {
                     .iter()
                     .map(|global| {
                         let global = self.clone_global(global, &hir.span)?;
+                        // Saving a frame is not a source read of the binding:
+                        // an overridden deferred value must remain unforced.
+                        let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
                         self.emit(
-                            Operation::GlobalRead(global),
+                            Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] },
                             Type::Value,
                             hir.span.clone(),
                         )

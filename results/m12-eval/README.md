@@ -1,3 +1,10 @@
+Fresh lazy-context validation records20 pinned controls, all40 public-eval,
+all60 runtime ABI and all3 borrowed-installation tests at actual0. See
+[lazy-context terminals](lazy-math-context-frame-focused/commands.json.gz) and
+[source conservation](verify-lazy-context-checkpoint.py). Prior full workspace
+results below predate this source change. Fresh broader/workspace/review/final CI
+remain separate gates; nominal cross-phase data limits remain explicit.
+
 # Compiled public eval and real Vars
 
 The review-fix source at `9a02658e` passes the complete 38-test public-eval

@@ -35252,3 +35252,33 @@ test threads, build jobs, memory limits, source and HEAD remained unchanged.
 The measured scheduling observation is archived as resource-policy.json.gz.
 Independent follow-up review and passing final-head CI
 still gate ready status. Numeric source-body closure remains separate in #518.
+
+
+Fresh pinned Clojure controls cover unused invalid math contexts, actual
+keyword/map reads, macro and raw-macro access, decimal-consumption effects,
+lazy/function bindings and nested precision/nil overrides. The compiler
+snapshots valid MathContext scalar fields or existing nominal data without
+validating them as numeric context. Unsupported cross-phase data retain an
+honest diagnostic at an actual binding read; unused lazy/function bindings do
+not execute or fail. Dynamic-frame saves use a compiler-only unforced read,
+so a macro can install a valid inner context and restore the outer value.
+Deferred diagnostics live in private GC-owned messages and produce ordinary
+language Errors on read; no foreign roots, fake values or per-request host
+callbacks are added. The existing nominal macro-data transport boundary remains.
+
+The source-frozen focused commands return0 for all40 public-eval tests, all60
+runtime ABI tests and all3 borrowed-installation tests. The new20-control
+primary executes in Runtime/Macro and inside actual compiled Macro functions,
+with post-GC observations. The immutable terminals and exact runner are under
+results/m12-eval/lazy-math-context-frame-focused; verify-lazy-context-checkpoint.py
+links their actual dirty-source HEAD to this committed source by hash without
+relabeling history. Retained negatives include the original eager validation,
+the initial library-test compile error (now fixed), and the actual nested
+binding counterexamples. The intermediate GC run was intentionally interrupted
+for that confirmed production defect and its real nonzero terminal is retained.
+
+Earlier source9a workspace/native/bootstrap results remain historical after
+this source change. Fresh full native capture and strict conservation,
+Java/Node-free bootstrap, exact two-thread workspace validation, independent
+follow-up review and passing final-head CI retain separate gates. No primary,
+baseline, count/skip/opaque or unrelated suite judgments change.
