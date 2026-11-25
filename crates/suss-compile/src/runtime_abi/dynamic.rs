@@ -245,42 +245,33 @@ fn set_binding(lookup: u32, restore: bool) -> Vec<Instruction<'static>> {
         ArraySet(ARGS),
         Else,
     ]);
-    if restore {
-        // A frame over an unbound root never wrote that root. Restoring its
-        // undefined snapshot must not turn it into a bound root. A matching
-        // parent frame still receives the saved value through the branch above.
-        body.push(LocalGet(0));
-        body.extend(flags());
-        body.extend([I32Const(CELL_BOUND), I32And, If(BlockType::Empty)]);
+    if !restore {
+        body.extend(root_set());
     }
-    body.extend([
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(5)),
-        LocalGet(1),
-        StructSet {
-            struct_type_index: 5,
-            field_index: 0,
-        },
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(5)),
-        LocalGet(0),
-    ]);
-    // Binding the root keeps CELL_DYNAMIC.
+    // Entering a frame does not mutate its root. A root definition made while
+    // that frame is active must survive its exit, including exceptional exit.
+    body.push(End);
+    body
+}
+fn root_set() -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut body = vec![
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
+        StructSet { struct_type_index: BINDING, field_index: 0 },
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(0),
+    ];
     body.extend(flags());
     body.extend([
-        I32Const(CELL_BOUND),
-        I32Or,
-        StructSet {
-            struct_type_index: 5,
-            field_index: 1,
-        },
+        I32Const(CELL_BOUND), I32Or,
+        StructSet { struct_type_index: BINDING, field_index: 1 },
     ]);
-    if restore { body.push(End); }
-    body.push(End);
     body
 }
 pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
     use Instruction::*;
+    let mut root = root_set();
+    root.push(LocalGet(1));
+    b.function("binding-root-set", &[VALUE, VALUE], &[VALUE], &root);
     let set_in = b.function_with_locals(
         "binding-set-in",
         &[VALUE, VALUE, VALUE],

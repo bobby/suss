@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/binding-initializer-effects-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6820986270904541,
+  "controls": 9,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "fa3ba72b2d472127120bf85abf5e792b8a17db2b3f20b58b2cdf00b417076525",
+  "stdout_sha256": "e1b9a5a31f86e26239c34d1eac853ac247076675622a79be38f6e083f928d1b8",
+  "qualification": "Fresh pinned Clojure1.12.6 observations of initializer order and persistent root/outer-frame effects. Redefinitions retain explicit dynamic metadata. Native controls adapt catch Throwable only; no native output is an expected value."
+}

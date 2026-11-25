@@ -391,6 +391,11 @@ impl<'a> Lowerer<'a> {
                 return self.async_region(hir, body, handler.as_deref(), cleanup.as_deref(), payload.as_ref(), Vec::new());
             }
             Expression::AsyncDynamicScope { bindings, body } if self.suspendable => {
+                // Initializers run in the existing frame. Save its selected
+                // values afterward so cleanup preserves initializer effects,
+                // including effects before an initializer suspends.
+                let mut values = Vec::new();
+                for (_, value) in bindings { values.push(operand!(value)); }
                 let mut globals = Vec::new();
                 let mut operands = Vec::new();
                 for (global, _) in bindings {
@@ -399,7 +404,7 @@ impl<'a> Lowerer<'a> {
                     let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
                     operands.push(self.emit(Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] }, Type::Value, hir.span.clone())?);
                 }
-                for (_, value) in bindings { operands.push(operand!(value)); }
+                operands.extend(values);
                 let frame = self.emit(Operation::AsyncDynamicEnter { globals, operands }, Type::Value, hir.span.clone())?;
                 return self.async_region(hir, body, None, None, None, vec![frame]);
             }
@@ -423,6 +428,10 @@ impl<'a> Lowerer<'a> {
                 written
             }
             Expression::DynamicScope { bindings, body } => {
+                // Clojure evaluates every initializer before installing the
+                // frame. Snapshot after those effects, not before them.
+                let mut values = Vec::new();
+                for (_, value) in bindings { values.push(operand!(value)); }
                 let globals = bindings
                     .iter()
                     .map(|(global, _)| self.clone_global(global, &hir.span))
@@ -441,9 +450,7 @@ impl<'a> Lowerer<'a> {
                         )
                     })
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
-                for (_, value) in bindings {
-                    operands.push(operand!(value));
-                }
+                operands.extend(values);
                 operands.push(operand!(body));
                 self.emit(
                     Operation::DynamicScope { globals, operands },
@@ -552,10 +559,11 @@ impl<'a> Lowerer<'a> {
                         self.current = unbound;
                         if let Some(value) = self.expression(initializer)? {
                             let global_for_write = self.clone_global(global, &hir.span)?;
+                            let cell = self.emit(Operation::GlobalCell(global_for_write), Type::Value, hir.span.clone())?;
                             let value = self.emit(
-                                Operation::GlobalWrite {
-                                    global: global_for_write,
-                                    value,
+                                Operation::Nominal {
+                                    operation: Nominal::BindingRootSet,
+                                    arguments: vec![cell, value],
                                 },
                                 Type::Value,
                                 hir.span.clone(),
@@ -573,10 +581,11 @@ impl<'a> Lowerer<'a> {
                     } else {
                         let value = operand!(initializer);
                         let global = self.clone_global(global, &hir.span)?;
+                        let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
                         let written = self.emit(
-                            Operation::GlobalWrite {
-                                global,
-                                value,
+                            Operation::Nominal {
+                                operation: Nominal::BindingRootSet,
+                                arguments: vec![cell, value],
                             },
                             Type::Value,
                             hir.span.clone(),

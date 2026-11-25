@@ -387,6 +387,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::BindingDefined => { names.insert("binding-defined"); }
                         Nominal::BindingGetter => { names.insert("binding-getter"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
+                        Nominal::BindingRootSet => { names.insert("binding-root-set"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -933,7 +934,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
-            "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
+            "binding-root-set" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -4490,6 +4491,7 @@ fn emit_function(
                         | Nominal::BindingDefined
                         | Nominal::BindingGetter
                         | Nominal::BindingSnapshot
+                        | Nominal::BindingRootSet
                         | Nominal::DecimalContextNew
                         | Nominal::DecimalContextGetter
                         | Nominal::CoerceString
@@ -4577,6 +4579,7 @@ fn emit_function(
                                 Nominal::BindingDefined => "binding-defined",
                                 Nominal::BindingGetter => "binding-getter",
                                 Nominal::BindingSnapshot => "binding-snapshot",
+                                Nominal::BindingRootSet => "binding-root-set",
                                 Nominal::DecimalContextNew => "decimal-context-new",
                                 Nominal::DecimalContextGetter => "decimal-context-getter-install",
                                 Nominal::CoerceString => "coerce-string",

@@ -7079,3 +7079,38 @@ fn unbound_dynamic_snapshots_preserve_root_state_and_nested_selected_values() {
     pop(&mut store, runtime, parent);
     strict_unbound(&mut store, runtime, cell);
 }
+
+#[test]
+fn root_definitions_preserve_selected_frames_and_survive_pop_after_gc() {
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    for initially_bound in [false, true] {
+        let cell = nominal_value(&mut store, runtime, "binding-unbound", &[]);
+        let old = sentinel_value(&mut store, runtime, runtime_abi::FALSE);
+        if initially_bound {
+            nominal_value(&mut store, runtime, "binding-root-set", &[cell, old]);
+        }
+        let snapshot = nominal_value(&mut store, runtime, "binding-snapshot", &[cell]);
+        let selected = sentinel_value(&mut store, runtime, runtime_abi::NIL);
+        let entries = nominal_value(&mut store, runtime, "args-new", &[Val::I32(3)]);
+        let array = entries.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+        for (index, value) in [cell, snapshot, selected].into_iter().enumerate() {
+            array.set(&mut store, index as u32, value).unwrap();
+        }
+        let frame = nominal_value(&mut store, runtime, "dynamic-push", &[entries]);
+        let defined = sentinel_value(&mut store, runtime, runtime_abi::TRUE);
+        let written = nominal_value(&mut store, runtime, "binding-root-set", &[cell, defined]);
+        assert_eq!(sentinel_of(&mut store, &written), runtime_abi::TRUE as u32);
+        store.gc(None).unwrap();
+        let value = nominal_value(&mut store, runtime, "binding-get", &[cell]);
+        assert_eq!(sentinel_of(&mut store, &value), runtime_abi::NIL as u32);
+        runtime.get_func(&mut store, "dynamic-pop").unwrap().call(&mut store, &[frame], &mut []).unwrap();
+        store.gc(None).unwrap();
+        let value = nominal_value(&mut store, runtime, "binding-get", &[cell]);
+        assert_eq!(sentinel_of(&mut store, &value), runtime_abi::TRUE as u32);
+        let bound = nominal_value(&mut store, runtime, "binding-bound", &[cell]);
+        assert_eq!(sentinel_of(&mut store, &bound), runtime_abi::TRUE as u32);
+    }
+}

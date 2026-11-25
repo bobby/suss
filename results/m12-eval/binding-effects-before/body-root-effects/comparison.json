@@ -1,0 +1,17 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-body-root-effects-before/compare.clj"
+  ],
+  "exit_code": 1,
+  "seconds": 0.6122701168060303,
+  "primary_exit_code": 0,
+  "native_exit_code": 0,
+  "controls": 6,
+  "mismatch_count": 5,
+  "qualification": "Pinned reader comparison of both actual successful executions. Comparator1 is wrong native values, not a native crash."
+}

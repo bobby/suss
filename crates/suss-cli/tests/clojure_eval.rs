@@ -1466,3 +1466,60 @@ fn actual_macro_eval_preserves_unbound_dynamic_frames() {
         assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
     }
 }
+
+
+#[test]
+fn binding_initializers_preserve_definition_eval_and_outer_frame_effects() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/binding-initializer-effects-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 9);
+    let stdout = include_str!("../../../results/m12-eval/binding-initializer-effects-primary/primary.stdout");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", stdout.lines().collect::<Vec<_>>().join(" "));
+    promotion_review_controls("binding-initializer-effects",
+        include_str!("../../../results/m12-eval/binding-initializer-effects-primary/expression.sus"), &primary, 9);
+}
+
+#[test]
+fn actual_macro_eval_preserves_binding_initializer_effects() {
+    let primary = format!("[{}]", include_str!("../../../results/m12-eval/binding-initializer-effects-primary/primary.stdout").lines().collect::<Vec<_>>().join(" "));
+    let forms = suss_reader::forms::read_forms(&primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/binding-initializer-effects-primary/expression.sus");
+        macros.define(&format!("(defmacro initializer-effects-in-actual-macro [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(initializer-effects-in-actual-macro)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}
+
+#[test]
+fn binding_bodies_keep_root_definitions_separate_from_dynamic_assignment() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/binding-root-effects-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 8);
+    let stdout = include_str!("../../../results/m12-eval/binding-root-effects-primary/primary.stdout");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", stdout.lines().collect::<Vec<_>>().join(" "));
+    promotion_review_controls("binding-root-effects",
+        include_str!("../../../results/m12-eval/binding-root-effects-primary/expression.sus"), &primary, 8);
+}
+
+#[test]
+fn actual_macro_eval_preserves_binding_body_root_definitions() {
+    let primary = format!("[{}]", include_str!("../../../results/m12-eval/binding-root-effects-primary/primary.stdout").lines().collect::<Vec<_>>().join(" "));
+    let forms = suss_reader::forms::read_forms(&primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/binding-root-effects-primary/expression.sus");
+        macros.define(&format!("(defmacro root-effects-in-actual-macro [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(root-effects-in-actual-macro)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}

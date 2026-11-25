@@ -457,7 +457,7 @@ fn a_cell_becomes_dynamic_when_first_framed_and_stays_dynamic() {
     assert_eq!((h.eval(reader), h.read("*x*")), (10, 10));
     let pop = h.runtime.get_func(&mut h.store, "dynamic-pop").unwrap();
     pop.call(&mut h.store, &[frame], &mut []).unwrap();
-    // Pop restores the root through binding-set, which keeps the dynamic bit,
+    // Pop leaves the root untouched and keeps the dynamic bit,
     // as does a later root write.
     assert_eq!(flags(&mut h, "*x*"), 3);
     assert_eq!(h.eval("(set! *x* 5)"), 5);

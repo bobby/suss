@@ -1,0 +1,7 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn [(do (def ^:dynamic body-root-eval 1) (let [inside (binding [body-root-eval 3] (eval (quote (def ^:dynamic body-root-eval 2))) body-root-eval)] [inside body-root-eval]))
+(do (def ^:dynamic body-root-direct 1) (let [inside (binding [body-root-direct 3] (def ^:dynamic body-root-direct 2) body-root-direct)] [inside body-root-direct]))
+(do (def ^:dynamic body-root-throw 1) [(try (binding [body-root-throw 3] (eval (quote (def ^:dynamic body-root-throw 2))) (throw (ex-info "body" {}))) (catch Throwable e :caught)) body-root-throw])
+(do (def ^:dynamic body-root-once) (let [inside (binding [body-root-once 3] (defonce ^:dynamic body-root-once 2) body-root-once)] [inside body-root-once]))
+(do (def ^:dynamic body-root-nested 0) [(binding [body-root-nested 1] [(binding [body-root-nested 3] (eval (quote (def ^:dynamic body-root-nested 2))) body-root-nested) body-root-nested]) body-root-nested])
+(do (def ^:dynamic body-root-set 1) (let [inside (binding [body-root-set 3] (set! body-root-set 4) body-root-set)] [inside body-root-set]))])

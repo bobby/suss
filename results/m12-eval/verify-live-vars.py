@@ -41,6 +41,29 @@ assert (p/'expression.sus').read_text()=='['+'\n'.join('(try '+row['expression']
 paths += ['crates/suss-cli/tests/compiled_macro_publication_cells.rs']
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 paths += ['crates/suss-compile/tests/portable_resolution.rs', 'crates/suss-compile/tests/portable_closures.rs', 'crates/suss-compile/tests/portable_dynamic_bindings.rs']
+p=BASE/'binding-initializer-effects-primary';initializer=json.loads((p/'command.json').read_text())
+assert initializer['exit_code']==0 and initializer['controls']==9
+assert all(sha(Path(name).read_bytes())==digest for name,digest in initializer['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==initializer['source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==initializer['stdout_sha256']
+rows=json.loads((p/'cases.json').read_text());assert len(rows)==9
+assert [row['observed_edn'] for row in rows]==(p/'primary.stdout').read_text().splitlines()
+assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n'+''.join('(prn '+row['expression']+')\n' for row in rows)
+assert (p/'expression.sus').read_text()=='['+'\n'.join(row['expression'].replace('(catch Throwable ', '(catch :default ') for row in rows)+']\n'
+paths += ['crates/suss-compile/tests/runtime_async_scheduler.rs']
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+p=BASE/'binding-root-effects-primary';initializer=json.loads((p/'command.json').read_text())
+assert initializer['exit_code']==0 and initializer['controls']==8
+assert all(sha(Path(name).read_bytes())==digest for name,digest in initializer['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==initializer['source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==initializer['stdout_sha256']
+rows=json.loads((p/'cases.json').read_text());assert len(rows)==8
+assert [row['observed_edn'] for row in rows]==(p/'primary.stdout').read_text().splitlines()
+assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n'+''.join('(prn '+row['expression']+')\n' for row in rows)
+assert (p/'expression.sus').read_text()=='['+'\n'.join(row['expression'].replace('(catch Throwable ', '(catch :default ') for row in rows)+']\n'
+paths += ['crates/suss-compile/tests/runtime_async_scheduler.rs']
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-cli/tests/portable_dynamic_bindings.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

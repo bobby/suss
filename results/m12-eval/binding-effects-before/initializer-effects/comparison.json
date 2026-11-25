@@ -1,0 +1,18 @@
+{
+  "head": "c266e1c354fd3ef032fa2473309ce9bd3b1c8c30",
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-initializer-effects-validated-primary-before/compare.clj"
+  ],
+  "exit_code": 1,
+  "seconds": 0.8410770893096924,
+  "primary_exit_code": 0,
+  "native_exit_code": 0,
+  "mismatch_count": 3,
+  "controls": 5,
+  "qualification": "Actual pinned Clojure reader/value comparison of the two captured successful executions. Comparator1 denotes three wrong native values, not a CLI crash or native101. Metadata-removing initial research1 remains separately retained."
+}

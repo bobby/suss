@@ -1,0 +1,5 @@
+{:index 0, :expected [3 2], :actual [3 1], :match false}
+{:index 1, :expected [3 2], :actual [3 1], :match false}
+{:index 2, :expected [:caught 2], :actual [:caught 2], :match true}
+{:index 3, :expected [4 1], :actual [4 1], :match true}
+{:index 4, :expected [3 2], :actual [3 1], :match false}
