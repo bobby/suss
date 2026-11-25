@@ -752,6 +752,10 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
     );
     let mut ids = std::collections::HashSet::new();
     let mut corrected = 0;
+    let dynamic_primary: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/portable-dynamic-primary/cases.json")).unwrap();
+    assert_eq!(dynamic_primary.len(), 2);
+    let mut dynamic_references = 0;
     let mut failing = Vec::new();
     for case in corpus["cases"].as_array().unwrap() {
         let id = case["id"].as_str().unwrap();
@@ -769,7 +773,20 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let observed = try_execute(&source)
             .map(|(mut store, value)| tagged(&mut store, &value))
             .map_err(|error| format!("{error:?}"));
-        let expected = clojure_override(id).unwrap_or_else(|| clojure_expected(&case["expected"], &source));
+        // Keep every original spelling executed. The legacy root-set spelling
+        // is a native bootstrap extension, not a Clojure-compatible root set!.
+        // Separately execute the pinned legal bound control; the definition
+        // reference is the original source verbatim. The CLJS corpus stays raw.
+        let dynamic_expected = dynamic_primary.iter().find(|row| row["id"] == id).map(|row| {
+            assert_eq!(row["source"], source);
+            let reference = row["primary_source"].as_str().unwrap();
+            let (mut store, value) = execute(reference);
+            assert_eq!(tagged(&mut store, &value), row["expected"], "{id}: primary control {reference}");
+            dynamic_references += 1;
+            row["expected"].clone()
+        });
+        let expected = dynamic_expected.unwrap_or_else(|| clojure_override(id)
+            .unwrap_or_else(|| clojure_expected(&case["expected"], &source)));
         if observed.as_ref() != Ok(&expected) {
             failing.push(format!("{id}: {source}: {observed:?}"));
         }
@@ -777,6 +794,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
     assert!(failing.is_empty(), "{failing:#?}");
     assert_eq!(ids.len(), 397);
     assert_eq!(corrected, 142);
+    assert_eq!(dynamic_references, 2);
 }
 
 /// Where Clojure's result differs from the pinned ClojureScript one beyond

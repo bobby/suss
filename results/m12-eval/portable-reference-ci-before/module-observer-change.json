@@ -1,0 +1,9 @@
+{
+  "file": "crates/suss-compile/tests/portable_modules.rs",
+  "before_sha256": "3243d7b54b6f0daca7c13ee758c5fd4b4a7ec079509efc2b2d32745c96e75af1",
+  "after_sha256": "679dad49285ab7cfb9d73bfc89247226463667ecfa7c8d003efa55929dc709a6",
+  "replacement_before": "\"binding-set\"",
+  "replacement_after": "\"binding-root-set\"",
+  "count": 2,
+  "qualification": "Instrumentation only: compiler definitions now call binding-root-set. Keep all expected initialization/provision/partial-effect assertions unchanged, forwarding actual setter function type and results. Prepared outside frozen source; apply only after current portable_pipeline gate terminal."
+}

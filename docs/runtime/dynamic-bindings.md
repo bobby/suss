@@ -118,3 +118,16 @@ and2000-step fuel tests pass with all earlier binding guards (318 focused tests
 total). Earlier wrong-value and IR-admission failures remain source-qualified;
 `verify-root-redefs-checkpoint.py` conserves the executed source and receipts.
 Broader/full/review/final-head CI remain required on this compiler change.
+
+
+Supplementary scope controls retain the original397-case ClojureScript corpus.
+The native bootstrap currently permits root set! outside a thread binding;
+Clojure1.12.6 rejects that spelling. The pinned legal outer-thread-binding
+control in results/m12-eval/portable-dynamic-primary observes initializer effect2;
+the exact original definition-in-binding source observes root9. Both original
+native spellings and the two legal primary controls execute. This is an explicit
+existing root-set extension, not a general Clojure error/compatibility waiver.
+The module initialization trace observes binding-root-set with all original
+order, partial-effect and module-publication assertions unchanged. Complete
+portable22 and module11 targets pass; verify-portable-reference-checkpoint.py
+relates these test-only deltas to the unchanged318-tested production source.
