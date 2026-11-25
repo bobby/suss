@@ -171,3 +171,45 @@ fn namespace_session_command_compiled_macro_definitions_respect_exclusions_and_a
     assert!(errors.contains("defmacro"), "{errors}");
     assert!(errors.contains("forbidden"), "{errors}");
 }
+
+#[test]
+fn native_eval_catalog_reaches_repl_inputs_in_both_phases() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    for phase in [suss_compile::portable::resolve::Phase::Runtime, suss_compile::portable::resolve::Phase::Macro] {
+        let mut runtime = match phase {
+            suss_compile::portable::resolve::Phase::Runtime => Session::new_repl(),
+            suss_compile::portable::resolve::Phase::Macro => Session::new_macro(),
+        }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+            "(eval '(defmacro entry-caller-context [] (list 'quote (ns-name *ns*))))").unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+            "(entry-caller-context)").unwrap(), "user", "{phase:?}");
+        portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+            "(def entry-effects (atom 0))").unwrap();
+        portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+            "(eval '(defmacro entry-caller-effect [] (swap! entry-effects inc) 42))").unwrap();
+        for expected in [1, 2] {
+            assert_eq!(portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+                "(entry-caller-effect)").unwrap(), "42", "{phase:?}");
+            assert_eq!(portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+                "@entry-effects").unwrap(), expected.to_string(), "{phase:?}");
+        }
+        portable_repl::evaluate_compiled(&mut runtime, &mut macros, "(ns entry.next)").unwrap();
+        runtime.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut runtime, &mut macros,
+            "(user/entry-caller-context)").unwrap(), "entry.next", "{phase:?}");
+        assert_eq!(runtime.current_namespace(), "entry.next");
+    }
+}
+
+#[test]
+fn native_eval_catalog_reaches_the_repl_command() {
+    let output = repl(concat!(
+        "(eval '(defmacro native-entry-answer [] 42))\n",
+        "(native-entry-answer)\n",
+    ));
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
+    assert_eq!(String::from_utf8(output.stdout).unwrap(), "#'user/native-entry-answer\n42\n");
+}

@@ -8,6 +8,7 @@ pub(crate) struct MacroAuthority {
     namespace_interner: SessionValue,
     namespace_setter: SessionValue,
     exception_message: SessionValue,
+    fallback: Option<MacroService>,
 }
 pub(crate) struct MacroReentryProfile {
     session: crate::portable_session::ReentryProfile,
@@ -21,6 +22,7 @@ impl MacroHost<'_> {
             namespace_interner: self.namespace_interner.clone(),
             namespace_setter: self.namespace_setter.clone(),
             exception_message: self.exception_message.clone(),
+            fallback: self.fallback.clone(),
         }
     }
     pub(crate) fn reentry_profile(&self) -> MacroReentryProfile {
@@ -31,6 +33,23 @@ impl MacroHost<'_> {
     }
 }
 impl MacroAuthority {
+    /// A native eval macro is compiled once in its caller's existing Store.
+    /// This catalog shares real cells, namespaces and captured objects there;
+    /// it does not reconstruct an isolated host or replay earlier definitions.
+    pub(crate) fn native(session: &mut SessionHost<'_>, bridge: Arc<FormBridge>, fallback: MacroService) -> Result<Self, SessionError> {
+        Ok(Self {
+            bridge,
+            catalog: Arc::new(Mutex::new(MacroCatalog::default())),
+            namespace_interner: session.original_core_function("intern-namespace")?,
+            namespace_setter: session.original_core_function("enter-macro-namespace!")?,
+            exception_message: session.original_core_function("ex-message")?,
+            fallback: Some(fallback),
+        })
+    }
+    pub(crate) fn with_fallback(mut self, fallback: MacroService) -> Self {
+        self.fallback = Some(fallback);
+        self
+    }
     pub(crate) fn bridge(&self) -> Arc<FormBridge> {
         self.bridge.clone()
     }
@@ -42,6 +61,9 @@ impl MacroAuthority {
             namespace_interner: self.namespace_interner.clone(),
             namespace_setter: self.namespace_setter.clone(),
             exception_message: self.exception_message.clone(),
+            fallback: self.fallback.clone(),
+            invocation_error: None,
+            native_effects: vec![],
         }
     }
 }

@@ -1,3 +1,24 @@
+### Caller-owned macro source and frontend checks
+
+The source-frozen working overlay on ba917029 returns actual0 for Rust checking,
+the unchanged reset/display1handle guard, synchronized independent-Macro worker
+compilation during Runtime, all55source/script/module/AOT/REPL tests, public74
+and host120. The broad targets contain249 unique test executions; the two focused
+controls repeat members of those targets. Exact commands, compressed original
+positive/negative receipts, pinned primary controls and limits are under
+results/m12-eval/caller-source-frontends-checkpoint. Source declarations retain
+the isolated Store; native eval declarations use real caller-owned bindings.
+Script Runtime execution still follows complete preparation. Source journals
+finish at linking before dependency/Runtime code. Compiler helper and predicate
+roots retain GC ownership without inflating external handle accounting.
+
+The separate script-native-publication probe records native exit1 for retained
+Runtime definitions and const names after a later prepared input; explicit future
+source redefinition is a passing control. Foreign-Store function/Var transport
+also remains unsupported. These results do not replace a fresh exact workspace,
+independent final review or final published-head CI. Original protected programs,
+primary/baseline observations, count/skip/opaque policies and allowances remain.
+
 ### Literal roots, false metadata and GC validation
 
 The frozen literal/metadata follow-up returns0 for complete public eval62

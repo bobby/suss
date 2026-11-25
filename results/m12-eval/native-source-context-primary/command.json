@@ -1,0 +1,24 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/native-source-context-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8621580600738525,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "2b48d0ab25efb748013b7d88c01540948da7a581f06806f3060e808820caf687",
+  "module_sources_sha256": {
+    "caller.sus": "cfdb9940279821d5f2cd604e8c7e29ecab67abe1392d554fa96e39e3ec846381",
+    "mixed.sus": "c1c6a4687f0ff811255bd18dd066c5f824fa90334320f07b45253b776816a33b"
+  },
+  "stdout_sha256": "1086e11226342fac6f2e23b5c85f3564e15f14606e8adc0be1d470852f2f2a3f",
+  "qualification": "Fresh primary source-module call-site namespace and same-owner reassertion observations. Native setup uses existing host namespace entry and public eval for caller-owned macros. Not native validation."
+}

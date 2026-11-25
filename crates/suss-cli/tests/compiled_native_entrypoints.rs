@@ -267,3 +267,42 @@ fn review_failed_script_preserves_completed_macro_dependencies_and_effects() {
         );
     }
 }
+
+#[test]
+fn native_eval_catalog_reaches_script_preparation_in_both_phases() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval '(defmacro entry-caller-context [] (list 'quote (ns-name *ns*))))").unwrap();
+        let result = portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            "(ns entry.a) (def one (user/entry-caller-context)) (ns entry.b) [entry.a/one (user/entry-caller-context)]",
+            None).unwrap();
+        assert_eq!(result, "[entry.a entry.b]", "{phase:?}");
+        assert_eq!(session.current_namespace(), "entry.b");
+        portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval '(defmacro entry-caller-made [] (eval '(def carried 41)) 42))").unwrap();
+        let result = portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            "(def staged (entry-caller-made)) [staged carried]", None).unwrap();
+        assert_eq!(result, "[42 41]", "{phase:?}");
+        session.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros, "carried").unwrap(), "41");
+    }
+}
+
+#[test]
+fn native_eval_catalog_keeps_script_declarations_in_the_isolated_source_store() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(def script-events (atom 0))").unwrap();
+        portable_repl::evaluate_compiled(&mut session, &mut macros, "(eval '(+ 0 0))").unwrap();
+        let result = portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            "(defmacro isolated-script [] (defonce script-events (atom 0)) (swap! script-events inc) 42) [(isolated-script) @script-events]",
+            None).unwrap();
+        assert_eq!(result, "[42 0]", "{phase:?}");
+    }
+}

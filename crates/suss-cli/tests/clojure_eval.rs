@@ -908,24 +908,13 @@ fn actual_reentrant_macro_eval_publishes_in_its_own_store() {
 }
 
 #[test]
-fn isolated_macro_function_calls_share_the_original_caller_allowance() {
-    use std::sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    };
+fn eval_macro_function_calls_share_the_original_caller_allowance() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        let observations = Arc::new(AtomicUsize::new(0));
-        let observer = observations.clone();
-        macros
-            .install_observation_hook(move |_, _| {
-                observer.fetch_add(1, Ordering::SeqCst);
-                Ok(0)
-            })
-            .unwrap();
+        session.eval("(def raw-budget-observations (atom 0))").unwrap();
         session
             .eval_with_macros(
-                "(eval '(defmacro raw-budget-once [] (suss.harness.observation/capture 1) 1))",
+                "(eval '(defmacro raw-budget-once [] (swap! raw-budget-observations inc) 1))",
                 &mut macros,
             )
             .unwrap();
@@ -935,10 +924,10 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
                 &mut macros,
             )
             .unwrap();
-        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (suss.harness.observation/capture 2) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
+        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (swap! raw-budget-observations inc) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
         let nil = session.eval("nil").unwrap();
         for (function, args) in [(&repeated, vec![]), (&looping, vec![&nil, &nil])] {
-            observations.store(0, Ordering::SeqCst);
+            session.eval("(reset! raw-budget-observations 0)").unwrap();
             session.set_operation_fuel(200_000);
             let start = std::time::Instant::now();
             let interrupt = session.interrupt_handle();
@@ -960,11 +949,11 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
                 "the original caller allowance must exhaust before the watchdog: {error}"
             );
             assert!(start.elapsed() < std::time::Duration::from_secs(5));
-            assert!(
-                observations.load(Ordering::SeqCst) > 0,
-                "the actual Macro body must run before exhaustion"
-            );
             session.set_operation_fuel(10_000_000);
+            let ran = session.eval("(pos? @raw-budget-observations)").unwrap();
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &ran).unwrap(), Observation::Bool(true),
+                "the actual caller-owned Macro body must run before exhaustion");
             let value = session
                 .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
                 .unwrap();
@@ -978,10 +967,15 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
 }
 
 #[test]
-fn runtime_cancellation_reaches_an_isolated_macro_function_and_returns_the_lease() {
+fn runtime_cancellation_reaches_eval_macro_code_and_preserves_source_service() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     let (signal, observed) = std::sync::mpsc::sync_channel(1);
+    let runtime_signal = signal.clone();
+    session.install_observation_hook(move |_, _| {
+        let _ = runtime_signal.try_send(());
+        Ok(0)
+    }).unwrap();
     macros
         .install_observation_hook(move |_, _| {
             let _ = signal.try_send(());
@@ -1792,5 +1786,238 @@ fn root_macro_flags_stay_private_when_ordinary_source_enters_core() {
              (.isMacro (var user/source-core-flag-macro))])"#,
             "[true false]");
         session.enter_namespace("user").unwrap();
+    }
+}
+
+#[test]
+fn native_eval_macros_use_caller_state_and_recheck_live_authorization() {
+    promotion_review_controls("caller-owned-macro-state",
+        include_str!("../../../results/m12-eval/caller-owned-macro-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/caller-owned-macro-primary/primary.stdout"), 5);
+}
+
+#[test]
+fn actual_macro_eval_uses_caller_state_and_live_authorization() {
+    let source = include_str!("../../../results/m12-eval/caller-owned-macro-primary/expression.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/caller-owned-macro-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(&format!("(defmacro native-caller-state-probe [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(native-caller-state-probe)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn native_eval_macro_catalog_survives_source_entries_without_changing_namespace_roots() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let namespace = session.eval("(fn [] (ns-name *ns*))").unwrap();
+        let before = session.invoke(&namespace, &[]).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let before = decoder.decode_session(&mut session, &before).unwrap();
+        session.eval_with_macros("(eval '(defmacro native-next-source [] 42))", &mut macros).unwrap();
+        session.collect().unwrap();
+        let value = session.eval_with_macros("(native-next-source)", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+        let value = session.invoke(&namespace, &[]).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), before);
+        let value = session.eval_with_macros("(do (eval '(defmacro native-source-ns [] (list 'quote (ns-name *ns*)))) (eval '(native-source-ns)))", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "user".encode_utf16().collect()));
+    }
+}
+
+#[test]
+fn native_eval_macro_effects_survive_outer_analysis_and_truthy_metadata() {
+    promotion_review_controls("caller-macro-effects",
+        include_str!("../../../results/m12-eval/caller-macro-effects-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/caller-macro-effects-primary/primary.stdout"), 7);
+}
+
+#[test]
+fn actual_macro_eval_preserves_compilation_effects_and_truthy_metadata() {
+    let source = include_str!("../../../results/m12-eval/caller-macro-effects-primary/expression.sus")
+        .replace("(catch Throwable ", "(catch :default ");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/caller-macro-effects-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(&format!("(defmacro native-macro-effects-probe [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(native-macro-effects-probe)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn native_source_macro_declarations_keep_the_isolated_source_host() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("isolation.sus"), "(ns isolation) (defmacro step [] (swap! user/source-phase-state inc) 42) (def answer (step))").unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro source-phase-seed [] (eval '(def source-phase-state (atom 0))) 42)").unwrap();
+        session.eval_with_macros("(source-phase-seed)", &mut macros).unwrap();
+        session.eval("(def source-phase-state (atom 0))").unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        session.eval_with_macros("(ns user (:require [isolation])) isolation/answer", &mut macros).unwrap();
+        macros.define("(defmacro source-phase-read [] (list 'quote @source-phase-state))").unwrap();
+        let value = session.eval_with_macros("[@source-phase-state (source-phase-read)]", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(),
+            Observation::Vector(vec![Observation::Long(0), Observation::Long(1)]));
+    }
+}
+
+#[test]
+fn native_source_macro_authority_retains_original_compiler_helpers() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(r#"
+          (with-redefs [suss.core/intern-namespace (fn [& xs] (throw :redirected-interner))
+                        suss.core/enter-macro-namespace! (fn [& xs] (throw :redirected-setter))
+                        suss.core/ex-message (fn [& xs] (throw :redirected-message))]
+            (eval '(defmacro native-retained-helper [] 42)))"#, &mut macros).unwrap_or_else(|error| panic!("{}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        let value = session.eval_with_macros("(native-retained-helper)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn native_source_macro_context_tracks_each_module_without_changing_roots() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("caller.sus"), include_str!("../../../results/m12-eval/native-source-context-primary/caller.sus")).unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        let namespace = session.eval("(fn [] (ns-name *ns*))").unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let before = session.invoke(&namespace, &[]).unwrap();
+        let before = decoder.decode_session(&mut session, &before).unwrap();
+        // Accepted namespace contract: the raw native root is suss.core.
+        // Source execution binds user or the namespace currently being loaded.
+        assert_eq!(before, Observation::Symbol(None, "suss.core".encode_utf16().collect()));
+        session.eval_with_macros("(eval '(defmacro native-source-context [] (list 'quote (ns-name *ns*))))", &mut macros).unwrap();
+        let value = session.eval_with_macros("(ns user (:require [caller])) caller/answer", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "caller".encode_utf16().collect()));
+        let value = session.invoke(&namespace, &[]).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), before);
+        let value = session.eval_with_macros("(ns-name *ns*)", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "user".encode_utf16().collect()));
+    }
+}
+
+#[test]
+fn native_source_macro_reassertion_supersedes_staged_foreign_owner() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("mixed.sus"), include_str!("../../../results/m12-eval/native-source-context-primary/mixed.sus")).unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("mixed").unwrap();
+        session.eval_with_macros("(eval '(defmacro shared [] 1))", &mut macros).unwrap();
+        session.enter_namespace("user").unwrap();
+        session.eval_with_macros("(eval '(defmacro native-reassert-shared [] (eval '(defmacro shared [] 42)) :done))", &mut macros).unwrap();
+        let value = session.eval_with_macros("(ns user (:require [mixed])) mixed/answer", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_macro_fuel_remains_bounded_after_native_eval() {
+    use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let observations = Arc::new(AtomicUsize::new(0));
+        let observer = observations.clone();
+        macros.install_observation_hook(move |_, _| { observer.fetch_add(1, Ordering::SeqCst); Ok(0) }).unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        macros.define("(defmacro isolated-source-fuel-loop [] (suss.harness.observation/capture 3) (loop [] (recur)))").unwrap();
+        macros.set_operation_fuel(200_000);
+        let interrupt = session.interrupt_handle();
+        let (done, waiting) = std::sync::mpsc::channel();
+        let watchdog = std::thread::spawn(move || {
+            if waiting.recv_timeout(std::time::Duration::from_secs(5)).is_err() { interrupt.interrupt(); }
+        });
+        let start = std::time::Instant::now();
+        let error = session.eval_with_macros("(isolated-source-fuel-loop)", &mut macros).unwrap_err();
+        let _ = done.send(());
+        watchdog.join().unwrap();
+        assert!(error.to_string().to_lowercase().contains("fuel"), "{error}");
+        assert!(start.elapsed() < std::time::Duration::from_secs(5));
+        assert!(observations.load(Ordering::SeqCst) > 0, "actual source Macro body must run");
+        macros.set_operation_fuel(10_000_000);
+        session.set_operation_fuel(10_000_000);
+        macros.define("(defmacro isolated-source-fuel-resumed [] 42)").unwrap();
+        let value = session.eval_with_macros("(isolated-source-fuel-resumed)", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_macro_cancellation_returns_its_service_after_native_eval() {
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let (signal, observed) = std::sync::mpsc::sync_channel(1);
+    macros.install_observation_hook(move |_, _| { let _ = signal.try_send(()); Ok(0) }).unwrap();
+    session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+    macros.define("(defmacro isolated-source-cancel-loop [] (suss.harness.observation/capture 77) (loop [] (recur)))").unwrap();
+    session.set_operation_fuel(u64::MAX);
+    macros.set_operation_fuel(u64::MAX);
+    let interrupt = session.interrupt_handle();
+    let controller = std::thread::spawn(move || {
+        let ran = observed.recv_timeout(std::time::Duration::from_secs(5)).is_ok();
+        interrupt.interrupt();
+        ran
+    });
+    let error = session.eval_with_macros("(isolated-source-cancel-loop)", &mut macros).unwrap_err();
+    assert!(controller.join().unwrap(), "actual source Macro body must reach its observer");
+    assert!(error.to_string().contains("Interrupted"), "{error}");
+    session.set_operation_fuel(10_000_000);
+    macros.set_operation_fuel(10_000_000);
+    macros.define("(defmacro isolated-source-cancel-resumed [] 42)").unwrap();
+    let value = session.eval_with_macros("(isolated-source-cancel-resumed)", &mut macros).unwrap();
+    let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+    assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+}
+
+#[test]
+fn native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        session.set_operation_fuel(20_000);
+        macros.set_operation_fuel(1_000_000);
+        let source = format!("{}42", " ".repeat(50_000));
+        let value = session.eval_with_macros(&source, &mut macros).unwrap();
+        session.set_operation_fuel(10_000_000);
+        macros.set_operation_fuel(10_000_000);
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
     }
 }

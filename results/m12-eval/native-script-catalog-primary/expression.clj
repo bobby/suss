@@ -1,0 +1,8 @@
+(assert (= "1.12.6" (clojure-version)))
+(def entry-results (atom []))
+(eval '(defmacro entry-caller-context [] (list 'quote (ns-name *ns*))))
+(swap! entry-results conj (load-string "(ns entry.a) (def one (user/entry-caller-context)) (ns entry.b) [entry.a/one (user/entry-caller-context)]"))
+(in-ns 'entry.b)
+(eval '(defmacro entry-caller-made [] (eval '(def carried 41)) 42))
+(swap! user/entry-results conj (load-string "(def staged (entry-caller-made)) [staged carried]"))
+(prn @user/entry-results)

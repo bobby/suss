@@ -1,0 +1,1 @@
+(eval '(def script-native-carried 42)) (eval 'script-native-carried)

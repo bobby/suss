@@ -240,12 +240,7 @@ impl MacroHost<'_> {
         catalog(&self.catalog)
             .declaration_sources
             .insert((namespace.clone(), name.clone()), provenance);
-        let exports = catalog(&self.catalog)
-            .definitions
-            .keys()
-            .filter(|(ns, _)| ns == &namespace)
-            .map(|(_, name)| name.clone())
-            .collect::<Vec<_>>();
+        let exports = self.declared_macro_exports(&namespace).unwrap_or_default();
         self.session.declare_macro_exports(&namespace, &exports)?;
         self.session.record_macro_declaration(&namespace, &name);
         Ok((value, variable))

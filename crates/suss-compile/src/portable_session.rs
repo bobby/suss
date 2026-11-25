@@ -272,12 +272,19 @@ pub(crate) struct BindingCheckpoint {
 }
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
+#[derive(Clone)]
 pub(crate) struct CompilationSnapshot {
     pub(crate) environment: Environment,
     pub(crate) native_owner: Option<u64>,
     phase: Phase,
     pub(crate) source_paths: Vec<PathBuf>,
     pub(crate) provided: BTreeSet<ModuleIdentity>,
+}
+/// Declaration journals belong to one preparation through its linking result.
+/// The operation excludes other threads without retaining a Macro Store lease.
+pub(crate) struct SourcePreparation {
+    authority: Option<crate::portable_macros::MacroAuthority>,
+    _operation: Option<crate::portable_macros::MacroOperation>,
 }
 impl CompilationSnapshot {
     pub(crate) fn new(
@@ -293,6 +300,28 @@ impl CompilationSnapshot {
             source_paths,
             provided,
         }
+    }
+    pub(crate) fn prepare_source(&self, source: &str, expander: &mut dyn portable::ExpansionHost) -> Result<portable::modules::PreparedInput, SessionError> {
+        let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
+        let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
+            portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len()).map_err(|error| suss_reader::ParseError {
+                message: error.message, span: error.span, expected: vec![],
+            })
+        }).map_err(|error| {
+            SessionError::Compile(Diagnostic {
+                span: error.span,
+                message: error.message,
+            })
+        })?;
+        portable::ExpansionHost::charge_expansion_work(&mut request, source.len() as u64, 0..source.len()).map_err(SessionError::Compile)?;
+        let prepared = self.prepare_with_origin(
+            forms,
+            0..source.len(),
+            &mut request,
+            Some(&portable::SourceOrigin::new(source, None)),
+        )?;
+        drop(request);
+        Ok(prepared)
     }
     pub(crate) fn phase(&self) -> Phase {
         self.phase
@@ -800,6 +829,15 @@ impl SessionHost<'_> {
     }
     pub(crate) fn operation_fuel_remaining(&self) -> Result<u64, SessionError> {
         self.store.get_fuel().map_err(Into::into)
+    }
+    pub(crate) fn compilation_work_allowance(&self) -> u64 {
+        if self.store.is_borrowed() || self.operation_budget_depth.load(Ordering::SeqCst) > 0 {
+            // Reentry inherits the active allowance, including an owned source
+            // entry's distinct compilation fuel. Never refill it from options.
+            self.operation_fuel_remaining().unwrap_or(0)
+        } else {
+            self.options.fuel_per_operation
+        }
     }
     /// An owned snapshot; native callbacks can publish namespace metadata.
     pub fn current_namespace(&self) -> String {
@@ -1327,7 +1365,10 @@ impl SessionHost<'_> {
         end_operation_budget(&self.operation_budget_depth);
     }
     pub(crate) fn record_macro_declaration(&mut self, namespace: &str, name: &str) {
-        registry_lock(&self.compiler).environment.record_macro_declaration(self.phase, namespace, name);
+        registry_lock(&self.compiler).environment.record_native_macro_definition(self.phase, namespace, name, self.identity);
+    }
+    pub(crate) fn native_macro_exports(&self, namespace: &str) -> Vec<String> {
+        registry_lock(&self.compiler).environment.macro_export_names(self.phase, namespace)
     }
     /// Cap an already-active operation without starting/refilling its budget.
     pub(crate) fn cap_operation_fuel(&mut self, limit: u64) -> Result<u64, SessionError> {
@@ -1563,38 +1604,74 @@ impl SessionHost<'_> {
         source: &str,
         expander: &mut dyn portable::ExpansionHost,
     ) -> Result<SessionValue, SessionError> {
-        self.attach_expander(expander);
-        expander.begin_declarations().map_err(SessionError::Compile)?;
-        let mut linked = false;
-        let result = self.eval_with_staged_macros(source, expander, &mut linked);
-        expander.end_declarations(linked).map_err(SessionError::Compile)?;
-        result
+        self.eval_input_with_macros(expander, |snapshot, expander| {
+            snapshot.prepare_source(source, expander)
+        }).map(|(value, _)| value)
     }
-    fn eval_with_staged_macros(
-        &mut self, source: &str, expander: &mut dyn portable::ExpansionHost, linked: &mut bool,
-    ) -> Result<SessionValue, SessionError> {
-        let mut request = portable::ExpansionRequest::new(expander, 0..source.len()).map_err(SessionError::Compile)?;
-        let forms = suss_reader::forms::read_forms_metered(source, &mut |work| {
-            portable::ExpansionHost::charge_expansion_work(&mut request, work, 0..source.len()).map_err(|error| suss_reader::ParseError {
-                message: error.message, span: error.span, expected: vec![],
-            })
-        }).map_err(|error| {
-            SessionError::Compile(Diagnostic {
-                span: error.span,
-                message: error.message,
-            })
-        })?;
-        portable::ExpansionHost::charge_expansion_work(&mut request, source.len() as u64, 0..source.len()).map_err(SessionError::Compile)?;
-        let prepared = self.compilation_snapshot().prepare_with_origin(
-            forms,
-            0..source.len(),
-            &mut request,
-            Some(&portable::SourceOrigin::new(source, None)),
-        )?;
-        // Preparation owns the isolated Macro Store only until compilation
-        // finishes. Runtime code may call eval and borrow that same authority.
-        drop(request);
-        self.eval_prepared_linked(prepared, linked)
+    /// Reader and REPL inputs share the caller's live macro authority while
+    /// retaining their own source spans and definition-result presentation.
+    pub(crate) fn eval_input_with_macros(
+        &mut self,
+        expander: &mut dyn portable::ExpansionHost,
+        prepare: impl FnOnce(&CompilationSnapshot, &mut dyn portable::ExpansionHost)
+            -> Result<portable::modules::PreparedInput, SessionError>,
+    ) -> Result<(SessionValue, Option<portable::hir::ResultDefinition>), SessionError> {
+        let (prepared, preparation) = self.prepare_source_input(expander, prepare)?;
+        let mut preparation = Some(preparation);
+        let definition = prepared.fragment.definition.clone();
+        let mut linked = false;
+        let outcome = self.eval_prepared_with_link(prepared, &mut linked, |session| {
+            session.finish_source_input(preparation.take().expect("source preparation"), expander, true)
+        });
+        let cleanup = match preparation {
+            Some(preparation) => self.finish_source_input(preparation, expander, false),
+            None => Ok(()),
+        };
+        match outcome { Err(error) => Err(error), Ok(value) => { cleanup?; Ok((value, definition)) } }
+    }
+    pub(crate) fn prepare_source_input<T>(
+        &mut self,
+        expander: &mut dyn portable::ExpansionHost,
+        prepare: impl FnOnce(&CompilationSnapshot, &mut dyn portable::ExpansionHost)
+            -> Result<T, SessionError>,
+    ) -> Result<(T, SourcePreparation), SessionError> {
+        self.attach_expander(expander);
+        let operation = expander.persistent_macro_context()
+            .and_then(|context| context.downcast_ref::<crate::portable_macros::MacroService>())
+            .map(crate::portable_macros::MacroService::operation);
+        if let Some(authority) = self.local_macro_authority() {
+            // Source input retains separate compile and runtime allowances.
+            // A borrowed reentrant entry instead inherits its active budget.
+            if !self.store.is_borrowed() && self.operation_budget_depth.load(Ordering::SeqCst) == 0 {
+                self.budget()?;
+                self.store.set_fuel(expander.expansion_work_fuel())?;
+            }
+            let profile = self.reentry_profile();
+            let prepared = {
+                let view = profile.bind(self.store.as_context_mut());
+                authority.bind(view).prepare_native_input(prepare)?
+            };
+            return Ok((prepared, SourcePreparation { authority: Some(authority), _operation: operation }));
+        }
+        expander.begin_declarations().map_err(SessionError::Compile)?;
+        match prepare(&self.compilation_snapshot(), expander) {
+            Ok(prepared) => Ok((prepared, SourcePreparation { authority: None, _operation: operation })),
+            Err(error) => { let _ = expander.end_declarations(false); Err(error) }
+        }
+    }
+    pub(crate) fn finish_source_input(
+        &mut self,
+        preparation: SourcePreparation,
+        expander: &mut dyn portable::ExpansionHost,
+        commit: bool,
+    ) -> Result<(), SessionError> {
+        match &preparation.authority {
+            Some(authority) => {
+                let profile = self.reentry_profile();
+                authority.bind(profile.bind(self.store.as_context_mut())).finish_native_source(commit)
+            }
+            None => expander.end_declarations(commit).map_err(SessionError::Compile),
+        }
     }
     /// Compile reader or expanded forms through the ordinary phase/module pipeline.
     /// No source printing/rereading, initializer replay or host interpretation.
@@ -1624,8 +1701,18 @@ impl SessionHost<'_> {
     ) -> Result<SessionValue, SessionError> {
         self.eval_prepared_linked(prepared, &mut false)
     }
-    fn eval_prepared_linked(
+    pub(crate) fn eval_prepared_linked(
         &mut self, prepared: portable::modules::PreparedInput, linked: &mut bool,
+    ) -> Result<SessionValue, SessionError> {
+        self.eval_prepared_with_link(prepared, linked, |_| Ok(()))
+    }
+    /// Finish source declaration journals at publication, before any dependency
+    /// initializer or Runtime work can wait on another compiler operation.
+    pub(crate) fn eval_prepared_with_link(
+        &mut self,
+        prepared: portable::modules::PreparedInput,
+        linked: &mut bool,
+        on_link: impl FnOnce(&mut Self) -> Result<(), SessionError>,
     ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
@@ -1642,6 +1729,7 @@ impl SessionHost<'_> {
         bytes.push(&wasm);
         let mut instances = self.install(&bytes, environment, &cells)?;
         *linked = true;
+        on_link(self)?;
         let input = instances.pop().unwrap();
         self.initialize_modules(prepared.modules, instances)?;
         self.eval_instance(input, true)

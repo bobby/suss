@@ -1,0 +1,1 @@
+(def ^:dynamic script-future (fn [] 0)) (eval '(def ^:dynamic script-future (fn [] 41))) (def ^:dynamic script-future (fn [] 42)) (eval '(script-future))

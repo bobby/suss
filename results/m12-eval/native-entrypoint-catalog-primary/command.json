@@ -1,0 +1,30 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-entrypoint-catalog-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7611854369752109,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    {
+      "name": "caller-context",
+      "source": "(do (eval '(defmacro entry-caller-context [] (list 'quote (ns-name *ns*)))) [(eval '(entry-caller-context)) (binding [*ns* (create-ns 'entry.next)] (eval '(user/entry-caller-context)))])"
+    },
+    {
+      "name": "caller-effects",
+      "source": "(do (def entry-effects (atom 0)) (eval '(defmacro entry-caller-effect [] (swap! entry-effects inc) 42)) [(eval '(entry-caller-effect)) @entry-effects (eval '(entry-caller-effect)) @entry-effects])"
+    }
+  ],
+  "source_sha256": "75bddb61da80f06e8ffd94411dc267243d8f689790e96d5fc97faa709b19565d",
+  "stdout_sha256": "5490940d3a571f06c468ff7d8b78f1b8b384bb1addd56513039b045ef67c30b3",
+  "qualification": "Pinned primary caller-defined macro behavior across separate compiler entries. Native REPL/script acceptance remains independent."
+}

@@ -1,0 +1,51 @@
+{
+  "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+  "binary_sha256": "5f7ed515f505d152a300aceb22001de98730e1eb9c1336318ef0a86176bc282a",
+  "source_head": "ba9170297b6450161c8c193e2fdcb3ca982dc50e",
+  "source_gate": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-script-link-and-internal-roots-working-state.json",
+  "source_gate_sha256": "0b244a7cc7c379752138dc76fa61a8dca296e3d0295298f9517fa546c3c181f5",
+  "commands": [
+    {
+      "name": "native-definition-after-later-prepared-input",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "-e",
+        "(eval '(def script-native-carried 42)) (eval 'script-native-carried)"
+      ],
+      "actual_exit": 1,
+      "seconds": 31.583044733852148,
+      "source_sha256": "378751f03b65648b99d3255cf1e44d07ea86dfd1704c06a9d475929b8b9c83f9",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ad61580a945b922d825d51659181368c4882c3149e84534e3300982662ce1fa6"
+    },
+    {
+      "name": "future-explicit-source-definition",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "-e",
+        "(def ^:dynamic script-future (fn [] 0)) (eval '(def ^:dynamic script-future (fn [] 41))) (def ^:dynamic script-future (fn [] 42)) (eval '(script-future))"
+      ],
+      "actual_exit": 0,
+      "seconds": 2.958861079066992,
+      "source_sha256": "44365d975aa3eb63b21b662911814aa966d4a092b257a3015dc7357f2f0133d7",
+      "stdout_sha256": "084c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "native-and-future-const-identities",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "-e",
+        "(eval '(def ^:const script-native-constant 99)) (def ^:const script-source-constant 42) [(eval 'script-native-constant) script-source-constant]"
+      ],
+      "actual_exit": 1,
+      "seconds": 2.7895981101319194,
+      "source_sha256": "8490a02f8f62773e8e04ca11ea332499a7a0c33de718e0539663fecae88d6198",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e69978f75e9e38d5a6e8bc2ea40ac6fb0bba02c5028dd1c33cc700709ad3395c"
+    }
+  ],
+  "complete": true,
+  "qualification": "Bounded read-only native script reproductions against the source-frozen binary built by actual successful original GC guard. Native failures remain failures; controls are not full validation.",
+  "binary_unchanged": true
+}

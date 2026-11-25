@@ -253,7 +253,7 @@ mod tests {
     }
 
     #[test]
-    fn macro_context_snapshot_work_is_debited_before_child_allowance() {
+    fn isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance() {
         use crate::portable_session::EvaluationMathContext;
         use std::sync::atomic::AtomicUsize;
         let mut failures = Vec::new();
@@ -266,8 +266,16 @@ mod tests {
                 seen.fetch_add(1, Ordering::SeqCst);
                 Ok(0)
             }).unwrap();
-            caller.eval_with_macros("(eval '(defmacro context-ledger-marker [] (suss.harness.observation/capture 1) 42))", &mut macros).unwrap();
-            let wrapper = caller.eval_with_macros("(let [f @(eval '(var context-ledger-marker))] (fn [context] (binding [*math-context* context] (f nil nil))))", &mut macros).unwrap();
+            // A genuine source declaration retains the isolated Store. Public
+            // eval declarations instead belong to the caller's live catalog.
+            macros.define("(defmacro context-ledger-marker [] (suss.harness.observation/capture 1) 42)").unwrap();
+            // Measure the same resident compiler/bridge used throughout the
+            // boundary search, rather than charging one cold initialization
+            // only to the separately measured snapshot.
+            caller.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+            // Raw function calls have the core namespace root, independently
+            // of the source input's user namespace frame.
+            let wrapper = caller.eval_with_macros("(fn [context] (binding [*math-context* context] (eval '(user/context-ledger-marker))))", &mut macros).unwrap();
             let namespace = caller.current_namespace();
             let service = macros.service();
             let root = {
@@ -294,6 +302,20 @@ mod tests {
                 };
                 assert!(snapshot_cost > 0);
                 let nil = Form { span: 0..0, metadata: vec![], kind: Kind::Nil };
+                // Prove both real entrypoints reach the marker before using
+                // its presence as a monotonic fuel-search observation.
+                observations.store(0, Ordering::SeqCst);
+                let (control, _) = service.invoke_root(&root, &namespace, vec![nil.clone(), nil.clone()], 400_000_000,
+                    EvaluationMathContext::Data(form.clone()), Arc::new(AtomicBool::new(false))).unwrap();
+                assert!(control.is_ok(), "{phase:?} elements={count}: direct child control: {control:?}");
+                assert!(observations.load(Ordering::SeqCst) > 0);
+                caller.set_operation_fuel(400_000_000);
+                observations.store(0, Ordering::SeqCst);
+                let control = caller.invoke(&wrapper, &[&context]);
+                if let Err(error) = control {
+                    panic!("{phase:?} elements={count}: public control: {}", crate::portable_repl::error_display(&mut caller, &error));
+                }
+                assert!(observations.load(Ordering::SeqCst) > 0);
                 let child_minimum = first_effect_fuel(|fuel| {
                     observations.store(0, Ordering::SeqCst);
                     let _ = service.invoke_root(&root, &namespace, vec![nil.clone(), nil.clone()], fuel,

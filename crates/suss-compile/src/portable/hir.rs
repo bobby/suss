@@ -1552,13 +1552,17 @@ impl Analyzer<'_> {
                         fields: &self.fields,
                         function_scopes: &self.function_scopes,
                     };
-                    if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                    let expanded = self.expander.expand(form, expansion_context)?;
+                    self.expander.refresh_native_environment(&mut self.environment, form.span.clone())?;
+                    if let Some(expanded) = expanded {
                         if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
                             let namespace = self.environment.current_namespace(self.phase).to_owned();
                             if let Some(names) = self.expander.declared_macro_exports(&namespace) {
                                 self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
                                 if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
                                     self.environment.record_macro_declaration(self.phase, &namespace, &name.name);
+                                    self.environment.record_macro_owner(self.phase, &namespace, &name.name,
+                                        self.expander.macro_binding_owner(&namespace, &name.name));
                                 }
                             }
                         }
@@ -2437,7 +2441,8 @@ impl Analyzer<'_> {
                 if key.namespace.is_none() && key.name == "macro")
                 && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
         });
-        if macro_enabled && !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition()) {
+        let native_macro = macro_enabled && self.origin.as_ref().is_some_and(|origin| origin.native_owner().is_some());
+        if macro_enabled && !native_macro && !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition()) {
             return Err(fail(
                 args[0].span.clone(),
                 "Definition const/macro attributes are not implemented yet",
@@ -2582,6 +2587,13 @@ impl Analyzer<'_> {
         if !preserve_declaration {
             self.environment
                 .record_definition(global.clone(), definition);
+        }
+        if native_macro {
+            // A native def with truthy :macro metadata is an ordinary real Var
+            // transformer. Its root executes in this same Store; no isolated
+            // source catalog entry or unused-parameter proof is manufactured.
+            self.environment.record_native_macro_definition(self.phase, &namespace, &name.name,
+                self.origin.as_ref().and_then(|origin| origin.native_owner()).expect("native macro origin"));
         }
         // Direct linking (#360): in an AOT build, a user var defined as a
         // function with no captures publishes its closure as a new link, and

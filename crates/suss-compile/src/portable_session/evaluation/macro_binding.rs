@@ -18,7 +18,7 @@ impl SessionHost<'_> {
         self.identical_values(&selected, &root).map(|same| !same)
     }
     pub(super) fn has_native_macro_binding_override(&mut self, snapshot: &CompilationSnapshot) -> Result<bool, SessionError> {
-        for global in snapshot.environment.native_macro_declarations() {
+        for global in snapshot.environment.native_macro_declarations(self.identity) {
             if global.phase() != self.phase || snapshot.environment.source_macro_overridden(
                 self.phase, global.namespace(), global.name()) { continue; }
             if !registry_lock(&self.compiler).cells.contains_key(&global) { continue; }
@@ -113,7 +113,7 @@ impl ExpansionHost for CallerExpansion<'_, '_> {
         if let Kind::List(items) = &form.kind {
             if let Some(Form { kind: Kind::Symbol(symbol), .. }) = items.first() {
                 if let Some((namespace, name)) = context.environment.resolve_source_macro(context.phase, symbol) {
-                    if let Some(global) = context.environment.native_macro_global(context.phase, &namespace, &name) {
+                    if let Some(global) = context.environment.native_macro_global(context.phase, &namespace, &name, self.caller.native_owner()) {
                         if !context.environment.source_macro_overridden(context.phase, &namespace, &name)
                             && self.caller.native_macro_binding_differs(&global).map_err(|e| diagnostic(form.span.clone(), e))? {
                             return match self.invoke(&global, form, context) {

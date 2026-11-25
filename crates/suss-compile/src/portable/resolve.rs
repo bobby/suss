@@ -10,6 +10,7 @@ use std::{
 };
 use super::persistent::{PersistentMap, PersistentSet};
 use suss_reader::Symbol;
+mod native_effects;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Phase {
@@ -136,7 +137,7 @@ impl ControlForm {
         })
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ProtocolMethod {
     pub name: String,
     pub signatures: Vec<(usize, usize)>, // argument arity, bundle key index
@@ -319,6 +320,17 @@ pub struct NamespaceScope<'a> {
     pub renamed_macro_refers: &'a BTreeSet<String>,
     pub declarations: Vec<(&'a Global, &'a DefinitionInfo)>,
 }
+#[derive(Debug, Clone)]
+struct MacroOwner {
+    store: u64,
+    revision: std::sync::Arc<()>,
+}
+impl PartialEq for MacroOwner {
+    fn eq(&self, other: &Self) -> bool {
+        self.store == other.store && std::sync::Arc::ptr_eq(&self.revision, &other.revision)
+    }
+}
+impl Eq for MacroOwner {}
 /// Explicit input to analysis, shared by future AOT, REPL and macro-session callers.
 /// Configuration is checked before mutation. Source analysis borrows it immutably.
 #[derive(Debug, Clone)]
@@ -341,6 +353,9 @@ pub struct Environment {
     // later ordinary def hides that transformer; namespace imports do not
     // silently turn it back into a macro. Persistent snapshots share revisions.
     macro_declarations: PersistentMap<Global, Option<std::sync::Arc<DefinitionInfo>>>,
+    // Store ownership is distinct from Phase: two native hosts can both be
+    // Macro. A revision also preserves reassertions during reentrant analysis.
+    macro_owners: BTreeMap<Global, MacroOwner>,
     // Actual Var metadata for one native eval analysis only. Never publish this
     // live observation as declaration history or source-analysis authority.
     native_macro_status: BTreeMap<Global, bool>,
@@ -520,6 +535,7 @@ impl Environment {
             identities: BTreeMap::new(),
             macro_exports: BTreeSet::new(),
             macro_declarations: PersistentMap::default(),
+            macro_owners: BTreeMap::new(),
             native_macro_status: BTreeMap::new(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
@@ -793,6 +809,10 @@ impl Environment {
             match before.macro_declarations.get(global) {
                 Some(revision) => { self.macro_declarations.insert(global.clone(), revision.clone()); }
                 None => { self.macro_declarations.remove(global); }
+            }
+            match before.macro_owners.get(global) {
+                Some(owner) => { self.macro_owners.insert(global.clone(), owner.clone()); }
+                None => { self.macro_owners.remove(global); }
             }
             let export = (phase, global.namespace.to_string(), global.name.to_string());
             if before.macro_exports.contains(&export) {
@@ -1234,12 +1254,15 @@ impl Environment {
         let global = Self::var_identity(target);
         matches!(self.bindings.get(&global), Some(Binding::InternalCell(_))).then_some(global)
     }
-    pub(crate) fn native_macro_declarations(&self) -> impl Iterator<Item = Global> + '_ {
-        self.macro_declarations.keys().cloned()
+    pub(crate) fn native_macro_declarations(&self, owner: u64) -> impl Iterator<Item = Global> + '_ {
+        self.macro_owners.iter().filter(move |(_, current)| current.store == owner).map(|(global, _)| global.clone())
     }
-    pub(crate) fn native_macro_global(&self, phase: Phase, namespace: &str, name: &str) -> Option<Global> {
+    pub(crate) fn native_macro_global(&self, phase: Phase, namespace: &str, name: &str, owner: u64) -> Option<Global> {
         let global = Global { phase, namespace: namespace.into(), name: name.into() };
-        self.macro_declarations.contains_key(&global).then_some(global)
+        self.macro_owners.get(&global).is_some_and(|current| current.store == owner).then_some(global)
+    }
+    pub(crate) fn macro_binding_owner(&self, phase: Phase, namespace: &str, name: &str) -> Option<u64> {
+        self.macro_owners.get(&Global { phase, namespace: canonical(namespace).into(), name: name.into() }).map(|owner| owner.store)
     }
     pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
         let global = Self::var_identity(target);
@@ -1483,8 +1506,28 @@ impl Environment {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
         let revision = self.shared_definition_info(&global).cloned();
         self.native_macro_status.remove(&global);
+        self.macro_owners.remove(&global);
         self.macro_declarations.insert(global, revision);
         self.source_changed();
+    }
+    pub(crate) fn record_macro_owner(&mut self, phase: Phase, namespace: &str, name: &str, owner: Option<u64>) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        match owner {
+            Some(store) => { self.macro_owners.insert(global, MacroOwner { store, revision: std::sync::Arc::new(()) }); }
+            None => { self.macro_owners.remove(&global); }
+        }
+        self.source_changed();
+    }
+    pub(crate) fn record_native_macro_definition(&mut self, phase: Phase, namespace: &str, name: &str, owner: u64) {
+        self.record_macro_declaration(phase, namespace, name);
+        self.record_macro_owner(phase, namespace, name, Some(owner));
+        let namespace = canonical(namespace);
+        self.macro_namespaces.insert((phase, namespace.to_owned()));
+        self.macro_exports.insert((phase, namespace.to_owned(), name.to_owned()));
+    }
+    pub(crate) fn macro_export_names(&self, phase: Phase, namespace: &str) -> Vec<String> {
+        self.macro_exports.iter().filter(|(p, ns, _)| *p == phase && ns == canonical(namespace))
+            .map(|(_, _, name)| name.clone()).collect()
     }
     pub(crate) fn source_macro_overridden(&self, phase: Phase, namespace: &str, name: &str) -> bool {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };

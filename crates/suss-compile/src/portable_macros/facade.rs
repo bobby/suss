@@ -90,6 +90,9 @@ impl MacroService {
         Ok((result.unwrap_or_else(|error| Err(Diagnostic { span, message: error.to_string() })),
             allowance.saturating_sub(remaining)))
     }
+    pub(crate) fn contains_source_macro(&self, namespace: &str, name: &str) -> bool {
+        self.with_host(|host| catalog(&host.catalog).definitions.contains_key(&(namespace.to_owned(), name.to_owned())))
+    }
     pub(crate) fn preparation_read<T>(&self, operation: impl FnOnce(&dyn ExpansionHost) -> T) -> T {
         self.with_host(|host| operation(host))
     }
@@ -245,14 +248,6 @@ impl CompiledMacros {
     ) -> Result<(), SessionError> {
         self.with_host_mut(|host| host.restore_bindings(checkpoint, globals))
     }
-    pub(crate) fn define_inline_macro(
-        &mut self,
-        form: &Form,
-        environment: &crate::portable::resolve::Environment,
-        phase: crate::portable::resolve::Phase,
-    ) -> Result<(), SessionError> {
-        self.with_host_mut(|host| host.define_inline_macro(form, environment, phase))
-    }
     pub(crate) fn define_form_with_origin(
         &mut self,
         form: Form,
@@ -341,6 +336,9 @@ impl ExpansionHost for CompiledMacros {
     fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> {
         self.read_host(|host| host.declared_macro_exports(namespace))
     }
+    fn macro_binding_owner(&self, namespace: &str, name: &str) -> Option<u64> {
+        self.read_host(|host| host.macro_binding_owner(namespace, name))
+    }
     fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
         self.read_host(MacroHost::artifact_dependencies)
     }
@@ -386,6 +384,45 @@ impl ExpansionHost for CompiledMacros {
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation() {
+        use std::{sync::mpsc, time::Duration};
+        let mut runtime = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        runtime.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        let service = macros.service();
+        let (request, requests) = mpsc::sync_channel(1);
+        let (reply, replies) = mpsc::sync_channel(1);
+        let replies = Mutex::new(replies);
+        let worker = std::thread::spawn(move || {
+            requests.recv_timeout(Duration::from_secs(5)).unwrap();
+            let result = service.with_host(|host| {
+                host.define("(defmacro compiled-during-runtime [] 42)")
+                    .map_err(|error| error.to_string())
+            });
+            reply.send(result).unwrap();
+        });
+        runtime.install_observation_hook(move |_, _| {
+            // The worker uses the independent Macro Store. It never reenters
+            // this callback's Runtime Store or receives its Caller/context.
+            request.send(()).map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+            replies.lock().unwrap().recv_timeout(Duration::from_secs(5))
+                .map_err(|error| wasmtime::Error::msg(format!("Runtime blocked its compiler: {error}")))?
+                .map_err(wasmtime::Error::msg)?;
+            Ok(0)
+        }).unwrap();
+        let result = crate::portable_repl::evaluate_script_compiled(
+            &mut runtime, &mut macros,
+            "(defmacro staged-before-runtime [] 17) (do (suss.harness.observation/capture 77) 42)",
+            None,
+        );
+        worker.join().unwrap();
+        assert_eq!(result.unwrap(), "42");
+        assert_eq!(crate::portable_repl::evaluate_compiled(
+            &mut runtime, &mut macros, "(compiled-during-runtime)",
+        ).unwrap(), "42");
+    }
     use std::panic::{AssertUnwindSafe, catch_unwind};
     use wasmtime::AsContextMut;
 

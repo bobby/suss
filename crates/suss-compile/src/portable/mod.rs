@@ -70,6 +70,10 @@ pub enum MacroReload {
 }
 pub const DEFAULT_OPERATION_FUEL: u64 = 10_000_000;
 pub trait ExpansionHost {
+    /// Incorporate declarations actually executed by a native transformer.
+    /// Ordinary isolated source hosts leave the enclosing phase unchanged.
+    #[doc(hidden)]
+    fn refresh_native_environment(&mut self, _environment: &mut resolve::Environment, _span: Range<usize>) -> Result<(), Diagnostic> { Ok(()) }
     /// Native composition may retain the same persistent host after preparation.
     /// Portable analysis never inspects or serializes this application context.
     #[doc(hidden)]
@@ -126,6 +130,10 @@ pub trait ExpansionHost {
     ) -> Result<(), Diagnostic> { Ok(()) }
     fn end_source_module(&mut self) -> Result<(), Diagnostic> { Ok(()) }
     fn declared_macro_exports(&self, _namespace: &str) -> Option<Vec<String>> { None }
+    /// The native Store holding the actual transformer root, if known. This
+    /// is compiler authority, never a serialized GC reference or source token.
+    #[doc(hidden)]
+    fn macro_binding_owner(&self, _namespace: &str, _name: &str) -> Option<u64> { None }
     fn load_macro_namespace(
         &mut self,
         _namespace: &str,
@@ -378,6 +386,9 @@ impl<'a> ExpansionRequest<'a> {
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
+    fn refresh_native_environment(&mut self, environment: &mut resolve::Environment, span: Range<usize>) -> Result<(), Diagnostic> {
+        self.host.refresh_native_environment(environment, span)
+    }
     fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> {
         self.host.persistent_macro_context()
     }
@@ -409,6 +420,7 @@ impl ExpansionHost for ExpansionRequest<'_> {
     }
     fn end_source_module(&mut self) -> Result<(), Diagnostic> { self.host.end_source_module() }
     fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> { self.host.declared_macro_exports(namespace) }
+    fn macro_binding_owner(&self, namespace: &str, name: &str) -> Option<u64> { self.host.macro_binding_owner(namespace, name) }
     fn load_macro_namespace(&mut self, namespace: &str, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
         self.host.load_macro_namespace(namespace, span)
     }
