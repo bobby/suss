@@ -77,6 +77,18 @@ paths += ['crates/suss-compile/tests/runtime_async_scheduler.rs']
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 paths += ['crates/suss-cli/tests/portable_dynamic_bindings.rs']
 paths += ['crates/suss-compile/src/portable/hir/dynamic.rs','crates/suss-compile/src/runtime_abi/dynamic/redefs.rs','crates/suss-compile/tests/runtime_dynamic_switch.rs','crates/suss-compile/src/portable/analyzer_edn.rs','crates/suss-compile/src/portable/hir/division_overloads.rs','crates/suss-compile/src/portable/hir/namespaces.rs','crates/suss-compile/tests/portable_async_analysis.rs']
+p=BASE/'macro-root-and-duplicate-primary'
+macro_roots=json.loads((p/'command.json').read_text())
+assert macro_roots['exit_code']==0 and macro_roots['controls']==13
+assert all(sha(Path(name).read_bytes())==digest for name,digest in macro_roots['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==macro_roots['source_sha256']
+assert sha((p/'expression.sus').read_bytes())==macro_roots['native_source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==macro_roots['stdout_sha256']
+assert len(macro_roots['cases'])==13
+source='['+'\n'.join(row['expression'] for row in macro_roots['cases'])+']'
+assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n(println (pr-str '+source+'))\n'
+assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')+'\n'
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

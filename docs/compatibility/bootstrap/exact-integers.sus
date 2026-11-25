@@ -2554,6 +2554,7 @@
 ;; intern the result; the getter is compiled directly against its live cell.
 (def ^:private make-binding-var
   (fn [getter namespace name metadata]
+    (suss.bootstrap/binding-getter-macro-set! getter (boolean (:macro metadata)))
     ;; Binding keys and namespace objects keep the platform's canonical core
     ;; identity. Public Var symbols use Clojure's core spelling for source data.
     (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
@@ -2568,4 +2569,5 @@
       (let [name (:name (meta v))
             namespace (:ns (meta v))]
         (assoc (assoc metadata :name name) :ns namespace)))
+    (suss.bootstrap/binding-getter-macro-set! (.-val v) (boolean (:macro metadata)))
     v))

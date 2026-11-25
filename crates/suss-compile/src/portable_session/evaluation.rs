@@ -510,6 +510,22 @@ impl SessionHost<'_> {
             if fields.len() != 3 {
                 return Err(wasmtime::Error::msg("Macro Var has invalid fields").into());
             }
+            // Var.bindRoot clears macro status even when it restores an old
+            // transformer. The metadata object's old :macro key is not enough
+            // to authorize catalog expansion after an actual root replacement.
+            let root_is_macro = {
+                let mut roots = RootScope::new(&mut self.store);
+                let getter = fields[0].object()?.to_rooted(&mut roots);
+                let check = self.runtime.get_func(&mut roots, "binding-getter-macro?")
+                    .ok_or_else(|| wasmtime::Error::msg("Missing Var macro flag reader"))?;
+                let mut result = [Val::I32(0)];
+                check.call(&mut roots, &[Val::AnyRef(Some(getter))], &mut result)?;
+                result[0].unwrap_i32() != 0
+            };
+            if !root_is_macro {
+                snapshot.environment.record_native_macro_status(global, false);
+                continue;
+            }
             let flag = self.invoke(&lookup, &[&fields[2], &key])?;
             // The public isMacro getter uses Clojure truthiness, too. Looking
             // up just this key avoids decoding unrelated opaque metadata.

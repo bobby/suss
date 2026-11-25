@@ -1,0 +1,13 @@
+[(do (declare root-macro-a) (eval '(defmacro root-macro-a [] 1)) (with-redefs [root-macro-a (fn [& args] 42)] (eval '(root-macro-a))))
+(do (declare root-macro-b root-macro-c) (eval '(defmacro root-macro-b [] 1)) (eval '(defmacro root-macro-c [] 2)) (try (with-redefs [root-macro-b @(var root-macro-c)] (eval '(root-macro-b))) (catch :default e :error)))
+(do (declare root-macro-d) (let [v (eval '(defmacro root-macro-d [] 1))] [(.isMacro v) (boolean (:macro (meta v))) (with-redefs [root-macro-d (fn [& xs] 42)] [(.isMacro v) (boolean (:macro (meta v))) (eval '(root-macro-d))]) (.isMacro v) (boolean (:macro (meta v))) (try (eval '(root-macro-d)) (catch :default e :error))]))
+(do (declare root-macro-e) (let [v (eval '(defmacro root-macro-e [] 1))] [(try (with-redefs [root-macro-e @v] (eval '(root-macro-e))) (catch :default e :error)) (.isMacro v)]))
+(do (declare root-macro-f) (let [v (eval '(defmacro root-macro-f [] 1))] [(try (with-redefs [root-macro-f (throw (ex-info "stop" {}))] :body) (catch :default e :error)) (.isMacro v) (eval '(root-macro-f))]))
+(do (declare root-macro-g) (let [v (eval '(defmacro root-macro-g [] 1))] [(with-redefs [root-macro-g (fn [& xs] 42)] (eval '(defmacro root-macro-g [] 2)) [(.isMacro v) (eval '(root-macro-g))]) (.isMacro v) (try (eval '(root-macro-g)) (catch :default e :error))]))
+(do (def root-dup-a 1) (def root-events-a (atom [])) [(with-redefs [root-dup-a (do (swap! root-events-a conj :a) 3) root-dup-a (do (swap! root-events-a conj :b) 4)] root-dup-a) root-dup-a @root-events-a])
+(do (def root-dup-b 1) (def root-events-b (atom [])) [(try (with-redefs [root-dup-b (do (swap! root-events-b conj :a) 3) user/root-dup-b (do (swap! root-events-b conj :b) 4)] :body) (catch :default e :error)) root-dup-b @root-events-b])
+(do (def root-dup-c 1) (def root-events-c (atom [])) [(with-redefs [^:dynamic root-dup-c (do (swap! root-events-c conj :a) 3) root-dup-c (do (swap! root-events-c conj :b) 4)] root-dup-c) @root-events-c])
+(do (def ^:dynamic root-dup-d 1) (def root-events-d (atom [])) [(binding [root-dup-d (do (swap! root-events-d conj :a) 3) root-dup-d (do (swap! root-events-d conj :b) 4)] root-dup-d) root-dup-d @root-events-d])
+(do (def root-dup-e 1) [(with-redefs [root-dup-e never-resolved-suppressed-initializer root-dup-e 4] root-dup-e) root-dup-e])
+(do (def root-dup-f 1) (try (with-redefs [root-dup-f 3 user/root-dup-f 4] :body) (catch :default e (ex-message e))))
+(do (def root-dup-g 1) (def root-dup-h 2) (def root-events-g (atom [])) [(with-redefs [root-dup-g (do (swap! root-events-g conj :a) 3) root-dup-h (do (swap! root-events-g conj :b) 5) root-dup-g (do (swap! root-events-g conj :c) 4)] [root-dup-g root-dup-h]) @root-events-g])]

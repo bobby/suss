@@ -1,3 +1,25 @@
+### Root macro status and duplicate source keys
+
+An independent immutable-binary review found two actual primary/native
+counterexamples: a redefined macro Var expanded its old catalog transformer,
+and duplicate with-redefs source keys ran a suppressed initializer. Fresh pinned
+Clojure 1.12.6 records thirteen controls under
+`results/m12-eval/macro-root-and-duplicate-primary` (actual exit 0).
+Root binding clears macro status during replacement and after restoration.
+Identical source symbols suppress the earlier initializer before analysis;
+distinct source spellings resolving to one Var evaluate both initializers and
+then throw before root replacement. Ordinary binding retains both effects.
+
+The follow-up adds a macro bit on actual binding cells, private compiled-core
+access through their real getters, and source-key handling in the existing
+bounded analyzer. Public Var metadata and native macro synchronization read that
+root status. No public marker values or foreign Store references are introduced.
+`cargo check -p suss-compile --locked` returns 0 (31.88 seconds). The earlier
+133b full-workspace and CI receipts remain historical: changed production code
+requires fresh focused, native, bootstrap and exact workspace execution before
+it can support a new validation claim. Existing primary/baseline policies and
+negative review receipts are preserved.
+
 ## Exact workspace and CI evidence (2026-11-25)
 
 At recorded code head `133b7024762d5006d4c784416e66ecef5a73f6b8`, run

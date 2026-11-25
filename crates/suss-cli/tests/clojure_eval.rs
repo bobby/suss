@@ -1551,3 +1551,26 @@ fn actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings() {
         assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
     }
 }
+
+#[test]
+fn root_macro_status_and_source_duplicate_effects_match_primary() {
+    promotion_review_controls("macro-root-and-source-duplicates",
+        include_str!("../../../results/m12-eval/macro-root-and-duplicate-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/macro-root-and-duplicate-primary/primary.stdout"), 13);
+}
+
+#[test]
+fn actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects() {
+    let primary = include_str!("../../../results/m12-eval/macro-root-and-duplicate-primary/primary.stdout");
+    let forms = suss_reader::forms::read_forms(primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/macro-root-and-duplicate-primary/expression.sus");
+        macros.define(&format!("(defmacro root-macro-duplicate-controls [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(root-macro-duplicate-controls)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}
