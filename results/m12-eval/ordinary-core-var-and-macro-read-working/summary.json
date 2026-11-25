@@ -1,0 +1,13 @@
+{
+  "base_head": "0e7b33fe8999b687d0c47f83d491641737ca3d91",
+  "source_overlay_sha256": "2fdb1f854df24c6cdfb5cb4568c06de23fa24c6cba62ba99fec75c91f5db1284",
+  "actual_all3_commands_exit0": true,
+  "actual_pass_counts": [
+    10,
+    33,
+    15
+  ],
+  "actual_total_passed": 58,
+  "source_head_overlay_binaryen_unchanged": true,
+  "qualification": "Frozen working-overlay diagnostic, not a clean committed-head full validation. Complete native entrypoints10, six original source-core CI targets33 and all15 root/privacy controls pass at unchanged allowances. Earlier real source/flag failures and corrected private-field test setup remain preserved. Fresh clean focused/all-observed-CI/bootstrap/native/workspace, independent xhigh review and final-head CI required."
+}

@@ -1,0 +1,11 @@
+{
+  "head": "3c4a59e85d12773f1105c14c65b865fba8186a60",
+  "actual_focus_exit": 101,
+  "first5_commands_actual0": true,
+  "ci_34_targets_actual0": true,
+  "ci_targets_passed_tests": 176,
+  "ci_executables": 36,
+  "failed_test": "a_global_read_reads_a_static_root_inline_and_asks_binding_read_otherwise",
+  "actual": "Guard expected first2 operators constant1/eq; emitter correctly adds mask-17/and before the old bound check.",
+  "qualification": "Actual structural guard101 on source3c4a, not a native semantic failure. Retain every existing root read/no-cast/else/dynamic-call assertion while accounting for the new metadata mask. Original source programs, values, oracle, count/skip/opaque and allowances unchanged. Production code unchanged by this test correction; current complete eval/ABI/async/host/full gates remain required."
+}

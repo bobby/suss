@@ -2748,7 +2748,11 @@ fn emit_function(
                     for instruction in &flags {
                         function.instruction(instruction);
                     }
+                    // Macro metadata does not change boundness or frame
+                    // selection. Keep every other flag's existing behavior.
                     function
+                        .instruction(&I32Const(!runtime_abi::CELL_MACRO))
+                        .instruction(&I32And)
                         .instruction(&I32Const(runtime_abi::CELL_BOUND))
                         .instruction(&I32Eq)
                         .instruction(&If(BlockType::Result(VALUE)))

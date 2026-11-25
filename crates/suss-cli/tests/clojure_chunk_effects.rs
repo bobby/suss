@@ -256,6 +256,13 @@ fn ordinary_source_core_keeps_generic_chunks_without_native_layout_access() {
                (reduce + s) (apply str (map str s))])
             (catch :default e [:unexpected-error (ex-message e)]))"#),
             "[(1 2 3 4 5 6) (0 2 4) 15 \"012345\"]");
+        assert_eq!(printed(&mut session, r#"
+          (let [metadata {:macro true :source 7}
+                v (Var. (fn [] 42) 'user/source-var metadata)
+                ordinary (Var. (fn [] 7) 'user/ordinary {:macro false})]
+            [(.isMacro v) (identical? metadata (meta v))
+             (identical? (meta v) (meta v)) @v (.isMacro ordinary)])"#),
+            "[true true true 42 false]");
         session.eval("(def source-loaded-chunk (array-chunk (object-array [7 8])))").unwrap();
         session.collect().unwrap();
         assert_eq!(printed_in(&mut session,

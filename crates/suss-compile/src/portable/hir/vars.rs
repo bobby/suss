@@ -184,4 +184,32 @@ impl Analyzer<'_> {
             body: Box::new(body),
         }))
     }
+    /// Direct source loading constructs generic Vars, not canonical native
+    /// root owners. Its own metadata remains authoritative. Entering the core
+    /// namespace must not grant access to a compiler-owned getter's flag.
+    pub(super) fn ordinary_var_macro_adapter(
+        &mut self, form: &Form, operation: Nominal, mut operands: Vec<Hir>,
+    ) -> Hir {
+        let node = |kind, ty| Hir {
+            source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+            ty, kind: std::sync::Arc::new(kind),
+        };
+        if operation == Nominal::BindingGetterMacro {
+            // Evaluate the getter expression once before consulting the
+            // generic Var's metadata; no native cell is read.
+            operands.push(self.literal_form(form, Literal::Bool(true)));
+            return node(Expression::Do(operands), Type::Bool);
+        }
+        debug_assert_eq!(operation, Nominal::BindingGetterMacroSet);
+        // Match the private adapter's operand order and getter result without
+        // writing a native flag. Even source named suss.core has no authority.
+        let getter = self.fresh_binding(form, operands.remove(0));
+        let mut result = self.local(form, getter.id);
+        result.ty = getter.value.ty;
+        let ty = result.ty;
+        operands.push(result);
+        let body = node(Expression::Do(operands), ty);
+        node(Expression::Let { bindings: vec![getter], body: Box::new(body) }, ty)
+    }
+
 }

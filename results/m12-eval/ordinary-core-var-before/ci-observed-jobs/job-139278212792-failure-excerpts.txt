@@ -1,0 +1,243 @@
+2026-11-25T14:59:28.9991279Z ---- ordinary_source_core_loads_uuid_readers_in_both_phases stdout ----
+2026-11-25T14:59:28.9991640Z
+2026-11-25T14:59:28.9992148Z thread 'ordinary_source_core_loads_uuid_readers_in_both_phases' (5930) panicked at crates/suss-cli/tests/clojure_uuid.rs:346:13:
+2026-11-25T14:59:28.9993040Z Runtime source core load: Var macro flags require compiled core at bytes 172966..173008
+2026-11-25T14:59:28.9993733Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:59:28.9994117Z
+2026-11-25T14:59:28.9994123Z
+2026-11-25T14:59:28.9994227Z failures:
+2026-11-25T14:59:28.9994567Z     ordinary_source_core_loads_uuid_readers_in_both_phases
+2026-11-25T14:59:28.9994567Z     ordinary_source_core_loads_uuid_readers_in_both_phases
+2026-11-25T14:59:28.9994865Z
+2026-11-25T14:59:28.9995205Z test result: FAILED. 14 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 90.25s
+2026-11-25T14:59:28.9995657Z
+2026-11-25T14:59:29.0371665Z error: test failed, to rerun pass `-p suss-cli --test clojure_uuid`
+2026-11-25T14:59:29.0373035Z      Running tests/compiled_aot_command.rs (target/debug/build/suss-cli/160a239c4b88f9f0/out/compiled_aot_command-160a239c4b88f9f0)
+2026-11-25T14:59:29.0390082Z
+2026-11-25T14:59:29.0391254Z running 5 tests
+2026-11-25T15:00:02.9716623Z test compile_file_defers_runtime_throw_and_preserves_output_on_invalid_selection_or_mapping ... ok
+2026-11-25T15:07:19.1112526Z ---- compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields stdout ----
+2026-11-25T15:07:19.1113036Z
+2026-11-25T15:07:19.1113765Z thread 'compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields' (6137) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:455:14:
+2026-11-25T15:07:19.1115144Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:19.1116117Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:19.1116539Z
+2026-11-25T15:07:19.1116784Z ---- declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer stdout ----
+2026-11-25T15:07:19.1117103Z
+2026-11-25T15:07:19.1117533Z thread 'declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer' (6138) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:53:14:
+2026-11-25T15:07:19.1116784Z ---- declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer stdout ----
+2026-11-25T15:07:19.1117103Z
+2026-11-25T15:07:19.1117533Z thread 'declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer' (6138) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:53:14:
+2026-11-25T15:07:19.1118433Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:19.1119021Z
+2026-11-25T15:07:19.1119249Z ---- raw_function_metadata_is_preserved_before_completed_callable_overlays stdout ----
+2026-11-25T15:07:19.1119558Z
+2026-11-25T15:07:19.1119995Z thread 'raw_function_metadata_is_preserved_before_completed_callable_overlays' (6139) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:142:14:
+2026-11-25T15:07:19.1120824Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:19.1119249Z ---- raw_function_metadata_is_preserved_before_completed_callable_overlays stdout ----
+2026-11-25T15:07:19.1119558Z
+2026-11-25T15:07:19.1119995Z thread 'raw_function_metadata_is_preserved_before_completed_callable_overlays' (6139) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:142:14:
+2026-11-25T15:07:19.1120824Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:19.1121257Z
+2026-11-25T15:07:19.1121262Z
+2026-11-25T15:07:19.1121365Z failures:
+2026-11-25T15:07:19.1121706Z     compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields
+2026-11-25T15:07:19.1122218Z     declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer
+2026-11-25T15:07:19.1123089Z     raw_function_metadata_is_preserved_before_completed_callable_overlays
+2026-11-25T15:07:19.1123397Z
+2026-11-25T15:07:19.1123640Z test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+2026-11-25T15:07:19.1123953Z
+2026-11-25T15:07:19.1211802Z error: test failed, to rerun pass `-p suss-cli --test compiled_macro_declaration_metadata`
+2026-11-25T15:07:19.1213032Z      Running tests/compiled_macro_hamt_lookup.rs (target/debug/build/suss-cli/f5472466351c2701/out/compiled_macro_hamt_lookup-f5472466351c2701)
+2026-11-25T15:07:19.1232423Z
+2026-11-25T15:07:19.1232709Z running 3 tests
+2026-11-25T15:07:21.0747744Z test compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined ... ok
+2026-11-25T15:07:25.7251400Z ---- repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings stdout ----
+2026-11-25T15:07:25.7251747Z
+2026-11-25T15:07:25.7252330Z thread 'repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings' (6158) panicked at crates/suss-cli/tests/compiled_macro_repeated_declarations.rs:109:14:
+2026-11-25T15:07:25.7253291Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:25.7253920Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:25.7254191Z
+2026-11-25T15:07:25.7254195Z
+2026-11-25T15:07:25.7254304Z failures:
+2026-11-25T15:07:25.7254614Z     repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings
+2026-11-25T15:07:25.7254614Z     repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings
+2026-11-25T15:07:25.7254882Z
+2026-11-25T15:07:25.7255127Z test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+2026-11-25T15:07:25.7255435Z
+2026-11-25T15:07:25.7302778Z error: test failed, to rerun pass `-p suss-cli --test compiled_macro_repeated_declarations`
+2026-11-25T15:07:25.7303884Z      Running tests/compiled_macro_syntax_quote.rs (target/debug/build/suss-cli/01d3ffbdf0ef9a81/out/compiled_macro_syntax_quote-01d3ffbdf0ef9a81)
+2026-11-25T15:07:25.7319962Z
+2026-11-25T15:07:25.7320133Z running 12 tests
+2026-11-25T15:07:28.7319128Z test compiled_macro_lazy_concat_output_is_executed_as_source_forms ... ok
+2026-11-25T15:07:34.6403910Z ---- compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces stdout ----
+2026-11-25T15:07:34.6404389Z
+2026-11-25T15:07:34.6404844Z thread 'compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces' (6174) panicked at crates/suss-cli/tests/compiled_macro_syntax_quote.rs:397:10:
+2026-11-25T15:07:34.6405678Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:34.6406265Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:34.6406541Z
+2026-11-25T15:07:34.6406545Z
+2026-11-25T15:07:34.6406631Z failures:
+2026-11-25T15:07:34.6406927Z     compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces
+2026-11-25T15:07:34.6406927Z     compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces
+2026-11-25T15:07:34.6407201Z
+2026-11-25T15:07:34.6407687Z test result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.91s
+2026-11-25T15:07:34.6408008Z
+2026-11-25T15:07:34.6850797Z error: test failed, to rerun pass `-p suss-cli --test compiled_macro_syntax_quote`
+2026-11-25T15:07:34.6851696Z      Running tests/compiled_phase_session.rs (target/debug/build/suss-cli/83f2632aff206cbe/out/compiled_phase_session-83f2632aff206cbe)
+2026-11-25T15:07:34.6867509Z
+2026-11-25T15:07:34.6867720Z running 3 tests
+2026-11-25T15:07:34.7632862Z test compiled_phase_session_load_reload_failure_and_reset_preserve_phase ... ok
+2026-11-25T15:07:56.1053868Z ---- caching_hash_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T15:07:56.1054340Z
+2026-11-25T15:07:56.1054949Z thread 'caching_hash_match_independently_decoded_primary_observations_after_gc' (6216) panicked at crates/suss-cli/tests/portable_caching_hash.rs:98:10:
+2026-11-25T15:07:56.1056121Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:56.1056967Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:56.1057316Z
+2026-11-25T15:07:56.1057321Z
+2026-11-25T15:07:56.1057432Z failures:
+2026-11-25T15:07:56.1057821Z     caching_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T15:07:56.1057821Z     caching_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T15:07:56.1058192Z
+2026-11-25T15:07:56.1058652Z test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.25s
+2026-11-25T15:07:56.1059113Z
+2026-11-25T15:07:56.1423007Z error: test failed, to rerun pass `-p suss-cli --test portable_caching_hash`
+2026-11-25T15:07:56.1423913Z      Running tests/portable_collection_hash.rs (target/debug/build/suss-cli/ea6de8a5f2bf0413/out/portable_collection_hash-ea6de8a5f2bf0413)
+2026-11-25T15:07:56.1439853Z
+2026-11-25T15:07:56.1440045Z running 5 tests
+2026-11-25T15:07:56.5133178Z test cached_hash_suppresses_effects_and_recovers_after_a_throw ... FAILED
+2026-11-25T15:07:57.0878069Z ---- cached_hash_suppresses_effects_and_recovers_after_a_throw stdout ----
+2026-11-25T15:07:57.0878425Z
+2026-11-25T15:07:57.0879100Z thread 'cached_hash_suppresses_effects_and_recovers_after_a_throw' (6225) panicked at crates/suss-cli/tests/portable_collection_hash.rs:198:10:
+2026-11-25T15:07:57.0880220Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0881031Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:57.0881425Z
+2026-11-25T15:07:57.0881685Z ---- collection_hash_matches_independently_decoded_primary_values stdout ----
+2026-11-25T15:07:57.0882052Z
+2026-11-25T15:07:57.0882587Z thread 'collection_hash_matches_independently_decoded_primary_values' (6226) panicked at crates/suss-cli/tests/portable_collection_hash.rs:119:10:
+2026-11-25T15:07:57.0881685Z ---- collection_hash_matches_independently_decoded_primary_values stdout ----
+2026-11-25T15:07:57.0882052Z
+2026-11-25T15:07:57.0882587Z thread 'collection_hash_matches_independently_decoded_primary_values' (6226) panicked at crates/suss-cli/tests/portable_collection_hash.rs:119:10:
+2026-11-25T15:07:57.0883644Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0884188Z
+2026-11-25T15:07:57.0884419Z ---- element_throw_stops_next_and_cons_cache_survives_gc stdout ----
+2026-11-25T15:07:57.0884751Z
+2026-11-25T15:07:57.0885213Z thread 'element_throw_stops_next_and_cons_cache_survives_gc' (6227) panicked at crates/suss-cli/tests/portable_collection_hash.rs:252:10:
+2026-11-25T15:07:57.0886237Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0884419Z ---- element_throw_stops_next_and_cons_cache_survives_gc stdout ----
+2026-11-25T15:07:57.0884751Z
+2026-11-25T15:07:57.0885213Z thread 'element_throw_stops_next_and_cons_cache_survives_gc' (6227) panicked at crates/suss-cli/tests/portable_collection_hash.rs:252:10:
+2026-11-25T15:07:57.0886237Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0886782Z
+2026-11-25T15:07:57.0887430Z ---- sequential_hash_agrees_across_retained_types_after_gc stdout ----
+2026-11-25T15:07:57.0887778Z
+2026-11-25T15:07:57.0888259Z thread 'sequential_hash_agrees_across_retained_types_after_gc' (6228) panicked at crates/suss-cli/tests/portable_collection_hash.rs:81:10:
+2026-11-25T15:07:57.0889432Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0887430Z ---- sequential_hash_agrees_across_retained_types_after_gc stdout ----
+2026-11-25T15:07:57.0887778Z
+2026-11-25T15:07:57.0888259Z thread 'sequential_hash_agrees_across_retained_types_after_gc' (6228) panicked at crates/suss-cli/tests/portable_collection_hash.rs:81:10:
+2026-11-25T15:07:57.0889432Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0889987Z
+2026-11-25T15:07:57.0890217Z ---- unordered_helper_hash_is_independent_of_input_order stdout ----
+2026-11-25T15:07:57.0890542Z
+2026-11-25T15:07:57.0891015Z thread 'unordered_helper_hash_is_independent_of_input_order' (6229) panicked at crates/suss-cli/tests/portable_collection_hash.rs:100:10:
+2026-11-25T15:07:57.0892020Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0890217Z ---- unordered_helper_hash_is_independent_of_input_order stdout ----
+2026-11-25T15:07:57.0890542Z
+2026-11-25T15:07:57.0891015Z thread 'unordered_helper_hash_is_independent_of_input_order' (6229) panicked at crates/suss-cli/tests/portable_collection_hash.rs:100:10:
+2026-11-25T15:07:57.0892020Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:57.0892566Z
+2026-11-25T15:07:57.0892570Z
+2026-11-25T15:07:57.0892717Z failures:
+2026-11-25T15:07:57.0893059Z     cached_hash_suppresses_effects_and_recovers_after_a_throw
+2026-11-25T15:07:57.0893638Z     collection_hash_matches_independently_decoded_primary_values
+2026-11-25T15:07:57.0895325Z     unordered_helper_hash_is_independent_of_input_order
+2026-11-25T15:07:57.0895654Z
+2026-11-25T15:07:57.0896014Z test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
+2026-11-25T15:07:57.0896510Z
+2026-11-25T15:07:57.0976845Z error: test failed, to rerun pass `-p suss-cli --test portable_collection_hash`
+2026-11-25T15:07:57.0977912Z      Running tests/portable_drop.rs (target/debug/build/suss-cli/34db726386df24c4/out/portable_drop-34db726386df24c4)
+2026-11-25T15:07:57.0993223Z
+2026-11-25T15:07:57.0993364Z running 1 test
+2026-11-25T15:07:59.4283155Z test drop_preserves_idrop_lazy_sequence_and_transducer_contracts ... ok
+2026-11-25T15:07:59.8232172Z ---- forward_declarations_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T15:07:59.8232714Z
+2026-11-25T15:07:59.8233396Z thread 'forward_declarations_match_independently_decoded_primary_observations_after_gc' (6238) panicked at crates/suss-cli/tests/portable_forward_declarations.rs:74:10:
+2026-11-25T15:07:59.8234714Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:07:59.8235520Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:07:59.8235879Z
+2026-11-25T15:07:59.8235883Z
+2026-11-25T15:07:59.8235991Z failures:
+2026-11-25T15:07:59.8236395Z     forward_declarations_match_independently_decoded_primary_observations_after_gc
+2026-11-25T15:07:59.8236395Z     forward_declarations_match_independently_decoded_primary_observations_after_gc
+2026-11-25T15:07:59.8236812Z
+2026-11-25T15:07:59.8237129Z test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+2026-11-25T15:07:59.8237565Z
+2026-11-25T15:07:59.8286862Z error: test failed, to rerun pass `-p suss-cli --test portable_forward_declarations`
+2026-11-25T15:07:59.8288133Z      Running tests/portable_implements.rs (target/debug/build/suss-cli/55574f60bb71ad04/out/portable_implements-55574f60bb71ad04)
+2026-11-25T15:07:59.8303138Z
+2026-11-25T15:07:59.8303357Z running 3 tests
+2026-11-25T15:07:59.9649824Z test implements_aliases_user_refers_exclusions_and_gc_preserve_direct_only_test ... ok
+2026-11-25T15:08:45.7170812Z ---- association_copies_only_selected_path_across_fragments_and_gc stdout ----
+2026-11-25T15:08:45.7171281Z
+2026-11-25T15:08:45.7171754Z thread 'association_copies_only_selected_path_across_fragments_and_gc' (6301) panicked at crates/suss-cli/tests/portable_vector_trie.rs:100:10:
+2026-11-25T15:08:45.7172621Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7173277Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:08:45.7173567Z
+2026-11-25T15:08:45.7173793Z ---- throwing_live_clone_prevents_source_parent_mutation_and_recovers stdout ----
+2026-11-25T15:08:45.7174477Z
+2026-11-25T15:08:45.7174889Z thread 'throwing_live_clone_prevents_source_parent_mutation_and_recovers' (6302) panicked at crates/suss-cli/tests/portable_vector_trie.rs:118:10:
+2026-11-25T15:08:45.7173793Z ---- throwing_live_clone_prevents_source_parent_mutation_and_recovers stdout ----
+2026-11-25T15:08:45.7174477Z
+2026-11-25T15:08:45.7174889Z thread 'throwing_live_clone_prevents_source_parent_mutation_and_recovers' (6302) panicked at crates/suss-cli/tests/portable_vector_trie.rs:118:10:
+2026-11-25T15:08:45.7175714Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7176177Z
+2026-11-25T15:08:45.7176409Z ---- throwing_outer_pop_clone_preserves_original_recursive_path_after_gc stdout ----
+2026-11-25T15:08:45.7176737Z
+2026-11-25T15:08:45.7177136Z thread 'throwing_outer_pop_clone_preserves_original_recursive_path_after_gc' (6303) panicked at crates/suss-cli/tests/portable_vector_trie.rs:141:10:
+2026-11-25T15:08:45.7177948Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7176409Z ---- throwing_outer_pop_clone_preserves_original_recursive_path_after_gc stdout ----
+2026-11-25T15:08:45.7176737Z
+2026-11-25T15:08:45.7177136Z thread 'throwing_outer_pop_clone_preserves_original_recursive_path_after_gc' (6303) panicked at crates/suss-cli/tests/portable_vector_trie.rs:141:10:
+2026-11-25T15:08:45.7177948Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7178365Z
+2026-11-25T15:08:45.7178721Z ---- vector_node_clone_owns_outer_array_and_preserves_edit_and_child stdout ----
+2026-11-25T15:08:45.7179048Z
+2026-11-25T15:08:45.7179429Z thread 'vector_node_clone_owns_outer_array_and_preserves_edit_and_child' (6304) panicked at crates/suss-cli/tests/portable_vector_trie.rs:42:10:
+2026-11-25T15:08:45.7180212Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7178721Z ---- vector_node_clone_owns_outer_array_and_preserves_edit_and_child stdout ----
+2026-11-25T15:08:45.7179048Z
+2026-11-25T15:08:45.7179429Z thread 'vector_node_clone_owns_outer_array_and_preserves_edit_and_child' (6304) panicked at crates/suss-cli/tests/portable_vector_trie.rs:42:10:
+2026-11-25T15:08:45.7180212Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7180628Z
+2026-11-25T15:08:45.7180830Z ---- vector_trie_matches_independently_decoded_primary_values stdout ----
+2026-11-25T15:08:45.7181106Z
+2026-11-25T15:08:45.7181501Z thread 'vector_trie_matches_independently_decoded_primary_values' (6305) panicked at crates/suss-cli/tests/portable_vector_trie.rs:61:10:
+2026-11-25T15:08:45.7182416Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7180830Z ---- vector_trie_matches_independently_decoded_primary_values stdout ----
+2026-11-25T15:08:45.7181106Z
+2026-11-25T15:08:45.7181501Z thread 'vector_trie_matches_independently_decoded_primary_values' (6305) panicked at crates/suss-cli/tests/portable_vector_trie.rs:61:10:
+2026-11-25T15:08:45.7182416Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:08:45.7182835Z
+2026-11-25T15:08:45.7182838Z
+2026-11-25T15:08:45.7182929Z failures:
+2026-11-25T15:08:45.7183231Z     association_copies_only_selected_path_across_fragments_and_gc
+2026-11-25T15:08:45.7183687Z     throwing_live_clone_prevents_source_parent_mutation_and_recovers
+2026-11-25T15:08:45.7184983Z     vector_trie_matches_independently_decoded_primary_values
+2026-11-25T15:08:45.7185219Z
+2026-11-25T15:08:45.7185472Z test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+2026-11-25T15:08:45.7185789Z
+2026-11-25T15:08:45.7248999Z error: test failed, to rerun pass `-p suss-cli --test portable_vector_trie`
+2026-11-25T15:08:45.7250032Z      Running tests/repl_default_budgets.rs (target/debug/build/suss-cli/d9e1ea8150b6e354/out/repl_default_budgets-d9e1ea8150b6e354)
+2026-11-25T15:08:45.7260211Z
+2026-11-25T15:08:45.7260626Z running 3 tests
+2026-11-25T15:08:48.6013351Z test default_repl_budgets_run_records_protocols_and_large_collections ... ok
+2026-11-25T15:12:40.7174137Z                              output=stdout, stderr=stderr)
+2026-11-25T15:12:40.7186265Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'bigint_helper', '--test', 'clojure_assert', '--test', 'clojure_constant_definitions', '--test', 'clojure_eval', '--test', 'clojure_nonescaping_vectors', '--test', 'clojure_ratios', '--test', 'clojure_uuid', '--test', 'compiled_aot_command', '--test', 'compiled_async_runtime_api', '--test', 'compiled_export_metadata', '--test', 'compiled_macro_compiler_catalog', '--test', 'compiled_macro_declaration_metadata', '--test', 'compiled_macro_hamt_lookup', '--test', 'compiled_macro_letfn_source', '--test', 'compiled_macro_repeated_declarations', '--test', 'compiled_macro_syntax_quote', '--test', 'compiled_phase_session', '--test', 'compiled_record_labels', '--test', 'compiled_when_let', '--test', 'core_state', '--test', 'generated_async_import_bridge', '--test', 'native_compiled_host', '--test', 'portable_aot', '--test', 'portable_arrays', '--test', 'portable_caching_hash', '--test', 'portable_collection_hash', '--test', 'portable_continuation_liveness', '--test', 'portable_drop', '--test', 'portable_forward_declarations', '--test', 'portable_implements', '--test', 'portable_letfn', '--test', 'portable_mutable_fields', '--test', 'portable_object_coercion', '--test', 'portable_quoted_identifiers', '--test', 'portable_record_identity', '--test', 'portable_resolution', '--test', 'portable_sorted_tree_nodes', '--test', 'portable_subvector', '--test', 'portable_vector_trie', '--test', 'public_expression_artifacts', '--test', 'repl_default_budgets', '--test', 'runtime_async_streams', '--test', 'session_lifecycle_host_cancel_hook', '--test', 'session_native_future_factory', '--test', 'uncached_expression_artifacts', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-11-25T15:12:40.7371505Z ##[error]Process completed with exit code 1.
+2026-11-25T15:12:40.7424564Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T15:12:40.7425198Z find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T15:12:40.7504719Z shell: /usr/bin/bash -e {0}
+2026-11-25T15:12:40.7504997Z env:
+2026-11-25T15:12:40.7505204Z   CARGO_BUILD_JOBS: 2
+2026-11-25T15:12:40.7505442Z   CARGO_HOME: /home/runner/.cargo
