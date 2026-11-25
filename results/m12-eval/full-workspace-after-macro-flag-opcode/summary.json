@@ -1,0 +1,22 @@
+{
+  "code_head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+  "actual_cargo_exit": 0,
+  "seconds": 10212.759862422943,
+  "successful_test_groups": 377,
+  "passed": 2578,
+  "existing_ignored": 15,
+  "inputs_unchanged": true,
+  "head_unchanged": true,
+  "focused_passed": 336,
+  "focused_eval": 59,
+  "focused_host": 119,
+  "retained_ci_passes": {
+    "source_head": "3c4a59e85d12773f1105c14c65b865fba8186a60",
+    "actual_passed": 176,
+    "targets": 34,
+    "qualification": "Conserved production-identical executions, not fresh fa0da passes."
+  },
+  "native_exit": 0,
+  "native_seconds": 338.262090921402,
+  "qualification": "Actual recorded source-specific local terminals. Reviewed-baseline native conformance retains unrelated failures/guest judgments. Independent full-scope review and final published-head CI remain required; this is no issue closure, Ready or merge claim."
+}

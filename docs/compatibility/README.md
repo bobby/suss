@@ -1868,3 +1868,18 @@ conservation across the associated prose/evidence publication is checked by
 results/m12-eval/verify-133b-workspace-checkpoint.py. Full command receipts and
 limits remain in results/m12-eval/README.md; independent review and passing
 final-head CI remain separate requirements.
+
+
+Recorded validation at code `fa0da7ec`: exact
+`cargo test --workspace --locked -- --test-threads=2` returns actual Cargo 0 in
+10212.760 seconds with source/HEAD unchanged. The run records
+377 successful groups, 2578 passed test executions and
+15 existing ignores. All 336 focused controls and ten broader
+commands return 0. Separately, 176 prior CI-target passes across 34 targets are
+conserved from production-identical `3c4a59e8`, rather than fresh fa0da runs.
+The broader gates include Java/Node-free bootstrap, complete native execution
+and strict comparison of 5,564 rows with prior successes and explicit failures/
+guest judgments retained. Source conservation is checked by
+`python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
+controls and limits remain under `results/m12-eval/`. Independent full-scope review
+and final published-head CI are separate requirements.
