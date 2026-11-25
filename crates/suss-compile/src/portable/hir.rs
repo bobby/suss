@@ -688,6 +688,8 @@ pub enum Nominal {
     BindingGetter,
     /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
     BindingSnapshot,
+    /// Compiler-only root definition, independent of the current dynamic frame.
+    BindingRootSet,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -858,7 +860,7 @@ impl Nominal {
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::BindingGetter | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
-                Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
+                Self::BindingRootSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,

@@ -4,18 +4,21 @@ This is bounded M2-02/M2-04 progress (issues #9/#11), not completion of the
 portable core, compiled macro bootstrap, session frontend or async scheduler.
 
 Original Rust HIR bootstrap handles `binding`, `with-redefs` and global `set!`.
-Definition names retain `^:dynamic`/map metadata. All original target values are
-read before any initializer, then initializers run once in source order. Values
-publish together through one frame. Duplicate targets use their last value;
-reverse snapshot restoration preserves the original value. Failed initializers
+Definition names retain `^:dynamic`/map metadata. Initializers run once in source order in the existing context. After all
+initializers finish, the compiler snapshots selected outer values and publishes
+the new values together through one frame. Duplicate targets use their last value;
+reverse restoration preserves outer binding effects from the initializers. Failed initializers
 publish no frame and keep prior arbitrary effects. Local assignment and missing
 vars fail with source locations before session declarations publish.
 
 Actual imported BindingCell identities select active values, so functions compiled
 in earlier fragments observe the current context. Escaping functions read the
 context at invocation; explicit lexical captures retain their captured value.
-Nil and false remain real bound values. Assignment/definition to an active target
-updates its frame; scope exit restores the snapshot. Arithmetic macro calls keep
+Nil and false remain real bound values. `set!` to an active target updates its
+frame. `def` and `defonce` publish the real root, independently of an active frame;
+reads inside that frame keep selecting its current binding. Scope exit restores
+parent-frame entries without writing root cells, so root definitions survive
+normal return, language throws and fuel recovery. Arithmetic macro calls keep
 their compiled meaning while first-class arithmetic values use live cells.
 
 ## Runtime and recovery
@@ -46,14 +49,16 @@ hashes/arities/dependencies are in docs/compatibility/reviews.edn. Upstream copy
 and EPL remain in the pinned submodule. No upstream form was copied; these original
 intrinsics/bootstrap implementations are partial adaptations, not completed ports.
 
-Nineteen new reference observations cover parallel/nested/duplicate bindings,
+The original nineteen ClojureScript reference observations covered parallel/nested/duplicate bindings,
 old/escaped functions and lexical captures, nil/false, throws/finally, snapshots
 before initializer side effects, failed initializers, assignment, ordinary vars,
 function redefinition and arithmetic macro/value separation. The fresh 278-case
 portable source comparison and 16 actual pipeline tests passed again after interruption hardening. All 58 focused native tests pass,
 including independent nested multi-target/duplicate fuel sweeps, escaped/thrown
 closure retention across GC and native inspection callback trap recovery.
-Full-baseline/review/final-head CI results belong in handoff.
+These are historical results. Their pre-initializer snapshot and definition
+rollback expectations are superseded by pinned Clojure1.12.6 observations.
+Current full-baseline/review/final-head CI results belong in handoff.
 
 Executing regressions are crates/suss-cli/tests/portable_dynamic_bindings.rs and
 crates/suss-compile/tests/portable_dynamic_bindings.rs. Initial six source tests
@@ -66,3 +71,22 @@ The pinned analyzer warns for binding a var without dynamic metadata but still
 executes it; this bootstrap permits the behavior but does not yet emit that warning.
 Full source-backed macro expansion, metadata policy, field assignment, ExceptionInfo,
 public Error classes and async context remain unfinished. Neither issue closes here.
+
+## Clojure binding-effect correction
+
+The pinned Clojure1.12.6 fixtures under
+`results/m12-eval/binding-initializer-effects-primary` and
+`results/m12-eval/binding-root-effects-primary` record nine initializer and eight
+root-effect controls. They cover direct/evaluated definitions, previously unbound
+roots, definitions during a binding body, `defonce`, nested outer-frame writes,
+all initializers preceding snapshots, failures and ordinary `set!` restoration.
+Prior successful native executions returned wrong values on three of five
+initializer controls and five of six body controls. Those comparator failures
+remain archived under `results/m12-eval/binding-effects-before`.
+
+The native tests compare Runtime and isolated Macro hosts and actual compiled
+macros to the primary. Production async-scheduler tests add a real pending await
+and forced GC before checking the same binding/root effects. The unchanged fuel
+sweep ranges check interruption recovery while preserving prior root definitions.
+This correction does not turn the historical broader workspace results into
+current-source validation or change the original suite's reviewed baseline.

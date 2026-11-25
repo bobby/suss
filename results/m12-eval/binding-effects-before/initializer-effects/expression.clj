@@ -1,0 +1,6 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn [(do (def ^:dynamic init-effect-direct 1) (let [inside (binding [init-effect-direct (do (def ^:dynamic init-effect-direct 2) 3)] init-effect-direct)] [inside init-effect-direct]))
+(do (def ^:dynamic init-effect-eval 1) (let [inside (binding [init-effect-eval (do (eval (quote (def ^:dynamic init-effect-eval 2))) 3)] init-effect-eval)] [inside init-effect-eval]))
+(do (def ^:dynamic init-effect-failed 1) (def ^:dynamic init-effect-second 0) [(try (binding [init-effect-failed (do (eval (quote (def ^:dynamic init-effect-failed 2))) 3) init-effect-second (throw (ex-info "later" {}))] :body) (catch Throwable e :caught)) init-effect-failed])
+(do (def ^:dynamic init-effect-body 1) (let [inside (binding [init-effect-body 3] (set! init-effect-body 4) init-effect-body)] [inside init-effect-body]))
+(do (def ^:dynamic init-effect-nested 0) (binding [init-effect-nested 1] [(binding [init-effect-nested (do (eval (quote (set! init-effect-nested 2))) 3)] init-effect-nested) init-effect-nested]))])

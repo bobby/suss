@@ -1724,3 +1724,12 @@ regressions and unchanged primary, count/skip/value-comparison guards. Counts
 are4466/75/84/2314/83 over4624 actual observations;26 Decimal source-form
 candidates and six unexecuted Decimal operands remain. This is suite-profile
 coverage evidence; compiler/runtime source is unchanged from a12b2796.
+
+### Binding effects in the persistent compiled host
+
+Fresh pinned Clojure1.12.6 controls distinguish initializer effects, active dynamic
+assignments and persistent root definitions. Current focused validation passes301
+native tests, including both phases/actual macros and real pending-await/GC
+regressions. Original suite primary, baseline and judgment rules stay unchanged.
+See `results/m12-eval/README.md` and `docs/runtime/dynamic-bindings.md` for commands,
+negative evidence and limits. Fresh broader/full/review/CI gates remain separate.

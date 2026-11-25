@@ -1,0 +1,50 @@
+{
+  "head": "c266e1c354fd3ef032fa2473309ce9bd3b1c8c30",
+  "scope": "suss-m12-binding-body-root-probe.scope",
+  "recorder_pid": 1241956,
+  "inputs": {
+    "crates/suss-compile/src/portable/ir.rs": "ea833a1afc71009934f85faff660b4b13ae94a4ada1a1c2f3a3890bddeb885b9",
+    "crates/suss-compile/src/portable/emit.rs": "d789ed153e89882f903ab3a48aac92b670ab7285683e9733cb80ff447d54a354",
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": "ddca02c83cf029e550d8e9b9177928bc5a28d2c0fc5eebbc9c8bbde64d6f0883",
+    "crates/suss-compile/src/portable_session/evaluation/math_context.rs": "3118e399f693ddc75bd1fee3326d58e17785ed7cf205ca73fe24e7e2890e4b72"
+  },
+  "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+  "binary_sha256": "31ad53c241c0ba0e660a6fda7819414eff56e3772935f5c6ada80f29f100a0a1",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "commands": [
+    {
+      "label": "primary",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-body-root-effects-before/expression.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 0.5828282833099365
+    },
+    {
+      "label": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-body-root-effects-before/isolated-cache",
+        "-e",
+        "[(do (def ^:dynamic body-root-eval 1) (let [inside (binding [body-root-eval 3] (eval (quote (def ^:dynamic body-root-eval 2))) body-root-eval)] [inside body-root-eval]))\n(do (def ^:dynamic body-root-direct 1) (let [inside (binding [body-root-direct 3] (def ^:dynamic body-root-direct 2) body-root-direct)] [inside body-root-direct]))\n(do (def ^:dynamic body-root-throw 1) [(try (binding [body-root-throw 3] (eval (quote (def ^:dynamic body-root-throw 2))) (throw (ex-info \"body\" {}))) (catch :default e :caught)) body-root-throw])\n(do (def ^:dynamic body-root-once) (let [inside (binding [body-root-once 3] (defonce ^:dynamic body-root-once 2) body-root-once)] [inside body-root-once]))\n(do (def ^:dynamic body-root-nested 0) [(binding [body-root-nested 1] [(binding [body-root-nested 3] (eval (quote (def ^:dynamic body-root-nested 2))) body-root-nested) body-root-nested]) body-root-nested])\n(do (def ^:dynamic body-root-set 1) (let [inside (binding [body-root-set 3] (set! body-root-set 4) body-root-set)] [inside body-root-set]))]\n"
+      ],
+      "exit_code": 0,
+      "seconds": 24.99825096130371
+    }
+  ],
+  "complete": true,
+  "qualification": "Read-only actual pinned JVM and stable CLI probe after initializer-order fix but before any root-definition fix; current HEAD plus dirty IR/tests captured by hashes; no shared target rebuild; focused gate already terminal101 for obsolete restoration assertions.",
+  "head_unchanged": true,
+  "inputs_unchanged": true,
+  "binary_unchanged": true
+}

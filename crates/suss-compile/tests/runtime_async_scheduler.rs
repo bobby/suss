@@ -1750,3 +1750,75 @@ fn cancel_all_captures_owners_once_and_drives_each_cleanup() {
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.integer("async-scheduler-cancel-all", &[]), 0);
 }
+
+
+#[test]
+fn suspended_binding_initializers_preserve_prior_outer_frame_effects() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/binding-initializer-effects-primary/cases.json")).unwrap();
+    let expected = rows.iter().find(|row| row["name"] == "nested-initializer-set-keeps-outer-effect").unwrap()["observed_edn"].as_str().unwrap();
+    let forms = suss_reader::forms::read_forms(expected).unwrap();
+    let suss_reader::forms::Kind::Vector(values) = &forms[0].kind else { panic!("primary vector") };
+    let expected: Vec<i64> = values.iter().map(|value| {
+        let suss_reader::forms::Kind::Long(value) = &value.kind else { panic!("primary long") };
+        *value
+    }).collect();
+    let mut h = Harness::new();
+    h.install("(def ^:dynamic *x* 0)");
+    let dependency = h.value("future-pending-new", &[]);
+    h.bind("dependency", dependency.clone());
+    // The pending dependency inserts an actual suspension after the initializer
+    // effect; resolving it to3 gives the same selected values as the primary.
+    let owner = h.source("(suss.async/future* (binding [*x* 1] (do (binding [*x* (do (t/emit 7) (set! *x* 2) (suss.async/await* dependency))] (t/emit *x*)) (t/emit *x*))))");
+    assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+    assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+    assert_eq!(h.trace(), [7]);
+    h.store.gc(None).unwrap();
+    let result = h.number(expected[0]);
+    assert_eq!(h.integer("future-resolve", &[dependency, result]), 1);
+    assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+    assert_eq!(h.integer("future-status", &[owner]), 1);
+    h.store.gc(None).unwrap();
+    let mut trace = vec![7];
+    trace.extend(expected);
+    assert_eq!(h.trace(), trace, "initializer runs once and its prior-frame write survives cleanup");
+    let cell = h.cells["user/*x*"].get(&mut h.store);
+    let current = h.value("binding-get", &[cell]);
+    assert_eq!(h.decode(&current), 0, "scheduler restores the real caller context");
+    assert_eq!(h.counts(), (0, 0));
+}
+
+#[test]
+fn suspended_binding_body_keeps_root_definition_and_selected_frame_after_gc() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/binding-root-effects-primary/cases.json")).unwrap();
+    let primary = rows.iter().find(|row| row["name"] == "body-direct-root").unwrap()["observed_edn"].as_str().unwrap();
+    let forms = suss_reader::forms::read_forms(primary).unwrap();
+    let suss_reader::forms::Kind::Vector(values) = &forms[0].kind else { panic!("primary vector") };
+    let expected: Vec<i64> = values.iter().map(|value| {
+        let suss_reader::forms::Kind::Long(value) = &value.kind else { panic!("primary long") };
+        *value
+    }).collect();
+    let mut h = Harness::new();
+    h.install("(def ^:dynamic *x* 1)");
+    let dependency = h.value("future-pending-new", &[]);
+    h.bind("dependency", dependency.clone());
+    let owner = h.source("(suss.async/future* (binding [*x* 3] (def ^:dynamic *x* 2) (t/emit *x*) (suss.async/await* dependency) (t/emit *x*)))");
+    assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+    assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
+    assert_eq!(h.trace(), [expected[0]]);
+    h.store.gc(None).unwrap();
+    let cell = h.cells["user/*x*"].get(&mut h.store);
+    let root = h.value("binding-get", &[cell]);
+    assert_eq!(h.decode(&root), expected[1], "definition is a persistent root effect while suspended");
+    let result = h.number(0);
+    assert_eq!(h.integer("future-resolve", &[dependency, result]), 1);
+    assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
+    assert_eq!(h.integer("future-status", &[owner]), 1);
+    h.store.gc(None).unwrap();
+    assert_eq!(h.trace(), [expected[0], expected[0]], "the selected binding survives suspension");
+    let cell = h.cells["user/*x*"].get(&mut h.store);
+    let root = h.value("binding-get", &[cell]);
+    assert_eq!(h.decode(&root), expected[1], "frame cleanup preserves the root definition");
+    assert_eq!(h.counts(), (0, 0));
+}

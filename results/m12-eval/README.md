@@ -1,3 +1,36 @@
+## Binding initializer and root effects (2026-11-25)
+
+The frozen binding-effects focused gate passes all301 tests:46 public eval,
+62 runtime ABI,2 publication,10 CLI binding,14 closures,3 compiler binding,
+14 resolution,27 async scheduler,5 dynamic switch and118 host-library tests.
+Nine fresh Clojure1.12.6 initializer controls and eight root controls compare in
+Runtime, isolated Macro and actual compiled macros. Actual pending-await/GC
+regressions preserve initializer writes and distinguish root definitions from
+selected frames. Both original fuel sweep ranges and four independently measured
+context-budget ledgers pass.
+
+All initializers now run before outer-frame snapshots in synchronous and async
+lowering. Definitions use a private root write; `set!` keeps current-frame
+assignment. Frame exit never rewrites a root it did not replace. The older three
+rollback assertions are corrected against the pinned primary while retaining their
+fuel sweeps. A later comment-only correction in runtime_dynamic_switch is checked
+by exact reverse substitution in verify-binding-effects-checkpoint.py; all other
+executed code/test/primary bytes are conserved.
+
+Actual predecessor executions returned0 but produced wrong values on3/5
+initializer and5/6 body controls; their pinned-reader comparisons return1. The
+initializer-only focused run returns101 on three historical rollback assertions.
+The previous exact workspace was deliberately interrupted for the proven effect
+bug, actual Cargo101 after7806.643s with unchanged source/HEAD. These are retained
+as failures, not timeouts or passes. The301-test success and before evidence are
+under results/m12-eval/binding-effects-focused and binding-effects-before; the
+checkpoint verifier conserves their source, primary and baseline hashes.
+
+Fresh broader provenance/bootstrap/native capture, exact two-thread workspace,
+independent review and final-head CI remain required for this changed compiler.
+Earlier C266 CI success and broader native0 receipts validate their own source.
+No original primary/baseline/count/skip/opaque judgments are changed.
+
 Fuel-accounting controls pass: 118 host-library and all40 public-eval tests,
 including four independently measured whole-budget cases in Runtime/Macro. See
 [receipts](context-fuel-accounting-focused/commands.json.gz) and

@@ -100,21 +100,23 @@ fn binding_is_visible_to_old_functions_but_escaped_readers_do_not_capture_scope(
 }
 
 #[test]
-fn original_values_are_snapshotted_before_initializers_and_failed_initializers_keep_effects() {
+fn initializer_and_body_definitions_survive_cleanup_and_failed_initializers_keep_effects() {
+    // Pinned Clojure controls in binding-initializer-effects-primary and
+    // binding-root-effects-primary retain root definitions across frame exit.
     let mut s = Session::new().unwrap();
     s.eval("(def ^:dynamic *value* 1)").unwrap();
     assert_eq!(
         eval(
             &mut s,
-            "(binding [*value* (do (set! *value* 2) 7)] *value*)"
+            "(binding [*value* (do (def ^:dynamic *value* 2) 7)] *value*)"
         ),
         num(7.0)
     );
-    assert_eq!(eval(&mut s, "*value*"), num(1.0));
+    assert_eq!(eval(&mut s, "*value*"), num(2.0));
     assert_eq!(
         eval(
             &mut s,
-            "(try (binding [*value* (do (set! *value* 2) (throw 7))] 42) (catch :default error *value*))"
+            "(try (binding [*value* (do (def ^:dynamic *value* 2) (throw 7))] 42) (catch :default error *value*))"
         ),
         num(2.0)
     );
@@ -129,8 +131,8 @@ fn original_values_are_snapshotted_before_initializers_and_failed_initializers_k
     assert_eq!(eval(&mut s, "*value*"), num(1.0));
     s.eval("(binding [*value* 7] (set! *value* 9))").unwrap();
     assert_eq!(eval(&mut s, "*value*"), num(1.0));
-    s.eval("(binding [*value* 7] (def *value* 9))").unwrap();
-    assert_eq!(eval(&mut s, "*value*"), num(1.0));
+    s.eval("(binding [*value* 7] (def ^:dynamic *value* 9))").unwrap();
+    assert_eq!(eval(&mut s, "*value*"), num(9.0));
 }
 
 #[test]
@@ -230,7 +232,9 @@ fn fuel_traps_do_not_leak_dynamic_values_into_the_next_prompt_or_saved_function(
 }
 
 #[test]
-fn fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot() {
+fn fuel_interruption_during_frame_pop_preserves_initializer_root_effect() {
+    // binding-root-effects-primary/fuel-root-initializer-final-state observes
+    // root2 after normal exit. Fuel interruption must preserve that prior effect.
     let mut s = Session::new().unwrap();
     s.eval("(def ^:dynamic *value* 1) (def entered false)")
         .unwrap();
@@ -239,14 +243,14 @@ fn fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot() {
         s.set_operation_fuel(50_000);
         s.eval("(set! *value* 1) (set! entered false)").unwrap();
         s.set_operation_fuel(fuel);
-        let result = s.eval("(binding [*value* (do (set! *value* 2) 7)] (set! entered true) 42)");
+        let result = s.eval("(binding [*value* (do (def ^:dynamic *value* 2) 7)] (set! entered true) 42)");
         s.set_operation_fuel(50_000);
         let entered = eval(&mut s, "(if entered 1 0)") == num(1.0);
         if entered {
             if matches!(result, Err(SessionError::Trap(_))) {
                 interrupted += 1;
             }
-            assert_eq!(eval(&mut s, "*value*"), num(1.0), "fuel {fuel}");
+            assert_eq!(eval(&mut s, "*value*"), num(2.0), "fuel {fuel}");
         }
     }
     assert!(interrupted > 0, "actually interrupt after body entry");
@@ -254,6 +258,8 @@ fn fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot() {
 
 #[test]
 fn nested_multi_target_pop_is_restartable_at_every_fuel_boundary() {
+    // The actual primary fuel-nested-multiple-final-roots control observes3/4.
+    // Sweep every existing fuel boundary without rolling back those root effects.
     let mut s = Session::new().unwrap();
     s.eval("(def ^:dynamic *x* 1) (def ^:dynamic *y* 2) (def entered false)")
         .unwrap();
@@ -263,14 +269,14 @@ fn nested_multi_target_pop_is_restartable_at_every_fuel_boundary() {
         s.eval("(set! *x* 1) (set! *y* 2) (set! entered false)")
             .unwrap();
         s.set_operation_fuel(fuel);
-        let result = s.eval("(binding [*x* (do (set! *x* 3) 7) *y* (do (set! *y* 4) 8)] (binding [*x* (do (set! *x* 9) 11) *y* (do (set! *y* 10) 12) *x* 13] (set! entered true) 42))");
+        let result = s.eval("(binding [*x* (do (def ^:dynamic *x* 3) 7) *y* (do (def ^:dynamic *y* 4) 8)] (binding [*x* (do (set! *x* 9) 11) *y* (do (set! *y* 10) 12) *x* 13] (set! entered true) 42))");
         s.set_operation_fuel(50_000);
         if eval(&mut s, "(if entered 1 0)") == num(1.0) {
             if matches!(result, Err(SessionError::Trap(_))) {
                 interrupted += 1;
             }
-            assert_eq!(eval(&mut s, "*x*"), num(1.0), "x at fuel {fuel}");
-            assert_eq!(eval(&mut s, "*y*"), num(2.0), "y at fuel {fuel}");
+            assert_eq!(eval(&mut s, "*x*"), num(3.0), "x at fuel {fuel}");
+            assert_eq!(eval(&mut s, "*y*"), num(4.0), "y at fuel {fuel}");
         }
     }
     assert!(interrupted > 0);
