@@ -212,6 +212,9 @@ pub(crate) const BINDING: u32 = 5;
 /// a read of a bound, never-bound-dynamically cell is its root (#354).
 pub(crate) const CELL_BOUND: i32 = 1;
 pub(crate) const CELL_DYNAMIC: i32 = 2;
+/// Public Var macro status follows the actual root cell. Every root bind,
+/// including with-redefs restoration, clears it; declaration metadata sets it.
+pub(crate) const CELL_MACRO: i32 = 16;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
@@ -1866,6 +1869,39 @@ fn build_module() -> Vec<u8> {
         LocalGet(0), RefFunc(binding_getter_entry), I32Const(0), I32Const(0),
         Call(b.names["closure-new"]),
     ]);
+    // Retained upstream Var fixtures can use an ordinary thunk with no native
+    // root cell. Its explicit metadata remains authoritative. Native Vars use
+    // the compiler-owned universal getter and its actual cell instead.
+    let getter_cell = b.function_with_locals("binding-getter-cell", &[VALUE], &[VALUE],
+        &[(1, VALUE)], &[
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
+            LocalTee(1), RefTestNonNull(HeapType::Concrete(BINDING)),
+            If(BlockType::Result(VALUE)), LocalGet(1), Else, sentinel_value(NIL), End,
+            Else, sentinel_value(NIL), End,
+        ]);
+    b.function_with_locals("binding-getter-macro?", &[VALUE], &[ValType::I32],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(1), RefIsNull,
+            If(BlockType::Result(ValType::I32)), I32Const(1), Else,
+            LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+            StructGet { struct_type_index: BINDING, field_index: 1 },
+            I32Const(CELL_MACRO), I32And, I32Eqz, I32Eqz, End,
+        ]);
+    b.function_with_locals("binding-getter-macro-set!", &[VALUE, VALUE], &[VALUE],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(2), RefIsNull,
+            If(BlockType::Empty), LocalGet(0), Return, End,
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
+            StructGet { struct_type_index: BINDING, field_index: 1 },
+            I32Const(!CELL_MACRO), I32And,
+            LocalGet(1), GlobalGet(TRUE_GLOBAL), RefEq,
+            If(BlockType::Result(ValType::I32)), I32Const(CELL_MACRO), Else, I32Const(0), End,
+            I32Or, StructSet { struct_type_index: BINDING, field_index: 1 }, LocalGet(0),
+        ]);
     // Anonymous publication tests the same selected dynamic/root cell value
     // as an ordinary read. An unbound root must not be read eagerly, while an
     // active dynamic entry may still provide a value for that root cell.

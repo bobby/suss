@@ -1,0 +1,55 @@
+{
+  "reviewed_head": "25f6cdf65939abd27783955e163b1ba5bc13dc8e",
+  "requested_effort": "xhigh",
+  "configured_reasoning_effort": "not introspectable by this agent",
+  "actual_review_scope": "Full implementation and unchanged nine criteria; inspected reentry/phase/compiler publication, functions/source pools, numeric roots, dynamic math context and work ledgers, owned exceptions, root/thread scopes and cleanup/fork/async machinery, original suite/provenance/AOT boundaries. Read-only independent primary/current Runtime CLI probes plus executable-conservation verifier.",
+  "prior_findings": "Original function constants/exception/math-context controls match exactly; unused invalid math-context long/quote also match3/:ok.",
+  "primary_stdout": "[[true false false :error :error :error] [[\"boom\" {:value 1N}] [\"boom\" {:value 1N}]] [0.333M 0.333M 0.333M] [3 :ok [[3 3] 1] [[3 4] [1 9]] [:error [1 9]] [4 1 [:b]] :error 42]]\n",
+  "native_stdout": "[[true false false :error :error :error] [[\"boom\" {:value 1N}] [\"boom\" {:value 1N}]] [0.333M 0.333M 0.333M] [3 :ok [[3 3] 1] [[3 4] [1 9]] [:error [1 9]] [4 1 [:a :b]] 1 1]]\n",
+  "findings": [
+    {
+      "severity": "P1",
+      "title": "Honor live macro Var root replacement during eval",
+      "file": "crates/suss-compile/src/portable_macros.rs",
+      "line": 954,
+      "related": [
+        "crates/suss-compile/src/runtime_abi/dynamic.rs:270",
+        "crates/suss-compile/src/portable_session/evaluation.rs:525"
+      ],
+      "primary": "42 for Runtime function replacement; :error for another existing macro root",
+      "native": "1 for both",
+      "violated_requirements": [
+        1,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "severity": "P2",
+      "title": "Preserve duplicate with-redefs source-key initializer semantics",
+      "file": "crates/suss-compile/src/portable/hir/dynamic.rs",
+      "line": 55,
+      "related": [
+        "crates/suss-compile/src/portable/ir.rs:427"
+      ],
+      "primary": "[4 1 [:b]]",
+      "native": "[4 1 [:a :b]]",
+      "violated_requirements": [
+        1,
+        5
+      ]
+    }
+  ],
+  "new_primary_native_receipts": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-25f6-independent-caught-root",
+  "macro_metadata_primary_only": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-25f6-macro-metadata-primary",
+  "duplicate_shape_primary_only": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-25f6-duplicate-primary-caught",
+  "source_and_head_unchanged": true,
+  "source_hashes": {
+    "crates/suss-compile/src/portable_macros.rs": "e8d2023d208aba4fc7ce69a17f22dbdf1163d19b1cfd9d3317bbe5cc34bc7c82",
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": "c42bf89f451cd1771b715d54dfd1a5fcafe63bef09380ccccb398d9072ecad84",
+    "crates/suss-compile/src/portable/hir/dynamic.rs": "3ced45c3764320022f231dbbdf976ed0a6cb7d3f4fe0c5b634213c1a417c20bc",
+    "crates/suss-compile/src/portable_session/evaluation.rs": "10754fcf263e085661b6ebefabeba9c338e1961949fe1794e28a37bd718622a8"
+  },
+  "qualification": "No source/HEAD/shared target/cache/PR changes or delegation. Numeric F not accessed. Exact workspace proof and composite verifier valid; reviewed baseline is not whole-language conformance. Fresh CLI probes are Runtime; Macro behavior was audited in code and existing frozen target evidence, not newly executed here. Current/future final-head CI remains independent. Initial uncaught primary arity/duplicate-key diagnostics retained separately and not relabeled native semantic failures."
+}

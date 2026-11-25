@@ -1408,6 +1408,32 @@ impl SessionHost<'_> {
         let value = cell.get(&mut roots);
         call(&mut roots, self.runtime, get, &[value], self.identity, &self.handles)
     }
+    pub(crate) fn binding_root_value(&mut self, identity: &CellIdentity) -> Result<SessionValue, SessionError> {
+        let cell = registry_lock(&self.compiler).cells.get(identity).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Missing published binding cell"))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let cell_value = cell.get(&mut roots);
+        let reference = cell_value.unwrap_anyref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing binding cell storage"))?;
+        let structure = reference.as_struct(&roots)?
+            .ok_or_else(|| wasmtime::Error::msg("Invalid binding cell storage"))?;
+        let value = structure.field(&mut roots, 0)?;
+        own(&mut roots, value, self.identity, &self.handles)
+    }
+    pub(crate) fn identical_values(&mut self, left: &SessionValue, right: &SessionValue) -> Result<bool, SessionError> {
+        self.check(left)?;
+        self.check(right)?;
+        match (&left.value, &right.value) {
+            (None, None) => Ok(true),
+            (Some(left), Some(right)) => {
+                let mut roots = RootScope::new(&mut self.store);
+                let left = left.to_rooted(&mut roots);
+                let right = right.to_rooted(&mut roots);
+                Ok(wasmtime::Rooted::ref_eq(&roots, &left, &right)?)
+            }
+            _ => Ok(false),
+        }
+    }
     pub fn eval(&mut self, source: &str) -> Result<SessionValue, SessionError> {
         let snapshot = self.compilation_snapshot();
         let prepared = portable::modules::prepare_input(

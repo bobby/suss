@@ -387,6 +387,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringFromUnit => { names.insert("string-from-unit"); }
                         Nominal::BindingDefined => { names.insert("binding-defined"); }
                         Nominal::BindingGetter => { names.insert("binding-getter"); }
+                        Nominal::BindingGetterMacro => { names.insert("binding-getter-macro?"); }
+                        Nominal::BindingGetterMacroSet => { names.insert("binding-getter-macro-set!"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
                         Nominal::BindingRootSet => { names.insert("binding-root-set"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
@@ -820,7 +822,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "binding-getter-macro?" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
             "list-function" => (vec![VALUE; 5], vec![VALUE]),
             "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
@@ -935,7 +937,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
-            "binding-root-set" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
+            "binding-root-set" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -4492,6 +4494,8 @@ fn emit_function(
                         Nominal::Class
                         | Nominal::BindingDefined
                         | Nominal::BindingGetter
+                        | Nominal::BindingGetterMacro
+                        | Nominal::BindingGetterMacroSet
                         | Nominal::BindingSnapshot
                         | Nominal::BindingRootSet
                         | Nominal::DecimalContextNew
@@ -4580,6 +4584,8 @@ fn emit_function(
                                 Nominal::Class => "class-value-new",
                                 Nominal::BindingDefined => "binding-defined",
                                 Nominal::BindingGetter => "binding-getter",
+                                Nominal::BindingGetterMacro => "binding-getter-macro?",
+                                Nominal::BindingGetterMacroSet => "binding-getter-macro-set!",
                                 Nominal::BindingSnapshot => "binding-snapshot",
                                 Nominal::BindingRootSet => "binding-root-set",
                                 Nominal::DecimalContextNew => "decimal-context-new",

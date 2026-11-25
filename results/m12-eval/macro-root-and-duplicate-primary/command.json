@@ -1,0 +1,78 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/macro-root-and-duplicate-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 2.1194918155670166,
+  "controls": 13,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "entry": "clojure/core.clj",
+  "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "source_sha256": "07e86331c9b164827ff867e01523664c066d84aa7a976ebafe7a8cf450bc3d80",
+  "native_source_sha256": "704ff79b813bb78af7e4570e58c74f30b4eede65a4da112a9d955dd2a394bd17",
+  "stdout_sha256": "8ab78301d458b12d7256eeb17b673edc1951b06e45483b1aae4a8310b1a36178",
+  "cases": [
+    {
+      "name": "macro-root-ordinary-function",
+      "expression": "(do (declare root-macro-a) (eval '(defmacro root-macro-a [] 1)) (with-redefs [root-macro-a (fn [& args] 42)] (eval '(root-macro-a))))"
+    },
+    {
+      "name": "macro-root-another-macro",
+      "expression": "(do (declare root-macro-b root-macro-c) (eval '(defmacro root-macro-b [] 1)) (eval '(defmacro root-macro-c [] 2)) (try (with-redefs [root-macro-b @(var root-macro-c)] (eval '(root-macro-b))) (catch Throwable e :error)))"
+    },
+    {
+      "name": "macro-status-clears-through-restoration",
+      "expression": "(do (declare root-macro-d) (let [v (eval '(defmacro root-macro-d [] 1))] [(.isMacro v) (boolean (:macro (meta v))) (with-redefs [root-macro-d (fn [& xs] 42)] [(.isMacro v) (boolean (:macro (meta v))) (eval '(root-macro-d))]) (.isMacro v) (boolean (:macro (meta v))) (try (eval '(root-macro-d)) (catch Throwable e :error))]))"
+    },
+    {
+      "name": "macro-same-root-still-clears-status",
+      "expression": "(do (declare root-macro-e) (let [v (eval '(defmacro root-macro-e [] 1))] [(try (with-redefs [root-macro-e @v] (eval '(root-macro-e))) (catch Throwable e :error)) (.isMacro v)]))"
+    },
+    {
+      "name": "failed-initializer-keeps-macro",
+      "expression": "(do (declare root-macro-f) (let [v (eval '(defmacro root-macro-f [] 1))] [(try (with-redefs [root-macro-f (throw (ex-info \"stop\" {}))] :body) (catch Throwable e :error)) (.isMacro v) (eval '(root-macro-f))]))"
+    },
+    {
+      "name": "new-macro-declaration-inside-root-scope",
+      "expression": "(do (declare root-macro-g) (let [v (eval '(defmacro root-macro-g [] 1))] [(with-redefs [root-macro-g (fn [& xs] 42)] (eval '(defmacro root-macro-g [] 2)) [(.isMacro v) (eval '(root-macro-g))]) (.isMacro v) (try (eval '(root-macro-g)) (catch Throwable e :error))]))"
+    },
+    {
+      "name": "duplicate-identical-source-key",
+      "expression": "(do (def root-dup-a 1) (def root-events-a (atom [])) [(with-redefs [root-dup-a (do (swap! root-events-a conj :a) 3) root-dup-a (do (swap! root-events-a conj :b) 4)] root-dup-a) root-dup-a @root-events-a])"
+    },
+    {
+      "name": "duplicate-qualified-source-keys",
+      "expression": "(do (def root-dup-b 1) (def root-events-b (atom [])) [(try (with-redefs [root-dup-b (do (swap! root-events-b conj :a) 3) user/root-dup-b (do (swap! root-events-b conj :b) 4)] :body) (catch Throwable e :error)) root-dup-b @root-events-b])"
+    },
+    {
+      "name": "duplicate-symbol-metadata-is-not-a-key",
+      "expression": "(do (def root-dup-c 1) (def root-events-c (atom [])) [(with-redefs [^:dynamic root-dup-c (do (swap! root-events-c conj :a) 3) root-dup-c (do (swap! root-events-c conj :b) 4)] root-dup-c) @root-events-c])"
+    },
+    {
+      "name": "binding-duplicates-keep-both-effects",
+      "expression": "(do (def ^:dynamic root-dup-d 1) (def root-events-d (atom [])) [(binding [root-dup-d (do (swap! root-events-d conj :a) 3) root-dup-d (do (swap! root-events-d conj :b) 4)] root-dup-d) root-dup-d @root-events-d])"
+    },
+    {
+      "name": "suppressed-initializer-is-not-analyzed",
+      "expression": "(do (def root-dup-e 1) [(with-redefs [root-dup-e never-resolved-suppressed-initializer root-dup-e 4] root-dup-e) root-dup-e])"
+    },
+    {
+      "name": "duplicate-var-map-error-message",
+      "expression": "(do (def root-dup-f 1) (try (with-redefs [root-dup-f 3 user/root-dup-f 4] :body) (catch Throwable e (ex-message e))))"
+    },
+    {
+      "name": "duplicate-source-key-retains-first-position",
+      "expression": "(do (def root-dup-g 1) (def root-dup-h 2) (def root-events-g (atom [])) [(with-redefs [root-dup-g (do (swap! root-events-g conj :a) 3) root-dup-h (do (swap! root-events-g conj :b) 5) root-dup-g (do (swap! root-events-g conj :c) 4)] [root-dup-g root-dup-h]) @root-events-g])"
+    }
+  ],
+  "qualification": "Actual pinned Clojure root macro-status and source-key duplicate controls. Only owned catch adaptation for native source. No native pass claim; historical negative review receipts retained separately."
+}

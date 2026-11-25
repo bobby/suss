@@ -510,6 +510,7 @@ pub struct AnalysisGraph<'a, 'store> {
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
     jobs: VecDeque<(Value, Task)>,
+    native_namespace_membership: bool,
 }
 impl<'a, 'store> AnalysisGraph<'a, 'store> {
     fn reader_key(&mut self, form: &Form) -> Result<KeyId> {
@@ -546,6 +547,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
             asts: BTreeMap::new(),
             recipes: Vec::new(),
             jobs: VecDeque::new(),
+            native_namespace_membership: false,
         }
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
@@ -1268,6 +1270,16 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
     pub(crate) fn native_evaluation_locals(
         &mut self, context: portable::ExpansionContext<'_>,
     ) -> Result<SessionValue> {
+        // Initializer ASTs retain real source locals and namespace membership,
+        // without recursively importing every unrelated global definition.
+        // Full compiler catalogs remain an explicit, separate projection.
+        let mut projection = AnalysisGraph::new(self.bridge, &mut *self.session);
+        projection.native_namespace_membership = true;
+        projection.native_local_values(context)
+    }
+    fn native_local_values(
+        &mut self, context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
         self.charge(context.locals.len().saturating_add(context.fields.len()))?;
         let root = if context.locals.is_empty() && context.fields.is_empty() {
             self.scalar(Literal::Nil)?
@@ -1606,6 +1618,14 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
     }
     fn namespace(&mut self, namespace: &Arc<SourceNamespace>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
+        if self.native_namespace_membership {
+            let key = Arc::as_ptr(namespace) as usize;
+            self.charge(1)?;
+            if let Some((_, value)) = self.namespaces.get(&key) { return Ok(*value); }
+            let value = self.namespace_membership(namespace)?;
+            self.namespaces.insert(key, (namespace.clone(), value));
+            return Ok(value);
+        }
         let fact_count = namespace.aliases.len()
             + namespace.refers.len()
             + namespace.used_refers.len()

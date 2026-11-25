@@ -1,0 +1,20 @@
+{
+  "recorded_code_head": "6b435045cf92549531fb99d6d344670b5464334d",
+  "actual_frozen_root_target_exit": 101,
+  "passed": 9,
+  "failed": 3,
+  "qualified_runtime_control_exit": 0,
+  "qualified_runtime_control_passed": 2,
+  "fuel_allowance": 200000,
+  "cancellation_allowance": "u64::MAX, separate observer-triggered cancellation control",
+  "ordinary_macro_allowance": 10000000,
+  "cache_only_aggregate_exit": 101,
+  "instrumented_aggregate_exit": 101,
+  "instrumented_remaining_fuel": [
+    9996238,
+    9809785,
+    9659252
+  ],
+  "diagnosis": "Third env-reading control enters local initializer AST namespace definitions, recursively including unrelated declarations. Local lexical views need membership, full catalogs retain their explicit interface.",
+  "qualification": "Actual failures preserved. Qualified diagnostic tests change harness names, preserving limits and actual observer entry; raw invocation has no source-input namespace frame. This is not a current full/final-head pass receipt."
+}

@@ -2,6 +2,81 @@ The numeric integration retains the parent eval evidence below at its exact
 recorded source. Fresh validation of the combined tree remains separate; the
 parent-specific checkpoint verifier does not certify numeric changes.
 
+### Native lexical projection and ordinary operation budgets
+
+The frozen6b435045 root-filter command returns101 with9pass/3fail. The actual
+fuel/cancel diagnostics show unqualified user Var names at a raw function
+invocation, which has no input namespace frame. Pinned Clojure records
+[:unresolved 42] under the equivalent core namespace. Qualified Runtime controls
+then return0 (2tests) with the same200000 fuel and separate observer-triggered
+cancellation limits. Macro-only observation hooks keep their existing API.
+
+A paid-work trace enters the aggregate compiled macro with9996238 fuel, then
+completes its first two controls with9809785 and9659252. Its env-reading third
+control exhausts the remaining allowance while a local initializer AST includes
+unrelated namespace definition bodies. Caching immutable Var metadata alone
+still returns101; that negative remains recorded. Native lexical graphs now
+retain actual locals, initializer ASTs and namespace membership without importing
+those unrelated bodies. Explicit compiler-catalog/record projections keep their
+existing full interfaces. This is a projection boundary, not a substituted local
+value, raised allowance, new skip or altered primary.
+
+The follow-up also retains atomic expanded functions in C.EVAL and maps in the
+collection constant context. An independent pinned control records actual
+identity [true false false false] for direct/map/vector/set results. All14 root
+regressions return0 on the recorded working-tree overlay at original allowances,
+including both phases/actual macros, typed cancellation/fuel and identity. See
+`macro-thread-cost-before` and `macro-thread-bounded-local-diagnostic` for actual
+terminals and qualifications. Fresh clean-commit complete focused, bootstrap,
+native, exact workspace, independent review and final-head CI remain required.
+
+### Caller-owned macro bindings and stable Var metadata
+
+At8a93677f, both new root/duplicate tests return0 across both phases and actual
+macros. Its broader focused command returns101 on an unchanged retained Var
+fixture: that Var uses an ordinary thunk rather than a native binding getter.
+The frozen receipts are under `macro-thread-followup-before`. Two independent
+immutable8a CLI commands return0 but disagree with fresh pinned Clojure controls
+on metadata-map identity after root clearing and on a thread-selected macro
+transformer. Their actual outputs remain under `metadata-identity-primary` and
+`thread-macro-binding-before`.
+
+The follow-up guards native getter classification, caches cleared Var metadata,
+and prepares a thread-selected transformer through the existing analyzer/emitter
+while invoking it in its actual caller Store. Macro service steps release their
+Store before caller execution; a scoped operation owner keeps catalogs exclusive
+and permits same-thread reentry. Selected functions are read at each expansion,
+without inheriting the old function's unused-form/environment proofs. Nine fresh
+primary controls retain actual captures/effects, form/environment, recursive
+evaluation, changing bindings, existing function/Var identity and failed prefix
+effects. Pure component capability and original oracle/baseline policies remain.
+
+The current Rust check returns0 (24.39 seconds). New native focused, service
+ownership/cancellation, bootstrap/native/full workspace, independent review and
+final-head CI results must be recorded separately before any new pass claim.
+
+### Root macro status and duplicate source keys
+
+An independent immutable-binary review found two actual primary/native
+counterexamples: a redefined macro Var expanded its old catalog transformer,
+and duplicate with-redefs source keys ran a suppressed initializer. Fresh pinned
+Clojure 1.12.6 records thirteen controls under
+`results/m12-eval/macro-root-and-duplicate-primary` (actual exit 0).
+Root binding clears macro status during replacement and after restoration.
+Identical source symbols suppress the earlier initializer before analysis;
+distinct source spellings resolving to one Var evaluate both initializers and
+then throw before root replacement. Ordinary binding retains both effects.
+
+The follow-up adds a macro bit on actual binding cells, private compiled-core
+access through their real getters, and source-key handling in the existing
+bounded analyzer. Public Var metadata and native macro synchronization read that
+root status. No public marker values or foreign Store references are introduced.
+`cargo check -p suss-compile --locked` returns 0 (31.88 seconds). The earlier
+133b full-workspace and CI receipts remain historical: changed production code
+requires fresh focused, native, bootstrap and exact workspace execution before
+it can support a new validation claim. Existing primary/baseline policies and
+negative review receipts are preserved.
+
 Native eval charges context transport before choosing the isolated Macro
 allowance. Independent caller/direct-child/public-entry resource measurements
 pass in both phases without raising budgets. New focused evidence is under
@@ -1746,3 +1821,13 @@ GC/fork ownership, pending async return/cancellation and trap recovery. Twelve
 fresh primary controls and318 focused native tests pass. Reproduction and
 limits are in `results/m12-eval/README.md` and `docs/runtime/dynamic-bindings.md`;
 full workspace, independent review and final-head CI remain separate gates.
+
+
+Recorded validation at code `133b7024` (2026-11-25): the exact two-thread workspace
+command returns actual 0 in 10,420.338 seconds with source/HEAD unchanged; all ten required
+CI 45586341822 checks pass on that code head. The run retains all original oracle,
+count/skip/opaque rules and 15 existing Rust-test ignores. Executed code/test/fixture
+conservation across the associated prose/evidence publication is checked by
+results/m12-eval/verify-133b-workspace-checkpoint.py. Full command receipts and
+limits remain in results/m12-eval/README.md; independent review and passing
+final-head CI remain separate requirements.

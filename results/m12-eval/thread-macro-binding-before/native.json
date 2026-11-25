@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(do (declare dynamic-bound-macro) (let [v (eval '(defmacro ^:dynamic dynamic-bound-macro [] 1))] [(binding [dynamic-bound-macro (fn [& xs] 42)] [(.isMacro v) (eval '(dynamic-bound-macro))]) (eval '(dynamic-bound-macro))]))"
+  ],
+  "head": "8a93677f634c80f4af79fd34be3c7bdbdb55c7dd",
+  "exit_code": 0,
+  "seconds": 54.38504219055176,
+  "binary_sha256": "95339ec6a105dbc0e9fe0b54758935570ffd28f3fefca2dc5f34c9ffdd8d7d95",
+  "binary_unchanged": true,
+  "head_unchanged": true,
+  "tracked_source_unchanged": true,
+  "source_sha256": "9a330b629958657f0e74b4d7350f7b1c4bcc33708c072612b1657fb73881f20d",
+  "matches_primary": false,
+  "qualification": "Independent bounded immutable current-CLI probe of public Var metadata identity, not a build or whole validation pass."
+}

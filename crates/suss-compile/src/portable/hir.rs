@@ -693,6 +693,9 @@ pub enum Nominal {
     BindingDefined,
     /// Compiler-only construction of the shared Wasm getter for a native Var.
     BindingGetter,
+    /// Private compiled-core access to the real Var root's macro flag.
+    BindingGetterMacro,
+    BindingGetterMacroSet,
     /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
     BindingSnapshot,
     /// Compiler-only root definition, independent of the current dynamic frame.
@@ -796,7 +799,7 @@ impl Nominal {
         match self {
             Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
             Self::StringIndexOf | Self::ChunkIndexAdd | Self::BoxDoubleObject => Type::Number,
-            Self::BindingDefined
+            Self::BindingDefined | Self::BindingGetterMacro
             | Self::IsNumber
             | Self::IsRatio
             | Self::IsBigInt
@@ -867,8 +870,8 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::BindingGetter | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
-                Self::BindingRootSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
+                Self::BindingDefined | Self::BindingGetter | Self::BindingGetterMacro | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
+                Self::BindingRootSet | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
@@ -3575,6 +3578,9 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            if matches!(symbol.name.as_str(), "binding-getter-macro?" | "binding-getter-macro-set!") && !self.privileged {
+                return Err(fail(form.span.clone(), "Var macro flags require compiled core"));
+            }
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));
@@ -3643,6 +3649,8 @@ impl Analyzer<'_> {
                 "decimal-from-integer" => Some(Nominal::DecimalNew),
                 "as-decimal" => Some(Nominal::DecimalCoerce),
                 "math-context-new" => Some(Nominal::DecimalContextNew),
+                "binding-getter-macro?" => Some(Nominal::BindingGetterMacro),
+                "binding-getter-macro-set!" => Some(Nominal::BindingGetterMacroSet),
                 "decimal-context-getter-install" => Some(Nominal::DecimalContextGetter),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),

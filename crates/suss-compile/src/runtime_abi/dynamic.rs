@@ -258,7 +258,7 @@ fn root_set() -> Vec<Instruction<'static>> {
     ];
     body.extend(flags());
     body.extend([
-        I32Const(CELL_BOUND), I32Or,
+        I32Const(!CELL_MACRO), I32And, I32Const(CELL_BOUND), I32Or,
         StructSet { struct_type_index: BINDING, field_index: 1 },
     ]);
     body

@@ -8,9 +8,16 @@ use crate::{
 };
 
 mod macro_function;
+mod macro_binding;
 pub(super) mod function_pool;
 mod math_context;
 pub(crate) use math_context::EvaluationMathContext;
+
+#[derive(Clone)]
+struct MacroMetadata {
+    metadata: Option<OwnedRooted<AnyRef>>,
+    enabled: bool,
+}
 
 #[derive(Default)]
 pub(super) struct Evaluation {
@@ -24,6 +31,7 @@ pub(super) struct Evaluation {
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    macro_metadata: Mutex<BTreeMap<CellIdentity, MacroMetadata>>,
     exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
@@ -320,13 +328,18 @@ impl Evaluation {
             view.synchronize_evaluation_macros(&mut snapshot)?;
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = view.evaluation_updates_input_namespace()?;
-            let context = view.evaluation_math_context()?;
-            let allowance = view.operation_fuel_remaining()?;
-            let (prepared, spent) =
-                service.prepare_evaluation(&snapshot, form, allowance, context, view.interrupt.clone())?;
-            // Release the isolated Macro lease before executing Runtime code.
-            // Compilation and macro execution debit the caller cumulatively.
-            view.charge_host_work(spent)?;
+            let prepared = if view.has_native_macro_binding_override(&snapshot)? {
+                // A thread-bound transformer lives in this Store. Invoke it
+                // here, releasing the Macro Store between compiler steps.
+                macro_binding::prepare(&mut view, &service, &bridge, &snapshot, form)
+            } else {
+                let context = view.evaluation_math_context()?;
+                let allowance = view.operation_fuel_remaining()?;
+                let (prepared, spent) = service.prepare_evaluation(
+                    &snapshot, form, allowance, context, view.interrupt.clone())?;
+                view.charge_host_work(spent)?;
+                prepared
+            };
             match prepared? {
                 PreparedEvaluation::MacroDeclaration(form) => {
                     let prepared =
@@ -441,7 +454,7 @@ impl SessionHost<'_> {
         &mut self,
         snapshot: &mut CompilationSnapshot,
     ) -> Result<(), SessionError> {
-        snapshot.environment.clear_native_macro_status();
+        let mut statuses = BTreeMap::new();
         let mut declarations = Vec::new();
         for global in snapshot.environment.native_macro_declarations() {
             self.charge_host_work(
@@ -452,6 +465,7 @@ impl SessionHost<'_> {
             }
         }
         if declarations.is_empty() {
+            snapshot.environment.replace_native_macro_status(statuses);
             return Ok(());
         }
         let state = self
@@ -511,6 +525,39 @@ impl SessionHost<'_> {
             if fields.len() != 3 {
                 return Err(wasmtime::Error::msg("Macro Var has invalid fields").into());
             }
+            // Var.bindRoot clears macro status even when it restores an old
+            // transformer. The metadata object's old :macro key is not enough
+            // to authorize catalog expansion after an actual root replacement.
+            let root_is_macro = {
+                let mut roots = RootScope::new(&mut self.store);
+                let getter = fields[0].object()?.to_rooted(&mut roots);
+                let check = self.runtime.get_func(&mut roots, "binding-getter-macro?")
+                    .ok_or_else(|| wasmtime::Error::msg("Missing Var macro flag reader"))?;
+                let mut result = [Val::I32(0)];
+                check.call(&mut roots, &[Val::AnyRef(Some(getter))], &mut result)?;
+                result[0].unwrap_i32() != 0
+            };
+            if !root_is_macro {
+                statuses.insert(global, false);
+                continue;
+            }
+            // Metadata is compiler-created persistent data. Reuse only an
+            // unchanged actual object identity, never a name or structural
+            // guess; root clearing above still takes precedence on every read.
+            let cached = registry_lock(&state.macro_metadata).get(&global).cloned();
+            if let Some(cached) = cached {
+                let same = match (&fields[2].value, &cached.metadata) {
+                    (None, None) => true,
+                    (Some(current), Some(previous)) => {
+                        let mut roots = RootScope::new(&mut self.store);
+                        let current = current.to_rooted(&mut roots);
+                        let previous = previous.to_rooted(&mut roots);
+                        wasmtime::Rooted::ref_eq(&roots, &current, &previous)?
+                    }
+                    _ => false,
+                };
+                if same { statuses.insert(global, cached.enabled); continue; }
+            }
             let flag = self.invoke(&lookup, &[&fields[2], &key])?;
             // The public isMacro getter uses Clojure truthiness, too. Looking
             // up just this key avoids decoding unrelated opaque metadata.
@@ -523,10 +570,12 @@ impl SessionHost<'_> {
                     !wasmtime::Rooted::ref_eq(&roots, &flag, &false_value)?
                 }
             };
-            snapshot
-                .environment
-                .record_native_macro_status(global, enabled);
+            registry_lock(&state.macro_metadata).insert(global.clone(), MacroMetadata {
+                metadata: fields[2].value.clone(), enabled,
+            });
+            statuses.insert(global, enabled);
         }
+        snapshot.environment.replace_native_macro_status(statuses);
         Ok(())
     }
     pub(crate) fn evaluation_aliases(&mut self) -> Result<BTreeMap<String, String>, SessionError> {

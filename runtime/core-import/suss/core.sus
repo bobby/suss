@@ -5462,13 +5462,15 @@
 (deftype Var [val sym ^:mutable _meta]
   Object
   (isMacro [_]
-    (boolean (:macro _meta)))
+    (boolean (and (suss.bootstrap/binding-getter-macro? val) (:macro _meta))))
   (toString [_]
     (str_ "#'" sym))
   IDeref
   (-deref [_] (val))
   IMeta
-  (-meta [_] _meta)
+  (-meta [_]
+    (if (suss.bootstrap/binding-getter-macro? val) _meta
+      (do (set! _meta (dissoc _meta :macro)) _meta)))
   IEquiv
   (-equiv [this other] (identical? this other))
   IHash
@@ -12716,6 +12718,7 @@ reduces them without incurring seq initialization"
 ;; intern the result; the getter is compiled directly against its live cell.
 (def ^:private make-binding-var
   (fn [getter namespace name metadata]
+    (suss.bootstrap/binding-getter-macro-set! getter (boolean (:macro metadata)))
     ;; Binding keys and namespace objects keep the platform's canonical core
     ;; identity. Public Var symbols use Clojure's core spelling for source data.
     (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
@@ -12730,6 +12733,7 @@ reduces them without incurring seq initialization"
       (let [name (:name (meta v))
             namespace (:ns (meta v))]
         (assoc (assoc metadata :name name) :ns namespace)))
+    (suss.bootstrap/binding-getter-macro-set! (.-val v) (boolean (:macro metadata)))
     v))
 
 ;; BEGIN Clojure num checked Number projection

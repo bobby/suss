@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(assert (= \"1.12.6\" (clojure-version))) [[(let [f (fn [n] n)] (identical? f (eval f))) (let [f (fn [n] n)] (identical? f (eval (list 'identity f)))) (let [f (fn [n] n)] (identical? f (eval (list 'quote f)))) (let [x 1 f (fn [n] (+ n x))] (try (let [g (eval (list 'identity f))] [(g 41) (identical? f g)]) (catch Throwable e :error))) (let [a (atom 0) f (fn [] (swap! a inc))] (try (let [g (eval (list 'identity f))] [(f) (g) (f)]) (catch Throwable e :error))) (let [f (with-meta (fn [n] n) {:m 1})] (try (let [g (eval (list 'identity f))] [(g 42) (meta g) (identical? f g)]) (catch Throwable e :error)))] [(try (eval '(throw (ex-info \"boom\" {:value 1N}))) (catch Throwable e [(ex-message e) (ex-data e)])) (let [v (eval '(defmacro throws-data [] (throw (ex-info \"boom\" {:value 1N}))))] (try (v nil nil) (catch Throwable e [(ex-message e) (ex-data e)])))] [(with-precision 3 (eval '(/ 1M 3M))) (do (eval '(defmacro third-decimal [] (/ 1M 3M))) (with-precision 3 (try (eval '(third-decimal)) (catch Throwable e :error)))) (let [v (eval '(defmacro raw-third-decimal [] (/ 1M 3M)))] (with-precision 3 (try (v nil nil) (catch Throwable e :error))))] [(binding [*math-context* :invalid] (try (eval '(+ 1 2)) (catch Throwable e :error))) (binding [*math-context* :invalid] (try (eval '(quote :ok)) (catch Throwable e :error))) (do (def ^:dynamic review-scope-x 1) [(with-redefs [review-scope-x 2] (binding [review-scope-x 3] [(eval 'review-scope-x) (do (eval '(def ^:dynamic review-scope-x 4)) (eval 'review-scope-x))])) review-scope-x]) (do (def review-init-a 1) (def review-init-b 2) [(with-redefs [review-init-a (do (eval '(def review-init-b 9)) 3) review-init-b 4] [review-init-a review-init-b]) [review-init-a review-init-b]]) (do (def review-failed-a 1) (def review-failed-b 2) [(try (with-redefs [review-failed-a (do (eval '(def review-failed-b 9)) 3) review-failed-b (throw (ex-info \"stop\" {}))] :body) (catch Throwable e :error)) [review-failed-a review-failed-b]]) (do (def review-dup 1) (def review-events (atom [])) [(with-redefs [review-dup (do (swap! review-events conj :a) 3) review-dup (do (swap! review-events conj :b) 4)] review-dup) review-dup @review-events]) (try (do (declare review-macro-a review-macro-b) (eval '(defmacro review-macro-a [] 1)) (eval '(defmacro review-macro-b [] 2)) (with-redefs [review-macro-a @(var review-macro-b)] (eval '(review-macro-a)))) (catch Throwable e :error)) (do (declare review-macro-c) (eval '(defmacro review-macro-c [] 1)) (with-redefs [review-macro-c (fn [& args] 42)] (eval '(review-macro-c))))]]"
+  ],
+  "exit_code": 0,
+  "seconds": 3.022050142288208,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "dc62d80d0a66e6dcecceba0e378c84ee1b2c4ed4c521273149e2756b9907ed73",
+  "prior_probe": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-25f6-independent",
+  "qualification": "Prior primary uncaught arity error retained. Catch only macro-root replacement failure to compare its genuine error boundary without suppressing or relabeling the other controls."
+}

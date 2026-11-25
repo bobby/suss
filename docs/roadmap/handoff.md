@@ -1,3 +1,111 @@
+### Native lexical projection and ordinary operation budgets
+
+The frozen6b435045 root-filter command returns101 with9pass/3fail. The actual
+fuel/cancel diagnostics show unqualified user Var names at a raw function
+invocation, which has no input namespace frame. Pinned Clojure records
+[:unresolved 42] under the equivalent core namespace. Qualified Runtime controls
+then return0 (2tests) with the same200000 fuel and separate observer-triggered
+cancellation limits. Macro-only observation hooks keep their existing API.
+
+A paid-work trace enters the aggregate compiled macro with9996238 fuel, then
+completes its first two controls with9809785 and9659252. Its env-reading third
+control exhausts the remaining allowance while a local initializer AST includes
+unrelated namespace definition bodies. Caching immutable Var metadata alone
+still returns101; that negative remains recorded. Native lexical graphs now
+retain actual locals, initializer ASTs and namespace membership without importing
+those unrelated bodies. Explicit compiler-catalog/record projections keep their
+existing full interfaces. This is a projection boundary, not a substituted local
+value, raised allowance, new skip or altered primary.
+
+The follow-up also retains atomic expanded functions in C.EVAL and maps in the
+collection constant context. An independent pinned control records actual
+identity [true false false false] for direct/map/vector/set results. All14 root
+regressions return0 on the recorded working-tree overlay at original allowances,
+including both phases/actual macros, typed cancellation/fuel and identity. See
+`macro-thread-cost-before` and `macro-thread-bounded-local-diagnostic` for actual
+terminals and qualifications. Fresh clean-commit complete focused, bootstrap,
+native, exact workspace, independent review and final-head CI remain required.
+
+### Caller-owned macro bindings and stable Var metadata
+
+At8a93677f, both new root/duplicate tests return0 across both phases and actual
+macros. Its broader focused command returns101 on an unchanged retained Var
+fixture: that Var uses an ordinary thunk rather than a native binding getter.
+The frozen receipts are under `macro-thread-followup-before`. Two independent
+immutable8a CLI commands return0 but disagree with fresh pinned Clojure controls
+on metadata-map identity after root clearing and on a thread-selected macro
+transformer. Their actual outputs remain under `metadata-identity-primary` and
+`thread-macro-binding-before`.
+
+The follow-up guards native getter classification, caches cleared Var metadata,
+and prepares a thread-selected transformer through the existing analyzer/emitter
+while invoking it in its actual caller Store. Macro service steps release their
+Store before caller execution; a scoped operation owner keeps catalogs exclusive
+and permits same-thread reentry. Selected functions are read at each expansion,
+without inheriting the old function's unused-form/environment proofs. Nine fresh
+primary controls retain actual captures/effects, form/environment, recursive
+evaluation, changing bindings, existing function/Var identity and failed prefix
+effects. Pure component capability and original oracle/baseline policies remain.
+
+The current Rust check returns0 (24.39 seconds). New native focused, service
+ownership/cancellation, bootstrap/native/full workspace, independent review and
+final-head CI results must be recorded separately before any new pass claim.
+
+### Root macro status and duplicate source keys
+
+An independent immutable-binary review found two actual primary/native
+counterexamples: a redefined macro Var expanded its old catalog transformer,
+and duplicate with-redefs source keys ran a suppressed initializer. Fresh pinned
+Clojure 1.12.6 records thirteen controls under
+`results/m12-eval/macro-root-and-duplicate-primary` (actual exit 0).
+Root binding clears macro status during replacement and after restoration.
+Identical source symbols suppress the earlier initializer before analysis;
+distinct source spellings resolving to one Var evaluate both initializers and
+then throw before root replacement. Ordinary binding retains both effects.
+
+The follow-up adds a macro bit on actual binding cells, private compiled-core
+access through their real getters, and source-key handling in the existing
+bounded analyzer. Public Var metadata and native macro synchronization read that
+root status. No public marker values or foreign Store references are introduced.
+`cargo check -p suss-compile --locked` returns 0 (31.88 seconds). The earlier
+133b full-workspace and CI receipts remain historical: changed production code
+requires fresh focused, native, bootstrap and exact workspace execution before
+it can support a new validation claim. Existing primary/baseline policies and
+negative review receipts are preserved.
+
+## Exact workspace and CI evidence (2026-11-25)
+
+At recorded code head `133b7024762d5006d4c784416e66ecef5a73f6b8`, run
+`cargo test --workspace --locked -- --test-threads=2`: actual Cargo exit 0
+in 10,420.338 seconds, with all 8,439 recorded inputs and HEAD unchanged throughout.
+The complete run records 377 successful test groups, 2,566 passed tests and 15
+existing ignored tests. The compiler-expression target has 305 passes and 10
+existing prototype-harness ignores; manual baseline/catalog generators and the
+selected random guard retain their existing ignore policy. The optimized random
+guard separately passes when explicitly selected by the conserved broader run.
+No source/test/oracle is changed to obtain these outcomes.
+
+All 48 public-eval tests, complete 22-test Clojure suite (including its actual
+native comparison against the reviewed baseline), original 5-test some-fn target
+with 372 controls and 47 actual AOT components, and complete 22/11 portable/module
+targets pass within that run. The raw 397-case corpus, 142 existing corrections,
+two additional qualified primary controls and every original module order,
+partial-effect, retry and publication assertion remain. The recorded complete
+native comparison keeps existing unrelated failures and guest judgments explicit;
+it does not establish whole-language conformance.
+
+All ten required checks in CI 45586341822 pass on that same code head: foundation,
+eight integration partitions and the final aggregate check. The failed C9 CI
+logs and deliberately interrupted C9 workspace 101 remain preserved separately.
+Original primary, baseline, comparator and count/skip/opaque rules are unchanged.
+
+Receipts/logs are in results/m12-eval/full-workspace-after-portable-reference-alignment,
+portable-reference-workspace-gates and final-ci-133b. Run
+`python3 results/m12-eval/verify-133b-workspace-checkpoint.py` to verify the actual
+terminals and conserve every executed code/test/fixture input across publication
+of these prose/evidence files. Later code changes require fresh relevant checks;
+independent review and passing final-head CI remain separate requirements.
+
 ## Portable references and module observers (2026-11-25)
 
 C9 CI run45577012191
