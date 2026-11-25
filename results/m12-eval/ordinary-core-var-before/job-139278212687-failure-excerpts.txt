@@ -1,0 +1,153 @@
+2026-11-25T14:35:31.4142740Z ---- ordinary_source_core_keeps_generic_chunks_without_native_layout_access stdout ----
+2026-11-25T14:35:31.4143103Z
+2026-11-25T14:35:31.4143604Z thread 'ordinary_source_core_keeps_generic_chunks_without_native_layout_access' (4180) panicked at crates/suss-cli/tests/clojure_chunk_effects.rs:250:82:
+2026-11-25T14:35:31.4144620Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:35:31.4145318Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:35:31.4145631Z
+2026-11-25T14:35:31.4145635Z
+2026-11-25T14:35:31.4145733Z failures:
+2026-11-25T14:35:31.4146297Z     ordinary_source_core_keeps_generic_chunks_without_native_layout_access
+2026-11-25T14:35:31.4146297Z     ordinary_source_core_keeps_generic_chunks_without_native_layout_access
+2026-11-25T14:35:31.4146597Z
+2026-11-25T14:35:31.4146877Z test result: FAILED. 14 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.76s
+2026-11-25T14:35:31.4147246Z
+2026-11-25T14:35:31.4787519Z error: test failed, to rerun pass `-p suss-cli --test clojure_chunk_effects`
+2026-11-25T14:35:31.4789002Z      Running tests/clojure_equality_bitwise.rs (target/debug/build/suss-cli/d5bad9e3b5ddec45/out/clojure_equality_bitwise-d5bad9e3b5ddec45)
+2026-11-25T14:35:31.4806100Z
+2026-11-25T14:35:31.4806285Z running 7 tests
+2026-11-25T14:35:34.0796926Z test bit_operations_are_64_bit_and_take_longs ... ok
+2026-11-25T14:39:15.1649512Z ---- compiled_argument_lists_preserve_quoted_data_and_actual_file_positions stdout ----
+2026-11-25T14:39:15.1649875Z
+2026-11-25T14:39:15.1650424Z thread 'compiled_argument_lists_preserve_quoted_data_and_actual_file_positions' (4520) panicked at crates/suss-cli/tests/compiled_macro_declaration_functions.rs:129:14:
+2026-11-25T14:39:15.1651510Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:39:15.1652492Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:39:15.1652824Z
+2026-11-25T14:39:15.1652829Z
+2026-11-25T14:39:15.1653008Z failures:
+2026-11-25T14:39:15.1653501Z     compiled_argument_lists_preserve_quoted_data_and_actual_file_positions
+2026-11-25T14:39:15.1653501Z     compiled_argument_lists_preserve_quoted_data_and_actual_file_positions
+2026-11-25T14:39:15.1653955Z
+2026-11-25T14:39:15.1654356Z test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.10s
+2026-11-25T14:39:15.1654919Z
+2026-11-25T14:39:15.2211935Z error: test failed, to rerun pass `-p suss-cli --test compiled_macro_declaration_functions`
+2026-11-25T14:39:15.2213162Z      Running tests/compiled_macro_global_reference_asts.rs (target/debug/build/suss-cli/b4ee3d5bfa9f51ac/out/compiled_macro_global_reference_asts-b4ee3d5bfa9f51ac)
+2026-11-25T14:39:15.2230847Z
+2026-11-25T14:39:15.2231380Z running 2 tests
+2026-11-25T14:39:21.7748477Z test resolved_info_copies_identity_fields_and_shares_captured_nested_metadata ... ok
+2026-11-25T14:40:41.4062147Z ---- sorted_protocol_aliases_retained_values_reload_and_method_arities stdout ----
+2026-11-25T14:40:41.4062853Z
+2026-11-25T14:40:41.4063856Z thread 'sorted_protocol_aliases_retained_values_reload_and_method_arities' (4627) panicked at crates/suss-cli/tests/core_sorted_interfaces.rs:103:24:
+2026-11-25T14:40:41.4066135Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:41.4067695Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:40:41.4068377Z
+2026-11-25T14:40:41.4069158Z ---- sorted_protocol_shared_nominal_observations_match_both_phases_after_gc stdout ----
+2026-11-25T14:40:41.4069883Z
+2026-11-25T14:40:41.4070788Z thread 'sorted_protocol_shared_nominal_observations_match_both_phases_after_gc' (4628) panicked at crates/suss-cli/tests/core_sorted_interfaces.rs:103:24:
+2026-11-25T14:40:41.4069158Z ---- sorted_protocol_shared_nominal_observations_match_both_phases_after_gc stdout ----
+2026-11-25T14:40:41.4069883Z
+2026-11-25T14:40:41.4070788Z thread 'sorted_protocol_shared_nominal_observations_match_both_phases_after_gc' (4628) panicked at crates/suss-cli/tests/core_sorted_interfaces.rs:103:24:
+2026-11-25T14:40:41.4072393Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:41.4073134Z
+2026-11-25T14:40:41.4073139Z
+2026-11-25T14:40:41.4073262Z failures:
+2026-11-25T14:40:41.4098964Z     sorted_protocol_aliases_retained_values_reload_and_method_arities
+2026-11-25T14:40:41.4099775Z     sorted_protocol_shared_nominal_observations_match_both_phases_after_gc
+2026-11-25T14:40:41.4099775Z     sorted_protocol_shared_nominal_observations_match_both_phases_after_gc
+2026-11-25T14:40:41.4100133Z
+2026-11-25T14:40:41.4100427Z test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+2026-11-25T14:40:41.4100813Z
+2026-11-25T14:40:41.4169192Z error: test failed, to rerun pass `-p suss-cli --test core_sorted_interfaces`
+2026-11-25T14:40:41.4170627Z      Running tests/namespace_session.rs (target/debug/build/suss-cli/bc3fefb0dd028a01/out/namespace_session-bc3fefb0dd028a01)
+2026-11-25T14:40:41.4187201Z
+2026-11-25T14:40:41.4187386Z running 5 tests
+2026-11-25T14:40:41.4718025Z test namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependencies_provided ... ok
+2026-11-25T14:40:49.9086505Z ---- bitwise_hash_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T14:40:49.9087278Z
+2026-11-25T14:40:49.9088319Z thread 'bitwise_hash_match_independently_decoded_primary_observations_after_gc' (4706) panicked at crates/suss-cli/tests/portable_bitwise_hash.rs:105:10:
+2026-11-25T14:40:49.9090423Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:49.9092049Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:40:49.9092711Z
+2026-11-25T14:40:49.9092717Z
+2026-11-25T14:40:49.9092896Z failures:
+2026-11-25T14:40:49.9093559Z     bitwise_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T14:40:49.9093559Z     bitwise_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T14:40:49.9094213Z
+2026-11-25T14:40:49.9094776Z test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+2026-11-25T14:40:49.9095521Z
+2026-11-25T14:40:49.9193692Z error: test failed, to rerun pass `-p suss-cli --test portable_bitwise_hash`
+2026-11-25T14:40:49.9194768Z      Running tests/portable_let_star.rs (target/debug/build/suss-cli/5d79281f982a8c6a/out/portable_let_star-5d79281f982a8c6a)
+2026-11-25T14:40:49.9212449Z
+2026-11-25T14:40:49.9212621Z running 1 test
+2026-11-25T14:40:54.6253970Z test primitive_let_star_executes_directly_and_from_compiled_macros_in_both_phases ... ok
+2026-11-25T14:40:56.2210523Z ---- murmur_hash_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T14:40:56.2210902Z
+2026-11-25T14:40:56.2211413Z thread 'murmur_hash_match_independently_decoded_primary_observations_after_gc' (4717) panicked at crates/suss-cli/tests/portable_murmur_hash.rs:50:10:
+2026-11-25T14:40:56.2212458Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:56.2217022Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:40:56.2217752Z
+2026-11-25T14:40:56.2218276Z ---- retained_murmur_functions_observe_live_globals_and_old_values_survive_gc stdout ----
+2026-11-25T14:40:56.2218896Z
+2026-11-25T14:40:56.2219544Z thread 'retained_murmur_functions_observe_live_globals_and_old_values_survive_gc' (4718) panicked at crates/suss-cli/tests/portable_murmur_hash.rs:226:10:
+2026-11-25T14:40:56.2218276Z ---- retained_murmur_functions_observe_live_globals_and_old_values_survive_gc stdout ----
+2026-11-25T14:40:56.2218896Z
+2026-11-25T14:40:56.2219544Z thread 'retained_murmur_functions_observe_live_globals_and_old_values_survive_gc' (4718) panicked at crates/suss-cli/tests/portable_murmur_hash.rs:226:10:
+2026-11-25T14:40:56.2220508Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:56.2221003Z
+2026-11-25T14:40:56.2221006Z
+2026-11-25T14:40:56.2221094Z failures:
+2026-11-25T14:40:56.2221598Z     murmur_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T14:40:56.2222120Z     retained_murmur_functions_observe_live_globals_and_old_values_survive_gc
+2026-11-25T14:40:56.2222120Z     retained_murmur_functions_observe_live_globals_and_old_values_survive_gc
+2026-11-25T14:40:56.2222421Z
+2026-11-25T14:40:56.2222686Z test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+2026-11-25T14:40:56.2223055Z
+2026-11-25T14:40:56.2437218Z error: test failed, to rerun pass `-p suss-cli --test portable_murmur_hash`
+2026-11-25T14:40:56.2438814Z      Running tests/portable_numeric_hash.rs (target/debug/build/suss-cli/b190c61058d30ec8/out/portable_numeric_hash-b190c61058d30ec8)
+2026-11-25T14:40:56.2457062Z
+2026-11-25T14:40:56.2457449Z running 3 tests
+2026-11-25T14:40:56.8553601Z test numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc ... FAILED
+2026-11-25T14:40:57.1441153Z ---- numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc stdout ----
+2026-11-25T14:40:57.1441513Z
+2026-11-25T14:40:57.1441999Z thread 'numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc' (4728) panicked at crates/suss-cli/tests/portable_numeric_hash.rs:139:10:
+2026-11-25T14:40:57.1442952Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:57.1443645Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T14:40:57.1443967Z
+2026-11-25T14:40:57.1444200Z ---- numeric_hash_aliases_and_private_adapters_validate_in_both_phases stdout ----
+2026-11-25T14:40:57.1444530Z
+2026-11-25T14:40:57.1444997Z thread 'numeric_hash_aliases_and_private_adapters_validate_in_both_phases' (4727) panicked at crates/suss-cli/tests/portable_numeric_hash.rs:180:10:
+2026-11-25T14:40:57.1444200Z ---- numeric_hash_aliases_and_private_adapters_validate_in_both_phases stdout ----
+2026-11-25T14:40:57.1444530Z
+2026-11-25T14:40:57.1444997Z thread 'numeric_hash_aliases_and_private_adapters_validate_in_both_phases' (4727) panicked at crates/suss-cli/tests/portable_numeric_hash.rs:180:10:
+2026-11-25T14:40:57.1446224Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:57.1446728Z
+2026-11-25T14:40:57.1446991Z ---- numeric_hash_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T14:40:57.1447356Z
+2026-11-25T14:40:57.1447830Z thread 'numeric_hash_match_independently_decoded_primary_observations_after_gc' (4729) panicked at crates/suss-cli/tests/portable_numeric_hash.rs:37:10:
+2026-11-25T14:40:57.1448810Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:57.1446991Z ---- numeric_hash_match_independently_decoded_primary_observations_after_gc stdout ----
+2026-11-25T14:40:57.1447356Z
+2026-11-25T14:40:57.1447830Z thread 'numeric_hash_match_independently_decoded_primary_observations_after_gc' (4729) panicked at crates/suss-cli/tests/portable_numeric_hash.rs:37:10:
+2026-11-25T14:40:57.1448810Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T14:40:57.1449417Z
+2026-11-25T14:40:57.1449421Z
+2026-11-25T14:40:57.1449512Z failures:
+2026-11-25T14:40:57.1449809Z     numeric_hash_aliases_and_private_adapters_validate_in_both_phases
+2026-11-25T14:40:57.1450284Z     numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc
+2026-11-25T14:40:57.1450765Z     numeric_hash_match_independently_decoded_primary_observations_after_gc
+2026-11-25T14:40:57.1451060Z
+2026-11-25T14:40:57.1451324Z test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+2026-11-25T14:40:57.1452020Z
+2026-11-25T14:40:57.1532208Z error: test failed, to rerun pass `-p suss-cli --test portable_numeric_hash`
+2026-11-25T14:40:57.1533471Z      Running tests/portable_queues.rs (target/debug/build/suss-cli/ed71f3436b680cf7/out/portable_queues-ed71f3436b680cf7)
+2026-11-25T14:40:57.1551019Z
+2026-11-25T14:40:57.1551307Z running 3 tests
+2026-11-25T14:40:59.6913563Z test queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract ... ok
+2026-11-25T14:50:14.5768496Z                              output=stdout, stderr=stderr)
+2026-11-25T14:50:14.5776006Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'apply_fixed_arity', '--test', 'captured_fn_calls', '--test', 'clojure_chunk_effects', '--test', 'clojure_equality_bitwise', '--test', 'clojure_nonescaping_map_entries', '--test', 'clojure_random', '--test', 'clojure_unchecked_ratios', '--test', 'compiled_aot_async_command', '--test', 'compiled_async_library', '--test', 'compiled_equiv_hash_fast', '--test', 'compiled_macro_collection_source_asts', '--test', 'compiled_macro_declaration_functions', '--test', 'compiled_macro_global_reference_asts', '--test', 'compiled_macro_large_form_transport', '--test', 'compiled_macro_reload', '--test', 'compiled_macro_source_tags', '--test', 'compiled_packed_hints', '--test', 'compiled_record_factories', '--test', 'compiled_vector_nth', '--test', 'core_sorted_interfaces', '--test', 'generated_async_export_boundary', '--test', 'namespace_session', '--test', 'persistent_session', '--test', 'portable_array_bulk_copy', '--test', 'portable_bitwise_hash', '--test', 'portable_closures', '--test', 'portable_constructor_source_analysis', '--test', 'portable_dispatch', '--test', 'portable_expression_conformance', '--test', 'portable_if_let', '--test', 'portable_let_star', '--test', 'portable_murmur_hash', '--test', 'portable_numeric_hash', '--test', 'portable_queues', '--test', 'portable_record_helpers', '--test', 'portable_repeat_coercion', '--test', 'portable_sorted_tree_collections', '--test', 'portable_structured_control', '--test', 'portable_value_decoder', '--test', 'public_compiled_pipeline', '--test', 'reduce_paths', '--test', 'runtime_async_scheduler', '--test', 'session_interrupt', '--test', 'session_live_heap_suspended_tasks', '--test', 'transient_vector_append', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-11-25T14:50:14.5936266Z ##[error]Process completed with exit code 1.
+2026-11-25T14:50:14.6026227Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T14:50:14.6027001Z find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T14:50:14.6131634Z shell: /usr/bin/bash -e {0}
+2026-11-25T14:50:14.6131923Z env:
+2026-11-25T14:50:14.6132136Z   CARGO_BUILD_JOBS: 2
+2026-11-25T14:50:14.6132407Z   CARGO_HOME: /home/runner/.cargo

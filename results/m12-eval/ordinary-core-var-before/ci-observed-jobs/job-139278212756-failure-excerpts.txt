@@ -1,0 +1,108 @@
+2026-11-25T15:04:09.4073423Z ---- function_literal_metadata_evaluates_lexical_values_and_keeps_callable_body stdout ----
+2026-11-25T15:04:09.4073722Z
+2026-11-25T15:04:09.4074156Z thread 'function_literal_metadata_evaluates_lexical_values_and_keeps_callable_body' (4470) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4074960Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4075523Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:04:09.4075754Z
+2026-11-25T15:04:09.4075939Z ---- ordinary_callable_wrong_arity_runs_operands_once_and_recovers stdout ----
+2026-11-25T15:04:09.4076188Z
+2026-11-25T15:04:09.4076538Z thread 'ordinary_callable_wrong_arity_runs_operands_once_and_recovers' (4471) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4075939Z ---- ordinary_callable_wrong_arity_runs_operands_once_and_recovers stdout ----
+2026-11-25T15:04:09.4076188Z
+2026-11-25T15:04:09.4076538Z thread 'ordinary_callable_wrong_arity_runs_operands_once_and_recovers' (4471) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4077243Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4077606Z
+2026-11-25T15:04:09.4077756Z ---- ordinary_collection_calls_use_canonical_ifn_methods stdout ----
+2026-11-25T15:04:09.4077979Z
+2026-11-25T15:04:09.4078290Z thread 'ordinary_collection_calls_use_canonical_ifn_methods' (4472) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4078944Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4077756Z ---- ordinary_collection_calls_use_canonical_ifn_methods stdout ----
+2026-11-25T15:04:09.4077979Z
+2026-11-25T15:04:09.4078290Z thread 'ordinary_collection_calls_use_canonical_ifn_methods' (4472) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4078944Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4079297Z
+2026-11-25T15:04:09.4079504Z ---- ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc stdout ----
+2026-11-25T15:04:09.4079773Z
+2026-11-25T15:04:09.4080735Z thread 'ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc' (4473) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4081508Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4079504Z ---- ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc stdout ----
+2026-11-25T15:04:09.4079773Z
+2026-11-25T15:04:09.4080735Z thread 'ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc' (4473) panicked at crates/suss-cli/tests/portable_callable_metadata.rs:49:10:
+2026-11-25T15:04:09.4081508Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:09.4081876Z
+2026-11-25T15:04:09.4081879Z
+2026-11-25T15:04:09.4081953Z failures:
+2026-11-25T15:04:09.4082229Z     function_literal_metadata_evaluates_lexical_values_and_keeps_callable_body
+2026-11-25T15:04:09.4082612Z     ordinary_callable_wrong_arity_runs_operands_once_and_recovers
+2026-11-25T15:04:09.4083429Z     ordinary_metafn_calls_preserve_captured_functions_and_metadata_after_gc
+2026-11-25T15:04:09.4083665Z
+2026-11-25T15:04:09.4083866Z test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.76s
+2026-11-25T15:04:09.4084136Z
+2026-11-25T15:04:09.4175449Z error: test failed, to rerun pass `-p suss-cli --test portable_callable_metadata`
+2026-11-25T15:04:09.4176219Z      Running tests/portable_empty.rs (target/debug/build/suss-cli/a49091f15f60a963/out/portable_empty-a49091f15f60a963)
+2026-11-25T15:04:09.4193228Z
+2026-11-25T15:04:09.4193373Z running 3 tests
+2026-11-25T15:04:11.5622239Z test empty_retains_direct_and_native_fallback_and_live_dispatch ... ok
+2026-11-25T15:04:15.5379890Z ---- indexing_contract_match_independently_encoded_primary_observations stdout ----
+2026-11-25T15:04:15.5380158Z
+2026-11-25T15:04:15.5380681Z thread 'indexing_contract_match_independently_encoded_primary_observations' (4491) panicked at crates/suss-cli/tests/portable_indexing.rs:68:10:
+2026-11-25T15:04:15.5381461Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:15.5382016Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:04:15.5382256Z
+2026-11-25T15:04:15.5382423Z ---- indexing_errors_preserve_messages_effects_and_gc_recovery stdout ----
+2026-11-25T15:04:15.5383091Z
+2026-11-25T15:04:15.5383420Z thread 'indexing_errors_preserve_messages_effects_and_gc_recovery' (4492) panicked at crates/suss-cli/tests/portable_indexing.rs:96:10:
+2026-11-25T15:04:15.5382423Z ---- indexing_errors_preserve_messages_effects_and_gc_recovery stdout ----
+2026-11-25T15:04:15.5383091Z
+2026-11-25T15:04:15.5383420Z thread 'indexing_errors_preserve_messages_effects_and_gc_recovery' (4492) panicked at crates/suss-cli/tests/portable_indexing.rs:96:10:
+2026-11-25T15:04:15.5384073Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:15.5384425Z
+2026-11-25T15:04:15.5384619Z ---- indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases stdout ----
+2026-11-25T15:04:15.5384884Z
+2026-11-25T15:04:15.5385219Z thread 'indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases' (4493) panicked at crates/suss-cli/tests/portable_indexing.rs:190:10:
+2026-11-25T15:04:15.5386079Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:15.5384619Z ---- indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases stdout ----
+2026-11-25T15:04:15.5384884Z
+2026-11-25T15:04:15.5385219Z thread 'indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases' (4493) panicked at crates/suss-cli/tests/portable_indexing.rs:190:10:
+2026-11-25T15:04:15.5386079Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:15.5386430Z
+2026-11-25T15:04:15.5386433Z
+2026-11-25T15:04:15.5386506Z failures:
+2026-11-25T15:04:15.5386776Z     indexing_contract_match_independently_encoded_primary_observations
+2026-11-25T15:04:15.5387132Z     indexing_errors_preserve_messages_effects_and_gc_recovery
+2026-11-25T15:04:15.5387475Z     indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases
+2026-11-25T15:04:15.5387706Z
+2026-11-25T15:04:15.5387917Z test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+2026-11-25T15:04:15.5388193Z
+2026-11-25T15:04:15.5485049Z error: test failed, to rerun pass `-p suss-cli --test portable_indexing`
+2026-11-25T15:04:15.5486300Z      Running tests/portable_map_mutation_helpers.rs (target/debug/build/suss-cli/68036de8fe4a4fb0/out/portable_map_mutation_helpers-68036de8fe4a4fb0)
+2026-11-25T15:04:15.5502605Z
+2026-11-25T15:04:15.5502735Z running 5 tests
+2026-11-25T15:04:17.5244286Z test retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_returns_receiver ... ok
+2026-11-25T15:04:29.2161480Z ---- seqable_predicate_covers_portable_values_in_both_phases_after_gc stdout ----
+2026-11-25T15:04:29.2161892Z
+2026-11-25T15:04:29.2162460Z thread 'seqable_predicate_covers_portable_values_in_both_phases_after_gc' (4537) panicked at crates/suss-cli/tests/portable_seqable.rs:29:14:
+2026-11-25T15:04:29.2163389Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 172966..173008, message: "Var macro flags require compiled core" })
+2026-11-25T15:04:29.2163922Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+2026-11-25T15:04:29.2164165Z
+2026-11-25T15:04:29.2164169Z
+2026-11-25T15:04:29.2164246Z failures:
+2026-11-25T15:04:29.2164487Z     seqable_predicate_covers_portable_values_in_both_phases_after_gc
+2026-11-25T15:04:29.2164487Z     seqable_predicate_covers_portable_values_in_both_phases_after_gc
+2026-11-25T15:04:29.2164703Z
+2026-11-25T15:04:29.2164911Z test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+2026-11-25T15:04:29.2165202Z
+2026-11-25T15:04:29.2236789Z error: test failed, to rerun pass `-p suss-cli --test portable_seqable`
+2026-11-25T15:04:29.2255871Z      Running tests/portable_take_nth.rs (target/debug/build/suss-cli/e61d1cc88da9282f/out/portable_take_nth-e61d1cc88da9282f)
+2026-11-25T15:04:29.2256510Z
+2026-11-25T15:04:29.2256614Z running 1 test
+2026-11-25T15:04:31.1661856Z test take_nth_preserves_lazy_and_transducer_arities ... ok
+2026-11-25T15:13:31.3371176Z                              output=stdout, stderr=stderr)
+2026-11-25T15:13:31.3375336Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'build_cache', '--test', 'clojure_biginteger_carrier', '--test', 'clojure_decimal_arithmetic', '--test', 'clojure_letfn', '--test', 'clojure_numeric_captures', '--test', 'clojure_raw_numeric_core', '--test', 'collection_invoke', '--test', 'compiled_aot_direct_linking', '--test', 'compiled_bootstrap', '--test', 'compiled_keyword_literals', '--test', 'compiled_macro_constructor_source_asts', '--test', 'compiled_macro_field_records', '--test', 'compiled_macro_hash_maps', '--test', 'compiled_macro_maps', '--test', 'compiled_macro_set_oracle', '--test', 'compiled_module_cache', '--test', 'compiled_printing', '--test', 'compiled_record_type_boundary', '--test', 'conformance', '--test', 'dispatch_paths', '--test', 'generated_async_import_order', '--test', 'native_repl_async_pty', '--test', 'portable_aot_lists', '--test', 'portable_async_analysis', '--test', 'portable_callable_metadata', '--test', 'portable_collection_source_analysis', '--test', 'portable_control_source_analysis', '--test', 'portable_empty', '--test', 'portable_hash_map_sharing', '--test', 'portable_indexing', '--test', 'portable_map_mutation_helpers', '--test', 'portable_native_objects', '--test', 'portable_packed_aget', '--test', 'portable_ranges', '--test', 'portable_record_sequence_dependencies', '--test', 'portable_seqable', '--test', 'portable_stdlib_discovery', '--test', 'portable_take_nth', '--test', 'printing_chunks', '--test', 'read_string', '--test', 'repl_value_display', '--test', 'runtime_evaluation', '--test', 'session_lifecycle_reset_interruption', '--test', 'shared_runtime', '--test', 'user_named_sites', '--', '--test-threads=2']' returned non-zero exit status 101.
+2026-11-25T15:13:31.6238012Z ##[error]Process completed with exit code 1.
+2026-11-25T15:13:31.6307540Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T15:13:31.6308148Z find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+2026-11-25T15:13:31.6351977Z shell: /usr/bin/bash -e {0}
+2026-11-25T15:13:31.6352229Z env:
+2026-11-25T15:13:31.6352399Z   CARGO_BUILD_JOBS: 2
+2026-11-25T15:13:31.6352598Z   CARGO_HOME: /home/runner/.cargo

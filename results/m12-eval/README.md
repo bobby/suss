@@ -1,3 +1,31 @@
+### Generic source Vars and ordinary macro-function reads
+
+CI on0e7b33fe reports ordinary source-core loads rejected by private Var macro
+adapters. Generic source loading now retains its own Var metadata, evaluating
+adapter operands in order and returning the same getter without reading or
+writing canonical native root flags. A host-extracted getter regression verifies
+that ordinary source entering the core namespace cannot gain that authority;
+canonical field access and other namespaces retain their existing checks.
+
+An independent retained entrypoint test also returns101 before any rejected
+script executes. Actual compiled macro observations identify user/keep in both
+Var spellings: dereferencing the Var calls17, while reading its raw function
+reports unbound. GlobalRead compared flags exactly with bound1, so the new macro
+metadata bit made bound17 appear undefined. The read now masks only that metadata
+bit, preserving every other flag's root/frame behavior. The original before/after
+script expectations remain, with an added before-script assertion. Temporary
+inspection code is archived and removed from the regression source.
+
+The combined working-overlay command returns0 for complete native entrypoints
+(10 tests), six source-core CI targets (33) and all root/privacy controls (15):
+58 actual passes with source, HEAD, overlay and Binaryen unchanged. The earlier
+wrong private-field test setup, actual CI failures, raw-read101 controls and the
+deliberately interrupted0e workspace101 remain explicit under results/m12-eval.
+This diagnostic is not a clean-head full baseline. Fresh source-bound focused,
+all observed CI targets, native/bootstrap/workspace, independent review and
+final published-head CI results must be established separately. Original primary,
+baseline, source programs, count/skip/opaque rules and allowances remain unchanged.
+
 ### Native lexical projection and ordinary operation budgets
 
 The frozen6b435045 root-filter command returns101 with9pass/3fail. The actual

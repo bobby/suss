@@ -193,6 +193,11 @@ fn review_script_compile_failure_preserves_macro_bindings() {
     macros
         .define("(defmacro indirect [] (apply keep [nil nil]))")
         .unwrap();
+    assert_eq!(
+        portable_repl::evaluate_compiled(&mut session, &mut macros, "(indirect)").unwrap(),
+        "17",
+        "ordinary indirect call before a rejected script"
+    );
     assert!(
         portable_repl::evaluate_script_compiled(
             &mut session,

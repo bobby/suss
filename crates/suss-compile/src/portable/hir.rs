@@ -3543,9 +3543,6 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
-            if matches!(symbol.name.as_str(), "binding-getter-macro?" | "binding-getter-macro-set!") && !self.privileged {
-                return Err(fail(form.span.clone(), "Var macro flags require compiled core"));
-            }
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));
@@ -3678,6 +3675,10 @@ impl Analyzer<'_> {
                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";
+                let var_macro = matches!(operation, Nominal::BindingGetterMacro | Nominal::BindingGetterMacroSet);
+                if var_macro && !self.privileged && !ordinary_core {
+                    return Err(fail(form.span.clone(), "Var macro flags require compiled core"));
+                }
                 let transient_vector = matches!(operation, Nominal::TransientVectorTypes | Nominal::TransientVectorAppend);
                 let transient_map = matches!(operation, Nominal::TransientMapTypes | Nominal::TransientMapAssoc | Nominal::TransientMapConj);
                 if transient_map && !self.privileged && !ordinary_core {
@@ -3704,6 +3705,9 @@ impl Analyzer<'_> {
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
+                if var_macro && ordinary_core {
+                    return Ok(self.ordinary_var_macro_adapter(form, operation, operands));
+                }
                 if (chunk || transient_vector || transient_map) && ordinary_core {
                     // Direct source loading keeps user-extensible descriptors.
                     // It cannot register them as canonical or access native

@@ -1,0 +1,9 @@
+{
+  "actual_existing_test_exit": 101,
+  "actual_before_script_control_exit": 101,
+  "actual_reference_facts_exit": 101,
+  "facts": "Both Var spellings identify user/keep; dereferenced Var calls17, raw symbol call throws unbound before any failed script.",
+  "cause": "GlobalRead fast path tests flags exactly CELL_BOUND; newCELL_MACRO makes bound flags17 miss both root and dynamic routes and returnundefined.",
+  "fix": "Mask onlyCELL_MACRO before the existing bound-only fastpath comparison, preserving all other flag handling and original dynamic fallback.",
+  "qualification": "Actual native-only existing-contract regression, separately reproduced after generic-core fix. Retained original expected17/23 values, addedbefore-script assertion, removedtemporaryfactsinstrumentationfromtestsource. Fresh own execution/full/review/finalCI required; no fixture/primary/count/skip/opaque/allowance edits."
+}

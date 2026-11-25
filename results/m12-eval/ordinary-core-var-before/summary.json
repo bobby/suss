@@ -1,0 +1,23 @@
+{
+  "head": "0e7b33fe8999b687d0c47f83d491641737ca3d91",
+  "focused_commands_actual0": 6,
+  "focused_tests": 335,
+  "preworkspace_broader_commands_actual0": 10,
+  "complete_native_actual0": true,
+  "strict_rows": 5564,
+  "actual_workspace_exit": 101,
+  "actual_workspace_seconds": 1384.9378912448883,
+  "workspace_interrupted_for_confirmed_ci_regression": true,
+  "source_head_tools_unchanged": true,
+  "ci_run": 45635072648,
+  "confirmed_ci_failed_job": 139278212687,
+  "confirmed_ci_targets": [
+    "clojure_chunk_effects",
+    "compiled_macro_declaration_functions",
+    "core_sorted_interfaces",
+    "portable_bitwise_hash",
+    "portable_murmur_hash",
+    "portable_numeric_hash"
+  ],
+  "qualification": "CI has real source-admission failures on ordinary core loading. Local full run deliberately interrupted after that confirmation; its actual101 is not a natural character semantic failure or timeout. Positive focused/native/bootstrap receipts remain historical source0e only. New implementation requires fresh own gates/full/review/finalCI; no primary/baseline/count/skip/opaque or allowance change."
+}

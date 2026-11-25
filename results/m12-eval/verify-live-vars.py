@@ -121,6 +121,8 @@ assert sha((p/'expression.sus').read_bytes())==collection['native_source_sha256'
 assert sha((p/'primary.stdout').read_bytes())==collection['stdout_sha256']
 assert (p/'primary.stdout').read_text().strip()=='[true false false false]'
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-cli/tests/clojure_chunk_effects.rs','crates/suss-cli/tests/compiled_macro_declaration_functions.rs','crates/suss-cli/tests/core_sorted_interfaces.rs','crates/suss-cli/tests/portable_bitwise_hash.rs','crates/suss-cli/tests/portable_murmur_hash.rs','crates/suss-cli/tests/portable_numeric_hash.rs']
+paths += ['crates/suss-cli/tests/compiled_native_entrypoints.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

@@ -1,0 +1,25 @@
+{
+  "head": "0e7b33fe8999b687d0c47f83d491641737ca3d91",
+  "at": 1795618652.6215506,
+  "reason": "Deliberately stop redundant local baseline after confirmed same-head CI integration3 failures in six ordinary-source-core targets. Not an observation timeout or inferred failure. Do not treat this full run as a successful baseline or as a natural character semantic failure. Source/HEAD remain frozen until actual Cargo/recorder/broader terminals.",
+  "confirmed_ci_run": 45635072648,
+  "confirmed_ci_job": 139278212687,
+  "confirmed_failure_log": {
+    "name": "integration (3)",
+    "conclusion": "failure",
+    "raw_gzip": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pr516-ci-0e/job-139278212687.log.gz",
+    "excerpts": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pr516-ci-0e/job-139278212687-failure-excerpts.txt"
+  },
+  "signal": "SIGINT",
+  "owned_test_subtree": [
+    {
+      "pid": 2239865,
+      "command": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_char-ec70a862dff29b7b --test-threads=2 "
+    }
+  ],
+  "cargo_pid": 2195200,
+  "recorder_pid": 2195166,
+  "actual_full_exit": 101,
+  "actual_full_seconds": 1384.9378912448883,
+  "source_head_unchanged": true
+}

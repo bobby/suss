@@ -1693,3 +1693,61 @@ fn actual_macro_eval_preserves_root_expanded_function_and_collection_identity() 
         assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
     }
 }
+
+
+#[test]
+fn root_macro_flags_stay_private_when_ordinary_source_enters_core() {
+    fn expect(session: &mut Session, source: &str, wanted: &str) {
+        let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(session, 30_000).unwrap();
+        let forms = suss_reader::forms::read_forms(wanted).unwrap();
+        assert_eq!(canonical(decoder.decode_session(session, &value).unwrap()),
+            canonical(expected(&forms[0])), "{source}");
+    }
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(eval '(defmacro source-core-flag-macro [] 1))").unwrap();
+        for source in [
+            "(suss.bootstrap/binding-getter-macro? nil)",
+            "(suss.bootstrap/binding-getter-macro-set! nil true)",
+        ] {
+            let error = session.eval(source).unwrap_err();
+            assert!(error.to_string().contains("Var macro flags require compiled core"), "{error}");
+        }
+        session.eval("(def source-core-flag-var (var source-core-flag-macro))").unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        // The host may extract a canonical getter to exercise this boundary;
+        // entering the core namespace alone cannot read built-in fields.
+        expect(&mut session,
+            "(try (.-val user/source-core-flag-var) (catch :default e (ex-message e)))",
+            "\"Built-in type internals are private to suss.core\"");
+        session.eval_privileged("(def source-core-native-getter (.-val user/source-core-flag-var))").unwrap();
+        expect(&mut session, r#"
+          (let [trace (atom []) getter source-core-native-getter]
+            [(suss.bootstrap/binding-getter-macro?
+               (do (swap! trace conj :read) getter))
+             (identical? getter
+               (suss.bootstrap/binding-getter-macro-set!
+                 (do (swap! trace conj :getter) getter)
+                 (do (swap! trace conj :flag) false)))
+             @trace (.isMacro (var user/source-core-flag-macro))
+             (eval '(user/source-core-flag-macro))])"#,
+            "[true true [:read :getter :flag] true 1]");
+        for source in [
+            "(suss.bootstrap/binding-getter-macro?)",
+            "(suss.bootstrap/binding-getter-macro-set! nil)",
+        ] {
+            let error = session.eval(source).unwrap_err();
+            assert!(error.to_string().contains("Invalid private native object adapter arity"), "{error}");
+        }
+        expect(&mut session,
+            "(with-redefs [user/source-core-flag-macro (fn [] 42)] (eval '(user/source-core-flag-macro)))",
+            "42");
+        expect(&mut session, r#"
+          (let [getter source-core-native-getter]
+            [(identical? getter (suss.bootstrap/binding-getter-macro-set! getter true))
+             (.isMacro (var user/source-core-flag-macro))])"#,
+            "[true false]");
+        session.enter_namespace("user").unwrap();
+    }
+}

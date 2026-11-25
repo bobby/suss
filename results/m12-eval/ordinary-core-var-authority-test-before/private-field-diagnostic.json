@@ -1,0 +1,35 @@
+{
+  "head": "0e7b33fe8999b687d0c47f83d491641737ca3d91",
+  "source_overlay_sha256": "0863cbc66e0840d50daa78eb8d90a0d41de728e60fb1c2eebcfd3e4c460006b7",
+  "source_overlay_unchanged": true,
+  "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+  "binary_sha256": "cbf9846c3f9eff867b5add3ba0e9cbab941b88fba12283fd226c6d801105e57c",
+  "binary_unchanged": true,
+  "rows": [
+    {
+      "name": "getter-field",
+      "source": "(do (eval '(defmacro private-probe [] 1)) (eval '(try (nil? (.-val (var user/private-probe))) (catch :default e [(ex-message e) (ex-data e)]))))",
+      "exit_code": 0,
+      "seconds": 28.34615468978882,
+      "stdout": "[\"Built-in type internals are private to suss.core\" nil]\n",
+      "stderr": ""
+    },
+    {
+      "name": "macro-method",
+      "source": "(do (eval '(defmacro private-probe [] 1)) (eval '(try (.isMacro (var user/private-probe)) (catch :default e [(ex-message e) (ex-data e)]))))",
+      "exit_code": 0,
+      "seconds": 29.483147144317627,
+      "stdout": "true\n",
+      "stderr": ""
+    },
+    {
+      "name": "source-core",
+      "source": "(do (eval '(defmacro private-probe [] 1)) (eval '(ns suss.core)) (eval '(try (let [getter (.-val (var user/private-probe))] [(suss.bootstrap/binding-getter-macro? getter) (.isMacro (var user/private-probe)) (eval '(user/private-probe))]) (catch :default e [(ex-message e) (ex-data e)]))))",
+      "exit_code": 0,
+      "seconds": 30.14701199531555,
+      "stdout": "[\"Built-in type internals are private to suss.core\" nil]\n",
+      "stderr": ""
+    }
+  ],
+  "qualification": "Bounded current working-overlay Runtime CLI diagnostics; no primary match or whole issue success inferred. CLI was built by recorded working-focused Cargo invocation, which reported actual test101."
+}
