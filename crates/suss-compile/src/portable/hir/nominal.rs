@@ -1393,12 +1393,7 @@ impl Analyzer<'_> {
                 self.fresh_binding(declaration, function),
             ));
         }
-        self.environment.protocols.insert(protocol.clone(), methods);
-        if self.privileged {
-            self.environment.core_protocols.insert(protocol.clone());
-        } else {
-            self.environment.core_protocols.remove(protocol);
-        }
+        self.environment.set_protocol(protocol.clone(), methods, self.privileged);
         let bundle = self.nominal(
             form,
             Nominal::Array,

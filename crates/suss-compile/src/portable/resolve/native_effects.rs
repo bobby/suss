@@ -32,6 +32,10 @@ impl Environment {
         meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
     ) -> Result<(), Diagnostic> {
         if before.source_generation == after.source_generation { return Ok(()); }
+        // These effects already executed in the caller, rather than belonging
+        // to the source declarations awaiting a later Runtime input.
+        let publication = self.publication.take();
+        let outcome = (|| {
         set_changes(&mut self.namespaces, &before.namespaces, &after.namespaces, meter)?;
         for (key, scope) in &after.scopes {
             meter(1)?;
@@ -101,5 +105,8 @@ impl Environment {
         // Native execution publishes live cells/declarations, never AOT slots.
         self.source_changed();
         Ok(())
+        })();
+        self.publication = publication;
+        outcome
     }
 }

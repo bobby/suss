@@ -11,6 +11,8 @@ use std::{
 use super::persistent::{PersistentMap, PersistentSet};
 use suss_reader::Symbol;
 mod native_effects;
+mod publication;
+pub(crate) use publication::Publication;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Phase {
@@ -335,6 +337,7 @@ impl Eq for MacroOwner {}
 /// Configuration is checked before mutation. Source analysis borrows it immutably.
 #[derive(Debug, Clone)]
 pub struct Environment {
+    publication: Option<publication::Log>,
     pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
@@ -524,6 +527,7 @@ impl Environment {
     pub fn new(namespace: &str) -> Result<Self, Diagnostic> {
         valid_namespace(namespace)?;
         let mut env = Self {
+            publication: None,
             reader_state: super::syntax_quote::ReaderState::default(),
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
@@ -891,10 +895,12 @@ impl Environment {
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
         self.source_changed();
+        let info = std::sync::Arc::new(info);
+        self.record_publication(|| publication::Change::Definition(global.clone(), info.clone()));
         self.definitions
             .entry((global.phase, global.namespace.clone()))
             .or_default()
-            .insert(global, std::sync::Arc::new(info));
+            .insert(global, info);
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
@@ -916,6 +922,7 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
+        self.record_publication(|| publication::Change::Materialize(global.clone()));
         if self.materialized_bootstrap.insert(global.clone()) {
             self.refresh_identity(&global);
             self.source_changed();
@@ -946,10 +953,12 @@ impl Environment {
         assert_eq!(actual, expected);
     }
     fn bind(&mut self, global: Global, binding: Binding) {
+        self.record_publication(|| publication::Change::Bind(global.clone(), Some(binding.clone())));
         self.bindings.insert(global.clone(), binding);
         self.refresh_identity(&global);
     }
     fn unbind(&mut self, global: &Global) {
+        self.record_publication(|| publication::Change::Bind(global.clone(), None));
         self.bindings.remove(global);
         self.refresh_identity(global);
     }
@@ -1002,6 +1011,7 @@ impl Environment {
         }) {
             return Err(error(format!("Ambiguous namespace alias {namespace}")));
         }
+        self.record_publication(|| publication::Change::Namespace(phase, namespace.into()));
         self.namespaces.insert((phase, namespace.into()));
         Ok(())
     }
@@ -1012,6 +1022,7 @@ impl Environment {
             .entry((phase, namespace.into()))
             .or_insert_with(|| Scope::new(namespace));
         self.current.insert(phase, namespace.into());
+        self.record_publication(|| publication::Change::Enter(phase, namespace.into()));
         self.source_changed();
         Ok(())
     }
@@ -1025,6 +1036,7 @@ impl Environment {
         let namespace = self.current[&phase].clone();
         self.scopes
             .insert((phase, namespace.clone()), Scope::new(&namespace));
+        self.record_publication(|| publication::Change::Reset(phase, namespace.clone()));
         self.source_changed();
         Ok(())
     }
@@ -1289,6 +1301,7 @@ impl Environment {
     }
     /// Records the AOT build's exported functions' numeric parameters (#385).
     pub(crate) fn set_export_param_hints(&mut self, hints: BTreeMap<(String, String), Vec<Option<bool>>>) {
+        self.record_publication(|| publication::Change::ExportHints(hints.clone()));
         self.export_param_hints = hints;
     }
     pub(crate) fn export_param_hints(&self, namespace: &str, name: &str) -> Option<&Vec<Option<bool>>> {
@@ -1296,6 +1309,7 @@ impl Environment {
     }
     /// The number of a keyword cell's per-fragment cache (#387).
     pub(crate) fn keyword_cache(&mut self, cell: &Global) -> usize {
+        self.record_publication(|| publication::Change::Keyword(cell.clone()));
         let next = self.keyword_caches.len();
         *self.keyword_caches.entry(cell.clone()).or_insert(next)
     }
@@ -1316,6 +1330,7 @@ impl Environment {
         let definition = self.direct_link_count;
         let slot = *self.direct_slots.entry(global.clone()).or_insert(definition);
         self.direct_links.insert(global.clone(), (slot, definition));
+        self.record_publication(|| publication::Change::DirectLink(global.clone(), Some((slot, definition))));
         (slot, definition)
     }
     /// A direct-linked var's slot, which `set!` also writes (#360).
@@ -1325,6 +1340,7 @@ impl Environment {
     /// A var that is no longer direct-linkable, such as one redefined to a
     /// non-function, stops linking new calls.
     pub(crate) fn end_direct_link(&mut self, global: &Global) {
+        self.record_publication(|| publication::Change::DirectLink(global.clone(), None));
         self.direct_links.remove(global);
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
@@ -1377,6 +1393,7 @@ impl Environment {
             )));
         }
         aliases.insert(namespace.into(), target.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(namespace.into(), target.into(), macros));
         Ok(())
     }
     /// Native eval takes aliases from the caller's actual Namespace object.
@@ -1384,6 +1401,7 @@ impl Environment {
     /// or qualified. Replacing this snapshot retains every other scope fact.
     pub(crate) fn replace_evaluation_aliases(&mut self, phase: Phase, aliases: BTreeMap<String, String>) {
         if self.scope(phase).aliases != aliases {
+            self.record_scope_publication(phase, || publication::ScopeChange::Aliases(aliases.clone()));
             self.scope_mut(phase).aliases = aliases;
         }
     }
@@ -1409,6 +1427,7 @@ impl Environment {
         self.scope_mut(phase)
             .aliases
             .insert(alias.into(), namespace.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(alias.into(), namespace.into(), false));
         Ok(())
     }
     pub fn refer(
@@ -1464,18 +1483,20 @@ impl Environment {
             return Err(error(format!("Ambiguous binding {local}")));
         }
         let scope = self.scope_mut(phase);
-        scope.refers.insert(local.into(), global);
+        scope.refers.insert(local.into(), global.clone());
         if renamed {
             &mut scope.renamed_refers
         } else {
             &mut scope.used_refers
         }
         .insert(local.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Refer(local.into(), global, renamed));
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
         valid_name(name)?;
         self.scope_mut(phase).excluded_core.insert(name.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Exclude(name.into()));
         Ok(())
     }
     pub(crate) fn record_native_macro_source(&mut self, phase: Phase, namespace: &str, name: &str,
@@ -1507,13 +1528,17 @@ impl Environment {
         let revision = self.shared_definition_info(&global).cloned();
         self.native_macro_status.remove(&global);
         self.macro_owners.remove(&global);
+        self.record_publication(|| publication::Change::MacroDeclaration(global.clone(), revision.clone()));
+        self.record_publication(|| publication::Change::MacroOwner(global.clone(), None));
         self.macro_declarations.insert(global, revision);
         self.source_changed();
     }
     pub(crate) fn record_macro_owner(&mut self, phase: Phase, namespace: &str, name: &str, owner: Option<u64>) {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
-        match owner {
-            Some(store) => { self.macro_owners.insert(global, MacroOwner { store, revision: std::sync::Arc::new(()) }); }
+        let value = owner.map(|store| MacroOwner { store, revision: std::sync::Arc::new(()) });
+        self.record_publication(|| publication::Change::MacroOwner(global.clone(), value.clone()));
+        match value {
+            Some(value) => { self.macro_owners.insert(global, value); }
             None => { self.macro_owners.remove(&global); }
         }
         self.source_changed();
@@ -1551,6 +1576,7 @@ impl Environment {
             valid_name(name)?;
         }
         let namespace = canonical(namespace);
+        self.record_publication(|| publication::Change::MacroExports(phase, namespace.into(), names.to_vec()));
         self.macro_namespaces.insert((phase, namespace.into()));
         self.macro_exports
             .retain(|(p, ns, _)| *p != phase || ns != namespace);
@@ -1588,6 +1614,7 @@ impl Environment {
             return Err(error(format!("Ambiguous macro namespace alias {alias}")));
         }
         scope.macro_aliases.insert(alias.into(), namespace.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(alias.into(), namespace.into(), true));
         Ok(())
     }
     pub fn macro_refer(
@@ -1624,13 +1651,14 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
-        scope.macro_refers.insert(local.into(), target);
+        scope.macro_refers.insert(local.into(), target.clone());
         if renamed {
             &mut scope.renamed_macro_refers
         } else {
             &mut scope.used_macro_refers
         }
         .insert(local.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::MacroRefer(local.into(), target, renamed));
         Ok(())
     }
     pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {

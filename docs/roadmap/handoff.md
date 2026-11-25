@@ -35696,3 +35696,26 @@ guest judgments retained. Source conservation is checked by
 `python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
 controls and limits remain under `results/m12-eval/`. Independent full-scope review
 and final published-head CI are separate requirements.
+
+### Static script publication and executed native definitions
+
+The script-source-publication-metered-working receipt records all six actual
+commands returning0 with source/HEAD/Binaryen conserved. It includes Rust check,
+three repeated focused publication controls, source/script/module/AOT/REPL58,
+public eval74 and host ownership/budget120:252 distinct target executions.
+Run the exact commands from the archived commands.json under
+results/m12-eval/script-source-publication-checkpoint; raw logs and input hashes
+are retained there as deterministic gzip files. Earlier Rust visibility errors
+and pre-metering execution are retained as separate historical receipts.
+
+Scripts now publish each reached form's static declarations onto the actual
+live compiler catalog, preserving definitions created by earlier native eval,
+future explicit source precedence, actual later macro reassertions and linked
+prefix effects before Runtime errors. Static publication contains no Runtime
+values or initializer replay. Pure AOT does not capture native declarations.
+Source identities are reserved before Runtime so private function pools and
+reader identifiers cannot collide with nested eval.
+
+Isolated source function/Var transport, mixed source/native root forwarding,
+full current workspace/bootstrap validation and a fresh independent review
+remain required. These focused passes do not establish issue completion.

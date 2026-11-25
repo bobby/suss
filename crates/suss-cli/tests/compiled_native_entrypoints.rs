@@ -306,3 +306,57 @@ fn native_eval_catalog_keeps_script_declarations_in_the_isolated_source_store() 
         assert_eq!(result, "[42 0]", "{phase:?}");
     }
 }
+
+#[test]
+fn scripts_preserve_executed_native_definitions_and_future_source_precedence() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    let cases = [
+        (include_str!("../../../results/m12-eval/script-native-publication-primary/native-definition-after-later-prepared-input.sus"), "42"),
+        (include_str!("../../../results/m12-eval/script-native-publication-primary/future-explicit-source-definition.sus"), "42"),
+        (include_str!("../../../results/m12-eval/script-native-publication-primary/native-and-future-const-identities.sus"), "[99 42]"),
+    ];
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for (source, expected) in cases {
+            let actual = portable_repl::evaluate_script_compiled(&mut session, &mut macros, source, None).unwrap();
+            assert_eq!(actual, expected, "{phase:?}: {source}");
+            session.collect().unwrap();
+        }
+        assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "[script-native-carried script-native-constant (identical? #'script-native-carried (eval '(var script-native-carried)))]").unwrap(), "[42 99 true]", "{phase:?}");
+    }
+}
+
+#[test]
+fn script_publication_retains_a_later_native_macro_reassertion() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval '(defmacro publication-target [] 1))").unwrap();
+        portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval '(defmacro publication-reassert [] (eval '(defmacro publication-target [] 42)) 0))").unwrap();
+        let source = "(defmacro publication-target [] 17) (def publication-answer [(publication-reassert) (publication-target)]) publication-answer";
+        assert_eq!(portable_repl::evaluate_script_compiled(&mut session, &mut macros, source, None).unwrap(), "[0 42]", "{phase:?}");
+        session.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval '(publication-target))").unwrap(), "42", "{phase:?}");
+    }
+}
+
+#[test]
+fn script_publication_keeps_definitions_before_a_runtime_exception() {
+    use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::{Session, SessionError}};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let error = portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            "(eval '(def script-prefix-saved 21)) (throw (ex-info \"stop\" {})) 0", None).unwrap_err();
+        assert!(matches!(error, SessionError::Language(_)), "{phase:?}: {error:?}");
+        session.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros,
+            "(eval 'script-prefix-saved)").unwrap(), "21", "{phase:?}");
+    }
+}

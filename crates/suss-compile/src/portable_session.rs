@@ -1599,6 +1599,12 @@ impl SessionHost<'_> {
             provided: code.provided.clone(),
         }
     }
+    pub(crate) fn reserve_source_identities(&mut self, prepared: &Environment) {
+        registry_lock(&self.compiler).environment.reserve_prepared_identities(prepared);
+    }
+    pub(crate) fn publish_source_catalog(&mut self, environment: Environment) {
+        registry_lock(&self.compiler).environment = environment;
+    }
     pub fn eval_with_macros(
         &mut self,
         source: &str,

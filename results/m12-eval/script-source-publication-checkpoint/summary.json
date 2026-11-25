@@ -1,0 +1,120 @@
+{
+  "head": "c5de548c58f1f649daf72b09120635cd51b6563c",
+  "actual_terminal": true,
+  "all_six_commands_passed": true,
+  "counts": {
+    "publication-rust-check": 0,
+    "script-publication-boundaries": 2,
+    "script-native-definition-and-future-precedence": 1,
+    "source-script-module-aot-and-repl-guards": 58,
+    "complete-public-eval-controls": 74,
+    "host-library-budget-and-ownership": 120
+  },
+  "distinct_broad_tests": 252,
+  "recorded_input_count": 8941,
+  "all_recorded_inputs_conserved_before_publication": true,
+  "allowed_publication_delta": {
+    "path": "docs/roadmap/handoff.md",
+    "before": "710fef9ba6f2f275fd5d9bd06638a23df35fc82cfc05cd2622fdb84f40430640",
+    "after": "11209f03655fb4b6a950cc265f133194e6d72cb8a550ba26f20ac49eff60ae74"
+  },
+  "evidence": [
+    {
+      "source": "results/m12-eval/script-source-publication-working/commands.json",
+      "sha256": "1b0d515761f0f1e05ec5940f978cc25cce7f2f241ae73595d9c231583bf897ec",
+      "archive": "script-source-publication-working--commands.json.gz",
+      "archive_sha256": "45a6894124bebd59dcb7854696ba54fe9382f04ef78e248b706fc3ef5835f740"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-working/publication-rust-check.log",
+      "sha256": "6e41245287db4b38347b715063bd9237c25d37391f37571cf3181b8534f42f9b",
+      "archive": "script-source-publication-working--publication-rust-check.log.gz",
+      "archive_sha256": "e6d47df5462d9bbda5ea97557bac24a2fc3fe2b18067975ce32977472bf16cd5"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/commands.json",
+      "sha256": "bdedecb10202b96dadf8e0a8261353301031efd4b7e8f2747b610d3c14c67af9",
+      "archive": "script-source-publication-visible-working--commands.json.gz",
+      "archive_sha256": "02002f9f1efaff727a4f548690ae9fd62b4b0164ee0ac039a146581279a7142b"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/complete-public-eval-controls.log",
+      "sha256": "001f4e79fa19d9e9290bb852c8b67de83658e5c777df7c70eca4fa8f9174ea61",
+      "archive": "script-source-publication-visible-working--complete-public-eval-controls.log.gz",
+      "archive_sha256": "0005e7c730dc137dfa0e4412be8d5a74f8d0ef229a876a37265291124f71c01b"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/host-library-budget-and-ownership.log",
+      "sha256": "871ebfa980643a215d80be3856b7b98f5f26ad133ddb6ea6f4d61f0a52310b74",
+      "archive": "script-source-publication-visible-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "6e61302a6974a89ef01d1a0f9b23ae9c2bacc3dfe4790c1a5b1dfb05cbc79c04"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/publication-rust-check.log",
+      "sha256": "1343133726932e35672de5947eca190106020acb389673071f1b434855c9615c",
+      "archive": "script-source-publication-visible-working--publication-rust-check.log.gz",
+      "archive_sha256": "7a250b60f1df9c9ba10af8965618d17d08cb1eace874ee7b6f72e137f2b2b84f"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/script-native-definition-and-future-precedence.log",
+      "sha256": "dd87151999212dde0f6029a75ced9332cb2dab70939a29bbdd0338c43cf8d3fe",
+      "archive": "script-source-publication-visible-working--script-native-definition-and-future-precedence.log.gz",
+      "archive_sha256": "6f8c57d7ab931e791b0ca133d602de01f82ccb02ce62c7ca008581b23f637438"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/script-native-macro-reassertion.log",
+      "sha256": "ee2a37a89b9a75b548df54c8d7892667bcce79ec8ba9b182770e4023ecf58114",
+      "archive": "script-source-publication-visible-working--script-native-macro-reassertion.log.gz",
+      "archive_sha256": "04e9691b38609683f5c2f005d05c022f783ddce0bdb9bdd7d9d76392fe30277a"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-visible-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "d9137e8a22876b34516a096ed2db060d021e640de09bfa3230f8fd31e7af9e8c",
+      "archive": "script-source-publication-visible-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "ff5b1e7dbeb04acc6cbad219370ecc44f252032300f210fdd1043eb869b93eb3"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/commands.json",
+      "sha256": "672d500d445f0361676029da1270a160d5e0379c362c10df364846da5edea5b4",
+      "archive": "script-source-publication-metered-working--commands.json.gz",
+      "archive_sha256": "2d3dcc5a5031cba534dedbac44bcbe3193e11e8f6bfa0dc9309dd60b5af43120"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/complete-public-eval-controls.log",
+      "sha256": "378d3e9dc46cc1ff0a2cf2e92d72618501ecd1e35033fc55161d2f163673dce2",
+      "archive": "script-source-publication-metered-working--complete-public-eval-controls.log.gz",
+      "archive_sha256": "2288a0def08d6180d313dee5459b71da157f2d40210ed62801ba947f2c77eaf3"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/host-library-budget-and-ownership.log",
+      "sha256": "edffb984b1fb6337ac8c1873875b22d4f0b3579e80311b35856a9a8b152add21",
+      "archive": "script-source-publication-metered-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "0d5d5440e1cd9b5ff1cbff78a2a7718a6b8beb9301eebec9b1eac6b65d8345b7"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/publication-rust-check.log",
+      "sha256": "79e9f4738b75f59ef1e4b6ba6033a46be65d98bc2dbe3db0a71c892114c1c36c",
+      "archive": "script-source-publication-metered-working--publication-rust-check.log.gz",
+      "archive_sha256": "dcaf58ff442309df6e3d97832b587b3a9eb8a45507dafae1e0de664bf131434b"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/script-native-definition-and-future-precedence.log",
+      "sha256": "0b0f542549e0e9beb007a1625b065426d3491a6df769d982e434af7e34302451",
+      "archive": "script-source-publication-metered-working--script-native-definition-and-future-precedence.log.gz",
+      "archive_sha256": "0501177555ea1dea61068f32af48f13512e6f3e636ae3de8bd8aee2cfcf7cce2"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/script-publication-boundaries.log",
+      "sha256": "445c9fed334ae45f3b7baaec91e96f3e03a8ca0e3c6f4f5183fe1266531f9d7c",
+      "archive": "script-source-publication-metered-working--script-publication-boundaries.log.gz",
+      "archive_sha256": "ed4ff7894042e78190bdcf1df0e9dcfd386ea3a077e98179cb584ec6f8040c35"
+    },
+    {
+      "source": "results/m12-eval/script-source-publication-metered-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "c02dff37785c618b6479f7bf671235a3faf873b91a339ab8393aa880555a0996",
+      "archive": "script-source-publication-metered-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "d6dc5c827fc356fdb2f058228da049d2ea7aa6c2fe2eceeb09c67d0d8f1f275d"
+    }
+  ],
+  "remaining": "Isolated source Fn/Var transport and mixed native/source roots, current complete validation, independent promotion review and final-head CI. No promotion or merge."
+}

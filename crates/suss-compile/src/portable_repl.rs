@@ -313,10 +313,19 @@ pub fn evaluate_script_compiled(
     runtime.attach_expander(macros);
     let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, path);
-    let (prepared, preparation) = runtime.prepare_source_input(macros, |snapshot, expander| {
-        prepare_script_module(snapshot.clone(), expander, forms, source.len(), &origin)
-            .map(|(prepared, _)| prepared)
+    let ((prepared, completed, catalog), preparation) = runtime.prepare_source_input(macros, |snapshot, expander| {
+        let (prepared, completed) = prepare_script_module(snapshot.clone(), expander, forms, source.len(), &origin)?;
+        let mut namespaces = std::collections::BTreeSet::new();
+        let mut meter = |work| expander.charge_expansion_work(work, 0..source.len());
+        for input in &prepared {
+            if let Some(publication) = input.publication() { namespaces.extend(publication.macro_namespaces(&mut meter).map_err(SessionError::Compile)?); }
+        }
+        let catalog = completed.environment.macro_catalog_publication(&namespaces, &mut meter).map_err(SessionError::Compile)?;
+        catalog.charge(&mut meter).map_err(SessionError::Compile)?;
+        Ok((prepared, completed, catalog))
     })?;
+    runtime.reserve_source_identities(&completed.environment);
+    let mut catalog = Some(catalog);
     let mut preparation = Some(preparation);
     // All runtime compilation succeeds before any input/dependency initializer.
     let mut linked = false;
@@ -327,16 +336,27 @@ pub fn evaluate_script_compiled(
     while let Some(input) = prepared.next() {
         let final_form = prepared.peek().is_none();
         match input {
-            PreparedScript::Macro(value) if final_form => result = value,
-            PreparedScript::Macro(_) => {}
-            PreparedScript::Runtime(input) => {
+            PreparedScript::Macro(value, _) if final_form => result = value,
+            PreparedScript::Macro(_, _) => {}
+            PreparedScript::Runtime(mut input, publication) => {
                 let definition = input.fragment.definition.clone();
-                let value = runtime.eval_prepared_with_link(input, &mut linked, |runtime| {
+                let value = {
+                let _budget = runtime.operation_budget_scope()?;
+                if let Some(publication) = publication {
+                    let mut environment = runtime.compilation_snapshot().environment;
+                    let mut meter = |work| runtime.charge_host_work(work).map_err(|error| crate::portable::Diagnostic { span: 0..source.len(), message: error.to_string() });
+                    if let Some(catalog) = &catalog { catalog.apply_catalog(&mut environment, &mut meter).map_err(SessionError::Compile)?; }
+                    publication.apply_runtime(&mut environment, &mut meter).map_err(SessionError::Compile)?;
+                    input.fragment.environment = environment;
+                }
+                runtime.eval_prepared_with_link(input, &mut linked, |runtime| {
+                    catalog.take();
                     match preparation.take() {
                         Some(preparation) => runtime.finish_source_input(preparation, macros, true),
                         None => Ok(()),
                     }
-                })?;
+                })?
+                };
                 if final_form {
                     result = match result_var(runtime, definition, &value)? {
                         Some(var) => var,
@@ -345,6 +365,12 @@ pub fn evaluate_script_compiled(
                 }
             }
         }
+    }
+    if let Some(catalog) = catalog.take() {
+        let _budget = runtime.operation_budget_scope()?;
+        let mut environment = runtime.compilation_snapshot().environment;
+        catalog.apply_catalog(&mut environment, &mut |work| runtime.charge_host_work(work).map_err(|error| crate::portable::Diagnostic { span: 0..source.len(), message: error.to_string() })).map_err(SessionError::Compile)?;
+        runtime.publish_source_catalog(environment);
     }
     Ok(result)
     })();
@@ -371,8 +397,13 @@ pub(crate) fn read_script_forms(
 /// Shared staged source preparation: compiler facts and compiled macro effects,
 /// with no Runtime execution or Store requirement.
 pub(crate) enum PreparedScript {
-    Runtime(crate::portable::modules::PreparedInput),
-    Macro(String),
+    Runtime(crate::portable::modules::PreparedInput, Option<crate::portable::resolve::Publication>),
+    Macro(String, Option<crate::portable::resolve::Publication>),
+}
+impl PreparedScript {
+    fn publication(&self) -> Option<&crate::portable::resolve::Publication> {
+        match self { Self::Runtime(_, publication) | Self::Macro(_, publication) => publication.as_ref() }
+    }
 }
 /// Return the completed immutable input snapshot for multi-source AOT batches.
 /// The ordinary script entrypoint retains its existing result and transaction.
@@ -431,14 +462,21 @@ fn prepare_script_declarations(
             // Source declarations use the same analyzer/expander path as
             // dependency modules. Their real phase owner enters the snapshot;
             // caller-owned eval declarations remain in their native catalog.
-            let input = snapshot.prepare_with_origin(
+            let mut selected = snapshot.clone();
+            let capture = snapshot.native_owner.map(|_| selected.environment.begin_publication());
+            let mut input = selected.prepare_with_origin(
                 vec![form], 0..source_len, macros, Some(origin),
             )?;
+            input.fragment.environment.clear_publication();
+            let publication = capture.map(|capture| capture.finish());
+            if let Some(publication) = &publication {
+                publication.charge(&mut |work| macros.charge_expansion_work(work, 0..source_len)).map_err(SessionError::Compile)?;
+            }
             snapshot.environment = input.fragment.environment.clone();
             snapshot.provided.extend(input.modules.iter().map(|module| module.identity.clone()));
             prepared.push(match var {
-                Some(var) => PreparedScript::Macro(var),
-                None => PreparedScript::Runtime(input),
+                Some(var) => PreparedScript::Macro(var, publication),
+                None => PreparedScript::Runtime(input, publication),
             });
         }
     Ok((prepared, snapshot))
