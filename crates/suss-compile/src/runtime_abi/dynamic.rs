@@ -146,7 +146,7 @@ pub(super) fn lookup(b: &mut Builder) -> u32 {
         &body,
     )
 }
-pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'static>>) {
+fn selected_binding(lookup: u32, root: Vec<Instruction<'static>>) -> Vec<Instruction<'static>> {
     use Instruction::*;
     // Only a cell a frame has held can have a frame entry.
     let mut body = vec![LocalGet(0)];
@@ -169,12 +169,32 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
     body.extend([LocalGet(2), ArrayGet(ARGS), Else]);
     body.extend(root);
     body.push(End);
+    body
+}
+
+pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'static>>) {
+    use Instruction::*;
     b.function_with_locals(
         "binding-get-unforced",
         &[VALUE],
         &[VALUE],
         &[(1, VALUE), (1, ValType::I32)],
-        &body,
+        &selected_binding(lookup, root),
+    );
+    // A frame saves state without dereferencing an unbound Var or forcing a
+    // deferred context error. An unbound root's physical nil slot is not nil
+    // as a value: preserve the compiler's undefined representation instead.
+    let mut snapshot = vec![LocalGet(0)];
+    snapshot.extend(flags());
+    snapshot.extend([
+        I32Const(CELL_BOUND), I32And, If(BlockType::Result(VALUE)),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 0 },
+        Else, sentinel_value(UNDEFINED), End,
+    ]);
+    b.function_with_locals(
+        "binding-snapshot", &[VALUE], &[VALUE],
+        &[(1, VALUE), (1, ValType::I32)], &selected_binding(lookup, snapshot),
     );
     // Unsupported native context transport is reported on the binding read,
     // never while constructing an otherwise unused dynamic frame. A private
@@ -185,23 +205,27 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
         LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)),
         I32Const(DEFERRED_ERROR), StructNew(BINDING),
     ]);
-    b.function_with_locals("binding-get", &[VALUE], &[VALUE], &[(1, VALUE)], &[
-        LocalGet(0), Call(b.names["binding-get-unforced"]), LocalSet(1),
-        LocalGet(1), RefTestNonNull(HeapType::Concrete(BINDING)), If(BlockType::Empty),
-        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+    b.function("binding-force", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(BINDING)), If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
         StructGet { struct_type_index: BINDING, field_index: 1 },
         I32Const(DEFERRED_ERROR), I32And, If(BlockType::Empty),
         GlobalGet(nominal::ERROR_GLOBAL),
-        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
         StructGet { struct_type_index: BINDING, field_index: 0 },
         RefCastNonNull(HeapType::Concrete(STRING)),
         sentinel_value(NIL), sentinel_value(NIL), I32Const(0), RefI31,
         StructNew(LANGUAGE_ERROR), Throw(0), End, End,
-        LocalGet(1),
+        LocalGet(0),
     ]);
+    for (name, select) in [("binding-get", "binding-get-unforced"), ("binding-read", "binding-snapshot")] {
+        b.function(name, &[VALUE], &[VALUE], &[
+            LocalGet(0), Call(b.names[select]), Call(b.names["binding-force"]),
+        ]);
+    }
 }
 
-pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
+fn set_binding(lookup: u32, restore: bool) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let mut body = vec![
         LocalGet(0),
@@ -220,6 +244,16 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         LocalGet(1),
         ArraySet(ARGS),
         Else,
+    ]);
+    if restore {
+        // A frame over an unbound root never wrote that root. Restoring its
+        // undefined snapshot must not turn it into a bound root. A matching
+        // parent frame still receives the saved value through the branch above.
+        body.push(LocalGet(0));
+        body.extend(flags());
+        body.extend([I32Const(CELL_BOUND), I32And, If(BlockType::Empty)]);
+    }
+    body.extend([
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(5)),
         LocalGet(1),
@@ -240,14 +274,19 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
             struct_type_index: 5,
             field_index: 1,
         },
-        End,
     ]);
+    if restore { body.push(End); }
+    body.push(End);
+    body
+}
+pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
+    use Instruction::*;
     let set_in = b.function_with_locals(
         "binding-set-in",
         &[VALUE, VALUE, VALUE],
         &[],
         &[(1, VALUE), (1, ValType::I32)],
-        &body,
+        &set_binding(lookup, false),
     );
     b.function(
         "binding-set",
@@ -255,7 +294,13 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         &[],
         &[LocalGet(0), LocalGet(1), GlobalGet(CURRENT), Call(set_in)],
     );
-    set_in
+    b.function_with_locals(
+        "binding-restore-in",
+        &[VALUE, VALUE, VALUE],
+        &[],
+        &[(1, VALUE), (1, ValType::I32)],
+        &set_binding(lookup, true),
+    )
 }
 /// Validate a whole chain, including entries hidden by a nearer binding. No
 /// frame, entry, cell or root is mutated. Only the language nil sentinel ends a
@@ -464,7 +509,7 @@ fn fork(b: &mut Builder, validate: u32) {
         &body,
     );
 }
-pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> Vec<u32> {
+pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) -> Vec<u32> {
     use Instruction::*;
     // Validate every cell and complete storage before publishing a new frame.
     let mut body = vec![];
@@ -613,7 +658,7 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
         I32Add,
         ArrayGet(ARGS),
         LocalGet(2),
-        Call(binding_set),
+        Call(binding_restore),
         Br(0),
         End,
         End,

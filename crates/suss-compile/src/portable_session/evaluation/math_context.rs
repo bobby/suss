@@ -154,7 +154,7 @@ impl SessionHost<'_> {
         let input = cell.get(&mut scope);
         let getter = self
             .runtime
-            .get_func(&mut scope, "binding-get-unforced")
+            .get_func(&mut scope, "binding-snapshot")
             .unwrap();
         let old = call(
             &mut scope,

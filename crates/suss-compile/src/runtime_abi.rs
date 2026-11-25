@@ -1912,7 +1912,7 @@ fn build_module() -> Vec<u8> {
             End,
         ],
     );
-    let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
+    let binding_restore = dynamic::binding_set(&mut b, dynamic_lookup);
     dynamic::switching(&mut b);
     dynamic::namespace_input_owner(&mut b);
     decimals::late_functions(&mut b);
@@ -2161,7 +2161,7 @@ fn build_module() -> Vec<u8> {
         ],
     );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
-    arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
+    arithmetic_functions.extend(dynamic::functions(&mut b, binding_restore, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);

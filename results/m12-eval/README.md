@@ -526,3 +526,37 @@ installation tests (0, 150.06s), again with unchanged source and HEAD. Earlier
 Rust API, universal-closure-layout, setup and semantic negatives remain separate
 compressed receipts and exact source overlays. These focused results do not
 replace the broader compiler, complete native capture or exact workspace gates.
+
+Binding snapshots and unbound dynamic roots (2026-11-24): CI run45541143411
+fails the unchanged publication-cell regression at source4003dc28. The same
+existing test independently returns101 locally, with its executable and HEAD
+unchanged. Strict binding-get cannot save an unbound root while entering a
+binding. Compiler snapshots now use a nonforcing binding-snapshot; ordinary
+dynamic reads use binding-read, while Var dereference keeps strict binding-get.
+Nil and false frame values take precedence over an unbound root. Frame cleanup
+restores matching parent entries without turning an unbound root into a bound
+undefined value. Deferred errors still throw on consumption and remain GC-owned.
+
+Run the frozen focused commands recorded in unbound-dynamic-focused: complete
+runtime_abi61, unchanged compiled_macro_publication_cells2, clojure_eval42 and
+portable host-library118 all return0. Six pinned Clojure1.12.6 observations cover
+nil, false, nested frames, eval, throwing cleanup and once-only initializer
+effects; normal Runtime/Macro and actual compiled macros retain their results.
+The earlier20 math-context controls and four measured fuel-ledger cases pass.
+The42-test eval target consists of40 declared eval tests and2 decoder guards.
+
+The three existing source-order instrumentation targets now observe binding-read
+with their effect/order assertions unchanged: portable_closures14,
+portable_dynamic_bindings3 and portable_resolution14 all return0. Source
+conservation and provenance checks pass. Commands, frozen input hashes, exact
+positive/negative terminals and source overlays are retained under results/m12-eval;
+run python3 results/m12-eval/verify-unbound-checkpoint.py to check conservation.
+
+The source4003 workspace was deliberately interrupted for this confirmed CI
+regression, with actual Cargo101 in1483.632s and unchanged source/HEAD. Its ten
+preceding broader commands pass, including native0 and strict conservation of
+all5564 ordered rows, prior5346 successes and229/200 tagged numeric host matches.
+Those broader results are historical after this runtime change. Fresh native
+capture, Java/Node-free bootstrap, exact two-thread workspace validation,
+independent follow-up review and passing final-head CI retain separate gates.
+No primary, baseline, count/skip/opaque rule or unrelated suite judgment changes.

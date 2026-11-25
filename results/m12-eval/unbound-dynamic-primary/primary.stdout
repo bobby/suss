@@ -1,0 +1,6 @@
+[true true nil]
+[false true false]
+[true [false true] true]
+[nil false nil]
+[{:inside true} true]
+[true [:init]]

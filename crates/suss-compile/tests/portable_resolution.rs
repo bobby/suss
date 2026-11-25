@@ -316,7 +316,7 @@ fn namespace_global_reads_preserve_once_only_source_order_and_short_circuit() {
         .instance(&mut store, "suss.runtime", runtime)
         .unwrap();
     linker.allow_shadowing(true);
-    let get = runtime.get_func(&mut store, "binding-get").unwrap();
+    let get = runtime.get_func(&mut store, "binding-read").unwrap();
     let ty = get.ty(&store);
     let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
         get.call(&mut caller, args, results)?;
@@ -333,14 +333,14 @@ fn namespace_global_reads_preserve_once_only_source_order_and_short_circuit() {
         Ok(())
     });
     linker
-        .define(&store, "suss.runtime", "binding-get", wrapper)
+        .define(&store, "suss.runtime", "binding-read", wrapper)
         .unwrap();
     for (name, expected) in [("condition", 0.0), ("left", 11.0), ("right", 22.0)] {
         let id = env.declare_cell(Phase::Runtime, "app", name).unwrap();
         let value = number(&mut store, runtime, expected);
         let cell = call(&mut store, runtime, "binding-new", &[value]);
         // Bound and dynamic (`CELL_BOUND | CELL_DYNAMIC`), so reads call the
-        // wrapped binding-get: a static cell's read is inline (#354).
+        // wrapped binding-read: a static cell's read is inline (#354).
         cell.unwrap_anyref()
             .unwrap()
             .as_struct(&store)

@@ -6993,9 +6993,13 @@ fn private_deferred_binding_reports_on_read_survives_gc_and_preserves_ordinary_c
     binding.call(&mut store, &[output[0]], &mut output).unwrap();
     let cell = output[0];
     let getter = runtime.get_func(&mut store, "binding-get").unwrap();
-    for _ in 0..2 {
+    let reader = runtime.get_func(&mut store, "binding-read").unwrap();
+    let snapshot = nominal_value(&mut store, runtime, "binding-snapshot", &[cell]);
+    for get in [getter, reader] {
         store.gc(None).unwrap();
-        let error = getter.call(&mut store, &[cell], &mut output).unwrap_err();
+        let saved = nominal_value(&mut store, runtime, "binding-snapshot", &[cell]);
+        assert!(wasmtime::Rooted::ref_eq(&store, snapshot.unwrap_anyref().unwrap(), saved.unwrap_anyref().unwrap()).unwrap());
+        let error = get.call(&mut store, &[cell], &mut output).unwrap_err();
         assert!(error.is::<wasmtime::ThrownException>());
         let exception = store.take_pending_exception().unwrap();
         let payload = exception.field(&mut store, 0).unwrap();
@@ -7010,4 +7014,68 @@ fn private_deferred_binding_reports_on_read_survives_gc_and_preserves_ordinary_c
     binding.call(&mut store, &[inner], &mut output).unwrap();
     getter.call(&mut store, &[output[0]], &mut output).unwrap();
     assert!(wasmtime::Rooted::ref_eq(&store, inner.unwrap_anyref().unwrap(), output[0].unwrap_anyref().unwrap()).unwrap());
+}
+
+
+#[test]
+fn unbound_dynamic_snapshots_preserve_root_state_and_nested_selected_values() {
+    fn push(store: &mut Store<()>, runtime: Instance, cell: Val, value: Val) -> Val {
+        let old = nominal_value(store, runtime, "binding-snapshot", &[cell]);
+        let entries = nominal_value(store, runtime, "args-new", &[Val::I32(3)]);
+        let array = entries.unwrap_anyref().unwrap().as_array(&*store).unwrap().unwrap();
+        for (index, value) in [cell, old, value].into_iter().enumerate() {
+            array.set(&mut *store, index as u32, value).unwrap();
+        }
+        nominal_value(store, runtime, "dynamic-push", &[entries])
+    }
+    fn pop(store: &mut Store<()>, runtime: Instance, frame: Val) {
+        runtime.get_func(&mut *store, "dynamic-pop").unwrap().call(store, &[frame], &mut []).unwrap();
+    }
+    fn strict_unbound(store: &mut Store<()>, runtime: Instance, cell: Val) {
+        for name in ["binding-get", "binding-get-unforced"] {
+            let error = runtime.get_func(&mut *store, name).unwrap()
+                .call(&mut *store, &[cell], &mut [Val::null_any_ref()]).unwrap_err();
+            assert!(error.is::<wasmtime::ThrownException>());
+            assert!(store.take_pending_exception().is_some());
+        }
+        for name in ["binding-snapshot", "binding-read"] {
+            let value = nominal_value(store, runtime, name, &[cell]);
+            assert_eq!(sentinel_of(store, &value), runtime_abi::UNDEFINED as u32);
+        }
+        let bound = nominal_value(store, runtime, "binding-bound", &[cell]);
+        assert_eq!(sentinel_of(store, &bound), runtime_abi::FALSE as u32);
+    }
+    let engine = support::engine();
+    let module = Module::new(&engine, runtime_abi::module()).unwrap();
+    let mut store = Store::new(&engine, ());
+    let runtime = Instance::new(&mut store, &module, &[]).unwrap();
+    let cell = nominal_value(&mut store, runtime, "binding-unbound", &[]);
+    strict_unbound(&mut store, runtime, cell);
+    for (outer, inner) in [(runtime_abi::NIL, runtime_abi::FALSE), (runtime_abi::FALSE, runtime_abi::NIL)] {
+        let value = sentinel_value(&mut store, runtime, outer);
+        let frame = push(&mut store, runtime, cell, value);
+        for name in ["binding-get", "binding-read", "binding-snapshot"] {
+            let value = nominal_value(&mut store, runtime, name, &[cell]);
+            assert_eq!(sentinel_of(&mut store, &value), outer as u32);
+        }
+        let value = sentinel_value(&mut store, runtime, inner);
+        let nested = push(&mut store, runtime, cell, value);
+        store.gc(None).unwrap();
+        let value = nominal_value(&mut store, runtime, "binding-get", &[cell]);
+        assert_eq!(sentinel_of(&mut store, &value), inner as u32);
+        pop(&mut store, runtime, nested);
+        let value = nominal_value(&mut store, runtime, "binding-read", &[cell]);
+        assert_eq!(sentinel_of(&mut store, &value), outer as u32);
+        pop(&mut store, runtime, frame);
+        strict_unbound(&mut store, runtime, cell);
+    }
+    // An unrelated parent frame must not make the unbound root eligible for a
+    // restore write either; lookup has to select the actual matching cell.
+    let other = nominal_value(&mut store, runtime, "binding-new", &[Val::null_any_ref()]);
+    let parent = push(&mut store, runtime, other, Val::null_any_ref());
+    let nested = push(&mut store, runtime, cell, Val::null_any_ref());
+    pop(&mut store, runtime, nested);
+    strict_unbound(&mut store, runtime, cell);
+    pop(&mut store, runtime, parent);
+    strict_unbound(&mut store, runtime, cell);
 }
