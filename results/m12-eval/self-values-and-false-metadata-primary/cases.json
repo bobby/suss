@@ -1,0 +1,54 @@
+[
+  {
+    "name": "atom-self",
+    "expression": "(let [a (atom 7)] (identical? a (eval a)))"
+  },
+  {
+    "name": "delay-self",
+    "expression": "(let [d (delay 7)] (identical? d (eval d)))"
+  },
+  {
+    "name": "atom-recursive",
+    "expression": "(let [a (atom 7)] (identical? a (eval (eval a))))"
+  },
+  {
+    "name": "argument-once",
+    "expression": "(let [trace (atom []) a (atom 7)] [(identical? a (eval (do (swap! trace conj :argument) a))) @trace])"
+  },
+  {
+    "name": "delay-not-realized",
+    "expression": "(let [trace (atom 0) d (delay (swap! trace inc))] [(identical? d (eval d)) @trace (realized? d)])"
+  },
+  {
+    "name": "exception-self",
+    "expression": "(let [e (ex-info \"held\" {:x 1})] (identical? e (eval e)))"
+  },
+  {
+    "name": "namespace-self",
+    "expression": "(let [n (the-ns 'user)] (identical? n (eval n)))"
+  },
+  {
+    "name": "nested-atom-rejected",
+    "expression": "(let [a (atom 7)] (try (eval [a]) :accepted (catch Throwable e :rejected)))"
+  },
+  {
+    "name": "quoted-atom-rejected",
+    "expression": "(let [a (atom 7)] (try (eval (list 'quote a)) :accepted (catch Throwable e :rejected)))"
+  },
+  {
+    "name": "macro-false",
+    "expression": "(let [v (eval '(def ^{:macro false} metadata-false 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v) @v (identical? v (eval '(var metadata-false)))])"
+  },
+  {
+    "name": "macro-nil",
+    "expression": "(let [v (eval '(def ^{:macro nil} metadata-nil 43))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v) @v (identical? v (eval '(var metadata-nil)))])"
+  },
+  {
+    "name": "false-metadata-map-identity",
+    "expression": "(let [v (eval '(def ^{:macro false} metadata-false-stable 44)) m (meta v)] [(identical? m (meta v)) (identical? m (meta (eval '(var metadata-false-stable)))) (:macro m) (.isMacro v)])"
+  },
+  {
+    "name": "nil-metadata-map-identity",
+    "expression": "(let [v (eval '(def ^{:macro nil} metadata-nil-stable 45)) m (meta v)] [(identical? m (meta v)) (identical? m (meta (eval '(var metadata-nil-stable)))) (contains? m :macro) (:macro m) (.isMacro v)])"
+  }
+]

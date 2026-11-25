@@ -123,6 +123,21 @@ assert (p/'primary.stdout').read_text().strip()=='[true false false false]'
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 paths += ['crates/suss-cli/tests/clojure_chunk_effects.rs','crates/suss-cli/tests/compiled_macro_declaration_functions.rs','crates/suss-cli/tests/core_sorted_interfaces.rs','crates/suss-cli/tests/portable_bitwise_hash.rs','crates/suss-cli/tests/portable_murmur_hash.rs','crates/suss-cli/tests/portable_numeric_hash.rs']
 paths += ['crates/suss-cli/tests/compiled_native_entrypoints.rs']
+# Public eval has a separate top-level literal boundary. The pinned negative
+# nested-Atom cases remain failures; false/nil metadata does not authorize macros.
+p=BASE/'self-values-and-false-metadata-primary'
+literals=json.loads((p/'command.json').read_text())
+assert literals['exit_code']==0 and literals['case_count']==13
+assert all(sha(Path(name).read_bytes())==digest for name,digest in literals['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==literals['source_sha256']
+assert sha((p/'expression.sus').read_bytes())==literals['native_source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==literals['stdout_sha256']
+rows=json.loads((p/'cases.json').read_text());assert len(rows)==13
+source='[\n'+'\n'.join(row['expression'] for row in rows)+'\n]\n'
+assert (p/'expression.clj').read_text()=='(prn '+source.strip()+')\n'
+assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-compile/src/runtime_abi/nominal.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

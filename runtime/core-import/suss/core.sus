@@ -5468,7 +5468,7 @@
   (-deref [_] (val))
   IMeta
   (-meta [_]
-    (if (suss.bootstrap/binding-getter-macro? val) _meta
+    (if (or (suss.bootstrap/binding-getter-macro? val) (not (:macro _meta))) _meta
       (do (set! _meta (dissoc _meta :macro)) _meta)))
   IEquiv
   (-equiv [this other] (identical? this other))

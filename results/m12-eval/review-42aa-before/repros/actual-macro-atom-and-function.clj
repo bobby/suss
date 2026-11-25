@@ -1,0 +1,2 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (do (eval '(defmacro actual-macro-native-probes [] (list 'quote [(try (let [a (atom 7)] (identical? a (eval a))) (catch Throwable e (ex-message e))) (try (let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x)))) (catch Throwable e (ex-message e))) (try (let [v (eval '(def ^{:macro false} macro-metadata-false 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)]) (catch Throwable e (ex-message e)))]))) (eval '(actual-macro-native-probes))))

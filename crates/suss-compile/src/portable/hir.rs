@@ -2430,21 +2430,18 @@ impl Analyzer<'_> {
         // cross-namespace access remains callable (the pinned analyzer emits a
         // warning, not an access error). Warning emission/namespace filtering
         // remain separate unfinished namespace acceptance requirements.
-        for metadata in &args[0].metadata {
-            let unsupported = |form: &Form| {
-                matches!(&form.kind, Kind::Keyword(key)
+        // False and nil are ordinary declaration metadata, not permission to
+        // expand a Var as a macro. Retain those exact values on the real Var.
+        let macro_enabled = reader_metadata_pairs(&args[0])?.chunks_exact(2).any(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
                 if key.namespace.is_none() && key.name == "macro")
-            };
-            if !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition())
-                && (unsupported(metadata)
-                || matches!(&metadata.kind, Kind::Map(entries)
-                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0]))))
-            {
-                return Err(fail(
-                    args[0].span.clone(),
-                    "Definition const/macro attributes are not implemented yet",
-                ));
-            }
+                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+        });
+        if macro_enabled && !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition()) {
+            return Err(fail(
+                args[0].span.clone(),
+                "Definition const/macro attributes are not implemented yet",
+            ));
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         if name

@@ -1,3 +1,59 @@
+### Literal roots, false metadata and GC validation
+
+The frozen literal/metadata follow-up returns0 for complete public eval62
+(including retained original-object roots across forced GC in both phases)
+and host119. The production-identical full runtime ABI62 also returns0; its
+source/target/fixtures are conserved across the separate new GC test and
+provenance additions. These243 distinct target executions do not include the
+supplemental repeated new2 controls. Original13 pinned primary controls retain
+actual values and explicit nested-Atom rejection. The initial2-test101 for the
+reserved ExceptionInfo descriptor remains a negative receipt.
+
+Run `python3 results/m12-eval/verify-self-values-metadata-checkpoint.py` to
+check actual terminals and preserve every executed input across this explicit
+prose/evidence publication. Later production changes require new relevant
+validation; old full-workspace/CI passes remain specific to their old inputs.
+The retained macro-live-state-before controls still show the caller-global and
+nested-definition mismatches, and function/Var macro transport remains to fix.
+No complete issue, promotion or merge is established by this checkpoint.
+
+### Literal and false metadata review controls
+
+The first frozen working-overlay command returns101: both new aggregate tests
+reach an unsupported ExceptionInfo literal. A per-case diagnostic records the
+other12 controls matching, including the original Atom/Delay failures, unchanged
+nested-Atom rejection and false/nil metadata/identity. Runtime-owned exception
+descriptors reserve identities below the source descriptor counter and do not
+carry the core privacy flag; the direct-literal classifier now includes them.
+The next frozen command returns0 for both13-control native/actual-Macro tests
+and the complete62-test runtime ABI target, with source/HEAD/tools unchanged.
+These working receipts are under self-values-false-metadata-reserved-errors-working.
+A separate retained-root GC regression and broader checks remain to execute.
+
+An additional pinned primary/native comparison under macro-live-state-before
+records caller-global reads/atom updates and nested-eval definitions diverging
+inside eval-defined macros. Function/Var transport and live macro-state work
+remain required; the positive literal/metadata receipts do not cover those cases.
+
+### Native literal and false metadata review regressions
+
+Independent xhigh review at42aa08e8 confirms four remaining mismatches: function/Var
+arguments through ordinary macros, macro authorization after an earlier expansion
+changes its actual Var, top-level Atom/Delay literals, and false/nil macro metadata.
+Exact unchanged-source primary/native receipts are under
+results/m12-eval/review-42aa-before. Existing positive fa0da workspace/CI receipts
+remain specific to their tested inputs; they do not cover these counterexamples.
+
+The working follow-up separates top-level non-syntax core objects from portable
+macro syntax, retaining actual roots. Original compiled predicates and the checked
+nominal ABI distinguish symbols/collections and user type constant contexts;
+nested opaque constants retain their existing compilation errors. False/nil macro
+metadata is admitted and retained without enabling expansion. Thirteen new pinned
+Clojure1.12.6 controls return0 under self-values-and-false-metadata-primary, with
+native and actual-Macro regressions added. These source changes have not yet been
+built or executed. Function/Var macro transport and live in-unit authorization
+still require fixes; current broader/full/review/final-head CI remain separate.
+
 ### Macro flag opcode guard alignment
 
 The3c4a clean run returns0 for its first five commands, including all34 observed

@@ -92,6 +92,25 @@ fn copy_array(body: &mut Vec<Instruction<'static>>, source: u32, target: u32) {
 
 pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     use Instruction::*;
+    // Compiler.eval uses a compiled constant context for user IType instances.
+    // Core's ordinary reference objects (Atom, Delay, Namespace, errors, ...)
+    // remain direct literals when they are neither symbols nor collections.
+    // The host combines this ABI test with the original compiled core predicates;
+    // it never infers a nominal family from a type spelling or field count.
+    let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(OBJECT)),
+        If(BlockType::Result(ValType::I32))];
+    get(&mut body, 0, OBJECT, 0);
+    body.extend([RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+        I64Const(CORE_PRIVATE_BIT), I64And, I64Eqz, I32Eqz]);
+    // Runtime-owned descriptors, including ExceptionInfo, predate the first
+    // counter-assigned identity and do not carry the source-core privacy flag.
+    get(&mut body, 0, OBJECT, 0);
+    body.extend([RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+        I64Const(FIRST_COUNTED_IDENTITY), I64LtU, I32Or,
+        Else, I32Const(1), End]);
+    b.function("evaluation-direct-literal-test", &[VALUE], &[ValType::I32], &body);
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
     body.extend([

@@ -1,0 +1,627 @@
+{
+  "review": "Independent whole-PR promotion review of#516 against all nine unchanged#515 acceptance criteria",
+  "effort": "xhigh",
+  "complete": true,
+  "reviewed_at_unix": 1795634214.9645712,
+  "repository": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source",
+  "base_main": "5ce2826cd6b032ebaf7c589d80df396e4521b399",
+  "head": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "tested_production_and_test_head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+  "review_range": "5ce2826cd6b032ebaf7c589d80df396e4521b399...42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "outcome": "changes_requested_keep_draft",
+  "promotion_permitted": false,
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P1",
+      "title": "Compile ordinary macro forms containing caller-owned function and Var constants",
+      "location": {
+        "file": "crates/suss-compile/src/portable_session/evaluation.rs",
+        "start_line": 335,
+        "end_line": 340
+      },
+      "related_locations": [
+        {
+          "file": "crates/suss-compile/src/portable_macro_data.rs",
+          "start_line": 910,
+          "end_line": 913
+        },
+        {
+          "file": "crates/suss-compile/src/portable_session/evaluation.rs",
+          "start_line": 892,
+          "end_line": 902
+        }
+      ],
+      "criteria": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "description": "The public Runtime path sends ordinary eval forms to the isolated Macro service, including authenticated NativeConstant nodes for current functions/Vars. A shipped when-let or an eval-defined passthrough macro tries to quote its explicit argument in that different Store and hits the correct owner guard. Consequently simple generated forms accepted by Clojure fail before compilation can finish. No captures, foreign references supplied by the user, reflection, or hidden internals are needed. The same-owner actual compiled Macro control succeeds, demonstrating host-dependent public behavior.",
+      "minimal_repro": "(let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x))))",
+      "pinned_clojure_1_12_6": {
+        "exit_code": 0,
+        "stdout": "42"
+      },
+      "current_native": {
+        "exit_code": 1,
+        "stderr": "Error: Uncaught language exception: Compiled macro expansion failed during explicit argument 1 input transport: Host error: Native constant cannot cross phase Store ownership at bytes 0..0"
+      },
+      "additional_repros": [
+        {
+          "name": "var-when-let",
+          "source": "(let [v #'identity] (identical? v (eval (list 'when-let ['x v] 'x))))",
+          "primary_stdout": "true",
+          "native_exit": 1
+        },
+        {
+          "name": "function-macro",
+          "source": "(do (eval '(defmacro passthrough [x] x)) (let [f (fn [] 42)] ((eval (list 'passthrough f)))))",
+          "primary_stdout": "42",
+          "native_exit": 1
+        },
+        {
+          "name": "var-macro",
+          "source": "(do (eval '(defmacro passthrough [x] x)) (let [v #'identity] (identical? v (eval (list 'passthrough v)))))",
+          "primary_stdout": "true",
+          "native_exit": 1
+        }
+      ],
+      "evidence": [
+        "function-when-let.primary.json",
+        "function-when-let.native.json",
+        "var-when-let.primary.json",
+        "var-when-let.native.json",
+        "function-macro.primary.json",
+        "function-macro.native.json",
+        "var-macro.primary.json",
+        "var-macro.native.json",
+        "supplemental-batch.primary.json",
+        "supplemental-batch.native.json"
+      ],
+      "required_resolution": "Provide a semantically faithful expansion path for these ordinary values while preserving native phase AND Store ownership, captures, identity, Clojure constant construction rules and metering. Do not weaken the owner check, use placeholder form values, replay source, or interpret forms.",
+      "exact_violated_requirements": {
+        "1": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.",
+        "3": "Resolve symbols in the current namespace and live binding environment. Respect dynamic bindings, including the math context; outer lexical locals are not implicitly captured. Existing function objects evaluate to themselves, and compiled function results remain callable and rooted after GC.",
+        "4": "Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state.",
+        "6": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state."
+      }
+    },
+    {
+      "id": "R2",
+      "severity": "P1",
+      "title": "Recheck live macro authorization after earlier expansion changes its root",
+      "location": {
+        "file": "crates/suss-compile/src/portable_session/evaluation/macro_binding.rs",
+        "start_line": 115,
+        "end_line": 119
+      },
+      "related_locations": [
+        {
+          "file": "crates/suss-compile/src/portable_macros.rs",
+          "start_line": 951,
+          "end_line": 969
+        },
+        {
+          "file": "crates/suss-compile/src/portable_session/evaluation.rs",
+          "start_line": 327,
+          "end_line": 338
+        }
+      ],
+      "criteria": [
+        1,
+        4,
+        5,
+        6
+      ],
+      "description": "synchronize_evaluation_macros runs once before preparing a whole eval unit. Both expansion paths then trust Environment.source_macro_overridden from that snapshot. A caller-owned transformer can recursively eval an ordinary definition of its own Var, correctly clearing the actual macro flag. Later uses in the same vector still invoke it as a transformer. Re-reading the selected function each time does not refresh its authorization. This repeats expansion-time effects and changes a required ordinary runtime call into another macro expansion.",
+      "minimal_repro": "(do (declare changing-macro) (eval '(defmacro ^:dynamic changing-macro [] 1)) (let [f (fn [& xs] (if (empty? xs) 43 (do (eval '(def ^:dynamic changing-macro (fn [] 45))) 42)))] (binding [changing-macro f] (eval '[(changing-macro) (changing-macro)]))))",
+      "pinned_clojure_1_12_6": {
+        "exit_code": 0,
+        "stdout": "[42 43]"
+      },
+      "current_native": {
+        "exit_code": 0,
+        "stdout": "[42 42]",
+        "execution_scope": "First item of actual successful supplemental-batch native0, whose saved full command/source/output are the executed reproduction. The additional bare invocation timed out at55s and is not counted as success."
+      },
+      "additional_repros": [
+        {
+          "source": "(do (eval '(defmacro own-changing-macro [] (eval '(def own-changing-macro (fn [] 43))) 42)) (eval '[(own-changing-macro) (own-changing-macro)]))",
+          "primary_stdout": "[42 43]",
+          "native_stdout": "[42 42]",
+          "observation": "Second element of supplemental-batch output; ordinary evaluated macro replaces its own root during the first expansion."
+        }
+      ],
+      "evidence": [
+        "macro-status-changes-during-expansion.primary.json",
+        "supplemental-batch.primary.json",
+        "supplemental-batch.native.json",
+        "macro-status-changes-during-expansion.native-timeout.json"
+      ],
+      "required_resolution": "Consult current real Var macro status at each expansion decision, including after recursive eval/root publication in an earlier expansion, and ensure stale catalog fallback cannot reauthorize it. Preserve thread bindings, current transformer roots, safe reentry and actual effect order.",
+      "exact_violated_requirements": {
+        "1": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.",
+        "4": "Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state.",
+        "5": "Preserve actual primary failure/effect boundaries. Fresh primary observations show a top-level eval `do` can perform a prefix effect before a later form's compilation fails; a throwing definition initializer preserves its prior root. Do not silently roll back arbitrary prior runtime effects or publish fabricated successful definitions.",
+        "6": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state."
+      },
+      "repro_context": "The first and second cases were executed in order as entries of the archived supplemental vector with an outer catch that preserves unexpected errors. Later entries cannot change those already returned immutable vectors. Use the exact supplemental-batch command for the measured native reproduction."
+    },
+    {
+      "id": "R3",
+      "severity": "P2",
+      "title": "Accept ordinary self-evaluating nominal values at the public eval boundary",
+      "location": {
+        "file": "crates/suss-compile/src/portable_macro_data.rs",
+        "start_line": 1268,
+        "end_line": 1271
+      },
+      "related_locations": [
+        {
+          "file": "crates/suss-compile/src/portable_session/evaluation.rs",
+          "start_line": 283,
+          "end_line": 299
+        }
+      ],
+      "criteria": [
+        1,
+        3,
+        6
+      ],
+      "description": "Evaluation decodes its argument through the strict macro-syntax whitelist before the scalar identity fast path. NativeRead only exempts functions, classes and Vars, so already supported ordinary Atom and Delay objects are rejected even at the top level. Clojure Compiler.eval returns these non-collection, non-symbol objects unchanged. The actual compiled Macro control fails identically, so this is not an unavoidable cross-Store transfer.",
+      "minimal_repro": "(let [a (atom 7)] (identical? a (eval a)))",
+      "pinned_clojure_1_12_6": {
+        "exit_code": 0,
+        "stdout": "true"
+      },
+      "current_native": {
+        "exit_code": 1,
+        "stderr": "Error: Uncaught language exception: Invalid or unsupported compiled macro data: Unrecognized nominal macro data type at bytes 0..0"
+      },
+      "additional_repros": [
+        {
+          "source": "(let [d (delay 7)] (identical? d (eval d)))",
+          "primary_stdout": "true",
+          "native_exit": 1
+        },
+        {
+          "source": "Public eval of an Atom inside the eval-defined actual-macro-native-probes transformer",
+          "primary_stdout": "true",
+          "native_stdout": "Invalid or unsupported compiled macro data: Unrecognized nominal macro data type at bytes 0..0",
+          "observation": "First element of third supplemental-batch result."
+        }
+      ],
+      "evidence": [
+        "atom-self.primary.json",
+        "atom-self.native.json",
+        "delay-self.primary.json",
+        "delay-self.native.json",
+        "supplemental-batch.primary.json",
+        "supplemental-batch.native.json"
+      ],
+      "required_resolution": "Classify all required top-level self-evaluating values separately from portable macro syntax and preserve their actual caller roots/identity. Preserve Clojure compilation errors for nested opaque constants where the JVM cannot embed them; do not indiscriminately make every nested object a successful constant.",
+      "exact_violated_requirements": {
+        "1": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.",
+        "3": "Resolve symbols in the current namespace and live binding environment. Respect dynamic bindings, including the math context; outer lexical locals are not implicitly captured. Existing function objects evaluate to themselves, and compiled function results remain callable and rooted after GC.",
+        "6": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state."
+      }
+    },
+    {
+      "id": "R4",
+      "severity": "P2",
+      "title": "Admit false or nil :macro metadata on ordinary evaluated definitions",
+      "location": {
+        "file": "crates/suss-compile/src/portable/hir.rs",
+        "start_line": 2438,
+        "end_line": 2445
+      },
+      "criteria": [
+        1,
+        4,
+        6
+      ],
+      "description": "The definition admission check rejects the presence of any :macro key outside an internally authorized macro declaration, without inspecting its value. Thus eval cannot create an ordinary Var with :macro false or nil and inspect its metadata/isMacro result. Clojure retains the key/value and reports Boolean false. This is a pre-existing admission restriction, not a demonstrated false-value implementation mismatch, but the unchanged public eval/special-form and ordinary definition contract contains no waiver for it. The program uses only eval, def, meta, contains?, keyword lookup and the Var isMacro method already provided by this PR.",
+      "minimal_repro": "(let [v (eval '(def ^{:macro false} metadata-false 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)])",
+      "pinned_clojure_1_12_6": {
+        "exit_code": 0,
+        "stdout": "[true false false]"
+      },
+      "current_native": {
+        "exit_code": 1,
+        "stderr": "Error: Uncaught language exception: Definition const/macro attributes are not implemented yet at bytes 0..0"
+      },
+      "additional_repros": [
+        {
+          "source": "(let [v (eval '(def ^{:macro nil} metadata-nil 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)])",
+          "primary_stdout": "[true nil false]",
+          "native_exit": 1
+        },
+        {
+          "source": "The false metadata case inside the actual-macro-native-probes compiled transformer",
+          "primary_stdout": "[true false false]",
+          "native_stdout": "Definition const/macro attributes are not implemented yet at bytes 0..0"
+        }
+      ],
+      "evidence": [
+        "def-macro-false.primary.json",
+        "def-macro-false.native.json",
+        "def-macro-nil.primary.json",
+        "def-macro-nil.native.json",
+        "supplemental-batch.primary.json",
+        "supplemental-batch.native.json"
+      ],
+      "required_resolution": "Admit and preserve these ordinary false/nil metadata values without authorizing macro expansion, while retaining actual Var identity and correct native flag authority. Existing documentation/rejection is not acceptance evidence.",
+      "exact_violated_requirements": {
+        "1": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.",
+        "4": "Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state.",
+        "6": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state."
+      }
+    }
+  ],
+  "acceptance_matrix": [
+    {
+      "ordinal": 1,
+      "status": "not_met",
+      "blocking_findings": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "assessment": "Scalar/string/list/collection/arity/evaluation-order controls were inspected, but ordinary admitted generated macros and self-evaluating objects plus metadata admission have current counterexamples.",
+      "exact_requirement": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does."
+    },
+    {
+      "ordinal": 2,
+      "status": "supported_by_current_executed_evidence",
+      "assessment": "Inspected exact-number decoder/emitter paths and actual full-capture eval ordinals5/6/7: BigInt1, Decimal unscaled10/scale1, Ratio1/2 are explicit host fields, independently comparable. Strict capture retains229/200 numeric host matches. No new numeric defect confirmed; numeric source closure remains#518.",
+      "exact_requirement": "BigInt, Ratio and BigDecimal literals retain their actual categories and scale. Evaluate generated form data, including numeric applications, with the same arithmetic and source-overload rules as ordinary compiled code."
+    },
+    {
+      "ordinal": 3,
+      "status": "not_met",
+      "blocking_findings": [
+        "R1",
+        "R3"
+      ],
+      "assessment": "Reviewed live namespace/alias capture, original-cell getters, nominal identity, native function pools/construction, metadata functions, dynamic and math-context snapshots/restoration, GC tests and exact direct/collection constant contexts. Required ordinary function/Var macro forms and scalar identities remain blocked.",
+      "exact_requirement": "Resolve symbols in the current namespace and live binding environment. Respect dynamic bindings, including the math context; outer lexical locals are not implicitly captured. Existing function objects evaluate to themselves, and compiled function results remain callable and rooted after GC."
+    },
+    {
+      "ordinal": 4,
+      "status": "not_met",
+      "blocking_findings": [
+        "R1",
+        "R2",
+        "R4"
+      ],
+      "assessment": "Real native Var cells and stable interning are implemented; ordinary source-loaded Var metadata stays generic and root-flag operations remain private. Reentrant definitions/macros still have the confirmed in-unit authorization and admission failures.",
+      "exact_requirement": "Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state."
+    },
+    {
+      "ordinal": 5,
+      "status": "not_met",
+      "blocking_findings": [
+        "R2"
+      ],
+      "assessment": "Top-level do splits through real compiled units; initializers write roots only after success; retained root/thread-binding and failure-boundary controls preserve effects. However later calls after an expansion clears macro status repeat transformer effects instead of becoming ordinary calls.",
+      "exact_requirement": "Preserve actual primary failure/effect boundaries. Fresh primary observations show a top-level eval `do` can perform a prefix effect before a later form's compilation fails; a throwing definition initializer preserves its prior root. Do not silently roll back arbitrary prior runtime effects or publish fabricated successful definitions."
+    },
+    {
+      "ordinal": 6,
+      "status": "not_met",
+      "blocking_findings": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "assessment": "Reviewed owned/borrowed Store split, phase+native-owner checks, compiler-state publication outside guest calls, MacroService leases/ThreadId/depth/Condvar/drop order, budget inheritance and cancellation relay, typed error paths, dynamic/root recovery and async lease cleanup. No unsafe Store alias or source replay found in inspected paths. Public semantics still differ between ordinary Runtime and same-owner actual Macro execution; no new concurrency stress/build was run.",
+      "exact_requirement": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state."
+    },
+    {
+      "ordinal": 7,
+      "status": "fresh_primary_controls_exist_but_current_counterexamples_require_regressions",
+      "assessment": "Inspected pinned primary receipts and fresh source-qualified focused controls, and independently executed new pinned1.12.6/current-native repros. Passing named control maps are not sufficient semantic proof; add the confirmed cases to both hosts and actual Macro coverage.",
+      "exact_requirement": "Run fresh primary controls for literals, generated calls, functions, Var identity, namespace lookup, macros, loops, recursion, laziness, dynamic context, argument order and failures. The current24-control primary recording is research evidence, not a native pass claim."
+    },
+    {
+      "ordinal": 8,
+      "status": "supported_by_current_executed_evidence",
+      "assessment": "Inspected unchanged vendor/body guard and exact current capture rows1..34 in order, loaded namespace,29 independent host matches and the same original five opaque guest ordinals15..19. Original protected primary, comparator and current baseline hashes verify; numeric rows5/6/7 are actual typed host observations. Baseline diff against main only removes three resolved namespace-load failures, retaining unrelated failures.",
+      "exact_requirement": "Execute all34 ordered assertions of the complete unchanged vendored eval body against the pinned primary, preserving original count/skip rules and explicit guest-only judgments. Its two BigInt/Ratio and one BigDecimal rows must become independently matching host observations. Preserve prior observations and unrelated suite failures."
+    },
+    {
+      "ordinal": 9,
+      "status": "not_met_for_promotion",
+      "blocking_findings": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "assessment": "Source/license provenance and inventory/handoff align with current frozen execution, current6 focused+11 broader exact terminals and full workspace are genuine passes, and code-head CI is actually successful. This independent review finds blockers. Final published-head CI remains separately required; no Ready, issue closure or merge is approved.",
+      "exact_requirement": "Retain source/license provenance and align inventory/handoff. Run focused regressions, relevant original numeric/module/macro/GC/artifact guards, Java/Node-free bootstrap reproduction, exact two-thread workspace baseline, independent promotion review and passing final-head CI before ready status. No merge without a later explicit instruction."
+    }
+  ],
+  "validation_audited": {
+    "published_conservation_verifier": {
+      "actual_exit": 0,
+      "stdout": "Actualfa0da focused336/bootstrap/native5564/strict/exactworkspace0 conserved across explicit prose/evidence publication. Current independent scope review and final-head CI remain separate requirements."
+    },
+    "actual_workspace_log_recount": {
+      "groups": 377,
+      "passed": 2578,
+      "failed": 0,
+      "ignored": 15
+    },
+    "workspace_summary": {
+      "code_head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+      "actual_cargo_exit": 0,
+      "seconds": 10212.759862422943,
+      "successful_test_groups": 377,
+      "passed": 2578,
+      "existing_ignored": 15,
+      "inputs_unchanged": true,
+      "head_unchanged": true,
+      "focused_passed": 336,
+      "focused_eval": 59,
+      "focused_host": 119,
+      "retained_ci_passes": {
+        "source_head": "3c4a59e85d12773f1105c14c65b865fba8186a60",
+        "actual_passed": 176,
+        "targets": 34,
+        "qualification": "Conserved production-identical executions, not fresh fa0da passes."
+      },
+      "native_exit": 0,
+      "native_seconds": 338.262090921402,
+      "qualification": "Actual recorded source-specific local terminals. Reviewed-baseline native conformance retains unrelated failures/guest judgments. Independent full-scope review and final published-head CI remain required; this is no issue closure, Ready or merge claim."
+    },
+    "strict_current_capture": {
+      "baseline_sha256": "dea5db93e9548008d91e5c79ee11978920575975ec601f1852139ff063329d7f",
+      "baseline_written": false,
+      "capture_sha256": "b7328a9e469faf968836eea515b7773386845434db89fb2d6d5678c9ffab82bd",
+      "complete_bodies": {
+        "clojure.core-test.eval": {
+          "actual_rows": 34,
+          "guest_ordinals": [
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "host_matches": 29
+        },
+        "clojure.core-test.symbol": {
+          "actual_rows": 61,
+          "guest_ordinals": [],
+          "host_matches": 61
+        },
+        "clojure.core-test.var-qmark": {
+          "actual_rows": 34,
+          "guest_ordinals": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "host_matches": 26
+        }
+      },
+      "counts": {
+        "fail": 105,
+        "guest-judged": 106,
+        "namespaces-failed": 63,
+        "not-executed": 1374,
+        "pass": 5354,
+        "skipped": 0
+      },
+      "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+      "numeric_subsets": {
+        "bigint-ratio": {
+          "primary_rows": 229,
+          "strict_host_matches": 229
+        },
+        "decimal": {
+          "primary_rows": 200,
+          "strict_host_matches": 200
+        }
+      },
+      "original_native_exit_code": 0,
+      "prior_comparable_successes_preserved": 5346,
+      "qualification": "Fresh actual native0 on the current frozen source. The unchanged strict reviewer preserves all previous comparable successes, exact complete eval/symbol/Var bodies, all229/200 independently matching numeric tagged rows and the existing measured baseline. No new failures, skips or opaque judgments are accepted. Numeric source-form scope and workspace/review/CI remain separate gates.",
+      "raw_rows": 5564
+    },
+    "focused_actual_commands": 6,
+    "broader_actual_commands": 11,
+    "code_head_ci": {
+      "run_id": 45650312818,
+      "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+      "status": "completed",
+      "conclusion": "success",
+      "actual_successful_required_jobs": [
+        "foundation",
+        "integration (3)",
+        "integration (2)",
+        "integration (1)",
+        "integration (6)",
+        "integration (5)",
+        "integration (7)",
+        "integration (0)",
+        "integration (4)",
+        "test"
+      ]
+    },
+    "final_published_head_ci": {
+      "run_id": 45680273352,
+      "checks": [
+        {
+          "name": "compare",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED"
+        },
+        {
+          "name": "foundation",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "integration (0)",
+          "status": "IN_PROGRESS",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (1)",
+          "status": "IN_PROGRESS",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (2)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "integration (3)",
+          "status": "IN_PROGRESS",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (4)",
+          "status": "IN_PROGRESS",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (5)",
+          "status": "QUEUED",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (6)",
+          "status": "QUEUED",
+          "conclusion": ""
+        },
+        {
+          "name": "integration (7)",
+          "status": "QUEUED",
+          "conclusion": ""
+        }
+      ]
+    },
+    "current_pr_is_draft": true,
+    "ignored_name_comparison": {
+      "baseline_head": "133b7024762d5006d4c784416e66ecef5a73f6b8",
+      "baseline_path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/full-workspace-after-portable-reference-alignment",
+      "baseline_exit": 0,
+      "prior_ignored": [
+        "test_cond_thread_first",
+        "test_cond_thread_first_false",
+        "test_print_no_newline",
+        "test_println_basic",
+        "test_println_multiple_args",
+        "test_println_no_args",
+        "test_println_number",
+        "test_prn_basic",
+        "test_some_thread_first",
+        "test_when_first",
+        "record_case_catalog",
+        "record_known_failures",
+        "record_observations",
+        "optimized_selected_random_import_preserves_draws",
+        "crates/suss-compile/src/lib.rs - (line 20)"
+      ],
+      "current_ignored": [
+        "test_cond_thread_first",
+        "test_cond_thread_first_false",
+        "test_print_no_newline",
+        "test_println_basic",
+        "test_println_multiple_args",
+        "test_println_no_args",
+        "test_println_number",
+        "test_prn_basic",
+        "test_some_thread_first",
+        "test_when_first",
+        "record_case_catalog",
+        "record_known_failures",
+        "record_observations",
+        "optimized_selected_random_import_preserves_draws",
+        "crates/suss-compile/src/lib.rs - (line 20)"
+      ],
+      "same_names": true
+    }
+  },
+  "prior_findings_revisited": [
+    {
+      "topic": "Stale macro roots/status/transformers",
+      "assessment": "Existing upfront root-redefinition/thread-binding controls, root bit16, stable metadata cache identity and selected function rereads were inspected and their actual current passes accepted. A remaining in-unit state transition is confirmed asR2."
+    },
+    {
+      "topic": "Duplicate with-redefs initializers",
+      "assessment": "Source-symbol equality ignores metadata; last initializer is chosen at the first key position, suppressing replaced analysis/effects. Distinct spellings resolving to one Var retain both initializers then a duplicate-key throw before root installation. Ordinary binding retains both effects. Inspected thirteen pinned controls, actual current full/focused results and source implementation; no remaining defect confirmed in these cases."
+    },
+    {
+      "topic": "Root leases, GC/fork/async cleanup",
+      "assessment": "Inspected private wrapper validation, snapshot after initializer effects, publication before root writes, restartable installation/pop, bound-bit restoration, live thread-selection precedence, fork omission and native async cleanup. Existing native tests are source-conserved and pass. No independent heavy fuel sweep rerun."
+    },
+    {
+      "topic": "Function/Var constants and construction",
+      "assessment": "Inspected direct constant roots, same-owner/phase enforcement, per-source-function pools, initialization at construction, captures and metadata error boundaries, explicit current pinned identity contexts. R1 is an additional ordinary macro transport gap; no pointer/serialized-handle workaround accepted."
+    },
+    {
+      "topic": "Bounded lexical graphs vs Full catalogs",
+      "assessment": "Native top-level env is nil and lexical env is symbol keyed, with actual locals and initializer ASTs. Namespace membership projection omits unrelated global bodies while explicit Full and RecordBindings remain separate interfaces. Inspected recipe/metering paths and actual graph controls; no additional confirmed interface counterexample."
+    },
+    {
+      "topic": "Generic source-core Var adapters and GlobalRead macro mask",
+      "assessment": "Ordinary source-core lowering evaluates operands in order, retains getter identity and generic metadata authority, and never grants native root-bit read/write authority. Privileged compiled core retains native operations. GlobalRead masks only CELL_MACRO before bound equality and preserves dynamic fallback; structural guard and retained failed-script before17/fresh23 behavior audited."
+    }
+  ],
+  "explicit_limit_assessments": [
+    {
+      "topic": "Existing root set! extension",
+      "assessment": "Accepted pre-issue design/platform contract and original JVM rejection are retained, and the separate legal bound initializer control is a different source. No raw-source compatibility match is claimed; I did not report this inherited extension as a new eval defect or substitute the legal control for the rejected source."
+    },
+    {
+      "topic": "Cross-phase nominal transport",
+      "assessment": "The owner guard is required and correct. Documentation cannot exempt the ordinary function/Var when-let and passthrough cases confirmed byR1."
+    },
+    {
+      "topic": "False/nil :macro metadata",
+      "assessment": "Confirmed admission rejection, not a measured false-value result. The unchanged acceptance criteria still require ordinary def form-data behavior; recordR4 as an inherited acceptance gap that must be resolved rather than a waiver."
+    }
+  ],
+  "evidence_directory": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-42aa-independent-repros",
+  "native_provenance_qualification": "Existing immutable CLI169dba83... is current completed fa0da Cargo/source linked via fingerprint dependencies and a hardlink todeps/suss-98efbdf2fca6b3ca, plus executed-input conservation across3c4a/fa0da/42aa. No archived CLI-specific digest was claimed. The999fc41a... receipt is the suite harness, not the CLI. All actual repros record HEAD/source/binary invariance, use--no-cache and external output directories. No source/HEAD/shared target/cache/GitHub/F mutation or agent delegation was performed.",
+  "excluded_probe_claims": [
+    {
+      "case": "quoted-atom",
+      "assessment": "Pinned Clojure itself rejects embedding an Atom in compiled quote context; the native failure is not claimed as a semantic defect."
+    },
+    {
+      "case": "empty-list-opaque-meta",
+      "assessment": "Pinned Clojure rejects embedding opaque metadata here; no success obligation inferred from it."
+    }
+  ],
+  "limits": [
+    "This is a read-only source/evidence review with bounded independent repros. No heavy rebuild, workspace rerun, shared-cache mutation or fresh comprehensive concurrency stress was performed.",
+    "The numeric child#518 is separate and was not modified or treated as parent acceptance evidence.",
+    "Successful historical checkpoints were not relabeled as current-source gates; old negative workspace/CI evidence remains negative.",
+    "Recorded full/baseline conformance demonstrates its specified observations, not whole-language completeness. Confirmed counterexamples block promotion even if the published-head CI later passes.",
+    "An extra bare standalone R2 retry timed out at55 seconds; it is retained separately and not counted as a successful terminal. R2 wrong values are observed in the earlier complete actual native0 supplemental batch. No unverified deadlock or new timeout defect is asserted."
+  ],
+  "completed_at_unix": 1795634281.583661,
+  "final_invariance": {
+    "head": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+    "binary_sha256": "169dba83f98ffbd2d73020a974664249253a792611f902323263c0c582574243",
+    "production_inputs_unchanged": true,
+    "fingerprints_unchanged": true,
+    "binary_unchanged": true,
+    "tracked_source_clean": true
+  }
+}

@@ -1696,6 +1696,49 @@ fn actual_macro_eval_preserves_root_expanded_function_and_collection_identity() 
 
 
 #[test]
+fn eval_preserves_self_evaluating_objects_and_false_macro_metadata() {
+    promotion_review_controls("self-values-and-false-metadata",
+        include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/primary.stdout"), 13);
+}
+
+#[test]
+fn actual_macro_eval_preserves_self_values_and_false_macro_metadata() {
+    let primary = include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/primary.stdout");
+    let forms = suss_reader::forms::read_forms(primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/expression.sus");
+        macros.define(&format!("(defmacro self-value-metadata-controls [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(self-value-metadata-controls)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn eval_self_values_retain_their_actual_roots_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let evaluate = session.eval_with_macros("(fn [x] (eval x))", &mut macros).unwrap();
+        let identity = session.eval("(fn [x y] (identical? x y))").unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        for source in ["(atom 7)", "(delay 7)", "(ex-info \"held\" {:x 1})", "(the-ns 'user)"] {
+            let original = session.eval_with_macros(source, &mut macros).unwrap();
+            session.collect().unwrap();
+            let evaluated = session.invoke(&evaluate, &[&original]).unwrap();
+            session.collect().unwrap();
+            let result = session.invoke(&identity, &[&original, &evaluated]).unwrap();
+            decoder.refill(20_000);
+            assert_eq!(decoder.decode_session(&mut session, &result).unwrap(), Observation::Bool(true),
+                "{:?} {source}", session.phase());
+        }
+    }
+}
+
+#[test]
 fn root_macro_flags_stay_private_when_ordinary_source_enters_core() {
     fn expect(session: &mut Session, source: &str, wanted: &str) {
         let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));

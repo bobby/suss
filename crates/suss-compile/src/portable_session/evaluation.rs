@@ -31,6 +31,7 @@ pub(super) struct Evaluation {
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    syntax_tests: Mutex<Vec<SessionValue>>,
     macro_metadata: Mutex<BTreeMap<CellIdentity, MacroMetadata>>,
     exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
@@ -237,6 +238,7 @@ impl Evaluation {
         self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
         let metadata_lookup = registry_lock(&self.metadata_lookup).take();
+        let syntax_tests = std::mem::take(&mut *registry_lock(&self.syntax_tests));
         drop((
             profile,
             bridge,
@@ -246,6 +248,7 @@ impl Evaluation {
             var_class,
             input_base,
             metadata_lookup,
+            syntax_tests,
         ));
     }
     fn bridge(&self, view: &mut SessionHost<'_>) -> Result<Arc<FormBridge>, SessionError> {
@@ -280,6 +283,31 @@ impl Evaluation {
             let mut roots = RootScope::new(&mut view.store);
             own(&mut roots, input, view.identity, &view.handles)?
         };
+        // Already materialized non-syntax values need no macro serialization.
+        // Use retained compiled predicates, so rebinding public core names cannot
+        // change this compiler boundary. Nested constants still go through the
+        // ordinary constant compiler and retain its Clojure rejection rules.
+        let direct_literal = {
+            let mut roots = RootScope::new(&mut view.store);
+            let input = value.val(&mut roots.as_context_mut());
+            let test = view.runtime.get_func(&mut roots, "evaluation-direct-literal-test")
+                .ok_or_else(|| wasmtime::Error::msg("Missing evaluation literal classifier"))?;
+            let mut result = [Val::I32(0)];
+            test.call(&mut roots, &[input], &mut result)?;
+            result[0].unwrap_i32() != 0
+        };
+        if direct_literal {
+            let tests = registry_lock(&self.syntax_tests).clone();
+            let mut syntax = false;
+            for test in tests {
+                let result = view.invoke(&test, &[&value])?;
+                let enabled = view.inspect(&result, |mut store, value| {
+                    Ok(sentinel_tag(&mut store, &value)? == Some(runtime_abi::TRUE as u32))
+                })?;
+                if enabled { syntax = true; break; }
+            }
+            if !syntax { return Ok(value); }
+        }
         let bridge = self.bridge(&mut view)?;
         let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
         // Clojure evaluates a scalar literal to the actual argument object.
@@ -677,6 +705,15 @@ impl SessionHost<'_> {
             )?
         };
         *registry_lock(&state.metadata_lookup) = Some(value.object()?.clone());
+        let mut syntax_tests = Vec::new();
+        for name in ["coll?", "symbol?"] {
+            let cell = self.core_cell(name)?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            syntax_tests.push(call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?);
+        }
+        *registry_lock(&state.syntax_tests) = syntax_tests;
         // Capture the original constructor before exposing this Session to user
         // source; restoring an exception must not consult a rebound ex-info.
         let cell = self.core_cell("ex-info")?;
