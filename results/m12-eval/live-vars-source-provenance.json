@@ -122,7 +122,7 @@
     "results/m12-eval/unbound-dynamic-primary/primary.stdout": "f24bf74929aac6d0b4483f3857e1c6c6135502026acd9a81327eb2163a919d84",
     "crates/suss-compile/tests/portable_resolution.rs": "f9a48b2187b0668d988b7792306b20fe3286c9198cdedab4e510481a9c67db32",
     "crates/suss-compile/tests/portable_closures.rs": "8787b27e15baf4c3f879ec05af8cba3d7e57b86c3b6d3b891c5cb5e9abc830ca",
-    "crates/suss-compile/tests/portable_dynamic_bindings.rs": "f0ec6395d2310165764d33ba3e2d6977eac1d1ff413cfe152a334e2bd10d2e26",
+    "crates/suss-compile/tests/portable_dynamic_bindings.rs": "5206e188269b5d1740fa0270c8fb0cace8ce807454257fa4cafd1e4d6d876f7c",
     "crates/suss-compile/tests/runtime_async_scheduler.rs": "e161d65741ddf8619e21e77c93e4430475972994193a9420b4e6bec424b1bfb3",
     "results/m12-eval/binding-initializer-effects-primary/cases.json": "4250580eb4d2a7710d5ac71179daf3e178ef76e5cc68f0b28aecaa2c9201af07",
     "results/m12-eval/binding-initializer-effects-primary/command.json": "ce671a86b855334590344c35c9a64897419c813012477bf22553569f4eaeb190",

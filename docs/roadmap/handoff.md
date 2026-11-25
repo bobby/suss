@@ -1,3 +1,18 @@
+### Macro flag opcode guard alignment
+
+The3c4a clean run returns0 for its first five commands, including all34 observed
+CI-failing targets (176 tests across36 executables, zero ignores). The next full
+eval/ABI/dynamic command returns101 at an existing structural opcode guard: it
+expects constant1/eq immediately after a flag read, while the corrected emitter
+first masks macro metadata using constant-17/and. Its remaining native tests
+before that target pass; host-library execution has not started in this receipt.
+
+The guard now explicitly checks the mask and retains every original inline-root,
+no-cast, else-branch and dynamic-call assertion. All three dynamic compiler guards
+then return0. This follow-up changes the assertion and derived provenance, with
+all production inputs and original language observations conserved. Fresh full
+eval/ABI/async, host, native/bootstrap and exact workspace results remain separate.
+
 ### Generic source Vars and ordinary macro-function reads
 
 CI on0e7b33fe reports ordinary source-core loads rejected by private Var macro
