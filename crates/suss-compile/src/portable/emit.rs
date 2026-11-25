@@ -242,9 +242,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
-                        globals: targets, ..
-                    } | Operation::AsyncDynamicEnter { globals: targets, .. } => {
-                        names.insert("dynamic-invoke");
+                        roots, globals: targets, ..
+                    } | Operation::AsyncDynamicEnter { roots, globals: targets, .. } => {
+                        names.insert(if *roots { "root-redefs-invoke" } else { "dynamic-invoke" });
+                        names.insert(if *roots { "root-redefs-push" } else { "dynamic-push" });
                         globals.extend(targets.iter().cloned());
                     }
                     Operation::Try { .. } => {
@@ -804,7 +805,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
             "future-pending-new" | "dynamic-fork" | "dynamic-save" | "random-double" => (vec![], vec![VALUE]),
             "evaluate-form" => (vec![VALUE], vec![VALUE]),
-            "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
+            "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" | "root-redefs-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
             "dynamic-pop" => (vec![VALUE], vec![]),
             "async-registration-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
@@ -2576,7 +2577,7 @@ fn emit_function(
                     r#async::item(&mut function, slots.snapshot, 7);
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
-                Operation::AsyncDynamicEnter { globals: targets, operands } => {
+                Operation::AsyncDynamicEnter { roots, globals: targets, operands } => {
                     if continuation.is_none() { return Err(fail("Async dynamic entry outside continuation")); }
                     for (i, target) in targets.iter().enumerate() {
                         function.instruction(&GlobalGet(globals.binary_search(target).expect("collected dynamic cell") as u32))
@@ -2584,7 +2585,7 @@ fn emit_function(
                             .instruction(&LocalGet(operands[targets.len() + i].0 as u32 + offset));
                     }
                     function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: (targets.len() * 3) as u32 })
-                        .instruction(&Call(index("dynamic-push"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        .instruction(&Call(index(if *roots { "root-redefs-push" } else { "dynamic-push" }))).instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::MakeFuture { body, captures } => {
                     let body_index = futures.iter().position(|candidate| std::ptr::eq(*candidate, body.as_ref())).expect("collected future");
@@ -2593,6 +2594,7 @@ fn emit_function(
                 }
                 Operation::Await { .. } => return Err(fail("Unnormalized await reached emission")),
                 Operation::DynamicScope {
+                    roots,
                     globals: targets,
                     operands,
                 } => {
@@ -2612,7 +2614,7 @@ fn emit_function(
                             array_size: targets.len() as u32 * 3,
                         })
                         .instruction(&LocalGet(operands.last().unwrap().0 as u32 + offset))
-                        .instruction(&Call(index("dynamic-invoke")))
+                        .instruction(&Call(index(if *roots { "root-redefs-invoke" } else { "dynamic-invoke" })))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Try { regions } => {

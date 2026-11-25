@@ -2,6 +2,48 @@ The numeric integration retains the parent eval evidence below at its exact
 recorded source. Fresh validation of the combined tree remains separate; the
 parent-specific checkpoint verifier does not certify numeric changes.
 
+## Root redefinitions and thread bindings (2026-11-25)
+
+The frozen root-scope gate passes318 tests:48 public eval,62 runtime ABI,
+2 publication,2 raw-core/native-AOT,11 CLI binding,10 async analysis,14 closures,
+3 compiler binding,14 resolution,28 async scheduler,6 dynamic switch and118
+host-library tests. Twelve fresh pinned Clojure1.12.6 controls match Runtime,
+isolated Macro and actual compiled macros. The new2000-step fuel sweep covers
+root installation/restoration traps without undoing unrelated effects. Forced-GC
+pending-await return/cancellation and fork tests retain root ownership; all four
+independently measured context-budget ledgers and earlier binding controls pass.
+
+`with-redefs` now replaces real roots and restores their old values/boundness;
+`binding` changes thread bindings and preserves definitions. Existing thread
+bindings keep priority over root redefinitions. HIR/IR carry the scope kind;
+root-mode old-value slots are explicit nil placeholders because actual roots are
+captured on entry. Private GC-owned binding-cell wrappers retain the real cell
+and prior bound bit without changing shared layouts or exposing fabricated Vars.
+Validation precedes root mutation. A rooted lease precedes the first root write;
+reverse pop is restartable and restores only that lease's selected roots. Forks
+inherit thread bindings while omitting globally owned root leases. A pending
+scope keeps its roots globally visible until its owning return/cancellation.
+
+The published50d7 source returned wrong native values on4/6 fresh controls even
+though both primary/native commands exited0. Its actual pinned-reader comparison
+returns1; source/head/binary hashes and source archive are retained. The first
+new focused run returns101 at the existing IR Value-only snapshot check (46pass,
+2fail); the new scope kind now requires Nil placeholders while ordinary bindings
+still require Value snapshots. Its exact before source and terminal are retained.
+The previous50d7 workspace was deliberately interrupted for the proven semantic
+regression: actual Cargo101 after1831.858s, source/HEAD unchanged. Obsolete-head
+CI45567451208 was cancelled. Earlier broader native0/strict5564 evidence keeps its
+original source qualification; none of these is a current full-workspace pass.
+
+Reproduce source/evidence conservation with
+`python3 results/m12-eval/verify-root-redefs-checkpoint.py` and source/primary
+provenance with `python3 results/m12-eval/verify-live-vars.py`. Positive receipts
+are in with-redefs-root-focused-after-ir-kind; before and initial101 evidence
+are in with-redefs-root-before and with-redefs-root-focused. Fresh broader,
+Java/Node-free bootstrap/native capture, exact workspace, independent review and
+final-head CI remain separate gates. Original primary, baseline and count/skip/
+opaque rules stay unchanged; complete numeric source-body closure stays separate.
+
 ## Binding initializer and root effects (2026-11-25)
 
 The frozen binding-effects focused gate passes all301 tests:46 public eval,

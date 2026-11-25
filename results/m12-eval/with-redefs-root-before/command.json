@@ -1,0 +1,50 @@
+{
+  "head": "50d70b62522e3d442d479fa71bac23d91a7a106e",
+  "scope": "suss-m12-with-redefs-root-scope-probe-v2.scope",
+  "recorder_pid": 1360433,
+  "inputs": {
+    "crates/suss-compile/src/portable/ir.rs": "7b138058e2e70b0b91fd75a04c02568e4060deeaacdd4fe2dfc13e8c41e1081c",
+    "crates/suss-compile/src/portable/emit.rs": "7a2b8725ce22194aecc006cca829d070266235c572150eb0d25ffca9e72a9e58",
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": "59eadeba4e0fe1c66f7c9132c520536516c689b6448120e7dab89e819cd50b98",
+    "crates/suss-compile/src/portable_session/evaluation/math_context.rs": "3118e399f693ddc75bd1fee3326d58e17785ed7cf205ca73fe24e7e2890e4b72"
+  },
+  "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+  "binary_sha256": "3bd4cc697733ae39e8553a2c7b4e6bb7dab8268c0384472033656ea747784b36",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "commands": [
+    {
+      "label": "primary",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/with-redefs-root-scope-before-v2/expression.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7959017753601074
+    },
+    {
+      "label": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/with-redefs-root-scope-before-v2/isolated-cache",
+        "-e",
+        "[(do (def ^:dynamic redefs-body 1) (let [inside (with-redefs [redefs-body 3] (def ^:dynamic redefs-body 2) redefs-body)] [inside redefs-body]))\n(do (def ^:dynamic redefs-eval 1) (let [inside (with-redefs [redefs-eval 3] (eval (quote (def ^:dynamic redefs-eval 2))) redefs-eval)] [inside redefs-eval]))\n(do (def ^:dynamic redefs-throw 1) (def redefs-prefix 0) [(try (with-redefs [redefs-throw 3] (eval (quote (def ^:dynamic redefs-throw 2))) (def redefs-prefix 8) (throw (ex-info \"body\" {}))) (catch :default e :caught)) redefs-throw redefs-prefix])\n(do (def ^:dynamic redefs-nested 0) [(binding [redefs-nested 1] [(with-redefs [redefs-nested 3] (eval (quote redefs-nested))) redefs-nested]) redefs-nested])\n(do (def ^:dynamic redefs-init 1) (let [inside (with-redefs [redefs-init (do (def ^:dynamic redefs-init 2) 3)] redefs-init)] [inside redefs-init]))\n(do (def ^:dynamic redefs-binding 1) (let [inside (binding [redefs-binding 3] (def ^:dynamic redefs-binding 2) redefs-binding)] [inside redefs-binding]))]\n"
+      ],
+      "exit_code": 0,
+      "seconds": 48.19857454299927
+    }
+  ],
+  "complete": true,
+  "qualification": "Read-only actual pinned JVM/current50d7 CLI comparison of binding versus with-redefs root restoration; separate external build/cache, no sharedtarget rebuild or source edits; current full remains active until actual semantic evidence. Prior probe setup NameError executed no primary/native command and is not semantic evidence.",
+  "head_unchanged": true,
+  "inputs_unchanged": true,
+  "binary_unchanged": true
+}

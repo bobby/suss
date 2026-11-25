@@ -314,7 +314,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::DynamicScope { bindings: vec![(global, read(&span))], body: Box::new(body) }),
+            kind: std::sync::Arc::new(Expression::DynamicScope { roots: false, bindings: vec![(global, read(&span))], body: Box::new(body) }),
         });
         Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(effects)) })
     }

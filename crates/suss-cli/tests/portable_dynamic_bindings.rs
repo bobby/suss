@@ -298,3 +298,25 @@ fn closure_values_and_thrown_closures_survive_frame_restoration_and_gc() {
     assert_eq!(number(&mut s, &value), num(7.0));
     assert_eq!(eval(&mut s, "(*f*)"), num(1.0));
 }
+
+#[test]
+fn root_redefinition_install_and_pop_are_recoverable_at_every_fuel_boundary() {
+    let mut s = Session::new().unwrap();
+    s.eval("(def ^:dynamic *root* 1) (def entered false) (def prefix 0)").unwrap();
+    let mut interrupted = 0;
+    let mut completed = 0;
+    for fuel in 1..=2000 {
+        s.set_operation_fuel(50_000);
+        s.eval("(set! *root* 1) (set! entered false) (set! prefix 0)").unwrap();
+        s.set_operation_fuel(fuel);
+        let result = s.eval("(with-redefs [*root* 3] (def ^:dynamic *root* 2) (def prefix 8) (set! entered true) 42)");
+        s.set_operation_fuel(50_000);
+        assert_eq!(eval(&mut s, "*root*"), num(1.0), "root must be restored at fuel {fuel}");
+        if eval(&mut s, "(if entered 1 0)") == num(1.0) {
+            assert_eq!(eval(&mut s, "prefix"), num(8.0), "unrelated prior effect survives fuel {fuel}");
+            if matches!(result, Err(SessionError::Trap(_))) { interrupted += 1; }
+            if result.is_ok() { completed += 1; }
+        }
+    }
+    assert!(interrupted > 0 && completed > 0, "exercise both interrupted pop and complete scope exit");
+}

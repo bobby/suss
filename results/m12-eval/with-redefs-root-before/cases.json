@@ -1,0 +1,26 @@
+[
+  {
+    "name": "redefs-definition-body",
+    "expression": "(do (def ^:dynamic redefs-body 1) (let [inside (with-redefs [redefs-body 3] (def ^:dynamic redefs-body 2) redefs-body)] [inside redefs-body]))"
+  },
+  {
+    "name": "redefs-eval-definition-body",
+    "expression": "(do (def ^:dynamic redefs-eval 1) (let [inside (with-redefs [redefs-eval 3] (eval (quote (def ^:dynamic redefs-eval 2))) redefs-eval)] [inside redefs-eval]))"
+  },
+  {
+    "name": "redefs-throw-restores-only-selected-root",
+    "expression": "(do (def ^:dynamic redefs-throw 1) (def redefs-prefix 0) [(try (with-redefs [redefs-throw 3] (eval (quote (def ^:dynamic redefs-throw 2))) (def redefs-prefix 8) (throw (ex-info \"body\" {}))) (catch Throwable e :caught)) redefs-throw redefs-prefix])"
+  },
+  {
+    "name": "redefs-respects-existing-binding",
+    "expression": "(do (def ^:dynamic redefs-nested 0) [(binding [redefs-nested 1] [(with-redefs [redefs-nested 3] (eval (quote redefs-nested))) redefs-nested]) redefs-nested])"
+  },
+  {
+    "name": "redefs-initializer-root-effect-control",
+    "expression": "(do (def ^:dynamic redefs-init 1) (let [inside (with-redefs [redefs-init (do (def ^:dynamic redefs-init 2) 3)] redefs-init)] [inside redefs-init]))"
+  },
+  {
+    "name": "binding-definition-persists-control",
+    "expression": "(do (def ^:dynamic redefs-binding 1) (let [inside (binding [redefs-binding 3] (def ^:dynamic redefs-binding 2) redefs-binding)] [inside redefs-binding]))"
+  }
+]

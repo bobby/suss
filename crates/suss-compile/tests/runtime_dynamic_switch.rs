@@ -130,7 +130,8 @@ impl Harness {
             .unwrap();
         self.decode(&output[0])
     }
-    fn push(&mut self, bindings: &[(&str, i64)]) -> Val {
+    fn push(&mut self, bindings: &[(&str, i64)]) -> Val { self.push_kind("dynamic-push", bindings) }
+    fn push_kind(&mut self, helper: &str, bindings: &[(&str, i64)]) -> Val {
         let entries = self.call("args-new", &[Val::I32(bindings.len() as i32 * 3)]);
         let array = entries
             .unwrap_anyref()
@@ -148,7 +149,7 @@ impl Harness {
                     .unwrap();
             }
         }
-        self.call("dynamic-push", &[entries])
+        self.call(helper, &[entries])
     }
     fn same(&self, a: &Val, b: &Val) -> bool {
         // nil is a null reference in ABI v3.
@@ -465,4 +466,33 @@ fn a_cell_becomes_dynamic_when_first_framed_and_stays_dynamic() {
     assert_eq!((h.eval(reader), h.read("*x*")), (5, 5));
     assert_eq!(h.eval("(binding [*y* 7] *y*)"), 7);
     assert_eq!((flags(&mut h, "*y*"), h.eval("*y*")), (3, 2));
+}
+
+#[test]
+fn root_leases_restore_roots_without_overriding_bindings_or_forking_ownership() {
+    let mut h = Harness::new();
+    let thread = h.push(&[("*x*", 10)]);
+    let lease = h.push_kind("root-redefs-push", &[("*x*", 3)]);
+    assert_eq!(h.read("*x*"), 10, "root redefinition leaves the thread binding selected");
+    assert_eq!(h.eval("(do (def ^:dynamic *x* 2) *x*)"), 10);
+    let fork = h.call("dynamic-fork", &[]);
+    h.store.gc(None).unwrap();
+    let fields = frame_fields(&mut h, &fork);
+    let nil = h.nil();
+    assert!(h.same(&fields[0], &nil), "fork retains just the binding, not its caller's root lease");
+    h.call("dynamic-switch", &[fork.clone()]);
+    assert_eq!(h.read("*x*"), 10);
+    let pop = h.runtime.get_func(&mut h.store, "dynamic-pop").unwrap();
+    pop.call(&mut h.store, &[fork], &mut []).unwrap();
+    assert_eq!(h.read("*x*"), 2, "child frame exit cannot restore the parent's root lease");
+    h.call("dynamic-switch", &[lease.clone()]);
+    pop.call(&mut h.store, &[lease], &mut []).unwrap();
+    assert_eq!(h.read("*x*"), 10);
+    pop.call(&mut h.store, &[thread], &mut []).unwrap();
+    assert_eq!(h.read("*x*"), 1, "the owning root lease restored its original root");
+    let root = h.push_kind("root-redefs-push", &[("*y*", 7)]);
+    let child = h.call("dynamic-fork", &[]);
+    assert!(h.same(&child, &nil), "a root lease alone creates no inherited thread bindings");
+    pop.call(&mut h.store, &[root], &mut []).unwrap();
+    assert_eq!(h.read("*y*"), 2);
 }

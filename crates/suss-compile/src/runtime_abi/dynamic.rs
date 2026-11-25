@@ -1,5 +1,6 @@
 //! Original rooted dynamic frames. Entries are private cell/old/current triplets.
 use super::*;
+mod redefs;
 pub(super) const CURRENT: u32 = nominal::SENTINEL_GLOBAL + 1;
 const FRAME: u32 = 9;
 fn error(body: &mut Vec<Instruction<'static>>) {
@@ -69,18 +70,12 @@ fn flags() -> [Instruction<'static>; 2] {
         },
     ]
 }
-fn check_cell(body: &mut Vec<Instruction<'static>>) {
-    use Instruction::*;
-    body.extend([
-        RefTestNonNull(HeapType::Concrete(5)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    error(body);
-    body.push(End);
+fn check_cell(body: &mut Vec<Instruction<'static>>, check: u32) {
+    body.push(Instruction::Call(check));
 }
 pub(super) fn lookup(b: &mut Builder) -> u32 {
     use Instruction::*;
+    redefs::checks(b);
     let mut body = vec![
         LocalGet(1),
         LocalSet(2),
@@ -111,7 +106,7 @@ pub(super) fn lookup(b: &mut Builder) -> u32 {
     ]);
     array(&mut body, 3);
     body.extend([LocalGet(4), ArrayGet(ARGS)]);
-    check_cell(&mut body);
+    check_cell(&mut body, b.names["dynamic-cell-check"]);
     array(&mut body, 3);
     body.extend([
         LocalGet(4),
@@ -225,9 +220,10 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
     }
 }
 
-fn set_binding(lookup: u32, restore: bool) -> Vec<Instruction<'static>> {
+fn set_binding(lookup: u32, restore: bool, check: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
-    let mut body = vec![
+    let mut body = if restore { redefs::restore_prefix(check) } else { vec![] };
+    body.extend([
         LocalGet(0),
         LocalGet(2),
         Call(lookup),
@@ -237,7 +233,7 @@ fn set_binding(lookup: u32, restore: bool) -> Vec<Instruction<'static>> {
         I32Const(0),
         I32GeS,
         If(BlockType::Empty),
-    ];
+    ]);
     array(&mut body, 3);
     body.extend([
         LocalGet(4),
@@ -248,8 +244,8 @@ fn set_binding(lookup: u32, restore: bool) -> Vec<Instruction<'static>> {
     if !restore {
         body.extend(root_set());
     }
-    // Entering a frame does not mutate its root. A root definition made while
-    // that frame is active must survive its exit, including exceptional exit.
+    // Ordinary binding frames never mutate/restore roots. Explicit root leases
+    // were handled above; their selected roots are restored on every exit.
     body.push(End);
     body
 }
@@ -277,7 +273,7 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         &[VALUE, VALUE, VALUE],
         &[],
         &[(1, VALUE), (1, ValType::I32)],
-        &set_binding(lookup, false),
+        &set_binding(lookup, false, b.names["dynamic-cell-check"]),
     );
     b.function(
         "binding-set",
@@ -289,8 +285,8 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         "binding-restore-in",
         &[VALUE, VALUE, VALUE],
         &[],
-        &[(1, VALUE), (1, ValType::I32)],
-        &set_binding(lookup, true),
+        &[(1, VALUE), (2, ValType::I32)],
+        &set_binding(lookup, true, b.names["dynamic-cell-check"]),
     )
 }
 /// Validate a whole chain, including entries hidden by a nearer binding. No
@@ -314,6 +310,7 @@ pub(super) fn switching(b: &mut Builder) {
     frame(&mut body, 0, 1);
     body.push(LocalSet(2));
     shape(&mut body, 2);
+    body.extend([LocalGet(2), Call(b.names["dynamic-entries-roots"]), Drop]);
     array(&mut body, 2);
     body.extend([
         ArrayLen,
@@ -330,7 +327,7 @@ pub(super) fn switching(b: &mut Builder) {
     ]);
     array(&mut body, 2);
     body.extend([LocalGet(3), ArrayGet(ARGS)]);
-    check_cell(&mut body);
+    check_cell(&mut body, b.names["dynamic-cell-check"]);
     body.extend([Br(0), End, End]);
     frame(&mut body, 0, 0);
     body.extend([
@@ -474,6 +471,7 @@ fn fork(b: &mut Builder, validate: u32) {
     ]);
     array(&mut body, 2);
     body.extend([LocalGet(7), ArrayGet(ARGS), LocalSet(1)]);
+    body.extend([LocalGet(1), Call(b.names["root-redefs-frame?"]), If(BlockType::Empty), Br(1), End]);
     frame(&mut body, 1, 1);
     body.push(LocalSet(4));
     array(&mut body, 4);
@@ -505,6 +503,7 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
     // Validate every cell and complete storage before publishing a new frame.
     let mut body = vec![];
     shape(&mut body, 0);
+    body.extend([LocalGet(0), Call(b.names["dynamic-entries-roots"]), Drop]);
     array(&mut body, 0);
     body.extend([
         ArrayLen,
@@ -521,7 +520,7 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
     ]);
     array(&mut body, 0);
     body.extend([LocalGet(2), ArrayGet(ARGS)]);
-    check_cell(&mut body);
+    check_cell(&mut body, b.names["dynamic-cell-check"]);
     body.extend([Br(0), End, End]);
     // Mark every cell dynamic, so its reads search the frames from now on.
     array(&mut body, 0);
@@ -597,6 +596,7 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
     frame(&mut body, 0, 1);
     body.push(LocalSet(1));
     shape(&mut body, 1);
+    body.extend([LocalGet(1), Call(b.names["dynamic-entries-roots"]), Drop]);
     array(&mut body, 1);
     body.extend([
         ArrayLen,
@@ -613,7 +613,7 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
     ]);
     array(&mut body, 1);
     body.extend([LocalGet(3), ArrayGet(ARGS)]);
-    check_cell(&mut body);
+    check_cell(&mut body, b.names["dynamic-cell-check"]);
     body.extend([Br(0), End, End]);
     frame(&mut body, 0, 0);
     body.push(LocalSet(2));
@@ -672,14 +672,16 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
     }
     b.code.function(&body);
     b.count += 1;
-    b.function_with_locals(
-        "dynamic-invoke",
+    let root_push = redefs::push(b, push);
+    for (name, enter) in [("dynamic-invoke", push), ("root-redefs-invoke", root_push)] {
+        b.function_with_locals(
+        name,
         &[VALUE, VALUE],
         &[VALUE],
         &[(1, VALUE)],
         &[
             LocalGet(0),
-            Call(push),
+            Call(enter),
             LocalSet(2),
             LocalGet(1),
             sentinel_value(NIL),
@@ -691,6 +693,7 @@ pub(super) fn functions(b: &mut Builder, binding_restore: u32, try_invoke: u32) 
             Call(try_invoke),
         ],
     );
+    }
     vec![callback]
 }
 

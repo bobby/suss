@@ -33,7 +33,7 @@ pub enum Operation {
     RegionPush { handler: Option<usize>, cleanup: Option<usize>, end: usize, dynamic: Vec<ValueId> },
     RegionExit { value: ValueId, cleanup: bool },
     RegionValue,
-    AsyncDynamicEnter { globals: Vec<Global>, operands: Vec<ValueId> },
+    AsyncDynamicEnter { roots: bool, globals: Vec<Global>, operands: Vec<ValueId> },
     Bitwise {
         operation: Bitwise,
         arguments: Vec<ValueId>,
@@ -50,6 +50,7 @@ pub enum Operation {
     NilTest(ValueId),
     /// Snapshot operands, initializer operands and compiled body, in that order.
     DynamicScope {
+        roots: bool,
         globals: Vec<Global>,
         operands: Vec<ValueId>,
     },
@@ -390,7 +391,7 @@ impl<'a> Lowerer<'a> {
             Expression::AsyncTry { body, handler, cleanup, payload } if self.suspendable => {
                 return self.async_region(hir, body, handler.as_deref(), cleanup.as_deref(), payload.as_ref(), Vec::new());
             }
-            Expression::AsyncDynamicScope { bindings, body } if self.suspendable => {
+            Expression::AsyncDynamicScope { roots, bindings, body } if self.suspendable => {
                 // Initializers run in the existing frame. Save its selected
                 // values afterward so cleanup preserves initializer effects,
                 // including effects before an initializer suspends.
@@ -402,10 +403,10 @@ impl<'a> Lowerer<'a> {
                     globals.push(self.clone_global(global, &hir.span)?);
                     let global = self.clone_global(global, &hir.span)?;
                     let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
-                    operands.push(self.emit(Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] }, Type::Value, hir.span.clone())?);
+                    operands.push(if *roots { self.literal(Literal::Nil, hir.span.clone())? } else { self.emit(Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] }, Type::Value, hir.span.clone())? });
                 }
                 operands.extend(values);
-                let frame = self.emit(Operation::AsyncDynamicEnter { globals, operands }, Type::Value, hir.span.clone())?;
+                let frame = self.emit(Operation::AsyncDynamicEnter { roots: *roots, globals, operands }, Type::Value, hir.span.clone())?;
                 return self.async_region(hir, body, None, None, None, vec![frame]);
             }
             Expression::Await { .. }
@@ -427,7 +428,7 @@ impl<'a> Lowerer<'a> {
                 self.write_link(linked, written, &hir.span)?;
                 written
             }
-            Expression::DynamicScope { bindings, body } => {
+            Expression::DynamicScope { roots, bindings, body } => {
                 // Clojure evaluates every initializer before installing the
                 // frame. Snapshot after those effects, not before them.
                 let mut values = Vec::new();
@@ -443,17 +444,15 @@ impl<'a> Lowerer<'a> {
                         // Saving a frame is not a source read of the binding:
                         // an overridden deferred value must remain unforced.
                         let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
-                        self.emit(
-                            Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] },
-                            Type::Value,
-                            hir.span.clone(),
-                        )
+                        if *roots { self.literal(Literal::Nil, hir.span.clone()) } else {
+                            self.emit(Operation::Nominal { operation: Nominal::BindingSnapshot, arguments: vec![cell] }, Type::Value, hir.span.clone())
+                        }
                     })
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
                 operands.extend(values);
                 operands.push(operand!(body));
                 self.emit(
-                    Operation::DynamicScope { globals, operands },
+                    Operation::DynamicScope { roots: *roots, globals, operands },
                     Type::Value,
                     hir.span.clone(),
                 )?
@@ -1208,12 +1207,12 @@ fn verify_recurrence_inner(
             if let Some(handler) = handler { verify_recurrence(handler, &mut Vec::new(), false, meter)?; }
             if let Some(cleanup) = cleanup { verify_recurrence(cleanup, &mut Vec::new(), false, meter)?; }
         }
-        Expression::AsyncDynamicScope { bindings, body } => {
+        Expression::AsyncDynamicScope { bindings, body, .. } => {
             for (_, value) in bindings { verify_recurrence(value, targets, false, meter)?; }
             verify_recurrence(body, &mut Vec::new(), false, meter)?;
         }
         Expression::Assign { value, .. } => verify_recurrence(value, targets, false, meter)?,
-        Expression::DynamicScope { bindings, body } => {
+        Expression::DynamicScope { bindings, body, .. } => {
             if hir.ty != Type::Value
                 || !matches!(&*body.kind, Expression::Function { parameters, .. } if parameters.is_empty())
             {
@@ -1804,12 +1803,17 @@ fn verify_function_inner(
                 Operation::RegionExit { .. } | Operation::RegionValue => {
                     if result_ty != Type::Value { return Err(fail("IR region outcome must be dynamic Value")); }
                 }
-                Operation::AsyncDynamicEnter { globals, operands } => {
+                Operation::AsyncDynamicEnter { roots, globals, operands } => {
                     if result_ty != Type::Value || operands.len() != globals.len() * 2 {
                         return Err(fail("IR async dynamic entry shape mismatch"));
                     }
+                    for value in &operands[..globals.len()] {
+                        if ty(*value)? != if *roots { Type::Nil } else { Type::Value } {
+                            return Err(fail("IR async dynamic snapshot kind mismatch"));
+                        }
+                    }
                 }
-                Operation::DynamicScope { globals, operands } => {
+                Operation::DynamicScope { roots, globals, operands } => {
                     if globals.len() > i32::MAX as usize / 3
                         || operands.len() != globals.len() * 2 + 1
                         || result_ty != Type::Value
@@ -1821,8 +1825,11 @@ fn verify_function_inner(
                         return Err(fail("IR dynamic scope shape mismatch"));
                     }
                     for value in &operands[..globals.len()] {
-                        if ty(*value)? != Type::Value {
-                            return Err(fail("IR dynamic snapshot must be Value"));
+                        // Root leases capture the actual roots on entry; these
+                        // unused slots must be explicit nil placeholders.
+                        let expected = if *roots { Type::Nil } else { Type::Value };
+                        if ty(*value)? != expected {
+                            return Err(fail(if *roots { "IR root lease placeholder must be Nil" } else { "IR dynamic snapshot must be Value" }));
                         }
                     }
                 }

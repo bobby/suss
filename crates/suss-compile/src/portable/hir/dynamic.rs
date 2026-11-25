@@ -36,6 +36,7 @@ impl Analyzer<'_> {
         form: &Form,
         args: &[Form],
         context: super::super::AnalysisContext,
+        roots: bool,
     ) -> Result<Hir, Diagnostic> {
         let Some(Form {
             kind: Kind::Vector(pairs),
@@ -59,10 +60,10 @@ impl Analyzer<'_> {
         self.target = target;
         let body = body?;
         let kind = if self.suspendable {
-            Expression::AsyncDynamicScope { bindings, body: Box::new(body) }
+            Expression::AsyncDynamicScope { roots, bindings, body: Box::new(body) }
         } else {
             let body = self.exception_region(form, vec![], body);
-            Expression::DynamicScope { bindings, body: Box::new(body) }
+            Expression::DynamicScope { roots, bindings, body: Box::new(body) }
         };
         Ok(Hir {
             source: None,

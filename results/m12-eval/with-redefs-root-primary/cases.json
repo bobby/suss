@@ -1,0 +1,62 @@
+[
+  {
+    "name": "redefs-definition-body",
+    "expression": "(do (def ^:dynamic redefs-body 1) (let [inside (with-redefs [redefs-body 3] (def ^:dynamic redefs-body 2) redefs-body)] [inside redefs-body]))",
+    "observed_edn": "[2 1]"
+  },
+  {
+    "name": "redefs-eval-definition-body",
+    "expression": "(do (def ^:dynamic redefs-eval 1) (let [inside (with-redefs [redefs-eval 3] (eval (quote (def ^:dynamic redefs-eval 2))) redefs-eval)] [inside redefs-eval]))",
+    "observed_edn": "[2 1]"
+  },
+  {
+    "name": "redefs-throw-restores-only-selected-root",
+    "expression": "(do (def ^:dynamic redefs-throw 1) (def redefs-prefix 0) [(try (with-redefs [redefs-throw 3] (eval (quote (def ^:dynamic redefs-throw 2))) (def redefs-prefix 8) (throw (ex-info \"body\" {}))) (catch Throwable e :caught)) redefs-throw redefs-prefix])",
+    "observed_edn": "[:caught 1 8]"
+  },
+  {
+    "name": "redefs-respects-existing-binding",
+    "expression": "(do (def ^:dynamic redefs-nested 0) [(binding [redefs-nested 1] [(with-redefs [redefs-nested 3] (eval (quote redefs-nested))) redefs-nested]) redefs-nested])",
+    "observed_edn": "[[1 1] 0]"
+  },
+  {
+    "name": "redefs-initializer-root-effect-control",
+    "expression": "(do (def ^:dynamic redefs-init 1) (let [inside (with-redefs [redefs-init (do (def ^:dynamic redefs-init 2) 3)] redefs-init)] [inside redefs-init]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "binding-definition-persists-control",
+    "expression": "(do (def ^:dynamic redefs-binding 1) (let [inside (binding [redefs-binding 3] (def ^:dynamic redefs-binding 2) redefs-binding)] [inside redefs-binding]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "ordinary-root-definition-restored",
+    "expression": "(do (def redefs-ordinary 1) (let [inside (with-redefs [redefs-ordinary 3] (def redefs-ordinary 2) redefs-ordinary)] [inside redefs-ordinary]))",
+    "observed_edn": "[2 1]"
+  },
+  {
+    "name": "nested-redefs-restore-each-root",
+    "expression": "(do (def ^:dynamic redefs-layered 1) [(with-redefs [redefs-layered 3] [(with-redefs [redefs-layered 4] (def ^:dynamic redefs-layered 2) redefs-layered) redefs-layered]) redefs-layered])",
+    "observed_edn": "[[2 3] 1]"
+  },
+  {
+    "name": "unbound-root-restored-before-defonce",
+    "expression": "(do (def ^:dynamic redefs-unbound) (let [inside (with-redefs [redefs-unbound 3] (def ^:dynamic redefs-unbound 2) redefs-unbound)] (defonce ^:dynamic redefs-unbound 8) [inside redefs-unbound]))",
+    "observed_edn": "[2 8]"
+  },
+  {
+    "name": "duplicate-target-last-value-root-restored",
+    "expression": "(do (def ^:dynamic redefs-duplicate 1) [(with-redefs [redefs-duplicate 3 redefs-duplicate 4] redefs-duplicate) redefs-duplicate])",
+    "observed_edn": "[4 1]"
+  },
+  {
+    "name": "failed-later-initializer-preserves-prefix",
+    "expression": "(do (def ^:dynamic redefs-failed 1) (def redefs-second 0) [(try (with-redefs [redefs-failed (do (def ^:dynamic redefs-failed 2) 3) redefs-second (throw (ex-info \"initializer\" {}))] :body) (catch Throwable e :caught)) redefs-failed])",
+    "observed_edn": "[:caught 2]"
+  },
+  {
+    "name": "escaped-reader-root-and-explicit-capture",
+    "expression": "(do (def ^:dynamic redefs-escaped 1) (let [read-root (with-redefs [redefs-escaped 3] (fn [] redefs-escaped)) captured (with-redefs [redefs-escaped 3] (let [value redefs-escaped] (fn [] value)))] [(read-root) (captured) redefs-escaped]))",
+    "observed_edn": "[1 3 1]"
+  }
+]

@@ -3127,7 +3127,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
                 "function",
                 methods.iter().map(|method| method.body.as_ref()).collect(),
             ),
-            Expression::AsyncDynamicScope { bindings, body } => (
+            Expression::AsyncDynamicScope { bindings, body, .. } => (
                 "async-dynamic-scope",
                 bindings
                     .iter()
@@ -3135,7 +3135,7 @@ impl<'a, 'store> AnalysisGraph<'a, 'store> {
                     .chain(std::iter::once(body.as_ref()))
                     .collect(),
             ),
-            Expression::DynamicScope { bindings, body } => (
+            Expression::DynamicScope { bindings, body, .. } => (
                 "dynamic-scope",
                 bindings
                     .iter()

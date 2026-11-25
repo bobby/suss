@@ -90,7 +90,7 @@ impl Pass<'_> {
                 }
                 Function { body, .. } | Future { body, .. } => self.features(body),
                 GeneralFunction { methods, .. } => self.any(methods.iter().map(|method| method.body.as_ref())),
-                DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } =>
+                DynamicScope { bindings, body, .. } | AsyncDynamicScope { bindings, body, .. } =>
                     self.any(bindings.iter().map(|(_, value)| value).chain(std::iter::once(body.as_ref()))),
                 AsyncTry { body, handler, cleanup, .. } => self.any(std::iter::once(body.as_ref())
                     .chain(handler.iter().map(Box::as_ref)).chain(cleanup.iter().map(Box::as_ref))),
@@ -312,7 +312,7 @@ impl Pass<'_> {
                     }
                 }
                 Do(arguments) => { for argument in arguments { self.walk(argument, facts)?; } }
-                DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } => {
+                DynamicScope { bindings, body, .. } | AsyncDynamicScope { bindings, body, .. } => {
                     for (_, value) in bindings { self.walk(value, facts)?; }
                     self.walk(body, facts)?;
                 }
