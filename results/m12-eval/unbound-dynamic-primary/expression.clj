@@ -1,0 +1,7 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (do (def ^:dynamic frame-snapshot-nil) (binding [frame-snapshot-nil nil] [(nil? frame-snapshot-nil) (identical? frame-snapshot-nil nil) @(var frame-snapshot-nil)])))
+(prn (do (def ^:dynamic frame-snapshot-false) (binding [frame-snapshot-false false] [frame-snapshot-false (identical? frame-snapshot-false false) @(var frame-snapshot-false)])))
+(prn (do (def ^:dynamic frame-snapshot-nested) (binding [frame-snapshot-nested nil] [(identical? frame-snapshot-nested nil) (binding [frame-snapshot-nested false] [frame-snapshot-nested (identical? frame-snapshot-nested false)]) (identical? frame-snapshot-nested nil)])))
+(prn (do (def ^:dynamic frame-snapshot-eval) (binding [frame-snapshot-eval nil] [(eval 'frame-snapshot-eval) (binding [frame-snapshot-eval false] (eval 'frame-snapshot-eval)) (eval 'frame-snapshot-eval)])))
+(prn (do (def ^:dynamic frame-snapshot-throw) (binding [frame-snapshot-throw nil] [(try (binding [frame-snapshot-throw false] (throw (ex-info "inner" {:inside true}))) (catch Throwable e (ex-data e))) (identical? frame-snapshot-throw nil)])))
+(prn (do (def ^:dynamic frame-snapshot-initializer) (let [effects (atom []) result (binding [frame-snapshot-initializer (do (swap! effects conj :init) nil)] (identical? frame-snapshot-initializer nil))] [result @effects])))

@@ -1437,3 +1437,32 @@ fn actual_macro_eval_preserves_invalid_math_context_consumption_and_binding_data
         assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
     }
 }
+
+
+#[test]
+fn unbound_dynamic_frames_preserve_values_effects_and_eval_context() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/unbound-dynamic-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 6);
+    let stdout = include_str!("../../../results/m12-eval/unbound-dynamic-primary/primary.stdout");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", stdout.lines().collect::<Vec<_>>().join(" "));
+    promotion_review_controls("unbound-dynamic-frames",
+        include_str!("../../../results/m12-eval/unbound-dynamic-primary/expression.sus"), &primary, 6);
+}
+
+#[test]
+fn actual_macro_eval_preserves_unbound_dynamic_frames() {
+    let primary = format!("[{}]", include_str!("../../../results/m12-eval/unbound-dynamic-primary/primary.stdout").lines().collect::<Vec<_>>().join(" "));
+    let forms = suss_reader::forms::read_forms(&primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/unbound-dynamic-primary/expression.sus");
+        macros.define(&format!("(defmacro unbound-frames-in-actual-macro [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(unbound-frames-in-actual-macro)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}

@@ -61,7 +61,7 @@ fn dynamic_targets_preserve_namespace_aliases_phase_and_lexical_shadowing() {
 }
 
 #[test]
-fn a_global_read_reads_a_static_root_inline_and_asks_binding_get_otherwise() {
+fn a_global_read_reads_a_static_root_inline_and_asks_binding_read_otherwise() {
     // Only a cell a binding frame has held searches the frames; any other
     // bound cell's read is a field read at the read site (#354).
     use wasmparser::{Operator, Parser, Payload};
@@ -86,5 +86,5 @@ fn a_global_read_reads_a_static_root_inline_and_asks_binding_get_otherwise() {
     // The cell's global is already a binding reference, so it isn't cast.
     assert_eq!(operators[at + 4..at + 6], ["GlobalGet { global_index: 0 }".to_string(), field(0)]);
     assert!(operators[at + 6] == "Else", "{:?}", &operators[at..]);
-    assert!(operators[at + 7..].iter().any(|op| op.starts_with("Call")), "a dynamic read calls binding-get");
+    assert!(operators[at + 7..].iter().any(|op| op.starts_with("Call")), "a dynamic read calls binding-read");
 }

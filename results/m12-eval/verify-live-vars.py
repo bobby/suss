@@ -29,6 +29,18 @@ paths += ['crates/suss-compile/src/portable_macro_graph.rs','crates/suss-compile
 paths += ['docs/compatibility/patches/expression-symbol.json','results/m12-eval/symbol-primary/cases.json']
 paths += ['crates/suss-compile/src/portable_session/installation.rs', 'crates/suss-compile/src/portable_session/compiler_state.rs', 'crates/suss-compile/src/portable_session/evaluation/function_pool.rs', 'crates/suss-compile/src/portable_session/evaluation/math_context.rs', 'crates/suss-compile/src/portable_macro_data/exception.rs', 'results/m12-eval/function-def-and-pool-primary/cases.json', 'results/m12-eval/function-pool-initialization-primary/cases.json', 'results/m12-eval/exception-transfer-primary/cases.json', 'results/m12-eval/function-metadata-primary/cases.json', 'results/m12-eval/materialization-and-context-primary/cases.json']
 paths += ['crates/suss-compile/src/runtime_abi/dynamic.rs', 'crates/suss-compile/src/runtime_abi/decimals.rs', 'crates/suss-compile/tests/runtime_abi.rs', 'results/m12-eval/lazy-math-context-primary/cases.json', 'results/m12-eval/lazy-math-context-primary/expression.sus']
+p=BASE/'unbound-dynamic-primary';unbound=json.loads((p/'command.json').read_text())
+assert unbound['exit_code']==0
+assert all(sha(Path(name).read_bytes())==digest for name,digest in unbound['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==unbound['source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==unbound['stdout_sha256']
+rows=json.loads((p/'cases.json').read_text());assert len(rows)==6
+assert [row['observed_edn'] for row in rows]==(p/'primary.stdout').read_text().splitlines()
+assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n'+''.join('(prn '+row['expression']+')\n' for row in rows)
+assert (p/'expression.sus').read_text()=='['+'\n'.join('(try '+row['expression'].replace('(catch Throwable ', '(catch :default ')+' (catch :default unexpected :unexpected-native-error))' for row in rows)+']\n'
+paths += ['crates/suss-cli/tests/compiled_macro_publication_cells.rs']
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-compile/tests/portable_resolution.rs', 'crates/suss-compile/tests/portable_closures.rs', 'crates/suss-compile/tests/portable_dynamic_bindings.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')
