@@ -1,0 +1,20 @@
+{
+  "recorded_code_head": "133b7024762d5006d4c784416e66ecef5a73f6b8",
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "actual_cargo_exit": 0,
+  "actual_seconds": 10420.337684392929,
+  "source_and_head_unchanged_during_execution": true,
+  "successful_test_groups": 377,
+  "passed_tests": 2566,
+  "existing_ignored_tests": 15,
+  "actual_required_ci_success": true,
+  "ci_run": 45586341822,
+  "qualification": "Actual recorded local baseline and CI outcomes, preserving all existing ignores and original primary/baseline/count/skip/opaque rules. A later prose/evidence checkpoint must conserve every executed source/test/fixture input. Independent review and passing final-head CI remain required; no milestone or issue closure is inferred."
+}

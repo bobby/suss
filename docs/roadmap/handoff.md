@@ -1,3 +1,36 @@
+## Exact workspace and CI evidence (2026-11-25)
+
+At recorded code head `133b7024762d5006d4c784416e66ecef5a73f6b8`, run
+`cargo test --workspace --locked -- --test-threads=2`: actual Cargo exit 0
+in 10,420.338 seconds, with all 8,439 recorded inputs and HEAD unchanged throughout.
+The complete run records 377 successful test groups, 2,566 passed tests and 15
+existing ignored tests. The compiler-expression target has 305 passes and 10
+existing prototype-harness ignores; manual baseline/catalog generators and the
+selected random guard retain their existing ignore policy. The optimized random
+guard separately passes when explicitly selected by the conserved broader run.
+No source/test/oracle is changed to obtain these outcomes.
+
+All 48 public-eval tests, complete 22-test Clojure suite (including its actual
+native comparison against the reviewed baseline), original 5-test some-fn target
+with 372 controls and 47 actual AOT components, and complete 22/11 portable/module
+targets pass within that run. The raw 397-case corpus, 142 existing corrections,
+two additional qualified primary controls and every original module order,
+partial-effect, retry and publication assertion remain. The recorded complete
+native comparison keeps existing unrelated failures and guest judgments explicit;
+it does not establish whole-language conformance.
+
+All ten required checks in CI 45586341822 pass on that same code head: foundation,
+eight integration partitions and the final aggregate check. The failed C9 CI
+logs and deliberately interrupted C9 workspace 101 remain preserved separately.
+Original primary, baseline, comparator and count/skip/opaque rules are unchanged.
+
+Receipts/logs are in results/m12-eval/full-workspace-after-portable-reference-alignment,
+portable-reference-workspace-gates and final-ci-133b. Run
+`python3 results/m12-eval/verify-133b-workspace-checkpoint.py` to verify the actual
+terminals and conserve every executed code/test/fixture input across publication
+of these prose/evidence files. Later code changes require fresh relevant checks;
+independent review and passing final-head CI remain separate requirements.
+
 ## Portable references and module observers (2026-11-25)
 
 C9 CI run45577012191

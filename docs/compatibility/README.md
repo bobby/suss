@@ -1740,3 +1740,13 @@ GC/fork ownership, pending async return/cancellation and trap recovery. Twelve
 fresh primary controls and318 focused native tests pass. Reproduction and
 limits are in `results/m12-eval/README.md` and `docs/runtime/dynamic-bindings.md`;
 full workspace, independent review and final-head CI remain separate gates.
+
+
+Recorded validation at code `133b7024` (2026-11-25): the exact two-thread workspace
+command returns actual 0 in 10,420.338 seconds with source/HEAD unchanged; all ten required
+CI 45586341822 checks pass on that code head. The run retains all original oracle,
+count/skip/opaque rules and 15 existing Rust-test ignores. Executed code/test/fixture
+conservation across the associated prose/evidence publication is checked by
+results/m12-eval/verify-133b-workspace-checkpoint.py. Full command receipts and
+limits remain in results/m12-eval/README.md; independent review and passing
+final-head CI remain separate requirements.
