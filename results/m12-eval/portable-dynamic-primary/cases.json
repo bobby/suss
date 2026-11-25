@@ -1,0 +1,30 @@
+[
+  {
+    "id": "dynamic-snapshot-before-initializers",
+    "source": "(do (def ^:dynamic *snapshot* 1) (binding [*snapshot* (do (set! *snapshot* 2) 7)] *snapshot*) *snapshot*)",
+    "legacy_cljs_expected": {
+      "tag": "f64",
+      "bits": "3ff0000000000000"
+    },
+    "primary_source": "(do (def ^:dynamic *snapshot* 1) (binding [*snapshot* 1] (binding [*snapshot* (do (set! *snapshot* 2) 7)] *snapshot*) *snapshot*))",
+    "qualification": "The unchanged native bootstrap spelling permits a root set! and must retain that prior effect. Clojure rejects unbound root set!; its independent control supplies an outer thread binding to observe the corresponding initializer effect. This does not claim raw-source Clojure compatibility.",
+    "expected": {
+      "tag": "long",
+      "value": "2"
+    }
+  },
+  {
+    "id": "dynamic-definition-inside-binding",
+    "source": "(do (def ^:dynamic *defined* 1) (binding [*defined* 7] (def *defined* 9)) *defined*)",
+    "legacy_cljs_expected": {
+      "tag": "f64",
+      "bits": "3ff0000000000000"
+    },
+    "primary_source": "(do (def ^:dynamic *defined* 1) (binding [*defined* 7] (def *defined* 9)) *defined*)",
+    "qualification": "The original source is valid in pinned Clojure and returns9; a definition in a binding body persists in the real root. No source adaptation.",
+    "expected": {
+      "tag": "long",
+      "value": "9"
+    }
+  }
+]

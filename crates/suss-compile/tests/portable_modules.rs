@@ -65,7 +65,7 @@ impl Host {
         linker
             .instance(&mut store, "suss.runtime", runtime)
             .unwrap();
-        let setter = runtime.get_func(&mut store, "binding-set").unwrap();
+        let setter = runtime.get_func(&mut store, "binding-root-set").unwrap();
         let setter_type = setter.ty(&store);
         let trace =
             wasmtime::Func::new(&mut store, setter_type, move |mut caller, args, results| {
@@ -79,7 +79,7 @@ impl Host {
                 setter.call(&mut caller, args, results)
             });
         linker
-            .define(&store, "suss.runtime", "binding-set", trace)
+            .define(&store, "suss.runtime", "binding-root-set", trace)
             .unwrap();
         Self {
             store,

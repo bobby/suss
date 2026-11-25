@@ -1,0 +1,5 @@
+Execution error (IllegalStateException) at user/eval136 (original-0.clj:2).
+Can't change/establish root binding of: *snapshot* with set
+
+Full report at:
+/tmp/clojure-2029966926295326152.edn

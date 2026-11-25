@@ -1,3 +1,34 @@
+## Portable references and module observers (2026-11-25)
+
+C9 CI run45577012191
+fails portable_pipeline on two supplementary ClojureScript scope expectations,
+and portable_modules on two initialization traces. The complete portable target
+now returns0 (22tests,705.135s including compilation); all397 original source IDs
+and142 existing correction paths still execute. Two additional pinned Clojure
+controls record Long2 and Long9. The definition case is the exact original
+source. For the initializer case Clojure rejects root set! (actual1); its legal
+outer-thread-binding control returns2. The original native root-set spelling
+remains an explicit bootstrap extension and is still executed. This qualified
+reference does not claim raw-source Clojure equivalence for that extension.
+The original raw CLJS corpus and primary/baseline/count/skip/opaque rules remain
+unchanged. Primary source, exact outputs, JVM failure and JAR hashes are retained
+under results/m12-eval/portable-dynamic-primary.
+
+The module observer now intercepts binding-root-set, the actual import used by
+definitions. Only two hook strings change; every initialization order, partial
+effect, retry and provided-module assertion remains unchanged. The full module
+target returns0 (11tests,16.753s including compilation). Production code stays
+byte-identical to the318-test root-scope gate and its ten passing broader
+commands, including Java/Node-free bootstrap, native0 and strict5564-row capture.
+Run python3 results/m12-eval/verify-portable-reference-checkpoint.py to verify
+that conservation and both new target receipts. Older source-specific verifiers
+remain historical. The C9 exact workspace was deliberately interrupted for the
+confirmed CI reference mismatch: actual101 in1954.140s, source/HEAD unchanged.
+That receipt and both failed CI logs remain under results/m12-eval. A fresh exact
+two-thread workspace terminal, independent review and final-head CI remain
+required; targeted passes do not replace those gates.
+
+
 ## Root redefinitions and thread bindings (2026-11-25)
 
 The frozen root-scope gate passes318 tests:48 public eval,62 runtime ABI,

@@ -1,0 +1,23 @@
+{
+  "head": "c9eecf80df791baba8fc51c19cc7d6e1ea136179",
+  "workspace": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/full-workspace-after-root-redefs/command.json",
+  "recorder_pid": 1444386,
+  "cargo_pid": 1444419,
+  "test_pids": [
+    1513148
+  ],
+  "descendants": [
+    1513148,
+    1517014
+  ],
+  "complete": true,
+  "reason": "Deliberate interruption for confirmed CI portable_pipeline reference mismatch (two stale ClojureScript scope expectations), not a timeout. Production C9 code unchanged. Raw397 corpus and142 existing correction paths must remain immutable; add explicit source-qualified adjustments with actual Clojure evidence, retaining raw native extension checks.",
+  "CI_job": 139077317860,
+  "CI_logs": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pr516-ci-c9ee/job-139077317860.log.gz",
+  "probe": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/command.json",
+  "corpus_sha256": "65c4bea5bc76ceea7fe2c8c8bcf307336e2478782deef65e6af3a02032834601",
+  "actual_workspace_exit_code": 101,
+  "actual_workspace_seconds": 1954.1399502754211,
+  "inputs_unchanged": true,
+  "head_unchanged": true
+}
