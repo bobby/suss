@@ -1041,7 +1041,14 @@ impl FormBridge {
         span: Range<usize>,
         include_metadata: bool,
     ) -> Result<Form, SessionError> {
-        self.read_with_context(session, value, span, include_metadata, None).map(|(form, _)| form)
+        self.read_with_context(session, value, span, include_metadata, None, true).map(|(form, _)| form)
+    }
+    /// Snapshot already materialized data without invoking a lazy sequence.
+    /// Dynamic-context transport must not execute an otherwise unused binding.
+    pub(crate) fn read_materialized(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+    ) -> Result<Form, SessionError> {
+        self.read_with_context(session, value, 0..0, true, None, false).map(|(form, _)| form)
     }
     pub(crate) fn read_evaluation(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
@@ -1050,13 +1057,13 @@ impl FormBridge {
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
         let native = NativeRead { owner, closure_test, class_test, instance_test, var_class, meta_fn_class, constants: vec![] };
-        let (form, constants) = self.read_with_context(session, value, span, true, Some(native))?;
+        let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
     }
     fn read_with_context(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
-        span: Range<usize>, include_metadata: bool, native: Option<NativeRead>,
+        span: Range<usize>, include_metadata: bool, native: Option<NativeRead>, realize_lazy: bool,
     ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         self.check(session)?;
         session.with_operation_budget(|session| {
@@ -1076,7 +1083,7 @@ impl FormBridge {
                         profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
                         host_fuel: std::cell::Cell::new(0),
                         lazy_calls: std::cell::Cell::new(0),
-                            calls: Some(ReadCalls {
+                            calls: realize_lazy.then_some(ReadCalls {
                                 args_new,
                                 invoke,
                                 function,

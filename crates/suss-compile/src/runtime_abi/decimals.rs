@@ -18,6 +18,9 @@ pub(super) fn pair(b: &Builder) -> Vec<Instruction<'static>> {
 }
 
 pub(super) fn declare(b: &mut Builder) -> (u32, u32) {
+    b.function("decimal-context-test", &[VALUE], &[ValType::I32], &[
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(MATH_CONTEXT)),
+    ]);
     b.function("decimal-test", &[VALUE], &[ValType::I32], &[
         LocalGet(0), RefTestNonNull(HeapType::Concrete(DECIMAL)),
     ]);

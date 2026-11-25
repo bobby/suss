@@ -35671,3 +35671,73 @@ JVM primary, comparator, count/skip/opaque contracts and 132 explicit global
 failures remain unchanged. The canonical primitive NaN=false and ordinary
 function/object NaN=true profiles are both retained. Exact workspace,
 independent review and passing final-head CI remain required.
+
+
+The final eval review-fix source at 9a02658e completes all ten broader
+validation commands with source, HEAD and pinned Binaryen unchanged. They
+cover source/primary provenance, core and sequence imports, compiler library,
+25 numeric/module/artifact/budget targets, the optimized random-effect guard,
+Java/Node-free bootstrap reproduction, and the complete native capture.
+Actual native exit 0 takes 469.394s. Strict conservation retains
+all 5,564 ordered observations, 5,346 prior comparable successes, all 34
+original eval assertions (29 host matches and the same five guest judgments),
+the complete symbol/Var bodies, and 229 BigInt/Ratio plus 200 Decimal tagged
+host matches. The existing baseline, primary, count/skip/opaque rules and
+unrelated failures remain unchanged. See the compressed terminals under
+results/m12-eval/promotion-review-all-fixes-broader.
+
+Run `cargo test --workspace --locked -- --test-threads=2`: actual exit 0 in
+13637.983s, with source and HEAD unchanged throughout the
+durable run. The exact command, Rust toolchain, input hashes and full output
+are archived under full-workspace-after-promotion-review-fixes. This validates
+the construction-time function pools, owned exception transfer and inherited
+math context on the current executable source; earlier workspace results
+remain historical. During the continuous run, the temporary CPU ceiling was
+raised from three to six cores after the numeric capture freed host capacity;
+test threads, build jobs, memory limits, source and HEAD remained unchanged.
+The measured scheduling observation is archived as resource-policy.json.gz.
+Independent follow-up review and passing final-head CI
+still gate ready status. Numeric source-body closure remains separate in #518.
+
+
+Fresh pinned Clojure controls cover unused invalid math contexts, actual
+keyword/map reads, macro and raw-macro access, decimal-consumption effects,
+lazy/function bindings and nested precision/nil overrides. The compiler
+snapshots valid MathContext scalar fields or existing nominal data without
+validating them as numeric context. Unsupported cross-phase data retain an
+honest diagnostic at an actual binding read; unused lazy/function bindings do
+not execute or fail. Dynamic-frame saves use a compiler-only unforced read,
+so a macro can install a valid inner context and restore the outer value.
+Deferred diagnostics live in private GC-owned messages and produce ordinary
+language Errors on read; no foreign roots, fake values or per-request host
+callbacks are added. The existing nominal macro-data transport boundary remains.
+
+The source-frozen focused commands return0 for all40 public-eval tests, all60
+runtime ABI tests and all3 borrowed-installation tests. The new20-control
+primary executes in Runtime/Macro and inside actual compiled Macro functions,
+with post-GC observations. The immutable terminals and exact runner are under
+results/m12-eval/lazy-math-context-frame-focused; verify-lazy-context-checkpoint.py
+links their actual dirty-source HEAD to this committed source by hash without
+relabeling history. Retained negatives include the original eager validation,
+the initial library-test compile error (now fixed), and the actual nested
+binding counterexamples. The intermediate GC run was intentionally interrupted
+for that confirmed production defect and its real nonzero terminal is retained.
+
+Earlier source9a workspace/native/bootstrap results remain historical after
+this source change. Fresh full native capture and strict conservation,
+Java/Node-free bootstrap, exact two-thread workspace validation, independent
+follow-up review and passing final-head CI retain separate gates. No primary,
+baseline, count/skip/opaque or unrelated suite judgments change.
+
+
+The numeric integration applies the parent eval lazy-context/frame-snapshot
+source delta without changing other numeric production, test, runtime or
+configuration inputs. Both append-only handoff sections are preserved and the
+live-Var provenance is regenerated from the combined tree. Parent focused
+40+60+3 results and numeric CI at ea76 are historical evidence for their own
+sources; the combined tree requires fresh execution and exact workspace checks.
+The ea76 numeric full workspace was intentionally interrupted for the confirmed
+shared context bug, with actual101 and unchanged source/HEAD; it is not a pass.
+Existing primary, comparison, count/skip/opaque and explicit failure ledgers
+remain unchanged. Parent-only verify-lazy-context-checkpoint.py remains scoped
+to its recorded parent source; it is not an integrated numeric acceptance check.

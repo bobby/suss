@@ -80,7 +80,7 @@ impl MacroService {
         form: Form,
         namespace: &str,
         fuel: u64,
-        context: Option<(i32, i32)>,
+        context: crate::portable_session::EvaluationMathContext,
         interrupt: Arc<AtomicBool>,
         prepare_caller: impl FnOnce(Form, Form, Vec<String>, u64) -> Result<(T, u64), SessionError>,
     ) -> Result<(Result<(T, SessionValue), SessionError>, u64), SessionError> {
@@ -154,7 +154,7 @@ impl MacroService {
         namespace: &str,
         arguments: Vec<Form>,
         fuel: u64,
-        context: Option<(i32, i32)>,
+        context: crate::portable_session::EvaluationMathContext,
         interrupt: Arc<AtomicBool>,
     ) -> Result<(Result<Form, SessionError>, u64), SessionError> {
         let mut lease = self.lease();
@@ -222,7 +222,7 @@ mod tests {
         let interrupt = macros.interrupt_handle();
         let form = suss_reader::forms::read_forms("(defmacro cancelled-declaration [] 42)").unwrap().pop().unwrap();
         let result = service.declare_evaluation(
-            form, "cancelled-namespace", 400_000_000, None,
+            form, "cancelled-namespace", 400_000_000, crate::portable_session::EvaluationMathContext::Nil,
             Arc::new(AtomicBool::new(false)),
             move |_, _, _, _| {
                 // Cancel after preparation, precisely at the cap before commit.

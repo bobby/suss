@@ -1,4 +1,35 @@
+The numeric integration retains the parent eval evidence below at its exact
+recorded source. Fresh validation of the combined tree remains separate; the
+parent-specific checkpoint verifier does not certify numeric changes.
+
+Fresh lazy-context validation records20 pinned controls, all40 public-eval,
+all60 runtime ABI and all3 borrowed-installation tests at actual0. See
+[lazy-context terminals](lazy-math-context-frame-focused/commands.json.gz) and
+[source conservation](verify-lazy-context-checkpoint.py). Prior full workspace
+results below predate this source change. Fresh broader/workspace/review/final CI
+remain separate gates; nominal cross-phase data limits remain explicit.
+
 # Compiled public eval and real Vars
+
+The review-fix source at `9a02658e` passes the complete 38-test public-eval
+and three borrowed-installation controls, all ten broader validation commands,
+and the exact `cargo test --workspace --locked -- --test-threads=2` baseline.
+The full workspace returns actual exit 0 in 13637.983s; source
+and HEAD remain unchanged throughout the durable run. The broader gate also
+reproduces bootstrap without Java/Node and returns actual native exit 0 in
+469.394s with strict complete-capture conservation. See the
+[broader terminals](promotion-review-all-fixes-broader/commands.json.gz) and
+[full workspace receipt](full-workspace-after-promotion-review-fixes/command.json.gz).
+
+Function constants follow source-function construction timing, alias/arity
+sharing and Clojure's capture/materialization failure boundaries. Isolated
+macro calls inherit and restore math context; message/data/cause transfer
+uses owned values and original accessors, while VM traps retain their path.
+The original 34 eval rows retain 29 host matches and the same five guest
+judgments. All 5,564 ordered observations, 5,346 prior comparable successes,
+229/200 numeric tagged host matches and unrelated baseline failures remain
+explicit. Independent follow-up review and final-head CI have separate gates;
+complete numeric source-body evidence remains separate in #518.
 
 Native Runtime and isolated Macro sessions compile form data through their own
 persistent analyzer/emitter and live binding cells. Public eval supports recursive

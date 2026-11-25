@@ -10,6 +10,7 @@ use crate::{
 mod macro_function;
 pub(super) mod function_pool;
 mod math_context;
+pub(crate) use math_context::EvaluationMathContext;
 
 #[derive(Default)]
 pub(super) struct Evaluation {

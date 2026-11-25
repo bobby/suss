@@ -693,6 +693,8 @@ pub enum Nominal {
     BindingDefined,
     /// Compiler-only construction of the shared Wasm getter for a native Var.
     BindingGetter,
+    /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
+    BindingSnapshot,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -863,7 +865,7 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::BindingGetter | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
+                Self::BindingDefined | Self::BindingGetter | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,

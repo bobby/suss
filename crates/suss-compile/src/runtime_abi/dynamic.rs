@@ -170,13 +170,37 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
     body.extend(root);
     body.push(End);
     b.function_with_locals(
-        "binding-get",
+        "binding-get-unforced",
         &[VALUE],
         &[VALUE],
         &[(1, VALUE), (1, ValType::I32)],
         &body,
     );
+    // Unsupported native context transport is reported on the binding read,
+    // never while constructing an otherwise unused dynamic frame. A private
+    // cell holds the GC-owned message; ordinary Vars are nominal objects, not
+    // raw binding cells. No host callback or foreign root survives the request.
+    const DEFERRED_ERROR: i32 = 4;
+    b.function("binding-delay-error", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)),
+        I32Const(DEFERRED_ERROR), StructNew(BINDING),
+    ]);
+    b.function_with_locals("binding-get", &[VALUE], &[VALUE], &[(1, VALUE)], &[
+        LocalGet(0), Call(b.names["binding-get-unforced"]), LocalSet(1),
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(BINDING)), If(BlockType::Empty),
+        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 1 },
+        I32Const(DEFERRED_ERROR), I32And, If(BlockType::Empty),
+        GlobalGet(nominal::ERROR_GLOBAL),
+        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 0 },
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        sentinel_value(NIL), sentinel_value(NIL), I32Const(0), RefI31,
+        StructNew(LANGUAGE_ERROR), Throw(0), End, End,
+        LocalGet(1),
+    ]);
 }
+
 pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
     use Instruction::*;
     let mut body = vec![

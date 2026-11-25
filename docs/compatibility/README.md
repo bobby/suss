@@ -1,3 +1,14 @@
+The numeric integration retains the parent eval evidence below at its exact
+recorded source. Fresh validation of the combined tree remains separate; the
+parent-specific checkpoint verifier does not certify numeric changes.
+
+Native eval defers invalid math-context validation until consumption and keeps
+unused lazy/function bindings inert. Private frame snapshots preserve deferred
+values while macros override and restore context. Twenty fresh primary controls
+and focused40+60+3 tests pass; see [receipts](../../results/m12-eval/lazy-math-context-frame-focused/commands.json.gz).
+Historical workspace evidence below predates this source change; new broader
+validation, independent review and final CI remain separate gates.
+
 The complete Clojure assert form has a compiled source adaptation in
 [assert provenance](bootstrap/clojure-assert.json). Its original arities,
 compile-time flag checks, branches and message expressions are retained;
@@ -27,6 +38,17 @@ keeps ifn?'s actual missing-promise blocker. All229 BigInt/Ratio and200 Decimal
 tagged-operand rows match independently; these subsets do not establish whole
 numeric source-form conformance. Exact workspace, review and final-head CI retain
 separate gates; see [eval evidence](../../results/m12-eval/README.md).
+
+The later review-fix source9a02658e also preserves function-constant
+construction timing, shared arities, Clojure capture/failure boundaries and
+owned macro exception payloads. Runtime/Macro math-context transfer restores
+caller and leased-store state. All38 public-eval controls, all10 broader
+commands and the exact two-thread workspace baseline return0 with frozen
+source/HEAD. The immutable [workspace receipt](../../results/m12-eval/full-workspace-after-promotion-review-fixes/command.json.gz)
+and [broader receipts](../../results/m12-eval/promotion-review-all-fixes-broader/commands.json.gz)
+retain actual results. Independent follow-up review and final-head CI remain
+separate gates; no whole-language or complete numeric-source claim is inferred.
+
 
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate

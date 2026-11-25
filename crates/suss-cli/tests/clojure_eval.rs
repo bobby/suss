@@ -1409,3 +1409,31 @@ fn eval_function_pool_initialization_preserves_construction_effects_and_arity_sh
         include_str!("../../../results/m12-eval/function-pool-initialization-primary/cases.json"),
         include_str!("../../../results/m12-eval/function-pool-initialization-primary/stdout.log"), "function-pool-construction-primary");
 }
+
+#[test]
+fn eval_invalid_math_context_is_validated_at_consumption_and_preserves_binding_data() {
+    let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/lazy-math-context-primary/cases.json")).unwrap();
+    assert_eq!(rows.len(), 20);
+    let stdout = include_str!("../../../results/m12-eval/lazy-math-context-primary/primary.stdout");
+    assert_eq!(stdout.lines().collect::<Vec<_>>(), rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>());
+    let primary = format!("[{}]", rows.iter().map(|row| row["observed_edn"].as_str().unwrap()).collect::<Vec<_>>().join(" "));
+    promotion_review_controls("lazy-math-context",
+        include_str!("../../../results/m12-eval/lazy-math-context-primary/expression.sus"), &primary, 20);
+}
+
+#[test]
+fn actual_macro_eval_preserves_invalid_math_context_consumption_and_binding_data() {
+    let primary = format!("[{}]", include_str!("../../../results/m12-eval/lazy-math-context-primary/primary.stdout").lines().collect::<Vec<_>>().join(" "));
+    let forms = suss_reader::forms::read_forms(&primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/lazy-math-context-primary/expression.sus");
+        macros.define(&format!("(defmacro lazy-context-in-actual-macro [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(lazy-context-in-actual-macro)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?}", session.phase());
+    }
+}

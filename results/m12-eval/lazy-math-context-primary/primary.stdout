@@ -1,0 +1,20 @@
+3
+:ok
+42
+:invalid
+true
+[:error [:before]]
+:invalid
+{:bad [1N 2/3 1.00M]}
+(quote :invalid)
+[:error 0.333M nil]
+3
+3
+[3 0]
+:ok
+[:error [:before]]
+[:safe 0]
+0.333M
+0.333M
+[0.333M 0]
+{:inside true}
