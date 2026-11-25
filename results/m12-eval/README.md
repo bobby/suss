@@ -1,3 +1,28 @@
+### Caller-owned macro bindings and stable Var metadata
+
+At8a93677f, both new root/duplicate tests return0 across both phases and actual
+macros. Its broader focused command returns101 on an unchanged retained Var
+fixture: that Var uses an ordinary thunk rather than a native binding getter.
+The frozen receipts are under `macro-thread-followup-before`. Two independent
+immutable8a CLI commands return0 but disagree with fresh pinned Clojure controls
+on metadata-map identity after root clearing and on a thread-selected macro
+transformer. Their actual outputs remain under `metadata-identity-primary` and
+`thread-macro-binding-before`.
+
+The follow-up guards native getter classification, caches cleared Var metadata,
+and prepares a thread-selected transformer through the existing analyzer/emitter
+while invoking it in its actual caller Store. Macro service steps release their
+Store before caller execution; a scoped operation owner keeps catalogs exclusive
+and permits same-thread reentry. Selected functions are read at each expansion,
+without inheriting the old function's unused-form/environment proofs. Nine fresh
+primary controls retain actual captures/effects, form/environment, recursive
+evaluation, changing bindings, existing function/Var identity and failed prefix
+effects. Pure component capability and original oracle/baseline policies remain.
+
+The current Rust check returns0 (24.39 seconds). New native focused, service
+ownership/cancellation, bootstrap/native/full workspace, independent review and
+final-head CI results must be recorded separately before any new pass claim.
+
 ### Root macro status and duplicate source keys
 
 An independent immutable-binary review found two actual primary/native

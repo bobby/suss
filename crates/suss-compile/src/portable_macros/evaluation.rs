@@ -10,18 +10,17 @@ pub(crate) enum PreparedEvaluation {
     MacroDeclaration(Form),
 }
 
-impl MacroHost<'_> {
-    pub(super) fn prepare_native_evaluation(
-        &mut self,
-        snapshot: &CompilationSnapshot,
-        mut form: Form,
-    ) -> Result<PreparedEvaluation, SessionError> {
+pub(crate) fn prepare_with_expander(
+    snapshot: &CompilationSnapshot,
+    mut form: Form,
+    expander: &mut dyn ExpansionHost,
+) -> Result<PreparedEvaluation, SessionError> {
         let span = form.span.clone();
         let origin = crate::portable::SourceOrigin::native_evaluation(
             snapshot.native_owner.ok_or_else(|| wasmtime::Error::msg("Missing native compilation owner"))?
         );
         {
-            let mut request = crate::portable::ExpansionRequest::new(self, span.clone())
+            let mut request = crate::portable::ExpansionRequest::new(expander, span.clone())
                 .map_err(SessionError::Compile)?;
             request
                 .charge_expansion_work(
@@ -96,13 +95,23 @@ impl MacroHost<'_> {
             let direct = match &form.kind {
                 Kind::List(items) | Kind::Vector(items) | Kind::Set(items) =>
                     matches!(items.first().map(|item| &item.kind), Some(Kind::Symbol(name)) if name.name.starts_with("def")),
-                _ => false,
+                // A transformer may return a live function or Var directly.
+                // Non-collection Compiler.eval inputs use C.EVAL, too.
+                _ => true,
             };
             let origin=origin.with_native_direct_constants(direct);
             snapshot
-                .prepare_with_origin(vec![form], span, self, Some(&origin))
+                .prepare_with_origin(vec![form], span, expander, Some(&origin))
                 .map(PreparedEvaluation::Fragment)
         }
+
+}
+
+impl MacroHost<'_> {
+    pub(super) fn prepare_native_evaluation(
+        &mut self, snapshot: &CompilationSnapshot, form: Form,
+    ) -> Result<PreparedEvaluation, SessionError> {
+        prepare_with_expander(snapshot, form, self)
     }
 
     pub(crate) fn evaluate_native_form(

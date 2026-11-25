@@ -8,6 +8,7 @@ use crate::{
 };
 
 mod macro_function;
+mod macro_binding;
 pub(super) mod function_pool;
 mod math_context;
 pub(crate) use math_context::EvaluationMathContext;
@@ -319,13 +320,18 @@ impl Evaluation {
             view.synchronize_evaluation_macros(&mut snapshot)?;
             snapshot.environment.native_evaluation_namespace = true;
             let publish_namespace = view.evaluation_updates_input_namespace()?;
-            let context = view.evaluation_math_context()?;
-            let allowance = view.operation_fuel_remaining()?;
-            let (prepared, spent) =
-                service.prepare_evaluation(&snapshot, form, allowance, context, view.interrupt.clone())?;
-            // Release the isolated Macro lease before executing Runtime code.
-            // Compilation and macro execution debit the caller cumulatively.
-            view.charge_host_work(spent)?;
+            let prepared = if view.has_native_macro_binding_override(&snapshot)? {
+                // A thread-bound transformer lives in this Store. Invoke it
+                // here, releasing the Macro Store between compiler steps.
+                macro_binding::prepare(&mut view, &service, &bridge, &snapshot, form)
+            } else {
+                let context = view.evaluation_math_context()?;
+                let allowance = view.operation_fuel_remaining()?;
+                let (prepared, spent) = service.prepare_evaluation(
+                    &snapshot, form, allowance, context, view.interrupt.clone())?;
+                view.charge_host_work(spent)?;
+                prepared
+            };
             match prepared? {
                 PreparedEvaluation::MacroDeclaration(form) => {
                     let prepared =

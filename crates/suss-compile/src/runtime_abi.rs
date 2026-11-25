@@ -1869,20 +1869,31 @@ fn build_module() -> Vec<u8> {
         LocalGet(0), RefFunc(binding_getter_entry), I32Const(0), I32Const(0),
         Call(b.names["closure-new"]),
     ]);
-    b.function_with_locals("binding-getter-macro?", &[VALUE], &[ValType::I32],
+    // Retained upstream Var fixtures can use an ordinary thunk with no native
+    // root cell. Its explicit metadata remains authoritative. Native Vars use
+    // the compiler-owned universal getter and its actual cell instead.
+    let getter_cell = b.function_with_locals("binding-getter-cell", &[VALUE], &[VALUE],
         &[(1, VALUE)], &[
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)),
+            If(BlockType::Result(VALUE)),
             LocalGet(0), RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
             StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
-            RefCastNonNull(HeapType::Concrete(BINDING)), LocalSet(1),
+            LocalTee(1), RefTestNonNull(HeapType::Concrete(BINDING)),
+            If(BlockType::Result(VALUE)), LocalGet(1), Else, sentinel_value(NIL), End,
+            Else, sentinel_value(NIL), End,
+        ]);
+    b.function_with_locals("binding-getter-macro?", &[VALUE], &[ValType::I32],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(1), RefIsNull,
+            If(BlockType::Result(ValType::I32)), I32Const(1), Else,
             LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
             StructGet { struct_type_index: BINDING, field_index: 1 },
-            I32Const(CELL_MACRO), I32And, I32Eqz, I32Eqz,
+            I32Const(CELL_MACRO), I32And, I32Eqz, I32Eqz, End,
         ]);
     b.function_with_locals("binding-getter-macro-set!", &[VALUE, VALUE], &[VALUE],
         &[(1, VALUE)], &[
-            LocalGet(0), RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
-            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
-            RefCastNonNull(HeapType::Concrete(BINDING)), LocalSet(2),
+            LocalGet(0), Call(getter_cell), LocalTee(2), RefIsNull,
+            If(BlockType::Empty), LocalGet(0), Return, End,
             LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
             LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
             StructGet { struct_type_index: BINDING, field_index: 1 },

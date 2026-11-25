@@ -89,6 +89,29 @@ source='['+'\n'.join(row['expression'] for row in macro_roots['cases'])+']'
 assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n(println (pr-str '+source+'))\n'
 assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')+'\n'
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+p=BASE/'thread-macro-binding-primary'
+thread_macros=json.loads((p/'command.json').read_text())
+assert thread_macros['exit_code']==0 and thread_macros['controls']==9
+assert all(sha(Path(name).read_bytes())==digest for name,digest in thread_macros['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==thread_macros['source_sha256']
+assert sha((p/'expression.sus').read_bytes())==thread_macros['native_source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==thread_macros['stdout_sha256']
+assert len(thread_macros['cases'])==9
+source='['+'\n'.join(row['expression'] for row in thread_macros['cases'])+']'
+assert (p/'expression.clj').read_text()=='(assert (= "1.12.6" (clojure-version)))\n(prn '+source+')\n'
+assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')+'\n'
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+p=BASE/'metadata-identity-primary'
+identity=json.loads((p/'primary.json').read_text())
+assert identity['exit_code']==0
+assert all(sha(Path(name).read_bytes())==digest for name,digest in identity['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==identity['source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==identity['stdout_sha256']
+negative=json.loads((p/'native.json').read_text())
+assert negative['head']=='8a93677f634c80f4af79fd34be3c7bdbdb55c7dd' and negative['exit_code']==0
+assert not negative['matches_primary'] and all(negative[k] for k in ['binary_unchanged','head_unchanged','tracked_source_unchanged'])
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-compile/src/portable_session/evaluation/macro_binding.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

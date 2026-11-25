@@ -13,9 +13,9 @@ mod facade;
 mod evaluation;
 mod definitions;
 mod native_invocation;
-pub(crate) use evaluation::PreparedEvaluation;
+pub(crate) use evaluation::{PreparedEvaluation, prepare_with_expander};
 pub use facade::CompiledMacros;
-pub(crate) use facade::MacroService;
+pub(crate) use facade::{MacroService, MacroOperation};
 #[derive(Clone, Copy)]
 pub(crate) enum CompilerCatalogMode {
     Full,
@@ -954,6 +954,19 @@ impl ExpansionHost for MacroHost<'_> {
         let Some(function) = catalog(&self.catalog).definitions.get(&target).cloned() else {
             return Ok(None);
         };
+        let mut binding_override = false;
+        let function = if context.phase == self.session.phase()
+            && context.origin.and_then(|origin| origin.native_owner()) == Some(self.session.native_owner()) {
+            if let Some(global) = context.environment.native_macro_global(context.phase, &target.0, &target.1) {
+                let selected = self.session.binding_value(&global).map_err(|error| Diagnostic {
+                    span: form.span.clone(), message: error.to_string(),
+                })?;
+                binding_override = !self.session.identical_values(&function, &selected).map_err(|error| Diagnostic {
+                    span: form.span.clone(), message: error.to_string(),
+                })?;
+                selected
+            } else { function }
+        } else { function };
         catalog(&self.catalog).source_expansions += 1;
         let mut stage = String::from("caller form provenance");
         let caller_namespace = context.environment.current_namespace(context.phase).to_owned();
@@ -980,7 +993,7 @@ impl ExpansionHost for MacroHost<'_> {
                     self.bridge.quote_evaluation_ref(session, form, owner)
                 } else { self.bridge.quote_ref(session, form) }
             };
-            let caller_form = if catalog(&self.catalog).caller_form_free.contains(&target) {
+            let caller_form = if !binding_override && catalog(&self.catalog).caller_form_free.contains(&target) {
                 self.bridge.quote(session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
             } else {
                 quote(session, &caller_data)?
@@ -989,7 +1002,7 @@ impl ExpansionHost for MacroHost<'_> {
             // A macro that cannot read &env receives nil instead of a
             // materialized analysis graph; nothing else can observe it.
             stage = "caller &env input transport".into();
-            let caller_environment = if catalog(&self.catalog).environment_free.contains(&target) {
+            let caller_environment = if !binding_override && catalog(&self.catalog).environment_free.contains(&target) {
                 self.bridge.quote(
                     session,
                     Form {
@@ -1001,7 +1014,7 @@ impl ExpansionHost for MacroHost<'_> {
             } else {
                 catalog(&self.catalog).environment_materializations += 1;
                 let mut graph = AnalysisGraph::new(&self.bridge, session);
-                let mode = catalog(&self.catalog).compiler_catalog_macros.get(&target).copied();
+                let mode = if binding_override { None } else { catalog(&self.catalog).compiler_catalog_macros.get(&target).copied() };
                 match mode {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?

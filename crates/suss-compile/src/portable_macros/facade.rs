@@ -6,6 +6,19 @@ use std::sync::Condvar;
 struct SharedHost {
     available: Mutex<Option<MacroHost<'static>>>,
     returned: Condvar,
+    operation: Mutex<(Option<std::thread::ThreadId>, usize)>,
+    operation_returned: Condvar,
+}
+/// Keep a preparation's catalogs exclusive while releasing the Store before
+/// invoking a caller-owned transformer. Same-thread nested calls may borrow it.
+pub(crate) struct MacroOperation(Arc<SharedHost>, std::thread::ThreadId);
+impl Drop for MacroOperation {
+    fn drop(&mut self) {
+        let mut owner = self.0.operation.lock().unwrap_or_else(|e| e.into_inner());
+        assert_eq!(owner.0, Some(self.1));
+        owner.1 -= 1;
+        if owner.1 == 0 { owner.0 = None; self.0.operation_returned.notify_all(); }
+    }
 }
 #[derive(Clone)]
 pub(crate) struct MacroService(Arc<SharedHost>);
@@ -13,15 +26,29 @@ pub(crate) struct MacroLease {
     shared: Arc<SharedHost>,
     host: Option<MacroHost<'static>>,
     saved_fuel: Option<u64>,
+    _operation: MacroOperation,
 }
 impl MacroService {
     fn new(host: MacroHost<'static>) -> Self {
         Self(Arc::new(SharedHost {
             available: Mutex::new(Some(host)),
             returned: Condvar::new(),
+            operation: Mutex::new((None, 0)),
+            operation_returned: Condvar::new(),
         }))
     }
+    pub(crate) fn operation(&self) -> MacroOperation {
+        let current = std::thread::current().id();
+        let mut owner = self.0.operation.lock().unwrap_or_else(|e| e.into_inner());
+        while owner.0.is_some_and(|thread| thread != current) {
+            owner = self.0.operation_returned.wait(owner).unwrap_or_else(|e| e.into_inner());
+        }
+        owner.0 = Some(current);
+        owner.1 = owner.1.checked_add(1).expect("macro preparation depth");
+        MacroOperation(self.0.clone(), current)
+    }
     pub(crate) fn lease(&self) -> MacroLease {
+        let operation = self.operation();
         let mut available = self
             .0
             .available
@@ -38,7 +65,37 @@ impl MacroService {
             shared: self.0.clone(),
             host: available.take(),
             saved_fuel: None,
+            _operation: operation,
         }
+    }
+    pub(crate) fn preparation_step<T>(
+        &self, fuel: u64,
+        context: Option<crate::portable_session::EvaluationMathContext>,
+        interrupt: Arc<std::sync::atomic::AtomicBool>,
+        span: std::ops::Range<usize>,
+        operation: impl FnOnce(&mut dyn ExpansionHost) -> Result<T, Diagnostic>,
+    ) -> Result<(Result<T, Diagnostic>, u64), SessionError> {
+        let mut lease = self.lease();
+        let allowance = lease.limit_fuel(fuel);
+        let run = |host: &mut MacroHost<'static>| -> Result<Result<T, Diagnostic>, SessionError> {
+            let _budget = host.session.operation_budget_scope()?;
+            let _relay = super::native_invocation::InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
+            Ok(operation(host))
+        };
+        let result = match context {
+            Some(context) => lease.with_math_context(context, run),
+            None => run(lease.host()),
+        };
+        let remaining = lease.host().session.operation_fuel_remaining()?;
+        Ok((result.unwrap_or_else(|error| Err(Diagnostic { span, message: error.to_string() })),
+            allowance.saturating_sub(remaining)))
+    }
+    pub(crate) fn preparation_read<T>(&self, operation: impl FnOnce(&dyn ExpansionHost) -> T) -> T {
+        self.with_host(|host| operation(host))
+    }
+    pub(crate) fn preparation_cleanup<T>(&self, operation: impl FnOnce(&mut dyn ExpansionHost) -> Result<T, Diagnostic>) -> Result<T, Diagnostic> {
+        // Pop Rust journals even when the operation has exhausted its fuel.
+        self.with_host(|host| operation(host))
     }
     pub(crate) fn prepare_evaluation(
         &self,
@@ -331,6 +388,27 @@ mod tests {
     use super::*;
     use std::panic::{AssertUnwindSafe, catch_unwind};
     use wasmtime::AsContextMut;
+
+    #[test]
+    fn caller_transformer_operation_allows_nested_leases_and_serializes_other_threads() {
+        let macros = CompiledMacros::new().unwrap();
+        let service = macros.service();
+        let operation = service.operation();
+        service.with_host(|_| ());
+        let other = service.clone();
+        let (started, starting) = std::sync::mpsc::channel();
+        let (finished, finishing) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            started.send(()).unwrap();
+            other.with_host(|_| finished.send(()).unwrap());
+        });
+        starting.recv().unwrap();
+        assert!(matches!(finishing.try_recv(), Err(std::sync::mpsc::TryRecvError::Empty)));
+        drop(operation);
+        finishing.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        worker.join().unwrap();
+        service.with_host(|_| ());
+    }
 
     #[test]
     fn macro_service_preserves_state_returns_before_runtime_and_survives_unwind() {

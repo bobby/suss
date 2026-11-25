@@ -1,0 +1,8 @@
+{
+  "head": "8a93677f634c80f4af79fd34be3c7bdbdb55c7dd",
+  "new13_primary_regression_tests_exit": 0,
+  "complete_combined_target_exit": 101,
+  "failure": "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases: retained Var uses ordinary thunk, so native-only getter cast traps",
+  "source_and_head_unchanged": true,
+  "qualification": "Actual source-bound focused101 retained, not relabeled a pass. Native0 metadata/thread-binding mismatches retained separately. New source requires fresh gates."
+}

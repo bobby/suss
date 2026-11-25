@@ -1237,6 +1237,10 @@ impl Environment {
     pub(crate) fn native_macro_declarations(&self) -> impl Iterator<Item = Global> + '_ {
         self.macro_declarations.keys().cloned()
     }
+    pub(crate) fn native_macro_global(&self, phase: Phase, namespace: &str, name: &str) -> Option<Global> {
+        let global = Global { phase, namespace: namespace.into(), name: name.into() };
+        self.macro_declarations.contains_key(&global).then_some(global)
+    }
     pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
         let global = Self::var_identity(target);
         match self.bindings.get(&global) {
