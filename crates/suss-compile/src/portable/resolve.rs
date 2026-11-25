@@ -1473,9 +1473,11 @@ impl Environment {
     pub(crate) fn clear_native_macro_status(&mut self) {
         self.native_macro_status.clear();
     }
-    pub(crate) fn record_native_macro_status(&mut self, global: Global, enabled: bool) {
-        self.native_macro_status.insert(global, enabled);
-        self.source_changed();
+    pub(crate) fn replace_native_macro_status(&mut self, statuses: BTreeMap<Global, bool>) {
+        if self.native_macro_status != statuses {
+            self.native_macro_status = statuses;
+            self.source_changed();
+        }
     }
     pub(crate) fn record_macro_declaration(&mut self, phase: Phase, namespace: &str, name: &str) {
         let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };

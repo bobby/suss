@@ -95,6 +95,7 @@ pub(crate) fn prepare_with_expander(
             let direct = match &form.kind {
                 Kind::List(items) | Kind::Vector(items) | Kind::Set(items) =>
                     matches!(items.first().map(|item| &item.kind), Some(Kind::Symbol(name)) if name.name.starts_with("def")),
+                Kind::Map(_) => false,
                 // A transformer may return a live function or Var directly.
                 // Non-collection Compiler.eval inputs use C.EVAL, too.
                 _ => true,

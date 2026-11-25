@@ -1,0 +1,9 @@
+{
+  "base_head": "6b435045cf92549531fb99d6d344670b5464334d",
+  "actual_exit": 0,
+  "actual_passed_tests": 14,
+  "actual_failed_tests": 0,
+  "actual_ignored_tests": 0,
+  "ordinary_allowances_unchanged": true,
+  "qualification": "Actual working-tree diagnostic on the recorded overlay. The overlay was observed during execution and its source bytes still match; this is not a clean-commit/final-head gate or an initial frozen-source receipt. A fresh clean-commit full focused/native/workspace sequence remains required."
+}

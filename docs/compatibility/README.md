@@ -1,3 +1,31 @@
+### Native lexical projection and ordinary operation budgets
+
+The frozen6b435045 root-filter command returns101 with9pass/3fail. The actual
+fuel/cancel diagnostics show unqualified user Var names at a raw function
+invocation, which has no input namespace frame. Pinned Clojure records
+[:unresolved 42] under the equivalent core namespace. Qualified Runtime controls
+then return0 (2tests) with the same200000 fuel and separate observer-triggered
+cancellation limits. Macro-only observation hooks keep their existing API.
+
+A paid-work trace enters the aggregate compiled macro with9996238 fuel, then
+completes its first two controls with9809785 and9659252. Its env-reading third
+control exhausts the remaining allowance while a local initializer AST includes
+unrelated namespace definition bodies. Caching immutable Var metadata alone
+still returns101; that negative remains recorded. Native lexical graphs now
+retain actual locals, initializer ASTs and namespace membership without importing
+those unrelated bodies. Explicit compiler-catalog/record projections keep their
+existing full interfaces. This is a projection boundary, not a substituted local
+value, raised allowance, new skip or altered primary.
+
+The follow-up also retains atomic expanded functions in C.EVAL and maps in the
+collection constant context. An independent pinned control records actual
+identity [true false false false] for direct/map/vector/set results. All14 root
+regressions return0 on the recorded working-tree overlay at original allowances,
+including both phases/actual macros, typed cancellation/fuel and identity. See
+`macro-thread-cost-before` and `macro-thread-bounded-local-diagnostic` for actual
+terminals and qualifications. Fresh clean-commit complete focused, bootstrap,
+native, exact workspace, independent review and final-head CI remain required.
+
 ### Caller-owned macro bindings and stable Var metadata
 
 At8a93677f, both new root/duplicate tests return0 across both phases and actual

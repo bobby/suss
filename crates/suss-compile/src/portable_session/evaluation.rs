@@ -13,6 +13,12 @@ pub(super) mod function_pool;
 mod math_context;
 pub(crate) use math_context::EvaluationMathContext;
 
+#[derive(Clone)]
+struct MacroMetadata {
+    metadata: Option<OwnedRooted<AnyRef>>,
+    enabled: bool,
+}
+
 #[derive(Default)]
 pub(super) struct Evaluation {
     profile: Mutex<Option<Arc<ReentryProfile>>>,
@@ -25,6 +31,7 @@ pub(super) struct Evaluation {
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    macro_metadata: Mutex<BTreeMap<CellIdentity, MacroMetadata>>,
     exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
 
@@ -446,7 +453,7 @@ impl SessionHost<'_> {
         &mut self,
         snapshot: &mut CompilationSnapshot,
     ) -> Result<(), SessionError> {
-        snapshot.environment.clear_native_macro_status();
+        let mut statuses = BTreeMap::new();
         let mut declarations = Vec::new();
         for global in snapshot.environment.native_macro_declarations() {
             self.charge_host_work(
@@ -457,6 +464,7 @@ impl SessionHost<'_> {
             }
         }
         if declarations.is_empty() {
+            snapshot.environment.replace_native_macro_status(statuses);
             return Ok(());
         }
         let state = self
@@ -529,8 +537,25 @@ impl SessionHost<'_> {
                 result[0].unwrap_i32() != 0
             };
             if !root_is_macro {
-                snapshot.environment.record_native_macro_status(global, false);
+                statuses.insert(global, false);
                 continue;
+            }
+            // Metadata is compiler-created persistent data. Reuse only an
+            // unchanged actual object identity, never a name or structural
+            // guess; root clearing above still takes precedence on every read.
+            let cached = registry_lock(&state.macro_metadata).get(&global).cloned();
+            if let Some(cached) = cached {
+                let same = match (&fields[2].value, &cached.metadata) {
+                    (None, None) => true,
+                    (Some(current), Some(previous)) => {
+                        let mut roots = RootScope::new(&mut self.store);
+                        let current = current.to_rooted(&mut roots);
+                        let previous = previous.to_rooted(&mut roots);
+                        wasmtime::Rooted::ref_eq(&roots, &current, &previous)?
+                    }
+                    _ => false,
+                };
+                if same { statuses.insert(global, cached.enabled); continue; }
             }
             let flag = self.invoke(&lookup, &[&fields[2], &key])?;
             // The public isMacro getter uses Clojure truthiness, too. Looking
@@ -544,10 +569,12 @@ impl SessionHost<'_> {
                     !wasmtime::Rooted::ref_eq(&roots, &flag, &false_value)?
                 }
             };
-            snapshot
-                .environment
-                .record_native_macro_status(global, enabled);
+            registry_lock(&state.macro_metadata).insert(global.clone(), MacroMetadata {
+                metadata: fields[2].value.clone(), enabled,
+            });
+            statuses.insert(global, enabled);
         }
+        snapshot.environment.replace_native_macro_status(statuses);
         Ok(())
     }
     pub(crate) fn evaluation_aliases(&mut self) -> Result<BTreeMap<String, String>, SessionError> {

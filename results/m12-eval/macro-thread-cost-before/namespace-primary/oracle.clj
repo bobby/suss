@@ -1,0 +1,2 @@
+(assert (= "1.12.6" (clojure-version)))
+(do (declare namespace-thread-macro) (eval '(defmacro ^:dynamic namespace-thread-macro [] 1)) (let [unqualified (fn [] (binding [namespace-thread-macro (fn [& xs] 42)] (eval '(namespace-thread-macro)))) qualified (fn [] (binding [namespace-thread-macro (fn [& xs] 42)] (eval '(user/namespace-thread-macro))))] (prn (binding [*ns* (the-ns 'clojure.core)] [(try (unqualified) (catch Throwable e :unresolved)) (qualified)]))))

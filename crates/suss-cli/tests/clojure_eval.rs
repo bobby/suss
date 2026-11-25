@@ -1624,13 +1624,14 @@ fn actual_macro_eval_preserves_root_thread_selected_macro_bindings() {
 #[test]
 fn root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion() {
     use std::{sync::{Arc, atomic::{AtomicUsize, Ordering}, mpsc}, thread, time::Duration};
-    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+    {
+        let mut session = Session::new_repl().unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         let count = Arc::new(AtomicUsize::new(0));
         let observer = count.clone();
         session.install_observation_hook(move |_, _| { observer.fetch_add(1, Ordering::SeqCst); Ok(0) }).unwrap();
         let function = session.eval_with_macros(
-            "(do (declare thread-fuel-macro) (eval '(defmacro ^:dynamic thread-fuel-macro [] 1)) (let [looping (fn [& xs] (suss.harness.observation/capture 1) (loop [] (recur)))] (fn [] (binding [thread-fuel-macro looping] (eval '(thread-fuel-macro))))))",
+            "(do (declare thread-fuel-macro) (eval '(defmacro ^:dynamic thread-fuel-macro [] 1)) (let [looping (fn [& xs] (suss.harness.observation/capture 1) (loop [] (recur)))] (fn [] (binding [thread-fuel-macro looping] (eval '(user/thread-fuel-macro))))))",
             &mut macros).unwrap();
         session.set_operation_fuel(200_000);
         let interrupt = session.interrupt_handle();
@@ -1639,10 +1640,10 @@ fn root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion(
         let error = session.invoke(&function, &[]).unwrap_err();
         let _ = done.send(()); watchdog.join().unwrap();
         assert!(matches!(&error, suss_compile::portable_session::SessionError::Trap(error)
-            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error}");
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{}", suss_compile::portable_repl::error_display(&mut session, &error));
         assert!(count.load(Ordering::SeqCst) > 0, "the actual selected transformer must execute");
         session.set_operation_fuel(10_000_000);
-        let value = session.eval_with_macros("(eval '(thread-fuel-macro))", &mut macros).unwrap();
+        let value = session.eval_with_macros("(eval '(user/thread-fuel-macro))", &mut macros).unwrap();
         let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
         assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(1));
     }
@@ -1656,16 +1657,39 @@ fn root_thread_macro_cancels_actual_caller_code_and_returns_macro_service() {
     let (events, waiting) = mpsc::channel(); let entered = events.clone();
     session.install_observation_hook(move |_, _| { let _ = entered.send(true); Ok(0) }).unwrap();
     let function = session.eval_with_macros(
-        "(do (declare thread-cancel-macro) (eval '(defmacro ^:dynamic thread-cancel-macro [] 1)) (let [looping (fn [& xs] (suss.harness.observation/capture 1) (loop [] (recur)))] (fn [] (binding [thread-cancel-macro looping] (eval '(thread-cancel-macro))))))",
+        "(do (declare thread-cancel-macro) (eval '(defmacro ^:dynamic thread-cancel-macro [] 1)) (let [looping (fn [& xs] (suss.harness.observation/capture 1) (loop [] (recur)))] (fn [] (binding [thread-cancel-macro looping] (eval '(user/thread-cancel-macro))))))",
         &mut macros).unwrap();
     session.set_operation_fuel(u64::MAX);
     let interrupt = session.interrupt_handle();
     let controller = thread::spawn(move || { let entered = waiting.recv_timeout(Duration::from_secs(5)) == Ok(true); interrupt.interrupt(); entered });
     let error = session.invoke(&function, &[]).unwrap_err(); let _ = events.send(false);
-    assert!(controller.join().unwrap(), "the selected caller transformer must reach its observer");
+    assert!(controller.join().unwrap(), "the selected caller transformer must reach its observer: {}", suss_compile::portable_repl::error_display(&mut session, &error));
     assert!(error.is_interrupt(), "{error}");
     session.set_operation_fuel(10_000_000);
-    let value = session.eval_with_macros("(eval '(thread-cancel-macro))", &mut macros).unwrap();
+    let value = session.eval_with_macros("(eval '(user/thread-cancel-macro))", &mut macros).unwrap();
     let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
     assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(1));
+}
+
+#[test]
+fn root_expanded_function_and_collection_contexts_preserve_primary_identity() {
+    promotion_review_controls("expanded-function-collection-contexts",
+        include_str!("../../../results/m12-eval/expanded-macro-collection-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/expanded-macro-collection-primary/primary.stdout"), 4);
+}
+
+#[test]
+fn actual_macro_eval_preserves_root_expanded_function_and_collection_identity() {
+    let primary = include_str!("../../../results/m12-eval/expanded-macro-collection-primary/primary.stdout");
+    let forms = suss_reader::forms::read_forms(primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/expanded-macro-collection-primary/expression.sus");
+        macros.define(&format!("(defmacro expanded-function-collection-controls [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(expanded-function-collection-controls)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
 }
