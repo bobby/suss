@@ -47,12 +47,13 @@ impl SessionHost<'_> {
         let span = form.span.clone();
         let origin = portable::SourceOrigin::native_evaluation(self.identity)
             .for_macro_definition(self.identity);
+        let context = self.evaluation_math_context()?;
         let allowance = self.operation_fuel_remaining()?;
         let (prepared, spent) = service.declare_evaluation(
             form,
             &namespace,
             allowance,
-            self.evaluation_math_context()?,
+            context,
             self.interrupt.clone(),
             |mut template, source, names, spent| {
                 self.charge_host_work(spent)?;
@@ -205,12 +206,14 @@ impl SessionHost<'_> {
             forms.push(bridge.read(self, &value, 0..0)?);
         }
         let namespace = self.evaluation_namespace()?;
+        let context = self.evaluation_math_context()?;
+        let allowance = self.operation_fuel_remaining()?;
         let (result, spent) = service.invoke_root(
             function,
             &namespace,
             forms,
-            self.operation_fuel_remaining()?,
-            self.evaluation_math_context()?,
+            allowance,
+            context,
             self.interrupt.clone(),
         )?;
         self.charge_host_work(spent)?;
