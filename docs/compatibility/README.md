@@ -28,6 +28,17 @@ tagged-operand rows match independently; these subsets do not establish whole
 numeric source-form conformance. Exact workspace, review and final-head CI retain
 separate gates; see [eval evidence](../../results/m12-eval/README.md).
 
+The later review-fix source9a02658e also preserves function-constant
+construction timing, shared arities, Clojure capture/failure boundaries and
+owned macro exception payloads. Runtime/Macro math-context transfer restores
+caller and leased-store state. All38 public-eval controls, all10 broader
+commands and the exact two-thread workspace baseline return0 with frozen
+source/HEAD. The immutable [workspace receipt](../../results/m12-eval/full-workspace-after-promotion-review-fixes/command.json.gz)
+and [broader receipts](../../results/m12-eval/promotion-review-all-fixes-broader/commands.json.gz)
+retain actual results. Independent follow-up review and final-head CI remain
+separate gates; no whole-language or complete numeric-source claim is inferred.
+
+
 Clojure `min-key` now executes32 fresh primary controls through shipped core in
 Runtime, isolated Macro and actual AOT, with independently decoded candidate
 values and key-effect traces. All49 ordered assertions of the unchanged vendored

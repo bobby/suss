@@ -35225,3 +35225,30 @@ refreshed separately under `provenance-refresh-after-review-fixes`, preserving
 upstream, adaptation, primary and historical frozen receipts. Broader compiler,
 complete native suite/capture and exact workspace validation must be rerun after
 these code changes; the earlier 3f79 workspace result is historical evidence.
+
+
+The final eval review-fix source at 9a02658e completes all ten broader
+validation commands with source, HEAD and pinned Binaryen unchanged. They
+cover source/primary provenance, core and sequence imports, compiler library,
+25 numeric/module/artifact/budget targets, the optimized random-effect guard,
+Java/Node-free bootstrap reproduction, and the complete native capture.
+Actual native exit 0 takes 469.394s. Strict conservation retains
+all 5,564 ordered observations, 5,346 prior comparable successes, all 34
+original eval assertions (29 host matches and the same five guest judgments),
+the complete symbol/Var bodies, and 229 BigInt/Ratio plus 200 Decimal tagged
+host matches. The existing baseline, primary, count/skip/opaque rules and
+unrelated failures remain unchanged. See the compressed terminals under
+results/m12-eval/promotion-review-all-fixes-broader.
+
+Run `cargo test --workspace --locked -- --test-threads=2`: actual exit 0 in
+13637.983s, with source and HEAD unchanged throughout the
+durable run. The exact command, Rust toolchain, input hashes and full output
+are archived under full-workspace-after-promotion-review-fixes. This validates
+the construction-time function pools, owned exception transfer and inherited
+math context on the current executable source; earlier workspace results
+remain historical. During the continuous run, the temporary CPU ceiling was
+raised from three to six cores after the numeric capture freed host capacity;
+test threads, build jobs, memory limits, source and HEAD remained unchanged.
+The measured scheduling observation is archived as resource-policy.json.gz.
+Independent follow-up review and passing final-head CI
+still gate ready status. Numeric source-body closure remains separate in #518.
