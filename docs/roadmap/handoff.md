@@ -35650,3 +35650,24 @@ ci6-sequence-{nan-context,boxed}-primary and focused-repair receipts. Original
 fixture/count/coercion-correction/skip/opaque/ledger contracts are unchanged.
 Fresh provenance/complete-native/conservation checks, exact workspace,
 independent review and final-head CI remain required on the repaired branch.
+
+
+The CI6 retained-source repair passes all eight source-frozen conservation,
+provenance and capture commands on source 75488c08. Focused execution already
+returns 0 for all seven sequence tests (the immutable 135-case source matrix
+and five canonical primitive/Object controls in Runtime/Macro) plus all four
+existing source-object tests including actual AOT. The subsequent conservation
+check proves executable/test/primary inputs remain byte-identical across the
+evidence-only commit; the focused receipt retains its actual original HEAD.
+
+Fresh full native exit 0 takes 697.803s. Strict comparison preserves
+all 5,750 ordered observations, prior successful judgments and 229 BigInt/Ratio
+plus 200 Decimal tagged host matches. The exact committed default26 checker
+also returns 0 on this fresh capture, retaining 23 host matches and three
+explicit narrow-wrapper differences. See compressed receipts under
+results/m12-num-api/ci6-sequence-all-repairs-validation and the separate
+ci6-repaired-fullcapture-default26-review. The original 135-case fixture,
+JVM primary, comparator, count/skip/opaque contracts and 132 explicit global
+failures remain unchanged. The canonical primitive NaN=false and ordinary
+function/object NaN=true profiles are both retained. Exact workspace,
+independent review and passing final-head CI remain required.

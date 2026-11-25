@@ -1,0 +1,296 @@
+{
+  "assertions": [
+    {
+      "head": "NaN?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "7ff8000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "NaN?",
+      "test": "clojure.core-test.num/test-num",
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 2,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 3,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 4,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 5,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 6,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 7,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 8,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 9,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 10,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 11,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 12,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 13,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 14,
+      "source-head": "and",
+      "test": "clojure.core-test.num/test-num",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 15,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 16,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 17,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 18,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 19,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 20,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 21,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 22,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 23,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 24,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 25,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 26,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.num/test-num",
+      "threw": true,
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.num",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}
