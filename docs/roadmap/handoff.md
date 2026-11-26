@@ -1,4 +1,12 @@
-Public eval is layered above the native host/Macro foundation; its original acceptance criteria and full34 assertion guard remain in #515/#516. Numeric completion remains in #518. Historical execution receipts in this branch predate the extraction and do not establish current final-head validation.
+Public eval is layered above #521. The original #515 acceptance criteria, full34 guard and original dependent tests remain on this consumer layer. Core validation receipts retain their #521 source scope; current public-eval validation is separate.
+
+### Quoted Var metadata and independent core validation
+
+The core foundation specifies host/Macro ownership and Var publication in docs/runtime/host-macro-boundary.md. Quoted declaration data now uses original core constructors while expressions retain live user resolution. The original AOT option-schema constructor-redefinition test changes from actual101 to actual0. Primary controls distinguish initializer failure from metadata failure after the new root is bound; Runtime and Macro match all three transitions.
+
+Seven frozen command groups across three positive batches pass28 Rust executions: the original AOT regression, native_host_boundary/runtime_evaluation, three direct-capability owner/service/budget controls, bounded scalar export, the new definition transition regression, original export precedence and all nine constructor AST projections in both caller phases. Production inputs are identical across those batches. Python364 passes with its exact source qualification; core/Var provenance and core import checks pass. See results/native-host-foundation/focused-validation.json, per-command receipts/logs and archived source overlays/runners. The initial missing export dependency-root101 and deliberately interrupted extraction batch remain explicit.
+
+Ten additional original public-eval-dependent tests stay on #516; three also have independently validated core capability variants. Full ownership/source/ABI coverage, bootstrap, exact two-thread workspace validation, issue acceptance, independent review and final-head CI are separate required gates. No publication, promotion or completion is implied by these scoped results.
 
 ### Native host/Macro and Var foundation extraction
 

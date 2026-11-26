@@ -528,3 +528,64 @@ fn root_audit_macro_reload_to_ordinary_definition_updates_retained_var_root_and_
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
+
+#[test]
+fn quoted_var_metadata_keeps_original_data_constructors_and_live_user_calls() {
+    let primary = suss_reader::forms::read_forms("[([unbound-marker] {:key #{unbound-marker}}) ([x]) 99]").unwrap();
+    let wanted = canonical(expected(&primary[0]));
+    for constant in ["", "^:const "] {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            let retained = session.eval("(def quoted-metadata-target 0)").unwrap();
+            let observe = session.eval("(let [vector vector meta meta get get q :quoted a :arglists c :computed] (fn [v] (let [m (meta v)] (vector (get m q) (get m a) (get m c)))))").unwrap();
+            session.enter_namespace("suss.core").unwrap();
+            session.eval(&format!("(def count (fn [x] 99)) (def {constant}PersistentVector nil) (def {constant}Keyword nil)")).unwrap();
+            session.enter_namespace("user").unwrap();
+            session.eval("(def ^{:quoted '([unbound-marker] {:key #{unbound-marker}}) :arglists '([x]) :computed (let [f count] (f 123))} quoted-metadata-target 42)").unwrap();
+            session.collect().unwrap();
+            let value = session.invoke(&observe, &[&retained]).unwrap();
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{:?} {constant}", session.phase());
+        }
+    }
+}
+
+#[test]
+fn declaration_metadata_retains_quote_arity_errors_and_previous_roots() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let retained = session.eval("(def malformed-metadata-target 42)").unwrap();
+        let observe = session.eval("(fn [v] @v)").unwrap();
+        for quote in ["(quote)", "(quote 1 2)"] {
+            let error = session.eval(&format!("(def ^{{:probe {quote}}} malformed-metadata-target 7)")).unwrap_err();
+            let message = suss_compile::portable_repl::error_display(&mut session, &error);
+            assert!(message.contains("quote requires exactly one operand"), "{message}");
+            let value = session.invoke(&observe, &[&retained]).unwrap();
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+        }
+    }
+}
+
+#[test]
+fn var_definition_orders_initializer_root_and_metadata_effects_like_primary() {
+    let cases = [
+        ("(def ^{:probe (do (swap! transition-events conj :metadata) :after)} transition-target (do (swap! transition-events conj :initializer) (throw (ex-info \"initializer stop\" {}))))", true, "[42 :before [:initializer]]"),
+        ("(def ^{:probe (do (swap! transition-events conj :metadata) :after)} transition-target (do (swap! transition-events conj :initializer) 43))", false, "[43 :after [:initializer :metadata]]"),
+        ("(def ^{:probe (do (swap! transition-events conj [:metadata @#'transition-target]) (throw (ex-info \"metadata stop\" {})))} transition-target (do (swap! transition-events conj :initializer) 44))", true, "[44 :after [:initializer [:metadata 44]]]"),
+    ];
+    assert_eq!(cases.iter().map(|row| row.2).collect::<Vec<_>>().join("\n") + "\n",
+        include_str!("../../../results/native-host-foundation/definition-transition-primary/primary.stdout"));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def transition-events (atom [])) (def ^{:probe :before} transition-target 42)").unwrap();
+        let observe = session.eval("(fn [] [@#'transition-target (:probe (meta #'transition-target)) @transition-events])").unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for (source, fails, primary) in cases {
+            session.eval("(reset! transition-events [])").unwrap();
+            assert_eq!(session.eval(source).is_err(), fails, "{:?}: {source}", session.phase());
+            session.collect().unwrap();
+            let value = session.invoke(&observe, &[]).unwrap();
+            decoder.refill(40_000);
+            let forms = suss_reader::forms::read_forms(primary).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), expected(&forms[0]), "{:?}: {source}", session.phase());
+        }
+    }
+}

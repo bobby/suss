@@ -1,0 +1,1 @@
+WARNING: count already refers to: #'clojure.core/count in namespace: user, being replaced by: #'user/count

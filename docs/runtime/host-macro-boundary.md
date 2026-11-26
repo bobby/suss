@@ -91,6 +91,7 @@ share a cell, while unrelated phase namespaces do not share by spelling.
 | Analyze a declaration | Intern the genuine Var where required. Analysis alone does not publish the proposed initializer value or execute an untaken/uncalled definition. |
 | Initializer returns | Publish that returned root and evaluated declaration metadata on the existing Var at the definition's execution boundary. |
 | Initializer throws | Retain the prior root and declaration metadata; preserve effects already executed by the initializer. |
+| Metadata throws after initialization | Retain the new root and prior metadata. Metadata observes the new root; initializer effects precede metadata effects. |
 | Ordinary root write/redefinition | Change the actual root; preserve identity. Ordinary binding clears macro status according to the language contract. |
 | Dynamic binding/assignment | Change the selected dynamic frame, independently of the physical root. Restore the frame on exit, including supported interruption. |
 | alter-var-root | Apply to the physical root and write only after successful return. Preserve macro status and already executed callback effects. |
@@ -130,3 +131,9 @@ recorded separately. They do not count as independent foundation validation.
 Historical receipts on #516 are historical; run this source's focused checks,
 bootstrap and exact two-thread workspace baseline before claiming completion.
 Independent review/fixes and final-head CI gate promotion.
+
+Three unit controls also execute directly through the internal evaluate-form
+capability, with a `_without_public_eval_binding` suffix. Their original public
+wrapper variants and seven frontend consumer tests remain unchanged on #516.
+Both variants retain the same effect, owner, budget and recovery assertions; the
+core versions exercise the installed host capability without a public eval Var.

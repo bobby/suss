@@ -172,6 +172,19 @@ fn namespace_session_command_compiled_macro_definitions_respect_exclusions_and_a
     assert!(errors.contains("forbidden"), "{errors}");
 }
 
+
+#[test]
+fn native_eval_catalog_reaches_the_repl_command() {
+    let output = repl(concat!(
+        "(eval '(defmacro native-entry-answer [] 42))\n",
+        "(native-entry-answer)\n",
+    ));
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
+    assert_eq!(String::from_utf8(output.stdout).unwrap(), "#'user/native-entry-answer\n42\n");
+}
+
+
 #[test]
 fn native_eval_catalog_reaches_repl_inputs_in_both_phases() {
     use suss_cli::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
@@ -201,15 +214,4 @@ fn native_eval_catalog_reaches_repl_inputs_in_both_phases() {
             "(user/entry-caller-context)").unwrap(), "entry.next", "{phase:?}");
         assert_eq!(runtime.current_namespace(), "entry.next");
     }
-}
-
-#[test]
-fn native_eval_catalog_reaches_the_repl_command() {
-    let output = repl(concat!(
-        "(eval '(defmacro native-entry-answer [] 42))\n",
-        "(native-entry-answer)\n",
-    ));
-    assert!(output.status.success(), "{output:?}");
-    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
-    assert_eq!(String::from_utf8(output.stdout).unwrap(), "#'user/native-entry-answer\n42\n");
 }
