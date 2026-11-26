@@ -1,3 +1,7 @@
+### Independent Var and Symbol conformance controls
+
+Two integration controls used public eval indirectly, including through the retained Var primary fixture. Their core counterparts now call the installed capability directly, preserving every assertion and all40 identifier rows in both phases. The original wrapper controls remain unchanged on #516. The complete portable_symbol_conversion target passes6 tests with frozen inputs; production inputs are unchanged from the earlier positive core batches. The combined focused record is34 Rust test executions, distinct from #516's separate34 eval assertions. Full baseline, bootstrap, review and final-head CI remain separate gates.
+
 ### Quoted Var metadata and independent core validation
 
 The core foundation specifies host/Macro ownership and Var publication in docs/runtime/host-macro-boundary.md. Quoted declaration data now uses original core constructors while expressions retain live user resolution. The original AOT option-schema constructor-redefinition test changes from actual101 to actual0. Primary controls distinguish initializer failure from metadata failure after the new root is bound; Runtime and Macro match all three transitions.

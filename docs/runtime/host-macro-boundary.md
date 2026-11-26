@@ -137,3 +137,9 @@ capability, with a `_without_public_eval_binding` suffix. Their original public
 wrapper variants and seven frontend consumer tests remain unchanged on #516.
 Both variants retain the same effect, owner, budget and recovery assertions; the
 core versions exercise the installed host capability without a public eval Var.
+
+Var/Symbol integration controls also have direct-capability counterparts. They
+execute every original row, including all40 identifier cases in both phases,
+with unchanged expectations. Only the public eval call head routes directly to
+the installed core capability; raw primary fixtures stay unchanged. The two
+original wrapper controls remain on #516 alongside their original source.

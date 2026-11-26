@@ -104,7 +104,7 @@ fn retained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases() 
 }
 
 #[test]
-fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities() {
+fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding() {
     for macro_phase in [false, true] {
         let mut session = if macro_phase {
             Session::new_macro().unwrap()
@@ -115,7 +115,7 @@ fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities
         check(
             &mut session,
             &mut decoder,
-            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
+            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (suss.bootstrap/evaluate-form '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (suss.bootstrap/evaluate-form '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
             "[42 nil true true false true true]",
         );
         check(
@@ -205,7 +205,7 @@ fn private_utf16_storage_handles_empty_search_surrogates_and_invalid_bounds() {
 }
 
 #[test]
-fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() {
+fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding() {
     fn tagged(value: &Observation) -> serde_json::Value {
         use serde_json::json;
         match value {
@@ -266,8 +266,11 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
         for case in cases {
             exercised += 1;
             if let Some(primary) = var_primary.iter().find(|primary| primary["name"] == case["id"]) {
-                check(&mut session, &mut decoder,
-                    primary["native_expression"].as_str().unwrap(),
+                // Execute the unchanged primary through the core capability;
+                // the original public-wrapper control remains on #516.
+                let expression = primary["native_expression"].as_str().unwrap()
+                    .replace("(eval ", "(suss.bootstrap/evaluate-form ");
+                check(&mut session, &mut decoder, &expression,
                     primary["expected"].as_str().unwrap());
                 continue;
             }
