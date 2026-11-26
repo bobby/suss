@@ -1057,6 +1057,10 @@ pub enum SourceNode {
 }
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
+    /// A source macro declaration was already recorded in its owning phase.
+    /// Its compiler-generated nil keeps the Runtime pipeline staged, but is not
+    /// another source form. Real nils and nil-valued macro calls remain nodes.
+    pub(crate) declaration_placeholder: bool,
     /// Set only for analyzer-generated body regions, before runtime lowering.
     pub is_body: bool,
     pub tags: SourceTags,
@@ -1555,9 +1559,11 @@ impl Analyzer<'_> {
                     let expanded = self.expander.expand(form, expansion_context)?;
                     self.expander.refresh_native_environment(&mut self.environment, form.span.clone())?;
                     if let Some(expanded) = expanded {
+                        let mut declaration_placeholder = false;
                         if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
                             let namespace = self.environment.current_namespace(self.phase).to_owned();
                             if let Some(names) = self.expander.declared_macro_exports(&namespace) {
+                                declaration_placeholder = matches!(expanded.kind, Kind::Nil);
                                 self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
                                 if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
                                     self.environment.record_macro_declaration(self.phase, &namespace, &name.name);
@@ -1566,7 +1572,14 @@ impl Analyzer<'_> {
                                 }
                             }
                         }
-                        return self.form_in_named(&expanded, context, tail, name_hint);
+                        return self.form_in_named(&expanded, context, tail, name_hint).map(|mut value| {
+                            if declaration_placeholder {
+                                if let Some(source) = &mut value.source {
+                                    std::sync::Arc::make_mut(source).declaration_placeholder = true;
+                                }
+                            }
+                            value
+                        });
                     }
                     // Bootstrap binding forms lower before source facts are
                     // recorded. let shares the pinned function-pattern binder;
@@ -1680,6 +1693,7 @@ impl Analyzer<'_> {
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                 )?;
                 let mut source = SourceAnalysis {
+                    declaration_placeholder: false,
                     is_body: false,
                     tags,
                     form: form.clone(),

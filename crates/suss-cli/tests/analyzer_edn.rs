@@ -333,6 +333,18 @@ fn macro_source_emission_keeps_attributes_without_redundant_runtime_flags() {
 }
 
 #[test]
+fn source_macro_declaration_placeholders_preserve_explicit_and_expanded_nil_forms() {
+    use suss_reader::edn::Value;
+    let source = "(ns macro.placeholders)\nnil\n(defmacro keep-nil [] nil)\nnil\n(keep-nil)";
+    let path = root().join("target/macro-placeholders.sus");
+    let document = hir_document(&analyze_source(source, &path, &[], None, None).unwrap(), &path).unwrap();
+    assert_eq!(asts(&document).len(), 5, "each actual source form contributes one AST");
+    let nils = asts(&document).iter().filter(|node| get(node, "op") == &Value::keyword("const") && get(node, "val") == &Value::Nil).count();
+    assert_eq!(nils, 3, "two source nils and the real nil macro expansion remain visible");
+    assert_round_trip(source, &path, &[]);
+}
+
+#[test]
 fn local_macro_import_setup_keeps_one_node_per_source_declaration() {
     use suss_reader::edn::Value;
     let source = r#"(ns first (:require [clojure.edn :as edn]))
