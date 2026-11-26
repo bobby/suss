@@ -72,6 +72,10 @@ pub struct InterruptHandle {
     requested: Arc<AtomicBool>,
 }
 impl InterruptHandle {
+    pub(crate) fn has_suspended_parent(&self, parent: &Arc<AtomicBool>) -> bool {
+        suspended::observes_interrupt(parent, &self.engine)
+    }
+
     /// Withdraw a request no guest code has consumed yet (#410): a SIGINT
     /// received while the REPL waits for input is that input's interrupt,
     /// not the next guest turn's.
@@ -85,13 +89,13 @@ impl InterruptHandle {
         self.engine.increment_epoch();
     }
 }
-/// Install the session's epoch callback: trap only for this session's request,
-/// consuming it so post-trap dynamic restoration runs uninterrupted.
+/// Trap for this session or its synchronous suspended ancestors. Consume only
+/// this session's request; ancestors consume theirs during their own unwind.
 fn install_interrupt(store: &mut Store<()>, requested: &Arc<AtomicBool>) {
     let requested = requested.clone();
     store.set_epoch_deadline(1);
     store.epoch_deadline_callback(move |_| {
-        if requested.swap(false, Ordering::SeqCst) {
+        if requested.swap(false, Ordering::SeqCst) || suspended::interrupt_requested() {
             Err(wasmtime::Trap::Interrupt.into())
         } else {
             Ok(UpdateDeadline::Continue(1))
@@ -532,7 +536,7 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
     // Restoration executes only finite, checked runtime frame/cell operations,
     // never a source body or finally callback. Preserve the operation's fuel.
     scope.as_context_mut().set_fuel(u64::MAX)?;
-    let result = (|| -> wasmtime::Result<()> {
+    let result = suspended::restoring_dynamic(|| -> wasmtime::Result<()> {
         loop {
             let current = global.get(&mut *scope);
             let current = current
@@ -554,7 +558,7 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
             let current = Val::AnyRef(Some(*current));
             pop.call(&mut *scope, &[current], &mut [])?;
         }
-    })();
+    });
     scope.as_context_mut().set_fuel(fuel)?;
     if result.is_err() {
         scope.as_context_mut().take_pending_exception();
@@ -585,6 +589,12 @@ fn execution_error<C: AsContextMut<Data = ()>>(
     identity: u64,
     handles: &Arc<AtomicUsize>,
 ) -> SessionError {
+    // Wasmtime's epoch hook has read-only Store access. Exhaust the interrupted
+    // operation here, once the guest has returned the unique mutable Store
+    // borrow, before dynamic restoration temporarily borrows cleanup fuel.
+    if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt) {
+        if let Err(error) = scope.as_context_mut().set_fuel(0) { return error.into(); }
+    }
     if !error.is::<wasmtime::ThrownException>() {
         // Native callbacks may translate an exception into an ordinary host error.
         // It must not leave the Store carrying a stale pending exception.
@@ -1403,7 +1413,7 @@ impl SessionHost<'_> {
         units: u64,
         interrupt: &AtomicBool,
     ) -> wasmtime::Result<()> {
-        if interrupt.swap(false, Ordering::SeqCst) {
+        if interrupt.swap(false, Ordering::SeqCst) || suspended::interrupt_requested() {
             // Match the epoch callback's consumed request, but do not let a
             // caller catch cancellation and continue the same fueled operation.
             // Finite dynamic restoration saves/restores this exhausted budget.

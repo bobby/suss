@@ -35747,3 +35747,35 @@ cleanup, roots/GC/reset identity and live MacroService effects. They do not
 implement or prove Fn/Var transport. Actual value proxies, cross-phase metadata/
 Namespace/live-cell behavior, retirement and cancellation forwarding still need
 implementation and language acceptance before complete workspace/review gates.
+
+### Source analysis placeholders and interrupted dynamic restoration
+
+The cancellation-restoration-and-analyzer-fixed-working receipt records all seven
+actual commands returning0 with source/HEAD/Binaryen conserved. Commands and
+input hashes are archived under results/m12-eval/cancellation-analyzer-checkpoint.
+Source/frontend58, public eval74, host126, analyzer18 and macro analysis/source
+metadata15 give291 distinct passing test executions; focus6 repeats host tests.
+The exact positive source overlay and the reconstructed pre-fix overlay (all six
+modified source hashes verified against the negative receipt) are archived too.
+
+The source analyzer now marks only compiled macro-declaration placeholders.
+The declaration remains represented in its owning phase without another Runtime
+nil AST; real source nils and genuine nil-valued macro expansions remain visible.
+This fixes the four analyzer_edn failures from CI45724644593/integration0 on00707;
+that failed log remains evidence, not a green result. The local pre-fix analyzer
+run retained13 passes and5 failures, including the new nil-preservation control.
+
+Suspended-parent cancellation now reaches guest loops and native host work.
+Only the target consumes its own request; ancestors consume theirs while
+unwinding. Same-engine/exact-parent flags avoid an extra relay thread; distinct
+engines/unregistered parents keep the existing relay. Wasmtime51's epoch hook
+has read-only Store access, so interrupt fuel is exhausted at execution_error,
+then preserved through cleanup. A private scoped guard allows only finite runtime
+frame/cell restoration to finish while the ancestor request remains pending.
+It does not mask source bodies, finally handlers or the current session's own
+requests. The strengthened guest control first failed during math-frame restore
+and now verifies restoration, nil context, exhausted fuel and recovery.
+
+Native function/Var transport and actual mixed source/native Var-root forwarding
+remain unimplemented. These passes do not establish complete issue acceptance,
+a current full workspace/bootstrap/conformance pass or promotion review.

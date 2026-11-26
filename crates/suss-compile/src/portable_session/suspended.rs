@@ -7,15 +7,42 @@
 #![forbid(unsafe_code)]
 use super::*;
 use scoped_tls_hkt::scoped_thread_local;
+use std::cell::Cell;
+
+thread_local! {
+    static RESTORING_DYNAMIC: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Finite runtime frame/cell cleanup must finish before an interrupted ancestor
+/// resumes. No source body, finally handler or foreign callback executes here.
+/// Current-session requests retain their normal epoch behavior.
+pub(super) fn restoring_dynamic<T>(operation: impl FnOnce() -> T) -> T {
+    struct Restore(bool);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            RESTORING_DYNAMIC.with(|state| state.set(self.0));
+        }
+    }
+    let _restore = Restore(RESTORING_DYNAMIC.with(|state| state.replace(true)));
+    operation()
+}
 
 trait Live {
     fn owner(&self) -> u64;
+    fn interrupt(&self) -> &Arc<AtomicBool>;
+    fn engine(&self) -> &Engine;
     fn run(&mut self, action: &mut dyn for<'s> FnMut(&mut SessionHost<'s>));
 }
 struct View<'a, 's>(&'a mut SessionHost<'s>);
 impl Live for View<'_, '_> {
     fn owner(&self) -> u64 {
         self.0.identity
+    }
+    fn interrupt(&self) -> &Arc<AtomicBool> {
+        &self.0.interrupt
+    }
+    fn engine(&self) -> &Engine {
+        &self.0.engine
     }
     fn run(&mut self, action: &mut dyn for<'s> FnMut(&mut SessionHost<'s>)) {
         action(&mut self.0.reborrow());
@@ -24,10 +51,18 @@ impl Live for View<'_, '_> {
 type Action<'a> = dyn for<'s> FnMut(&mut SessionHost<'s>, &mut dyn Registry) + 'a;
 trait Registry {
     fn contains(&self, owner: u64) -> bool;
+    fn observes_interrupt(&self, flag: &Arc<AtomicBool>, engine: &Engine) -> bool;
+    fn interrupt_requested(&self) -> bool;
     fn choose(&mut self, owner: u64, action: &mut Action<'_>) -> bool;
 }
 struct Empty;
 impl Registry for Empty {
+    fn observes_interrupt(&self, _: &Arc<AtomicBool>, _: &Engine) -> bool {
+        false
+    }
+    fn interrupt_requested(&self) -> bool {
+        false
+    }
     fn contains(&self, _: u64) -> bool {
         false
     }
@@ -40,6 +75,13 @@ struct Joined<'a> {
     rest: &'a mut (dyn Registry + 'a),
 }
 impl Registry for Joined<'_> {
+    fn observes_interrupt(&self, flag: &Arc<AtomicBool>, engine: &Engine) -> bool {
+        (Arc::ptr_eq(self.head.interrupt(), flag) && Engine::same(self.head.engine(), engine))
+            || self.rest.observes_interrupt(flag, engine)
+    }
+    fn interrupt_requested(&self) -> bool {
+        self.head.interrupt().load(Ordering::SeqCst) || self.rest.interrupt_requested()
+    }
     fn contains(&self, owner: u64) -> bool {
         self.head.owner() == owner || self.rest.contains(owner)
     }
@@ -105,6 +147,21 @@ pub(crate) fn with_host<T>(
         });
     }
     output
+}
+
+/// Exact flag identity matters: an unrelated session with the same boolean
+/// state does not participate in this synchronous cancellation chain. The target
+/// must also share the ancestor engine, so its epoch callback is woken directly.
+pub(crate) fn observes_interrupt(flag: &Arc<AtomicBool>, engine: &Engine) -> bool {
+    ACTIVE.is_set() && ACTIVE.with(|registry| registry.observes_interrupt(flag, engine))
+}
+
+/// Ancestors consume their own requests during unwinding. A descendant only
+/// observes the request and exhausts its own current operation.
+pub(crate) fn interrupt_requested() -> bool {
+    !RESTORING_DYNAMIC.with(Cell::get)
+        && ACTIVE.is_set()
+        && ACTIVE.with(|registry| registry.interrupt_requested())
 }
 
 #[cfg(all(test, not(suss_generator)))]
@@ -197,6 +254,138 @@ mod tests {
         let result = peer.run.call(&mut host.store, depth);
         let spent = allowance - host.store.get_fuel()?;
         Ok((result, spent))
+    }
+
+    #[test]
+    fn suspended_parent_interrupt_stops_a_foreign_guest_and_retires_both_budgets() {
+        use std::sync::{Barrier, mpsc};
+        let mut parent = Session::new().unwrap();
+        let mut child = Session::new_macro().unwrap();
+        let bridge = crate::portable_macro_data::FormBridge::new(&mut child).unwrap();
+        let context = child
+            .enter_evaluation_math_context(EvaluationMathContext::Context(3, 4), &bridge)
+            .unwrap();
+        let flag = parent.host_work_interrupt();
+        let parent_engine = parent.engine.clone();
+        let handle = parent.interrupt_handle();
+        let (started, start) = mpsc::channel();
+        let rendezvous = Arc::new(Barrier::new(2));
+        let release = rendezvous.clone();
+        let mut linker = Linker::new(&child.engine);
+        linker
+            .func_wrap("host", "started", move || -> wasmtime::Result<()> {
+                started
+                    .send(())
+                    .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
+                release.wait();
+                Ok(())
+            })
+            .unwrap();
+        let module = Module::new(
+            &child.engine,
+            r#"(module
+          (import "host" "started" (func $started))
+          (func (export "go") (result eqref) call $started (loop $spin br $spin) unreachable))"#,
+        )
+        .unwrap();
+        let instance = linker.instantiate(&mut child.store, &module).unwrap();
+        let go = instance.get_func(&mut child.store, "go").unwrap();
+        parent.store.set_fuel(1_000_000).unwrap();
+        child.store.set_fuel(10_000_000).unwrap();
+        let worker = std::thread::spawn(move || {
+            start
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .unwrap();
+            handle.interrupt();
+            rendezvous.wait();
+        });
+        let result = scope(&mut parent, || {
+            assert!(observes_interrupt(&flag, &parent_engine));
+            let outcome = {
+                let mut roots = RootScope::new(&mut child.store);
+                call(
+                    &mut roots,
+                    child.runtime,
+                    go,
+                    &[],
+                    child.identity,
+                    &child.handles,
+                )
+            };
+            let restoration = child.leave_evaluation_math_context(&context);
+            assert!(
+                restoration.is_ok(),
+                "finite child frame restoration must finish while the ancestor request remains pending: {restoration:?}"
+            );
+            outcome
+        });
+        worker.join().unwrap();
+        assert!(result.unwrap_err().is_interrupt());
+        assert_eq!(child.store.get_fuel().unwrap(), 0);
+        assert!(
+            flag.load(Ordering::SeqCst),
+            "child must not consume its ancestor's request"
+        );
+        assert!(parent.charge_host_work(0).unwrap_err().is_interrupt());
+        assert_eq!(parent.store.get_fuel().unwrap(), 0);
+        assert!(!flag.load(Ordering::SeqCst));
+        assert!(!ACTIVE.is_set());
+        // A restored child must not retain the interrupted operation's frame.
+        child.store.set_fuel(1_000_000).unwrap();
+        let value = child.eval("*math-context*").unwrap();
+        assert!(matches!(
+            bridge.read(&mut child, &value, 0..0).unwrap().kind,
+            suss_reader::forms::Kind::Nil
+        ));
+        for host in [&mut parent, &mut child] {
+            let value = host.eval("42").unwrap();
+            assert_eq!(
+                host.inspect(&value, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+                Some(RuntimeNumber::Long(42))
+            );
+        }
+    }
+
+    #[test]
+    fn suspended_parent_interrupt_is_also_observed_by_foreign_host_work() {
+        let mut parent = Session::new().unwrap();
+        let mut child = Session::with_options_in(SessionOptions::default(), Phase::Macro).unwrap();
+        let flag = parent.host_work_interrupt();
+        let parent_engine = parent.engine.clone();
+        let handle = parent.interrupt_handle();
+        let unrelated = Arc::new(AtomicBool::new(false));
+        let foreign_engine = Engine::default();
+        parent.store.set_fuel(1_000_000).unwrap();
+        child.store.set_fuel(1_000_000).unwrap();
+        let result = scope(&mut parent, || {
+            assert!(observes_interrupt(&flag, &parent_engine));
+            assert!(!observes_interrupt(&unrelated, &parent_engine));
+            assert!(
+                !observes_interrupt(&flag, &foreign_engine),
+                "foreign engines need their own epoch relay"
+            );
+            handle.interrupt();
+            child.charge_host_work(1)
+        });
+        assert!(result.unwrap_err().is_interrupt());
+        assert_eq!(child.store.get_fuel().unwrap(), 0);
+        assert!(flag.load(Ordering::SeqCst));
+        assert!(parent.charge_host_work(0).unwrap_err().is_interrupt());
+        assert!(!flag.load(Ordering::SeqCst));
+        assert_eq!(parent.store.get_fuel().unwrap(), 0);
+        assert!(!observes_interrupt(&flag, &parent_engine));
+        let value = child.eval("42").unwrap();
+        assert_eq!(
+            child
+                .inspect(&value, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+            Some(RuntimeNumber::Long(42))
+        );
     }
 
     #[test]
