@@ -1,0 +1,144 @@
+{
+  "phases": {
+    "before": {
+      "exits": {
+        "live-var-namespace-state": 101
+      },
+      "passing_target_counts": {
+        "live-var-namespace-state": 0
+      }
+    },
+    "focused": {
+      "exits": {
+        "library-typecheck": 0,
+        "live-var-namespace-state": 0,
+        "private-native-capability": 0
+      },
+      "passing_target_counts": {
+        "library-typecheck": 0,
+        "live-var-namespace-state": 1,
+        "private-native-capability": 11
+      }
+    },
+    "complete-controls": {
+      "exits": {
+        "ownership-library": 0,
+        "public-immutable-aliases": 0,
+        "full20-source-values": 101,
+        "strict-self-values": 0,
+        "source-frontends": 0,
+        "record-provenance": 0
+      },
+      "passing_target_counts": {
+        "ownership-library": 137,
+        "public-immutable-aliases": 1,
+        "full20-source-values": 0,
+        "strict-self-values": 2,
+        "source-frontends": 58,
+        "record-provenance": 0
+      }
+    }
+  },
+  "sources": [
+    "crates/suss-compile/src/portable_macro_data.rs",
+    "crates/suss-compile/src/portable_session/evaluation/native_values.rs",
+    "crates/suss-cli/tests/clojure_eval.rs"
+  ],
+  "limits": "Nine new immutable metadata alias controls pass in both phases. Current focused tests do not establish full eval, workspace, bootstrap, numeric integration, promotion review or final-head CI. Unchanged full20 still fails for ns-interns and its dependent catalog check.",
+  "current_distinct_passing_targets": 198,
+  "full20_matches": {
+    "Runtime": 19,
+    "Macro": 19
+  },
+  "archive_hashes": {
+    "before/commands.json.gz": "0f531015fe74759867721e7f930669a147067e790519e3dc42dd66a85292934d",
+    "before/live-var-namespace-state.log.gz": "6d277588ad976985bad9ca9b01de131c3f300ce77af32d743c9ac67e250c5691",
+    "before/overlay/crates/suss-cli/tests/clojure_eval.rs.gz": "f2bf95d8ff635780e8c55da56559cf53f7bde5008dd6846f041e1c5a8e540510",
+    "before/overlay/crates/suss-compile/src/portable_macro_data.rs.gz": "516cb7205b156cb6dbb920d63fa0bbf07f45881fd502abe53864eebd5bdd1fd0",
+    "before/overlay/crates/suss-compile/src/portable_session/evaluation/native_values.rs.gz": "e505debbb7927cdd08c465a3a1af6b0dcb3802565c9dfbfdc0aa97a7c162bb69",
+    "before/runner.py.gz": "7acfc3960fe35ea9fced6c3c58585e1d97e185faa644beae8336e05cd76be72b",
+    "complete-controls/commands.json.gz": "045e29ee53a3e2299eb960e02ca7b48b2da81c01809658d69022e9bd26935814",
+    "complete-controls/full20-source-values.log.gz": "52717a3ccbd7a766dd83c584bf35129b74b381f97d7d53297f9a4a84f2567431",
+    "complete-controls/overlay/crates/suss-cli/tests/clojure_eval.rs.gz": "9fa7b778f6fdeeea8f037e167f46a0691117e3519832a8339f039aaf81ea5019",
+    "complete-controls/overlay/crates/suss-compile/src/portable_macro_data.rs.gz": "b7eae6daf8d5eb1b8dca3edd31276001809d65d8ac4e9f5bc7237f84ab5cc71f",
+    "complete-controls/overlay/crates/suss-compile/src/portable_session/evaluation/native_values.rs.gz": "65b3a5cb5c203f12ee6b59d494fb5c59c07fb678ff69f34113a78e9ca7864acb",
+    "complete-controls/ownership-library.log.gz": "3b7b54969f9f30007d4735b53fcf6ec7d7eaa8e00f8075bcb1a3b8f9954f822b",
+    "complete-controls/public-immutable-aliases.log.gz": "afd85a6d57eb41cb27db2859faef41eec5e1e2271e7c8983e3906ab8db08d66f",
+    "complete-controls/record-provenance.log.gz": "6e51371d062c3f8a4ea79025a1c283b7b3ef201d57d5c1e7bc2557097ad6eda3",
+    "complete-controls/runner.py.gz": "746523e308079f4de413524775571190a4aa923aa3bec7bd27f78235dbfbd4c1",
+    "complete-controls/source-frontends.log.gz": "a0d34b1056ee6ac94f412a4939b29fda245f3a07f809fb154f71c5dce643d44f",
+    "complete-controls/strict-self-values.log.gz": "d085c336b514094a10165ffbc8458e4bb354dd329ee7e404c0dda87f1b74ca98",
+    "focused/commands.json.gz": "888c47dc1a7932bab38017e244b35d6bc85c50c3792b4be63acad31eab182431",
+    "focused/library-typecheck.log.gz": "1ee90a949a182c38481d0cc75a8a35492fe046e39581f04e1e5091f8d9c5e8e1",
+    "focused/live-var-namespace-state.log.gz": "448770352d03f194bb050e744d9881d1361aa67f956c6f8ebe5c24ff64853ff7",
+    "focused/overlay/crates/suss-cli/tests/clojure_eval.rs.gz": "f2bf95d8ff635780e8c55da56559cf53f7bde5008dd6846f041e1c5a8e540510",
+    "focused/overlay/crates/suss-compile/src/portable_macro_data.rs.gz": "b7eae6daf8d5eb1b8dca3edd31276001809d65d8ac4e9f5bc7237f84ab5cc71f",
+    "focused/overlay/crates/suss-compile/src/portable_session/evaluation/native_values.rs.gz": "e505debbb7927cdd08c465a3a1af6b0dcb3802565c9dfbfdc0aa97a7c162bb69",
+    "focused/private-native-capability.log.gz": "cbbbf4569aee7232eb96247409764dc75aaffe2d1b65156911ea50000d36f5c4",
+    "focused/runner.py.gz": "94e9e5fbf5f3d0bfe7640687f2b54747321fe222289567ab5eaef5fed896d5b8",
+    "inputs/010f590b9c443ba1152bda7ea05ceec9a7eeed47171bf43955d833288c45a80e.gz": "771994bad6db937b43df08bd5f837143fa705b7f0467548c8c6f85a77f091d02",
+    "inputs/13eb9d651bd977ab87284223372a5d57511ca8b95fd2f7c7484fdf0732f1f0d2.gz": "1727731ecfc1a752800ed24882022a5273f65a624e78e215f7a0cdcb238af923",
+    "inputs/14795baf5785bebda065609f14ecd1bf455599672d3006b8bf1492391512b761.gz": "e5d24bf4d8361b74ee93e4f8f5ec68ac2966b1fb5e361339f5963921d4a958b6",
+    "inputs/154ad68319ffb9350f8f82400a8f470867b60c10e637b1d20ea2cc43512bf660.gz": "f636982de85613c741803bbf7f254dc641277b9eadf60dd3c893f4653309aee8",
+    "inputs/1fb1d4f89881fac700d50de4a58adf4ee0a085df285625e744acc543ab22d5ee.gz": "5fdbe4489b3dc1341b183a70703d67efa505918ba0d612516ae5601bc38b8fa4",
+    "inputs/235326d31649703c17d4203e8fd2fe3cc1e0c4d00c5e8329f791cc3d158ea3a8.gz": "8e733008894f2ba26cdadb6783bbd4dc3a8b720b71affb1de9a9f0b862650c6f",
+    "inputs/3595b22efec32630c5f89037b5dea40c96141b3a6a68081b9bd008e2d2d62095.gz": "b7dbff0ea01fb4d54fd2902f30bf8150350589da1384c98e45a9c933c262ca48",
+    "inputs/377ec9049b7d29d8db399236bca9498a56603041926e99e5c7235f9fb125d575.gz": "eaf419126d90335be2bb8def3fb9ad5c818812e9c4e4925058c590536bc86381",
+    "inputs/421e45472f57b52e1edb2c65d23cf0d74501dcec70b52732a9b416bfd4327673.gz": "3cc35722190e2df8d850b6ab3c8cbf14a21a2128af82968f97dd3b2c2bccf40c",
+    "inputs/4c0f2748c838fa9a82f9f38621875d5ea9bb05efe61dd897f0a5c797589990a5.gz": "26a150838f9f5944878ae584c8f319241ab5581523a2bf13c131b0f25492a20f",
+    "inputs/5da0f38950e7dce45677d64be8617ce223fb6365ef0e178105f2da45e1cb8efb.gz": "84276ca332c051bd4ffba9d93b9252a77b07b89e917bc9902fd41d2c5cfe54cc",
+    "inputs/6827dcdda4ef7621f3fcf9fc789e55b8afebde42da46631be590163fd176a875.gz": "aab08d95b967129a40807f0e2e5378d31d1e7f67d2b6e38bd1395dcf2e94da27",
+    "inputs/6c4aee73380466debe6279a7b1d45e0b1bc0400eebbcea9566147455f4a52603.gz": "0e704a1be356b95e3296a28f97295b0ba5d9b14db2d3f76d0bfef95844db615b",
+    "inputs/7104d5d32db7bdd10ce2b851a3530f269a56d1ae50ebda60fc784b54963d6a1b.gz": "a4dc8ac3a4138bc373914404c22bc3c2dd79a3e100e05857da0e07ee80b4f647",
+    "inputs/72846ed7d10a3f2e644a74d69ce05d94270af0c47dc776e35bb4e080c101da1b.gz": "75f1fc8c8cb1dcbdb9464cb3860d3f5097dd6610c4052a86e4ae936ed67613cf",
+    "inputs/77fffc28e4334150bff8cbe2d9762795b419307d01510637ba8070382ab0a969.gz": "1848f2ebb29daaa1a0488ab4540d1454b51eca2a05b39b2316676e02df8dd25d",
+    "inputs/7c04b864f2e5be0a1e7916718443ceb47f6c5f4f6f0cac956b389d6c669f0624.gz": "5e316362c56ae549718a6ba6814cf3044cb9077bbef86157236c09dec2b75372",
+    "inputs/7cd59942f6f166391b9293f8e91fc1c80951c33d25c5ec684f2e0580d004a86b.gz": "5b514f57b793f05faa2600291d7506492f53db00bd97a85b7aba6286bc2bb86e",
+    "inputs/7f48faed53e8d4b512974122f7c62f8611f8f61223bd0824bab28ca911269c90.gz": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+    "inputs/8502e91facca2294d6cbc7b0e89680454902db5209d19a11e4013e8338946363.gz": "f291f331d742d3f612b13e0497be48fdbd41fda129eab91f49675b168a2c03af",
+    "inputs/85a928c7338ce53a74e1dbaf1ec3f7984725ad1bc74f53fbd31058e7484ecb50.gz": "6de4d4be6f968f5c0fcbc4d9fc172a1b72a185104e5698e4551fb06bcd6da1f7",
+    "inputs/88aadce82000bf4ec71c6e007ed4495bc2d05fa5bad8e45afccfecdd863610a3.gz": "914b91ba6a94157194687eac5a880b034608d0cc4e74702f6afa4e48c9c2ee07",
+    "inputs/8c31b7fd11f4fb397c7b2cbf3db256f1e59d8337336ee3233f595e23e4d79891.gz": "22b3db335f4409ce3f56ec18759d9fa3e853377ead5990e73f07e47290b570cb",
+    "inputs/92337a62714777eca9b6780b06f558a5169f03d12ef0dea54c296ef3c2779ace.gz": "7b187e388379c488b95087dca273b23545f67d6c33e7d19bbc52e411c1bc430f",
+    "inputs/930d3647f0b7a1f804b79138174f9a317e04a9a46b24ba63446148a8ef729c36.gz": "a4e448910cc931d2576a8fd5b92cee2a140a2d4bb2c40e31ee552cc54580236a",
+    "inputs/935d7b177761b7336ec876b890ac3ddc54e1c3481a6788778ebe6f4ae9897591.gz": "d23850d0f71097666ef3c4df92c8651e9030036fb03eca1cc1610677992d6a08",
+    "inputs/a16db4c9e849c6becf63771032a35294ed077bc2d4b6462ef7f182935a451961.gz": "cdcc86df9bf65326382485deb62491a053afdc83681b29b0b43c029c2d7a6f30",
+    "inputs/a475d9da01ebabda459147ab598bf8abe28eac04de25b7cd23dcd90cebb7b043.gz": "d5e531c022e0d0db062939010d83aaf6a8faf869b069474bc0244b31bae43198",
+    "inputs/a71b75da51834ed82c196d8f6ff77fce7da5b1a72aa787ada63c10d711cadb48.gz": "f9b384ae326cde92142533fed8314f0e4d57043bf178da33e406785c1ee1ef07",
+    "inputs/ae890362e231ef95872f3d023e61817b491cb71cae9a327af7589f8af35cc61d.gz": "d26c3de2023321e23d70bf1d757f74a9a2f4cea73d2ab3b4c25f3f4e16647f06",
+    "inputs/b069bdea0642539d1d39d9e3daf9479b1f161debfaebb74fdefa63d4f1c1e765.gz": "9003325fa3e870a664b5c26d614cd6a0096e40cde8621e797e8ee17c3a458458",
+    "inputs/b62fbf90bbc90e527ee3e0dd9776b7375d69f4494266c179a2d9597c6495a263.gz": "fea78b1c94b4b154d183fec2a7dc97b78f0c61f513f507edd84ca97c897b630c",
+    "inputs/bbb1f07d85e27a0f834f0686c776d4552fdf0a0cc9108725f45a77c09564188b.gz": "e9da449eaba82f404ca341a987d006702499146882cd21a78793f73a83d6e006",
+    "inputs/c23b39f4d9c48a6d584fc727725de87d60f570cd6d4a54d76c1f486a9d8596f7.gz": "529f6a4c88300dc4d9c624b4b4f7c686d4a811491c2a1f790965beb516841c8b",
+    "inputs/c6f78987be97d7e0c72b82cb49cbaca47e039535c92832e4bd9807b166d7451b.gz": "49df38034f2110a4bd36dc257a4d2b840d0f31249513b24c2ab8210ef9d7d005",
+    "inputs/c8e174336fb448444789ea82dfe842508d659acb3801b6d6b11672e5e92e002b.gz": "e94d467bf0db5fbbc383d55f50a4bf649018a3e8e7cb1ee03e8aad8630e5b86e",
+    "inputs/cb90882ead0de4b66cf99bc2aca567b2d168f21adabb761d6f7583c8f9ea7f85.gz": "c67088be27c3993b8868064c5dc113438c04ffb3d7cd5b58acc3548797db1c7e",
+    "inputs/ce823031f706321ad4271373ffdae9bbaa7449be29444eb6db175fc4b67f415f.gz": "9c8ba275c7ca3fb40b51c589d4c2e7467f0a54a3bf3dbdf1fce52de1788df441",
+    "inputs/ceda0be43fa3e82c0a7ef01662160e0071c7e1418f3acc272a452e8e2ee8b199.gz": "e8519cd9501a59ce0bc60fa0856c3410f7c67e124e27ace036b415f549e5e081",
+    "inputs/cfce7d43a7cc87ffcca2b391bfb6addb3a731c2e22a8ad90faaab6f170f04eb6.gz": "3452c6ef6ea7feafe312592e0749b6d22781b43c3f86e53249bd8469cc39e11a",
+    "inputs/d53b62162b3d1a1f2a585f6f320fca3a78dea59ebeb7ea5db815f84011f1b560.gz": "61e64ed90704cc8bfe66e811958161e65b2b5916310d841cf6b0e2348759f016",
+    "inputs/d69a1ca0d0c0cc8cf36c7cab218d51d7e6ea2741fc42156f5f0cbd2ee5d90cff.gz": "c76f5bff0246355442dad07366c027a15d401e83b43f6589a3a659a2ccbf0b2f",
+    "inputs/d828a135f09f7686d7dc0a7607aaa7bf07fa971986b8201b0b6da22ea4066635.gz": "18a380e2cb697f8c323314241ce5126eb2af92abc8093bddd143bc9c889031e2",
+    "inputs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "inputs/e52e37590ceeb50e4248c2351b380b1e7de77c580665d306df9e90e8ce19a0ea.gz": "3995ef72d8dca4e87a2473306d6b712eb0533361c1c61867d79624755ea2fc77",
+    "inputs/ece19c6bbcf030f7c37232a7651068ed879f50f02ea63b5efe840353049e0f25.gz": "0d8088492298d561392010a6bfdb9476a487035189e748842a8bd21378b6ec76",
+    "inputs/ecec3e527de6bd8cf5edc6bf17cd718962f525fb2e2a6955959960a064decd03.gz": "26662dc04ddd3b8c4d5b302cdb9dcf3aa7cc3c961390fa27d94af08ea6e5040f",
+    "inputs/f2a50895a266d4a2d3544b0d5e536e72d5fcf22dd0ec235831d901c1a1d60d65.gz": "92450f4b8e5e80cb35749adc350f9455660619d3447f72d01a675f06067138a3",
+    "inputs/f792cd8da3df50dbe6d94c9f2369c871468cc587d9e97bb8fd6f53077b288dcd.gz": "4be129ab906916cd8ec2c8e4f5dbf4b88702e941b94847fe2640118d0dd8b8fb",
+    "inputs/f8e0ad6cb8dbd48a79cb98ccd099856920fc9113814095e051cdbde67e8304a1.gz": "38bc4ff0f9e911bd75497cb53729113e8316eb2842f6204552596be22b7b83a5",
+    "inputs/fbaba08f06f20ec6dc821587c7fe02c15c413db7a32d22fb73e5d639e3c2c652.gz": "8c9114e152248b08361c9d9d62f6209edd55cb766ee1e41da837154410ff0eff",
+    "inputs/fef2b0ba156478ecf7dd5363be86555d0c50c956ff897c54c9a503157fba2360.gz": "2c78b6a910f98136f17d40e6044f956b735e2bfa8914a4809397d8aa71f9057a",
+    "inputs/ff0f8c2462fba3e66c5a819e78792e36127e4a0b1b4940af9a74c8d580114b5b.gz": "03197f8f8fbcb91559c1afed6ea0b5414c51c9df58932e42cbc02de48da5427b",
+    "inputs/ffc2b1015e6d64b725cc21c3eb521b8baa4f9f5098b06ebce946823bf3dbc080.gz": "b2c85446355538324f5afab62985d7c169a5eb3f576e88a84472708e96ee6a90"
+  },
+  "publication_prose_delta": {
+    "docs/roadmap/handoff.md": {
+      "tested": "a3a582d8ede9337b78043631c0a9a5ce57be3bc8df9abbb7f290f9d6b5727e19",
+      "published": "9932f73357a1d3c70e6c8f209f9b4653b11d9bc0437831da1a1679c1453f88b6"
+    },
+    "docs/compatibility/README.md": {
+      "tested": "c2726a54ded529d5fbad203b06c3496f616bb0a8b3b4b1b3e5e247e2451eaa7c",
+      "published": "ff3d7a0638a50deab8244e0f184b944e393ef01b85f298be88c298b0dc6e78f5"
+    }
+  }
+}

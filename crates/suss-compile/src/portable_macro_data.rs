@@ -1016,11 +1016,18 @@ impl FormBridge {
                     if has_metadata {
                         // Preserve quotation order: realize children and the
                         // base collection before evaluating its metadata map.
-                        let pairs = normalized_reader_metadata(session, form)?;
-                        let metadata_form = Form {
-                            span: form.span.clone(),
-                            metadata: vec![],
-                            kind: Kind::Map(pairs),
+                        let metadata_form = match (native_values, form.metadata.as_slice()) {
+                            // A private transport read has already checked the
+                            // actual metadata map's canonical descriptor. Keep
+                            // its scoped root, including aliases with values
+                            // reached by another part of the same transport.
+                            (NativeFormValues::Transport { .. }, [metadata])
+                                if matches!(metadata.kind, Kind::NativeConstant { .. }) => metadata.clone(),
+                            _ => Form {
+                                span: form.span.clone(),
+                                metadata: vec![],
+                                kind: Kind::Map(normalized_reader_metadata(session, form)?),
+                            },
                         };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
                             self.form_value(session, &metadata_form, native_values)
@@ -1223,8 +1230,16 @@ fn metadata(
     if nil(store, value)? {
         return Ok(vec![]);
     }
+    let transport = budget.native.as_ref()
+        .is_some_and(|native| native.purpose == NativeReadPurpose::Transport);
+    if transport && !matches!(object(store, value, classes)?.0,
+        Class::PersistentArrayMap | Class::PersistentHashMap)
+    {
+        return Err(error("Runtime macro metadata requires a canonical persistent map"));
+    }
     let form = decode(store, value, classes, span, depth + 1, budget)?;
-    if !matches!(form.kind, Kind::Map(_)) {
+    if !matches!(form.kind, Kind::Map(_))
+        && !(transport && matches!(form.kind, Kind::NativeConstant { .. })) {
         return Err(error(
             "Runtime macro metadata requires a canonical persistent map",
         ));
@@ -1311,7 +1326,8 @@ struct NativeRead {
 }
 static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 impl NativeRead {
-    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val, depth: usize,
+    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val,
+        classes: &BTreeMap<i64, (Class, SessionValue)>, depth: usize,
         interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Kind>> {
         // The transport's root is being materialized, not captured again.
         // Capturing it would recursively re-export the same unsupported root.
@@ -1345,6 +1361,18 @@ impl NativeRead {
                 let mut result = [Val::null_any_ref()];
                 array_test.call(&mut *store, &[*value], &mut result)?;
                 supported = crate::portable_session::sentinel_tag(&mut *store, &result[0])? == Some(crate::runtime_abi::TRUE as u32);
+            }
+            if !supported && self.purpose == NativeReadPurpose::Transport {
+                // Retain supported immutable nominal roots rather than
+                // flattening each occurrence independently. Descriptor identity
+                // comes from the bridge's captured classes, never a type name.
+                // Mutable arrays use live forwarding above; lazy sequences and
+                // implementation nodes still follow the strict decoder.
+                supported = object(store, value, classes).is_ok_and(|(class, _)| matches!(class,
+                    Class::Uuid | Class::Symbol | Class::List | Class::EmptyList
+                    | Class::PersistentVector | Class::PersistentArrayMap
+                    | Class::PersistentHashMap | Class::PersistentHashSet
+                    | Class::MapEntry | Class::PersistentQueue));
             }
             if !supported { return Ok(None); }
         }
@@ -1490,7 +1518,7 @@ fn decode_datum_inner<T: DatumTarget>(
 ) -> wasmtime::Result<T> {
     spend(store, budget)?;
     if let Some(native) = &mut budget.native {
-        if let Some(kind) = native.constant(store, value, depth, &budget.interrupt)? {
+        if let Some(kind) = native.constant(store, value, classes, depth, &budget.interrupt)? {
             return Ok(T::plain(Form { span: span.clone(), metadata: vec![], kind }));
         }
     }

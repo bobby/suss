@@ -1122,6 +1122,64 @@ mod tests {
     }
 
     #[test]
+    fn native_function_capability_nested_immutable_aliases_keep_real_roots() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let maker = source.eval(
+            "(def immutable-maker (let [v (with-meta [42] {:tag :kept})] (fn [] v))) immutable-maker"
+        ).unwrap();
+        let original = source.eval(
+            "(with-meta (fn [] 1) {:item (immutable-maker) :again (immutable-maker)})"
+        ).unwrap();
+        let inspect = target.eval(
+            "(fn [f maker] (let [m (meta f) a (:item m) b (:again m) returned (maker)] (if (and (identical? a b) (identical? a returned) (identical? (meta a) (meta returned)) (= a returned)) 42 -1)))"
+        ).unwrap();
+        let read = target.eval("(fn [f] (:item (meta f)))").unwrap();
+        let compiler_sizes = |session: &Session| {
+            let compiler = registry_lock(&session.compiler);
+            (compiler.cells.len(), compiler.native_function_cells.len())
+        };
+        let before = (compiler_sizes(&source), compiler_sizes(&target));
+        let imported = target.import_value(source.export_value(&original).unwrap()).unwrap();
+        let imported_maker = target.import_value(source.export_value(&maker).unwrap()).unwrap();
+        for _ in 0..2 {
+            source.collect().unwrap();
+            target.collect().unwrap();
+            let result = super::super::super::suspended::scope(&mut source, || {
+                target.invoke(&inspect, &[&imported, &imported_maker])
+            }).unwrap();
+            assert_eq!(
+                target.inspect(&result, |mut store, value| runtime_number(&mut store, &value)).unwrap(),
+                Some(RuntimeNumber::Long(42)),
+                "metadata aliases and a real callback return must retain the same immutable object and metadata"
+            );
+        }
+        assert_eq!((compiler_sizes(&source), compiler_sizes(&target)), before);
+        let returned = target.invoke(&read, &[&imported]).unwrap();
+        let restored = source.import_value(target.export_value(&returned).unwrap()).unwrap();
+        let actual = source.invoke(&maker, &[]).unwrap();
+        assert!(source.identical_values(&restored, &actual).unwrap(),
+            "return to the source must unwrap the exact immutable object");
+        let endpoint = target.native_value_endpoint(&imported).unwrap().unwrap();
+        let weak = Arc::downgrade(&endpoint);
+        let NativeKind::Function { metadata: Some(Transfer::Native(metadata)) } = &endpoint.kind else {
+            panic!("actual metadata endpoint");
+        };
+        let metadata = Arc::downgrade(metadata);
+        let nested = Arc::downgrade(&target.native_value_endpoint(&returned).unwrap().unwrap());
+        drop(endpoint);
+        drop(original);
+        drop(imported);
+        drop(returned);
+        source.collect().unwrap();
+        target.collect().unwrap();
+        assert!(weak.upgrade().is_none());
+        assert!(metadata.upgrade().is_none());
+        assert!(nested.upgrade().is_none(),
+            "scoped immutable roots must not become a persistent compiler cache");
+    }
+
+    #[test]
     fn native_function_capability_nested_metadata_uses_scoped_roots() {
         let mut source = Session::new_repl().unwrap();
         let mut target = Session::new_macro().unwrap();

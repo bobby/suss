@@ -2024,6 +2024,31 @@ fn native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel() {
 
 
 #[test]
+fn isolated_source_macros_preserve_nested_immutable_metadata_aliases() {
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/immutable-native-graph-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(rows.len(), 9);
+    let wanted = canonical(expected(&primary[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        // Compile the transformer in the isolated service, then pass actual
+        // caller functions and captures through public eval's form-data path.
+        macros.define(include_str!(
+            "../../../results/m12-eval/immutable-native-graph-primary/setup.sus"
+        )).unwrap();
+        let value = session.eval_with_macros(include_str!(
+            "../../../results/m12-eval/immutable-native-graph-primary/expression.sus"
+        ), &mut macros).unwrap_or_else(|error| panic!("{}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted,
+            "{:?} isolated source metadata aliases", session.phase());
+    }
+}
+
+#[test]
 fn isolated_source_macros_preserve_actual_function_var_and_namespace_values() {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../results/m12-eval/isolated-source-call-primary/cases.json"

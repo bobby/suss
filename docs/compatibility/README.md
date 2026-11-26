@@ -1,3 +1,22 @@
+### Nested immutable metadata identity
+
+Private native transport retains supported immutable nominal values in its
+scoped root bundle. Repeated values inside function metadata and actual callback
+returns preserve identity, metadata identity and equality. Metadata maps are
+validated against captured canonical descriptors before they can become private
+transport tokens; ordinary syntax and display admission is unchanged.
+
+Nine fresh pinned Clojure controls match in both Runtime and isolated Macro
+execution: vectors, lists, small/large maps, sets, symbols, metadata-bearing empty
+collections and nested sharing. The working overlay on 0c2914c4 returns 0 for
+137 ownership-library tests, the nine-case public test, two strict self-value
+tests and 58 frontend tests (198 distinct test executions), plus provenance.
+The unchanged full20 aggregate still returns 101 with 19/20 matches per phase
+because ns-interns and its dependent catalog declaration remain unresolved.
+Exact source/runner reconstructions, the original failing identity regression,
+current logs and limits are in results/m12-eval/immutable-native-values-checkpoint.
+These focused results do not replace full issue, workspace or numeric validation.
+
 ### Authenticated live Vars and Namespaces
 
 Native isolated macros now retain the caller's actual Vars, Namespace objects

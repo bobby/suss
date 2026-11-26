@@ -1,3 +1,25 @@
+### Immutable metadata transport checks
+
+The source-frozen overlay on 0c2914c4 passes the 137-test ownership library,
+nine-case public isolated-macro test in both phases, two strict eval self-value
+tests, 58 source/module/REPL/AOT tests and record-macro provenance. The 198 distinct
+current passing test executions include exact original-object return, compiler
+cell-count conservation, GC release and the existing private capability guards.
+The initial identity regression returns 101 before the fix. A separate earlier
+working revision typechecks and passes the focused regression and 11 private
+tests; its twelve passing executions repeat coverage with weaker lifetime checks.
+
+Run `python3 results/m12-eval/immutable-native-values-checkpoint/verify.py --current`
+to verify exact sources, runner/command/log hashes, pinned primary inputs and the
+explicit publication prose delta. Without --current, verification checks the
+recorded historical inputs even after subsequent implementation changes.
+The complete unchanged full20 test still returns 101 with 19 matches per phase
+for the missing ns-interns/dependent catalog declarations. Genuine user/core
+interning and mixed source/native Var-root publication remain required behavior;
+fresh full workspace/bootstrap/conformance/numeric integration and promotion
+review/CI are separate gates. The three original M12 issues remain authoritative
+on GitHub; these receipts make no issue-completion or promotion claim.
+
 ### Named-property provenance follow-up
 
 On dc1364d0 plus the corrected named-property source-file hash, the exact
