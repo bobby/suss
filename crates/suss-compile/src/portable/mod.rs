@@ -70,6 +70,12 @@ pub enum MacroReload {
 }
 pub const DEFAULT_OPERATION_FUEL: u64 = 10_000_000;
 pub trait ExpansionHost {
+    /// Native Compiler.eval interns a real Var when analyzing a def, before
+    /// its initializer is compiled or executed. Portable source hosts have no
+    /// caller Store to mutate and retain their ordinary publication boundary.
+    #[doc(hidden)]
+    fn intern_native_var(&mut self, _owner: u64, _global: &resolve::Global,
+        _declaration: &suss_reader::forms::Form, _doc: Option<&[u16]>) -> Result<(), Diagnostic> { Ok(()) }
     /// Incorporate declarations actually executed by a native transformer.
     /// Ordinary isolated source hosts leave the enclosing phase unchanged.
     #[doc(hidden)]
@@ -386,6 +392,10 @@ impl<'a> ExpansionRequest<'a> {
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
+    fn intern_native_var(&mut self, owner: u64, global: &resolve::Global,
+        declaration: &suss_reader::forms::Form, doc: Option<&[u16]>) -> Result<(), Diagnostic> {
+        self.host.intern_native_var(owner, global, declaration, doc)
+    }
     fn refresh_native_environment(&mut self, environment: &mut resolve::Environment, span: Range<usize>) -> Result<(), Diagnostic> {
         self.host.refresh_native_environment(environment, span)
     }

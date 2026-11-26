@@ -222,12 +222,15 @@ enum DecodedKind<T> {
 
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
-// Immutable native containers; their Wasm referents still require live checks.
+// Captured native containers; their Wasm referents still require live checks.
 struct BridgeCore {
     roots: Vec<SessionValue>,
     classes: BTreeMap<i64, (Class, SessionValue)>,
     constructors: BTreeMap<Class, usize>,
     factories: BTreeMap<&'static str, SessionValue>,
+    // Runtime-interned keywords avoid repeated throwaway construction for
+    // metadata keys. This bounded cache owns roots, not external value handles.
+    keywords: std::sync::Mutex<BTreeMap<(Option<String>, String), wasmtime::OwnedRooted<AnyRef>>>,
 }
 pub struct FormBridge {
     core: Arc<BridgeCore>,
@@ -353,7 +356,7 @@ impl FormBridge {
         session.charge_host_work((std::mem::size_of::<BridgeCore>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
         Ok(Self {
-            core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
+            core: Arc::new(BridgeCore { roots, classes, constructors, factories, keywords: Default::default() }),
         })
     }
     fn check(&self, session: &mut SessionHost<'_>) -> Result<(), SessionError> {
@@ -771,6 +774,14 @@ impl FormBridge {
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
+        let cache_key = if keyword && metadata.is_none() {
+            session.charge_host_work((name.len() + namespace.map_or(0, str::len)) as u64 + 1)?;
+            Some((namespace.map(str::to_owned), name.to_owned()))
+        } else { None };
+        if let Some(key) = &cache_key {
+            let cached = self.core.keywords.lock().unwrap_or_else(|error| error.into_inner()).get(key).cloned();
+            if let Some(root) = cached { return session.root_value(&root); }
+        }
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let ns = if let Some(namespace) = namespace {
             self.scalar(
@@ -784,14 +795,12 @@ impl FormBridge {
             session,
             &crate::portable::hir::Literal::String(name.encode_utf16().collect()),
         )?;
-        let fqn = namespace.map_or_else(
-            || name.to_owned(),
-            |namespace| format!("{namespace}/{name}"),
-        );
-        let fqn = self.scalar(
-            session,
-            &crate::portable::hir::Literal::String(fqn.encode_utf16().collect()),
-        )?;
+        // An unqualified identifier's full spelling is its immutable name.
+        // Reuse that actual string instead of allocating/copying it twice.
+        let fqn = if let Some(namespace) = namespace {
+            let text = format!("{namespace}/{name}");
+            self.scalar(session, &crate::portable::hir::Literal::String(text.encode_utf16().collect()))?
+        } else { name_value.clone() };
         // The hash cache is private to core and starts empty; core's own hash
         // fills it on first use (design decision 2026-10-25).
         let memo = nil.clone();
@@ -801,10 +810,19 @@ impl FormBridge {
                     "Keyword compiler data cannot carry metadata",
                 )));
             }
-            self.construct(session,
+            let value = self.construct(session,
                 Class::Keyword,
                 &[&ns, &name_value, &fqn, &memo],
-            )
+            )?;
+            if let Some(key) = cache_key {
+                let mut cache = self.core.keywords.lock().unwrap_or_else(|error| error.into_inner());
+                if cache.len() >= 128 {
+                    session.charge_host_work(cache.len() as u64 + 1)?;
+                    cache.clear();
+                }
+                cache.insert(key, value.object()?.clone());
+            }
+            Ok(value)
         } else {
             self.construct(session,
                 Class::Symbol,
@@ -1096,9 +1114,10 @@ impl FormBridge {
         span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
         class_test: wasmtime::Func, instance_test: wasmtime::Func, identity_test: wasmtime::Func,
         var_class: wasmtime::OwnedRooted<AnyRef>,
+        unbound_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, unbound_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
@@ -1111,11 +1130,12 @@ impl FormBridge {
         closure_test: wasmtime::Func, class_test: wasmtime::Func,
         instance_test: wasmtime::Func, identity_test: wasmtime::Func,
         var_class: wasmtime::OwnedRooted<AnyRef>,
+        unbound_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
         namespace_class: wasmtime::OwnedRooted<AnyRef>, array_test: wasmtime::Func,
     ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         let native = NativeRead { owner, closure_test, class_test, instance_test,
-            identity_test, var_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, constants: vec![] };
+            identity_test, var_class, unbound_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, constants: vec![] };
         self.read_with_context(session, value, 0..0, true, Some(native), false)
     }
     fn read_with_context(
@@ -1318,6 +1338,7 @@ struct NativeRead {
     instance_test: wasmtime::Func,
     identity_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
+    unbound_class: wasmtime::OwnedRooted<AnyRef>,
     meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     namespace_class: Option<wasmtime::OwnedRooted<AnyRef>>,
     array_test: Option<wasmtime::Func>,
@@ -1352,6 +1373,16 @@ impl NativeRead {
             let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
             self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
             let mut supported = result[0].unwrap_i32() != 0;
+            if !supported {
+                let unbound = Val::AnyRef(Some(self.unbound_class.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[unbound, *value], &mut result)?;
+                if result[0].unwrap_i32() != 0 {
+                    if self.purpose == NativeReadPurpose::Evaluation && depth != 0 {
+                        return Err(error("Cannot embed an Unbound value in compiled form data"));
+                    }
+                    supported = true;
+                }
+            }
             if !supported && let Some(namespace) = &self.namespace_class {
                 let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut *store)));
                 self.instance_test.call(&mut *store, &[namespace, *value], &mut result)?;

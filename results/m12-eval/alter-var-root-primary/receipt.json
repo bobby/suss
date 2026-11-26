@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/alter-var-root-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.5973348752595484,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "expression.sus": "8b4147cfffdc9c3193768d31f175e628c56b2dd46924b4e3c2358e66b4fd9bcf",
+    "expression.clj": "fbe2ef951e50d3602f605e41d48636b3b81fd71272f2c3074d9379e9e774c14a",
+    "primary.stdout": "f12b854bfeb884f064936c7b8a4f7e4807cc81fde5d93e3ab708c27d26894441",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Actual root access ignores dynamic entries; arguments, failures, prefix effects, nil and false are preserved."
+}

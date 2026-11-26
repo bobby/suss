@@ -1,0 +1,1 @@
+[[true false true true "Attempting to call unbound fn: #'user/isolated-unbound-target"] [42 42 "Attempting to call unbound fn: #'user/isolated-unbound-target"]]

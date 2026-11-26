@@ -431,10 +431,22 @@ fn public_eval_function_result_survives_gc_and_reads_the_live_root() {
 
 #[test]
 fn actual_aot_public_eval_reports_the_missing_explicit_compiler_capability() {
+    aot_missing_capability_report(
+        "(ns eval-capability) (def report (fn [] (try (str (eval '(+ 1N 1/2))) (catch :default e (.-message e)))))",
+        "Compiled evaluation capability is unavailable");
+}
+
+#[test]
+fn actual_aot_namespace_catalog_reports_the_missing_explicit_capability() {
+    aot_missing_capability_report(
+        "(ns eval-capability) (def report (fn [] (try (str (ns-interns *ns*)) (catch :default e (.-message e)))))",
+        "Native namespace catalog capability is unavailable");
+}
+
+fn aot_missing_capability_report(program: &str, required: &str) {
     use std::process::Command;
     let root = tempfile::tempdir().unwrap();
-    std::fs::write(root.path().join("app.sus"),
-        "(ns eval-capability) (def report (fn [] (try (str (eval '(+ 1N 1/2))) (catch :default e (.-message e)))))").unwrap();
+    std::fs::write(root.path().join("app.sus"), program).unwrap();
     std::fs::write(
         root.path().join("app.wit"),
         "package test:eval-capability; world w { export report: func() -> string; }",
@@ -496,7 +508,7 @@ fn actual_aot_public_eval_reports_the_missing_explicit_compiler_capability() {
     );
     assert_eq!(
         String::from_utf8(executed.stdout).unwrap().trim_end(),
-        "Compiled evaluation capability is unavailable"
+        required
     );
 }
 
@@ -2024,6 +2036,108 @@ fn native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel() {
 
 
 #[test]
+fn namespace_catalog_requires_the_registered_namespace_identity() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let forged = session.eval_privileged("(Namespace. (symbol \"suss.core\") (array))").unwrap();
+        let query = session.eval_with_macros("(fn [n] (ns-interns n))", &mut macros).unwrap();
+        let error = session.invoke(&query, &[&forged]).unwrap_err();
+        assert!(suss_compile::portable_repl::error_display(&mut session, &error)
+            .contains("registered canonical Namespace"));
+        let value = session.eval_with_macros("(let [n (:ns (meta #'identity))] (identical? n (the-ns (ns-name n))))", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Bool(true));
+    }
+}
+
+#[test]
+fn native_eval_def_metadata_obeys_primary_root_and_publication_boundaries() {
+    promotion_review_controls("generated-def-metadata",
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/primary.stdout"), 3);
+    promotion_review_controls("failed-def-metadata",
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/failure-expression.sus"),
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/failure-vector-primary.stdout"), 2);
+}
+
+#[test]
+fn namespace_catalog_core_functions_reuse_live_var_cells() {
+    promotion_review_controls("core-function-catalog",
+        include_str!("../../../results/m12-eval/namespace-core-functions-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/namespace-core-functions-primary/primary.stdout"), 3);
+}
+
+#[test]
+fn native_eval_namespace_catalog_preserves_analysis_interning_boundaries() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/namespace-declaration-boundaries-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/namespace-declaration-boundaries-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 5);
+    assert_eq!(rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for (case, required) in cases.iter().zip(rows) {
+            let name = case["name"].as_str().unwrap();
+            let body = case["expression"].as_str().unwrap().replace("(catch Throwable ", "(catch :default ");
+            let program = format!("(eval '{body})");
+            match session.eval_with_macros(&program, &mut macros) {
+                Ok(value) => {
+                    session.collect().unwrap();
+                    decoder.refill(40_000);
+                    let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                    let required = canonical(expected(required));
+                    if actual == required { eprintln!("namespace-boundary-primary-match {phase:?} {name}"); }
+                    else { failures.push(format!("{phase:?} {name}: {actual:?}, expected {required:?}")); }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn namespace_catalog_returns_actual_user_core_and_macro_vars() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/namespace-interns-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/namespace-interns-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 2);
+    assert_eq!(rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for (case, required) in cases.iter().zip(rows) {
+            let name = case["name"].as_str().unwrap();
+            match session.eval_with_macros(case["expression"].as_str().unwrap(), &mut macros) {
+                Ok(value) => {
+                    session.collect().unwrap();
+                    decoder.refill(40_000);
+                    let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                    let required = canonical(expected(required));
+                    if actual == required { eprintln!("namespace-catalog-primary-match {phase:?} {name}"); }
+                    else { failures.push(format!("{phase:?} {name}: {actual:?}, expected {required:?}")); }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
 fn isolated_source_macros_preserve_nested_immutable_metadata_aliases() {
     let primary = suss_reader::forms::read_forms(include_str!(
         "../../../results/m12-eval/immutable-native-graph-primary/primary.stdout"
@@ -2197,5 +2311,39 @@ fn isolated_source_nested_function_metadata_retains_actual_callbacks() {
                 "{phase:?}: nested metadata aliases must preserve the actual callback and its captured effects");
             session.collect().unwrap();
         }
+    }
+}
+
+#[test]
+fn native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior() {
+    promotion_review_controls("unbound-values",
+        include_str!("../../../results/m12-eval/unbound-values-behavior-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/unbound-values-behavior-primary/primary.stdout"), 4);
+}
+
+#[test]
+fn native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries() {
+    promotion_review_controls("alter-var-root",
+        include_str!("../../../results/m12-eval/alter-var-root-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/alter-var-root-primary/primary.stdout"), 4);
+}
+
+#[test]
+fn isolated_source_callbacks_preserve_real_unbound_values_and_root_writes() {
+    let source = include_str!("../../../results/m12-eval/isolated-unbound-primary/expression.sus");
+    let setup = include_str!("../../../results/m12-eval/isolated-unbound-primary/setup.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/isolated-unbound-primary/primary.stdout")).unwrap();
+    assert_eq!(forms.len(), 1);
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(setup).unwrap();
+        let source = source.replace("(catch Throwable ", "(catch :default ");
+        let value = session.eval_with_macros(&source, &mut macros)
+            .unwrap_or_else(|error| panic!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{phase:?}");
     }
 }

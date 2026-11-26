@@ -754,6 +754,19 @@ impl MacroHost<'_> {
     }
 }
 impl ExpansionHost for MacroHost<'_> {
+    fn intern_native_var(&mut self, owner: u64, global: &crate::portable::resolve::Global,
+        declaration: &Form, doc: Option<&[u16]>) -> Result<(), Diagnostic> {
+        let result = if owner == self.session.native_owner() {
+            self.session.intern_analyzed_var(global, declaration, doc)
+        } else {
+            Err(wasmtime::Error::msg("Native Var admission has a foreign owner").into())
+        };
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span: declaration.span.clone(), message }
+        })
+    }
     fn refresh_native_environment(&mut self, environment: &mut crate::portable::resolve::Environment, span: std::ops::Range<usize>) -> Result<(), Diagnostic> {
         for (before, after) in std::mem::take(&mut self.native_effects) {
             environment.apply_native_effects(&before, &after, &mut |work| {

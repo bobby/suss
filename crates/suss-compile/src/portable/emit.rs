@@ -806,7 +806,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             name if name.starts_with("int32-") && name.ends_with("-raw") =>
                 (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
             "future-pending-new" | "dynamic-fork" | "dynamic-save" | "random-double" => (vec![], vec![VALUE]),
-            "evaluate-form" => (vec![VALUE], vec![VALUE]),
+            "evaluate-form" | "namespace-interns" | "binding-declare" | "hash-unencoded-chars" => (vec![VALUE], vec![VALUE]),
             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" | "root-redefs-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
             "dynamic-pop" => (vec![VALUE], vec![]),
@@ -927,7 +927,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-get-unforced" | "binding-snapshot" | "binding-read" | "binding-getter" | "binding-bound" | "number-negate" | "value-negate"
+            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-get-unforced" | "binding-snapshot" | "binding-read" | "binding-getter" | "binding-getter-root-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
@@ -937,7 +937,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
-            "binding-root-set" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
+            "binding-getter-root-set!" => (vec![VALUE; 3], vec![VALUE]),
+            "binding-root-set" | "binding-getter-unbound-init!" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -2670,15 +2671,16 @@ fn emit_function(
                         },
                     ];
                     // A bound cell that no binding frame has held reads its
-                    // root inline (#354). Otherwise an unbound cell reads as
-                    // undefined, and a dynamic one reads its selected frame.
+                    // root inline (#354). A real unbound Var reads its cached
+                    // Unbound object; internal cells retain undefined. Dynamic
+                    // cells read their selected frame.
                     for instruction in &flags {
                         function.instruction(instruction);
                     }
                     // Macro metadata does not change boundness or frame
                     // selection. Keep every other flag's existing behavior.
                     function
-                        .instruction(&I32Const(!runtime_abi::CELL_MACRO))
+                        .instruction(&I32Const(!(runtime_abi::CELL_MACRO | runtime_abi::CELL_DECLARED)))
                         .instruction(&I32And)
                         .instruction(&I32Const(runtime_abi::CELL_BOUND))
                         .instruction(&I32Eq)
@@ -2699,7 +2701,15 @@ fn emit_function(
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-read")))
                         .instruction(&Else)
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 2 })
+                        .instruction(&RefIsNull)
+                        .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                        .instruction(&Else)
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 2 })
+                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));

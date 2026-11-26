@@ -513,6 +513,16 @@ impl<'a> Lowerer<'a> {
                 constant,
                 ..
             } => {
+                // Record execution independently of initialization. Native eval
+                // also admits Vars during analysis, including untaken defs.
+                if var.is_some() {
+                    let declared = self.clone_global(global, &hir.span)?;
+                    let cell = self.emit(Operation::GlobalCell(declared), Type::Value, hir.span.clone())?;
+                    self.emit(Operation::Bitwise {
+                        operation: super::hir::Bitwise::DeclareBinding,
+                        arguments: vec![cell],
+                    }, Type::Value, hir.span.clone())?;
+                }
                 if let Some(initializer) = initializer {
                     if *once {
                         let global_for_test = self.clone_global(global, &hir.span)?;
@@ -1434,7 +1444,7 @@ fn loop_safe(operation: &Operation) -> bool {
         | Operation::Array { .. }
         | Operation::MakeClosure { .. }
         | Operation::MakeGeneralClosure { .. } => true,
-        Operation::Bitwise { operation, .. } => !matches!(operation, super::hir::Bitwise::RandomDouble | super::hir::Bitwise::EvaluateForm),
+        Operation::Bitwise { operation, .. } => !matches!(operation, super::hir::Bitwise::RandomDouble | super::hir::Bitwise::EvaluateForm | super::hir::Bitwise::NamespaceInterns | super::hir::Bitwise::DeclareBinding | super::hir::Bitwise::HashUnencodedChars | super::hir::Bitwise::BindingGetterUnboundInit | super::hir::Bitwise::BindingGetterRootSet | super::hir::Bitwise::BindingGetterRootGet),
         Operation::Comparison { operation, .. } => !matches!(operation, C::Less | C::LessEqual | C::Greater | C::GreaterEqual),
         Operation::Arithmetic { coercing, .. } => !coercing,
         Operation::Nominal { operation, .. } => {

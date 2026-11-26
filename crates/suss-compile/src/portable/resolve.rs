@@ -1714,13 +1714,16 @@ impl Environment {
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).
     pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
+        self.declared_globals(phase, namespace).map(|global| global.name.to_string()).collect()
+    }
+    pub(crate) fn declared_globals<'a>(&'a self, phase: Phase, namespace: &'a str)
+        -> impl Iterator<Item = &'a Global> + 'a {
         let start = Global { phase, namespace: namespace.into(), name: "".into() };
         self.bindings
             .range(start..)
-            .take_while(|(global, _)| global.phase == phase && &*global.namespace == namespace)
+            .take_while(move |(global, _)| global.phase == phase && &*global.namespace == namespace)
             .filter(|(_, binding)| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
-            .map(|(global, _)| global.name.to_string())
-            .collect()
+            .map(|(global, _)| global)
     }
     /// Whether `resolve` finds `name` as one of `namespace`'s own bindings.
     pub(crate) fn declares(&self, phase: Phase, namespace: &str, name: &str) -> bool {

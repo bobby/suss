@@ -3,6 +3,7 @@
 //! The source Store is borrowed only synchronously or leased by its own service.
 use super::*;
 mod operations;
+mod namespace_catalog;
 use crate::portable_macros::MacroServiceWeak;
 use crate::runtime_abi::native_values as native_op;
 use std::sync::Weak;
@@ -45,18 +46,21 @@ enum NativeKind {
 #[derive(Clone, Copy)]
 enum LiveClass {
     Var,
+    VarUnbound,
     Namespace,
 }
 impl LiveClass {
     fn name(self) -> &'static str {
         match self {
             Self::Var => "Var",
+            Self::VarUnbound => "VarUnbound",
             Self::Namespace => "Namespace",
         }
     }
     fn fields(self) -> usize {
         match self {
             Self::Var => 3,
+            Self::VarUnbound => 1,
             Self::Namespace => 2,
         }
     }
@@ -67,6 +71,7 @@ impl NativeKind {
             Self::Function { .. } => native_op::FUNCTION,
             Self::Materialized { .. } => native_op::DATA,
             Self::Nominal(LiveClass::Var) => native_op::VAR,
+            Self::Nominal(LiveClass::VarUnbound) => native_op::VAR_UNBOUND,
             Self::Nominal(LiveClass::Namespace) => native_op::NAMESPACE,
             Self::ObjectArray => native_op::OBJECT_ARRAY,
         }
@@ -177,7 +182,7 @@ impl SessionHost<'_> {
             .filter(|state| !state.retired.load(Ordering::SeqCst))
             .ok_or_else(|| wasmtime::Error::msg("Native value owner has retired").into())
     }
-    fn root_value(&mut self, root: &OwnedRooted<AnyRef>) -> Result<SessionValue, SessionError> {
+    pub(crate) fn root_value(&mut self, root: &OwnedRooted<AnyRef>) -> Result<SessionValue, SessionError> {
         let mut roots = RootScope::new(&mut self.store);
         let value = Val::AnyRef(Some(root.to_rooted(&mut roots)));
         own(&mut roots, value, self.identity, &self.handles)
@@ -287,6 +292,7 @@ impl SessionHost<'_> {
             .get_func(&mut self.store, "native-identical-test")
             .unwrap();
         let var_class = registry_lock(&state.var_class).clone().unwrap();
+        let unbound_class = registry_lock(&state.unbound_class).clone().unwrap();
         let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
         let namespace_class = registry_lock(&state.namespace)
             .as_ref()
@@ -306,6 +312,7 @@ impl SessionHost<'_> {
             instance_test,
             identity_test,
             var_class,
+            unbound_class,
             meta_fn_class,
             namespace_class,
             array_test,
@@ -381,6 +388,7 @@ impl SessionHost<'_> {
                 return Ok(Transfer::Native(existing));
             }
             let var = registry_lock(&state.var_class).clone().unwrap();
+            let unbound = registry_lock(&state.unbound_class).clone().unwrap();
             let namespace = registry_lock(&state.namespace)
                 .as_ref()
                 .unwrap()
@@ -399,6 +407,11 @@ impl SessionHost<'_> {
                 if result[0].unwrap_i32() != 0 {
                     Some(NativeKind::Nominal(LiveClass::Var))
                 } else {
+                    let unbound = Val::AnyRef(Some(unbound.to_rooted(&mut roots)));
+                    test.call(&mut roots, &[unbound, input], &mut result)?;
+                    if result[0].unwrap_i32() != 0 {
+                        Some(NativeKind::Nominal(LiveClass::VarUnbound))
+                    } else {
                     let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut roots)));
                     test.call(&mut roots, &[namespace, input], &mut result)?;
                     if result[0].unwrap_i32() != 0 {
@@ -416,6 +429,7 @@ impl SessionHost<'_> {
                         } else {
                             None
                         }
+                    }
                     }
                 }
             };
@@ -1541,6 +1555,7 @@ mod tests {
             .get_func(&mut source.store, "native-identical-test")
             .unwrap();
         let var_class = registry_lock(&state.var_class).clone().unwrap();
+        let unbound_class = registry_lock(&state.unbound_class).clone().unwrap();
         let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
         let namespace_class = registry_lock(&state.namespace)
             .as_ref()
@@ -1561,6 +1576,7 @@ mod tests {
             instance_test,
             identity_test,
             var_class,
+            unbound_class,
             meta_fn_class,
             namespace_class,
             array_test,

@@ -74,6 +74,19 @@ impl CallerExpansion<'_, '_> {
     }
 }
 impl ExpansionHost for CallerExpansion<'_, '_> {
+    fn intern_native_var(&mut self, owner: u64, global: &crate::portable::resolve::Global,
+        declaration: &Form, doc: Option<&[u16]>) -> Result<(), Diagnostic> {
+        let result = if owner == self.caller.native_owner() {
+            self.caller.intern_analyzed_var(global, declaration, doc)
+        } else {
+            Err(wasmtime::Error::msg("Native Var admission has a foreign owner").into())
+        };
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span: declaration.span.clone(), message }
+        })
+    }
     fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> { Some(&self.service) }
     fn expansion_work_fuel(&self) -> u64 { self.caller.options.fuel_per_operation }
     fn begin_expansion_request(&mut self, span: Range<usize>) -> Result<(), Diagnostic> {

@@ -1,3 +1,43 @@
+### Native namespace and Unbound receipts
+
+The source-frozen ordinary-unbound-working overlay on 214d999f completes all ten
+recorded commands. Public eval returns 101 with 87/88 tests passing: the sole
+failure is the unresolved core macro Var `when-let`, in both Runtime and Macro.
+The unchanged full20 transport test now matches all20 observations in each phase.
+All five namespace declaration-boundary controls match in each phase, including
+failed initializers, untaken/uncalled definitions and analysis before a later
+compile error. Generated metadata and the new genuine Unbound/actual-root
+controls pass. The same overlay returns0 for runtime ABI62, ownership137,
+built-in sealing8, the original string/hash3, Python364 and core import checking.
+
+The subsequent ABI13 overlay changes only runtime_abi::VERSION from12 to13 in
+nonresult inputs. Its six commands all return0: runtime ABI62, the two Unbound
+regression tests, two actual no-import AOT capability tests, the core-function
+catalog, Python364 and core import checking. These67 Rust test executions are a
+focused follow-up; the complete88-test eval target and full workspace have not
+been rerun on ABI13. Exact sources/HEAD/runner/pinned Binaryen remain conserved
+within each batch. The ABI bump accounts for the added Var-owned Unbound GC root
+in the shared cell layout. See docs/runtime/native-var-values.md for behavior.
+
+Run `python3 results/m12-eval/namespace-native-values-checkpoint/verify.py --current`
+to check fifteen exact historical source/runner/log receipts, the one-line ABI
+change, explicit prose-only publication deltas and current source conservation.
+Omitting --current checks historical evidence after later source changes.
+Negative receipts retain catalog fuel exhaustion, the unguarded hashing failure
+on live helper replacement, generated-metadata publication errors, private-field
+and ordinary-read mismatches, and a mistakenly selected nonexistent CLI ABI
+target. The latter executed no ABI tests; the actual runtime_abi target is in
+suss-compile and passes62 in the final two batches. Original protected fixtures,
+primary/comparison/count/skip rules and operation allowances stay unchanged.
+
+Core/mixed source macro Var publication still needs the actual caller-owned Var
+with its real isolated transformer root, correct caller namespace, live root
+replacement and source-link publication boundaries without initializer replay.
+Full workspace/bootstrap/native/conformance, numeric-parent integration and
+independent promotion review/final-head CI remain separate gates. GitHub issues
+remain the authoritative acceptance records; this checkpoint makes no closure,
+promotion or merge claim.
+
 ### Immutable metadata transport checks
 
 The source-frozen overlay on 0c2914c4 passes the 137-test ownership library,

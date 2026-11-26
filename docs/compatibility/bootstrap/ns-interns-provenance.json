@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "upstream": "Clojure1.12.6",
+  "license": "EPL-1.0",
+  "jar-sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "entry": "clojure/core.clj",
+  "entry-sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "original": "(defn ns-interns\n  \"Returns a map of the intern mappings for the namespace.\"\n  {:added \"1.0\"\n   :static true}\n  [ns]\n  (let [ns (the-ns ns)]\n    (filter-key val (fn [^clojure.lang.Var v] (and (instance? clojure.lang.Var v)\n                                 (= ns (.ns v))))\n                (ns-map ns))))",
+  "original-sha256": "e4a5ce2568289bb1f7bb52980a88257696941cdd84fda42eaf29c03c4251126d",
+  "source": "docs/compatibility/bootstrap/exact-integers.sus",
+  "adaptation": ";; BEGIN Clojure ns-interns\n;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.\n;; See runtime/core-import/epl-v10.html.\n;; Clojure1.12.6 namespace-map filtering is supplied by the native compiled\n;; host's actual binding cells. Pure components require that explicit capability.\n(def ^{:doc \"Returns a map of the intern mappings for the namespace.\"\n       :added \"1.0\" :static true} ns-interns\n  (fn [ns] (suss.bootstrap/namespace-interns (the-ns ns))))\n;; END Clojure ns-interns",
+  "adaptation-sha256": "815ee68aa0c35107b630469e769eb4b51beb035e1bfe88443726d51da47c7b18",
+  "contract": "Retain the one-argument function, metadata and the-ns validation. The native callback filters actual phase-owned interned binding cells and supplies real canonical Vars; a pure component receives no hidden compiler. Provenance does not certify execution."
+}

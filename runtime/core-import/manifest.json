@@ -8,7 +8,7 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "b150acd97592461236ddb9cf21c96335bfaeebef66980e631ea707048c8f0b7a",
+  "recipe-sha256": "5f437753017d7395a175838d121d5c9003e7b687b080431bd102bcebb98ce9d5",
   "reviews-sha256": "1beb00a3f66cd14edb1dc67fad76416d1e4843e1b0b3ca73821da0abebfba131",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -1276,8 +1276,8 @@
       "extracted": "extracted/0041.cljs",
       "extracted-sha256": "b4763de780cca6b8b300acd333ec1a304c163aaa2dbbcf95e998c9ed6bc23937",
       "patch": "docs/compatibility/patches/m3-hash-unencoded-chars.json",
-      "patch-sha256": "757759b42ead498ee8220e822efa0578c277facb616259d58f810c83189ada34",
-      "adapted-form-sha256": "80d5987eb1755201d7855d4a1865ecf4c88f40fd2b2b6c86acbd6932b67f50e5",
+      "patch-sha256": "85327b7d06a89f7a668ed5ae83aaca402027aef0d464e69cff89150a6dfe2469",
+      "adapted-form-sha256": "e5ccc53a7b1bd5442dfe354fa98e77cefcff20f4ddfd258c5f7b5e150c7405b3",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15794,7 +15794,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "c059db5d28ef42a088c7c0e714ec143250d0f270f4ebd466056a07569395c734"
+      "sha256": "29e02329ee78f54e3c5eebecc1bd9be06e684a44ce6f92601825136f63a4664a"
     }
   },
   "files": {
@@ -16311,6 +16311,6 @@
     "extracted/0508.cljs": "77326b79c0347440e41ece228e7fe66e5693f05eaeb78d743dc5c5c35c1bf2a4",
     "extracted/0509.cljs": "6bbf109e23ed20487388fc3fc11b61608c9c066e1e7ebc213c92932a587d4fed",
     "extracted/0510.cljs": "4b1a77bb0f37cd6cb4e74dd708b1226a2a56defd6bab87e589a138e269191c71",
-    "suss/core.sus": "3fc73e78b7d6b383cbf3ebdaea35dcf20704604365ffdaec13de1c0a6d1c9540"
+    "suss/core.sus": "f71f52096ea17c15a438a91da7c8c415f17b2f9230bd1e66c43b0ed8e62d254a"
   }
 }

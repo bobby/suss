@@ -287,6 +287,12 @@ pub enum Bitwise {
     /// Execution-time entropy; never a compiler constant or a pure operation.
     RandomDouble,
     EvaluateForm,
+    NamespaceInterns,
+    DeclareBinding,
+    HashUnencodedChars,
+    BindingGetterUnboundInit,
+    BindingGetterRootSet,
+    BindingGetterRootGet,
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
@@ -442,6 +448,12 @@ impl Bitwise {
             Self::F64TimeClip => "primitive-f64-time-clip",
             Self::RandomDouble => "random-double",
             Self::EvaluateForm => "evaluate-form",
+            Self::NamespaceInterns => "namespace-interns",
+            Self::DeclareBinding => "binding-declare",
+            Self::HashUnencodedChars => "hash-unencoded-chars",
+            Self::BindingGetterUnboundInit => "binding-getter-unbound-init!",
+            Self::BindingGetterRootSet => "binding-getter-root-set!",
+            Self::BindingGetterRootGet => "binding-getter-root-get",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
@@ -490,7 +502,8 @@ impl Bitwise {
     pub(crate) fn arity(self) -> usize {
         match self {
             Self::RandomDouble => 0,
-            Self::EvaluateForm => 1,
+            Self::BindingGetterRootSet => 3,
+            Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::HashUnencodedChars | Self::BindingGetterRootGet => 1,
             Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
@@ -549,7 +562,7 @@ impl Bitwise {
                 | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
             Type::Value
         } else {
             Type::Number
@@ -2543,6 +2556,10 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
+        if let Some(owner) = self.origin.as_ref().and_then(|origin| origin.native_owner()) {
+            self.expander.intern_native_var(owner, &global, &definition.declaration,
+                definition.docstring.as_deref())?;
+        }
         // Register shipped core's direct link before analyzing the initializer,
         // so a self-recursive core function also calls its own definition.
         let dynamic = Self::dynamic_metadata(&args[0]) || prior_dynamic;
@@ -3757,6 +3774,11 @@ impl Analyzer<'_> {
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "random-double" => Some(Bitwise::RandomDouble),
                 "evaluate-form" => Some(Bitwise::EvaluateForm),
+                "namespace-interns" => Some(Bitwise::NamespaceInterns),
+                "hash-unencoded-chars" => Some(Bitwise::HashUnencodedChars),
+                "binding-getter-unbound-init!" => Some(Bitwise::BindingGetterUnboundInit),
+                "binding-getter-root-set!" => Some(Bitwise::BindingGetterRootSet),
+                "binding-getter-root-get" => Some(Bitwise::BindingGetterRootGet),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),

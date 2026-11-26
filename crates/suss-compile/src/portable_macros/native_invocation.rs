@@ -242,7 +242,7 @@ mod tests {
                 Ok(((), u64::MAX))
             },
         );
-        assert!(matches!(result, Err(ref error) if error.is_interrupt()));
+        assert!(matches!(result, Err(ref error) if error.is_interrupt()), "{result:?}");
         assert_eq!(macros.current_namespace(), original);
         macros.define("(defmacro recovered-declaration [] 42)").unwrap();
         assert_eq!(macros.current_namespace(), original);

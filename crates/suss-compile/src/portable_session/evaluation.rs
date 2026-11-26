@@ -35,6 +35,7 @@ pub(super) struct Evaluation {
     input_base: Mutex<Option<OwnedRooted<AnyRef>>>,
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    unbound_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
     syntax_tests: Mutex<Vec<OwnedRooted<AnyRef>>>,
@@ -247,6 +248,7 @@ impl Evaluation {
         let input_base = registry_lock(&self.input_base).take();
         self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
+        let unbound_class = registry_lock(&self.unbound_class).take();
         let metadata_lookup = registry_lock(&self.metadata_lookup).take();
         let syntax_tests = std::mem::take(&mut *registry_lock(&self.syntax_tests));
         drop((
@@ -258,6 +260,7 @@ impl Evaluation {
             compiler_helpers,
             namespace,
             var_class,
+            unbound_class,
             input_base,
             metadata_lookup,
             syntax_tests,
@@ -647,6 +650,16 @@ impl SessionHost<'_> {
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
         registry_lock(&state.compiler_helpers).insert("Var", value.object()?.clone());
+        let unbound_constructor = {
+            let cell = self.core_cell("VarUnbound")?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        let descriptor = self.data_descriptor(&unbound_constructor, true)?;
+        *registry_lock(&state.unbound_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("VarUnbound", unbound_constructor.object()?.clone());
         let namespace_constructor = {
             let cell = self.core_cell("Namespace")?;
             let mut roots = RootScope::new(&mut self.store);
@@ -847,6 +860,8 @@ impl SessionHost<'_> {
         let var_class = registry_lock(&evaluation.var_class)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        let unbound_class = registry_lock(&evaluation.unbound_class).clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native Unbound authority"))?;
         let meta_fn_class = registry_lock(&evaluation.meta_fn_class).clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native metadata-function authority"))?;
         bridge.read_evaluation(
@@ -859,6 +874,7 @@ impl SessionHost<'_> {
             instance_test,
             identity_test,
             var_class,
+            unbound_class,
             meta_fn_class,
         )
     }

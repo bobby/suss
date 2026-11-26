@@ -2,12 +2,11 @@
 use super::*;
 use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
-/// Core value types whose fields are their documented public API. They hold
-/// only scalars, with no storage arrays or hash caches, so reading them exposes
-/// nothing private (design decision 2026-10-25). Their fields are immutable,
-/// so named writes are rejected like those to any immutable field (#278).
-/// None remain since the WIT 64-bit wrappers were retired for longs (#336).
-const PUBLIC_FIELD_TYPES: &[&str] = &[];
+/// Core types whose final fields are public API. Clojure Var.Unbound.v is
+/// the actual Var reference, not storage arrays, capabilities or hash caches.
+/// Their descriptors remain closed to extension, and ordinary final-field
+/// guards reject writes (#278).
+const PUBLIC_FIELD_TYPES: &[&str] = &["VarUnbound"];
 /// Core types whose constructors user code may call, while their fields stay
 /// private (#279): those core macro expansions construct in user code
 /// (defrecord's seq and iterator, lazy-seq, delay, defmulti), as Clojure's

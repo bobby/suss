@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/namespace-declaration-boundaries-primary-prepared/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8406414310447872,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "expression.clj": "d02a595ded588453786f71d58f7115fd8bb5c6797e60a2bad0bd9674b644430b",
+    "cases.json": "082f818d2537e8771a16a2cbfc67435a54eac3ed770d4bf70522464dbc0b5840",
+    "primary.stdout": "67be9015f39d609a3c23dda8906559d859b26a27c6d7bee64656737b2340f484",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Fresh primary only; distinguishes analysis-time Var interning from initializer/root publication. No native claim."
+}

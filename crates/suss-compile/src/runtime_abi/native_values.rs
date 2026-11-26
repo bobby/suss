@@ -8,6 +8,7 @@ pub(crate) const DATA: i32 = 2;
 pub(crate) const VAR: i32 = 3;
 pub(crate) const NAMESPACE: i32 = 4;
 pub(crate) const OBJECT_ARRAY: i32 = 5;
+pub(crate) const VAR_UNBOUND: i32 = 6;
 pub(crate) const FIELD_GET: i32 = 0;
 pub(crate) const FIELD_SET: i32 = 1;
 pub(crate) const GETTER_MACRO: i32 = 2;
@@ -18,6 +19,9 @@ pub(crate) const ARRAY_SET: i32 = 6;
 pub(crate) const ARRAY_CLONE: i32 = 7;
 pub(crate) const ARRAY_ELEMENTS: i32 = 8;
 pub(crate) const ARRAY_COPY: i32 = 9;
+pub(crate) const NAMESPACE_INTERNS: i32 = 10;
+pub(crate) const GETTER_ROOT_SET: i32 = 11;
+pub(crate) const GETTER_ROOT_GET: i32 = 12;
 const ROOT: u32 = MAP_ENTRY_DESCRIPTOR_GLOBAL + 8;
 
 pub(super) fn declare(b: &mut Builder) -> u32 {
@@ -65,6 +69,14 @@ pub(super) fn declare(b: &mut Builder) -> u32 {
         &[(1, VALUE)],
         &body,
     );
+    let mut query = vec![GlobalGet(ROOT), RefIsNull, If(BlockType::Empty)];
+    query.extend(numeric::error("Native namespace catalog capability is unavailable", 3));
+    query.extend([
+        End, LocalGet(0), I32Const(NAMESPACE_INTERNS), I32Const(0),
+        sentinel_value(NIL), sentinel_value(NIL), GlobalGet(ROOT),
+        RefAsNonNull, CallRef(source),
+    ]);
+    b.function("namespace-interns", &[VALUE], &[VALUE], &query);
     source
 }
 

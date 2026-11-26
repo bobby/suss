@@ -22,20 +22,22 @@ impl SessionHost<'_> {
                     .upgrade()
                     .filter(|s| !s.retired.load(Ordering::SeqCst))
                     .ok_or_else(|| wasmtime::Error::msg("Native value owner has retired"))?;
-                let endpoint = capability(caller.as_context_mut(), args[0])?
-                    .ok_or_else(|| wasmtime::Error::msg("Invalid native operation capability"))?;
                 let profile = registry_lock(&state.profile)
                     .clone()
                     .ok_or_else(|| wasmtime::Error::msg("No active native value profile"))?;
                 let mut view = profile.bind(caller.as_context_mut());
                 let _values = view.native_values_scope();
-                let result = view.native_operation(
-                    &endpoint,
-                    args[1].unwrap_i32(),
-                    args[2].unwrap_i32(),
-                    args[3],
-                    args[4],
-                );
+                let result = if args[1].unwrap_i32() == op::NAMESPACE_INTERNS {
+                    let namespace = {
+                        let mut roots = RootScope::new(&mut view.store);
+                        own(&mut roots, args[0], view.identity, &view.handles)?
+                    };
+                    view.namespace_interns(&namespace)
+                } else {
+                    let endpoint = capability(view.store.as_context_mut(), args[0])?
+                        .ok_or_else(|| wasmtime::Error::msg("Invalid native operation capability"))?;
+                    view.native_operation(&endpoint, args[1].unwrap_i32(), args[2].unwrap_i32(), args[3], args[4])
+                };
                 match result {
                     Ok(value) => {
                         results[0] = value.val(&mut view.store.as_context_mut());
@@ -114,6 +116,12 @@ impl SessionHost<'_> {
         let (name, count, indexed, boolean, void) = match (&endpoint.kind, code) {
             (NativeKind::Nominal(_), op::FIELD_GET) => ("object-field-get", 0, true, false, false),
             (NativeKind::Nominal(_), op::FIELD_SET) => ("object-field-set", 1, true, false, true),
+            (NativeKind::Function { .. }, op::GETTER_ROOT_GET) => {
+                ("binding-getter-root-get", 0, false, false, false)
+            }
+            (NativeKind::Function { .. }, op::GETTER_ROOT_SET) => {
+                ("binding-getter-root-set!", 2, false, false, false)
+            }
             (NativeKind::Function { .. }, op::GETTER_MACRO) => {
                 ("binding-getter-macro?", 0, false, true, false)
             }
