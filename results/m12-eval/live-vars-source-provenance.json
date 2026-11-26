@@ -228,7 +228,7 @@
     "crates/suss-cli/tests/repl_value_display.rs": "d6f7fe67f23e77dd42c644cef87ed94565114a529774f5adda07e9b6601f1045",
     "crates/suss-compile/src/portable/hir/nominal.rs": "8c52a48df883b4ab21c4bcdac0e0f520be27eec6a29125016817092f0e048c30",
     "crates/suss-compile/src/portable/hir/quotes.rs": "c37d80214b4a75e51c71685db66e9d74c8049556cc5296edb27cce3512315548",
-    "crates/suss-compile/src/portable_session/evaluation/native_values.rs": "f511b9b5f17229ca40c3a072c5339e738182a434f511931549266ed2cff02f60",
+    "crates/suss-compile/src/portable_session/evaluation/native_values.rs": "803b4b40781985c9eb8a4d9e6926283cafdb0ccb495182bbcd7d33287da560c1",
     "crates/suss-compile/tests/portable_calling_convention.rs": "7374d02064b47209c4fd4f5f9bf3011c3410d6ec9ffa320643ac3fb2e718d748",
     "crates/suss-compile/tests/portable_comparator_foundations.rs": "26a7f4d704548f5d3ef6225d93d17d2f37e29203ca349a61224cf2df2cedde49",
     "results/m12-eval/declaration-metadata-lexical-primary/expression.clj": "c7a3ed518e5641dd2287c3c2744a409bc260b3621af2dc74c5f5ed71ccb52d8d",

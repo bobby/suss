@@ -94,9 +94,12 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
               (contains? init :inferred-ret-tag) (get init :inferred-ret-tag)])))"#,
             )
             .unwrap();
+        // Hint metadata executes; retain the original raw declaration syntax
+        // and primary projections while supplying its explicit symbol value.
         session
             .eval(
-                r#"(def effects 0)
+                r#"(def string 'string)
+          (def effects 0)
           (def ^{:tag false} scalar (do (set! effects (+ effects 1)) 7))
           (def ^{:dynamic true :tag false} *scalar* 8)
           (def ^{:tag false} callable (fn [] 23))
