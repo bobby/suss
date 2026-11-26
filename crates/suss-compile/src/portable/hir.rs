@@ -1432,7 +1432,7 @@ impl Analyzer<'_> {
         let construction = node(Expression::Call { callee: Box::new(node(Expression::Global(helper))), arguments });
         let cell = self.environment.constant_cell(self.phase);
         self.pattern_sites.push((value.clone(), cell.clone()));
-        let initialize = node(Expression::Definition { result: None, constant: None, global: cell.clone(),
+        let initialize = node(Expression::Definition { compiler_root: false, result: None, constant: None, global: cell.clone(),
             name_metadata: vec![], name_span: form.span.clone(), docstring: None,
             initializer: Some(Box::new(construction)), once: true, linked: None });
         self.callable_keys.insert(cell.clone(), initialize);
