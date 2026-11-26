@@ -102,6 +102,9 @@ impl Analyzer<'_> {
                 Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) => items,
                 Kind::Keyword(_) | Kind::Tagged { .. } => return self.quote_var_metadata(form),
                 Kind::List(items) if items.is_empty() => return self.quote_var_metadata(form),
+                Kind::List(items) if items.len() == 2 && matches!(&items[0].kind,
+                    Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "quote") =>
+                    return self.quote_var_metadata(&items[1]),
                 _ => return self.form(form),
             };
             // Evaluate expressions against the user's current bindings. Only

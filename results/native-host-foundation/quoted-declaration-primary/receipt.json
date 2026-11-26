@@ -1,0 +1,23 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "core-boundary-foundation/quoted-declaration-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.9589992659166455,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "expression.clj": "8c65c495aeb7cd0c89fa8651d7c77c99cb9eeabd1701ab0573de056371ac57b9",
+    "primary.stdout": "71de7c595d1b0cc44fbe46622169949a7d260bd337e22a0190727f3b58a28a26",
+    "primary.stderr": "5a3185314ad4860c1e09b50862bdf7af37d7eae90aaea226adbb613c4d2796dc"
+  },
+  "qualification": "Pinned primary only; constructor replacement and actual native AOT results require separate native execution."
+}

@@ -1460,12 +1460,12 @@ mod tests {
     }
 
     #[test]
-    fn native_function_capability_live_var_namespace_and_state_keep_real_owners() {
+    fn native_function_capability_live_var_namespace_and_state_keep_real_owners_without_public_eval_binding() {
         let mut source = Session::new_repl().unwrap();
         let mut target = Session::new_macro().unwrap();
         let original = source.eval("(def live-forwarded-var 11)").unwrap();
         let callback = source.eval(
-            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (eval '(def live-forwarded-var 42))))"
+            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (suss.bootstrap/evaluate-form '(def live-forwarded-var 42))))"
         ).unwrap();
         let read = target.eval(
             "(fn [v f] (let [before @v ns (:ns (meta v))] (f) (binding [*ns* ns] (alias 'live-forwarded-alias 'user)) (if (and (var? v) (= before 11) (= @v 42) (not (.isMacro v)) (identical? (meta v) (meta v)) (identical? ns (:ns (meta v))) (= 'user (ns-name ns))) 42 -1)))"
@@ -1872,4 +1872,65 @@ mod tests {
             Some(RuntimeNumber::Long(42))
         );
     }
+
+    #[test]
+    fn native_function_capability_live_var_namespace_and_state_keep_real_owners() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let original = source.eval("(def live-forwarded-var 11)").unwrap();
+        let callback = source.eval(
+            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (eval '(def live-forwarded-var 42))))"
+        ).unwrap();
+        let read = target.eval(
+            "(fn [v f] (let [before @v ns (:ns (meta v))] (f) (binding [*ns* ns] (alias 'live-forwarded-alias 'user)) (if (and (var? v) (= before 11) (= @v 42) (not (.isMacro v)) (identical? (meta v) (meta v)) (identical? ns (:ns (meta v))) (= 'user (ns-name ns))) 42 -1)))"
+        ).unwrap();
+        let imported = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        let callback = target
+            .import_value(source.export_value(&callback).unwrap())
+            .unwrap();
+        source.collect().unwrap();
+        target.collect().unwrap();
+        let result = super::super::super::suspended::scope(&mut source, || {
+            target.invoke(&read, &[&imported, &callback])
+        })
+        .unwrap_or_else(|error| {
+            panic!(
+                "{}",
+                crate::portable_repl::error_display(&mut target, &error)
+            )
+        });
+        assert_eq!(
+            target
+                .inspect(&result, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+            Some(RuntimeNumber::Long(42))
+        );
+        let alias = source
+            .eval("(contains? (ns-aliases *ns*) 'live-forwarded-alias)")
+            .unwrap();
+        assert_eq!(
+            source
+                .inspect(&alias, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32),
+            "namespace writes must reach the actual original state array"
+        );
+        let returned = source
+            .import_value(target.export_value(&imported).unwrap())
+            .unwrap();
+        let same = source.eval("(fn [a b] (identical? a b))").unwrap();
+        let same = source.invoke(&same, &[&original, &returned]).unwrap();
+        assert_eq!(
+            source
+                .inspect(&same, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32),
+            "return transport must unwrap the exact original Var"
+        );
+    }
+
 }

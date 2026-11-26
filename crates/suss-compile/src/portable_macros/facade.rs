@@ -585,11 +585,11 @@ mod tests {
     }
 
     #[test]
-    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation() {
+    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation_without_public_eval_binding() {
         use std::{sync::mpsc, time::Duration};
         let mut runtime = Session::new_repl().unwrap();
         let mut macros = CompiledMacros::new().unwrap();
-        runtime.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        runtime.eval_with_macros("(suss.bootstrap/evaluate-form '(+ 0 0))", &mut macros).unwrap();
         let service = macros.service();
         let (request, requests) = mpsc::sync_channel(1);
         let (reply, replies) = mpsc::sync_channel(1);
@@ -755,4 +755,44 @@ mod tests {
             "no definition or expansion replay"
         );
     }
+
+    #[test]
+    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation() {
+        use std::{sync::mpsc, time::Duration};
+        let mut runtime = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        runtime.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        let service = macros.service();
+        let (request, requests) = mpsc::sync_channel(1);
+        let (reply, replies) = mpsc::sync_channel(1);
+        let replies = Mutex::new(replies);
+        let worker = std::thread::spawn(move || {
+            requests.recv_timeout(Duration::from_secs(5)).unwrap();
+            let result = service.with_host(|host| {
+                host.define("(defmacro compiled-during-runtime [] 42)")
+                    .map_err(|error| error.to_string())
+            });
+            reply.send(result).unwrap();
+        });
+        runtime.install_observation_hook(move |_, _| {
+            // The worker uses the independent Macro Store. It never reenters
+            // this callback's Runtime Store or receives its Caller/context.
+            request.send(()).map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+            replies.lock().unwrap().recv_timeout(Duration::from_secs(5))
+                .map_err(|error| wasmtime::Error::msg(format!("Runtime blocked its compiler: {error}")))?
+                .map_err(wasmtime::Error::msg)?;
+            Ok(0)
+        }).unwrap();
+        let result = crate::portable_repl::evaluate_script_compiled(
+            &mut runtime, &mut macros,
+            "(defmacro staged-before-runtime [] 17) (do (suss.harness.observation/capture 77) 42)",
+            None,
+        );
+        worker.join().unwrap();
+        assert_eq!(result.unwrap(), "42");
+        assert_eq!(crate::portable_repl::evaluate_compiled(
+            &mut runtime, &mut macros, "(compiled-during-runtime)",
+        ).unwrap(), "42");
+    }
+
 }

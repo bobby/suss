@@ -1,3 +1,5 @@
+The numeric branch now inherits the focused core checkpoint ec2f4208 through #516. The parent records28 scoped Rust test executions and its primary/source qualifications; those do not validate this numeric tree. Core ownership, Var metadata and publication work belongs in #521 (#519/#520), public eval in #516, numeric completion here. See docs/runtime/host-macro-boundary.md and the parent scoped receipts.
+
 Numeric changes are layered above the public eval consumer (#516) and core host/Macro/Var foundation (#521, #519, #520). See docs/runtime/host-macro-boundary.md for core ownership and publication contracts. Historical validation below retains its original source qualifications; it does not validate this restacked source.
 
 ### Root effects, executable metadata and native transport
