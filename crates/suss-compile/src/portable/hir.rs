@@ -704,7 +704,7 @@ pub enum Nominal {
     BindingGetterMacroSet,
     /// Compiler-authored Var publication. The staged flag is set only on the
     /// converted source declaration, never inferred from a language call/name.
-    VarMetadataDefine { staged: bool },
+    VarMetadataDefine { staged: bool, macro_flag: Option<bool> },
     /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
     BindingSnapshot,
     /// Compiler-only root definition, independent of the current dynamic frame.
@@ -851,7 +851,7 @@ impl Nominal {
                 Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
                 Self::DecimalNew => count == 2,
-                Self::VarMetadataDefine { .. } => count == 3,
+                Self::VarMetadataDefine { macro_flag, .. } => count == if macro_flag.is_some() { 2 } else { 3 },
                 Self::DecimalCoerce => count == 1,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
@@ -4953,7 +4953,7 @@ pub(crate) fn prepare_with_origin(
             match hir.kind_mut() {
                 Expression::Let { body, .. } => mark_metadata(body, staged),
                 Expression::Do(items) if !items.is_empty() => mark_metadata(items.last_mut().unwrap(), staged),
-                Expression::Nominal { operation: Nominal::VarMetadataDefine { staged: flag }, .. } => *flag = staged,
+                Expression::Nominal { operation: Nominal::VarMetadataDefine { staged: flag, .. }, .. } => *flag = staged,
                 _ => {}
             }
         }

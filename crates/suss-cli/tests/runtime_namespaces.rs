@@ -374,6 +374,7 @@ fn aot_namespace_frame_size_is_bounded_per_form() {
     eprintln!("component bytes: plain {small}/{large}, scoped {scoped_small}/{scoped_large}; bytes/form: {per_form}/{scoped_per_form}");
     let split_code_growth = large_code - small_code;
     let grouped_code_growth = grouped_large_code - grouped_small_code;
+    eprintln!("code bytes: split {small_code}/{large_code}, grouped {grouped_small_code}/{grouped_large_code}; growth: split {split_code_growth}, grouped {grouped_code_growth}");
     let frame_code = split_code_growth.checked_sub(grouped_code_growth)
         .expect("grouped control grew more code than split forms") / 20;
     eprintln!("code growth: split {split_code_growth}, grouped {grouped_code_growth}; extra bytes per split form: {frame_code}");

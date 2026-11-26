@@ -120,6 +120,21 @@ Ordinary helper writes remain language writes, including during a later staged
 declaration. Rollback consults both the actual metadata root and its independent
 ownership marker; root equality alone cannot identify the last writer.
 
+Compiler publication derives macro status from raw declaration metadata. A
+statically absent literal `:macro` key yields false without per-definition core
+lookup calls; dynamic keys and `:macro` values retain the original core lookup
+path. All metadata expressions and normalization still execute normally.
+
+Normalization and publication reuse one canonical Var object loaded after
+interning. Its getter still observes live root writes; this avoids a repeated
+hidden-cell lookup while preserving actual identity across helper execution.
+
+The proven macro flag is an immediate operand of the private publication primitive;
+the runtime storage ABI is unchanged. Ordinary, non-resumable eval emission drops
+only an unread publication return after executing the write. References in all
+instruction operands, captures and terminators retain their result locals;
+resumable frame layouts are unchanged.
+
 The native storage hook accepts only the original Var descriptor and the actual
 Var rooted in the compiler's registered hidden cell, with its actual logical
 binding cell. Symbol text selects candidates; exact rooted references authenticate

@@ -174,6 +174,12 @@ impl Analyzer<'_> {
                 kind: Kind::String(doc.clone()),
             });
         }
+        // Literal keys retain their identity while the metadata values run.
+        // Avoid two extra core calls per ordinary definition when :macro is
+        // provably absent; dynamic keys still use the original lookup path.
+        let macro_absent = pairs.iter().step_by(2).all(|key| matches!(
+            &key.kind, Kind::Keyword(key) if key.namespace.is_some() || key.name != "macro"
+        ));
         let metadata_form = Form {
             span: form.span.clone(), metadata: vec![], kind: Kind::Map(pairs),
         };
@@ -204,18 +210,28 @@ impl Analyzer<'_> {
         });
         let read = node(Expression::Global(cell));
         let result = if update {
+            // The canonical Var object stays stable while its getter observes
+            // live root writes. Normalize and publish through that same object
+            // without repeating the hidden-cell lookup after a helper call.
+            let variable = self.fresh_binding(form, read);
+            let read = self.local(form, variable.id);
             // Finish all user expressions and metadata normalization before
             // the one classified publication write. A source declaration's
             // final write is distinct from effects in its metadata expressions.
             let normalized = self.var_core_call(form, "binding-var-metadata", vec![read.clone(), metadata_value.clone()])?;
             let normalized = self.fresh_binding(form, normalized);
-            let key = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword::new("macro")) };
-            let key = self.quote_var_metadata(&key)?;
-            let macro_value = self.var_core_call(form, "get", vec![metadata_value, key])?;
-            let macro_flag = self.var_core_call(form, "boolean", vec![macro_value])?;
             let normalized_value = self.local(form, normalized.id);
-            let body = self.nominal(form, Nominal::VarMetadataDefine { staged: false }, vec![read, normalized_value, macro_flag]);
-            node(Expression::Let { bindings: vec![normalized], body: Box::new(body) })
+            let (macro_flag, arguments) = if macro_absent {
+                (Some(false), vec![read, normalized_value])
+            } else {
+                let key = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword::new("macro")) };
+                let key = self.quote_var_metadata(&key)?;
+                let macro_value = self.var_core_call(form, "get", vec![metadata_value, key])?;
+                let flag = self.var_core_call(form, "boolean", vec![macro_value])?;
+                (None, vec![read, normalized_value, flag])
+            };
+            let body = self.nominal(form, Nominal::VarMetadataDefine { staged: false, macro_flag }, arguments);
+            node(Expression::Let { bindings: vec![variable, normalized], body: Box::new(body) })
         } else {
             read
         };
