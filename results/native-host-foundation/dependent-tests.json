@@ -58,5 +58,17 @@
     "name": "native_function_capability_live_var_namespace_and_state_keep_real_owners",
     "sha256": "a90ba18a2317ecd0cde0b100c608fbaafdcb946b7fdaab8c1660f48ed2e19b32",
     "foundation_counterpart": "native_function_capability_live_var_namespace_and_state_keep_real_owners_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "name": "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities",
+    "sha256": "e1638f5ed8a42568ed6d5c6db4572e63458a2adacd52c85fc84984cbead5de55",
+    "foundation_counterpart": "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "name": "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+    "sha256": "7334af0220acbcecdba9d568e86bae9c32a14699385d6d4f52ee11d883e4ef8d",
+    "foundation_counterpart": "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding"
   }
 ]

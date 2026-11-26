@@ -1,3 +1,5 @@
+The numeric layer inherits the final focused core extraction (ef9548fe) through #516. The core record contains34 focused Rust test executions, with source qualifications; it is separate from this numeric tree and #516’s34 eval assertions. Core workspace validation is running on #521.
+
 The numeric branch now inherits the focused core checkpoint ec2f4208 through #516. The parent records28 scoped Rust test executions and its primary/source qualifications; those do not validate this numeric tree. Core ownership, Var metadata and publication work belongs in #521 (#519/#520), public eval in #516, numeric completion here. See docs/runtime/host-macro-boundary.md and the parent scoped receipts.
 
 Numeric changes are layered above the public eval consumer (#516) and core host/Macro/Var foundation (#521, #519, #520). See docs/runtime/host-macro-boundary.md for core ownership and publication contracts. Historical validation below retains its original source qualifications; it does not validate this restacked source.
@@ -35794,7 +35796,7 @@ remain separate gates; original suite/primary/count/skip/opaque rules do not cha
 
 The complete14-control Clojure1.12.6 API primary and separate6 binding controls
 retain two direct-call compilation failures and18 value/effect observations.
-The native/AOT negative command returns101 in75.659s, with source/HEAD unchanged: 
+The native/AOT negative command returns101 in75.659s, with source/HEAD unchanged:
 five discrepancies per native phase, plus actual AOT value and arity-stage
 failures. An earlier fixture setup failure on unloaded subs is retained separately.
 
