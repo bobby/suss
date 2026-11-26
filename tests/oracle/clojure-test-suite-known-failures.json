@@ -4,7 +4,7 @@
  "namespaces": {
   "clojure.core-test.add-watch": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 250..14860"
+   "diagnostic": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unresolved Runtime name ref at bytes 250..14860"
   },
   "clojure.core-test.ancestors": {
    "stage": "namespace",
@@ -164,7 +164,7 @@
   },
   "clojure.core-test.remove-watch": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 238..8527"
+   "diagnostic": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name ref at bytes 238..8527"
   },
   "clojure.core-test.repeatedly": {
    "stage": "read",

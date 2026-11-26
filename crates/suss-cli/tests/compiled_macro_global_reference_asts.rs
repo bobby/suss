@@ -83,7 +83,11 @@ fn captured_global_declarations_supply_var_ast_fields_without_catalog_mutation()
                (= (get ast :ns) (get info :ns))]])))"#,
             )
             .unwrap();
+        // Preserve the primary raw declaration syntax and all AST expectations.
+        // Its metadata expressions receive explicit symbol values.
         let value = session.eval_with_macros(r#"
+          (def string 'string) (def number 'number)
+          (def forged 'forged) (def wrong 'wrong)
           (def effects 0)
           (def ^{:doc "source declaration"} scalar
             (do (set! effects (+ effects 1)) 42))
@@ -186,6 +190,8 @@ fn resolved_info_copies_identity_fields_and_shares_captured_nested_metadata() {
         let value = session
             .eval_with_macros(
                 r#"
+          ;; Runtime metadata executes; the captured declaration still contains raw.
+          (def raw 'raw)
           (def ^{:doc "before" :ns raw} value 17)
           (let [a value b value changed (def ^{:doc "after"} value false)]
             [(inspect-copy a b) value])"#,

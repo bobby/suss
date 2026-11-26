@@ -2085,3 +2085,22 @@ final published-head CI remain separate gates.
 
 
 The [root/metadata checkpoint](../../results/m12-eval/root-metadata-checkpoint/summary.json) records executable declaration metadata, real staged-source root effects, macro-to-ordinary reloads and authenticated imported-function body proofs. Fifteen successful command groups across two frozen batches return actual0: complete-public-eval=103, ci-macro-and-stream-targets=14, ownership-library=138, source-frontends=58, runtime-abi-and-structural-guards=71, named-calling-hash-sealing-and-ci-display=33, persistent-repl-display-controls=8, java-node-free-bootstrap=4. Only the REPL display test and its provenance verification files change between the two batches; production inputs are identical. The original display-target101 remains in its receipt. Python tests, original/source/core/sequence provenance and Java/Node-free bootstrap also return0. These local results do not replace fresh complete native conformance, the exact two-thread workspace baseline, issue acceptance, independent review or final-head CI.
+
+
+### Executable metadata fixture and native diagnostic validation
+
+The [declaration metadata checkpoint](../../results/m12-eval/declaration-metadata-checkpoint/summary.json)
+records fresh complete native0: all5,564 ordered assertion decisions are preserved,
+including the complete34-assertion eval body and229 BigInt/Ratio plus200 Decimal
+independent host matches. The actual native101 before review remains archived;
+only two blocked namespace diagnostics advance from `alter-var-root` to `ref`.
+All counts, skips, guest judgments and unrelated failures remain explicit.
+
+Pinned Clojure1.12.6 confirms declaration metadata executes. The original compiler
+projection fixtures now supply explicit symbol-value bindings for previously
+unbound metadata expressions; their raw declarations and all expected projections
+remain unchanged. Four original projection tests and a new six-control regression
+pass, as do core/eval provenance checks. A failed lexical-wrapper attempt remains
+archived because nesting declarations changed the catalog snapshots under test.
+Production inputs are identical to9222862b. Exact workspace, final acceptance
+audit, independent review and final-head CI remain separate gates.
