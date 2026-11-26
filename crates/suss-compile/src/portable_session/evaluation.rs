@@ -155,18 +155,17 @@ impl NamespaceAccess {
     }
     fn read(&self, session: &mut SessionHost<'_>) -> Result<String, SessionError> {
         session.charge_host_work(16)?;
-        let runtime = session.runtime;
+        let namespace = {
+            let mut roots = RootScope::new(&mut session.store);
+            let get = session.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = self.cell.get(&mut roots);
+            call(&mut roots, session.runtime, get, &[cell], session.identity, &session.handles)?
+        };
+        self.value_name(session, &namespace)
+    }
+    fn value_name(&self, session: &mut SessionHost<'_>, namespace: &SessionValue) -> Result<String, SessionError> {
+        if let Some(name) = session.native_namespace_name(namespace)? { return Ok(name); }
         let mut roots = RootScope::new(&mut session.store);
-        let get = runtime.get_func(&mut roots, "binding-get").unwrap();
-        let cell = self.cell.get(&mut roots);
-        let namespace = call(
-            &mut roots,
-            runtime,
-            get,
-            &[cell],
-            session.identity,
-            &session.handles,
-        )?;
         let namespace = namespace.val(&mut roots.as_context_mut());
         fn fields(
             store: &mut StoreContextMut<'_, ()>,
@@ -647,6 +646,15 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("Var", value.object()?.clone());
+        let namespace_constructor = {
+            let cell = self.core_cell("Namespace")?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        registry_lock(&state.compiler_helpers).insert("Namespace", namespace_constructor.object()?.clone());
         let cell = self.core_cell("MetaFn")?;
         let value = {
             let mut roots = RootScope::new(&mut self.store);
@@ -731,6 +739,7 @@ impl SessionHost<'_> {
         self.evaluation = Some(state);
         self.refresh_evaluation_profile();
         self.install_native_identity(&self.evaluation.as_ref().unwrap().clone())?;
+        self.install_native_operations(&self.evaluation.as_ref().unwrap().clone())?;
         Ok(())
     }
     fn throw_evaluation_error<T>(&mut self, error: SessionError) -> wasmtime::Result<T> {

@@ -47,6 +47,7 @@ mod numeric_operands;
 mod random;
 mod evaluation;
 mod native_identity;
+pub(crate) mod native_values;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
@@ -306,11 +307,7 @@ fn named_site_get(b: &mut Builder) {
     let property_get = b.names["named-property-get"];
     let full = || [LocalGet(1), LocalGet(2), Call(property_get), Return];
     let field_read = |slot: u32| [
-        LocalGet(6),
-        StructGet { struct_type_index: 7, field_index: 1 },
-        LocalGet(slot),
-        ArrayGet(ARGS),
-        Return,
+        LocalGet(1), LocalGet(slot), Call(b.names["object-field-get"]), Return,
     ];
     // The descriptor's own method, cached in the first entry (its method
     // moves to the second), or the full lookup when it has none.
@@ -412,8 +409,7 @@ fn user_named_site_get(b: &mut Builder) {
     code.extend([RefEq, If(BlockType::Empty)]);
     code.extend(site(SITE_SLOT));
     code.extend([LocalTee(5), I32Const(0), I32GeS, If(BlockType::Empty)]);
-    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 1 },
-        LocalGet(5), ArrayGet(ARGS), Return, End]);
+    code.extend([LocalGet(1), LocalGet(5), Call(b.names["object-field-get"]), Return, End]);
     code.extend(site(SITE_EPOCH));
     code.extend(epoch());
     code.extend([I32Eq, If(BlockType::Empty)]);
@@ -473,12 +469,7 @@ fn named_site_set(b: &mut Builder) {
     code.extend(site(SITE_SLOT));
     code.extend([LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
     code.extend([
-        LocalGet(1),
-        RefCastNonNull(HeapType::Concrete(OBJECT)),
-        StructGet { struct_type_index: OBJECT, field_index: 1 },
-        LocalGet(4),
-        LocalGet(3),
-        ArraySet(ARGS),
+        LocalGet(1), LocalGet(4), LocalGet(3), Call(b.names["object-field-set"]),
         LocalGet(3),
         Return,
         End,
@@ -1530,6 +1521,8 @@ fn build_module() -> Vec<u8> {
         next_type: helper.type_count,
         names: std::collections::BTreeMap::new(),
     };
+    let native_identity_type = native_identity::declare(&mut b);
+    let native_values_type = native_values::declare(&mut b);
     let string = HeapType::Concrete(STRING);
     for (name, sentinel) in [("nil", NIL), ("false", FALSE), ("true", TRUE)] {
         b.function(name, &[], &[VALUE], &[sentinel_value(sentinel)]);
@@ -1886,7 +1879,12 @@ fn build_module() -> Vec<u8> {
     b.function_with_locals("binding-getter-macro?", &[VALUE], &[ValType::I32],
         &[(1, VALUE)], &[
             LocalGet(0), Call(getter_cell), LocalTee(1), RefIsNull,
-            If(BlockType::Result(ValType::I32)), I32Const(1), Else,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0), I32Const(native_values::GETTER_MACRO), I32Const(0), sentinel_value(NIL), sentinel_value(NIL),
+            Call(b.names["native-value-operation"]), GlobalGet(TRUE_GLOBAL), RefEq,
+            Else, I32Const(1), End, Else,
             LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
             StructGet { struct_type_index: BINDING, field_index: 1 },
             I32Const(CELL_MACRO), I32And, I32Eqz, I32Eqz, End,
@@ -1894,7 +1892,11 @@ fn build_module() -> Vec<u8> {
     b.function_with_locals("binding-getter-macro-set!", &[VALUE, VALUE], &[VALUE],
         &[(1, VALUE)], &[
             LocalGet(0), Call(getter_cell), LocalTee(2), RefIsNull,
-            If(BlockType::Empty), LocalGet(0), Return, End,
+            If(BlockType::Empty),
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+            If(BlockType::Empty), LocalGet(0), I32Const(native_values::GETTER_MACRO_SET), I32Const(0), LocalGet(1), sentinel_value(NIL),
+            Call(b.names["native-value-operation"]), Drop, End,
+            LocalGet(0), Return, End,
             LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
             LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
             StructGet { struct_type_index: BINDING, field_index: 1 },
@@ -2199,7 +2201,6 @@ fn build_module() -> Vec<u8> {
     );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_restore, try_invoke));
-    let native_identity_type = native_identity::declare(&mut b);
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);
@@ -2760,6 +2761,7 @@ fn build_module() -> Vec<u8> {
     random::append(&mut b, &mut globals);
     evaluation::append(&mut b, &mut globals);
     native_identity::append(&mut globals, native_identity_type);
+    native_values::append(&mut globals, native_values_type);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

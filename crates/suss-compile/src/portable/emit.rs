@@ -367,11 +367,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ChunkIndexAdd => {},
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
-                        Nominal::PackedGet(_) => {
+                        Nominal::PackedGet(kind) => {
+                            if *kind == 6 { names.insert("native-value-kind"); }
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
                         }
-                        Nominal::PackedSet(_) => {
+                        Nominal::PackedSet(kind) => {
+                            if *kind == 6 { names.insert("native-value-kind"); }
                             names.insert("packed-array-set-3");
                             names.insert("language-error-new");
                         }
@@ -820,7 +822,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "binding-defined" | "binding-getter-macro?" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "binding-getter-macro?" | "native-value-kind" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
             "list-function" => (vec![VALUE; 5], vec![VALUE]),
             "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
@@ -3119,10 +3121,17 @@ fn emit_function(
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&I32Eqz)
                         .instruction(&BrIf(0))
+                        .instruction(&Block(BlockType::Result(ValType::Ref(RefType { nullable: false,
+                            heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Array } }))))
                         .instruction(&LocalGet(array))
                         .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 })
-                        .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Array }))
+                        .instruction(&BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF,
+                            to_ref_type: RefType { nullable: false,
+                                heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Array } } })
+                        .instruction(&Drop)
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&ArrayLen)
                         .instruction(&LocalTee(field_index_local))
                         .instruction(&I32Const(1 << 30))
@@ -3458,6 +3467,7 @@ fn emit_function(
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
                             code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            code.extend([LocalGet(field_index_local), LocalGet(storage), ArrayLen, I32GeU, BrIf(0)]);
                             code.extend([LocalGet(storage), LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(1), End]);
                             code.extend([GlobalGet(cache), LocalGet(object), LocalGet(name), Call(index("named-site-get")), End]);
                             for instruction in &code {
@@ -3495,6 +3505,8 @@ fn emit_function(
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
                             code.extend([LocalTee(field_index_local), I32Const(0), I32GeS, If(BlockType::Empty),
+                                LocalGet(field_index_local), LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
+                                ArrayLen, I32GeU, BrIf(1),
                                 LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
                                 LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(2), End]);
                             code.extend(site(runtime_abi::SITE_EPOCH));
@@ -3534,7 +3546,8 @@ fn emit_function(
                             } else {
                                 code.extend([LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 1 }]);
                             }
-                            code.extend([LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
+                            code.extend([LocalTee(storage_locals + 6), ArrayLen, LocalGet(field_index_local), I32LeU, BrIf(0),
+                                LocalGet(storage_locals + 6), LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
                                 LocalGet(value), Br(1), End, GlobalGet(cache), LocalGet(object),
                                 LocalGet(name), LocalGet(value), Call(index("named-site-set")), End]);
                             for instruction in code { function.instruction(&instruction); }
@@ -3792,6 +3805,14 @@ fn emit_function(
                                 code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
                                     Call(index("language-error-new")), Throw(0)]);
                             };
+                            if object {
+                                code.extend([LocalGet(array), Call(index("native-value-kind")),
+                                    I32Const(runtime_abi::native_values::OBJECT_ARRAY), I32Eq, If(BlockType::Empty)]);
+                                for argument in arguments { locals.push_boxed(&mut code, *argument); }
+                                code.push(Call(index(if set { "packed-array-set-3" } else { "packed-array-get-2" })));
+                                if raw_result { code.extend([Drop, LocalGet(locals.raw(arguments[2]))]); }
+                                code.extend([Br(1), End]);
+                            }
                             error(&mut code);
                             code.push(End);
                             if !set && !object && locals.of(inst.result) == unboxed::Repr::Boxed {

@@ -35851,3 +35851,42 @@ checkpoint. Its76-pass/one-failure full eval receipt belongs to74db1fb3. Current
 full workspace/bootstrap/native/conformance/provenance validation and independent
 promotion review follow completion of the remaining behavior. Numeric integration
 continues to await those completed shared changes.
+
+### Authenticated live Vars and Namespaces
+
+Native isolated macros now retain the caller's actual Vars, Namespace objects
+and namespace state arrays. Operations borrow the actual source Store or lease
+its owning Macro service, preserving live cells, identity/hash, metadata and
+macro flags after callbacks. Shared operation callbacks use GC-owned private
+capabilities, not numeric/name authority or one permanent callback per value.
+Namespace reads made by the host use the same actual descriptor validation.
+Ordinary syntax/display readers and opaque Atom rejection keep their contracts.
+
+The unchanged20-control source fixture now matches19/20 in each Runtime and
+Macro phase, attempting all40 observations. The remaining declaration and
+catalog failure is the missing ns-interns function. Actual Var root updates,
+dynamic reads, macro-status changes, metadata aliases and Namespace mutation
+match the pinned primary. A separate ownership regression confirms round-trip
+unwrapping of the exact original Var and mutation of the original state array.
+
+An array regression exposed direct alength casting private native storage as a
+local array. Guarded lowering now declines that path; hinted object-array reads
+and writes also forward authenticated native arrays. The regression exercises
+aliases, clone independence, overlapping copy, range failure before writes,
+elements, GC, exact return identity and source retirement. The actual initial
+cast failures and complete source overlays remain in the evidence archive.
+
+The final10-command frozen batch returns0 for typecheck, library136, ABI62,
+source/REPL/module/AOT58 and four focused eval tests; full20 remains actual101
+with only the stated ns-interns errors. These are260 distinct passing target
+executions and one failing aggregate; separate live1 and private10 repeat library
+controls. Source, HEAD and pinned Binaryen are conserved through actual terminal.
+Exact commands, logs, complete current/negative source overlays and reconstruction
+checks are under results/m12-eval/live-native-values-checkpoint.
+
+Namespace interning must cover real user and core cells, and mixed source/native
+Var-root publication still needs completion without replaying initializers.
+Fresh primary research for immutable nested metadata sharing and user/core Var
+catalogs is separate from these native results; no native pass is claimed for it.
+Current complete workspace/bootstrap/native/conformance/provenance validation
+and independent promotion review remain after the required implementation.

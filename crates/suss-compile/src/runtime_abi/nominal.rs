@@ -329,6 +329,17 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let mut body = vec![];
         guard(&mut body, 0, OBJECT);
         get(&mut body, 0, OBJECT, 1);
+        body.extend([ArrayLen, I32Eqz, If(BlockType::Empty), LocalGet(0),
+            Call(b.names["native-value-kind"]), I32Const(native_values::VAR), I32Sub,
+            I32Const(1), I32LeU, If(BlockType::Empty)]);
+        body.extend(native_values::operation(b, 0,
+            if writing { native_values::FIELD_SET } else { native_values::FIELD_GET },
+            vec![LocalGet(1)],
+            if writing { vec![LocalGet(2)] } else { vec![sentinel_value(NIL)] },
+            vec![sentinel_value(NIL)]));
+        if writing { body.push(Drop); }
+        body.extend([Return, End, End]);
+        get(&mut body, 0, OBJECT, 1);
         body.extend([LocalSet(if writing { 3 } else { 2 }), LocalGet(1)]);
         array(&mut body, if writing { 3 } else { 2 });
         body.extend([ArrayLen, I32GeU, If(BlockType::Empty)]);

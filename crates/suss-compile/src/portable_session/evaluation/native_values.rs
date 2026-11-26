@@ -2,7 +2,9 @@
 //! roots; one shared invocation callback per destination never owns those roots.
 //! The source Store is borrowed only synchronously or leased by its own service.
 use super::*;
+mod operations;
 use crate::portable_macros::MacroServiceWeak;
+use crate::runtime_abi::native_values as native_op;
 use std::sync::Weak;
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AsContext, ExternRef, FieldType, StorageType, StructRef, StructRefPre, StructType};
@@ -37,6 +39,38 @@ enum NativeKind {
         form: Form,
         constants: BTreeMap<u64, Transfer>,
     },
+    Nominal(LiveClass),
+    ObjectArray,
+}
+#[derive(Clone, Copy)]
+enum LiveClass {
+    Var,
+    Namespace,
+}
+impl LiveClass {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Var => "Var",
+            Self::Namespace => "Namespace",
+        }
+    }
+    fn fields(self) -> usize {
+        match self {
+            Self::Var => 3,
+            Self::Namespace => 2,
+        }
+    }
+}
+impl NativeKind {
+    fn tag(&self) -> i32 {
+        match self {
+            Self::Function { .. } => native_op::FUNCTION,
+            Self::Materialized { .. } => native_op::DATA,
+            Self::Nominal(LiveClass::Var) => native_op::VAR,
+            Self::Nominal(LiveClass::Namespace) => native_op::NAMESPACE,
+            Self::ObjectArray => native_op::OBJECT_ARRAY,
+        }
+    }
 }
 pub(crate) struct ValuesScope(Arc<Evaluation>);
 impl Drop for ValuesScope {
@@ -109,10 +143,15 @@ impl SessionHost<'_> {
                     error => wasmtime::Error::msg(error.to_string()),
                 })?;
                 let first = capability(view.store.as_context_mut(), arguments[0])?;
-                let second = capability(view.store.as_context_mut(), arguments[1])?;
-                results[0] = Val::I32(i32::from(
-                    first.zip(second).is_some_and(|(a, b)| Arc::ptr_eq(&a, &b)),
-                ));
+                results[0] = if matches!(arguments[1], Val::AnyRef(None)) {
+                    // Private kind query; normal identity always supplies two caps.
+                    Val::I32(first.map_or(0, |value| value.kind.tag()))
+                } else {
+                    let second = capability(view.store.as_context_mut(), arguments[1])?;
+                    Val::I32(i32::from(
+                        first.zip(second).is_some_and(|(a, b)| Arc::ptr_eq(&a, &b)),
+                    ))
+                };
                 Ok(())
             },
         )?;
@@ -151,47 +190,12 @@ impl SessionHost<'_> {
         let runtime = self.runtime;
         let mut roots = RootScope::new(&mut self.store);
         let value = value.val(&mut roots.as_context_mut());
-        let mut test = [Val::I32(0)];
+        let mut result = [Val::null_any_ref()];
         runtime
-            .get_func(&mut roots, "closure-value-test")
+            .get_func(&mut roots, "native-identity-capability")
             .unwrap()
-            .call(&mut roots, &[value], &mut test)?;
-        if test[0].unwrap_i32() != 0 {
-            let object = value.unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
-            // Captured user closures do not have the universal host entry shape.
-            if object.ty(&roots)?.fields().len() == runtime_abi::UNIVERSAL_MAX as usize + 1 {
-                let env = object.field(&mut roots, runtime_abi::UNIVERSAL_ENVIRONMENT as usize)?;
-                return capability(roots.as_context_mut(), env).map_err(Into::into);
-            }
-        } else {
-            // Imported MetaFn values carry an authenticated capability in their
-            // private prototype holder. User with-meta creates a fresh holder.
-            let Some(object) = value
-                .anyref()
-                .flatten()
-                .map(|r| r.as_struct(&roots))
-                .transpose()?
-                .flatten()
-            else {
-                return Ok(None);
-            };
-            if object.ty(&roots)?.fields().len() == 4 {
-                let prototype = object.field(&mut roots, 2)?;
-                if let Some(array) = prototype
-                    .anyref()
-                    .flatten()
-                    .map(|r| r.as_array(&roots))
-                    .transpose()?
-                    .flatten()
-                {
-                    if array.len(&roots)? == 2 {
-                        let value = array.get(&mut roots, 1)?;
-                        return capability(roots.as_context_mut(), value).map_err(Into::into);
-                    }
-                }
-            }
-        }
-        Ok(None)
+            .call(&mut roots, &[value], &mut result)?;
+        capability(roots.as_context_mut(), result[0]).map_err(Into::into)
     }
     fn existing_native_value(
         &mut self,
@@ -284,6 +288,15 @@ impl SessionHost<'_> {
             .unwrap();
         let var_class = registry_lock(&state.var_class).clone().unwrap();
         let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
+        let namespace_class = registry_lock(&state.namespace)
+            .as_ref()
+            .unwrap()
+            .namespace
+            .clone();
+        let array_test = self
+            .runtime
+            .get_func(&mut self.store, "object-array-test")
+            .unwrap();
         let (form, roots) = bridge.read_transport(
             self,
             value,
@@ -294,6 +307,8 @@ impl SessionHost<'_> {
             identity_test,
             var_class,
             meta_fn_class,
+            namespace_class,
+            array_test,
         )?;
         let mut constants = BTreeMap::new();
         for (index, root, _) in roots {
@@ -362,7 +377,52 @@ impl SessionHost<'_> {
             (function, result[0].unwrap_i32() != 0)
         };
         if !function && !wrapped {
-            return self.export_materialized_value(value);
+            if let Some(existing) = self.existing_native_value(&state, value)? {
+                return Ok(Transfer::Native(existing));
+            }
+            let var = registry_lock(&state.var_class).clone().unwrap();
+            let namespace = registry_lock(&state.namespace)
+                .as_ref()
+                .unwrap()
+                .namespace
+                .clone();
+            let live = {
+                let mut roots = RootScope::new(&mut self.store);
+                let input = value.val(&mut roots.as_context_mut());
+                let test = self
+                    .runtime
+                    .get_func(&mut roots, "object-instance")
+                    .unwrap();
+                let mut result = [Val::I32(0)];
+                let var = Val::AnyRef(Some(var.to_rooted(&mut roots)));
+                test.call(&mut roots, &[var, input], &mut result)?;
+                if result[0].unwrap_i32() != 0 {
+                    Some(NativeKind::Nominal(LiveClass::Var))
+                } else {
+                    let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut roots)));
+                    test.call(&mut roots, &[namespace, input], &mut result)?;
+                    if result[0].unwrap_i32() != 0 {
+                        Some(NativeKind::Nominal(LiveClass::Namespace))
+                    } else {
+                        let mut result = [Val::null_any_ref()];
+                        self.runtime
+                            .get_func(&mut roots, "object-array-test")
+                            .unwrap()
+                            .call(&mut roots, &[input], &mut result)?;
+                        if sentinel_tag(&mut roots.as_context_mut(), &result[0])?
+                            == Some(runtime_abi::TRUE as u32)
+                        {
+                            Some(NativeKind::ObjectArray)
+                        } else {
+                            None
+                        }
+                    }
+                }
+            };
+            return match live {
+                Some(kind) => self.retain_native_value(&state, value, kind),
+                None => self.export_materialized_value(value),
+            };
         }
         if let Some(existing) = self.existing_native_value(&state, value)? {
             return Ok(Transfer::Native(existing));
@@ -502,6 +562,67 @@ impl SessionHost<'_> {
         }
         let cap = self.new_value_capability(&state, endpoint)?;
         let value = match &endpoint.kind {
+            NativeKind::Nominal(class) => {
+                let constructor = self.original_core_function(class.name())?;
+                let nil = self.data_scalar(&crate::portable::hir::Literal::Nil)?;
+                let fields = vec![&nil; class.fields()];
+                let object = self.data_construct(&constructor, &fields)?;
+                let object = self.attach_value_capability(&object, &cap, endpoint.uid)?;
+                let mut roots = RootScope::new(&mut self.store);
+                let original = object
+                    .object()?
+                    .to_rooted(&mut roots)
+                    .as_struct(&roots)?
+                    .unwrap();
+                let mut fields = original.fields(&mut roots)?.collect::<Vec<_>>();
+                let mut empty = [Val::null_any_ref()];
+                self.runtime
+                    .get_func(&mut roots, "args-new")
+                    .unwrap()
+                    .call(&mut roots, &[Val::I32(0)], &mut empty)?;
+                fields[1] = empty[0];
+                let ty = original.ty(&roots)?;
+                let allocator = StructRefPre::new(&mut roots, ty);
+                let object = StructRef::new(&mut roots, &allocator, &fields)?;
+                own(
+                    &mut roots,
+                    Val::AnyRef(Some(object.to_anyref())),
+                    self.identity,
+                    &self.handles,
+                )?
+            }
+            NativeKind::ObjectArray => {
+                let kind = self.data_scalar(&crate::portable::hir::Literal::Long(6))?;
+                let length = self.data_scalar(&crate::portable::hir::Literal::Long(0))?;
+                let mut roots = RootScope::new(&mut self.store);
+                let mut original = [Val::null_any_ref()];
+                let kind = kind.val(&mut roots.as_context_mut());
+                let length = length.val(&mut roots.as_context_mut());
+                self.runtime
+                    .get_func(&mut roots, "packed-array-new")
+                    .unwrap()
+                    .call(&mut roots, &[kind, length], &mut original)?;
+                let original = original[0]
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&roots)?
+                    .unwrap();
+                let mut uid = [Val::null_any_ref()];
+                self.runtime
+                    .get_func(&mut roots, "long-box")
+                    .unwrap()
+                    .call(&mut roots, &[Val::I64(endpoint.uid)], &mut uid)?;
+                let ty = original.ty(&roots)?;
+                let allocator = StructRefPre::new(&mut roots, ty);
+                let capability = Val::AnyRef(Some(cap.to_rooted(&mut roots)));
+                let object = StructRef::new(&mut roots, &allocator, &[capability, uid[0]])?;
+                own(
+                    &mut roots,
+                    Val::AnyRef(Some(object.to_anyref())),
+                    self.identity,
+                    &self.handles,
+                )?
+            }
             NativeKind::Materialized { form, constants } => {
                 let mut values = BTreeMap::new();
                 for (index, transfer) in constants {
@@ -790,7 +911,7 @@ impl ForeignValue {
             .state
             .upgrade()
             .filter(|state| !state.retired.load(Ordering::SeqCst))
-            .ok_or_else(|| wasmtime::Error::msg("Native function source has retired"))?;
+            .ok_or_else(|| wasmtime::Error::msg("Native value source has retired"))?;
         let context = caller.evaluation_math_context()?;
         let allowance = caller.operation_fuel_remaining()?;
         let interrupt = caller.host_work_interrupt();
@@ -852,7 +973,7 @@ impl ForeignValue {
             }
             self.service
                 .as_ref()
-                .ok_or_else(|| wasmtime::Error::msg("Native function source is not active"))?
+                .ok_or_else(|| wasmtime::Error::msg("Native value source is not active"))?
                 .with_value_request(allowance, context.take().unwrap(), interrupt, run)
         })?;
         caller.settle_nested_fuel(allowance, spent)?;
@@ -1118,6 +1239,231 @@ mod tests {
     }
 
     #[test]
+    fn native_function_capability_live_var_namespace_and_state_keep_real_owners() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let original = source.eval("(def live-forwarded-var 11)").unwrap();
+        let callback = source.eval(
+            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (eval '(def live-forwarded-var 42))))"
+        ).unwrap();
+        let read = target.eval(
+            "(fn [v f] (let [before @v ns (:ns (meta v))] (f) (binding [*ns* ns] (alias 'live-forwarded-alias 'user)) (if (and (var? v) (= before 11) (= @v 42) (not (.isMacro v)) (identical? (meta v) (meta v)) (identical? ns (:ns (meta v))) (= 'user (ns-name ns))) 42 -1)))"
+        ).unwrap();
+        let imported = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        let callback = target
+            .import_value(source.export_value(&callback).unwrap())
+            .unwrap();
+        source.collect().unwrap();
+        target.collect().unwrap();
+        let result = super::super::super::suspended::scope(&mut source, || {
+            target.invoke(&read, &[&imported, &callback])
+        })
+        .unwrap_or_else(|error| {
+            panic!(
+                "{}",
+                crate::portable_repl::error_display(&mut target, &error)
+            )
+        });
+        assert_eq!(
+            target
+                .inspect(&result, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+            Some(RuntimeNumber::Long(42))
+        );
+        let alias = source
+            .eval("(contains? (ns-aliases *ns*) 'live-forwarded-alias)")
+            .unwrap();
+        assert_eq!(
+            source
+                .inspect(&alias, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32),
+            "namespace writes must reach the actual original state array"
+        );
+        let returned = source
+            .import_value(target.export_value(&imported).unwrap())
+            .unwrap();
+        let same = source.eval("(fn [a b] (identical? a b))").unwrap();
+        let same = source.invoke(&same, &[&original, &returned]).unwrap();
+        assert_eq!(
+            source
+                .inspect(&same, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32),
+            "return transport must unwrap the exact original Var"
+        );
+    }
+
+    #[test]
+    fn native_function_capability_live_arrays_copy_clone_and_retire_without_fake_storage() {
+        fn runtime(
+            target: &mut Session,
+            name: &str,
+            values: &[&SessionValue],
+        ) -> Result<SessionValue, SessionError> {
+            target.budget()?;
+            target.check_data_input_owners(values)?;
+            let mut roots = RootScope::new(&mut target.store);
+            let params = values
+                .iter()
+                .map(|value| value.val(&mut roots.as_context_mut()))
+                .collect::<Vec<_>>();
+            let function = target.runtime.get_func(&mut roots, name).unwrap();
+            call(
+                &mut roots,
+                target.runtime,
+                function,
+                &params,
+                target.identity,
+                &target.handles,
+            )
+        }
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let original = source.eval("(object-array [11 22 33 44])").unwrap();
+        let first = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        let second = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        let same = target
+            .eval("(fn [a b] (and (identical? a b) (= 4 (alength a)) (= 11 (aget a 0))))")
+            .unwrap();
+        let same = super::super::super::suspended::scope(&mut source, || {
+            target.invoke(&same, &[&first, &second])
+        })
+        .unwrap();
+        assert_eq!(
+            target
+                .inspect(&same, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32)
+        );
+        let hinted = target.eval("(fn [^objects a] (let [before (aget ^objects a 0)] (aset ^objects a 0 before) before))").unwrap();
+        let hinted = super::super::super::suspended::scope(&mut source, || {
+            target.invoke(&hinted, &[&first])
+        })
+        .unwrap();
+        assert_eq!(
+            target
+                .inspect(&hinted, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+            Some(RuntimeNumber::Long(11))
+        );
+        let elements = super::super::super::suspended::scope(&mut source, || {
+            runtime(&mut target, "object-array-elements", &[&first])
+        })
+        .unwrap();
+        target
+            .inspect(&elements, |mut store, value| {
+                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                assert_eq!(array.len(&store)?, 4);
+                for (i, expected) in [11, 22, 33, 44].into_iter().enumerate() {
+                    let value = array.get(&mut store, i as u32)?;
+                    assert_eq!(
+                        runtime_number(&mut store, &value)?,
+                        Some(RuntimeNumber::Long(expected))
+                    );
+                }
+                Ok(())
+            })
+            .unwrap();
+        let clone = super::super::super::suspended::scope(&mut source, || {
+            runtime(&mut target, "packed-array-clone", &[&first])
+        })
+        .unwrap();
+        let zero = target
+            .data_scalar(&crate::portable::hir::Literal::Long(0))
+            .unwrap();
+        let one = target
+            .data_scalar(&crate::portable::hir::Literal::Long(1))
+            .unwrap();
+        let three = target
+            .data_scalar(&crate::portable::hir::Literal::Long(3))
+            .unwrap();
+        let four = target
+            .data_scalar(&crate::portable::hir::Literal::Long(4))
+            .unwrap();
+        let changed = target
+            .data_scalar(&crate::portable::hir::Literal::Long(99))
+            .unwrap();
+        super::super::super::suspended::scope(&mut source, || {
+            runtime(&mut target, "packed-array-set", &[&clone, &zero, &changed])
+        })
+        .unwrap();
+        super::super::super::suspended::scope(&mut source, || {
+            runtime(
+                &mut target,
+                "packed-array-copy",
+                &[&first, &zero, &second, &one, &three],
+            )
+        })
+        .unwrap();
+        let verify = target.eval("(fn [a b] (and (not (identical? a b)) (= 11 (aget a 0)) (= 11 (aget a 1)) (= 22 (aget a 2)) (= 33 (aget a 3)) (= 99 (aget b 0)) (= 22 (aget b 1))))").unwrap();
+        for _ in 0..2 {
+            source.collect().unwrap();
+            target.collect().unwrap();
+            let valid = super::super::super::suspended::scope(&mut source, || {
+                target.invoke(&verify, &[&first, &clone])
+            })
+            .unwrap();
+            assert_eq!(
+                target
+                    .inspect(&valid, |mut store, value| sentinel_tag(&mut store, &value))
+                    .unwrap(),
+                Some(runtime_abi::TRUE as u32)
+            );
+        }
+        let error = super::super::super::suspended::scope(&mut source, || {
+            runtime(
+                &mut target,
+                "packed-array-copy",
+                &[&first, &four, &clone, &zero, &one],
+            )
+        })
+        .unwrap_err();
+        assert!(
+            matches!(&error, SessionError::Trap(error) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::ArrayOutOfBounds))
+        );
+        let valid = super::super::super::suspended::scope(&mut source, || {
+            target.invoke(&verify, &[&first, &clone])
+        })
+        .unwrap();
+        assert_eq!(
+            target
+                .inspect(&valid, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32),
+            "invalid copy ranges must not write a prefix"
+        );
+        let returned = source
+            .import_value(target.export_value(&first).unwrap())
+            .unwrap();
+        let same = source.eval("(fn [a b] (identical? a b))").unwrap();
+        let same = source.invoke(&same, &[&original, &returned]).unwrap();
+        assert_eq!(
+            source
+                .inspect(&same, |mut store, value| sentinel_tag(&mut store, &value))
+                .unwrap(),
+            Some(runtime_abi::TRUE as u32)
+        );
+        source.reset().unwrap();
+        let error = super::super::super::suspended::scope(&mut source, || {
+            runtime(&mut target, "packed-array-get", &[&first, &zero])
+        })
+        .unwrap_err();
+        assert!(crate::portable_repl::error_display(&mut target, &error).contains("retired"));
+        assert!(target.eval("(+ 40 2)").is_ok());
+    }
+
+    #[test]
     fn native_function_capability_transport_reader_does_not_recapture_its_root() {
         let mut source = Session::new_repl().unwrap();
         let value = source.eval("#'identity").unwrap();
@@ -1138,6 +1484,15 @@ mod tests {
             .unwrap();
         let var_class = registry_lock(&state.var_class).clone().unwrap();
         let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
+        let namespace_class = registry_lock(&state.namespace)
+            .as_ref()
+            .unwrap()
+            .namespace
+            .clone();
+        let array_test = source
+            .runtime
+            .get_func(&mut source.store, "object-array-test")
+            .unwrap();
         let owner = source.identity;
         let result = bridge.read_transport(
             &mut source,
@@ -1149,6 +1504,8 @@ mod tests {
             identity_test,
             var_class,
             meta_fn_class,
+            namespace_class,
+            array_test,
         );
         assert!(
             matches!(result, Err(SessionError::Compile(_))),

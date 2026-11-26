@@ -1091,7 +1091,7 @@ impl FormBridge {
         var_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
@@ -1105,9 +1105,10 @@ impl FormBridge {
         instance_test: wasmtime::Func, identity_test: wasmtime::Func,
         var_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+        namespace_class: wasmtime::OwnedRooted<AnyRef>, array_test: wasmtime::Func,
     ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         let native = NativeRead { owner, closure_test, class_test, instance_test,
-            identity_test, var_class, meta_fn_class, purpose: NativeReadPurpose::Transport, constants: vec![] };
+            identity_test, var_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, constants: vec![] };
         self.read_with_context(session, value, 0..0, true, Some(native), false)
     }
     fn read_with_context(
@@ -1303,6 +1304,8 @@ struct NativeRead {
     identity_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
     meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    namespace_class: Option<wasmtime::OwnedRooted<AnyRef>>,
+    array_test: Option<wasmtime::Func>,
     purpose: NativeReadPurpose,
     constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
 }
@@ -1332,7 +1335,18 @@ impl NativeRead {
         if !class && !function {
             let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
             self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
-            if result[0].unwrap_i32() == 0 { return Ok(None); }
+            let mut supported = result[0].unwrap_i32() != 0;
+            if !supported && let Some(namespace) = &self.namespace_class {
+                let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[namespace, *value], &mut result)?;
+                supported = result[0].unwrap_i32() != 0;
+            }
+            if !supported && let Some(array_test) = self.array_test {
+                let mut result = [Val::null_any_ref()];
+                array_test.call(&mut *store, &[*value], &mut result)?;
+                supported = crate::portable_session::sentinel_tag(&mut *store, &result[0])? == Some(crate::runtime_abi::TRUE as u32);
+            }
+            if !supported { return Ok(None); }
         }
         let materialize = function && depth != 0;
         let root = reference(value)?;

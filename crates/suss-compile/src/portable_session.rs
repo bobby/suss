@@ -2216,6 +2216,7 @@ impl SessionHost<'_> {
         value: &SessionValue,
     ) -> Result<Vec<SessionValue>, SessionError> {
         self.check(value)?;
+        if let Some(fields) = self.native_live_fields(value)? { return Ok(fields); }
         let mut scope = RootScope::new(&mut self.store);
         let value = value.object()?.to_rooted(&mut scope);
         let object = value.as_struct(&scope)?.ok_or_else(|| {

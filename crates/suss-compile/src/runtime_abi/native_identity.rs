@@ -33,6 +33,12 @@ pub(super) fn declare(b: &mut Builder) -> u32 {
         End,
         End,
         LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(PACKED)),
+        If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        LocalTee(1), cap_test.clone(), If(BlockType::Empty), LocalGet(1), Return, End, End,
+        LocalGet(0),
         RefTestNonNull(HeapType::Concrete(OBJECT)),
         If(BlockType::Empty),
         LocalGet(0),
@@ -123,6 +129,16 @@ pub(super) fn declare(b: &mut Builder) -> u32 {
         &[(2, VALUE)],
         &body,
     );
+    // A null second argument is the private kind query. Identity calls always
+    // pass two non-null extracted capabilities. The host authenticates the
+    // actual endpoint before returning its operation family.
+    b.function_with_locals("native-value-kind", &[VALUE], &[ValType::I32], &[(1, VALUE)], &[
+        GlobalGet(ROOT), RefIsNull, If(BlockType::Empty), I32Const(0), Return, End,
+        LocalGet(0), Call(extract), LocalTee(1), RefIsNull,
+        If(BlockType::Empty), I32Const(0), Return, End,
+        LocalGet(1), RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        GlobalGet(ROOT), RefAsNonNull, CallRef(source),
+    ]);
     // Ordinary source instances have one prototype element. A second private
     // element is allowed only when the installed host authenticates the actual
     // receiver's capability; arbitrary two-element arrays remain invalid.
