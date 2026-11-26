@@ -1,3 +1,5 @@
+Numeric changes are layered above the public eval consumer (#516) and core host/Macro/Var foundation (#521, #519, #520). See docs/runtime/host-macro-boundary.md for core ownership and publication contracts. Historical validation below retains its original source qualifications; it does not validate this restacked source.
+
 ### Root effects, executable metadata and native transport
 
 Compiler declaration staging now distinguishes its own writes from real root effects, including an identical root write, metadata execution and later restaging. Only the converted declaration root uses the ABI14 definition setter; nested/user definitions retain ordinary write semantics. Reloading a source macro as an ordinary value updates the retained caller Var's actual root, metadata and macro status. Declaration metadata executes user expressions while its literal containers retain original core constructors.

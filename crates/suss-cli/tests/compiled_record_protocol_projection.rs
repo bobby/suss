@@ -12,6 +12,11 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
         ("runtime", Session::new_repl().unwrap()),
         ("macro", Session::new_macro().unwrap()),
     ] {
+        // Keep forged metadata as data while definitions remain executable.
+        // Actual binding identity must still come from its real caller cell.
+        session.enter_namespace("forged").unwrap();
+        session.eval("(def Name 'forged/Name)").unwrap();
+        session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let full_source = r#"(defmacro ^{:suss/compiler-catalog true} protocol-index []
@@ -77,6 +82,11 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
 #[test]
 fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Keep forged metadata as data while definitions remain executable.
+        // Actual binding identity must still come from its real caller cell.
+        session.enter_namespace("forged").unwrap();
+        session.eval("(def Name 'forged/Name)").unwrap();
+        session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? view :suss/binding-names) (:protocols facts) (and (string? (first (:suss/binding-index view))) (vector? (second (:suss/binding-index view))))])))").unwrap();

@@ -1,3 +1,5 @@
+Numeric changes are layered above the public eval consumer (#516) and core host/Macro/Var foundation (#521, #519, #520). See docs/runtime/host-macro-boundary.md for core ownership and publication contracts. Historical validation below retains its original source qualifications; it does not validate this restacked source.
+
 The numeric integration retains the parent eval evidence below at its exact
 recorded source. Fresh validation of the combined tree remains separate; the
 parent-specific checkpoint verifier does not certify numeric changes.

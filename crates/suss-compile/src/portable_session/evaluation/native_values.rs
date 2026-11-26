@@ -416,10 +416,50 @@ impl SessionHost<'_> {
         }
         self.retain_native_value(&state, value, NativeKind::Materialized { form, constants })
     }
+    /// Scalars have no native identity carrier or metadata. Use the same
+    /// physical scalar predicates as the nominal decoder, without running every
+    /// function/class/Var test for each nil or numeric sequence field.
+    fn plain_transfer_scalar(&mut self, value: &SessionValue) -> Result<Option<Form>, SessionError> {
+        let interrupt = self.host_work_interrupt();
+        self.inspect(value, |mut store, value| {
+            let kind = if let Some(number) = runtime_number(&mut store, &value)? {
+                match number {
+                    RuntimeNumber::Long(value) => Kind::Long(value),
+                    RuntimeNumber::Double(value) => Kind::Number(value),
+                }
+            } else if let Some(tag) = sentinel_tag(&mut store, &value)? {
+                match tag as i32 {
+                    runtime_abi::NIL => Kind::Nil,
+                    runtime_abi::FALSE => Kind::Bool(false),
+                    runtime_abi::TRUE => Kind::Bool(true),
+                    _ => return Ok(None),
+                }
+            } else {
+                let Some(reference) = value.anyref().flatten() else { return Ok(None); };
+                let Some(array) = reference.as_array(&store)? else { return Ok(None); };
+                if !matches!(array.ty(&store)?.element_type(), StorageType::I16) {
+                    return Ok(None);
+                }
+                let length = array.len(&store)?;
+                let mut units = Vec::with_capacity((length as usize).min(4096));
+                for index in 0..length {
+                    SessionHost::consume_host_work(store.as_context_mut(), 1, &interrupt)?;
+                    units.push(array.get(&mut store, index)?.unwrap_i32() as u16);
+                }
+                Kind::String(units)
+            };
+            SessionHost::consume_host_work(store.as_context_mut(), 1, &interrupt)?;
+            Ok(Some(Form { span: 0..0, metadata: vec![], kind }))
+        })
+    }
     fn export_value(&mut self, value: &SessionValue) -> Result<Transfer, SessionError> {
         self.check(value)?;
         let _operation = self.operation_budget_scope()?;
         self.charge_host_work(1)?;
+        if let Some(form) = self.plain_transfer_scalar(value)? {
+            self.value_state()?;
+            return Ok(Transfer::Data(form));
+        }
         if let Some(endpoint) = self.native_value_endpoint(value)? {
             return Ok(Transfer::Native(endpoint));
         }
@@ -1182,6 +1222,36 @@ mod tests {
                 Some(runtime_abi::TRUE as u32),
                 "return transport must recover the exact source root"
             );
+        }
+    }
+
+    #[test]
+    fn native_scalar_exports_fit_a_small_budget_without_changing_categories_or_units() {
+        use crate::portable::hir::Literal;
+        let cases = vec![Literal::Nil, Literal::Bool(false), Literal::Bool(true),
+            Literal::Long(i64::MIN), Literal::Long(i64::MAX), Literal::Long(42),
+            Literal::Number(1.25), Literal::Number(-0.0), Literal::Number(f64::INFINITY),
+            Literal::Number(f64::NEG_INFINITY), Literal::Number(f64::NAN),
+            Literal::String(vec![]), Literal::String(vec![0xd800, 0, 0xdc00, 0xffff])];
+        for mut source in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            for literal in &cases {
+                source.set_operation_fuel(crate::portable::DEFAULT_OPERATION_FUEL);
+                let value = source.data_scalar(literal).unwrap();
+                source.collect().unwrap();
+                source.set_operation_fuel(256);
+                let Transfer::Data(form) = source.export_value(&value).unwrap() else {
+                    panic!("a scalar must not gain a native identity capability")
+                };
+                assert!(form.metadata.is_empty());
+                match (&form.kind, literal) {
+                    (Kind::Nil, Literal::Nil) => {},
+                    (Kind::Bool(actual), Literal::Bool(expected)) => assert_eq!(actual, expected),
+                    (Kind::Long(actual), Literal::Long(expected)) => assert_eq!(actual, expected),
+                    (Kind::Number(actual), Literal::Number(expected)) => assert_eq!(actual.to_bits(), expected.to_bits()),
+                    (Kind::String(actual), Literal::String(expected)) => assert_eq!(actual, expected),
+                    other => panic!("scalar transport changed category: {other:?}"),
+                }
+            }
         }
     }
 
