@@ -1,3 +1,17 @@
+### Named-property provenance follow-up
+
+On dc1364d0 plus the corrected named-property source-file hash, the exact
+15-command CI inventory/scanner step and a separate record-macro provenance
+check all return 0. The Python suite executes all 364 tests. Source inputs and
+HEAD stay unchanged through the commands; compressed logs, runner and input
+manifest are in results/m12-eval/provenance-followup-dc136/commands.json.
+The source-file hash accounts for the live nominal-field forwarding changes;
+the named-property guard hash, algorithm, license and upstream pins are unchanged.
+CI run 45758336090 failed on the prior source-file hash. This follow-up validates
+that failure's fix locally; bootstrap execution, Rust tests and remote CI are
+separate checks. The earlier live-value checkpoint verifier applies to dc1364d0;
+its current-tree conservation assertion intentionally excludes later changes.
+
 ### Caller-owned macro source and frontend checks
 
 The source-frozen working overlay on ba917029 returns actual0 for Rust checking,
