@@ -702,6 +702,9 @@ pub enum Nominal {
     /// Private compiled-core access to the real Var root's macro flag.
     BindingGetterMacro,
     BindingGetterMacroSet,
+    /// Compiler-authored Var publication. The staged flag is set only on the
+    /// converted source declaration, never inferred from a language call/name.
+    VarMetadataDefine { staged: bool },
     /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
     BindingSnapshot,
     /// Compiler-only root definition, independent of the current dynamic frame.
@@ -848,6 +851,7 @@ impl Nominal {
                 Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
                 Self::DecimalNew => count == 2,
+                Self::VarMetadataDefine { .. } => count == 3,
                 Self::DecimalCoerce => count == 1,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
@@ -4945,15 +4949,27 @@ pub(crate) fn prepare_with_origin(
     // Only its result definition owns the staging write; initializer bodies,
     // declaration metadata and hidden helper definitions remain real writes.
     if origin.is_some_and(super::SourceOrigin::is_macro_definition) {
-        fn mark_root(hir: &mut Hir) -> Result<(), Diagnostic> {
+        fn mark_metadata(hir: &mut Hir, staged: bool) {
+            match hir.kind_mut() {
+                Expression::Let { body, .. } => mark_metadata(body, staged),
+                Expression::Do(items) if !items.is_empty() => mark_metadata(items.last_mut().unwrap(), staged),
+                Expression::Nominal { operation: Nominal::VarMetadataDefine { staged: flag }, .. } => *flag = staged,
+                _ => {}
+            }
+        }
+        fn mark_root(hir: &mut Hir, staged: bool) -> Result<(), Diagnostic> {
             let span = hir.span.clone();
             match hir.kind_mut() {
-                Expression::Definition { compiler_root, .. } => { *compiler_root = true; Ok(()) }
-                Expression::Do(items) if !items.is_empty() => mark_root(items.last_mut().unwrap()),
+                Expression::Definition { compiler_root, result, .. } => {
+                    *compiler_root = true;
+                    if let Some(result) = result { mark_metadata(result, staged); }
+                    Ok(())
+                }
+                Expression::Do(items) if !items.is_empty() => mark_root(items.last_mut().unwrap(), staged),
                 _ => Err(Diagnostic { span, message: "Converted macro definition lost its root declaration".into() }),
             }
         }
-        mark_root(&mut hir)?;
+        mark_root(&mut hir, origin.is_some_and(super::SourceOrigin::is_staged_macro_definition))?;
     }
     let source_span = hir.span.clone();
     division_overloads::annotate(&mut hir, &analyzer.primitive_methods,

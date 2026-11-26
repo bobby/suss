@@ -947,6 +947,75 @@ fn source_declaration_rollback_preserves_later_metadata_effects_through_core_cap
 }
 
 #[test]
+fn staged_source_metadata_ownership_preserves_identical_and_superseded_user_writes() {
+    let base = core_capability_source(include_str!("../../../results/m12-eval/source-journal-metadata-effect-primary/base.sus"));
+    let cases = [
+        ("no language write", "nil", "", "second"),
+        ("changed metadata", "(suss.core/update-binding-var-meta! #'staged-reload (assoc (meta #'staged-reload) :doc \"effect\"))", "", "effect"),
+        ("identical helper write", "(suss.core/update-binding-var-meta! #'staged-reload (meta #'staged-reload))", "", "rejected"),
+        ("private field remains rejected", "(let [v #'staged-reload] (set! (.-_meta v) (meta v)))", "", "second"),
+        ("identical write before another staged declaration", "(suss.core/update-binding-var-meta! #'staged-reload (meta #'staged-reload))", "(defmacro staged-reload \"later compiler declaration\" [] 101)", "rejected"),
+        ("metadata expression writes before compiler publication", "nil", "(defmacro ^{:probe (do (suss.core/update-binding-var-meta! #'staged-reload (meta #'staged-reload)) nil)} staged-reload \"later compiler declaration\" [] 101)", "rejected"),
+    ];
+    let mut failures = Vec::new();
+    for phase in [suss_compile::portable::resolve::Phase::Runtime, suss_compile::portable::resolve::Phase::Macro] {
+        for (label, write, later, doc) in cases {
+            let session_for_phase = || if phase == suss_compile::portable::resolve::Phase::Macro {
+                Session::new_macro().unwrap()
+            } else { Session::new_repl().unwrap() };
+            let mut session = session_for_phase();
+            let mut macros = CompiledMacros::new().unwrap();
+            suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, &base, None).unwrap();
+            let rejected = format!("(defmacro staged-reload \"rejected\" [] 99)\n(defmacro effect-before-rejection [] {write} nil)\n(effect-before-rejection)\n{later}\n(no-such-source-initializer)\n");
+            let error = suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, &rejected, None).unwrap_err();
+            let message = suss_compile::portable_repl::repl_error_display(&mut session, &macros, &error);
+            let required = if label == "private field remains rejected" { "Built-in type internals are private" } else { "no-such-source-initializer" };
+            assert!(message.contains(required), "{phase:?}: {label}: {message}");
+            let mut fresh = session_for_phase();
+            let value = fresh.eval_with_macros("(let [v (get (ns-interns 'user) 'staged-reload)] [(:doc (meta v)) ((deref v) nil nil)])", &mut macros).unwrap();
+            fresh.collect().unwrap();
+            let mut decoder = Decoder::capture(&mut fresh, 40_000).unwrap();
+            let actual = decoder.decode_session(&mut fresh, &value).unwrap();
+            let wanted = Observation::Vector(vec![Observation::String(doc.encode_utf16().collect()), Observation::Long(23)]);
+            if actual != wanted { failures.push(format!("{phase:?}: {label}: {actual:?}, expected {wanted:?}")); }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn metadata_normalization_and_language_writes_preserve_the_primary_map_identity() {
+    let primary = suss_reader::forms::read_forms(include_str!("../../../results/native-host-foundation/identical-metadata-primary/primary.stdout")).unwrap();
+    let wanted = expected(&primary[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def metadata-identity-target :root)").unwrap();
+        // The native adapter additionally preserves the canonical :name/:ns;
+        // reset-meta!'s public API remains separate portable-core work.
+        let value = session.eval("(let [v #'metadata-identity-target original (meta v) same (assoc (assoc original :name (:name original)) :ns (:ns original))] [(identical? original same) (do (suss.core/update-binding-var-meta! v same) (identical? original (meta v))) (identical? original (meta v)) @v])").unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), wanted, "{:?}", session.phase());
+    }
+}
+
+#[test]
+fn compiler_metadata_publication_keeps_original_helpers_and_live_user_expressions() {
+    let forms = suss_reader::forms::read_forms("[:kept :user-replacement]").unwrap();
+    let wanted = expected(&forms[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let inspect = session.eval("(let [meta meta get get] (fn [v] [(get (meta v) :probe) (get (meta v) :computed)]))").unwrap();
+        session.enter_namespace("suss.core").unwrap();
+        session.eval("(def binding-var-metadata (fn [v m] :user-replacement)) (def get (fn [m k] :get-replacement)) (def boolean (fn [v] :boolean-replacement))").unwrap();
+        session.enter_namespace("user").unwrap();
+        let variable = session.eval("(def ^{:probe :kept :computed (suss.core/binding-var-metadata nil nil)} metadata-helper-target (fn [form env] nil))").unwrap();
+        session.collect().unwrap();
+        let value = session.invoke(&inspect, &[&variable]).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), wanted, "{:?}", session.phase());
+    }
+}
+
+#[test]
 fn source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function_through_core_capability() {
     let root = tempfile::tempdir().unwrap();
     let first = &core_capability_source(include_str!("../../../results/m12-eval/imported-macro-reload-primary/first.sus"));

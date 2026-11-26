@@ -97,6 +97,7 @@ share a cell, while unrelated phase namespaces do not share by spelling.
 | alter-var-root | Apply to the physical root and write only after successful return. Preserve macro status and already executed callback effects. |
 | Stage source macro | Record compiler-owned declarations separately from executed language writes. Publish the actual isolated transformer after the source completion/link boundary. |
 | Reject staged input | Undo only still-current compiler-owned staging writes. Preserve completed imports, identical user root writes and later metadata effects. |
+| Language metadata write | Clear metadata staging ownership even when the same map object is written. Preserve the actual map identity. Root and metadata write ownership are independent. |
 | Import/reload completes | Advance active declaration journals so rejecting later caller source cannot restore a superseded root. Retained Vars see replacement roots; retained old functions remain callable. |
 
 A genuine Unbound object belongs to its Var, retains identity across GC and root
@@ -112,6 +113,24 @@ constructors even after user replacements. User calls inside metadata still see
 live replacement bindings. Preserve raw declaration ASTs and primary projections;
 correct fixture setup without changing expected observations.
 
+The converted source declaration classifies only its final metadata publication
+as a staging write. Normalization and user metadata expressions finish first;
+their completed writes become the journal baseline before that publication.
+Ordinary helper writes remain language writes, including during a later staged
+declaration. Rollback consults both the actual metadata root and its independent
+ownership marker; root equality alone cannot identify the last writer.
+
+The native storage hook accepts only the original Var descriptor and the actual
+Var rooted in the compiler's registered hidden cell, with its actual logical
+binding cell. Symbol text selects candidates; exact rooted references authenticate
+them. A lookalike class or Var-class clone carrying the same getter cannot change
+the canonical Var's journal. A Var may hold another Var's genuine Unbound root;
+that mutable root's back-reference cannot authenticate canonical Var identity.
+The hook performs the physical metadata write and ownership update
+together after fallible work, using the actual Caller. Pure components retain
+their ordinary storage path without installing a host callback. This does not
+expand source access to built-in internals or add a public reset-meta! API.
+
 ## Implementation and executing controls
 
 | Responsibility | Entry points and controls |
@@ -122,6 +141,7 @@ correct fixture setup without changing expected observations.
 | Live capabilities and scoped graphs | evaluation/native_values.rs and its submodules; native_transport_uid_collisions_preserve_distinct_functions_and_repeated_aliases; native_function_capability_rejects_a_retired_source_before_touching_its_gc_root |
 | Nested cancellation | suspended_parent_interrupt_stops_a_foreign_guest_and_retires_both_budgets; suspended_parent_interrupt_is_also_observed_by_foreign_host_work |
 | Genuine Vars/metadata/source catalogs | portable/hir/vars.rs; CLI native_host_boundary target; runtime_evaluation capability target |
+| Metadata write ownership and identity | staged_source_metadata_ownership_preserves_identical_and_superseded_user_writes; metadata_normalization_and_language_writes_preserve_the_primary_map_identity; native_metadata_hook_changes_only_the_actual_canonical_var |
 | Compiler-owned data under replacement | native_host_boundary metadata controls; portable_aot_options::option_schema_survives_core_function_and_constructor_redefinition |
 | Original transport budgets | clojure_test_suite pinned_case_body_matches_all_primary_assertions and pinned_map_declaration_executes_without_transport_loss |
 

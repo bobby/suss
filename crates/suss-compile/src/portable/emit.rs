@@ -389,6 +389,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::BindingGetter => { names.insert("binding-getter"); }
                         Nominal::BindingGetterMacro => { names.insert("binding-getter-macro?"); }
                         Nominal::BindingGetterMacroSet => { names.insert("binding-getter-macro-set!"); }
+                        Nominal::VarMetadataDefine { .. } => { names.insert("var-metadata-define"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
                         Nominal::BindingRootSet => { names.insert("binding-root-set"); }
                         Nominal::BindingRootDefine => { names.insert("binding-root-define"); }
@@ -869,6 +870,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-number-positive"
             | "comparison-number-negative" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "var-metadata-define" => (vec![VALUE, VALUE, VALUE, ValType::I32], vec![VALUE]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" | "protocol-class-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -4277,6 +4279,13 @@ fn emit_function(
                             if *operation == Nominal::Set {
                                 function.instruction(&LocalGet(arguments[2].0 as u32 + offset));
                             }
+                        }
+                        Nominal::VarMetadataDefine { staged } => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&I32Const(i32::from(*staged)))
+                                .instruction(&Call(index("var-metadata-define")));
                         }
                         Nominal::FieldSet(field) => {
                             function

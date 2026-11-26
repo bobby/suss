@@ -24,6 +24,8 @@ pub(crate) const ARRAY_COPY: i32 = 9;
 pub(crate) const NAMESPACE_INTERNS: i32 = 10;
 pub(crate) const GETTER_ROOT_SET: i32 = 11;
 pub(crate) const GETTER_ROOT_GET: i32 = 12;
+pub(crate) const LOCAL_FIELD_SET: i32 = 13;
+pub(crate) const VAR_METADATA_DEFINE: i32 = 14;
 const ROOT: u32 = MAP_ENTRY_DESCRIPTOR_GLOBAL + 8;
 
 pub(super) fn declare(b: &mut Builder) -> u32 {
@@ -79,6 +81,20 @@ pub(super) fn declare(b: &mut Builder) -> u32 {
         RefAsNonNull, CallRef(source),
     ]);
     b.function("namespace-interns", &[VALUE], &[VALUE], &query);
+    // Optional local storage hooks. A null result means the host did not own
+    // this operation; pure components and unrelated objects use normal storage.
+    // The host authenticates a canonical Var and performs its actual write
+    // atomically with journal ownership, rather than observing a guessed tag.
+    for defining in [false, true] {
+        let mut body = vec![GlobalGet(ROOT), RefIsNull, If(BlockType::Result(ValType::I32)),
+            I32Const(0), Else, LocalGet(0), I32Const(if defining { VAR_METADATA_DEFINE } else { LOCAL_FIELD_SET }),
+            LocalGet(1), LocalGet(2)];
+        body.push(if defining { LocalGet(3) } else { sentinel_value(NIL) });
+        body.extend([GlobalGet(ROOT), RefAsNonNull, CallRef(source), RefIsNull, I32Eqz, End]);
+        b.function(if defining { "native-var-metadata-define" } else { "native-local-field-set" },
+            if defining { &[VALUE, ValType::I32, VALUE, VALUE] } else { &[VALUE, ValType::I32, VALUE] },
+            &[ValType::I32], &body);
+    }
     source
 }
 

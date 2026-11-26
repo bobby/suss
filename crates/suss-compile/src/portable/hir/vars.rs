@@ -204,7 +204,18 @@ impl Analyzer<'_> {
         });
         let read = node(Expression::Global(cell));
         let result = if update {
-            self.var_core_call(form, "update-binding-var-meta!", vec![read, metadata_value])?
+            // Finish all user expressions and metadata normalization before
+            // the one classified publication write. A source declaration's
+            // final write is distinct from effects in its metadata expressions.
+            let normalized = self.var_core_call(form, "binding-var-metadata", vec![read.clone(), metadata_value.clone()])?;
+            let normalized = self.fresh_binding(form, normalized);
+            let key = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword::new("macro")) };
+            let key = self.quote_var_metadata(&key)?;
+            let macro_value = self.var_core_call(form, "get", vec![metadata_value, key])?;
+            let macro_flag = self.var_core_call(form, "boolean", vec![macro_value])?;
+            let normalized_value = self.local(form, normalized.id);
+            let body = self.nominal(form, Nominal::VarMetadataDefine { staged: false }, vec![read, normalized_value, macro_flag]);
+            node(Expression::Let { bindings: vec![normalized], body: Box::new(body) })
         } else {
             read
         };

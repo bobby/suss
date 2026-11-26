@@ -1,6 +1,256 @@
 {
-  "qualification": "Scoped positive core checks only. Exact workspace baseline, independent review and final-head CI remain separate gates. Existing unsupported namespaces, failures, guest judgments and unexecuted assertions remain explicit.",
+  "qualification": "Latest scoped source passes all host/library/AOT/runtime/Var/Symbol/suite/bootstrap/source/projection/Python checks recorded here. Exact full workspace, independent review/fixes and final-head CI remain separate gates. Historical command qualifications and all negative receipts are retained.",
   "commands": [
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "complete-native-host-boundary",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "native_host_boundary",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1677556,
+      "exit_code": 0,
+      "seconds": 127.71985653694719,
+      "rust_test_executions": 48
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "all-core-ownership-transport-library",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--lib",
+        "portable_",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1681609,
+      "exit_code": 0,
+      "seconds": 16.560665282886475,
+      "rust_test_executions": 140
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "original-aot-metadata-constructor-control",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_aot_options",
+        "option_schema_survives_core_function_and_constructor_redefinition",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1682397,
+      "exit_code": 0,
+      "seconds": 38.302573144901544,
+      "rust_test_executions": 1
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "runtime-capability-contract",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_evaluation",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1683773,
+      "exit_code": 0,
+      "seconds": 2.5777342501096427,
+      "rust_test_executions": 2
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "var-and-symbol-primary-controls",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_symbol_conversion",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1683929,
+      "exit_code": 0,
+      "seconds": 8.179233741015196,
+      "rust_test_executions": 6
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "all-original-suite-guards",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1684254,
+      "exit_code": 0,
+      "seconds": 610.5586780351587,
+      "rust_test_executions": 19
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "java-node-free-bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1703215,
+      "exit_code": 0,
+      "seconds": 71.7920152740553,
+      "rust_test_executions": 4
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "core-import-source-verification",
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1705554,
+      "exit_code": 0,
+      "seconds": 1.3369021038524806
+    },
+    {
+      "phase": "metadata-write-core-gates-registered-vars",
+      "name": "live-var-provenance-verification",
+      "command": [
+        "python3",
+        "results/m12-eval/verify-live-vars.py"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1705623,
+      "exit_code": 0,
+      "seconds": 0.11778891086578369
+    },
+    {
+      "phase": "metadata-write-source-projections",
+      "name": "original-metadata-and-source-projections",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_export_metadata",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--test",
+        "compiled_macro_source_hint_boundaries",
+        "--test",
+        "compiled_macro_binding_records",
+        "--test",
+        "compiled_macro_field_records",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1706083,
+      "exit_code": 0,
+      "seconds": 250.42520744819194,
+      "rust_test_executions": 17
+    },
+    {
+      "phase": "metadata-write-source-projections",
+      "name": "python-script-tests",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1713939,
+      "exit_code": 0,
+      "seconds": 20.797074081376195,
+      "python_tests": 364
+    }
+  ],
+  "source_inputs_conserved_per_batch": true,
+  "native_capture": {
+    "sha256": "ebf21fb3244e977daabd5ac36b89bddeb2025f2d303eabe136eb483ac52d0af1",
+    "raw_rows": 5530,
+    "all_before_decisions_preserved": true,
+    "counts": {
+      "pass": 5325,
+      "guest-judged": 101,
+      "fail": 105,
+      "not-executed": 1408,
+      "skipped": 0,
+      "namespaces-failed": 64
+    }
+  },
+  "ledger_namespace_only_changes": 5,
+  "independent_core_counterparts": 26,
+  "original_public_consumer_tests_unchanged": true,
+  "negative_receipts": [
+    "baseline-before-review/commands.json",
+    "independent-core-acceptance/commands.json",
+    "metadata-write-ownership-before-corrected-admission/commands.json",
+    "metadata-write-ownership-after/commands.json",
+    "metadata-write-core-gates/commands.json",
+    "metadata-canonical-registry-before/commands.json"
+  ],
+  "deliberate_workspace_stop": "exact-workspace/commands.json",
+  "metadata_write_ownership": "metadata-write-ownership-validation.json",
+  "deliberate_workspace_stops": [
+    "exact-workspace/commands.json",
+    "exact-workspace-after-baseline-review/commands.json"
+  ],
+  "historical_commands": [
     {
       "phase": "independent-core-acceptance-corrected-adapter",
       "name": "independent-core-acceptance",
@@ -87,26 +337,6 @@
       "seconds": 13.936411396600306
     }
   ],
-  "source_inputs_conserved_per_batch": true,
-  "native_capture": {
-    "sha256": "a7de1e69fdec4111ff8502b48e6c3e5d72ccfc2019249a4883b7995a2262bb21",
-    "raw_rows": 5530,
-    "all_before_decisions_preserved": true,
-    "counts": {
-      "pass": 5325,
-      "guest-judged": 101,
-      "fail": 105,
-      "not-executed": 1408,
-      "skipped": 0,
-      "namespaces-failed": 64
-    }
-  },
-  "ledger_namespace_only_changes": 5,
-  "independent_core_counterparts": 26,
-  "original_public_consumer_tests_unchanged": true,
-  "negative_receipts": [
-    "baseline-before-review/commands.json",
-    "independent-core-acceptance/commands.json"
-  ],
-  "deliberate_workspace_stop": "exact-workspace/commands.json"
+  "latest_production_inputs_conserved_across_batches": true,
+  "original_test_bodies_conserved_exactly_once": 114
 }

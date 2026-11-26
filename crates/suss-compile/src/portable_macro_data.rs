@@ -603,6 +603,19 @@ impl FormBridge {
             Ok(Some((class, text(&mut store, &data[2], &mut budget)?)))
         })
     }
+    /// A qualified Symbol's immutable text, used only to select registry
+    /// candidates. Metadata is not traversed and no user method is invoked.
+    /// Authentication of the selected Var/cell remains the caller's job.
+    pub(crate) fn qualified_symbol_candidate(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+    ) -> Result<Option<(String, String)>, SessionError> {
+        self.check(session)?;
+        if session.inspect(value, |mut store, value| nil(&mut store, &value))? { return Ok(None); }
+        let Some((Class::Symbol, units)) = self.identifier_key(session, value)? else { return Ok(None); };
+        session.charge_host_work((units.len() as u64).saturating_mul(3).saturating_add(1))?;
+        let Ok(text) = String::from_utf16(&units) else { return Ok(None); };
+        Ok(text.split_once('/').map(|(namespace, name)| (namespace.to_owned(), name.to_owned())))
+    }
     fn map_node(
         &self,
         session: &mut SessionHost<'_>,

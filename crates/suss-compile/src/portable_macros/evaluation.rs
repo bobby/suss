@@ -167,7 +167,7 @@ impl MacroHost<'_> {
                     let outcome = (|| {
                         let origin = crate::portable::SourceOrigin::native_evaluation(self.session.native_owner());
                         let _operation = self.fallback.as_ref().map(MacroService::operation);
-                        let prepared = self.prepare_macro_definition(&form, form.span.clone(), Some(&origin));
+                        let prepared = self.prepare_macro_definition(&form, form.span.clone(), Some(&origin), false);
                         let mut pending = self.native_preparation_result(prepared)?;
                         pending.prepared.fragment.environment.enter_namespace(phase, &original).map_err(SessionError::Compile)?;
                         self.commit_macro_definition(pending).map(|(_function, variable)| variable)

@@ -1,0 +1,4 @@
+{
+  "original_test_bodies_conserved_exactly_once": 114,
+  "qualification": "Original wrapper tests remain on public-eval layer; foundation counterparts independently route direct compiler capability calls. Consumer production still awaits restack."
+}

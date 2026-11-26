@@ -96,7 +96,7 @@ impl MacroService {
         let original = host.session.current_namespace().to_owned();
         host.enter_namespace(namespace)?;
         let origin = crate::portable::SourceOrigin::native_evaluation(host.session.native_owner());
-        let pending = host.prepare_macro_definition(&form, form.span.clone(), Some(&origin));
+        let pending = host.prepare_macro_definition(&form, form.span.clone(), Some(&origin), false);
         let spent = allowance.saturating_sub(host.session.operation_fuel_remaining()?);
         let mut pending = match pending {
             Ok(pending) => pending,

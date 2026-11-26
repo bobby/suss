@@ -170,7 +170,7 @@ assert all(sha(Path(n).read_bytes()) == h for n, h in receipt['jars'].items())
 assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
 paths += [str(f.relative_to(ROOT)) for f in sorted(primary.iterdir()) if f.is_file()]
 paths += ['crates/suss-cli/tests/compiled_macro_global_reference_asts.rs']
-for directory in ['quoted-declaration-primary', 'definition-transition-primary']:
+for directory in ['quoted-declaration-primary', 'definition-transition-primary', 'identical-metadata-primary', 'unbound-replacement-primary']:
     primary = ROOT / 'results/native-host-foundation' / directory
     receipt = json.loads((primary / 'receipt.json').read_text())
     assert receipt['exit_code'] == 0
@@ -178,6 +178,10 @@ for directory in ['quoted-declaration-primary', 'definition-transition-primary']
     assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
     paths += [str(f.relative_to(ROOT)) for f in sorted(primary.iterdir()) if f.is_file()]
 paths += ['crates/suss-cli/tests/compiled_export_metadata.rs', 'crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs']
+paths += ['crates/suss-compile/src/runtime_abi/native_values.rs', 'crates/suss-compile/src/runtime_abi/nominal.rs',
+          'crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs',
+          'crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs',
+          'docs/runtime/host-macro-boundary.md']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

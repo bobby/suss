@@ -18,6 +18,7 @@ impl MacroHost<'_> {
         form: &Form,
         span: std::ops::Range<usize>,
         origin: Option<&crate::portable::SourceOrigin>,
+        staged: bool,
     ) -> Result<PendingMacroDefinition, SessionError> {
         let Kind::List(items) = &form.kind else {
             return Err(failure(form, "Expected source defmacro"));
@@ -157,7 +158,7 @@ impl MacroHost<'_> {
         let definition_origin = origin
             .cloned()
             .unwrap_or_else(|| crate::portable::SourceOrigin::new("", None))
-            .for_macro_definition(self.session.native_owner());
+            .for_macro_definition(self.session.native_owner(), staged);
         let prepared =
             snapshot.prepare_with_origin(vec![definition], span, self, Some(&definition_origin))?;
         let reads_environment =
