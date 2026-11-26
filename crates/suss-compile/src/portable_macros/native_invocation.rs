@@ -265,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance() {
+    fn isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance_without_public_eval_binding() {
         use crate::portable_session::EvaluationMathContext;
         use std::sync::atomic::AtomicUsize;
         let mut failures = Vec::new();
@@ -284,10 +284,10 @@ mod tests {
             // Measure the same resident compiler/bridge used throughout the
             // boundary search, rather than charging one cold initialization
             // only to the separately measured snapshot.
-            caller.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+            caller.eval_with_macros("(suss.bootstrap/evaluate-form '(+ 0 0))", &mut macros).unwrap();
             // Raw function calls have the core namespace root, independently
             // of the source input's user namespace frame.
-            let wrapper = caller.eval_with_macros("(fn [context] (binding [*math-context* context] (eval '(user/context-ledger-marker))))", &mut macros).unwrap();
+            let wrapper = caller.eval_with_macros("(fn [context] (binding [*math-context* context] (suss.bootstrap/evaluate-form '(user/context-ledger-marker))))", &mut macros).unwrap();
             let namespace = caller.current_namespace();
             let service = macros.service();
             let root = {

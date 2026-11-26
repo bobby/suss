@@ -1460,12 +1460,12 @@ mod tests {
     }
 
     #[test]
-    fn native_function_capability_live_var_namespace_and_state_keep_real_owners() {
+    fn native_function_capability_live_var_namespace_and_state_keep_real_owners_without_public_eval_binding() {
         let mut source = Session::new_repl().unwrap();
         let mut target = Session::new_macro().unwrap();
         let original = source.eval("(def live-forwarded-var 11)").unwrap();
         let callback = source.eval(
-            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (eval '(def live-forwarded-var 42))))"
+            "(fn [] (binding [*ns* (:ns (meta #'live-forwarded-var))] (suss.bootstrap/evaluate-form '(def live-forwarded-var 42))))"
         ).unwrap();
         let read = target.eval(
             "(fn [v f] (let [before @v ns (:ns (meta v))] (f) (binding [*ns* ns] (alias 'live-forwarded-alias 'user)) (if (and (var? v) (= before 11) (= @v 42) (not (.isMacro v)) (identical? (meta v) (meta v)) (identical? ns (:ns (meta v))) (= 'user (ns-name ns))) 42 -1)))"

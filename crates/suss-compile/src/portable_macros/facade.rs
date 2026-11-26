@@ -585,11 +585,11 @@ mod tests {
     }
 
     #[test]
-    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation() {
+    fn source_link_releases_macro_operation_before_runtime_waits_for_compilation_without_public_eval_binding() {
         use std::{sync::mpsc, time::Duration};
         let mut runtime = Session::new_repl().unwrap();
         let mut macros = CompiledMacros::new().unwrap();
-        runtime.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        runtime.eval_with_macros("(suss.bootstrap/evaluate-form '(+ 0 0))", &mut macros).unwrap();
         let service = macros.service();
         let (request, requests) = mpsc::sync_channel(1);
         let (reply, replies) = mpsc::sync_channel(1);
