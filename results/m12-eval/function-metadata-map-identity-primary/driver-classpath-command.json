@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "clojure.main",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/function-metadata-map-identity-primary-prepared/expression.clj"
+  ],
+  "exit_code": 1,
+  "seconds": 0.08590245246887207,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "0381d081ec5881b8f43cf9fddc3b4fb194ef65422c923c2881b05e43dc4fe040",
+  "native_source_sha256": "d3e9ffec3cee093726f48005c775c8d01b004ae826a8eb55183cbdfc53b97b8f",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "qualification": "Fresh primary query for source-held function metadata identity across separate eval/macro requests. Native counterpart has not executed yet; no fixture/skip/allowance changes."
+}

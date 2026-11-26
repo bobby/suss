@@ -2021,3 +2021,131 @@ fn native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel() {
         assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
     }
 }
+
+
+#[test]
+fn isolated_source_macros_preserve_actual_function_var_and_namespace_values() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/isolated-source-call-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/isolated-source-call-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(expected_rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 20);
+    assert_eq!(expected_rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        // These must be true isolated source transformers. Defining them with
+        // caller eval would sidestep the Store boundary this regression tests.
+        let setup = include_str!("../../../results/m12-eval/isolated-source-call-primary/setup.sus");
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            if let Err(error) = macros.define(&setup[declaration.span.clone()]) {
+                failures.push(format!("{phase:?} source declaration at {:?}: {error}", declaration.span));
+            }
+        }
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut retained = Vec::new();
+        for (row, expected_row) in cases.iter().zip(expected_rows) {
+            let name = row["name"].as_str().unwrap();
+            let program = row["expression"].as_str().unwrap().replace("(catch Throwable ", "(catch :default ");
+            match session.eval_with_macros(&program, &mut macros) {
+                Ok(value) => {
+                    decoder.refill(20_000);
+                    match decoder.decode_session(&mut session, &value) {
+                        Ok(observed) => {
+                            let observed = canonical(observed);
+                            let required = canonical(expected(expected_row));
+                            if observed == required {
+                                eprintln!("isolated-source-primary-match {phase:?} {name}");
+                                retained.push((value, expected_row, name));
+                            } else { failures.push(format!("{phase:?} {name}: {observed:?}, expected {required:?}")); }
+                        }
+                        Err(error) => failures.push(format!("{phase:?} {name}: {error:?}")),
+                    }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+        session.collect().unwrap();
+        for (value, expected_row, name) in retained {
+            decoder.refill(20_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(expected_row)), "{phase:?} {name} after GC");
+        }
+    }
+    assert!(failures.is_empty(), "isolated source value mismatches:\n{}", failures.join("\n"));
+}
+
+#[test]
+fn isolated_source_callback_preserves_typed_cancellation_and_recovers() {
+    use std::{sync::{Mutex, mpsc}, thread, time::Duration};
+    use suss_compile::portable_session::SessionError;
+    {
+        let mut session = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro isolated-callback-cancel [f] (list 'quote (f)))").unwrap();
+        let (entered, waiting) = mpsc::sync_channel(1);
+        let (requested, resume) = mpsc::sync_channel(1);
+        let resume = Mutex::new(resume);
+        session.install_observation_hook(move |_, _| {
+            entered.send(()).map_err(|e| wasmtime::Error::msg(e.to_string()))?;
+            resume.lock().unwrap().recv_timeout(Duration::from_secs(5))
+                .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
+            Ok(0)
+        }).unwrap();
+        let function = session.eval_with_macros(
+            "(fn [] (try (eval (list 'user/isolated-callback-cancel (fn [] (suss.harness.observation/capture 1) (loop [] (recur))))) (catch :default e [:incorrectly-caught (ex-message e)])))",
+            &mut macros).unwrap();
+        let interrupt = session.interrupt_handle();
+        let controller = thread::spawn(move || {
+            let observed = waiting.recv_timeout(Duration::from_secs(5)).is_ok();
+            interrupt.interrupt();
+            let _ = requested.send(());
+            observed
+        });
+        let result = session.invoke(&function, &[]);
+        let observed = controller.join().unwrap();
+        if !observed {
+            let detail = match &result {
+                Err(error) => suss_compile::portable_repl::error_display(&mut session, error),
+                Ok(value) => {
+                    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+                    format!("{:?}", decoder.decode_session(&mut session, value))
+                }
+            };
+            panic!("actual source callback must execute before cancellation: {detail}");
+        }
+        let error = result.expect_err("cancellation must remain uncatchable through the source macro");
+        assert!(matches!(&error, SessionError::Trap(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt)),
+            "callback cancellation must retain the typed interrupt: {error}");
+        let recovered = session.eval_with_macros("(eval '(+ 40 2))", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &recovered).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_function_metadata_retains_identity_between_macro_requests() {
+    let setup = include_str!("../../../results/m12-eval/function-metadata-map-identity-primary/setup.sus");
+    let expected = expected(&suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/function-metadata-map-identity-primary/primary.stdout"
+    )).unwrap()[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        for form in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[form.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(
+            "(let [f (with-meta (fn [] 42) {:tag :kept})] (eval (list 'identity-remember f)) (eval (list 'identity-check f)))",
+            &mut macros).unwrap();
+        for _ in 0..2 {
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), expected,
+                "source-held functions and their actual metadata retain identity across requests");
+            session.collect().unwrap();
+        }
+    }
+}

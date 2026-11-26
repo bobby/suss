@@ -15,7 +15,8 @@ mod definitions;
 mod native_invocation;
 pub(crate) use evaluation::{PreparedEvaluation, prepare_with_expander};
 pub use facade::CompiledMacros;
-pub(crate) use facade::{MacroService, MacroOperation};
+pub(crate) use facade::{MacroService, MacroServiceWeak, MacroOperation};
+pub(crate) use native_invocation::InterruptRelay;
 #[derive(Clone, Copy)]
 pub(crate) enum CompilerCatalogMode {
     Full,
@@ -731,10 +732,14 @@ impl MacroHost<'_> {
         let math = if context { Some(self.session.evaluation_math_context().map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?) } else { None };
         let allowance = self.session.operation_fuel_remaining().map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?;
         let interrupt = self.session.host_work_interrupt();
-        let (result, spent) = crate::portable_session::suspended::scope(&mut self.session, || service.preparation_step(allowance, math, interrupt, span.clone(), operation))
+        let (result, spent) = crate::portable_session::suspended::scope(&mut self.session, || service.preparation_step(allowance, math, interrupt, operation))
             .map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?;
-        self.session.settle_nested_fuel(allowance, spent).map_err(|e| Diagnostic { span, message: e.to_string() })?;
-        result
+        self.session.settle_nested_fuel(allowance, spent).map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?;
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span, message }
+        })
     }
     fn fallback_expand(&mut self, form: &Form, context: ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
         if self.fallback.is_none() { return Ok(None); }
@@ -1114,6 +1119,7 @@ impl ExpansionHost for MacroHost<'_> {
             return self.fallback_expand(form, context);
         };
         catalog(&self.catalog).source_expansions += 1;
+        let native_owner = context.origin.and_then(|origin| origin.native_owner());
         let before = native.then(|| self.session.compilation_snapshot().environment);
         let mut stage = String::from("caller form provenance");
         let caller_namespace = context.environment.current_namespace(context.phase).to_owned();
@@ -1134,7 +1140,6 @@ impl ExpansionHost for MacroHost<'_> {
             // Keep complete provenance for explicit arguments and &env. Only
             // the unused implicit parameter can be replaced with nil. Any
             // source expansion while compiling the body disables this proof.
-            let native_owner = context.origin.and_then(|origin| origin.native_owner());
             let quote = |session: &mut SessionHost<'_>, form: &Form| {
                 if let Some(owner) = native_owner {
                     self.bridge.quote_evaluation_ref(session, form, owner)
@@ -1239,7 +1244,7 @@ impl ExpansionHost for MacroHost<'_> {
             let result = match invocation {
                 Ok(value) => value,
                 Err(error) => {
-                    if native { return Err(error); }
+                    if native || native_owner.is_some() { return Err(error); }
                     if let SessionError::Language(payload) = &error {
                         // The native accessor reads canonical exception storage;
                         // arbitrary thrown values return nil. Keep the original
@@ -1260,8 +1265,9 @@ impl ExpansionHost for MacroHost<'_> {
             };
             trace_fuel(session, &target, "invoked")?;
             stage = "expanded result transport".into();
-            let expanded = if native_owner == Some(session.native_owner()) {
-                session.read_native_evaluation(&self.bridge, &result, form.span.clone())?
+            let expanded = if let Some(owner) = native_owner {
+                let expanded = session.read_native_evaluation(&self.bridge, &result, form.span.clone())?;
+                session.transport_expansion_constants(expanded, owner)?
             } else { self.bridge.read(session, &result, form.span.clone())? };
             trace_fuel(session, &target, "decoded")?;
             Ok(expanded)
@@ -1276,7 +1282,7 @@ impl ExpansionHost for MacroHost<'_> {
             Ok(value) => Ok(Some(value)),
             Err(error) => {
                 let message = format!("Compiled macro expansion failed during {stage}: {error}");
-                if native { self.invocation_error = Some(error); }
+                if native || native_owner.is_some() { self.invocation_error = Some(error); }
                 Err(Diagnostic { span: form.span.clone(), message })
             }
         }

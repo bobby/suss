@@ -331,6 +331,7 @@ impl FormBridge {
             // Empty literals lower to core's own EMPTY values; class
             // properties of built-in types are private to suss.core.
             ("empty-map", "{}"),
+            ("empty-vector", "[]"),
             ("empty-set", "#{}"),
             ("empty-list", "()"),
             ("empty-queue", "#queue []"),
@@ -351,6 +352,18 @@ impl FormBridge {
             session.inspect(root, |_, _| Ok(()))?;
         }
         Ok(())
+    }
+    /// Recognize genuine source singletons by rooted identity. Payload shape,
+    /// class spellings and numeric descriptor IDs never establish this fact.
+    pub(crate) fn is_canonical_empty(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        self.check(session)?;
+        for name in ["empty-map", "empty-vector", "empty-set", "empty-list", "empty-queue"] {
+            session.charge_host_work(1)?;
+            if session.values_identical(value, &self.core.factories[name])? { return Ok(true); }
+        }
+        Ok(false)
     }
     /// Native canonical data construction preserves sharing in analysis graphs.
     /// Inputs and factories are rooted in this Store; no source is interpreted.
@@ -909,7 +922,7 @@ impl FormBridge {
                     let mut result = match &form.kind {
                         Kind::NativeConstant { owner, index } => {
                             if native_owner != Some(*owner) { return Err(failure(form, "Native constants are not portable macro syntax")); }
-                            session.native_constant_value(*owner, *index)?
+                            session.import_evaluation_constant(*owner, *index)?
                         },
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
@@ -1046,10 +1059,11 @@ impl FormBridge {
     pub(crate) fn read_evaluation(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
         span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
-        class_test: wasmtime::Func, instance_test: wasmtime::Func, var_class: wasmtime::OwnedRooted<AnyRef>,
+        class_test: wasmtime::Func, instance_test: wasmtime::Func, identity_test: wasmtime::Func,
+        var_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, var_class, meta_fn_class, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
@@ -1242,6 +1256,7 @@ struct NativeRead {
     closure_test: wasmtime::Func,
     class_test: wasmtime::Func,
     instance_test: wasmtime::Func,
+    identity_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
     meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
@@ -1277,7 +1292,13 @@ impl NativeRead {
         for (index, previous, mode) in &self.constants {
             Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
             let previous = previous.to_rooted(&mut *store);
-            if *mode == materialize && wasmtime::Rooted::<AnyRef>::ref_eq(&*store, root, &previous)? {
+            if *mode != materialize { continue; }
+            let same_root = wasmtime::Rooted::<AnyRef>::ref_eq(&*store, root, &previous)?;
+            let mut same_capability = [Val::I32(0)];
+            if !same_root {
+                self.identity_test.call(&mut *store, &[*value, Val::AnyRef(Some(previous))], &mut same_capability)?;
+            }
+            if same_root || same_capability[0].unwrap_i32() != 0 {
                 return Ok(Some(Kind::NativeConstant { owner: self.owner, index: *index }));
             }
         }

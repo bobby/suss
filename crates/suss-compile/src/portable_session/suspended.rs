@@ -149,6 +149,10 @@ pub(crate) fn with_host<T>(
     output
 }
 
+pub(crate) fn contains(owner: u64) -> bool {
+    ACTIVE.is_set() && ACTIVE.with(|registry| registry.contains(owner))
+}
+
 /// Exact flag identity matters: an unrelated session with the same boolean
 /// state does not participate in this synchronous cancellation chain. The target
 /// must also share the ancestor engine, so its epoch callback is woken directly.

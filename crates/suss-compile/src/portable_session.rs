@@ -2240,6 +2240,14 @@ impl SessionHost<'_> {
         function: &SessionValue,
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
+        self.invoke_with_export(function, arguments, "invoke")
+    }
+    /// Native transported functions include canonical metadata wrappers. Use
+    /// the ordinary language IFn spread path rather than the closure-only ABI.
+    pub(crate) fn invoke_callable(&mut self, function: &SessionValue, arguments: &[&SessionValue]) -> Result<SessionValue, SessionError> {
+        self.invoke_with_export(function, arguments, "call-spread")
+    }
+    fn invoke_with_export(&mut self, function: &SessionValue, arguments: &[&SessionValue], export: &str) -> Result<SessionValue, SessionError> {
         self.check(function)?;
         let length = i32::try_from(arguments.len()).map_err(|_| {
             SessionError::Host(wasmtime::Error::msg("Too many invocation arguments"))
@@ -2264,7 +2272,7 @@ impl SessionHost<'_> {
             array.set(&mut scope, index as u32, value)?;
         }
         let function = Val::AnyRef(function.value.as_ref().map(|value| value.to_rooted(&mut scope)));
-        let invoke = self.runtime.get_func(&mut scope, "invoke").unwrap();
+        let invoke = self.runtime.get_func(&mut scope, export).unwrap();
         call(
             &mut scope,
             self.runtime,

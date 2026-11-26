@@ -377,7 +377,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean | Nominal::IsUndefined => {}
-                        Nominal::Identical => { names.insert("identical-value"); }
+                        Nominal::Identical => { names.insert("identical-value"); names.insert("native-identical-test"); }
                         Nominal::AllSmallIntegers | Nominal::IsLongValue | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
@@ -829,7 +829,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "apply" => (vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
             "apply-bounded-length" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
-            "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
+            "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" | "native-identical-test" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
             "primitive-int" | "primitive-bit-not" | "int32-int" | "int32-bit-count" => (vec![VALUE], vec![VALUE]),
@@ -3213,9 +3213,9 @@ fn emit_function(
                             // the reference's (#389). The same reference is
                             // identical unless a boxed double, which compares
                             // by value (NaN isn't identical to itself).
-                            // Distinct nominal objects, keywords among them,
-                            // aren't; only boxed longs, doubles and strings
-                            // compare by value (#361).
+                            // Distinct native handles may denote the same actual
+                            // source object; authenticate them in the runtime.
+                            // Boxed longs, doubles and strings compare by value.
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             let by_value = |function: &mut Function| {
                                 function
@@ -3224,6 +3224,10 @@ fn emit_function(
                                     .instruction(&Call(index("identical-value")))
                                     .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                                     .instruction(&RefEq);
+                            };
+                            let by_capability = |function: &mut Function| {
+                                function.instruction(&LocalGet(a)).instruction(&LocalGet(b))
+                                    .instruction(&Call(index("native-identical-test")));
                             };
                             function
                                 .instruction(&LocalGet(a))
@@ -3259,9 +3263,9 @@ fn emit_function(
                                 .instruction(&Else)
                                 .instruction(&LocalGet(a))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&I32Const(0))
-                                .instruction(&Else);
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            by_capability(&mut function);
+                            function.instruction(&Else);
                             for (index, ty) in [runtime_abi::NUMBER, runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
                                 function.instruction(&LocalGet(a)).instruction(&RefTestNonNull(HeapType::Concrete(ty)));
                                 if index > 0 {
@@ -3270,9 +3274,9 @@ fn emit_function(
                             }
                             function.instruction(&If(BlockType::Result(ValType::I32)));
                             by_value(&mut function);
+                            function.instruction(&Else);
+                            by_capability(&mut function);
                             function
-                                .instruction(&Else)
-                                .instruction(&I32Const(0))
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)

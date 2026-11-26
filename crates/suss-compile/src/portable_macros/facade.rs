@@ -23,6 +23,11 @@ impl Drop for MacroOperation {
 }
 #[derive(Clone)]
 pub(crate) struct MacroService(Arc<SharedHost>);
+#[derive(Clone)]
+pub(crate) struct MacroServiceWeak(std::sync::Weak<SharedHost>);
+impl MacroServiceWeak {
+    pub(crate) fn upgrade(&self) -> Option<MacroService> { self.0.upgrade().map(MacroService) }
+}
 pub(crate) struct MacroLease {
     shared: Arc<SharedHost>,
     host: Option<MacroHost<'static>>,
@@ -31,13 +36,18 @@ pub(crate) struct MacroLease {
 }
 impl MacroService {
     fn new(host: MacroHost<'static>) -> Self {
-        Self(Arc::new(SharedHost {
+        let service = Self(Arc::new(SharedHost {
             owner: host.session.native_owner(),
             available: Mutex::new(Some(host)),
             returned: Condvar::new(),
             operation: Mutex::new((None, 0)),
             operation_returned: Condvar::new(),
-        }))
+        }));
+        {
+            let available = service.0.available.lock().unwrap_or_else(|e| e.into_inner());
+            available.as_ref().unwrap().session.attach_native_value_service(MacroServiceWeak(Arc::downgrade(&service.0)));
+        }
+        service
     }
     pub(crate) fn operation(&self) -> MacroOperation {
         let current = std::thread::current().id();
@@ -74,11 +84,29 @@ impl MacroService {
         &self, fuel: u64,
         context: Option<crate::portable_session::EvaluationMathContext>,
         interrupt: Arc<std::sync::atomic::AtomicBool>,
-        span: std::ops::Range<usize>,
         operation: impl FnOnce(&mut dyn ExpansionHost) -> Result<T, Diagnostic>,
-    ) -> Result<(Result<T, Diagnostic>, u64), SessionError> {
-        let (result, spent) = self.with_request(fuel, context, interrupt, |host| Ok(operation(host)))?;
-        Ok((result.unwrap_or_else(|error| Err(Diagnostic { span, message: error.to_string() })), spent))
+    ) -> Result<(Result<T, SessionError>, u64), SessionError> {
+        self.with_request(fuel, None, interrupt, |host| {
+            let run = |host: &mut MacroHost<'_>| {
+                // Take the failure inside this request, before returning the
+                // owning Store's lease. Nested requests keep their own errors.
+                let previous = host.invocation_error.take();
+                let result = operation(host);
+                let error = host.invocation_error.take();
+                host.invocation_error = previous;
+                match result {
+                    Ok(value) => Ok(value),
+                    Err(diagnostic) => Err(error.unwrap_or(SessionError::Compile(diagnostic))),
+                }
+            };
+            let result = match context {
+                Some(context) => host.with_math_context(context, run),
+                None => run(host),
+            };
+            // Context entry/restoration can also throw. Transfer every owned
+            // language payload while its source Store is still available.
+            result.map_err(|error| super::native_invocation::transferable_error(host, error))
+        })
     }
 
     pub(crate) fn contains_source_macro(&self, namespace: &str, name: &str) -> bool {
@@ -118,6 +146,7 @@ impl MacroService {
         operation: impl FnOnce(&mut MacroHost<'_>) -> Result<T, SessionError>,
     ) -> Result<(Result<T, SessionError>, u64), SessionError> {
         self.with_host(|host| {
+            let _values = host.session.native_values_scope();
             struct FuelLimit<'a, 's> { host: &'a mut MacroHost<'s>, previous: u64 }
             impl Drop for FuelLimit<'_, '_> {
                 fn drop(&mut self) { self.host.set_operation_fuel(self.previous); }
@@ -140,6 +169,29 @@ impl MacroService {
             limited.host.session.settle_nested_fuel(saved, spent)?;
             Ok((result, spent))
         })
+    }
+    pub(crate) fn with_value_request<T>(
+        &self, fuel: u64, context: crate::portable_session::EvaluationMathContext,
+        interrupt: Arc<std::sync::atomic::AtomicBool>,
+        operation: impl FnOnce(&mut SessionHost<'_>) -> Result<T, SessionError>,
+    ) -> Result<(Result<T, SessionError>, u64), SessionError> {
+        let current = std::thread::current().id();
+        let guard = {
+            let mut owner = self.0.operation.lock().unwrap_or_else(|e| e.into_inner());
+            if owner.0.is_some_and(|thread| thread != current) {
+                return Err(wasmtime::Error::msg("Native function source is busy on another thread").into());
+            }
+            owner.0 = Some(current);
+            owner.1 = owner.1.checked_add(1).expect("native callback operation depth");
+            MacroOperation(self.0.clone(), current)
+        };
+        let available = self.0.available.lock().unwrap_or_else(|e| e.into_inner()).is_some();
+        if !available && !crate::portable_session::suspended::contains(self.0.owner) {
+            return Err(wasmtime::Error::msg("Native function source is not suspended").into());
+        }
+        let result = self.with_request(fuel, Some(context), interrupt, |host| operation(&mut host.session));
+        drop(guard);
+        result
     }
     fn with_owned_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         operation(self.lease().host())

@@ -35779,3 +35779,37 @@ and now verifies restoration, nil context, exhausted fuel and recovery.
 Native function/Var transport and actual mixed source/native Var-root forwarding
 remain unimplemented. These passes do not establish complete issue acceptance,
 a current full workspace/bootstrap/conformance pass or promotion review.
+
+### Native function and immutable metadata capabilities
+
+The current partial native transport checkpoint executes real caller closures
+through isolated source macros, retaining their captured effects, recursive eval,
+math context and owned exceptions. GC-held authenticated capabilities share one
+invocation callback per destination; source lookup is weak and destination roots
+are scoped to an operation. Same-source handles retain logical identity and hash,
+including immutable function metadata. Canonical empty roots use actual source
+root identity and keywords retain destination interning. Mutable/opaque nested
+values still report unsupported transport; no marker data substitutes for Vars
+or Namespaces.
+
+Request-scoped error transfer now preserves a typed interrupt through an actual
+source function callback. The negative reached guest execution and returned
+OutOfFuel; its positive preserves Interrupt and recovery. The earlier published
+CI cancellation race has a guest/controller handshake with the same2,000,000 fuel
+and unchanged REPL/AOT recovery assertions.
+
+Both current frozen batches reached their actual terminals with all input and
+Binaryen hashes conserved: host131, ABI62, source/REPL/module/AOT58 and identity
+hash4 return0. Public eval returns101 with76 passes and the one full20
+Var/Namespace fixture failing (12/20 matching controls in each phase, all40
+attempted). Private capability5 and focused metadata/callback2 repeat within
+those broader targets. Fresh pinned Clojure metadata identity yields five true
+relations; native before the fix yielded true,true,true,false,true, and the
+regression now matches in both phases after GC.
+
+Exact commands, actual failures, input manifests, current source overlay and
+historical source-reconstruction limits are under
+results/m12-eval/native-values-checkpoint. Historical full workspace passes do
+not cover these production changes. Genuine Var/Namespace/state-array transport,
+ns-interns, actual mixed source/native root projection, current full validation
+and independent promotion review remain to do.

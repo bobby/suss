@@ -2,10 +2,7 @@
 //! complete source-fragment expansion. These use public Session APIs and small
 //! test-only fuel limits; production defaults are not changed.
 use std::{
-    sync::{
-        OnceLock,
-        atomic::{AtomicBool, Ordering},
-    },
+    sync::{OnceLock, Mutex, mpsc},
     thread,
     time::Duration,
 };
@@ -200,8 +197,20 @@ fn component_engine() -> Engine {
 #[test]
 fn interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting() {
     let mut macros = CompiledMacros::new().unwrap();
+    let (entered, waiting) = mpsc::sync_channel(1);
+    let (requested, resume) = mpsc::sync_channel(1);
+    let resume = Mutex::new(resume);
+    macros.install_observation_hook(move |_, _| {
+        entered.send(()).map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+        // Hold the actual guest invocation until the controller has requested
+        // cancellation. This removes the race with a fast two-million-fuel loop
+        // without changing its allowance or accepting fuel exhaustion instead.
+        resume.lock().unwrap().recv_timeout(Duration::from_secs(5))
+            .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
+        Ok(0)
+    }).unwrap();
     macros
-        .define("(defmacro spin [] (loop [] (recur)))")
+        .define("(defmacro spin [] (suss.harness.observation/capture 1) (loop [] (recur)))")
         .unwrap();
     macros
         .define("(defmacro recover-value [x] (list '+ x 2))")
@@ -215,19 +224,14 @@ fn interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting(
     assert_eq!(number(&mut repl, &warm), 2);
 
     let interrupt = macros.interrupt_handle();
-    let stop_interrupts = std::sync::Arc::new(AtomicBool::new(false));
-    let stop_thread = stop_interrupts.clone();
     let interrupt_thread = thread::spawn(move || {
-        // Repeated requests avoid a timing race with operation setup, which
-        // intentionally discards an interrupt received while the session is idle.
-        while !stop_thread.load(Ordering::Acquire) {
-            interrupt.interrupt();
-            thread::sleep(Duration::from_millis(1));
-        }
+        let observed = waiting.recv_timeout(Duration::from_secs(5)).is_ok();
+        interrupt.interrupt();
+        let _ = requested.send(());
+        observed
     });
     let error = repl.eval_with_macros("(spin)", &mut macros).unwrap_err();
-    stop_interrupts.store(true, Ordering::Release);
-    interrupt_thread.join().unwrap();
+    assert!(interrupt_thread.join().unwrap(), "the actual Macro guest must reach the cancellation handshake");
     assert!(
         error.to_string().to_lowercase().contains("interrupted"),
         "expected explicit interruption, got {error}"

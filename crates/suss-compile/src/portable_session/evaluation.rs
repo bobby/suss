@@ -11,6 +11,7 @@ mod macro_function;
 mod macro_binding;
 pub(super) mod function_pool;
 mod math_context;
+mod native_values;
 pub(crate) use math_context::EvaluationMathContext;
 
 #[derive(Clone)]
@@ -21,6 +22,9 @@ struct MacroMetadata {
 
 #[derive(Default)]
 pub(super) struct Evaluation {
+    values: native_values::Values,
+    value_service: Mutex<Option<crate::portable_macros::MacroServiceWeak>>,
+    retired: AtomicBool,
     profile: Mutex<Option<Arc<ReentryProfile>>>,
     bridge: Mutex<Option<Arc<FormBridge>>>,
     external: Mutex<Option<MacroService>>,
@@ -229,6 +233,9 @@ impl NamespaceAccess {
 }
 impl Evaluation {
     pub(super) fn clear(&self) {
+        self.retired.store(true, Ordering::SeqCst);
+        self.values.clear();
+        registry_lock(&self.value_service).take();
         // Drop compiler services and roots outside the locks. Their teardown may
         // retire native requests in another isolated phase Store.
         let profile = registry_lock(&self.profile).take();
@@ -284,6 +291,7 @@ impl Evaluation {
         input: Val,
     ) -> Result<SessionValue, SessionError> {
         let mut view = profile.bind(caller);
+        let _values = view.native_values_scope();
         view.charge_host_work(1)?;
         let value = {
             let mut roots = RootScope::new(&mut view.store);
@@ -648,6 +656,7 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.meta_fn_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("MetaFn", value.object()?.clone());
 
         // Retain core's original get function. The generic native invocation
         // ABI takes callable functions; keyword application is compiler lowering.
@@ -721,6 +730,7 @@ impl SessionHost<'_> {
             .call(&mut self.store, &[Val::FuncRef(Some(callback))], &mut [])?;
         self.evaluation = Some(state);
         self.refresh_evaluation_profile();
+        self.install_native_identity(&self.evaluation.as_ref().unwrap().clone())?;
         Ok(())
     }
     fn throw_evaluation_error<T>(&mut self, error: SessionError) -> wasmtime::Result<T> {
@@ -819,6 +829,8 @@ impl SessionHost<'_> {
             .runtime
             .get_func(&mut self.store, "object-instance")
             .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
+        let identity_test = self.runtime.get_func(&mut self.store, "native-identical-test")
+            .ok_or_else(|| wasmtime::Error::msg("Missing native identity test"))?;
         let evaluation = self
             .evaluation
             .as_ref()
@@ -836,6 +848,7 @@ impl SessionHost<'_> {
             closure_test,
             class_test,
             instance_test,
+            identity_test,
             var_class,
             meta_fn_class,
         )

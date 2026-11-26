@@ -43,9 +43,13 @@ impl CallerExpansion<'_, '_> {
         let allowance = self.caller.operation_fuel_remaining().map_err(|e| diagnostic(span.clone(), e))?;
         let context = if context { Some(self.caller.evaluation_math_context().map_err(|e| diagnostic(span.clone(), e))?) } else { None };
         let (result, spent) = self.service.preparation_step(allowance, context,
-            self.caller.interrupt.clone(), span.clone(), operation).map_err(|e| diagnostic(span.clone(), e))?;
-        self.caller.charge_host_work(spent).map_err(|e| diagnostic(span, e))?;
-        result
+            self.caller.interrupt.clone(), operation).map_err(|e| diagnostic(span.clone(), e))?;
+        self.caller.charge_host_work(spent).map_err(|e| diagnostic(span.clone(), e))?;
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span, message }
+        })
     }
     fn invoke(&mut self, global: &CellIdentity, form: &Form, context: ExpansionContext<'_>) -> Result<Form, SessionError> {
         // Read at each invocation: a transformer may change this thread's

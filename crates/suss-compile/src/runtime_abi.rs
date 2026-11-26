@@ -46,6 +46,7 @@ mod case_hash;
 mod numeric_operands;
 mod random;
 mod evaluation;
+mod native_identity;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
@@ -2198,6 +2199,7 @@ fn build_module() -> Vec<u8> {
     );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_restore, try_invoke));
+    let native_identity_type = native_identity::declare(&mut b);
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);
@@ -2757,6 +2759,7 @@ fn build_module() -> Vec<u8> {
         decimal_context_type, b.names["decimal-context-impl"]);
     random::append(&mut b, &mut globals);
     evaluation::append(&mut b, &mut globals);
+    native_identity::append(&mut globals, native_identity_type);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

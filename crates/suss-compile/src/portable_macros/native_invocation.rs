@@ -13,12 +13,12 @@ use std::{
 // Forward cancellation through the public engine/flag handle, never a Store
 // pointer. One operation owns the relay; it is joined before the lease returns.
 // The condition variable wakes teardown immediately (no per-operation delay).
-pub(super) struct InterruptRelay {
+pub(crate) struct InterruptRelay {
     finished: Option<Arc<(Mutex<bool>, Condvar)>>,
     thread: Option<JoinHandle<()>>,
 }
 impl InterruptRelay {
-    pub(super) fn start(
+    pub(crate) fn start(
         parent: Arc<AtomicBool>,
         target: crate::portable_session::InterruptHandle,
     ) -> Result<Self, SessionError> {
@@ -61,7 +61,7 @@ impl Drop for InterruptRelay {
     }
 }
 
-fn transferable_error(host: &mut MacroHost<'_>, error: SessionError) -> SessionError {
+pub(super) fn transferable_error(host: &mut MacroHost<'_>, error: SessionError) -> SessionError {
     let SessionError::Language(value) = error else { return error };
     match host.bridge.transfer_exception(&mut host.session, &value) {
         Ok(payload) => SessionError::Host(wasmtime::Error::new(payload)),
