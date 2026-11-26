@@ -1,7 +1,7 @@
 //! Bounded native transport between reader forms and real compiled macro values.
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable::Diagnostic;
-use crate::portable_session::{RuntimeNumber, Session, SessionHost, SessionError, SessionValue, runtime_number};
+use crate::portable_session::{RuntimeNumber, Session, SessionHost, SessionError, SessionValue, CompilerRoot, runtime_number};
 use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
@@ -224,16 +224,19 @@ enum DecodedKind<T> {
 /// A reset or another Store invalidates this bridge; construct a new one there.
 // Captured native containers; their Wasm referents still require live checks.
 struct BridgeCore {
-    roots: Vec<SessionValue>,
-    classes: BTreeMap<i64, (Class, SessionValue)>,
+    roots: Vec<CompilerRoot>,
+    classes: BTreeMap<i64, (Class, CompilerRoot)>,
     constructors: BTreeMap<Class, usize>,
-    factories: BTreeMap<&'static str, SessionValue>,
+    factories: BTreeMap<&'static str, CompilerRoot>,
     // Runtime-interned keywords avoid repeated throwaway construction for
     // metadata keys. This bounded cache owns roots, not external value handles.
     keywords: std::sync::Mutex<BTreeMap<(Option<String>, String), wasmtime::OwnedRooted<AnyRef>>>,
 }
+#[derive(Clone)]
 pub struct FormBridge {
     core: Arc<BridgeCore>,
+    hash: CompilerRoot,
+    key_test: CompilerRoot,
 }
 
 // Native transport roots are scoped to the current value transfer. They must
@@ -254,7 +257,8 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         let keyword = class == Class::Keyword;
         let class = &self.core.roots[self.core.constructors[&class]];
-        let value = session.data_construct(class, arguments)?;
+        let class = class.value(session)?;
+        let value = session.data_construct(&class, arguments)?;
         // Keywords are interned, as guest construction interns them (#361).
         if keyword { session.data_keyword_intern(&value) } else { Ok(value) }
     }
@@ -274,10 +278,10 @@ impl FormBridge {
     }
     fn seed(
         &self,
-        _session: &mut SessionHost<'_>,
+        session: &mut SessionHost<'_>,
         name: &'static str,
     ) -> Result<SessionValue, SessionError> {
-        Ok(self.core.factories[name].clone())
+        self.core.factories[name].value(session)
     }
     pub(crate) fn with_form_metadata(
         &self,
@@ -305,11 +309,28 @@ impl FormBridge {
         )
     }
     pub fn new(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
+        if let Some(bridge) = session.captured_form_bridge() {
+            let _budget = session.operation_budget_scope()?;
+            // Constructors keep their authenticated original identities. A new
+            // reader bridge captures its current hash/equality callbacks, as
+            // before, so reader occurrences retain their observable effects.
+            let hash = CompilerRoot::capture(&session.data_core_value("hash")?)?;
+            let key_test = CompilerRoot::capture(&session.data_core_value("key-test")?)?;
+            return Ok(Self { core: bridge.core.clone(), hash, key_test });
+        }
+        Self::capture(session, false)
+    }
+    pub(crate) fn capture_native(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
+        Self::capture(session, true)
+    }
+    fn capture(session: &mut SessionHost<'_>, native: bool) -> Result<Self, SessionError> {
+        let _budget = session.operation_budget_scope()?;
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
         for (name, class) in SOURCE_CLASSES {
-            let value = session.eval(&format!("suss.core/{name}"))?;
+            let value = if native { session.data_core_root(name)? }
+                else { session.eval(&format!("suss.core/{name}"))? };
             let id = session.inspect(&value, |mut store, value| {
                 // A class constructor is a universal closure (ADR-0004) whose
                 // environment is its descriptor.
@@ -325,13 +346,13 @@ impl FormBridge {
                 }
             })?;
             let descriptor = session.data_descriptor(&value, true)?;
-            if classes.insert(id, (class, descriptor)).is_some() {
+            if classes.insert(id, (class, CompilerRoot::capture(&descriptor)?)).is_some() {
                 return Err(SessionError::Host(error(
                     "Duplicate macro data class identity",
                 )));
             }
             constructors.insert(class, roots.len());
-            roots.push(value);
+            roots.push(CompilerRoot::capture(&value)?);
         }
         let mut factories = BTreeMap::new();
         for (name, source) in [
@@ -349,19 +370,37 @@ impl FormBridge {
             ("empty-queue", "#queue []"),
             ("into", "suss.core/into"),
             ("with-meta", "suss.core/with-meta"),
-            ("lazy-sval", "(fn* [value] (.sval value))"),
+            ("lazy-sval", "suss.core/LazySeq"),
         ] {
-            factories.insert(name, session.eval(source)?);
+            let value = if name == "lazy-sval" {
+                let constructor = if native { session.data_core_root("LazySeq")? }
+                    else { session.eval(source)? };
+                session.data_object_method(&constructor, "sval")?
+            } else if !native { session.eval(source)? }
+            else if let Some(name) = source.strip_prefix("suss.core/") { session.data_core_root(name)? }
+            else {
+                let class = match name {
+                    "empty-map" => "PersistentArrayMap", "empty-vector" => "PersistentVector",
+                    "empty-set" => "PersistentHashSet", "empty-list" => "List", "empty-queue" => "PersistentQueue",
+                    _ => return Err(error("Unknown canonical data factory").into()),
+                };
+                let constructor = session.data_core_root(class)?;
+                session.data_static(&constructor, "EMPTY")?
+            };
+            factories.insert(name, CompilerRoot::capture(&value)?);
         }
         session.charge_host_work((std::mem::size_of::<BridgeCore>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
+        let hash = factories.remove("hash").expect("captured hash callback");
+        let key_test = factories.remove("key-test").expect("captured key callback");
         Ok(Self {
             core: Arc::new(BridgeCore { roots, classes, constructors, factories, keywords: Default::default() }),
+            hash, key_test,
         })
     }
     fn check(&self, session: &mut SessionHost<'_>) -> Result<(), SessionError> {
         for root in &self.core.roots {
-            session.inspect(root, |_, _| Ok(()))?;
+            root.check(session)?;
         }
         Ok(())
     }
@@ -373,7 +412,8 @@ impl FormBridge {
         self.check(session)?;
         for name in ["empty-map", "empty-vector", "empty-set", "empty-list", "empty-queue"] {
             session.charge_host_work(1)?;
-            if session.values_identical(value, &self.core.factories[name])? { return Ok(true); }
+            let seed = self.core.factories[name].value(session)?;
+            if session.values_identical(value, &seed)? { return Ok(true); }
         }
         Ok(false)
     }
@@ -427,7 +467,7 @@ impl FormBridge {
             let hash = if entries.len() <= 8 {
                 0
             } else {
-                let hash = session.invoke(&self.core.factories["hash"], &[key])?;
+                let hash = session.invoke_compiler_root(&self.hash, &[key])?;
                 session.inspect(&hash, |mut store, hash| {
                     let Some(value) = number(&mut store, &hash)? else {
                         return Err(error("Compiler map hash requires a numeric scalar"));
@@ -449,7 +489,7 @@ impl FormBridge {
                         .is_some_and(|other| other == identifier)
                 } else {
                     let equal =
-                        session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1])?;
+                        session.invoke_compiler_root(&self.key_test, &[key, &pairs[index].1])?;
                     session.inspect(&equal, |mut store, value| {
                         Ok(sentinel(&mut store, &value)? == Some(4))
                     })?
@@ -671,10 +711,10 @@ impl FormBridge {
             empty
         } else {
             let elements = self.vector_values(session, items)?;
-            session.invoke(&self.core.factories["into"], &[&empty, &elements])?
+            session.invoke_compiler_root(&self.core.factories["into"], &[&empty, &elements])?
         };
         if let Some(metadata) = metadata {
-            queue = session.invoke(&self.core.factories["with-meta"], &[&queue, metadata])?;
+            queue = session.invoke_compiler_root(&self.core.factories["with-meta"], &[&queue, metadata])?;
         }
         Ok(queue)
     }
@@ -1145,11 +1185,13 @@ impl FormBridge {
         self.check(session)?;
         session.with_operation_budget(|session| {
             let interrupt = session.host_work_interrupt();
+            let (native_kind, field_get, invoke_method) = session.data_live_sequence_calls();
+            let lazy = self.core.factories["lazy-sval"].value(session)?;
             session
                 .data_inspect_calls(
                     value,
-                    &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, _closure_new, function, undefined| {
+                    &lazy,
+                    |mut store, value, _args_new, _invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                 native,
@@ -1161,9 +1203,10 @@ impl FormBridge {
                         host_fuel: std::cell::Cell::new(0),
                         lazy_calls: std::cell::Cell::new(0),
                             calls: realize_lazy.then_some(ReadCalls {
-                                args_new,
-                                invoke,
+                                invoke_method,
                                 function,
+                                native_kind,
+                                field_get,
                             }),
                             undefined: Some(undefined),
                         };
@@ -1239,7 +1282,7 @@ fn nil(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<boo
 fn metadata(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1302,7 +1345,7 @@ fn name(
 fn object(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
 ) -> wasmtime::Result<(Class, Vec<Val>)> {
     let storage = fields(store, value, 4)?;
     let descriptor = fields(store, &storage[0], 6)?;
@@ -1348,7 +1391,7 @@ struct NativeRead {
 static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 impl NativeRead {
     fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val,
-        classes: &BTreeMap<i64, (Class, SessionValue)>, depth: usize,
+        classes: &BTreeMap<i64, (Class, CompilerRoot)>, depth: usize,
         interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Kind>> {
         // The transport's root is being materialized, not captured again.
         // Capturing it would recursively re-export the same unsupported root.
@@ -1403,7 +1446,7 @@ impl NativeRead {
                     Class::Uuid | Class::Symbol | Class::List | Class::EmptyList
                     | Class::PersistentVector | Class::PersistentArrayMap
                     | Class::PersistentHashMap | Class::PersistentHashSet
-                    | Class::MapEntry | Class::PersistentQueue));
+                    | Class::MapEntry | Class::PersistentQueue | Class::Cons | Class::LazySeq));
             }
             if !supported { return Ok(None); }
         }
@@ -1433,9 +1476,10 @@ impl NativeRead {
     }
 }
 struct ReadCalls {
-    args_new: wasmtime::Func,
-    invoke: wasmtime::Func,
+    invoke_method: wasmtime::Func,
     function: Val,
+    native_kind: wasmtime::Func,
+    field_get: wasmtime::Func,
 }
 struct Budget {
     display: Option<DisplayCalls>,
@@ -1453,6 +1497,28 @@ struct Budget {
     profile: bool,
     host_fuel: std::cell::Cell<u64>,
     lazy_calls: std::cell::Cell<u64>,
+}
+// Live sequence proxies retain their source fields rather than snapshotting
+// mutable lazy state. Only authenticated Cons/LazySeq capabilities may use this
+// path, and forcing remains in the ordinary fueled reader/sval operation.
+fn object_with_budget(store: &mut StoreContextMut<'_, ()>, value: &Val,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>, budget: &Budget,
+) -> wasmtime::Result<(Class, Vec<Val>)> {
+    let (class, data) = object(store, value, classes)?;
+    if !data.is_empty() || !matches!(class, Class::Cons | Class::LazySeq) { return Ok((class, data)); }
+    let calls = budget.calls.as_ref().ok_or_else(|| error("Live sequence reads need fueled source access"))?;
+    let expected = if matches!(class, Class::Cons) { crate::runtime_abi::native_values::CONS } else { crate::runtime_abi::native_values::LAZY_SEQ };
+    charge_read_work(store, 5, budget)?;
+    let mut kind = [Val::I32(0)];
+    calls.native_kind.call(&mut *store, &[*value], &mut kind)?;
+    if kind[0].unwrap_i32() != expected { return Err(error("Invalid live sequence capability")); }
+    let mut fields = Vec::with_capacity(4);
+    for index in 0..4 {
+        let mut result = [Val::null_any_ref()];
+        calls.field_get.call(&mut *store, &[*value, Val::I32(index)], &mut result)?;
+        fields.push(result[0]);
+    }
+    Ok((class, fields))
 }
 fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
     if budget.display.is_some() {
@@ -1511,7 +1577,7 @@ fn leave_active(budget: &mut Budget, pushed: bool) {
 fn decode(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1521,7 +1587,7 @@ fn decode(
 fn decode_datum<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1542,7 +1608,7 @@ fn decode_datum<T: DatumTarget>(
 fn decode_datum_inner<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1629,7 +1695,7 @@ fn decode_datum_inner<T: DatumTarget>(
             }
             DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::integer(*sign < 0, digits, *display == 0)))
         } else {
-            let (class, data) = object(store, value, classes)?;
+            let (class, data) = object_with_budget(store, value, classes, budget)?;
             let slot = match class {
                 Class::Symbol => Some(4),
                 Class::PersistentVector
@@ -1729,7 +1795,7 @@ fn decode_datum_inner<T: DatumTarget>(
                     if data.len() != 3 {
                         return Err(error("Invalid persistent hash set field layout"));
                     }
-                    let (map_class, map_data) = object(store, &data[1], classes)?;
+                    let (map_class, map_data) = object_with_budget(store, &data[1], classes, budget)?;
                     let entries = match map_class {
                         Class::PersistentHashMap => {
                             hash_map_pairs(store, &map_data, classes, budget)?
@@ -1827,7 +1893,7 @@ fn decode_datum_inner<T: DatumTarget>(
                     } else {
                         sequence(store, &data[2], classes, span, depth, budget)?
                     };
-                    let (rear_class, rear) = object(store, &data[3], classes)?;
+                    let (rear_class, rear) = object_with_budget(store, &data[3], classes, budget)?;
                     if rear_class != Class::PersistentVector {
                         return Err(error("Queue needs a persistent vector rear"));
                     }
@@ -1872,7 +1938,7 @@ fn decode_datum_inner<T: DatumTarget>(
 fn sequence<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1893,7 +1959,7 @@ fn sequence<T: DatumTarget>(
 fn sequence_inner<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1928,7 +1994,7 @@ fn sequence_inner<T: DatumTarget>(
             }
             break;
         }
-        let (class, data) = object(store, &cursor, classes)?;
+        let (class, data) = object_with_budget(store, &cursor, classes, budget)?;
         match class {
             Class::LazySeq => {
                 if data.len() != 4 {
@@ -1944,16 +2010,9 @@ fn sequence_inner<T: DatumTarget>(
                     .calls
                     .as_ref()
                     .ok_or_else(|| error("Lazy data needs fueled source realization"))?;
-                let mut args = [Val::null_any_ref()];
-                calls
-                    .args_new
-                    .call(&mut *store, &[Val::I32(1)], &mut args)?;
-                args[0]
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&*store)?
-                    .ok_or_else(|| error("Invalid invocation arguments"))?
-                    .set(&mut *store, 0, cursor.clone())?;
+                // The captured sval is an Object method: use the runtime's
+                // receiver-aware dispatch, including exception-safe CURRENT_THIS
+                // restoration, rather than treating the method as an IFn.
                 let mut result = [Val::null_any_ref()];
                 budget.lazy_calls.set(budget.lazy_calls.get().saturating_add(1));
                 // Observational reads never replace an invocation error. This
@@ -1963,9 +2022,9 @@ fn sequence_inner<T: DatumTarget>(
                     eprintln!("macro-lazy-invoke call={} stage=before fuel={fuel_before:?}",
                         budget.lazy_calls.get());
                 }
-                let invoked = calls.invoke.call(
+                let invoked = calls.invoke_method.call(
                     &mut *store,
-                    &[calls.function.clone(), args[0].clone()],
+                    &[calls.function.clone(), cursor.clone()],
                     &mut result,
                 );
                 if budget.profile {
@@ -1985,7 +2044,7 @@ fn sequence_inner<T: DatumTarget>(
                 if !first_segment {
                     metadata(store, &data[2], classes, span, depth, budget)?;
                 }
-                let (class, chunk) = object(store, &data[0], classes)?;
+                let (class, chunk) = object_with_budget(store, &data[0], classes, budget)?;
                 if class != Class::ArrayChunk || chunk.len() != 3 {
                     return Err(error("Chunked cons needs canonical array chunk storage"));
                 }
@@ -2161,7 +2220,7 @@ fn sequence_inner<T: DatumTarget>(
                 if !first_segment {
                     metadata(store, &data[4], classes, span, depth, budget)?;
                 }
-                let (owner, vector_data) = object(store, &data[0], classes)?;
+                let (owner, vector_data) = object_with_budget(store, &data[0], classes, budget)?;
                 if !matches!(owner, Class::PersistentVector) || vector_data.len() != 6 {
                     return Err(error(
                         "Chunked vector sequence needs canonical vector storage",
@@ -2222,7 +2281,7 @@ fn sequence_inner<T: DatumTarget>(
 fn append_indexed<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2337,7 +2396,7 @@ fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result
 fn source_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     if let Some(elements) = object_array_elements(store, value, budget)? {
@@ -2381,11 +2440,11 @@ fn object_array_elements(
 fn node_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     if !matches!(class, Class::VectorNode) || data.len() != 2 {
         return Err(error("Invalid persistent vector trie node"));
     }
@@ -2398,7 +2457,7 @@ fn node_elements(
 fn vector<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2422,7 +2481,7 @@ fn vector<T: DatumTarget>(
     }
     // persistent! clears only the root edit token. Descendant nodes may retain
     // their former token; the pinned persistent trie legitimately shares them.
-    let (_, root_data) = object(store, &data[3], classes)?;
+    let (_, root_data) = object_with_budget(store, &data[3], classes, budget)?;
     if root_data.len() != 2 || !nil(store, &root_data[0])? {
         return Err(error("Persistent vector root retains an active edit token"));
     }
@@ -2465,7 +2524,7 @@ fn vector_leaf(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     index: usize,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     let count = integer(store, &data[1])?;
@@ -2478,7 +2537,7 @@ fn vector_leaf(
     } else {
         ((count - 1) >> 5) << 5
     };
-    let (_, root_data) = object(store, &data[3], classes)?;
+    let (_, root_data) = object_with_budget(store, &data[3], classes, budget)?;
     if root_data.len() != 2 || !nil(store, &root_data[0])? {
         return Err(error("Persistent vector root retains an active edit token"));
     }
@@ -2504,7 +2563,7 @@ fn vector_leaf(
 fn hash_map<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2520,7 +2579,7 @@ fn hash_map<T: DatumTarget>(
 fn hash_map_pairs(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     if data.len() != 6 {
@@ -2551,7 +2610,7 @@ fn hash_map_pairs(
 fn map_sequence_pairs(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
@@ -2571,7 +2630,7 @@ fn map_sequence_pairs(
 fn map_sequence_pairs_inner(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
@@ -2579,7 +2638,7 @@ fn map_sequence_pairs_inner(
         return Ok(Vec::new());
     }
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     let mut pairs = Vec::new();
     match class {
         Class::PersistentArrayMapSeq => {
@@ -2639,7 +2698,7 @@ fn map_sequence_pairs_inner(
             if data.len() != expected {
                 return Err(error("Invalid key cursor list layout"));
             }
-            let (entry_class, entry) = object(store, &data[1], classes)?;
+            let (entry_class, entry) = object_with_budget(store, &data[1], classes, budget)?;
             if !matches!(entry_class, Class::MapEntry) || entry.len() != 3 {
                 return Err(error("Key cursor list needs canonical map entries"));
             }
@@ -2673,7 +2732,7 @@ fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
 fn hash_node(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     level: usize,
     budget: &mut Budget,
     pairs: &mut Vec<Val>,
@@ -2682,7 +2741,7 @@ fn hash_node(
         return Err(error("Hash trie depth exceeds 32-bit hash path"));
     }
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     match class {
         Class::BitmapIndexedNode => {
             if data.len() != 3 {

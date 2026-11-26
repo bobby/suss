@@ -2069,3 +2069,16 @@ guest judgments retained. Source conservation is checked by
 `python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
 controls and limits remain under `results/m12-eval/`. Independent full-scope review
 and final published-head CI are separate requirements.
+
+
+The canonical source-Var/import follow-up preserves actual isolated transformer
+roots, caller Var identity, source-link/initializer boundaries, completed
+import prefixes, redefinition metadata and later caller rejection. The local
+frozen [checkpoint](../../results/m12-eval/source-import-checkpoint/summary.json)
+returns0 for all eleven commands: public eval101, ownership137, source58,
+ABI/structural71,
+named/calling/hash/sealing/display/namespace32,
+Python/provenance and Java/Node-free bootstrap. Historical negative receipts
+retain failures and mistaken target selections. Complete native/workspace,
+remaining issue acceptance, independent review, numeric integration and
+final published-head CI remain separate gates.

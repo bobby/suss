@@ -109,6 +109,57 @@ impl MacroService {
         })
     }
 
+    pub(crate) fn artifact_cache(&self) -> Arc<Mutex<crate::portable::artifact_cache::ArtifactCache>> {
+        self.with_host(|host| catalog(&host.catalog).artifact_cache.clone())
+    }
+    pub(crate) fn load_source_namespace_for_caller(&self, fuel: u64,
+        context: crate::portable_session::EvaluationMathContext,
+        interrupt: Arc<std::sync::atomic::AtomicBool>, namespace: &str,
+        policy: crate::portable::MacroReload, owner: u64,
+        phase: crate::portable::resolve::Phase,
+    ) -> Result<(Result<Vec<String>, SessionError>, u64), SessionError> {
+        self.with_request(fuel, None, interrupt, |host| {
+            let result = host.with_math_context(context, |host|
+                host.load_source_namespace(namespace, policy, Some((owner, phase))));
+            result.map_err(|error| super::native_invocation::transferable_error(host, error))
+        })
+    }
+    pub(crate) fn source_owner(&self) -> u64 { self.0.owner }
+    pub(crate) fn pending_source_bindings(&self, fuel: u64,
+        interrupt: Arc<std::sync::atomic::AtomicBool>,
+    ) -> Result<(Result<Vec<(String, String)>, SessionError>, u64), SessionError> {
+        self.with_request(fuel, None, interrupt, |host| {
+            let work = catalog(&host.catalog).declaration_transactions.last().map_or(1, |transaction|
+                transaction.globals.iter().fold(1u64, |work, global|
+                    work.saturating_add((global.namespace().len() + global.name().len()) as u64 * 4 + 1)));
+            host.session.charge_host_work(work)?;
+            let keys = catalog(&host.catalog).declaration_transactions.last().map(|transaction|
+                transaction.globals.iter().map(|global|
+                    (global.namespace().to_owned(), global.name().to_owned())).collect()).unwrap_or_default();
+            Ok(keys)
+        })
+    }
+    pub(crate) fn project_linked_source_bindings(&self, fuel: u64,
+        interrupt: Arc<std::sync::atomic::AtomicBool>, owner: u64,
+        targets: &[crate::portable::resolve::Global],
+    ) -> Result<(Result<(), SessionError>, u64), SessionError> {
+        self.with_request(fuel, None, interrupt, |host| {
+            for target in targets {
+                let pending = catalog(&host.catalog).declaration_transactions.iter().any(|transaction|
+                    transaction.globals.iter().any(|global|
+                        global.namespace() == target.namespace() && global.name() == target.name()));
+                if !pending { host.session.project_source_macro_var(owner, target, true)?; }
+            }
+            Ok(())
+        })
+    }
+    pub(crate) fn project_namespace_macros(&self, fuel: u64,
+        interrupt: Arc<std::sync::atomic::AtomicBool>, owner: u64,
+        phase: crate::portable::resolve::Phase, namespace: &str,
+    ) -> Result<(Result<(), SessionError>, u64), SessionError> {
+        self.with_request(fuel, None, interrupt, |host|
+            host.project_namespace_macros(owner, phase, namespace))
+    }
     pub(crate) fn contains_source_macro(&self, namespace: &str, name: &str) -> bool {
         self.with_host(|host| catalog(&host.catalog).definitions.contains_key(&(namespace.to_owned(), name.to_owned())))
     }
@@ -358,6 +409,10 @@ impl Drop for CompiledMacros {
     }
 }
 impl ExpansionHost for CompiledMacros {
+    fn intern_source_macro_var(&mut self, owner: u64, global: &crate::portable::resolve::Global,
+        span: std::ops::Range<usize>) -> Result<Option<u64>, Diagnostic> {
+        self.with_host_mut(|host| host.intern_source_macro_var(owner, global, span))
+    }
     fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> {
         Some(&self.service)
     }

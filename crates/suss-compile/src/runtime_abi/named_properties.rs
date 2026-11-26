@@ -959,7 +959,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         array(&mut body, table);
         body.extend([ArrayLen, I32Ne, If(BlockType::Empty),
             LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR), I32Sub,
-            I32Const(1), I32GtU, If(BlockType::Empty)]);
+            I32Const(1), I32LeU,
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR_UNBOUND), I32Sub,
+            I32Const(2), I32LeU, I32Or, I32Eqz, If(BlockType::Empty)]);
         nominal::error(&mut body);
         body.extend([
             End, End,

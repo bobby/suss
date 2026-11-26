@@ -378,6 +378,8 @@ pub struct Environment {
     /// Only the root native eval form inherits its caller's dynamic namespace
     /// frame. Dependencies keep ordinary load frames; published catalogs clear it.
     pub(crate) native_evaluation_namespace: bool,
+    /// Native preparation authority; never a source-supplied value handle.
+    pub(crate) native_compilation_owner: Option<u64>,
     /// Analyzing the shipped core image itself, whose capture-free functions
     /// call each other directly (#360, #361). Only the bootstrap catalog sets
     /// it: privileged code compiled elsewhere, such as a session's core
@@ -547,6 +549,7 @@ impl Environment {
             direct_linking: false,
             ordered_namespace_initialization: false,
             native_evaluation_namespace: false,
+            native_compilation_owner: None,
             core_image_links: false,
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),
@@ -797,7 +800,7 @@ impl Environment {
             .expect("declared current scope")
     }
     /// Undo staged declaration publication without reverting unrelated macro effects/dependencies.
-    pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
+    pub(crate) fn advance_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
         for global in globals {
             match before.bindings.get(global) {
                 Some(value) => self.bind(global.clone(), value.clone()),
@@ -825,10 +828,13 @@ impl Environment {
                 self.macro_exports.remove(&export);
             }
         }
+        self.source_changed();
+    }
+    pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
+        self.advance_declarations(before, globals, phase);
         if let Some(namespace) = before.current.get(&phase) {
             self.current.insert(phase, namespace.clone());
         }
-        self.source_changed();
     }
     pub fn current_namespace(&self, phase: Phase) -> &str {
         &self.current[&phase]
@@ -1710,6 +1716,22 @@ impl Environment {
         symbol.name == name
             && !scope.excluded_core.contains(name)
             && !self.bindings.contains_key(&own)
+    }
+    pub(crate) fn macro_var_candidates(&self, phase: Phase, symbol: &Symbol) -> Vec<Global> {
+        let scope = self.scope(phase);
+        let global = |namespace: &str, name: &str| Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some((namespace, name)) = self.resolve_source_macro(phase, symbol) {
+            return vec![global(&namespace, &name)];
+        }
+        if let Some(namespace) = &symbol.namespace {
+            let namespace = symbol_namespace(scope.macro_aliases.get(namespace).or_else(|| scope.aliases.get(namespace)), namespace);
+            return vec![global(namespace, &symbol.name)];
+        }
+        let mut candidates = vec![global(&scope.namespace, &symbol.name)];
+        if self.resolves_bootstrap_name(phase, symbol, &symbol.name) && scope.namespace != "suss.core" {
+            candidates.push(global("suss.core", &symbol.name));
+        }
+        candidates
     }
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).

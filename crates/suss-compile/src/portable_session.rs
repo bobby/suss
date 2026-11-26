@@ -185,6 +185,31 @@ impl SessionValue {
         Val::AnyRef(self.rooted(store))
     }
 }
+/// A compiler-owned object root, distinct from a caller-owned value handle.
+/// The actual Store identity is retained so stale/cross-Store use remains an
+/// ordinary ownership error before a Wasmtime root is opened.
+#[derive(Clone)]
+pub(crate) struct CompilerRoot {
+    identity: u64,
+    value: OwnedRooted<AnyRef>,
+}
+impl CompilerRoot {
+    pub(crate) fn capture(value: &SessionValue) -> Result<Self, SessionError> {
+        Ok(Self { identity: value.identity, value: value.object()?.clone() })
+    }
+    pub(crate) fn check(&self, session: &SessionHost<'_>) -> Result<(), SessionError> {
+        if self.identity != session.identity { return Err(SessionError::ForeignValue); }
+        Ok(())
+    }
+    pub(crate) fn value(&self, session: &mut SessionHost<'_>) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.root_value(&self.value)
+    }
+    pub(crate) fn rooted(&self, store: &mut StoreContextMut<'_, ()>) -> Option<wasmtime::Rooted<AnyRef>> {
+        Some(self.value.to_rooted(store))
+    }
+    pub(crate) fn val(&self, store: &mut StoreContextMut<'_, ()>) -> Val { Val::AnyRef(self.rooted(store)) }
+}
 impl Clone for SessionValue {
     fn clone(&self) -> Self {
         self.handles.fetch_add(1, Ordering::Relaxed);
@@ -274,6 +299,15 @@ impl PendingHostFuture {
 pub(crate) struct BindingCheckpoint {
     environment: Environment,
     values: BTreeMap<CellIdentity, (Option<OwnedRooted<AnyRef>>, i32)>,
+}
+/// Metadata written by completed staged declarations, on the actual canonical
+/// Var. Only still-current compiler writes are restored; other object effects
+/// retain the existing source journal contract.
+#[derive(Clone)]
+pub(crate) struct VarMetadataCheckpoint {
+    variable: OwnedRooted<AnyRef>,
+    before: Option<OwnedRooted<AnyRef>>,
+    written: Vec<Option<OwnedRooted<AnyRef>>>,
 }
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
@@ -1287,6 +1321,11 @@ impl SessionHost<'_> {
     /// A single fueled operation inside the normal inspection/root/exception
     /// scope. Compiler-data decoding may call a captured source closure without
     /// escaping raw references or replenishing fuel per sequence element.
+    pub(crate) fn data_live_sequence_calls(&mut self) -> (Func, Func, Func) {
+        (self.runtime.get_func(&mut self.store, "native-value-kind").unwrap(),
+         self.runtime.get_func(&mut self.store, "object-field-get").unwrap(),
+         self.runtime.get_func(&mut self.store, "object-method-invoke-0").unwrap())
+    }
     pub(crate) fn data_inspect_calls<R>(
         &mut self,
         value: &SessionValue,
@@ -1303,18 +1342,9 @@ impl SessionHost<'_> {
     ) -> Result<R, SessionError> {
         self.check(function)?;
         self.budget()?;
-        let args_new = self
-            .runtime
-            .get_func(&mut self.store, "args-new")
-            .expect("runtime args");
-        let invoke = self
-            .runtime
-            .get_func(&mut self.store, "invoke")
-            .expect("runtime invoke");
-        let closure_new = self
-            .runtime
-            .get_func(&mut self.store, "closure-new")
-            .expect("runtime closure-new");
+        let args_new = self.runtime.get_func(&mut self.store, "args-new").expect("runtime args");
+        let invoke = self.runtime.get_func(&mut self.store, "invoke").expect("runtime invoke");
+        let closure_new = self.runtime.get_func(&mut self.store, "closure-new").expect("runtime closure-new");
         let runtime = self.runtime;
         self.inspect(value, |mut store, value| {
             let function = Val::AnyRef(function.rooted(&mut store));
@@ -1575,6 +1605,23 @@ impl SessionHost<'_> {
             values,
         })
     }
+    // Native-only checkpoint advancement for a completed source dependency.
+    // The caller reserves journal work before invoking the definition. No
+    // guest callbacks or source replay occur under the metadata guard here.
+    pub(crate) fn advance_binding_checkpoint(&mut self, checkpoint: &mut BindingCheckpoint,
+        identity: &CellIdentity) -> Result<(), SessionError> {
+        let code = registry_lock(&self.compiler);
+        let global = code.cells.get(identity).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Completed source binding is missing"))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = global.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        let value = cell.field(&mut roots, 0)?.unwrap_anyref()
+            .map(|value| value.to_owned_rooted(&mut roots)).transpose()?;
+        let flags = cell.field(&mut roots, 1)?.unwrap_i32();
+        checkpoint.values.insert(identity.clone(), (value, flags));
+        checkpoint.environment.advance_declarations(&code.environment, std::slice::from_ref(identity), self.phase);
+        Ok(())
+    }
     pub(crate) fn restore_bindings(
         &mut self,
         checkpoint: BindingCheckpoint,
@@ -1610,8 +1657,10 @@ impl SessionHost<'_> {
     }
     pub(crate) fn compilation_snapshot(&self) -> CompilationSnapshot {
         let code = registry_lock(&self.compiler);
+        let mut environment = code.environment.clone();
+        environment.native_compilation_owner = Some(self.identity);
         CompilationSnapshot {
-            environment: code.environment.clone(),
+            environment,
             native_owner: Some(self.identity),
             phase: self.phase,
             source_paths: self.options.source_paths.clone(),
@@ -1664,6 +1713,14 @@ impl SessionHost<'_> {
         let operation = expander.persistent_macro_context()
             .and_then(|context| context.downcast_ref::<crate::portable_macros::MacroService>())
             .map(crate::portable_macros::MacroService::operation);
+        if operation.is_some() && self.evaluation.is_some() && self.local_macro_authority().is_none() {
+            if !self.store.is_borrowed() && self.operation_budget_depth.load(Ordering::SeqCst) == 0 {
+                self.budget()?;
+                self.store.set_fuel(expander.expansion_work_fuel())?;
+            }
+            let profile = self.reentry_profile();
+            profile.bind(self.store.as_context_mut()).ensure_source_macro_authority()?;
+        }
         if let Some(authority) = self.local_macro_authority() {
             // Source input retains separate compile and runtime allowances.
             // A borrowed reentrant entry instead inherits its active budget.
@@ -1679,7 +1736,15 @@ impl SessionHost<'_> {
             return Ok((prepared, SourcePreparation { authority: Some(authority), _operation: operation }));
         }
         expander.begin_declarations().map_err(SessionError::Compile)?;
-        match prepare(&self.compilation_snapshot(), expander) {
+        let snapshot = self.compilation_snapshot();
+        if !self.store.is_borrowed() && self.operation_budget_depth.load(Ordering::SeqCst) == 0 {
+            self.budget()?;
+            self.store.set_fuel(expander.expansion_work_fuel())?;
+        }
+        let profile = self.reentry_profile();
+        let mut view = profile.bind(self.store.as_context_mut());
+        let prepared = suspended::scope(&mut view, || prepare(&snapshot, expander));
+        match prepared {
             Ok(prepared) => Ok((prepared, SourcePreparation { authority: None, _operation: operation })),
             Err(error) => { let _ = expander.end_declarations(false); Err(error) }
         }
@@ -1828,59 +1893,55 @@ impl SessionHost<'_> {
         expander: Option<&mut dyn portable::ExpansionHost>,
     ) -> Result<Option<SessionValue>, SessionError> {
         let Some(expander) = expander else {
-            return self.load_namespace_plan(namespace, provided, reloading, None, &mut false);
+            let environment = registry_lock(&self.compiler).environment.clone();
+            let mut plan = portable::modules::prepare_modules(
+                namespace, &self.options.source_paths, &environment, self.phase, &provided,
+            ).map_err(SessionError::Module)?;
+            plan.environment.enter_namespace(self.phase, &self.current_namespace())
+                .map_err(SessionError::Compile)?;
+            return self.execute_namespace_plan(plan, reloading, |_| Ok(()));
         };
-        expander.begin_declarations().map_err(SessionError::Compile)?;
-        let mut linked = false;
-        let result = self.load_namespace_plan(namespace, provided, reloading, Some(&mut *expander), &mut linked);
-        // Initializer failures retain installed state, as before. A preparation
-        // or linking error must not publish compiler-only replacements.
-        expander.end_declarations(linked).map_err(SessionError::Compile)?;
-        result
-    }
-    fn load_namespace_plan(
-        &mut self, namespace: &str, provided: BTreeSet<ModuleIdentity>, reloading: bool,
-        expander: Option<&mut dyn portable::ExpansionHost>, linked: &mut bool,
-    ) -> Result<Option<SessionValue>, SessionError> {
-        let environment = registry_lock(&self.compiler).environment.clone();
-        let mut plan = if let Some(expander) = expander {
+        // Use the same caller suspension, authority/capability selection and
+        // declaration journal as source/REPL input. Bare profiles retain their
+        // ordinary isolated source compiler, with no hidden native eval host.
+        let (mut plan, preparation) = self.prepare_source_input(expander, |snapshot, host| {
             portable::modules::prepare_modules_with_expander(
-                namespace,
-                &self.options.source_paths,
-                &environment,
-                self.phase,
-                &provided,
-                expander,
-            )
-        } else {
-            portable::modules::prepare_modules(
-                namespace,
-                &self.options.source_paths,
-                &environment,
-                self.phase,
-                &provided,
-            )
-        }
-        .map_err(SessionError::Module)?;
-        plan.environment
-            .enter_namespace(self.phase, &self.current_namespace())
-            .map_err(SessionError::Compile)?;
+                namespace, &snapshot.source_paths, &snapshot.environment,
+                snapshot.phase(), &provided, host,
+            ).map_err(SessionError::Module)
+        })?;
+        let mut preparation = Some(preparation);
+        let outcome = (|| {
+            plan.environment.enter_namespace(self.phase, &self.current_namespace())
+                .map_err(SessionError::Compile)?;
+            self.execute_namespace_plan(plan, reloading, |session| {
+                session.finish_source_input(preparation.take().expect("source preparation"), expander, true)
+            })
+        })();
+        let cleanup = match preparation {
+            Some(preparation) => self.finish_source_input(preparation, expander, false),
+            None => Ok(()),
+        };
+        match outcome { Err(error) => Err(error), Ok(value) => { cleanup?; Ok(value) } }
+    }
+    fn execute_namespace_plan(
+        &mut self, plan: portable::modules::ModulePlan, reloading: bool,
+        on_link: impl FnOnce(&mut Self) -> Result<(), SessionError>,
+    ) -> Result<Option<SessionValue>, SessionError> {
         self.budget()?;
-        let bytes: Vec<_> = plan
-            .modules
-            .iter()
-            .map(|module| module.wasm.as_slice())
-            .collect();
+        let bytes: Vec<_> = plan.modules.iter().map(|module| module.wasm.as_slice()).collect();
         let instances = self.install(&bytes, plan.environment, &plan.cells)?;
-        *linked = true;
         if reloading {
-            // Preparation/linking failed without changing loaded identities. Once
-            // execution starts, every selected unit must complete initialization
-            // before it can be considered loaded again. Earlier effects remain.
+            // Preparation/linking failed without changing loaded identities.
+            // After linking, every selected unit must initialize successfully
+            // before it can be considered loaded again. Prefix effects remain.
             for module in &plan.modules {
                 registry_lock(&self.compiler).provided.remove(&module.identity);
             }
         }
+        // Finish journals and release compiler operations before dependency
+        // initializers or Runtime code can wait on another compilation thread.
+        on_link(self)?;
         self.initialize_modules(plan.modules, instances)
     }
     fn initialize_modules(
@@ -1895,6 +1956,51 @@ impl SessionHost<'_> {
             result = Some(value);
         }
         Ok(result)
+    }
+    pub(crate) fn invoke_compiler_root(&mut self, function: &CompilerRoot,
+        arguments: &[&SessionValue]) -> Result<SessionValue, SessionError> {
+        let function = function.value(self)?;
+        self.invoke(&function, arguments)
+    }
+    pub(crate) fn data_core_root(&mut self, name: &str) -> Result<SessionValue, SessionError> {
+        self.charge_host_work(name.len() as u64 + 1)?;
+        let global = registry_lock(&self.compiler).environment.resolve(self.phase,
+            &suss_reader::Symbol::namespaced("suss.core", name), 0..0)
+            .map_err(SessionError::Compile)?.global().clone();
+        self.binding_root_value(&global)
+    }
+    pub(crate) fn data_core_value(&mut self, name: &str) -> Result<SessionValue, SessionError> {
+        self.charge_host_work(name.len() as u64 + 1)?;
+        let global = registry_lock(&self.compiler).environment.resolve(self.phase,
+            &suss_reader::Symbol::namespaced("suss.core", name), 0..0)
+            .map_err(SessionError::Compile)?.global().clone();
+        let cell = registry_lock(&self.compiler).cells.get(&global).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Missing core callback binding"))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let read = self.runtime.get_func(&mut roots, "binding-read").expect("runtime binding read");
+        let cell = cell.get(&mut roots);
+        call(&mut roots, self.runtime, read, &[cell], self.identity, &self.handles)
+    }
+    pub(crate) fn data_static(&mut self, constructor: &SessionValue, name: &str)
+        -> Result<SessionValue, SessionError> {
+        self.check(constructor)?;
+        let name = self.data_scalar(&portable::hir::Literal::String(name.encode_utf16().collect()))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let get = self.runtime.get_func(&mut roots, "fixed-named-property-get").unwrap();
+        let args = [constructor.val(&mut roots.as_context_mut()), name.val(&mut roots.as_context_mut())];
+        call(&mut roots, self.runtime, get, &args, self.identity, &self.handles)
+    }
+    pub(crate) fn data_object_method(&mut self, constructor: &SessionValue, name: &str)
+        -> Result<SessionValue, SessionError> {
+        let descriptor = self.data_descriptor(constructor, true)?;
+        let name = self.data_scalar(&portable::hir::Literal::String(name.encode_utf16().collect()))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let key = self.runtime.get_func(&mut roots, "object-method-key").unwrap();
+        let args = [descriptor.val(&mut roots.as_context_mut()), name.val(&mut roots.as_context_mut())];
+        let key = call(&mut roots, self.runtime, key, &args, self.identity, &self.handles)?;
+        let get = self.runtime.get_func(&mut roots, "protocol-method-get").unwrap();
+        let args = [descriptor.val(&mut roots.as_context_mut()), key.val(&mut roots.as_context_mut())];
+        call(&mut roots, self.runtime, get, &args, self.identity, &self.handles)
     }
     pub(crate) fn data_language_error(&mut self, message: &SessionValue) -> Result<SessionValue, SessionError> {
         self.check(message)?;

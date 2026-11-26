@@ -54,7 +54,21 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
         assert!(ids.insert(id));
         // Clojure throws for a long divided by zero; a double divisor still
         // gives the NaN marker this case probes.
-        let source = &case["source"].as_str().unwrap().replace("(/ 0 0)", "(/ 0.0 0)");
+        let source = case["source"].as_str().unwrap().replace("(/ 0 0)", "(/ 0.0 0)");
+        // The original JS fixture uses a declared global as its undefined
+        // placeholder. Clojure's declared Vars now hold genuine Unbound
+        // values, which are truthy callable objects. Keep these JS property
+        // and native-slot controls about actual undefined: the first case
+        // created PropertyProbe, whose missing static is genuinely undefined.
+        // Preserve the original corpus and all 63 expected observations.
+        // Genuine Unbound behavior is checked against JVM Clojure separately
+        // in clojure_eval, including its real Var, identity and call failure.
+        let source = if id == "dynamic-undefined-property-is-catchable" {
+            assert!(source.contains("(def property-uninitialized)"));
+            source.replace("(def property-uninitialized)",
+                "(def property-uninitialized (.-EMPTY PropertyProbe))")
+        } else { source };
+        let source = &source;
         let value = session
             .eval(source)
             .unwrap_or_else(|error| panic!("{id}: {source}: {error:?}"));
@@ -64,7 +78,7 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
                     session
                         .inspect(&value, |store, value| {
                             Ok(suss_cli::portable_session::runtime_number(store, &value)?
-                                .expect("Number layout"))
+                                .unwrap_or_else(|| panic!("{id}: {source}: Number layout")))
                         })
                         .unwrap(),
                 )

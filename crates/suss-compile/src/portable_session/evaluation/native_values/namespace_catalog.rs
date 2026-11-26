@@ -29,7 +29,7 @@ impl SessionHost<'_> {
         Ok(())
     }
 
-    fn catalog_namespace(&mut self, name: &str) -> Result<SessionValue, SessionError> {
+    pub(super) fn catalog_namespace(&mut self, name: &str) -> Result<SessionValue, SessionError> {
         self.charge_host_work(name.len() as u64 + 1)?;
         let bridge = self.value_state()?.bridge(self)?;
         let name = bridge.quote(self, Form { span: 0..0, metadata: vec![],
@@ -54,7 +54,7 @@ impl SessionHost<'_> {
         self.local_namespace_interns(namespace)
     }
 
-    fn catalog_cell_flags(&mut self, cell: Global) -> Result<i32, SessionError> {
+    pub(super) fn catalog_cell_flags(&mut self, cell: Global) -> Result<i32, SessionError> {
         self.charge_host_work(1)?;
         let mut roots = RootScope::new(&mut self.store);
         let cell = cell.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
@@ -69,6 +69,21 @@ impl SessionHost<'_> {
         let canonical = self.catalog_namespace(&name)?;
         if !self.identical_values(namespace, &canonical)? {
             return Err(wasmtime::Error::msg("Namespace catalog requires a registered canonical Namespace").into());
+        }
+        // A catalog must enumerate source macro exports even when no Var
+        // literal has previously asked the analyzer to materialize one.
+        if self.owned_macro_authority().is_none() {
+            let service = registry_lock(&state.external).clone();
+            if let Some(service) = service {
+                let allowance = self.operation_fuel_remaining()?;
+                let interrupt = self.host_work_interrupt();
+                let owner = self.identity;
+                let phase = self.phase;
+                let (result, spent) = super::super::super::suspended::scope(self, ||
+                    service.project_namespace_macros(allowance, interrupt, owner, phase, &name))?;
+                self.settle_nested_fuel(allowance, spent)?;
+                result?;
+            }
         }
         let trace = std::env::var_os("SUSS_NAMESPACE_FUEL_TRACE").is_some();
         if trace { eprintln!("namespace-catalog start {name} fuel={}", self.operation_fuel_remaining()?); }
@@ -115,6 +130,21 @@ impl SessionHost<'_> {
         result
     }
 
+    fn catalog_key(&mut self, identity: &CellIdentity) -> Result<SessionValue, SessionError> {
+        self.charge_host_work((identity.namespace().len() + identity.name().len()) as u64 + 1)?;
+        let state = self.value_state()?;
+        let existing = registry_lock(&state.catalog_keys).get(identity).cloned();
+        if let Some(key) = existing { return self.root_value(&key); }
+        // One immutable symbol per actual interned cell, rooted with its Var.
+        // Do not trust mutable Var metadata for catalog names. Reusing this
+        // canonical key also preserves its ordinary source hash cache.
+        let bridge = state.bridge(self)?;
+        let key = bridge.quote(self, Form { span: 0..0, metadata: vec![],
+            kind: Kind::Symbol(suss_reader::Symbol::new(identity.name())) })?;
+        registry_lock(&state.catalog_keys).insert(identity.clone(), key.object()?.clone());
+        Ok(key)
+    }
+
     fn intern_catalog_var(&mut self, identity: &CellIdentity,
         namespace: Option<&SessionValue>) -> Result<(SessionValue, Option<SessionValue>), SessionError> {
         let environment = registry_lock(&self.compiler).environment.clone();
@@ -123,7 +153,8 @@ impl SessionHost<'_> {
         let existing = registry_lock(&self.compiler).cells.get(&hidden).copied()
             .ok_or_else(|| wasmtime::Error::msg("Catalog Var cell was not staged"))?;
         if self.catalog_cell_flags(existing)? & runtime_abi::CELL_BOUND != 0 {
-            return Ok((self.binding_root_value(&hidden)?, None));
+            let key = self.catalog_key(identity)?;
+            return Ok((self.binding_root_value(&hidden)?, Some(key)));
         }
         let cell = registry_lock(&self.compiler).cells.get(identity).copied()
             .ok_or_else(|| wasmtime::Error::msg("Missing actual catalog binding cell"))?;
@@ -168,7 +199,7 @@ impl SessionHost<'_> {
             entries.push((key, value));
         }
         let namespace = match namespace { Some(namespace) => namespace.clone(), None => self.catalog_namespace(identity.namespace())? };
-        let name = bridge.quote(self, Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol::new(identity.name())) })?;
+        let name = self.catalog_key(identity)?;
         for (key, value) in [("name", name.clone()), ("ns", namespace)] {
             let key = bridge.quote(self, Form { span: 0..0, metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword::new(key)) })?;
             entries.push((key, value));

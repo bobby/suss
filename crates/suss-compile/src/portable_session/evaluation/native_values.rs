@@ -4,6 +4,8 @@
 use super::*;
 mod operations;
 mod namespace_catalog;
+mod macro_vars;
+mod function_namespace;
 use crate::portable_macros::MacroServiceWeak;
 use crate::runtime_abi::native_values as native_op;
 use std::sync::Weak;
@@ -47,6 +49,8 @@ enum NativeKind {
 enum LiveClass {
     Var,
     VarUnbound,
+    Cons,
+    LazySeq,
     Namespace,
 }
 impl LiveClass {
@@ -54,6 +58,8 @@ impl LiveClass {
         match self {
             Self::Var => "Var",
             Self::VarUnbound => "VarUnbound",
+            Self::Cons => "Cons",
+            Self::LazySeq => "LazySeq",
             Self::Namespace => "Namespace",
         }
     }
@@ -61,6 +67,7 @@ impl LiveClass {
         match self {
             Self::Var => 3,
             Self::VarUnbound => 1,
+            Self::Cons | Self::LazySeq => 4,
             Self::Namespace => 2,
         }
     }
@@ -72,6 +79,8 @@ impl NativeKind {
             Self::Materialized { .. } => native_op::DATA,
             Self::Nominal(LiveClass::Var) => native_op::VAR,
             Self::Nominal(LiveClass::VarUnbound) => native_op::VAR_UNBOUND,
+            Self::Nominal(LiveClass::Cons) => native_op::CONS,
+            Self::Nominal(LiveClass::LazySeq) => native_op::LAZY_SEQ,
             Self::Nominal(LiveClass::Namespace) => native_op::NAMESPACE,
             Self::ObjectArray => native_op::OBJECT_ARRAY,
         }
@@ -387,51 +396,34 @@ impl SessionHost<'_> {
             if let Some(existing) = self.existing_native_value(&state, value)? {
                 return Ok(Transfer::Native(existing));
             }
-            let var = registry_lock(&state.var_class).clone().unwrap();
-            let unbound = registry_lock(&state.unbound_class).clone().unwrap();
-            let namespace = registry_lock(&state.namespace)
-                .as_ref()
-                .unwrap()
-                .namespace
-                .clone();
+            let sequences = registry_lock(&state.sequence_classes).clone();
+            let classes = [
+                (registry_lock(&state.var_class).clone().unwrap(), LiveClass::Var),
+                (registry_lock(&state.unbound_class).clone().unwrap(), LiveClass::VarUnbound),
+                (registry_lock(&state.namespace).as_ref().unwrap().namespace.clone(), LiveClass::Namespace),
+                (sequences["Cons"].clone(), LiveClass::Cons),
+                (sequences["LazySeq"].clone(), LiveClass::LazySeq),
+            ];
             let live = {
                 let mut roots = RootScope::new(&mut self.store);
                 let input = value.val(&mut roots.as_context_mut());
-                let test = self
-                    .runtime
-                    .get_func(&mut roots, "object-instance")
-                    .unwrap();
-                let mut result = [Val::I32(0)];
-                let var = Val::AnyRef(Some(var.to_rooted(&mut roots)));
-                test.call(&mut roots, &[var, input], &mut result)?;
-                if result[0].unwrap_i32() != 0 {
-                    Some(NativeKind::Nominal(LiveClass::Var))
-                } else {
-                    let unbound = Val::AnyRef(Some(unbound.to_rooted(&mut roots)));
-                    test.call(&mut roots, &[unbound, input], &mut result)?;
-                    if result[0].unwrap_i32() != 0 {
-                        Some(NativeKind::Nominal(LiveClass::VarUnbound))
-                    } else {
-                    let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut roots)));
-                    test.call(&mut roots, &[namespace, input], &mut result)?;
-                    if result[0].unwrap_i32() != 0 {
-                        Some(NativeKind::Nominal(LiveClass::Namespace))
-                    } else {
-                        let mut result = [Val::null_any_ref()];
-                        self.runtime
-                            .get_func(&mut roots, "object-array-test")
-                            .unwrap()
-                            .call(&mut roots, &[input], &mut result)?;
-                        if sentinel_tag(&mut roots.as_context_mut(), &result[0])?
-                            == Some(runtime_abi::TRUE as u32)
-                        {
-                            Some(NativeKind::ObjectArray)
-                        } else {
-                            None
-                        }
-                    }
+                let test = self.runtime.get_func(&mut roots, "object-instance").unwrap();
+                let mut found = None;
+                for (descriptor, class) in classes {
+                    let descriptor = Val::AnyRef(Some(descriptor.to_rooted(&mut roots)));
+                    let mut result = [Val::I32(0)];
+                    test.call(&mut roots, &[descriptor, input], &mut result)?;
+                    if result[0].unwrap_i32() != 0 { found = Some(NativeKind::Nominal(class)); break; }
+                }
+                if found.is_none() {
+                    let mut result = [Val::null_any_ref()];
+                    self.runtime.get_func(&mut roots, "object-array-test").unwrap()
+                        .call(&mut roots, &[input], &mut result)?;
+                    if sentinel_tag(&mut roots.as_context_mut(), &result[0])? == Some(runtime_abi::TRUE as u32) {
+                        found = Some(NativeKind::ObjectArray);
                     }
                 }
+                found
             };
             return match live {
                 Some(kind) => self.retain_native_value(&state, value, kind),
@@ -775,12 +767,16 @@ impl SessionHost<'_> {
         for value in &values {
             arguments.push(self.export_value(value)?);
         }
+        let namespace = self.export_function_namespace()?;
         let result = endpoint.with_source(self, |source, function| {
             let mut values = Vec::with_capacity(arguments.len());
             for argument in arguments {
                 values.push(source.import_value(argument)?);
             }
-            let result = source.invoke_callable(function, &values.iter().collect::<Vec<_>>())?;
+            let checkpoint = source.enter_function_namespace(namespace)?;
+            let result = source.invoke_callable(function, &values.iter().collect::<Vec<_>>());
+            let restoration = source.leave_compilation_namespace(&checkpoint);
+            let result = match result { Err(error) => return Err(error), Ok(value) => { restoration?; value } };
             source.export_value(&result)
         })?;
         self.import_value(result)

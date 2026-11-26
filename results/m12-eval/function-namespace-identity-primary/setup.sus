@@ -1,0 +1,2 @@
+(defmacro source-ns-same [expected] (identical? *ns* expected))
+(defmacro source-ns-value [] *ns*)

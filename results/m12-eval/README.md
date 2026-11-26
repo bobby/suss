@@ -1,3 +1,39 @@
+### Canonical source Var publication and reload evidence
+
+The [source-import checkpoint](source-import-checkpoint/summary.json) retains
+33 exact source/runner/tool/log histories on base `eaea90d0`.
+Its final frozen overlay completes all eleven commands with actual exit0:
+public eval101, ownership137, source frontends58, ABI/structural
+71, and named-property,
+calling/hash/sealing/display/namespace
+32 test executions.
+Python tests, source/primary/core/sequence provenance and Java/Node-free
+bootstrap reproduction also return0. These are local overlay results, not
+final-head CI or the complete workspace/native-conformance gate.
+
+Source macros publish their actual isolated transformer in the caller's
+canonical Var, including explicit reload and public namespace loaders. A
+completed dependency advances active declaration journals, so rejecting or
+restaging later caller source cannot restore its old root over that dependency.
+Retained old functions remain callable. Native namespace identity and lazy
+realization/cache/GC boundaries retain their actual owners. Original class
+and method roots use private GC handles; each new reader bridge captures its
+current hash/equality callbacks without compiling lookup fragments.
+
+Run `python3 results/m12-eval/source-import-checkpoint/verify.py --current`
+from the repository root to reconstruct every recorded input and check current
+nonresult source against the final overlay plus the explicit documentation
+publication. Omitting `--current` verifies historical receipts after later
+implementation. The archive preserves all observed failures, including stale
+reloads, rollback over completed dependencies, lost reader hash effects,
+missed helper signatures, the wrongly selected nonexistent hash target and
+stale source-provenance hashes. Original primary/count/skip/opaque rules and
+ordinary operation budgets are unchanged. Full native capture, the exact
+workspace baseline, remaining issue acceptance, independent promotion review,
+parent integration into #518 and final published-head CI remain separate gates.
+
+Earlier validation follows.
+
 ### Literal roots, false metadata and GC validation
 
 The frozen literal/metadata follow-up returns0 for complete public eval62

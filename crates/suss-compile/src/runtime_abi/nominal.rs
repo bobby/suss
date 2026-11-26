@@ -332,7 +332,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         body.extend([ArrayLen, I32Eqz, If(BlockType::Empty), LocalGet(0),
             Call(b.names["native-value-kind"]), I32Const(native_values::VAR), I32Sub,
             I32Const(1), I32LeU,
-            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR_UNBOUND), I32Eq,
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR_UNBOUND), I32Sub, I32Const(2), I32LeU,
             I32Or, If(BlockType::Empty)]);
         body.extend(native_values::operation(b, 0,
             if writing { native_values::FIELD_SET } else { native_values::FIELD_GET },

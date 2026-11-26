@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/catalog-without-macro-reference-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6178594930097461,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "setup.sus": "8b641b393659f64e357681662ccf481c1e0f27d6a434b19e0f536b27f04dc8cd",
+    "expression.sus": "a10db7263bf377828ae6ac990c3856b36678e239016e9c57f560bfa182397f34",
+    "expression.clj": "6ea3a1ba0933992272805bd2c5970469fa571616e0ee1d6d1aaee3c9ce092686",
+    "primary.stdout": "034bc652fa4c22045cf3daba41ddea1ae5922721c3d0ff7548f2a999e5bd9903",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Use actual core Namespace from ordinary identity Var metadata; do not reference any macro Var before enumerating catalog. Avoid platform core namespace spelling."
+}

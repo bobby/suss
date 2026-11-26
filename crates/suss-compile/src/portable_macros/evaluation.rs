@@ -119,7 +119,7 @@ impl MacroHost<'_> {
         let outcome = (|| {
         let name = self.session.current_namespace().to_owned();
         let name = self.bridge.quote(&mut self.session, Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol::new(name)) })?;
-        let namespace = self.session.invoke(&self.namespace_interner, &[&name])?;
+        let namespace = self.session.invoke_compiler_root(&self.namespace_interner, &[&name])?;
         let checkpoint = self.session.enter_compilation_namespace(&namespace)?;
         let snapshot = self.session.compilation_snapshot();
         let prepared = prepare(&snapshot, self);

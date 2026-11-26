@@ -36,6 +36,9 @@ pub(super) struct Evaluation {
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     unbound_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    projected_macros: Mutex<std::collections::BTreeSet<CellIdentity>>,
+    catalog_keys: Mutex<BTreeMap<CellIdentity, OwnedRooted<AnyRef>>>,
+    sequence_classes: Mutex<BTreeMap<&'static str, OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
     syntax_tests: Mutex<Vec<OwnedRooted<AnyRef>>>,
@@ -249,6 +252,9 @@ impl Evaluation {
         self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
         let unbound_class = registry_lock(&self.unbound_class).take();
+        let sequence_classes = std::mem::take(&mut *registry_lock(&self.sequence_classes));
+        registry_lock(&self.projected_macros).clear();
+        let catalog_keys = std::mem::take(&mut *registry_lock(&self.catalog_keys));
         let metadata_lookup = registry_lock(&self.metadata_lookup).take();
         let syntax_tests = std::mem::take(&mut *registry_lock(&self.syntax_tests));
         drop((
@@ -261,6 +267,8 @@ impl Evaluation {
             namespace,
             var_class,
             unbound_class,
+            sequence_classes,
+            catalog_keys,
             input_base,
             metadata_lookup,
             syntax_tests,
@@ -422,6 +430,19 @@ impl SessionHost<'_> {
     pub(crate) fn leave_compilation_namespace(&mut self, checkpoint: &DynamicCheckpoint) -> Result<(), SessionError> {
         let mut scope = RootScope::new(&mut self.store);
         restore_dynamic(&mut scope, self.runtime, checkpoint)
+    }
+    pub(crate) fn captured_form_bridge(&self) -> Option<Arc<FormBridge>> {
+        let state = self.evaluation.as_ref()?;
+        registry_lock(&state.bridge).clone()
+    }
+    pub(crate) fn ensure_source_macro_authority(&mut self) -> Result<(), SessionError> {
+        let state = self.evaluation.clone().ok_or_else(|| wasmtime::Error::msg("Missing source compiler authority"))?;
+        if registry_lock(&state.local).is_some() { return Ok(()); }
+        let service = registry_lock(&state.external).clone().ok_or_else(|| wasmtime::Error::msg("Missing source macro service"))?;
+        let bridge = state.bridge(self)?;
+        let authority = MacroAuthority::native(self, bridge, service)?;
+        *registry_lock(&state.local) = Some(authority);
+        Ok(())
     }
     pub(crate) fn local_macro_authority(&self) -> Option<MacroAuthority> {
         let state = self.evaluation.as_ref()?;
@@ -624,7 +645,10 @@ impl SessionHost<'_> {
             return Ok(());
         }
         let state = Arc::new(Evaluation::default());
-        for name in ["intern-namespace", "enter-macro-namespace!", "ex-message"] {
+        // Capture the initialized core's real objects/functions directly. No
+        // source lookup fragments, recreated singletons or wrapper body.
+        *registry_lock(&state.bridge) = Some(Arc::new(FormBridge::capture_native(self)?));
+        for name in ["intern-namespace", "enter-macro-namespace!", "ex-message", "meta", "dissoc", "assoc", "make-binding-var"] {
             let cell = self.core_cell(name)?;
             let mut roots = RootScope::new(&mut self.store);
             let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
@@ -668,6 +692,18 @@ impl SessionHost<'_> {
             call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
         };
         registry_lock(&state.compiler_helpers).insert("Namespace", namespace_constructor.object()?.clone());
+        for name in ["Cons", "LazySeq"] {
+            let constructor = {
+                let cell = self.core_cell(name)?;
+                let mut roots = RootScope::new(&mut self.store);
+                let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+                let cell = cell.get(&mut roots);
+                call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+            };
+            let descriptor = self.data_descriptor(&constructor, true)?;
+            registry_lock(&state.sequence_classes).insert(name, descriptor.object()?.clone());
+            registry_lock(&state.compiler_helpers).insert(name, constructor.object()?.clone());
+        }
         let cell = self.core_cell("MetaFn")?;
         let value = {
             let mut roots = RootScope::new(&mut self.store);

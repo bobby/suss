@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/source-link-redefinition-ordered-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8511351649649441,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "first.sus": "1f527c4e4af95d11c1b11307bc91996b66533cf61cb89e532e220fc4711746a7",
+    "second.sus": "2f83c20c0632432a9a0acebd1fee6579fcc57838a7770360dddeac0ba380bd4b",
+    "native-change.sus": "faec87f00c10b588caab133bce87c56bd6b65f6e68d49a8bf6773a206d0accda",
+    "rejected.sus": "716fbd47cfcfa3f0bcfd6b4d9227ac0ef8fd22fdf51298ac80db16ec9132cf0a",
+    "expression.clj": "abd3f5a0f99aaddee9958736eb62a922a0700f7fae8e3d451bbbd1dacc9f4576",
+    "primary.stdout": "7902cda6facfbfadcf820757cec617558e289b5e4ffb56605f707c6e4f84301e",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Positive source redefinition and Var identity/metadata after an intervening actual root write. rejected.sus is a separate native compiled-source journal regression, not a claim about JVM load-string rollback."
+}

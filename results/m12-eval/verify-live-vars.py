@@ -138,6 +138,15 @@ assert (p/'expression.clj').read_text()=='(prn '+source.strip()+')\n'
 assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 paths += ['crates/suss-compile/src/runtime_abi/nominal.rs']
+paths += [
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs',
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/function_namespace.rs',
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/namespace_catalog.rs',
+ 'crates/suss-compile/src/portable_macro_data/borrowed_reader.rs',
+ 'crates/suss-compile/src/portable_macros/definitions.rs',
+ 'crates/suss-compile/src/portable_macros/facade.rs',
+ 'crates/suss-compile/src/portable/source.rs',
+]
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

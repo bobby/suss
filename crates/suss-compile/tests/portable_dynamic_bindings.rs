@@ -80,10 +80,10 @@ fn a_global_read_reads_a_static_root_inline_and_asks_binding_read_otherwise() {
     }
     let field = |field_index| format!("{:?}", Operator::StructGet { struct_type_index: 5, field_index });
     let at = operators.iter().position(|op| *op == field(1)).expect("flag read");
-    // Macro metadata (bit16) does not turn a bound static root into an
-    // unbound or dynamic one. Mask that bit, then retain the bound-only check.
+    // Macro metadata (bit16) and declaration status (bit32) do not
+    // turn a bound static root into an unbound or dynamic one. Mask both.
     assert_eq!(operators[at + 1..at + 5],
-        ["I32Const { value: -17 }", "I32And", "I32Const { value: 1 }", "I32Eq"]);
+        ["I32Const { value: -49 }", "I32And", "I32Const { value: 1 }", "I32Eq"]);
     assert!(operators[at + 5].starts_with("If"));
     // The cell's global is already a binding reference, so it isn't cast.
     assert_eq!(operators[at + 6..at + 8], ["GlobalGet { global_index: 0 }".to_string(), field(0)]);

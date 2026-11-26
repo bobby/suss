@@ -1,3 +1,27 @@
+### Source macro import and journal checkpoint
+
+Use `python3 results/m12-eval/source-import-checkpoint/verify.py --current`
+to verify the final overlay, 33 historical source/runner/tool/log
+receipts and explicit documentation publication. All eleven final commands
+return0 with source/HEAD/Binaryen conserved: public eval101, ownership137,
+source58, ABI/structural71,
+named/calling/hash/sealing/display/namespace32,
+Python tests, source/primary/core/sequence provenance and Java/Node-free
+bootstrap. The runners retain exact commands and their own actual terminals.
+These local results do not replace the complete native capture, exact
+`cargo test --workspace --locked -- --test-threads=2`, issue acceptance,
+independent promotion review, numeric parent integration or final-head CI.
+
+Canonical source Var roots/metadata now publish after completed source linking
+or an imported dependency definition. Completed imports advance every active
+journal baseline, including when later source stages that same name again.
+The fresh-caller and retained-function controls preserve the actual new root,
+metadata, identity and completed prefix effects. Reader callback counts/order
+and lazy-sequence realization, default budgets, cancellation and GC boundaries
+keep their original assertions. All negative receipts remain explicit.
+
+Earlier validation follows.
+
 ### Native namespace and Unbound receipts
 
 The source-frozen ordinary-unbound-working overlay on 214d999f completes all ten

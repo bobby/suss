@@ -6,8 +6,9 @@ use super::*;
 /// The callback's surrounding evaluation scope owns dynamic-frame restoration.
 pub(crate) struct BorrowedFormReader {
     core: Arc<BridgeCore>,
-    args_new: wasmtime::Func,
-    invoke: wasmtime::Func,
+    invoke_method: wasmtime::Func,
+    native_kind: wasmtime::Func,
+    field_get: wasmtime::Func,
     undefined: Option<wasmtime::OwnedRooted<AnyRef>>,
     interrupt: Arc<std::sync::atomic::AtomicBool>,
 }
@@ -18,19 +19,21 @@ impl FormBridge {
     ) -> Result<BorrowedFormReader, SessionError> {
         self.check(session)?;
         let interrupt = session.host_work_interrupt();
-        let lazy = &self.core.factories["lazy-sval"];
+        let (native_kind, field_get, invoke_method) = session.data_live_sequence_calls();
+        let lazy = self.core.factories["lazy-sval"].value(session)?;
         session.data_inspect_calls(
-            lazy,
-            lazy,
-            |mut store, _, args_new, invoke, _, _, undefined| {
+            &lazy,
+            &lazy,
+            |mut store, _, _args_new, _invoke, _closure_new, _, undefined| {
                 let undefined = undefined
                     .unwrap_anyref()
                     .map(|value| value.to_owned_rooted(&mut store))
                     .transpose()?;
                 Ok(BorrowedFormReader {
                     core: self.core.clone(),
-                    args_new,
-                    invoke,
+                    invoke_method,
+                    native_kind,
+                    field_get,
                     undefined,
                     interrupt,
                 })
@@ -66,9 +69,10 @@ impl BorrowedFormReader {
             host_fuel: std::cell::Cell::new(0),
             lazy_calls: std::cell::Cell::new(0),
             calls: Some(ReadCalls {
-                args_new: self.args_new,
-                invoke: self.invoke,
+                invoke_method: self.invoke_method,
                 function,
+                native_kind: self.native_kind,
+                field_get: self.field_get,
             }),
             undefined: Some(undefined),
         };

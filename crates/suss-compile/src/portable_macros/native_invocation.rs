@@ -196,13 +196,13 @@ impl MacroHost<'_> {
                     kind: Kind::Symbol(suss_reader::Symbol::new(namespace)),
                 },
             )?;
-            let object = self.session.invoke(&self.namespace_interner, &[&name])?;
+            let object = self.session.invoke_compiler_root(&self.namespace_interner, &[&name])?;
             catalog(&self.catalog)
                 .namespace_objects
                 .insert(namespace.to_owned(), object.clone());
             object
         };
-        self.session.invoke(&self.namespace_setter, &[&object])?;
+        self.session.invoke_compiler_root(&self.namespace_setter, &[&object])?;
         catalog(&self.catalog).macro_namespace = Some(namespace.to_owned());
         Ok(())
     }

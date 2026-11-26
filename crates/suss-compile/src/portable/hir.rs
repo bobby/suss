@@ -4318,8 +4318,22 @@ impl Analyzer<'_> {
         if bare && symbol.name == "var" {
             if args.len() != 1 { return Err(fail(form.span.clone(), "var requires exactly one symbol")); }
             let Kind::Symbol(target) = &args[0].kind else { return Err(fail(args[0].span.clone(), "var requires a symbol")); };
-            let binding = self.environment.resolve(self.phase, target, args[0].span.clone())?;
-            let global = binding.global().clone();
+            let mut resolved = self.environment.resolve(self.phase, target, args[0].span.clone()).map(|binding| binding.global().clone());
+            if resolved.is_err() {
+                if let Some(owner) = self.environment.native_compilation_owner {
+                    self.expander.charge_expansion_work((target.namespace.as_ref().map_or(0, String::len) + target.name.len() + self.environment.current_namespace(self.phase).len()) as u64 * 4 + 1, form.span.clone())?;
+                    for global in self.environment.macro_var_candidates(self.phase, target) {
+                        self.expander.charge_expansion_work((global.namespace().len() + global.name().len()) as u64 + 1, form.span.clone())?;
+                        if let Some(actual_owner) = self.expander.intern_source_macro_var(owner, &global, form.span.clone())? {
+                            self.environment.declare_cell(self.phase, global.namespace(), global.name())?;
+                            self.environment.record_native_macro_definition(self.phase, global.namespace(), global.name(), actual_owner);
+                            resolved = self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced(global.namespace(), global.name()), args[0].span.clone()).map(|binding| binding.global().clone());
+                            break;
+                        }
+                    }
+                }
+            }
+            let global = resolved?;
             return self.binding_var(form, &global, false);
         }
         if bare && symbol.name == "def" {

@@ -4,7 +4,7 @@ use super::*;
 pub(super) struct PendingMacroDefinition {
     pub prepared: crate::portable::modules::PreparedInput,
     pub template: Form,
-    binding: crate::portable::resolve::Global,
+    pub(super) binding: crate::portable::resolve::Global,
     name: String,
     namespace: String,
     reads_environment: bool,

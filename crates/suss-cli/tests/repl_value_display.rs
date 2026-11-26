@@ -117,7 +117,7 @@ fn unbound_names_and_errors_are_language_errors() {
         "(throw 31)\n",
         "(+ 1 2)\n",
     ));
-    assert_eq!(out, "#<undefined>\n#'user/d\n[nil]\n3\n");
+    assert_eq!(out, "#<undefined>\n#'user/d\n[#object[suss.core.VarUnbound 0x1 \"Unbound: #'user/d\"]]\n3\n");
     assert_eq!(
         err,
         concat!(

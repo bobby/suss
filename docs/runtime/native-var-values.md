@@ -37,5 +37,25 @@ canonical data factories. UTF-16 hashing uses an i32 Murmur fast path guarded by
 the captured seed and mixing-helper identities; replaced helpers execute the
 original source algorithm. Ordinary operation allowances remain unchanged.
 Pure components receive no hidden namespace/compiler service and report an
-explicit missing-capability error. Source-only macro exports still require
-caller-side Var-root publication before they appear in the caller's catalog.
+explicit missing-capability error.
+
+Source-only macro exports are materialized in the caller's canonical catalog
+without a prior Var reference. Staged declarations admit their actual Var but
+publish the isolated transformer only after source linking succeeds. Namespace
+imports execute in the isolated Macro host; each completed macro definition
+publishes its real root and metadata, and explicit reload preserves the caller's
+Var identity and any previously captured function. Completed dependencies
+advance every active source-declaration journal, so rejecting later caller
+source cannot restore an old root or metadata over that import. Unlinked
+compiler metadata writes are restored only while they remain current; later
+metadata effects remain intact. Public namespace load/reload uses the same
+source preparation and linking boundaries as compiled source input.
+
+Live Cons/LazySeq values retain the actual source fields and realization cache.
+Ordinary data reads force them through the captured Object method dispatcher,
+including its receiver and exception restoration. Function namespace context
+retains the actual Namespace object rather than a name-based replacement.
+Canonical class/EMPTY/method roots use private GC handles. New reader bridges
+capture current hash/equality callbacks to preserve reader occurrence effects;
+no helper lookup fragments are installed. See the source-import checkpoint
+for exact positive and negative receipts and the remaining validation gates.

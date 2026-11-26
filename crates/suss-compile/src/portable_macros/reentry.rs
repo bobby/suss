@@ -5,9 +5,9 @@ use super::*;
 pub(crate) struct MacroAuthority {
     bridge: Arc<FormBridge>,
     catalog: Arc<Mutex<MacroCatalog>>,
-    namespace_interner: SessionValue,
-    namespace_setter: SessionValue,
-    exception_message: SessionValue,
+    namespace_interner: CompilerRoot,
+    namespace_setter: CompilerRoot,
+    exception_message: CompilerRoot,
     fallback: Option<MacroService>,
 }
 pub(crate) struct MacroReentryProfile {
@@ -40,9 +40,9 @@ impl MacroAuthority {
         Ok(Self {
             bridge,
             catalog: Arc::new(Mutex::new(MacroCatalog::default())),
-            namespace_interner: session.original_core_function("intern-namespace")?,
-            namespace_setter: session.original_core_function("enter-macro-namespace!")?,
-            exception_message: session.original_core_function("ex-message")?,
+            namespace_interner: CompilerRoot::capture(&session.original_core_function("intern-namespace")?)?,
+            namespace_setter: CompilerRoot::capture(&session.original_core_function("enter-macro-namespace!")?)?,
+            exception_message: CompilerRoot::capture(&session.original_core_function("ex-message")?)?,
             fallback: Some(fallback),
         })
     }

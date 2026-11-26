@@ -2691,26 +2691,12 @@ fn emit_function(
                             field_index: 0,
                         })
                         .instruction(&Else);
-                    for instruction in &flags {
-                        function.instruction(instruction);
-                    }
+                    // The shared slow path selects dynamic frames and the
+                    // canonical Unbound/undefined value. Keep that uncommon
+                    // branch out of every fragment's static-root fast path.
                     function
-                        .instruction(&I32Const(runtime_abi::CELL_DYNAMIC))
-                        .instruction(&I32And)
-                        .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-read")))
-                        .instruction(&Else)
-                        .instruction(&GlobalGet(index_global))
-                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 2 })
-                        .instruction(&RefIsNull)
-                        .instruction(&If(BlockType::Result(VALUE)))
-                        .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
-                        .instruction(&Else)
-                        .instruction(&GlobalGet(index_global))
-                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 2 })
-                        .instruction(&End)
-                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }

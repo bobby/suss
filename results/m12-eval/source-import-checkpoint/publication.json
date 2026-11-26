@@ -1,0 +1,10 @@
+{
+  "phase": "source-import-complete-checkpoint",
+  "documentation_sha256": {
+    "docs/roadmap/handoff.md": "02e0fae5fb844179a88b328d0472e473eccf6a9c39caf3ce96a60953007f00fe",
+    "docs/compatibility/README.md": "71ee2dd35b0964d0be393dd01e2decceba5d54bf6f8ab0244179b38636a71b15",
+    "docs/runtime/native-var-values.md": "f547d10ad3b3b689ca24b93575cc0cb56c0ba35a667fc4cfb9a69bb786df8a38",
+    "results/m12-eval/README.md": "51a4d9c680fa2af38a62628cdd87a9e7089f6e28b1a93c4334f4225fbf889257"
+  },
+  "qualification": "Documentation-only publication follows the recorded frozen overlay. Historical source, runners, tools, failures and raw totals remain exact. No complete issue, promotion or merge claim."
+}
