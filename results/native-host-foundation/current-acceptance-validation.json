@@ -1,0 +1,112 @@
+{
+  "qualification": "Scoped positive core checks only. Exact workspace baseline, independent review and final-head CI remain separate gates. Existing unsupported namespaces, failures, guest judgments and unexecuted assertions remain explicit.",
+  "commands": [
+    {
+      "phase": "independent-core-acceptance-corrected-adapter",
+      "name": "independent-core-acceptance",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "native_host_boundary",
+        "through_core_capability",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_test_executions": 18,
+      "seconds": 31.644660045858473
+    },
+    {
+      "phase": "reviewed-baseline-owner-bootstrap",
+      "name": "all-original-suite-guards",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_test_executions": 19,
+      "seconds": 593.3663408430293
+    },
+    {
+      "phase": "reviewed-baseline-owner-bootstrap",
+      "name": "core-owner-reentry-and-transport-library",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--lib",
+        "portable_",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_test_executions": 139,
+      "seconds": 53.923136975150555
+    },
+    {
+      "phase": "reviewed-baseline-owner-bootstrap",
+      "name": "java-node-free-bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "exit_code": 0,
+      "rust_test_executions": 4,
+      "seconds": 80.27963713230565
+    },
+    {
+      "phase": "core-authority-phase-and-resource",
+      "name": "core-authority-phase-resource-and-exception-controls",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "native_host_boundary",
+        "core_authority_gate",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_test_executions": 8,
+      "seconds": 13.936411396600306
+    }
+  ],
+  "source_inputs_conserved_per_batch": true,
+  "native_capture": {
+    "sha256": "a7de1e69fdec4111ff8502b48e6c3e5d72ccfc2019249a4883b7995a2262bb21",
+    "raw_rows": 5530,
+    "all_before_decisions_preserved": true,
+    "counts": {
+      "pass": 5325,
+      "guest-judged": 101,
+      "fail": 105,
+      "not-executed": 1408,
+      "skipped": 0,
+      "namespaces-failed": 64
+    }
+  },
+  "ledger_namespace_only_changes": 5,
+  "independent_core_counterparts": 26,
+  "original_public_consumer_tests_unchanged": true,
+  "negative_receipts": [
+    "baseline-before-review/commands.json",
+    "independent-core-acceptance/commands.json"
+  ],
+  "deliberate_workspace_stop": "exact-workspace/commands.json"
+}

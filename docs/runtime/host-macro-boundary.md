@@ -143,3 +143,26 @@ execute every original row, including all40 identifier cases in both phases,
 with unchanged expectations. Only the public eval call head routes directly to
 the installed core capability; raw primary fixtures stay unchanged. The two
 original wrapper controls remain on #516 alongside their original source.
+
+## Independent core acceptance coverage
+
+Selected source programs route direct compilation calls through the installed
+capability; the raw primary fixtures, counts, expected observations and original
+public-wrapper controls are retained. These tests do not install a public eval
+binding. The `_through_core_capability` and `_core_authority_gate` counterparts
+cover the following contracts independently of that consumer.
+
+| Contract | Controls |
+| --- | --- |
+| Actual functions, Vars, Namespaces and immutable sharing | Isolated source value twenty-case corpus, nested immutable aliases, nested function metadata and retained metadata identity |
+| Real source state and recovery | Typed callback cancellation, lazy realization/cache, genuine Unbound values and alter-var-root failure effects |
+| Definition/publication transitions | Analysis interning, generated declaration metadata, staged redefinition, completed imports superseding rejection, identical root writes and later metadata effects |
+| Import and reload | Actual source macro roots/namespaces, old retained functions, once-loading, completed prefixes and reload recovery |
+| Authority and phase isolation | Source named core cannot acquire native flag authority; compiler helpers retain their original roots; source declarations retain the isolated Store; module context changes without changing namespace roots |
+| Context, fuel and errors | Source fuel/cancellation after native entry, separate source/runtime allowances and exact exception data/causes/plain/nil messages |
+
+Native library controls additionally cover collisions, forged descriptors/tokens,
+wrong owners, source retirement, temporary root lifetimes, non-immediate ancestor
+reentry, panic cleanup and cumulative context costs. The raw suite comparison
+retains all unrelated failures and guest judgments. Public eval's own arity,
+argument behavior and complete eval body remain on #516.

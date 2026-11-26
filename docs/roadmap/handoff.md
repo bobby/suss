@@ -1,3 +1,11 @@
+### Core suite baseline and independent boundary acceptance controls
+
+The complete original clojure_test_suite target passes19 guards, including case200M/map300M. The ownership/reentry/transport library filter passes139 tests. Java/Node-free bootstrap reproduction returns0 and its artifact-execution target passes4 tests. Twenty-six independent core counterparts cover live values, publication, authority, phase/context, cancellation/fuel and exact exception payloads; all pass. Production inputs are unchanged across the positive batches.
+
+The raw native101 before ledger correction contains5,530 ordered observations. Review preserves every non-eval decision from the previous full consumer capture, requires all61 Symbol and34 Var assertions (including eight existing guest judgments), and permits only two removed namespace failures plus three advanced diagnostics. The native0 rerun preserves every before decision with counts pass5325, guest101, fail105, blocked namespaces64, unexecuted1408 and skipped0. Public eval is intentionally absent from this foundation; its34 assertions remain the consumer's responsibility.
+
+Use results/native-host-foundation/baseline-before-review/review-baseline.py for the recorded audit; current-acceptance-validation.json links exact positive commands and source qualifications. The original native101, initial adapter failure and the deliberately stopped43-minute workspace run remain archived. The adapter correction routes JSON-provided program text through the capability; expected observations remain unchanged. Exact workspace success, independent review and final-head CI are separate required gates.
+
 ### Independent Var and Symbol conformance controls
 
 Two integration controls used public eval indirectly, including through the retained Var primary fixture. Their core counterparts now call the installed capability directly, preserving every assertion and all40 identifier rows in both phases. The original wrapper controls remain unchanged on #516. The complete portable_symbol_conversion target passes6 tests with frozen inputs; production inputs are unchanged from the earlier positive core batches. The combined focused record is34 Rust test executions, distinct from #516's separate34 eval assertions. Full baseline, bootstrap, review and final-head CI remain separate gates.

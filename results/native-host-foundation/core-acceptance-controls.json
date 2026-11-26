@@ -1,0 +1,210 @@
+[
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_callback_preserves_typed_cancellation_and_recovers",
+    "original_body_sha256": "76e7f5aec1160371eb752260359ba576f7e7a52fa529d5cbfbcb22e0759842e3",
+    "core_name": "isolated_source_callback_preserves_typed_cancellation_and_recovers_through_core_capability",
+    "core_body_sha256": "4dd671e8eb9a6839ee64714341479a01f069e8fc316c06ac57e3d7d1b99f0f4d",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_macros_preserve_nested_immutable_metadata_aliases",
+    "original_body_sha256": "6fd251d77391cfd60b6c0793417e257623fbbfd2a2f399579a4ceecda8c62951",
+    "core_name": "isolated_source_macros_preserve_nested_immutable_metadata_aliases_through_core_capability",
+    "core_body_sha256": "7ab381425c7bc31784c65b781b7e9bd242377a9f3071ec5e75fdbc5c39f76a1f",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_macros_preserve_actual_function_var_and_namespace_values",
+    "original_body_sha256": "fd2df540f7c0c6b8a40e90e49ecdde053afa15a6102260583412321222dd4f3c",
+    "core_name": "isolated_source_macros_preserve_actual_function_var_and_namespace_values_through_core_capability",
+    "core_body_sha256": "6df12c48e474e53458da6f5cb81ade400b276cc8694f274fb52a648b06b7e45e",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_function_metadata_retains_identity_between_macro_requests",
+    "original_body_sha256": "7b11b2a020616ef78c34a81c0754d9ea1e4596627ff824ebca93b157176ee474",
+    "core_name": "isolated_source_function_metadata_retains_identity_between_macro_requests_through_core_capability",
+    "core_body_sha256": "c0c600d19f23bb3838e0d1caeb55a5a7a042ca459a03dd89c39e1e72de27b0d8",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_nested_function_metadata_retains_actual_callbacks",
+    "original_body_sha256": "06b47f52acccb129a455a3f20cff3636fb02def194837900322f01644ce66a12",
+    "core_name": "isolated_source_nested_function_metadata_retains_actual_callbacks_through_core_capability",
+    "core_body_sha256": "cc3114b33fd2503dec29786c4a837117f422964202e19f78f0fb54950aa682dd",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior",
+    "original_body_sha256": "6106446a4ca4a65cc2a37da248e611202516499fe45ef8afd5f94a8f16d7e240",
+    "core_name": "native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior_through_core_capability",
+    "core_body_sha256": "f4f18fc04f42812d4bae21fb12e5ab2404e939c9f9a88dc750845cabf1abf329",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries",
+    "original_body_sha256": "63619403e9a7233e11a1c8d04c9c08940de3791f9946833103ae4e6d4a9fbdd2",
+    "core_name": "native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries_through_core_capability",
+    "core_body_sha256": "c9ab5fd608af3a7a0516bcd3fa5a0a4df6f5cd13cb787a77ee6c7fd80611601e",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_callbacks_preserve_real_unbound_values_and_root_writes",
+    "original_body_sha256": "f4e6082ce371ff78a55a4df121ed66440c4b1af839ca276993905e6168fb6831",
+    "core_name": "isolated_source_callbacks_preserve_real_unbound_values_and_root_writes_through_core_capability",
+    "core_body_sha256": "9d0a9f6faf92ee7835c82badf9a214c154bc0ed403d780aa4803327e9542735b",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "source_macro_var_roots_match_primary_identity_replacement_and_namespace_context",
+    "original_body_sha256": "f9dc921c700bfd947d68aa8e181e5a00a7cacd44a24f6ba065966f52124f99fb",
+    "core_name": "source_macro_var_roots_match_primary_identity_replacement_and_namespace_context_through_core_capability",
+    "core_body_sha256": "d578c394a97d323dbf50640c04b896acbcdc68c83be38e521e8acb2ad49b099a",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_lazy_sequences_preserve_realization_effects_and_cache_after_gc",
+    "original_body_sha256": "aabaeb73feffd1c1f423da67e9c8ff8ee08102fc10dd4e7803227cf419b9021d",
+    "core_name": "isolated_source_lazy_sequences_preserve_realization_effects_and_cache_after_gc_through_core_capability",
+    "core_body_sha256": "34997873deba421d8d2a69acb01d1447d8b0039e22cd55567cd3022fcd6f6319",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "staged_source_redefinitions_preserve_var_identity_and_reject_unlinked_roots",
+    "original_body_sha256": "4be9a49925a7375e969c74778e3b828b6f796ff2c44c0457e74975a12f642b4d",
+    "core_name": "staged_source_redefinitions_preserve_var_identity_and_reject_unlinked_roots_through_core_capability",
+    "core_body_sha256": "008a23c50ee63a9da5a698ac63183ec16baadae4df190eebcc4dc9956f49f4bd",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "source_declaration_rollback_preserves_later_metadata_effects",
+    "original_body_sha256": "9a913531e7d9043f8e092ec0e6f9054ed2472f8d50fbc616cf23d12dac887ab7",
+    "core_name": "source_declaration_rollback_preserves_later_metadata_effects_through_core_capability",
+    "core_body_sha256": "1b97c04635a7d71886ffc3618c2342ab59ba01fd11db6cc0247ec5bf2b9481e0",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function",
+    "original_body_sha256": "c22298c2ba7f5aa5ebb056441aadeeb758405d1d0adf226c76f7673342b32203",
+    "core_name": "source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function_through_core_capability",
+    "core_body_sha256": "464decd2658b9cb6c0f41fedfb8882734541da0e39a358e0f0a3d825344b55a2",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "source_macro_imports_preserve_once_loading_completed_prefixes_and_reload_recovery",
+    "original_body_sha256": "c90233851a2cab8e67006a3167261d3dfa80d4bf8a1fec63b2eeecb39468d8ac",
+    "core_name": "source_macro_imports_preserve_once_loading_completed_prefixes_and_reload_recovery_through_core_capability",
+    "core_body_sha256": "8a750f83d2ded02c76dddafac9becb81306437a7ec60a96f1289c6be462c5177",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "completed_macro_imports_supersede_rejected_staged_declarations_in_fresh_callers",
+    "original_body_sha256": "56189fcbce1a1f75450e24e22bc3d8d3b1871ff7d28ca0c37b92dc2af4ca72c4",
+    "core_name": "completed_macro_imports_supersede_rejected_staged_declarations_in_fresh_callers_through_core_capability",
+    "core_body_sha256": "601134955930d56e528e068e2a004bce0bd7877bcc2d2ab362f616bbcaebc89b",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "root_audit_staged_source_preserves_actual_macro_root_effect_before_later_failure",
+    "original_body_sha256": "7940d035cd6d4302027d85fd2916578931012b992b742081a82b98027662b62f",
+    "core_name": "root_audit_staged_source_preserves_actual_macro_root_effect_before_later_failure_through_core_capability",
+    "core_body_sha256": "ccfdcbab4c74a16bcdeb53183e494d8c800206f00864a7c426bbae24e2c86a60",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_eval_namespace_catalog_preserves_analysis_interning_boundaries",
+    "original_body_sha256": "0a3409cd0a2528f3bd3b78d53feef3ef9f241f360e1ad46d65ff9d2ee46116a9",
+    "core_name": "native_eval_namespace_catalog_preserves_analysis_interning_boundaries_through_core_capability",
+    "core_body_sha256": "61aa0d6f23121d5fc01cba509162e8413956305fed957a2df94788a161fc382e",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_eval_def_metadata_obeys_primary_root_and_publication_boundaries",
+    "original_body_sha256": "b7e657fee710c764c904c25f7967cdfd7379c3ee77e4063287c6d7ab342197b9",
+    "core_name": "native_eval_def_metadata_obeys_primary_root_and_publication_boundaries_through_core_capability",
+    "core_body_sha256": "0c678bb17162307b80e16046e1fc3bc74f34b5590989623c78a85efee12586e5",
+    "adapter": "Only direct (eval ...) call heads in selected source programs route to suss.bootstrap/evaluate-form; original primary inputs and expected results remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+    "original_body_sha256": "4207e11ba6b0c5b7bac340d04ab511fdcaf64952745edb2a41066010e0fd570b",
+    "core_name": "root_macro_flags_stay_private_when_ordinary_source_enters_core_core_authority_gate",
+    "core_body_sha256": "ecc825a95edc4b8e006980b860aa9c691af68ac2bd956a1bf0b6b71680c070ba",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_source_macro_declarations_keep_the_isolated_source_host",
+    "original_body_sha256": "f33a913633b26e06d12e820955e7d3f095fe3b95c98f18a6672525988cfb9644",
+    "core_name": "native_source_macro_declarations_keep_the_isolated_source_host_core_authority_gate",
+    "core_body_sha256": "86eb6b5639c10603fcf6c0bce58cf7fa14027227b58268a2caca637fab22a14c",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_source_macro_authority_retains_original_compiler_helpers",
+    "original_body_sha256": "ae535a89d271867c13d0ae77272ff91fb82671bdb7e956db647e706cf3c1fa3c",
+    "core_name": "native_source_macro_authority_retains_original_compiler_helpers_core_authority_gate",
+    "core_body_sha256": "64be5f26e11ea4240fcbe231453451969e7598a718f8bc0f743286c39238177a",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_source_macro_context_tracks_each_module_without_changing_roots",
+    "original_body_sha256": "afa6c911f8c749aa7cd22c1022aed380aac58b6581632021b2d6967793babdfe",
+    "core_name": "native_source_macro_context_tracks_each_module_without_changing_roots_core_authority_gate",
+    "core_body_sha256": "0ef7558ff936ca81f04c2593c0922dffc048241fe2c20e337b9cdbb22c9dca84",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_macro_fuel_remains_bounded_after_native_eval",
+    "original_body_sha256": "c508d9f644be2dbc7e952bb9fc317cd929ac3ed0950ce8d25396c7c5b78efe34",
+    "core_name": "isolated_source_macro_fuel_remains_bounded_after_native_eval_core_authority_gate",
+    "core_body_sha256": "f4cb8b6b9d3314ea1313e3057e8ab9f06e8fd1cc727ed0ba4ebfff25108aa738",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "isolated_source_macro_cancellation_returns_its_service_after_native_eval",
+    "original_body_sha256": "f3ac879cea8ab44250a90a4418486284d3d3c3c0d10ca0ef0af5e5af515e66a2",
+    "core_name": "isolated_source_macro_cancellation_returns_its_service_after_native_eval_core_authority_gate",
+    "core_body_sha256": "413ee8c15ac73c2196da95bff0c7baa7aca2cda460078bd7fcf6d5580c61e2dd",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel",
+    "original_body_sha256": "462667a55e3e704212513b8f63595d2e27177147dd4cf7e2d71ec32aec6736cf",
+    "core_name": "native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel_core_authority_gate",
+    "core_body_sha256": "ffd0709c5ba8592a73c4849c8f9efd937356bf23dcd867d89f752ee506d86517",
+    "adapter": "Only selected compilation call heads route to the installed core capability; expected values, resource limits and original consumer tests remain unchanged."
+  },
+  {
+    "origin": "crates/suss-cli/tests/clojure_eval.rs",
+    "original_name": "evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages",
+    "original_body_sha256": "2b7e95e5cf7a8cbb26070121b80ad17360b42fd34b3527b6cc64c9b496cfc83c",
+    "core_name": "evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages_core_authority_gate",
+    "core_body_sha256": "999e9badf979c619add8be038a6b6bf1c6cd03ce90076b18e56c2cafa5babde8",
+    "adapter": "Assemble the unchanged three pinned exception expressions/observations, then route their direct compilation calls to the installed capability."
+  }
+]
