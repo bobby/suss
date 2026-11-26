@@ -1,4 +1,8 @@
-Public eval is layered above #521. The original #515 acceptance criteria, full34 guard and original dependent tests remain on this consumer layer. Core validation receipts retain their #521 source scope; current public-eval validation is separate.
+Public eval consumes the independent core foundation (#521). Its original criteria and wrapper tests remain here; scoped core receipts do not validate this consumer tree.
+
+### Independent Var and Symbol conformance controls
+
+Two integration controls used public eval indirectly, including through the retained Var primary fixture. Their core counterparts now call the installed capability directly, preserving every assertion and all40 identifier rows in both phases. The original wrapper controls remain unchanged on #516. The complete portable_symbol_conversion target passes6 tests with frozen inputs; production inputs are unchanged from the earlier positive core batches. The combined focused record is34 Rust test executions, distinct from #516's separate34 eval assertions. Full baseline, bootstrap, review and final-head CI remain separate gates.
 
 ### Quoted Var metadata and independent core validation
 

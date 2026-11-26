@@ -82,7 +82,7 @@
     "crates/suss-reader/src/forms.rs": "977bb70c7be52a5d5483d6465b7ed51c91f02f7f158c3b906f6e8652a481d24a",
     "crates/suss-reader/src/edn/source.rs": "4c376049a0c142f71acf81a917b88d7266748a26df320357737ed5281a42944a",
     "crates/suss-compile/tests/runtime_evaluation.rs": "6c70f7143465864b867f4d3dd4b85c3ba84ed71f305cf64394405bb308fba647",
-    "crates/suss-compile/tests/portable_symbol_conversion.rs": "7a1360cc909f9498664c3b548f10d3a9bd4d016559a8d3ee9d808c06d7b9e4e6",
+    "crates/suss-compile/tests/portable_symbol_conversion.rs": "dbea04da0aeb6f1088f4e988975d437f3b3e4758991041e115a75e8472c92fb7",
     "results/m12-eval/macro-declaration-primary/cases.json": "d6aa8ef739c30e9af0cf34ed449a599295b52be4b055828a2fd7c3596969e5aa",
     "results/m12-eval/var-implementation-primary/cases.json": "9674822158414423c16758f3c309dc5962738a4a6bb066ebfdc3826ddb7e6fac",
     "crates/suss-compile/src/portable_macro_graph.rs": "b57a322477a404cc0349f6b7c42b37f80b072957d2277d036bccf7f99dfd517a",

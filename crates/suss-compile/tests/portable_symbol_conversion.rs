@@ -104,7 +104,7 @@ fn retained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases() 
 }
 
 #[test]
-fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities() {
+fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding() {
     for macro_phase in [false, true] {
         let mut session = if macro_phase {
             Session::new_macro().unwrap()
@@ -115,7 +115,7 @@ fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities
         check(
             &mut session,
             &mut decoder,
-            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
+            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (suss.bootstrap/evaluate-form '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (suss.bootstrap/evaluate-form '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
             "[42 nil true true false true true]",
         );
         check(
@@ -205,6 +205,136 @@ fn private_utf16_storage_handles_empty_search_surrogates_and_invalid_bounds() {
 }
 
 #[test]
+fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding() {
+    fn tagged(value: &Observation) -> serde_json::Value {
+        use serde_json::json;
+        match value {
+            Observation::Nil => json!({"tag": "nil"}),
+            Observation::Bool(value) => json!({"tag": "bool", "value": value}),
+            Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
+            Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
+            Observation::String(units) => json!({"tag": "string", "units": units}),
+            Observation::Vector(items) => {
+                json!({"tag": "vector", "items": items.iter().map(tagged).collect::<Vec<_>>()})
+            }
+            other => panic!("Unexpected primary corpus observation: {other:?}"),
+        }
+    }
+    // Pinned from ClojureScript: its integral binary64 results are Clojure longs.
+    fn clojure(expected: &serde_json::Value) -> serde_json::Value {
+        match expected["tag"].as_str() {
+            Some("f64") => {
+                let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+                let value = f64::from_bits(bits);
+                if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                    serde_json::json!({"tag":"long","value":(value as i64).to_string()})
+                } else {
+                    expected.clone()
+                }
+            }
+            Some("vector") => serde_json::json!({"tag":"vector","items":
+                expected["items"].as_array().unwrap().iter().map(clojure).collect::<Vec<_>>()}),
+            _ => expected.clone(),
+        }
+    }
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/symbol-conversion-cases.json"
+    ))
+    .unwrap();
+    assert_eq!(corpus["schema"], 1);
+    assert_eq!(
+        corpus["upstream"],
+        "c4295f303100bbf5afac449242d30bca1126f1a1"
+    );
+    let cases = corpus["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 40);
+    // Preserve the complete forty-row implementation corpus. Its two Var
+    // implementation assumptions are superseded by fresh Clojure observations;
+    // every case still executes, including all fixed/spread invocation guards.
+    let var_primary: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/var-implementation-primary/cases.json"
+    )).unwrap();
+    assert_eq!(var_primary.len(), 2);
+    for macro_phase in [false, true] {
+        let mut session = if macro_phase {
+            Session::new_macro().unwrap()
+        } else {
+            Session::new_repl().unwrap()
+        };
+        let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
+        let mut exercised = 0;
+        for case in cases {
+            exercised += 1;
+            if let Some(primary) = var_primary.iter().find(|primary| primary["name"] == case["id"]) {
+                // Execute the unchanged primary through the core capability;
+                // the original public-wrapper control remains on #516.
+                let expression = primary["native_expression"].as_str().unwrap()
+                    .replace("(eval ", "(suss.bootstrap/evaluate-form ");
+                check(&mut session, &mut decoder, &expression,
+                    primary["expected"].as_str().unwrap());
+                continue;
+            }
+            let value = session
+                .eval_probe(case["source"].as_str().unwrap())
+                .unwrap_or_else(|e| panic!("phase={macro_phase} {}: {e}", case["id"]));
+            session.collect().unwrap();
+            let actual = decoder.decode_session(&mut session, &value).unwrap();
+            assert_eq!(
+                tagged(&actual),
+                clojure(&case["expected"]),
+                "phase={macro_phase} {}",
+                case["id"]
+            );
+        }
+        assert_eq!(exercised, 40);
+    }
+
+#[test]
+fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities() {
+    for macro_phase in [false, true] {
+        let mut session = if macro_phase {
+            Session::new_macro().unwrap()
+        } else {
+            Session::new_repl().unwrap()
+        };
+        let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
+        check(
+            &mut session,
+            &mut decoder,
+            "(do (def ^{:m 17} review-var-api 1) (let [v (var review-var-api) h (hash v)] (eval '(def review-var-api 42)) [@v (:m (meta v)) (identical? v (eval '(var review-var-api))) (= h (hash v)) (fn? v) (ifn? v) (try (with-meta v {:m 19}) false (catch :default _ true))]))",
+            "[42 nil true true false true true]",
+        );
+        check(
+            &mut session,
+            &mut decoder,
+            "(do (def review-ordinary-var 42) [(.isMacro (var review-ordinary-var)) (identical? false (.isMacro (var review-ordinary-var)))])",
+            "[false true]",
+        );
+        for arity in 0..=20 {
+            let parameters = (0..arity)
+                .map(|i| format!("a{i}"))
+                .collect::<Vec<_>>()
+                .join(" ");
+            let arguments = (0..arity)
+                .map(|i| i.to_string())
+                .collect::<Vec<_>>()
+                .join(" ");
+            let source = format!(
+                "(let [v (new suss.core/Var (fn [] (fn [{parameters}] {arity})) 'a/b nil)] (v {arguments}))"
+            );
+            check(&mut session, &mut decoder, &source, &arity.to_string());
+        }
+        check(
+            &mut session,
+            &mut decoder,
+            "(let [v (new suss.core/Var (fn [] (fn [& args] (count args))) 'a/b nil)] (apply v [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]))",
+            "23",
+        );
+    }
+}
+
+
+#[test]
 fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() {
     fn tagged(value: &Observation) -> serde_json::Value {
         use serde_json::json;
@@ -285,4 +415,6 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
         }
         assert_eq!(exercised, 40);
     }
+}
+
 }

@@ -1,6 +1,6 @@
 {
   "qualification": "Scoped core validation only. No full workspace, complete native conformance, independent review, public eval or numeric completion claim. Historical source qualifications remain explicit.",
-  "rust_test_executions": 28,
+  "rust_test_executions": 34,
   "commands": [
     {
       "receipt": "focused-after-extraction/commands.json",
@@ -43,6 +43,12 @@
       "command": "original-constructor-source-projections",
       "exit_code": 0,
       "passed_executions": 1
+    },
+    {
+      "receipt": "independent-var-symbol-controls/commands.json",
+      "command": "independent-var-symbol-original-controls",
+      "exit_code": 0,
+      "passed_executions": 6
     }
   ],
   "production_inputs_conserved_across_positive_batches": {
