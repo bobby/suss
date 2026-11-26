@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/source-journal-metadata-effect-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6173836388625205,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "base.sus": "94a404a2517eac6d366a3ba03f1541c0b8108aa84f8eca504e9e7efbf2c6da13",
+    "jvm-rejected.sus": "e00653e6d7a4a9b00382e69149a29efaf15386720bbd0a3b8dd66f2b4693a266",
+    "native-rejected.sus": "dfb615b7112bd86eeb62bdf5ac24dbd2409c3901d74897b8d341cb0098f7448e",
+    "expression.clj": "8f32fc83b09828de5a8b04ba6d2b676f511a1b1cdc4b58e98b6818a86ec35b91",
+    "primary.stdout": "ac2c7be020bebc41fcdeee2695cc79e719e5ee9147b2ff61ba3538fc24ba4c74",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Only the later metadata effect is compared with the primary. Native setup uses the existing private metadata adapter because public alter-meta! is not available. Compiled-source declaration rollback retains its existing separate binding contract; this does not claim JVM load-string rolls back binding roots."
+}

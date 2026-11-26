@@ -10,6 +10,9 @@ use std::{
 };
 use super::persistent::{PersistentMap, PersistentSet};
 use suss_reader::Symbol;
+mod native_effects;
+mod publication;
+pub(crate) use publication::Publication;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Phase {
@@ -26,6 +29,29 @@ pub struct Global {
     name: std::sync::Arc<str>,
 }
 impl Global {
+    pub(crate) fn native_constant(phase: Phase, owner: u64, index: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-constants".into(),
+            name: format!("{owner:016x}-{index:016x}").into() }
+    }
+    pub(crate) fn native_value(phase: Phase, owner: u64, index: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-values".into(), name: format!("{owner:016x}-{index:016x}").into() }
+    }
+    pub(crate) fn native_function_site(phase: Phase, owner: u64, index: u64, pool: u64) -> Self {
+        Self { phase, namespace: "suss.internal.eval-function-sites".into(), name: format!("{owner:016x}-{index:016x}-{pool:016x}").into() }
+    }
+    pub(crate) fn native_site_initializer(&self) -> Self {
+        Self { phase: self.phase, namespace: "suss.internal.eval-function-initializers".into(), name: self.name.clone() }
+    }
+    pub(crate) fn native_site_import(phase: Phase, name: &str) -> Option<(Self, Self)> {
+        let name = name.strip_prefix("suss.internal.eval-function-sites/")
+            .or_else(|| name.strip_prefix("suss.internal.eval-function-initializers/"))?;
+        let parts = name.split('-').collect::<Vec<_>>();
+        if parts.len()!=3 || parts.iter().any(|part| part.len()!=16) { return None; }
+        let owner=u64::from_str_radix(parts[0],16).ok()?;
+        let index=u64::from_str_radix(parts[1],16).ok()?;
+        let pool=u64::from_str_radix(parts[2],16).ok()?;
+        Some((Self::native_function_site(phase,owner,index,pool), Self::native_constant(phase,owner,index)))
+    }
     /// The `suss.core` var a core link cell stands for (#360).
     pub(crate) fn core_var_of_link(&self) -> Option<Global> {
         (&*self.namespace == "suss.internal.core-link").then(|| Global {
@@ -113,7 +139,7 @@ impl ControlForm {
         })
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ProtocolMethod {
     pub name: String,
     pub signatures: Vec<(usize, usize)>, // argument arity, bundle key index
@@ -296,10 +322,22 @@ pub struct NamespaceScope<'a> {
     pub renamed_macro_refers: &'a BTreeSet<String>,
     pub declarations: Vec<(&'a Global, &'a DefinitionInfo)>,
 }
+#[derive(Debug, Clone)]
+struct MacroOwner {
+    store: u64,
+    revision: std::sync::Arc<()>,
+}
+impl PartialEq for MacroOwner {
+    fn eq(&self, other: &Self) -> bool {
+        self.store == other.store && std::sync::Arc::ptr_eq(&self.revision, &other.revision)
+    }
+}
+impl Eq for MacroOwner {}
 /// Explicit input to analysis, shared by future AOT, REPL and macro-session callers.
 /// Configuration is checked before mutation. Source analysis borrows it immutably.
 #[derive(Debug, Clone)]
 pub struct Environment {
+    publication: Option<publication::Log>,
     pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
@@ -314,6 +352,16 @@ pub struct Environment {
     /// `bind`, `unbind` and `materialize_bootstrap` keep it (#319).
     identities: BTreeMap<(Phase, std::sync::Arc<str>), PersistentSet<Global>>,
     macro_exports: BTreeSet<(Phase, String, String)>,
+    // The ordinary declaration revision present at an explicit defmacro. A
+    // later ordinary def hides that transformer; namespace imports do not
+    // silently turn it back into a macro. Persistent snapshots share revisions.
+    macro_declarations: PersistentMap<Global, Option<std::sync::Arc<DefinitionInfo>>>,
+    // Store ownership is distinct from Phase: two native hosts can both be
+    // Macro. A revision also preserves reassertions during reentrant analysis.
+    macro_owners: BTreeMap<Global, MacroOwner>,
+    // Actual Var metadata for one native eval analysis only. Never publish this
+    // live observation as declaration history or source-analysis authority.
+    native_macro_status: BTreeMap<Global, bool>,
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
     /// Protocols whose current definition is shipped core's (#279).
@@ -327,6 +375,11 @@ pub struct Environment {
     /// This policy is transient; published catalogs clear it and AOT artifacts
     /// carry their own sealed load-scope requirement.
     pub(crate) ordered_namespace_initialization: bool,
+    /// Only the root native eval form inherits its caller's dynamic namespace
+    /// frame. Dependencies keep ordinary load frames; published catalogs clear it.
+    pub(crate) native_evaluation_namespace: bool,
+    /// Native preparation authority; never a source-supplied value handle.
+    pub(crate) native_compilation_owner: Option<u64>,
     /// Analyzing the shipped core image itself, whose capture-free functions
     /// call each other directly (#360, #361). Only the bootstrap catalog sets
     /// it: privileged code compiled elsewhere, such as a session's core
@@ -476,6 +529,7 @@ impl Environment {
     pub fn new(namespace: &str) -> Result<Self, Diagnostic> {
         valid_namespace(namespace)?;
         let mut env = Self {
+            publication: None,
             reader_state: super::syntax_quote::ReaderState::default(),
             namespaces: BTreeSet::new(),
             bindings: BTreeMap::new(),
@@ -486,11 +540,16 @@ impl Environment {
             materialized_bootstrap: BTreeSet::new(),
             identities: BTreeMap::new(),
             macro_exports: BTreeSet::new(),
+            macro_declarations: PersistentMap::default(),
+            macro_owners: BTreeMap::new(),
+            native_macro_status: BTreeMap::new(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
             direct_linking: false,
             ordered_namespace_initialization: false,
+            native_evaluation_namespace: false,
+            native_compilation_owner: None,
             core_image_links: false,
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),
@@ -741,7 +800,7 @@ impl Environment {
             .expect("declared current scope")
     }
     /// Undo staged declaration publication without reverting unrelated macro effects/dependencies.
-    pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
+    pub(crate) fn advance_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
         for global in globals {
             match before.bindings.get(global) {
                 Some(value) => self.bind(global.clone(), value.clone()),
@@ -754,6 +813,14 @@ impl Environment {
                     definitions.remove(global);
                 }
             }
+            match before.macro_declarations.get(global) {
+                Some(revision) => { self.macro_declarations.insert(global.clone(), revision.clone()); }
+                None => { self.macro_declarations.remove(global); }
+            }
+            match before.macro_owners.get(global) {
+                Some(owner) => { self.macro_owners.insert(global.clone(), owner.clone()); }
+                None => { self.macro_owners.remove(global); }
+            }
             let export = (phase, global.namespace.to_string(), global.name.to_string());
             if before.macro_exports.contains(&export) {
                 self.macro_exports.insert(export);
@@ -761,10 +828,13 @@ impl Environment {
                 self.macro_exports.remove(&export);
             }
         }
+        self.source_changed();
+    }
+    pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
+        self.advance_declarations(before, globals, phase);
         if let Some(namespace) = before.current.get(&phase) {
             self.current.insert(phase, namespace.clone());
         }
-        self.source_changed();
     }
     pub fn current_namespace(&self, phase: Phase) -> &str {
         &self.current[&phase]
@@ -831,10 +901,12 @@ impl Environment {
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
         self.source_changed();
+        let info = std::sync::Arc::new(info);
+        self.record_publication(|| publication::Change::Definition(global.clone(), info.clone()));
         self.definitions
             .entry((global.phase, global.namespace.clone()))
             .or_default()
-            .insert(global, std::sync::Arc::new(info));
+            .insert(global, info);
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
@@ -856,6 +928,7 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
+        self.record_publication(|| publication::Change::Materialize(global.clone()));
         if self.materialized_bootstrap.insert(global.clone()) {
             self.refresh_identity(&global);
             self.source_changed();
@@ -886,10 +959,12 @@ impl Environment {
         assert_eq!(actual, expected);
     }
     fn bind(&mut self, global: Global, binding: Binding) {
+        self.record_publication(|| publication::Change::Bind(global.clone(), Some(binding.clone())));
         self.bindings.insert(global.clone(), binding);
         self.refresh_identity(&global);
     }
     fn unbind(&mut self, global: &Global) {
+        self.record_publication(|| publication::Change::Bind(global.clone(), None));
         self.bindings.remove(global);
         self.refresh_identity(global);
     }
@@ -942,6 +1017,7 @@ impl Environment {
         }) {
             return Err(error(format!("Ambiguous namespace alias {namespace}")));
         }
+        self.record_publication(|| publication::Change::Namespace(phase, namespace.into()));
         self.namespaces.insert((phase, namespace.into()));
         Ok(())
     }
@@ -952,6 +1028,7 @@ impl Environment {
             .entry((phase, namespace.into()))
             .or_insert_with(|| Scope::new(namespace));
         self.current.insert(phase, namespace.into());
+        self.record_publication(|| publication::Change::Enter(phase, namespace.into()));
         self.source_changed();
         Ok(())
     }
@@ -965,6 +1042,7 @@ impl Environment {
         let namespace = self.current[&phase].clone();
         self.scopes
             .insert((phase, namespace.clone()), Scope::new(&namespace));
+        self.record_publication(|| publication::Change::Reset(phase, namespace.clone()));
         self.source_changed();
         Ok(())
     }
@@ -1065,6 +1143,32 @@ impl Environment {
         }
         global
     }
+    pub(crate) fn native_constant(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+        let cell = Global::native_constant(phase, owner, index);
+        if !self.bindings.contains_key(&cell) {
+            self.bind(cell.clone(), Binding::InternalCell(cell.clone()));
+            self.source_changed();
+        }
+        cell
+    }
+    pub(crate) fn native_value(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+        let cell=Global::native_value(phase,owner,index);
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_site(&mut self, phase: Phase, owner: u64, index: u64, pool: u64) -> Global {
+        let cell=Global::native_function_site(phase,owner,index,pool);
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_initializer(&mut self, site: &Global) -> Global {
+        let cell=site.native_site_initializer();
+        if !self.bindings.contains_key(&cell) { self.bind(cell.clone(),Binding::InternalCell(cell.clone())); self.source_changed(); }
+        cell
+    }
+    pub(crate) fn native_function_pool(&mut self) -> u64 {
+        self.source_changed(); self.source_generation
+    }
     /// A fresh, unresolvable cell for one constant declaration revision.
     pub(crate) fn constant_cell(&mut self, phase: Phase) -> Global {
         let cell = Global {
@@ -1157,6 +1261,36 @@ impl Environment {
         }
         global
     }
+    /// One nominal Var per actual persistent source binding, phase-local and
+    /// unresolvable by user source. The getter closes over the original cell.
+    fn var_identity(target: &Global) -> Global {
+        let identity = format!("{}/{}", target.namespace(), target.name());
+        let name = identity.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        Global { phase: target.phase, namespace: "suss.internal.vars".into(), name: format!("var-{name}").into() }
+    }
+    pub(crate) fn existing_var_cell(&self, target: &Global) -> Option<Global> {
+        let global = Self::var_identity(target);
+        matches!(self.bindings.get(&global), Some(Binding::InternalCell(_))).then_some(global)
+    }
+    pub(crate) fn native_macro_declarations(&self, owner: u64) -> impl Iterator<Item = Global> + '_ {
+        self.macro_owners.iter().filter(move |(_, current)| current.store == owner).map(|(global, _)| global.clone())
+    }
+    pub(crate) fn native_macro_global(&self, phase: Phase, namespace: &str, name: &str, owner: u64) -> Option<Global> {
+        let global = Global { phase, namespace: namespace.into(), name: name.into() };
+        self.macro_owners.get(&global).is_some_and(|current| current.store == owner).then_some(global)
+    }
+    pub(crate) fn macro_binding_owner(&self, phase: Phase, namespace: &str, name: &str) -> Option<u64> {
+        self.macro_owners.get(&Global { phase, namespace: canonical(namespace).into(), name: name.into() }).map(|owner| owner.store)
+    }
+    pub(crate) fn var_cell(&mut self, target: &Global) -> Result<Global, Diagnostic> {
+        let global = Self::var_identity(target);
+        match self.bindings.get(&global) {
+            Some(Binding::InternalCell(_)) => {},
+            Some(_) => return Err(error("Var identity collides with a source binding")),
+            None => { self.bind(global.clone(), Binding::InternalCell(global.clone())); self.source_changed(); },
+        }
+        Ok(global)
+    }
     /// The hidden cell that holds the interned keyword `fqn` for literals
     /// (#361): every literal site of a keyword reads the same keyword.
     pub(crate) fn keyword_cell(&mut self, phase: Phase, fqn: &str) -> Global {
@@ -1173,6 +1307,7 @@ impl Environment {
     }
     /// Records the AOT build's exported functions' numeric parameters (#385).
     pub(crate) fn set_export_param_hints(&mut self, hints: BTreeMap<(String, String), Vec<Option<bool>>>) {
+        self.record_publication(|| publication::Change::ExportHints(hints.clone()));
         self.export_param_hints = hints;
     }
     pub(crate) fn export_param_hints(&self, namespace: &str, name: &str) -> Option<&Vec<Option<bool>>> {
@@ -1180,6 +1315,7 @@ impl Environment {
     }
     /// The number of a keyword cell's per-fragment cache (#387).
     pub(crate) fn keyword_cache(&mut self, cell: &Global) -> usize {
+        self.record_publication(|| publication::Change::Keyword(cell.clone()));
         let next = self.keyword_caches.len();
         *self.keyword_caches.entry(cell.clone()).or_insert(next)
     }
@@ -1200,6 +1336,7 @@ impl Environment {
         let definition = self.direct_link_count;
         let slot = *self.direct_slots.entry(global.clone()).or_insert(definition);
         self.direct_links.insert(global.clone(), (slot, definition));
+        self.record_publication(|| publication::Change::DirectLink(global.clone(), Some((slot, definition))));
         (slot, definition)
     }
     /// A direct-linked var's slot, which `set!` also writes (#360).
@@ -1209,6 +1346,7 @@ impl Environment {
     /// A var that is no longer direct-linkable, such as one redefined to a
     /// non-function, stops linking new calls.
     pub(crate) fn end_direct_link(&mut self, global: &Global) {
+        self.record_publication(|| publication::Change::DirectLink(global.clone(), None));
         self.direct_links.remove(global);
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
@@ -1261,7 +1399,17 @@ impl Environment {
             )));
         }
         aliases.insert(namespace.into(), target.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(namespace.into(), target.into(), macros));
         Ok(())
+    }
+    /// Native eval takes aliases from the caller's actual Namespace object.
+    /// These are already admitted Symbol keys; unlike ns :as they may be empty
+    /// or qualified. Replacing this snapshot retains every other scope fact.
+    pub(crate) fn replace_evaluation_aliases(&mut self, phase: Phase, aliases: BTreeMap<String, String>) {
+        if self.scope(phase).aliases != aliases {
+            self.record_scope_publication(phase, || publication::ScopeChange::Aliases(aliases.clone()));
+            self.scope_mut(phase).aliases = aliases;
+        }
     }
     pub fn alias(&mut self, phase: Phase, alias: &str, namespace: &str) -> Result<(), Diagnostic> {
         valid_namespace(alias)?;
@@ -1285,6 +1433,7 @@ impl Environment {
         self.scope_mut(phase)
             .aliases
             .insert(alias.into(), namespace.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(alias.into(), namespace.into(), false));
         Ok(())
     }
     pub fn refer(
@@ -1340,19 +1489,86 @@ impl Environment {
             return Err(error(format!("Ambiguous binding {local}")));
         }
         let scope = self.scope_mut(phase);
-        scope.refers.insert(local.into(), global);
+        scope.refers.insert(local.into(), global.clone());
         if renamed {
             &mut scope.renamed_refers
         } else {
             &mut scope.used_refers
         }
         .insert(local.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Refer(local.into(), global, renamed));
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
         valid_name(name)?;
         self.scope_mut(phase).excluded_core.insert(name.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Exclude(name.into()));
         Ok(())
+    }
+    pub(crate) fn record_native_macro_source(&mut self, phase: Phase, namespace: &str, name: &str,
+        source: suss_reader::forms::Form,
+    ) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some(info) = self.definition_info(&global) {
+            let mut info = info.clone();
+            info.definition_form = source;
+            info.initializer_form = None;
+            info.initializer = None;
+            self.record_definition(global, info);
+        }
+    }
+    pub(crate) fn inherit_native_macro_status(&mut self, caller: &Self) {
+        self.native_macro_status = caller.native_macro_status.clone();
+    }
+    pub(crate) fn clear_native_macro_status(&mut self) {
+        self.native_macro_status.clear();
+    }
+    pub(crate) fn replace_native_macro_status(&mut self, statuses: BTreeMap<Global, bool>) {
+        if self.native_macro_status != statuses {
+            self.native_macro_status = statuses;
+            self.source_changed();
+        }
+    }
+    pub(crate) fn record_macro_declaration(&mut self, phase: Phase, namespace: &str, name: &str) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        let revision = self.shared_definition_info(&global).cloned();
+        self.native_macro_status.remove(&global);
+        self.macro_owners.remove(&global);
+        self.record_publication(|| publication::Change::MacroDeclaration(global.clone(), revision.clone()));
+        self.record_publication(|| publication::Change::MacroOwner(global.clone(), None));
+        self.macro_declarations.insert(global, revision);
+        self.source_changed();
+    }
+    pub(crate) fn record_macro_owner(&mut self, phase: Phase, namespace: &str, name: &str, owner: Option<u64>) {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        let value = owner.map(|store| MacroOwner { store, revision: std::sync::Arc::new(()) });
+        self.record_publication(|| publication::Change::MacroOwner(global.clone(), value.clone()));
+        match value {
+            Some(value) => { self.macro_owners.insert(global, value); }
+            None => { self.macro_owners.remove(&global); }
+        }
+        self.source_changed();
+    }
+    pub(crate) fn record_native_macro_definition(&mut self, phase: Phase, namespace: &str, name: &str, owner: u64) {
+        self.record_macro_declaration(phase, namespace, name);
+        self.record_macro_owner(phase, namespace, name, Some(owner));
+        let namespace = canonical(namespace);
+        self.macro_namespaces.insert((phase, namespace.to_owned()));
+        self.macro_exports.insert((phase, namespace.to_owned(), name.to_owned()));
+    }
+    pub(crate) fn macro_export_names(&self, phase: Phase, namespace: &str) -> Vec<String> {
+        self.macro_exports.iter().filter(|(p, ns, _)| *p == phase && ns == canonical(namespace))
+            .map(|(_, _, name)| name.clone()).collect()
+    }
+    pub(crate) fn source_macro_overridden(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        let global = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some(enabled) = self.native_macro_status.get(&global) { return !enabled; }
+        let Some(declared) = self.macro_declarations.get(&global) else { return false };
+        match (declared, self.shared_definition_info(&global)) {
+            (None, None) => false,
+            (Some(declared), Some(current)) => !std::sync::Arc::ptr_eq(declared, current),
+            _ => true,
+        }
     }
     /// Macro catalogs describe functions in the isolated host, never Runtime cells.
     pub fn declare_macro_exports(
@@ -1366,6 +1582,7 @@ impl Environment {
             valid_name(name)?;
         }
         let namespace = canonical(namespace);
+        self.record_publication(|| publication::Change::MacroExports(phase, namespace.into(), names.to_vec()));
         self.macro_namespaces.insert((phase, namespace.into()));
         self.macro_exports
             .retain(|(p, ns, _)| *p != phase || ns != namespace);
@@ -1403,6 +1620,7 @@ impl Environment {
             return Err(error(format!("Ambiguous macro namespace alias {alias}")));
         }
         scope.macro_aliases.insert(alias.into(), namespace.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::Alias(alias.into(), namespace.into(), true));
         Ok(())
     }
     pub fn macro_refer(
@@ -1439,13 +1657,14 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
-        scope.macro_refers.insert(local.into(), target);
+        scope.macro_refers.insert(local.into(), target.clone());
         if renamed {
             &mut scope.renamed_macro_refers
         } else {
             &mut scope.used_macro_refers
         }
         .insert(local.into());
+        self.record_scope_publication(phase, || publication::ScopeChange::MacroRefer(local.into(), target, renamed));
         Ok(())
     }
     pub fn resolve_source_macro(&self, phase: Phase, symbol: &Symbol) -> Option<(String, String)> {
@@ -1498,16 +1717,35 @@ impl Environment {
             && !scope.excluded_core.contains(name)
             && !self.bindings.contains_key(&own)
     }
+    pub(crate) fn macro_var_candidates(&self, phase: Phase, symbol: &Symbol) -> Vec<Global> {
+        let scope = self.scope(phase);
+        let global = |namespace: &str, name: &str| Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        if let Some((namespace, name)) = self.resolve_source_macro(phase, symbol) {
+            return vec![global(&namespace, &name)];
+        }
+        if let Some(namespace) = &symbol.namespace {
+            let namespace = symbol_namespace(scope.macro_aliases.get(namespace).or_else(|| scope.aliases.get(namespace)), namespace);
+            return vec![global(namespace, &symbol.name)];
+        }
+        let mut candidates = vec![global(&scope.namespace, &symbol.name)];
+        if self.resolves_bootstrap_name(phase, symbol, &symbol.name) && scope.namespace != "suss.core" {
+            candidates.push(global("suss.core", &symbol.name));
+        }
+        candidates
+    }
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).
     pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
+        self.declared_globals(phase, namespace).map(|global| global.name.to_string()).collect()
+    }
+    pub(crate) fn declared_globals<'a>(&'a self, phase: Phase, namespace: &'a str)
+        -> impl Iterator<Item = &'a Global> + 'a {
         let start = Global { phase, namespace: namespace.into(), name: "".into() };
         self.bindings
             .range(start..)
-            .take_while(|(global, _)| global.phase == phase && &*global.namespace == namespace)
+            .take_while(move |(global, _)| global.phase == phase && &*global.namespace == namespace)
             .filter(|(_, binding)| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
-            .map(|(global, _)| global.name.to_string())
-            .collect()
+            .map(|(global, _)| global)
     }
     /// Whether `resolve` finds `name` as one of `namespace`'s own bindings.
     pub(crate) fn declares(&self, phase: Phase, namespace: &str, name: &str) -> bool {

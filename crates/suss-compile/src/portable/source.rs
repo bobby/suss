@@ -44,7 +44,8 @@ pub(crate) fn resolve_auto_keywords(
                 pending.push(operator);
                 pending.push(target);
             }
-            Kind::Nil
+            Kind::NativeConstant { .. }
+            | Kind::Nil
             | Kind::Bool(_)
             | Kind::Number(_)
             | Kind::Long(_)
@@ -443,6 +444,7 @@ pub(crate) fn namespace(
                         requirement.reload,
                         requirement.namespace.span.clone(),
                     )?;
+                    expander.refresh_native_environment(env, requirement.namespace.span.clone())?;
                     env.declare_macro_exports(phase, namespace, &exports)?;
                     located(env.record_requirement(phase, namespace, true), requirement.namespace)?;
                     if let Some(alias) = requirement.alias {

@@ -99,9 +99,11 @@ pub fn hir_document(fragments: &[RecordedFragment], path: &Path) -> Result<Value
             asts.push(analyzer_edn::namespace_node(directive, fragment.phase, origin)?);
         }
         for form in &fragment.forms {
-            // The compiler handles a namespace declaration itself and analyzes
-            // nil in its place.
-            let placeholder = fragment.namespace_directive.as_ref().is_some_and(|directive| {
+            // Namespace declarations and compiled source macro declarations
+            // have internal nil placeholders, not extra source forms. Keep
+            // explicit nils and actual macro expansions that return nil.
+            let placeholder = form.source.as_ref().is_some_and(|source| source.declaration_placeholder)
+                || fragment.namespace_directive.as_ref().is_some_and(|directive| {
                 form.source.as_ref().is_some_and(|source| {
                     source.form.span == directive.span
                         && matches!(source.form.kind, suss_reader::forms::Kind::Nil)

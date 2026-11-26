@@ -1,0 +1,1 @@
+[[true true false false true "Unbound: #'user/catalog-unbound-probe" "Attempting to call unbound fn: #'user/catalog-unbound-probe" "Attempting to call unbound fn: #'user/catalog-unbound-probe" [true 42 "Unbound: #'user/catalog-unbound-probe" "Attempting to call unbound fn: #'user/catalog-unbound-probe"]] [true true false] [17 true] [true true]]

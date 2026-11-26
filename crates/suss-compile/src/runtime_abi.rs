@@ -45,6 +45,9 @@ mod numeric_hash;
 mod case_hash;
 mod numeric_operands;
 mod random;
+mod evaluation;
+mod native_identity;
+pub(crate) mod native_values;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
@@ -57,7 +60,7 @@ mod string_char_at;
 mod type_values;
 pub(crate) mod numeric_classes;
 
-pub const VERSION: u32 = 12;
+pub const VERSION: u32 = 14;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -211,6 +214,14 @@ pub(crate) const BINDING: u32 = 5;
 /// a read of a bound, never-bound-dynamically cell is its root (#354).
 pub(crate) const CELL_BOUND: i32 = 1;
 pub(crate) const CELL_DYNAMIC: i32 = 2;
+/// Public Var macro status follows the actual root cell. Every root bind,
+/// including with-redefs restoration, clears it; declaration metadata sets it.
+pub(crate) const CELL_MACRO: i32 = 16;
+pub(crate) const CELL_DECLARED: i32 = 32;
+/// Transient compiler ownership of an isolated source declaration's root.
+/// Language root writes clear it, even when they write the identical function.
+/// It is neither Var metadata nor authority to access another cell/Store.
+pub(crate) const CELL_STAGED_ROOT: i32 = 64;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
@@ -301,11 +312,7 @@ fn named_site_get(b: &mut Builder) {
     let property_get = b.names["named-property-get"];
     let full = || [LocalGet(1), LocalGet(2), Call(property_get), Return];
     let field_read = |slot: u32| [
-        LocalGet(6),
-        StructGet { struct_type_index: 7, field_index: 1 },
-        LocalGet(slot),
-        ArrayGet(ARGS),
-        Return,
+        LocalGet(1), LocalGet(slot), Call(b.names["object-field-get"]), Return,
     ];
     // The descriptor's own method, cached in the first entry (its method
     // moves to the second), or the full lookup when it has none.
@@ -407,8 +414,7 @@ fn user_named_site_get(b: &mut Builder) {
     code.extend([RefEq, If(BlockType::Empty)]);
     code.extend(site(SITE_SLOT));
     code.extend([LocalTee(5), I32Const(0), I32GeS, If(BlockType::Empty)]);
-    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 1 },
-        LocalGet(5), ArrayGet(ARGS), Return, End]);
+    code.extend([LocalGet(1), LocalGet(5), Call(b.names["object-field-get"]), Return, End]);
     code.extend(site(SITE_EPOCH));
     code.extend(epoch());
     code.extend([I32Eq, If(BlockType::Empty)]);
@@ -468,12 +474,7 @@ fn named_site_set(b: &mut Builder) {
     code.extend(site(SITE_SLOT));
     code.extend([LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
     code.extend([
-        LocalGet(1),
-        RefCastNonNull(HeapType::Concrete(OBJECT)),
-        StructGet { struct_type_index: OBJECT, field_index: 1 },
-        LocalGet(4),
-        LocalGet(3),
-        ArraySet(ARGS),
+        LocalGet(1), LocalGet(4), LocalGet(3), Call(b.names["object-field-set"]),
         LocalGet(3),
         Return,
         End,
@@ -783,9 +784,10 @@ pub fn prelude() -> TypeSection {
         // Closure (ADR-0004): its function's code struct, native protocol
         // properties or null, and the lazily assigned, owner-held identity UID.
         structure(closure_fields()),
-        // Binding cell: value and flags, CELL_BOUND independent of the value
-        // (nil can be a binding) and CELL_DYNAMIC.
-        structure(vec![field(VALUE, true), field(ValType::I32, true)]),
+        // Binding cell: root, flags, and its genuine Var-owned Unbound value.
+        // The last root survives temporary root replacement/restoration; it
+        // never makes the cell bound. Internal cells have no Var and leave nil.
+        structure(vec![field(VALUE, true), field(ValType::I32, true), field(VALUE, true)]),
         // Descriptor: nominal identity, field schema, protocol table, metadata.
         structure(vec![
             field(ValType::I64, false),
@@ -1525,6 +1527,8 @@ fn build_module() -> Vec<u8> {
         next_type: helper.type_count,
         names: std::collections::BTreeMap::new(),
     };
+    let native_identity_type = native_identity::declare(&mut b);
+    let native_values_type = native_values::declare(&mut b);
     let string = HeapType::Concrete(STRING);
     for (name, sentinel) in [("nil", NIL), ("false", FALSE), ("true", TRUE)] {
         b.function(name, &[], &[VALUE], &[sentinel_value(sentinel)]);
@@ -1550,6 +1554,7 @@ fn build_module() -> Vec<u8> {
     longs::string(&mut b);
     longs::append(&mut b);
     longs::string_hash(&mut b);
+    longs::hash_unencoded_chars(&mut b);
     longs::functions(&mut b);
     case_hash::intrinsics(&mut b);
     longs::boxed_subtractions(&mut b);
@@ -1794,13 +1799,20 @@ fn build_module() -> Vec<u8> {
         "binding-new",
         &[VALUE],
         &[VALUE],
-        &[LocalGet(0), I32Const(1), StructNew(5)],
+        &[LocalGet(0), I32Const(1), sentinel_value(NIL), StructNew(5)],
     );
+    b.function("binding-declare", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 1 },
+        I32Const(CELL_DECLARED), I32Or,
+        StructSet { struct_type_index: BINDING, field_index: 1 }, LocalGet(0),
+    ]);
     b.function(
         "binding-unbound",
         &[],
         &[VALUE],
-        &[sentinel_value(NIL), I32Const(0), StructNew(5)],
+        &[sentinel_value(NIL), I32Const(0), sentinel_value(NIL), StructNew(5)],
     );
     b.function(
         "binding-bound",
@@ -1834,6 +1846,13 @@ fn build_module() -> Vec<u8> {
         I32And,
         I32Eqz,
         If(BlockType::Empty),
+        // A real Var interns a nominal Unbound object referencing that Var.
+        // Read it without setting CELL_BOUND, including after with-redefs.
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 2 }, RefIsNull,
+        I32Eqz, If(BlockType::Empty),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 2 }, Return, End,
         GlobalGet(1),
     ];
     let unbound_message: Vec<_> = "Unbound binding".encode_utf16().collect();
@@ -1858,6 +1877,65 @@ fn build_module() -> Vec<u8> {
         },
     ]);
     dynamic::binding_get(&mut b, dynamic_lookup, binding_get);
+    let binding_getter_entry = b.typed(INVOKE, &[], &[
+        LocalGet(0), ReturnCall(b.names["binding-get"]),
+    ]);
+    b.function("binding-getter", &[VALUE], &[VALUE], &[
+        LocalGet(0), RefFunc(binding_getter_entry), I32Const(0), I32Const(0),
+        Call(b.names["closure-new"]),
+    ]);
+    // Retained upstream Var fixtures can use an ordinary thunk with no native
+    // root cell. Its explicit metadata remains authoritative. Native Vars use
+    // the compiler-owned universal getter and its actual cell instead.
+    let getter_cell = b.function_with_locals("binding-getter-cell", &[VALUE], &[VALUE],
+        &[(1, VALUE)], &[
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
+            LocalTee(1), RefTestNonNull(HeapType::Concrete(BINDING)),
+            If(BlockType::Result(VALUE)), LocalGet(1), Else, sentinel_value(NIL), End,
+            Else, sentinel_value(NIL), End,
+        ]);
+    b.function_with_locals("binding-getter-unbound-init!", &[VALUE, VALUE], &[VALUE],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(2), RefIsNull,
+            If(BlockType::Empty), LocalGet(0), Return, End,
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
+            StructGet { struct_type_index: BINDING, field_index: 2 }, RefIsNull,
+            If(BlockType::Empty),
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
+            StructSet { struct_type_index: BINDING, field_index: 2 }, End, LocalGet(0),
+        ]);
+    b.function_with_locals("binding-getter-macro?", &[VALUE], &[ValType::I32],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(1), RefIsNull,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0), I32Const(native_values::GETTER_MACRO), I32Const(0), sentinel_value(NIL), sentinel_value(NIL),
+            Call(b.names["native-value-operation"]), GlobalGet(TRUE_GLOBAL), RefEq,
+            Else, I32Const(1), End, Else,
+            LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+            StructGet { struct_type_index: BINDING, field_index: 1 },
+            I32Const(CELL_MACRO), I32And, I32Eqz, I32Eqz, End,
+        ]);
+    b.function_with_locals("binding-getter-macro-set!", &[VALUE, VALUE], &[VALUE],
+        &[(1, VALUE)], &[
+            LocalGet(0), Call(getter_cell), LocalTee(2), RefIsNull,
+            If(BlockType::Empty),
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+            If(BlockType::Empty), LocalGet(0), I32Const(native_values::GETTER_MACRO_SET), I32Const(0), LocalGet(1), sentinel_value(NIL),
+            Call(b.names["native-value-operation"]), Drop, End,
+            LocalGet(0), Return, End,
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),
+            StructGet { struct_type_index: BINDING, field_index: 1 },
+            I32Const(!CELL_MACRO), I32And,
+            LocalGet(1), GlobalGet(TRUE_GLOBAL), RefEq,
+            If(BlockType::Result(ValType::I32)), I32Const(CELL_MACRO), Else, I32Const(0), End,
+            I32Or, StructSet { struct_type_index: BINDING, field_index: 1 }, LocalGet(0),
+        ]);
     // Anonymous publication tests the same selected dynamic/root cell value
     // as an ordinary read. An unbound root must not be read eagerly, while an
     // active dynamic entry may still provide a value for that root cell.
@@ -1904,8 +1982,50 @@ fn build_module() -> Vec<u8> {
             End,
         ],
     );
-    let binding_set = dynamic::binding_set(&mut b, dynamic_lookup);
+    let binding_restore = dynamic::binding_set(&mut b, dynamic_lookup);
+    let mut root_set = vec![
+        LocalGet(0), Call(getter_cell), LocalTee(3), RefIsNull,
+        If(BlockType::Empty),
+        LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+        If(BlockType::Empty), LocalGet(0), I32Const(native_values::GETTER_ROOT_SET), I32Const(0), LocalGet(1), LocalGet(2),
+        ReturnCall(b.names["native-value-operation"]), End,
+    ];
+    root_set.extend(numeric::error("Var has no native root binding", 3));
+    root_set.extend([
+        End,
+        // Var.alterRoot preserves macro metadata, unlike Var.bindRoot.
+        LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
+        StructSet { struct_type_index: BINDING, field_index: 0 },
+        LocalGet(2), GlobalGet(TRUE_GLOBAL), RefEq, If(BlockType::Empty),
+        LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
+        StructSet { struct_type_index: BINDING, field_index: 2 }, End,
+        LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)),
+        LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 1 }, I32Const(!(CELL_BOUND | CELL_STAGED_ROOT)), I32And,
+        LocalGet(2), GlobalGet(TRUE_GLOBAL), RefEq,
+        If(BlockType::Result(ValType::I32)), I32Const(0), Else, I32Const(CELL_BOUND), End,
+        I32Or, StructSet { struct_type_index: BINDING, field_index: 1 }, LocalGet(1),
+    ]);
+    b.function_with_locals("binding-getter-root-set!", &[VALUE; 3], &[VALUE], &[(1, VALUE)], &root_set);
+    let mut root_get = vec![
+        LocalGet(0), Call(getter_cell), LocalTee(1), RefIsNull,
+        If(BlockType::Empty),
+        LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::FUNCTION), I32Eq,
+        If(BlockType::Empty), LocalGet(0), I32Const(native_values::GETTER_ROOT_GET), I32Const(0), sentinel_value(NIL), sentinel_value(NIL),
+        ReturnCall(b.names["native-value-operation"]), End,
+    ];
+    root_get.extend(numeric::error("Var has no native root binding", 3));
+    root_get.extend([
+        End, LocalGet(1), Call(b.names["binding-bound"]), GlobalGet(TRUE_GLOBAL), RefEq,
+        If(BlockType::Result(VALUE)),
+        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 0 }, Else,
+        LocalGet(1), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 2 }, End,
+    ]);
+    b.function_with_locals("binding-getter-root-get", &[VALUE], &[VALUE], &[(1, VALUE)], &root_get);
     dynamic::switching(&mut b);
+    dynamic::namespace_input_owner(&mut b);
     decimals::late_functions(&mut b);
     let coercion_types = coercions::declare(&mut b);
     let prototype_types = owned_prototypes::declare(&mut b);
@@ -1924,6 +2044,7 @@ fn build_module() -> Vec<u8> {
     decimals::context_constructor(&mut b);
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
+    arithmetic_functions.push(binding_getter_entry);
     arithmetic_functions.extend(arrays::functions(&mut b));
     maps::functions(&mut b);
     chunks::functions(&mut b);
@@ -2151,7 +2272,7 @@ fn build_module() -> Vec<u8> {
         ],
     );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
-    arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
+    arithmetic_functions.extend(dynamic::functions(&mut b, binding_restore, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);
@@ -2710,6 +2831,9 @@ fn build_module() -> Vec<u8> {
     decimals::append_global(&mut globals, decimal_double_type, decimal_double,
         decimal_context_type, b.names["decimal-context-impl"]);
     random::append(&mut b, &mut globals);
+    evaluation::append(&mut b, &mut globals);
+    native_identity::append(&mut globals, native_identity_type);
+    native_values::append(&mut globals, native_values_type);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

@@ -1,0 +1,22 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/expanded-macro-collection-identity-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7332901954650879,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "d6039ff847d16104ac788a6ddaac8ae52ab09d66409baaf2d8b890548cbbe517",
+  "native_source_sha256": "5d2d4dafe0aa9245712b65968b3c43e95168d3ddfd8b8966ea6b5e2dc8b9a2be",
+  "stdout_sha256": "da210ba4d8269c38fa1e117d526d2be56c739c3a6429935c7973fac825dbe7f8",
+  "controls": 4,
+  "qualification": "Independent primary root versus collection constant contexts after a macro returns existing function data. No native pass claim."
+}

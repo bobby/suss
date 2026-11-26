@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/immutable-native-graph-primary-prepared/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.9322766098193824,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "setup.sus": "154ad68319ffb9350f8f82400a8f470867b60c10e637b1d20ea2cc43512bf660",
+    "expression.sus": "235326d31649703c17d4203e8fd2fe3cc1e0c4d00c5e8329f791cc3d158ea3a8",
+    "expression.clj": "930d3647f0b7a1f804b79138174f9a317e04a9a46b24ba63446148a8ef729c36",
+    "cases.json": "d69a1ca0d0c0cc8cf36c7cab218d51d7e6ea2741fc42156f5f0cbd2ee5d90cff",
+    "primary.stdout": "77fffc28e4334150bff8cbe2d9762795b419307d01510637ba8070382ab0a969",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Fresh pinned Clojure primary only. Nine ordered immutable metadata alias controls; native execution is separate."
+}

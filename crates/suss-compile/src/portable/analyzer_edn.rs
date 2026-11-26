@@ -664,7 +664,7 @@ fn lowered_children(kind: &Expression) -> Vec<&Hir> {
         Expression::Call { callee, arguments } => std::iter::once(callee.as_ref()).chain(arguments.iter()).collect(),
         Expression::Function { body, .. } => vec![body],
         Expression::GeneralFunction { methods, .. } => methods.iter().map(|m| m.body.as_ref()).collect(),
-        Expression::AsyncDynamicScope { bindings, body } | Expression::DynamicScope { bindings, body } => bindings
+        Expression::AsyncDynamicScope { bindings, body, .. } | Expression::DynamicScope { bindings, body, .. } => bindings
             .iter()
             .map(|(_, v)| v)
             .chain(std::iter::once(body.as_ref()))
@@ -876,7 +876,16 @@ fn emit_inner(node: &Value) -> Result<Form, String> {
             let Value::Symbol(name) = field(node, "name")? else { return Err("def without a name".into()) };
             let mut name = symbol_form(&name.name);
             if let Some(meta) = get(node, "meta") {
-                name.metadata = vec![value_to_form(meta)];
+                // defmacro itself restores the compiler-owned macro flag.
+                // Keep semantic AST/Var metadata intact, while emitting only
+                // the remaining declaration attributes in the source name.
+                let mut meta = meta.clone();
+                if let Value::Map(entries) = &mut meta {
+                    entries.remove(&kw("macro"));
+                }
+                if !matches!(&meta, Value::Map(entries) if entries.is_empty()) {
+                    name.metadata = vec![value_to_form(&meta)];
+                }
             }
             let mut forms = vec![name];
             if let Some(doc) = get(node, "doc") {

@@ -1,0 +1,137 @@
+[
+  {
+    "name": "core-var-public-symbol",
+    "expression": "[(symbol #'+) (namespace (symbol #'+)) (name (symbol #'+))]",
+    "expected": "[clojure.core/+ \"clojure.core\" \"+\"]"
+  },
+  {
+    "name": "core-var-symbol-identity",
+    "expression": "(identical? (symbol #'+) (symbol #'+))",
+    "expected": "false"
+  },
+  {
+    "name": "core-var-alias-identity",
+    "expression": "(identical? (var +) (var clojure.core/+))",
+    "expected": "true"
+  },
+  {
+    "name": "user-var-symbol",
+    "expression": "(do (eval '(def symbol-probe 42)) (symbol (eval '(var symbol-probe))))",
+    "expected": "user/symbol-probe"
+  },
+  {
+    "name": "two-arg-plain",
+    "expression": "(let [s (symbol \"a\" \"b\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"a\" \"b\"]"
+  },
+  {
+    "name": "two-arg-nil-namespace",
+    "expression": "(let [s (symbol nil \"b\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true nil \"b\"]"
+  },
+  {
+    "name": "two-arg-empty-namespace",
+    "expression": "(let [s (symbol \"\" \"b\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"\" \"b\"]"
+  },
+  {
+    "name": "two-arg-empty-name",
+    "expression": "(let [s (symbol \"a\" \"\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"a\" \"\"]"
+  },
+  {
+    "name": "two-arg-nil-name",
+    "expression": "(let [s (symbol \"a\" nil)] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"a\" nil]"
+  },
+  {
+    "name": "two-arg-nil-both",
+    "expression": "(let [s (symbol nil nil)] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true nil nil]"
+  },
+  {
+    "name": "two-arg-slash-name",
+    "expression": "(let [s (symbol \"a\" \"b/c\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"a\" \"b/c\"]"
+  },
+  {
+    "name": "two-arg-unicode",
+    "expression": "(let [s (symbol \"\ud83d\ude00\" \"\u03bb\")] [(symbol? s) (namespace s) (name s)])",
+    "expected": "[true \"\ud83d\ude00\" \"\u03bb\"]"
+  },
+  {
+    "name": "reject-symbol-ns",
+    "expression": "(try (symbol 'abc \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-symbol-name",
+    "expression": "(try (symbol \"abc\" 'abc) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-keyword-ns",
+    "expression": "(try (symbol :abc \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-keyword-name",
+    "expression": "(try (symbol \"abc\" :abc) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-number-ns",
+    "expression": "(try (symbol 17 \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-number-name",
+    "expression": "(try (symbol \"abc\" 17) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-bool-ns",
+    "expression": "(try (symbol false \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-bool-name",
+    "expression": "(try (symbol \"abc\" true) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-vector-ns",
+    "expression": "(try (symbol [] \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-map-name",
+    "expression": "(try (symbol \"abc\" {}) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-bigint-name",
+    "expression": "(try (symbol nil 1N) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "reject-ratio-ns",
+    "expression": "(try (symbol 1/3 \"abc\") false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "two-arg-effects-before-error",
+    "expression": "(let [trace (atom [])] [(try (symbol (do (swap! trace conj :ns) 'abc) (do (swap! trace conj :name) \"abc\")) false (catch Throwable _ true)) @trace])",
+    "expected": "[true [:ns :name]]"
+  },
+  {
+    "name": "var-symbol-metadata",
+    "expression": "[(meta (symbol #'+)) (meta (symbol (eval '(def ^{:marker 17} symbol-meta-probe 1))))]",
+    "expected": "[nil nil]"
+  },
+  {
+    "name": "core-var-symbol-roundtrip",
+    "expression": "(let [v (var +)] (identical? v (eval (list 'var (symbol v)))))",
+    "expected": "true"
+  }
+]

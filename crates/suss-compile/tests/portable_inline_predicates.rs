@@ -86,12 +86,15 @@ fn nil_and_identical_compile_inline_unless_shadowed_or_of_another_arity() {
     ] {
         assert!(call(source), "{source} doesn't call");
     }
-    // Only distinct boxed numbers or strings reach the runtime's test.
+    // Scalar comparison and authenticated native handles retain their private
+    // runtime helpers; the public predicate still has no mutable-cell call.
     assert!(
         imports("(fn [x y] (identical? x y))")
             .iter()
             .any(|name| name == "identical-value")
     );
+    assert!(imports("(fn [x y] (identical? x y))")
+        .iter().any(|name| name == "native-identical-test"));
 }
 
 #[test]

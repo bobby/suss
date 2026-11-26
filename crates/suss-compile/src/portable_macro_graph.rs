@@ -9,7 +9,7 @@ use crate::portable::{
 };
 use crate::{
     portable_macro_data::{FormBridge, MetadataShape},
-    portable_session::{Session, SessionError, SessionValue},
+    portable_session::{SessionHost, SessionError, SessionValue},
 };
 use std::{
     cmp::Ordering,
@@ -17,6 +17,8 @@ use std::{
     sync::Arc,
 };
 use suss_reader::forms::{Form, Kind};
+#[cfg(all(test, not(suss_generator)))]
+use crate::portable_session::Session;
 
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
@@ -84,7 +86,7 @@ fn sort_binding_names<'a>(
 }
 
 fn charge_origin_work(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     span: std::ops::Range<usize>,
     units: u64,
 ) -> std::result::Result<(), portable::Diagnostic> {
@@ -115,7 +117,7 @@ fn preserve_source_error<T>(
 }
 
 fn symbol_position(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     origin: &portable::SourceOrigin,
     form: &Form,
 ) -> Result<Option<portable::SourcePosition>> {
@@ -362,6 +364,11 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                 pending.extend(form.metadata.iter().rev().map(Task::Form));
             }
             Task::Kind(form) => match &form.kind {
+                Kind::NativeConstant { owner, index } => {
+                    append(&mut key, &[19], charge)?;
+                    append(&mut key, &owner.to_le_bytes(), charge)?;
+                    append(&mut key, &index.to_le_bytes(), charge)?;
+                }
                 Kind::Nil => append(&mut key, &[0], charge)?,
                 Kind::Bool(value) => append(&mut key, &[1, u8::from(*value)], charge)?,
                 Kind::Number(value) => {
@@ -478,9 +485,9 @@ enum Task {
 /// Recipe memo tables live for one build; transported data is immutable
 /// Clojure data (design decision 2026-10-25). An owned revision pointer is not
 /// an artifact cache key.
-pub struct AnalysisGraph<'a> {
+pub struct AnalysisGraph<'a, 'store> {
     bridge: &'a FormBridge,
-    session: &'a mut Session,
+    session: &'a mut SessionHost<'store>,
     keys: BTreeMap<String, Value>,
     symbols: BTreeMap<String, Value>,
     raw_keys: Interner,
@@ -502,8 +509,9 @@ pub struct AnalysisGraph<'a> {
     asts: BTreeMap<usize, (Arc<hir::SourceAnalysis>, Value)>,
     recipes: Vec<Option<Recipe>>,
     jobs: VecDeque<(Value, Task)>,
+    native_namespace_membership: bool,
 }
-impl<'a> AnalysisGraph<'a> {
+impl<'a, 'store> AnalysisGraph<'a, 'store> {
     fn reader_key(&mut self, form: &Form) -> Result<KeyId> {
         let mut plan = Plan::default();
         let root = self.raw_keys.plan(form, &mut plan, &mut |units| {
@@ -517,7 +525,7 @@ impl<'a> AnalysisGraph<'a> {
         })
         .map_err(SessionError::Compile)
     }
-    pub fn new(bridge: &'a FormBridge, session: &'a mut Session) -> Self {
+    pub fn new(bridge: &'a FormBridge, session: &'a mut SessionHost<'store>) -> Self {
         Self {
             bridge,
             session,
@@ -538,6 +546,7 @@ impl<'a> AnalysisGraph<'a> {
             asts: BTreeMap::new(),
             recipes: Vec::new(),
             jobs: VecDeque::new(),
+            native_namespace_membership: false,
         }
     }
     fn recipe(&mut self, recipe: Recipe) -> Result<Value> {
@@ -995,7 +1004,7 @@ impl<'a> AnalysisGraph<'a> {
             fn form(&self) -> &Form {
                 match self { Self::Borrowed(form) => form, Self::Owned(form) => form }
             }
-            fn leaf(self, session: &mut Session) -> Result<Form> {
+            fn leaf(self, session: &mut SessionHost<'_>) -> Result<Form> {
                 match self {
                     // A queue literal is transported whole, with its metadata.
                     Self::Owned(form) if matches!(form.kind, Kind::Tagged { .. }) => Ok(form),
@@ -1252,6 +1261,42 @@ impl<'a> AnalysisGraph<'a> {
             portable::AnalysisContext::Expression => "expr",
             portable::AnalysisContext::Return => "return",
         })
+    }
+    /// Clojure Compiler.eval supplies nil at top level and a Symbol-keyed
+    /// lexical environment inside a compiled body. Explicit Suss compiler
+    /// catalog requests retain their separate graph interface.
+    pub(crate) fn native_evaluation_locals(
+        &mut self, context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
+        // Initializer ASTs retain real source locals and namespace membership,
+        // without recursively importing every unrelated global definition.
+        // Full compiler catalogs remain an explicit, separate projection.
+        let mut projection = AnalysisGraph::new(self.bridge, &mut *self.session);
+        projection.native_namespace_membership = true;
+        projection.native_local_values(context)
+    }
+    fn native_local_values(
+        &mut self, context: portable::ExpansionContext<'_>,
+    ) -> Result<SessionValue> {
+        self.charge(context.locals.len().saturating_add(context.fields.len()))?;
+        let root = if context.locals.is_empty() && context.fields.is_empty() {
+            self.scalar(Literal::Nil)?
+        } else {
+            let mut entries = BTreeMap::new();
+            for (name, field) in context.fields {
+                self.charge(name.len().saturating_add(1))?;
+                entries.insert(name.clone(), self.field(field, 1)?);
+            }
+            for (name, local) in context.locals {
+                self.charge(name.len().saturating_add(1))?;
+                entries.insert(name.clone(), self.local(local, 1)?);
+            }
+            let entries = entries.into_iter().map(|(name, value)| {
+                Ok((self.symbol(&name)?, value))
+            }).collect::<Result<Vec<_>>>()?;
+            self.map_values(entries)?
+        };
+        self.materialize(root)
     }
     pub fn expansion(&mut self, context: portable::ExpansionContext<'_>) -> Result<SessionValue> {
         self.expansion_catalog(context, false, false)
@@ -1571,6 +1616,14 @@ impl<'a> AnalysisGraph<'a> {
     }
     fn namespace(&mut self, namespace: &Arc<SourceNamespace>, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
+        if self.native_namespace_membership {
+            let key = Arc::as_ptr(namespace) as usize;
+            self.charge(1)?;
+            if let Some((_, value)) = self.namespaces.get(&key) { return Ok(*value); }
+            let value = self.namespace_membership(namespace)?;
+            self.namespaces.insert(key, (namespace.clone(), value));
+            return Ok(value);
+        }
         let fact_count = namespace.aliases.len()
             + namespace.refers.len()
             + namespace.used_refers.len()
@@ -1728,7 +1781,7 @@ impl<'a> AnalysisGraph<'a> {
             return Ok(*value);
         }
         let tracing = std::env::var_os("SUSS_METADATA_FUEL_TRACE").is_some();
-        let trace = |session: &Session, stage: &str| -> Result<()> {
+        let trace = |session: &SessionHost<'_>, stage: &str| -> Result<()> {
             if tracing {
                 eprintln!("metadata-declaration {}/{} {stage}: {}", global.namespace(), global.name(), session.operation_fuel_remaining()?);
             }
@@ -3092,7 +3145,7 @@ impl<'a> AnalysisGraph<'a> {
                 "function",
                 methods.iter().map(|method| method.body.as_ref()).collect(),
             ),
-            Expression::AsyncDynamicScope { bindings, body } => (
+            Expression::AsyncDynamicScope { bindings, body, .. } => (
                 "async-dynamic-scope",
                 bindings
                     .iter()
@@ -3100,7 +3153,7 @@ impl<'a> AnalysisGraph<'a> {
                     .chain(std::iter::once(body.as_ref()))
                     .collect(),
             ),
-            Expression::DynamicScope { bindings, body } => (
+            Expression::DynamicScope { bindings, body, .. } => (
                 "dynamic-scope",
                 bindings
                     .iter()
@@ -3229,7 +3282,7 @@ mod sharing_tests {
     #[test]
     fn owned_normalized_metadata_fuel_failure_preserves_input_and_retry_recovers() {
         const MARKER: &str = "owned-prefix-marker";
-        fn marker_emitted(graph: &AnalysisGraph<'_>) -> bool {
+        fn marker_emitted(graph: &AnalysisGraph<'_, '_>) -> bool {
             graph.recipes.iter().flatten().any(|recipe| {
                 matches!(recipe, Recipe::Form(Form { kind: Kind::Symbol(symbol), .. })
                     if symbol.namespace.is_none() && symbol.name == MARKER)
@@ -3589,7 +3642,7 @@ mod sharing_tests {
         let (global, source) = namespace.declarations.iter()
             .find(|(global, _)| global.name() == "review-retained")
             .map(|(global, source)| (global.clone(), source.clone())).unwrap();
-        let build = |session: &mut Session, source: &Arc<portable::resolve::DefinitionInfo>| {
+        let build = |session: &mut SessionHost<'_>, source: &Arc<portable::resolve::DefinitionInfo>| {
             let _request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, session);
             let root = graph.declaration(&global, Some(source), 0).unwrap();
@@ -3984,7 +4037,7 @@ mod sharing_tests {
             .eval("(fn [value index] (nth (nth value index) 0))")
             .unwrap();
         fn bitmaps(
-            session: &mut Session,
+            session: &mut SessionHost<'_>,
             bridge: &FormBridge,
             probe: &SessionValue,
             value: &SessionValue,

@@ -1,0 +1,112 @@
+[
+  {
+    "name": "evaluated-macro",
+    "expression": "(do (eval '(defmacro review-eval-macro [] 42)) (eval '(review-eval-macro)))",
+    "expected": "42"
+  },
+  {
+    "name": "evaluated-macro-argument",
+    "expression": "(do (eval '(defmacro review-eval-add [x] (list '+ x 1))) (eval '(review-eval-add 41)))",
+    "expected": "42"
+  },
+  {
+    "name": "evaluated-macro-var",
+    "expression": "(let [v (eval '(defmacro review-eval-var [] 42))] [(var? v) (.isMacro v) (:macro (meta v)) (identical? v (eval '(var review-eval-var)))])",
+    "expected": "[true true true true]"
+  },
+  {
+    "name": "macro-prefix-survives-error",
+    "expression": "(do (try (eval '(do (defmacro review-prefix [] 42) missing-review)) (catch Exception _ nil)) (eval '(review-prefix)))",
+    "expected": "42"
+  },
+  {
+    "name": "raw-macro-function-returns-data",
+    "expression": "(let [v (eval '(defmacro raw-decl [x] (list '+ x 1)))] [(@v nil nil 41) (fn? @v) (ifn? v)])",
+    "expected": "[(+ 41 1) true true]"
+  },
+  {
+    "name": "captured-old-macro-root",
+    "expression": "(let [v (eval '(defmacro old-decl [] 1)) f @v] (eval '(defmacro old-decl [] 2)) [(f nil nil) (@v nil nil) (identical? v (eval '(var old-decl))) (eval '(old-decl))])",
+    "expected": "[1 2 true 2]"
+  },
+  {
+    "name": "ordinary-redefinition-after-macro",
+    "expression": "(do (eval '(defmacro ordinary-after-macro [] 1)) (eval '(def ordinary-after-macro (fn [] 2))) [(:macro (meta (eval '(var ordinary-after-macro)))) (try (eval '(ordinary-after-macro)) (catch Throwable _ :failed))])",
+    "expected": "[nil 2]"
+  },
+  {
+    "name": "macro-body-expanded-once",
+    "expression": "(do (eval '(declaration-reset)) (eval '(defmacro once-decl [] (declaration-stamp 42))) [(eval '(once-decl)) (eval '(declaration-count))])",
+    "expected": "[42 1]"
+  },
+  {
+    "name": "failed-macro-keeps-root",
+    "expression": "(do (eval '(defmacro kept-decl [] 42)) (try (eval '(defmacro kept-decl [] declaration-missing)) (catch Throwable _ nil)) (eval '(kept-decl)))",
+    "expected": "42"
+  },
+  {
+    "name": "macro-prefix-stops-at-throw",
+    "expression": "(do (try (eval '(do (defmacro throw-prefix [] 42) (throw (Exception. \"prefix\")) (defmacro after-throw [] 7))) (catch Throwable _ nil)) [(eval '(throw-prefix)) (try (eval '(after-throw)) (catch Throwable _ :missing))])",
+    "expected": "[42 :missing]"
+  },
+  {
+    "name": "macro-definition-no-body-execution",
+    "expression": "(do (eval '(defmacro lazy-decl [] (throw (Exception. \"only on invocation\")))) (try (eval '(lazy-decl)) (catch Throwable _ :body-ran)))",
+    "expected": ":body-ran"
+  },
+  {
+    "name": "macro-rest-arity",
+    "expression": "(do (eval '(defmacro rest-decl [a & xs] (list 'quote (into [a] xs)))) (eval '(rest-decl 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22)))",
+    "expected": "[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]"
+  },
+  {
+    "name": "macro-multiple-arities",
+    "expression": "(do (eval '(defmacro multi-decl ([] 42) ([x] x) ([x y] (list '+ x y)))) [(eval '(multi-decl)) (eval '(multi-decl 7)) (eval '(multi-decl 20 22))])",
+    "expected": "[42 7 42]"
+  },
+  {
+    "name": "raw-macro-argument-error",
+    "expression": "(let [v (eval '(defmacro raw-arity [x] x))] (try (v) (catch Throwable _ :wrong-arity)))",
+    "expected": ":wrong-arity"
+  },
+  {
+    "name": "raw-macro-language-error",
+    "expression": "(let [v (eval '(defmacro raw-error [] (throw (Exception. \"raw boom\"))))] (try (v nil nil) (catch Throwable _ :caught)))",
+    "expected": ":caught"
+  },
+  {
+    "name": "raw-macro-numeric-data",
+    "expression": "(let [v (eval '(defmacro numeric-decl [] [123456789012345678901234567890N 3/2 1.2300M]))] (v nil nil))",
+    "expected": "[123456789012345678901234567890N 3/2 1.2300M]"
+  },
+  {
+    "name": "macro-other-namespace",
+    "expression": "(binding [*ns* *ns*] (eval '(ns declaration-place)) (eval '(defmacro placed-decl [] 42)) (eval '(placed-decl)))",
+    "expected": "42"
+  },
+  {
+    "name": "qualified-macro-other-namespace",
+    "expression": "(eval '(declaration-place/placed-decl))",
+    "expected": "42"
+  },
+  {
+    "name": "macro-namespace-alias",
+    "expression": "(do (eval '(alias 'dp 'declaration-place)) (eval '(dp/placed-decl)))",
+    "expected": "42"
+  },
+  {
+    "name": "macro-implicit-parameters",
+    "expression": "(do (eval '(defmacro implicit-decl [] (list 'quote [(first &form) (nil? &env)]))) (eval '(implicit-decl)))",
+    "expected": "[implicit-decl true]"
+  },
+  {
+    "name": "macro-doc-and-metadata",
+    "expression": "(let [v (eval '(defmacro metadata-decl \"decl doc\" {:custom 17} [] 42)) m (meta v)] [(:name m) (ns-name (:ns m)) (:doc m) (:custom m) (:macro m)])",
+    "expected": "[metadata-decl user \"decl doc\" 17 true]"
+  },
+  {
+    "name": "raw-macro-retained-collection",
+    "expression": "(let [v (eval '(defmacro collection-decl [x] (list 'quote x)))] (v nil nil {:exact 3/2 :dec 1.2300M}))",
+    "expected": "(quote {:exact 3/2, :dec 1.2300M})"
+  }
+]

@@ -1,3 +1,11 @@
+### Native host/Macro and Var foundation extraction
+
+The core boundary is specified in [host-macro-boundary.md](../runtime/host-macro-boundary.md), with ownership, transport, retirement, dynamic context and Var publication transition/test maps. The foundation excludes the public language eval wrapper and its original body guard; those remain in #516. Numeric implementation remains in #518. Fourteen original tests move unchanged to CLI native_host_boundary; public-eval controls and historical execution archives remain on #516. Test-body hashes and the extraction map distinguish code movement from new validation.
+
+Use the native_host_boundary, runtime_evaluation, portable_aot_options and original pinned case/map targets, then ownership library, source/macro/ABI controls, bootstrap reproduction and the exact two-thread workspace baseline. Existing historical successes do not establish validation of the extracted tree. Current failures, commands and results belong in the linked issues and scoped receipts; extraction alone does not satisfy acceptance or promotion.
+
+Earlier handoff follows.
+
 ## Object-overload random controls and complete assert execution (2026-11-23)
 
 The e89e8ad2 core-only gate returns0 in654.236s (including a library rebuild),

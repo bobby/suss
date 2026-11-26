@@ -685,6 +685,48 @@ pub(super) fn string_hash(b: &mut Builder) {
     b.function_with_locals("string-hash", &[VALUE], &[VALUE], &[(1, typed_string), (3, ValType::I32)], &code);
 }
 
+/// Murmur3 x86_32 over unencoded UTF-16 code units, with seed zero. This is the
+/// same pair/odd-tail/fmix algorithm as core's source m3-hash-unencoded-chars;
+/// direct i32 operations avoid boxed arithmetic while hashing namespace keys.
+pub(super) fn hash_unencoded_chars(b: &mut Builder) {
+    use Instruction::*;
+    let typed_string = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(STRING) });
+    let mut code = vec![
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(STRING)), I32Eqz, If(BlockType::Empty),
+    ];
+    code.extend(numeric::error("Murmur3 character hashing requires a string", 3));
+    code.extend([
+        End, LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), LocalTee(1), ArrayLen, LocalSet(2),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), I32Const(1), I32Add, LocalGet(2), I32GeU, BrIf(1),
+        LocalGet(1), LocalGet(3), ArrayGetU(STRING),
+        LocalGet(1), LocalGet(3), I32Const(1), I32Add, ArrayGetU(STRING),
+        I32Const(16), I32Shl, I32Or,
+    ]);
+    code.extend(mix_k1());
+    code.extend(mix_h1(4));
+    code.extend([
+        LocalGet(3), I32Const(2), I32Add, LocalSet(3), Br(0), End, End,
+        LocalGet(3), LocalGet(2), I32LtU, If(BlockType::Empty),
+        LocalGet(4), LocalGet(1), LocalGet(3), ArrayGetU(STRING),
+    ]);
+    code.extend(mix_k1());
+    code.extend([
+        I32Xor, LocalSet(4), End,
+        // fmix(h1, 2 * UTF-16 length), including the empty string.
+        LocalGet(4), LocalGet(2), I32Const(2), I32Mul, I32Xor, LocalTee(4),
+        LocalGet(4), I32Const(16), I32ShrU, I32Xor,
+        I32Const(0x85ebca6b_u32 as i32), I32Mul, LocalTee(4),
+        LocalGet(4), I32Const(13), I32ShrU, I32Xor,
+        I32Const(0xc2b2ae35_u32 as i32), I32Mul, LocalTee(4),
+        LocalGet(4), I32Const(16), I32ShrU, I32Xor, LocalSet(4),
+        LocalGet(4), I32Const(0x4000_0000), I32Add, I32Const(0), I32GeS, If(BlockType::Result(VALUE)),
+        LocalGet(4), RefI31, Else, LocalGet(4), I64ExtendI32S, StructNew(LONG), End,
+    ]);
+    b.function_with_locals("hash-unencoded-chars", &[VALUE], &[VALUE],
+        &[(1, typed_string), (3, ValType::I32)], &code);
+}
+
 /// `string-append-long(s, n)` (#388): string `s` followed by the decimal
 /// digits of long `n`, an i31 or a boxed long, in one new string, with no
 /// intermediate digit string and one copy.

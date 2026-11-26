@@ -20,6 +20,7 @@ mod namespaces;
 mod exceptions;
 mod nominal;
 mod quotes;
+mod vars;
 mod primitive_returns;
 mod source_tags;
 use super::{
@@ -285,6 +286,13 @@ pub enum Bitwise {
     F64TimeClip,
     /// Execution-time entropy; never a compiler constant or a pure operation.
     RandomDouble,
+    EvaluateForm,
+    NamespaceInterns,
+    DeclareBinding,
+    HashUnencodedChars,
+    BindingGetterUnboundInit,
+    BindingGetterRootSet,
+    BindingGetterRootGet,
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
@@ -439,6 +447,13 @@ impl Bitwise {
             Self::F64SafeInteger => "primitive-f64-safe-integer",
             Self::F64TimeClip => "primitive-f64-time-clip",
             Self::RandomDouble => "random-double",
+            Self::EvaluateForm => "evaluate-form",
+            Self::NamespaceInterns => "namespace-interns",
+            Self::DeclareBinding => "binding-declare",
+            Self::HashUnencodedChars => "hash-unencoded-chars",
+            Self::BindingGetterUnboundInit => "binding-getter-unbound-init!",
+            Self::BindingGetterRootSet => "binding-getter-root-set!",
+            Self::BindingGetterRootGet => "binding-getter-root-get",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
@@ -487,6 +502,8 @@ impl Bitwise {
     pub(crate) fn arity(self) -> usize {
         match self {
             Self::RandomDouble => 0,
+            Self::BindingGetterRootSet => 3,
+            Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::HashUnencodedChars | Self::BindingGetterRootGet => 1,
             Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
@@ -545,7 +562,7 @@ impl Bitwise {
                 | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
             Type::Value
         } else {
             Type::Number
@@ -680,6 +697,16 @@ pub enum Nominal {
     CallableKeyRegister,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
+    /// Compiler-only construction of the shared Wasm getter for a native Var.
+    BindingGetter,
+    /// Private compiled-core access to the real Var root's macro flag.
+    BindingGetterMacro,
+    BindingGetterMacroSet,
+    /// Compiler-only dynamic-frame snapshot, preserving private deferred values.
+    BindingSnapshot,
+    /// Compiler-only root definition, independent of the current dynamic frame.
+    BindingRootSet,
+    BindingRootDefine,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -779,7 +806,7 @@ impl Nominal {
         match self {
             Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
             Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
-            Self::BindingDefined
+            Self::BindingDefined | Self::BindingGetterMacro
             | Self::IsNumber
             | Self::IsRatio
             | Self::IsBigInt
@@ -849,8 +876,8 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
-                Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
+                Self::BindingDefined | Self::BindingGetter | Self::BindingGetterMacro | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
+                Self::BindingRootSet | Self::BindingRootDefine | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
@@ -1044,6 +1071,10 @@ pub enum SourceNode {
 }
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
+    /// A source macro declaration was already recorded in its owning phase.
+    /// Its compiler-generated nil keeps the Runtime pipeline staged, but is not
+    /// another source form. Real nils and nil-valued macro calls remain nodes.
+    pub(crate) declaration_placeholder: bool,
     /// Set only for analyzer-generated body regions, before runtime lowering.
     pub is_body: bool,
     pub tags: SourceTags,
@@ -1134,6 +1165,8 @@ pub enum Expression {
         payload: Option<Parameter>,
     },
     AsyncDynamicScope {
+        /// Root replacement for with-redefs; false for thread binding.
+        roots: bool,
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
     },
@@ -1152,6 +1185,8 @@ pub enum Expression {
         arguments: Vec<Hir>,
     },
     DynamicScope {
+        /// Root replacement for with-redefs; false for thread binding.
+        roots: bool,
         bindings: Vec<(Global, Hir)>,
         body: Box<Hir>,
     },
@@ -1183,6 +1218,11 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// Only the compiler's converted top-level macro declaration preserves
+        /// an enrolled staging root. Nested/user definitions are real writes.
+        compiler_root: bool,
+        /// Native Var result after a successful write; absent during bootstrap.
+        result: Option<Box<Hir>>,
         /// An initialized scalar constant revision, published with its live var.
         constant: Option<Global>,
         global: Global,
@@ -1279,6 +1319,8 @@ struct Analyzer<'a> {
     /// fields by name.
     field_owner: Option<BindingId>,
     function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
+    native_function_pools: Vec<u64>,
+    native_pool_initializers: Vec<BTreeMap<Global, Hir>>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -1531,14 +1573,30 @@ impl Analyzer<'_> {
                         fields: &self.fields,
                         function_scopes: &self.function_scopes,
                     };
-                    if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                    let expanded = self.expander.expand(form, expansion_context)?;
+                    self.expander.refresh_native_environment(&mut self.environment, form.span.clone())?;
+                    if let Some(expanded) = expanded {
+                        let mut declaration_placeholder = false;
                         if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
                             let namespace = self.environment.current_namespace(self.phase).to_owned();
                             if let Some(names) = self.expander.declared_macro_exports(&namespace) {
+                                declaration_placeholder = matches!(expanded.kind, Kind::Nil);
                                 self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
+                                if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
+                                    self.environment.record_macro_declaration(self.phase, &namespace, &name.name);
+                                    self.environment.record_macro_owner(self.phase, &namespace, &name.name,
+                                        self.expander.macro_binding_owner(&namespace, &name.name));
+                                }
                             }
                         }
-                        return self.form_in_named(&expanded, context, tail, name_hint);
+                        return self.form_in_named(&expanded, context, tail, name_hint).map(|mut value| {
+                            if declaration_placeholder {
+                                if let Some(source) = &mut value.source {
+                                    std::sync::Arc::make_mut(source).declaration_placeholder = true;
+                                }
+                            }
+                            value
+                        });
                     }
                     // Bootstrap binding forms lower before source facts are
                     // recorded. let shares the pinned function-pattern binder;
@@ -1652,6 +1710,7 @@ impl Analyzer<'_> {
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                 )?;
                 let mut source = SourceAnalysis {
+                    declaration_placeholder: false,
                     is_body: false,
                     tags,
                     form: form.clone(),
@@ -1716,6 +1775,8 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
+                result: None,
                 constant: None,
                         global: fallback.clone(),
                         name_metadata: Vec::new(),
@@ -1772,6 +1833,7 @@ impl Analyzer<'_> {
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
+            Kind::NativeConstant { owner, index } => return self.native_constant(form, *owner, *index),
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
@@ -2404,20 +2466,19 @@ impl Analyzer<'_> {
         // cross-namespace access remains callable (the pinned analyzer emits a
         // warning, not an access error). Warning emission/namespace filtering
         // remain separate unfinished namespace acceptance requirements.
-        for metadata in &args[0].metadata {
-            let unsupported = |form: &Form| {
-                matches!(&form.kind, Kind::Keyword(key)
+        // False and nil are ordinary declaration metadata, not permission to
+        // expand a Var as a macro. Retain those exact values on the real Var.
+        let macro_enabled = reader_metadata_pairs(&args[0])?.chunks_exact(2).any(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
                 if key.namespace.is_none() && key.name == "macro")
-            };
-            if unsupported(metadata)
-                || matches!(&metadata.kind, Kind::Map(entries)
-                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0])))
-            {
-                return Err(fail(
-                    args[0].span.clone(),
-                    "Definition const/macro attributes are not implemented yet",
-                ));
-            }
+                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+        });
+        let native_macro = macro_enabled && self.origin.as_ref().is_some_and(|origin| origin.native_owner().is_some());
+        if macro_enabled && !native_macro && !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition()) {
+            return Err(fail(
+                args[0].span.clone(),
+                "Definition const/macro attributes are not implemented yet",
+            ));
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         if name
@@ -2500,6 +2561,10 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
+        if let Some(owner) = self.origin.as_ref().and_then(|origin| origin.native_owner()) {
+            self.expander.intern_native_var(owner, &global, &definition.declaration,
+                definition.docstring.as_deref())?;
+        }
         // Register shipped core's direct link before analyzing the initializer,
         // so a self-recursive core function also calls its own definition.
         let dynamic = Self::dynamic_metadata(&args[0]) || prior_dynamic;
@@ -2559,6 +2624,13 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition);
         }
+        if native_macro {
+            // A native def with truthy :macro metadata is an ordinary real Var
+            // transformer. Its root executes in this same Store; no isolated
+            // source catalog entry or unused-parameter proof is manufactured.
+            self.environment.record_native_macro_definition(self.phase, &namespace, &name.name,
+                self.origin.as_ref().and_then(|origin| origin.native_owner()).expect("native macro origin"));
+        }
         // Direct linking (#360): in an AOT build, a user var defined as a
         // function with no captures publishes its closure as a new link, and
         // later calls of the var call that definition, as Clojure's
@@ -2591,12 +2663,19 @@ impl Analyzer<'_> {
             self.environment.end_direct_link(&global);
             initializer
         };
+        let native_vars = self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone())
+            .ok().and_then(|binding| self.environment.existing_core_link(binding.global())).is_some();
+        let result = if !self.privileged && native_vars {
+            Some(Box::new(self.binding_var(form, &global, true)?))
+        } else { None };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
+                result,
                 constant: constant_cell,
                 global,
                 name_metadata: args[0].metadata.clone(),
@@ -2646,7 +2725,14 @@ impl Analyzer<'_> {
         // must not change an initializer function's return behavior.
         let return_hint = primitive_tag_key(form, "rettag")?;
         let outer_return_hint = std::mem::replace(&mut self.pending_return_hint, return_hint);
-        let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        let native = self.origin.as_ref().is_some_and(|origin| origin.native_owner().is_some());
+        if native { let pool=self.environment.native_function_pool(); self.native_function_pools.push(pool); self.native_pool_initializers.push(BTreeMap::new()); }
+        let mut result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        if native {
+            self.native_function_pools.pop();
+            let initializers=self.native_pool_initializers.pop().unwrap();
+            result=result.map(|value| Self::initialize_native_pool(value,initializers));
+        }
         self.pending_return_hint = outer_return_hint;
         self.pending_param_hints = outer_hints;
         self.suspendable = suspendable;
@@ -3571,6 +3657,8 @@ impl Analyzer<'_> {
                 "decimal-from-integer" => Some(Nominal::DecimalNew),
                 "as-decimal" => Some(Nominal::DecimalCoerce),
                 "math-context-new" => Some(Nominal::DecimalContextNew),
+                "binding-getter-macro?" => Some(Nominal::BindingGetterMacro),
+                "binding-getter-macro-set!" => Some(Nominal::BindingGetterMacroSet),
                 "decimal-context-getter-install" => Some(Nominal::DecimalContextGetter),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),
@@ -3633,6 +3721,10 @@ impl Analyzer<'_> {
                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";
+                let var_macro = matches!(operation, Nominal::BindingGetterMacro | Nominal::BindingGetterMacroSet);
+                if var_macro && !self.privileged && !ordinary_core {
+                    return Err(fail(form.span.clone(), "Var macro flags require compiled core"));
+                }
                 let transient_vector = matches!(operation, Nominal::TransientVectorTypes | Nominal::TransientVectorAppend);
                 let transient_map = matches!(operation, Nominal::TransientMapTypes | Nominal::TransientMapAssoc | Nominal::TransientMapConj);
                 if transient_map && !self.privileged && !ordinary_core {
@@ -3659,6 +3751,9 @@ impl Analyzer<'_> {
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
+                if var_macro && ordinary_core {
+                    return Ok(self.ordinary_var_macro_adapter(form, operation, operands));
+                }
                 if (chunk || transient_vector || transient_map) && ordinary_core {
                     // Direct source loading keeps user-extensible descriptors.
                     // It cannot register them as canonical or access native
@@ -3684,6 +3779,12 @@ impl Analyzer<'_> {
                 "f64-safe-integer" => Some(Bitwise::F64SafeInteger),
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "random-double" => Some(Bitwise::RandomDouble),
+                "evaluate-form" => Some(Bitwise::EvaluateForm),
+                "namespace-interns" => Some(Bitwise::NamespaceInterns),
+                "hash-unencoded-chars" => Some(Bitwise::HashUnencodedChars),
+                "binding-getter-unbound-init!" => Some(Bitwise::BindingGetterUnboundInit),
+                "binding-getter-root-set!" => Some(Bitwise::BindingGetterRootSet),
+                "binding-getter-root-get" => Some(Bitwise::BindingGetterRootGet),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
@@ -3896,7 +3997,7 @@ impl Analyzer<'_> {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
+                "if" | "do" | "fn*" | "def" | "var" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
@@ -4153,8 +4254,8 @@ impl Analyzer<'_> {
                 }),
             });
         }
-        if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
-            return self.dynamic_scope(form, args, context);
+        if let Some(ResolvedBinding::BootstrapBinding(global)) = &resolved {
+            return self.dynamic_scope(form, args, context, global.name() == "with-redefs");
         }
         if bare && symbol.name == "throw" {
             if args.len() != 1 {
@@ -4220,8 +4321,30 @@ impl Analyzer<'_> {
                 kind: std::sync::Arc::new(Expression::Recur { target, arguments }),
             });
         }
+        if bare && symbol.name == "var" {
+            if args.len() != 1 { return Err(fail(form.span.clone(), "var requires exactly one symbol")); }
+            let Kind::Symbol(target) = &args[0].kind else { return Err(fail(args[0].span.clone(), "var requires a symbol")); };
+            let mut resolved = self.environment.resolve(self.phase, target, args[0].span.clone()).map(|binding| binding.global().clone());
+            if resolved.is_err() {
+                if let Some(owner) = self.environment.native_compilation_owner {
+                    self.expander.charge_expansion_work((target.namespace.as_ref().map_or(0, String::len) + target.name.len() + self.environment.current_namespace(self.phase).len()) as u64 * 4 + 1, form.span.clone())?;
+                    for global in self.environment.macro_var_candidates(self.phase, target) {
+                        self.expander.charge_expansion_work((global.namespace().len() + global.name().len()) as u64 + 1, form.span.clone())?;
+                        if let Some(actual_owner) = self.expander.intern_source_macro_var(owner, &global, form.span.clone())? {
+                            self.environment.declare_cell(self.phase, global.namespace(), global.name())?;
+                            self.environment.record_native_macro_definition(self.phase, global.namespace(), global.name(), actual_owner);
+                            resolved = self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced(global.namespace(), global.name()), args[0].span.clone()).map(|binding| binding.global().clone());
+                            break;
+                        }
+                    }
+                }
+            }
+            let global = resolved?;
+            return self.binding_var(form, &global, false);
+        }
         if bare && symbol.name == "def" {
-            if args.len() == 1 && context != super::AnalysisContext::Statement {
+            if args.len() == 1 && context != super::AnalysisContext::Statement
+                && self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced("suss.core", "make-binding-var"), form.span.clone()).is_err() {
                 return Err(fail(
                     form.span.clone(),
                     "Initializerless def expression results are not certified yet; use a declaration statement",
@@ -4580,8 +4703,8 @@ impl Analyzer<'_> {
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
     match &*hir.kind {
         Expression::Assign { value, .. } => free_bindings(value, bound, free),
-        Expression::DynamicScope { bindings, body }
-        | Expression::AsyncDynamicScope { bindings, body } => {
+        Expression::DynamicScope { bindings, body, .. }
+        | Expression::AsyncDynamicScope { bindings, body, .. } => {
             for (_, value) in bindings {
                 free_bindings(value, bound, free);
             }
@@ -4788,6 +4911,8 @@ pub(crate) fn prepare_with_origin(
         type_body_fields: Vec::new(),
         field_owner: None,
         function_scopes: Vec::new().into(),
+        native_function_pools: Vec::new(),
+        native_pool_initializers: Vec::new(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
@@ -4804,6 +4929,11 @@ pub(crate) fn prepare_with_origin(
         method_recurrence: Vec::new(),
         primitive_methods: HashMap::new(),
     };
+    if origin.is_some_and(|origin| origin.native_owner().is_some()) {
+        let pool=analyzer.environment.native_function_pool();
+        analyzer.native_function_pools.push(pool);
+        analyzer.native_pool_initializers.push(BTreeMap::new());
+    }
     // The frame's own forms take the fragment's extent, not the source's, so
     // a fragment's IR and cache key do not change with the rest of its file.
     let extent = match (forms.first(), forms.last()) {
@@ -4811,6 +4941,20 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    // Mark the converted declaration before namespace/native-pool wrappers.
+    // Only its result definition owns the staging write; initializer bodies,
+    // declaration metadata and hidden helper definitions remain real writes.
+    if origin.is_some_and(super::SourceOrigin::is_macro_definition) {
+        fn mark_root(hir: &mut Hir) -> Result<(), Diagnostic> {
+            let span = hir.span.clone();
+            match hir.kind_mut() {
+                Expression::Definition { compiler_root, .. } => { *compiler_root = true; Ok(()) }
+                Expression::Do(items) if !items.is_empty() => mark_root(items.last_mut().unwrap()),
+                _ => Err(Diagnostic { span, message: "Converted macro definition lost its root declaration".into() }),
+            }
+        }
+        mark_root(&mut hir)?;
+    }
     let source_span = hir.span.clone();
     division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
@@ -4818,6 +4962,9 @@ pub(crate) fn prepare_with_origin(
         super::analysis_record::analyzed_forms(origin, items);
     }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
+    if let Some(initializers)=analyzer.native_pool_initializers.pop() {
+        hir=Analyzer::initialize_native_pool(hir,initializers);
+    }
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

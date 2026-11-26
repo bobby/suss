@@ -1,0 +1,1 @@
+(ns mixed) (defmacro shared [] 17) (def first (user/native-reassert-shared)) (def answer (shared))

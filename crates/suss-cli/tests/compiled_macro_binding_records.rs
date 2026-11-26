@@ -88,6 +88,15 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
   (checkpoint "outside" x)))
 (def prior 41)"#;
         session.eval_with_macros(source, &mut host).unwrap();
+        let candidate = {
+            let observed = snapshot(&host, "caught");
+            let SourceRole::CatchBinding { hidden, .. } = &observed["problem"].source_role else { panic!("source catch alias") };
+            let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private catch symbol") };
+            name.name.trim_end_matches('$').to_owned()
+        };
+        let source = source.replace("$exception2", &candidate);
+        let mut host = Observe::default();
+        session.eval_with_macros(&source, &mut host).unwrap();
         assert_eq!(scalar(&mut session, "result"), 40);
         assert_eq!(scalar(&mut session, "prior"), 41);
         let caught = snapshot(&host, "caught");
@@ -96,11 +105,11 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         assert_eq!(problem.source_kind(), LocalKind::Let);
         let SourceRole::CatchBinding { hidden, access } = &problem.source_role else { panic!("source catch alias") };
         let Kind::Symbol(name) = &hidden.declaration.kind else { panic!("private catch symbol") };
-        assert_eq!(name.name, "$exception2$");
+        assert_eq!(name.name, format!("{candidate}$"));
         assert!(caught.contains_key(&name.name));
-        assert!(caught.contains_key("$exception2"));
+        assert!(caught.contains_key(&candidate));
         assert_eq!(hidden.id, problem.id);
-        assert_ne!(hidden.id, caught["$exception2"].id);
+        assert_ne!(hidden.id, caught[&candidate].id);
         assert_eq!(hidden.kind, LocalKind::Catch);
         assert!(hidden.initializer.is_none());
         assert!(matches!(*access.kind, Expression::Local(id) if id == hidden.id));
@@ -110,10 +119,10 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         let outside = snapshot(&host, "outside");
         assert!(!outside.contains_key(&name.name));
         assert!(!outside.contains_key("problem"));
-        assert_eq!(outside["$exception2"].id, caught["$exception2"].id);
+        assert_eq!(outside[&candidate].id, caught[&candidate].id);
         let original = caught["x"].initializer.as_ref().unwrap().source.as_ref().unwrap();
         assert_eq!(original.context, portable::AnalysisContext::Expression);
-        assert!(original.locals.contains_key("$exception2"));
+        assert!(original.locals.contains_key(&candidate));
         assert!(!original.locals.contains_key("x"));
         assert!(!original.locals.contains_key(&name.name));
         let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };

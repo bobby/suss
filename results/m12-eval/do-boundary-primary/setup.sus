@@ -1,0 +1,1 @@
+(def eval-do-effects (atom [])) (def eval-do-root 99)

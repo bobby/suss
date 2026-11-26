@@ -1,0 +1,1 @@
+(eval '(def ^:const script-native-constant 99)) (def ^:const script-source-constant 42) [(eval 'script-native-constant) script-source-constant]

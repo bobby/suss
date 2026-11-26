@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/isolated-unbound-primary-prepared/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7059462987817824,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "setup.sus": "69f93b1ab2b83a5621224c9ad6eeb19e44719db78e0966edde13ae6e3ac4bfe5",
+    "expression.sus": "9357c44018e123fc76148d8968f9adb5dd4043dfe2a9a83c95763222abdcc735",
+    "expression.clj": "31987a5de855bb2a306dbb106bfed8dc9b0fa32fe4080e362ff65a7d9b59abbf",
+    "primary.stdout": "f481267860239599a83032afe24117a112a53ad285e188afcb670b0b36048b69",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Primary object/reference behavior for actual source macros invoking caller functions with real Unbound objects. Native Store ownership requires separate execution."
+}

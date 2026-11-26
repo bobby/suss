@@ -1,0 +1,422 @@
+{
+  "source_head": "869abf42a6d86c2ad1b8b86567b52d3ad108da68",
+  "original_tests": 102,
+  "foundation_tests": [
+    {
+      "name": "actual_aot_namespace_catalog_reports_the_missing_explicit_capability",
+      "sha256": "b95572b84eb5920aa3117fb558d595ab8e30336ed41eaa997445c665f9075ece"
+    },
+    {
+      "name": "public_alias_preserves_primary_state_errors_and_argument_order",
+      "sha256": "5ce9115d11e39e5760e83e01f3edb6fa2a78db0c2b2f6e167e4f72d7f404451d"
+    },
+    {
+      "name": "live_var_metadata_and_roots_survive_replacing_the_core_indexed_seq_constructor",
+      "sha256": "ec83668a6fa37a571bc7566d49deebbce17afc1e3d52698a03e862689d322460"
+    },
+    {
+      "name": "var_metadata_uses_original_core_data_without_changing_user_resolution",
+      "sha256": "5ffe017d555874c30318b4d4da84a1802075cc6942571d29cc0b247806c8b44c"
+    },
+    {
+      "name": "namespace_catalog_requires_the_registered_namespace_identity",
+      "sha256": "bf745eac5acdac3b9ad81cb64a695717c0af9764cd6b5c8336f87ff3eb5c2251"
+    },
+    {
+      "name": "namespace_catalog_core_functions_reuse_live_var_cells",
+      "sha256": "932965174fe815eb1db125c94f9b1342897363a4280f6750117936ae7b5b3b89"
+    },
+    {
+      "name": "namespace_catalog_returns_actual_user_core_and_macro_vars",
+      "sha256": "2c76b2680a3ae3680e2bd3242bc5fab5f1a980aae9706be2126661eeaf33eb04"
+    },
+    {
+      "name": "source_macro_function_namespace_preserves_unused_and_non_namespace_values",
+      "sha256": "86b9881d5b8d89aeb70055f7d0753945e3262278e5d16f2b4e49f546616f5837"
+    },
+    {
+      "name": "namespace_catalog_includes_source_macro_vars_without_prior_var_references",
+      "sha256": "8b98b5604219fd29539fa8c8beaeb364a110a94f6191fc14b701371a0631ff31"
+    },
+    {
+      "name": "staged_source_scripts_publish_real_macro_var_roots_after_linking",
+      "sha256": "6d6ff302184c33c35312ca066dddc228c7fe08afefcf158e6e70c43ac75f617c"
+    },
+    {
+      "name": "staged_source_modules_publish_real_macro_var_roots_after_linking",
+      "sha256": "9ecfec77a189e7ada7cc7b73588bb598d3e30f16d975733b384f406f6cc65a6b"
+    },
+    {
+      "name": "forwarded_source_functions_retain_actual_current_namespace_identity",
+      "sha256": "e024a71edeaf67e66463988a346389fbc0fc261b37319d6ac326979da943a5b9"
+    },
+    {
+      "name": "public_namespace_loaders_publish_canonical_source_macro_vars_and_reload_roots",
+      "sha256": "70ebc5065da902cd91b60866a7eaaacc78d0a88b31e4cec246a7d3aa62021d5d"
+    },
+    {
+      "name": "root_audit_macro_reload_to_ordinary_definition_updates_retained_var_root_and_status",
+      "sha256": "527ea7218b559894fdf3415ff0cee2e61f8707ca676ab88408204a3a4ec3ac8e"
+    }
+  ],
+  "child_tests": [
+    {
+      "name": "compiled_eval_handles_literals_generated_calls_functions_and_dynamic_scope",
+      "sha256": "c99a4e5763b97d0bf6613292ac63a0c1417a2677ec5991dac44420e745fce681"
+    },
+    {
+      "name": "compiled_eval_shares_real_namespace_vars_macros_and_effect_boundaries",
+      "sha256": "9eaf6e76cc477ea30c21654274f9ef5cbae8658bab228edb3facdf9d1f52ec67"
+    },
+    {
+      "name": "compiled_eval_is_reentrant_inside_actual_compiled_macro_functions",
+      "sha256": "ae3757b9524e9f846933267dfb6f8deb9ab6aa0941552f925851d8687af33081"
+    },
+    {
+      "name": "vars_retain_real_live_cells_identity_metadata_and_callability",
+      "sha256": "a0f27d56bb9bc49e2d9e4a09eb94f5db1d32251ebe6d5e0679268c363c71939f"
+    },
+    {
+      "name": "eval_preserves_primary_top_level_do_compilation_and_effect_boundaries",
+      "sha256": "479219f28542f300a46bde431531d3f421ee4485a427de256ebd3ecee5b703fc"
+    },
+    {
+      "name": "eval_namespace_changes_follow_real_caller_binding_frames",
+      "sha256": "d46fbe00d80559d9bb158734caf655811515ab2d4a42694699d0a8ec6d5a9698"
+    },
+    {
+      "name": "public_eval_function_result_survives_gc_and_reads_the_live_root",
+      "sha256": "216145a4c6c41ed0228fba5a014096f60c871f500cd28cf5a0c01d0e5f295cfa"
+    },
+    {
+      "name": "actual_aot_public_eval_reports_the_missing_explicit_compiler_capability",
+      "sha256": "2b1084a50df944f2bcd7cb8f65273c2077e248c23b1b3d488eab5e56cd706120"
+    },
+    {
+      "name": "public_eval_and_repeated_reentry_consume_the_original_operation_allowance",
+      "sha256": "b488097c14b4f57ea2b667e77a6482373e6f25a76311d00131000f65e5643298"
+    },
+    {
+      "name": "public_eval_cancels_running_guest_code_and_leaves_the_session_usable",
+      "sha256": "94ccefb2eeb7562663043162e5e042b8ecabef77ebf8446b89a22e985243c2a1"
+    },
+    {
+      "name": "reentrant_macro_eval_cancels_in_its_own_store_and_returns_its_lease",
+      "sha256": "0849864c9203f21cf8c35bd480514fda02afeecf1abbe287111cdb311645063b"
+    },
+    {
+      "name": "public_eval_diagnostics_preserve_the_actual_phase_and_unresolved_symbol",
+      "sha256": "5bf8ee1053a4605d00c979aab8fce4c556220c92af7cb8ab80b5afcab04f1da0"
+    },
+    {
+      "name": "eval_compiles_nested_function_and_var_constants_including_quotation",
+      "sha256": "9bd7722a8ff8d3a407bd3c67736e33443c2dd81fbbd967654d1e8b44c5eb4583"
+    },
+    {
+      "name": "reentrant_macro_eval_keeps_its_own_nested_constants",
+      "sha256": "4071c326f9f556887f0e35de95f1d63639aacd20c4110c1a72314e9e64153398"
+    },
+    {
+      "name": "evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion",
+      "sha256": "e7112cefc3eb6327fea613cb096965071274d3ba78849cff3477c93071fd5622"
+    },
+    {
+      "name": "evaluated_macro_function_survives_gc_owner_drop_and_another_macro_service",
+      "sha256": "206adc433caae7914411ed7d62a596318b2723977ab87a6b4da9023d3e021be1"
+    },
+    {
+      "name": "actual_reentrant_macro_eval_publishes_in_its_own_store",
+      "sha256": "1301c5e5d5c0b435abd8f5b4974f3c9bcaa6b046a1e89ba2ba0937d553a98b5d"
+    },
+    {
+      "name": "eval_macro_function_calls_share_the_original_caller_allowance",
+      "sha256": "472f79599301559588a89805c986d2f658ebc80128178030f0a5e193be6771df"
+    },
+    {
+      "name": "runtime_cancellation_reaches_eval_macro_code_and_preserves_source_service",
+      "sha256": "97adc9a220c352b12a1d88057ba049852ab04db71a615809bf77221e7467bf5d"
+    },
+    {
+      "name": "evaluated_macro_environment_keeps_nil_top_level_and_actual_lexical_names",
+      "sha256": "ae9dcf0384f71ed00931dfd907bf290adb9cd61941a0b6018f8af9d31778a95f"
+    },
+    {
+      "name": "failed_macro_replacement_preserves_live_metadata_and_successful_nested_effects",
+      "sha256": "72cb9adbeef6cc404292d36164486553eb24f74383c312b3220407d751bd55d5"
+    },
+    {
+      "name": "symbol_conversion_uses_public_var_names_and_clojure_two_argument_admission",
+      "sha256": "2d2afe8d752613d6bcaaf625047f2d1094de5e410642b9f8c75fb2a0a56b666f"
+    },
+    {
+      "name": "eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry",
+      "sha256": "f2ccb84956bd8b4b10e261c76b3cd11d4229363e07b4be6154f0082cf4c943c9"
+    },
+    {
+      "name": "eval_retains_actual_class_values_in_generated_numeric_forms",
+      "sha256": "4eed5b6b0ce31552c936edb346e928976ec3a44a7e7b5abb736d26458d928f9a"
+    },
+    {
+      "name": "eval_function_constant_materialization_preserves_primary_identity_and_errors",
+      "sha256": "af8da7742423685d68c6b094e1a619642bce9c786b42ad17192b2d2cde63d251"
+    },
+    {
+      "name": "evaluated_macro_language_exceptions_preserve_primary_message_and_data",
+      "sha256": "c6db8cd54318dcea82c4c930022a152d38ee5ce610847a460eacb480ec64ef2b"
+    },
+    {
+      "name": "evaluated_macro_calls_inherit_the_primary_caller_math_context",
+      "sha256": "3ee475132f48c669d6b9f5d1afea7abc9629a67ff328ea47c0f0e3edfa59bccd"
+    },
+    {
+      "name": "eval_math_context_scopes_preserve_rounding_nil_and_exception_restoration",
+      "sha256": "19809aad6bbc81e06ff3e7210050d018d1012edb34502c1c4298fcecff6b94a1"
+    },
+    {
+      "name": "eval_function_constant_initialization_preserves_unit_effects_and_aliases",
+      "sha256": "0eadac198677b876d6d37f891c325c04b46ad22a87155442c14c097e0b810fb2"
+    },
+    {
+      "name": "evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages",
+      "sha256": "2b7e95e5cf7a8cbb26070121b80ad17360b42fd34b3527b6cc64c9b496cfc83c"
+    },
+    {
+      "name": "eval_metadata_functions_preserve_top_roots_and_nested_unit_boundaries",
+      "sha256": "34ad8d2422271e1d41cc83b28bdbda1f54ecb3f40ec022ac949d0ca22d0c9fc5"
+    },
+    {
+      "name": "eval_function_pool_context_preserves_direct_def_and_distinct_nested_pools",
+      "sha256": "656b0cc917976d17f4c70655b08fd7de75ea8d3c081e8838d3b9acd2c52667e4"
+    },
+    {
+      "name": "eval_function_pool_initialization_preserves_construction_effects_and_arity_sharing",
+      "sha256": "575185ddab1967ffd317f582995eb7abe7a413d9b894e585af993509f77032d9"
+    },
+    {
+      "name": "eval_invalid_math_context_is_validated_at_consumption_and_preserves_binding_data",
+      "sha256": "33e49d2a7fd906f43522bd3b504c41da4817d0190c403eb40b2bd20d18fe5ae6"
+    },
+    {
+      "name": "actual_macro_eval_preserves_invalid_math_context_consumption_and_binding_data",
+      "sha256": "5026410b74595086cff5e97ade160483c3e6499cfc6ac5c03a931a649e4f376a"
+    },
+    {
+      "name": "unbound_dynamic_frames_preserve_values_effects_and_eval_context",
+      "sha256": "b5d148425632c355eee8a98e735a3f0f0dc815aac1d31749bf3dbb979271a87d"
+    },
+    {
+      "name": "actual_macro_eval_preserves_unbound_dynamic_frames",
+      "sha256": "a4fdc045896e7d7f4400f44eea24c9901b539fc4fc2c477eaf45af1b0e480256"
+    },
+    {
+      "name": "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+      "sha256": "5abdc289478db52076bbea658436afebe7d1ed13cd69d3d95d50170e7f63c411"
+    },
+    {
+      "name": "actual_macro_eval_preserves_binding_initializer_effects",
+      "sha256": "57bcf13891847124b00b55b860799227528cdd34df5ec28886a1b018306cf03e"
+    },
+    {
+      "name": "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+      "sha256": "87681d1c617c5596762051b02f4d54965b01a5cb38c0de9bcf2a1596880fd157"
+    },
+    {
+      "name": "actual_macro_eval_preserves_binding_body_root_definitions",
+      "sha256": "6f00da0244c4953f148f416616f2371028f20b9af76179d37b1687c84fb96d48"
+    },
+    {
+      "name": "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+      "sha256": "2fc2e3822cf1fe0057f67269480e65d006be21779118bb1b908eee9f875f63d7"
+    },
+    {
+      "name": "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+      "sha256": "48733bbbecf5af0dc1a075a7c8bd77938640c773236c6d64a4f41f9002a5d326"
+    },
+    {
+      "name": "root_macro_status_and_source_duplicate_effects_match_primary",
+      "sha256": "14a7a1e35ab892af96055ebb186a9f4ae5685bc8f2e0396b90164614a6a69173"
+    },
+    {
+      "name": "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+      "sha256": "646cef642a87db5870394ccaef69f21d278dee081d26711ea4b9d50d19c6090b"
+    },
+    {
+      "name": "root_metadata_identity_survives_macro_status_clearing",
+      "sha256": "71cae8050400995f66253b93f62945721364d6a9c21bd8ae1d06575677493b80"
+    },
+    {
+      "name": "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects",
+      "sha256": "a30ac2c4a43db68cd3502928c1ca0cbe74800dfbd3a3ed079c13706fdd4d3605"
+    },
+    {
+      "name": "actual_macro_eval_preserves_root_metadata_identity",
+      "sha256": "e681b4a32d3e3003b7510091c1c5886a4bfa5dcbf29b2053e8f25ca679873598"
+    },
+    {
+      "name": "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+      "sha256": "d57a4b5d0c1660d9a706aecdeb02366631ad055956602ec9a85b676100dd6de0"
+    },
+    {
+      "name": "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+      "sha256": "e10ad05c7a79213ede89b8fc752e6b82e54c78b298ef0895b64a4d014c55797a"
+    },
+    {
+      "name": "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+      "sha256": "6c28d8dbe0311f459b3539d57d4abadc2fc931a6b7c8157031c4aa5649656f4e"
+    },
+    {
+      "name": "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+      "sha256": "6f266c0550d5f53f88d20c02c7088000fa6cf26375e3a20023fbbe5f173ac321"
+    },
+    {
+      "name": "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+      "sha256": "01290910b9a06fb32d547efee6a10317ff61b56fab392b49af5c02d7cac14cbf"
+    },
+    {
+      "name": "eval_preserves_self_evaluating_objects_and_false_macro_metadata",
+      "sha256": "55097440bf5d473d6ac1ea27caaf81ceaa03f7eb27e13c8fb59c9f7b0fe2eff1"
+    },
+    {
+      "name": "actual_macro_eval_preserves_self_values_and_false_macro_metadata",
+      "sha256": "b816a7e1c361923710c3d4e12439b72f2f88f3f4cda868e450ebb798ae0642a8"
+    },
+    {
+      "name": "eval_self_values_retain_their_actual_roots_after_gc",
+      "sha256": "6703911abdcb32e1a3878c6e1f0432d473cccc51113f3632d355bc440ae8d70a"
+    },
+    {
+      "name": "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+      "sha256": "4207e11ba6b0c5b7bac340d04ab511fdcaf64952745edb2a41066010e0fd570b"
+    },
+    {
+      "name": "native_eval_macros_use_caller_state_and_recheck_live_authorization",
+      "sha256": "716da02037f044c00278cb07001ef90faeaf943956a2e0c494c398b83254de3f"
+    },
+    {
+      "name": "actual_macro_eval_uses_caller_state_and_live_authorization",
+      "sha256": "a9affa542fdf3c6f5b0fa06e22de8dbacf4d58fc0cbc3d70ab1f7e11a8f1821a"
+    },
+    {
+      "name": "native_eval_macro_catalog_survives_source_entries_without_changing_namespace_roots",
+      "sha256": "71cf9d45164ec95253a983850470ce48238bace4bd588045f74fed0e639148c2"
+    },
+    {
+      "name": "native_eval_macro_effects_survive_outer_analysis_and_truthy_metadata",
+      "sha256": "e42546e5541604813c6f7c7b8bce2cec6953270bad9c39c9487e6936dcc2b505"
+    },
+    {
+      "name": "actual_macro_eval_preserves_compilation_effects_and_truthy_metadata",
+      "sha256": "e58b8be36f11b65eb071af7469388a8e68bfa824743219a5f8e1a00b739d7d0e"
+    },
+    {
+      "name": "native_source_macro_declarations_keep_the_isolated_source_host",
+      "sha256": "f33a913633b26e06d12e820955e7d3f095fe3b95c98f18a6672525988cfb9644"
+    },
+    {
+      "name": "native_source_macro_authority_retains_original_compiler_helpers",
+      "sha256": "ae535a89d271867c13d0ae77272ff91fb82671bdb7e956db647e706cf3c1fa3c"
+    },
+    {
+      "name": "native_source_macro_context_tracks_each_module_without_changing_roots",
+      "sha256": "afa6c911f8c749aa7cd22c1022aed380aac58b6581632021b2d6967793babdfe"
+    },
+    {
+      "name": "native_source_macro_reassertion_supersedes_staged_foreign_owner",
+      "sha256": "33cacd47ac81db15f9e3bc0dd94b07a31a6026b4a0516aa938e55a3829eb03d2"
+    },
+    {
+      "name": "isolated_source_macro_fuel_remains_bounded_after_native_eval",
+      "sha256": "c508d9f644be2dbc7e952bb9fc317cd929ac3ed0950ce8d25396c7c5b78efe34"
+    },
+    {
+      "name": "isolated_source_macro_cancellation_returns_its_service_after_native_eval",
+      "sha256": "f3ac879cea8ab44250a90a4418486284d3d3c3c0d10ca0ef0af5e5af515e66a2"
+    },
+    {
+      "name": "native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel",
+      "sha256": "462667a55e3e704212513b8f63595d2e27177147dd4cf7e2d71ec32aec6736cf"
+    },
+    {
+      "name": "native_eval_def_metadata_obeys_primary_root_and_publication_boundaries",
+      "sha256": "b7e657fee710c764c904c25f7967cdfd7379c3ee77e4063287c6d7ab342197b9"
+    },
+    {
+      "name": "native_eval_namespace_catalog_preserves_analysis_interning_boundaries",
+      "sha256": "0a3409cd0a2528f3bd3b78d53feef3ef9f241f360e1ad46d65ff9d2ee46116a9"
+    },
+    {
+      "name": "isolated_source_macros_preserve_nested_immutable_metadata_aliases",
+      "sha256": "6fd251d77391cfd60b6c0793417e257623fbbfd2a2f399579a4ceecda8c62951"
+    },
+    {
+      "name": "isolated_source_macros_preserve_actual_function_var_and_namespace_values",
+      "sha256": "fd2df540f7c0c6b8a40e90e49ecdde053afa15a6102260583412321222dd4f3c"
+    },
+    {
+      "name": "isolated_source_callback_preserves_typed_cancellation_and_recovers",
+      "sha256": "76e7f5aec1160371eb752260359ba576f7e7a52fa529d5cbfbcb22e0759842e3"
+    },
+    {
+      "name": "isolated_source_function_metadata_retains_identity_between_macro_requests",
+      "sha256": "7b11b2a020616ef78c34a81c0754d9ea1e4596627ff824ebca93b157176ee474"
+    },
+    {
+      "name": "isolated_source_nested_function_metadata_retains_actual_callbacks",
+      "sha256": "06b47f52acccb129a455a3f20cff3636fb02def194837900322f01644ce66a12"
+    },
+    {
+      "name": "native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior",
+      "sha256": "6106446a4ca4a65cc2a37da248e611202516499fe45ef8afd5f94a8f16d7e240"
+    },
+    {
+      "name": "native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries",
+      "sha256": "63619403e9a7233e11a1c8d04c9c08940de3791f9946833103ae4e6d4a9fbdd2"
+    },
+    {
+      "name": "isolated_source_callbacks_preserve_real_unbound_values_and_root_writes",
+      "sha256": "f4e6082ce371ff78a55a4df121ed66440c4b1af839ca276993905e6168fb6831"
+    },
+    {
+      "name": "source_macro_var_roots_match_primary_identity_replacement_and_namespace_context",
+      "sha256": "f9dc921c700bfd947d68aa8e181e5a00a7cacd44a24f6ba065966f52124f99fb"
+    },
+    {
+      "name": "isolated_source_lazy_sequences_preserve_realization_effects_and_cache_after_gc",
+      "sha256": "aabaeb73feffd1c1f423da67e9c8ff8ee08102fc10dd4e7803227cf419b9021d"
+    },
+    {
+      "name": "staged_source_redefinitions_preserve_var_identity_and_reject_unlinked_roots",
+      "sha256": "4be9a49925a7375e969c74778e3b828b6f796ff2c44c0457e74975a12f642b4d"
+    },
+    {
+      "name": "source_declaration_rollback_preserves_later_metadata_effects",
+      "sha256": "9a913531e7d9043f8e092ec0e6f9054ed2472f8d50fbc616cf23d12dac887ab7"
+    },
+    {
+      "name": "source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function",
+      "sha256": "c22298c2ba7f5aa5ebb056441aadeeb758405d1d0adf226c76f7673342b32203"
+    },
+    {
+      "name": "source_macro_imports_preserve_once_loading_completed_prefixes_and_reload_recovery",
+      "sha256": "c90233851a2cab8e67006a3167261d3dfa80d4bf8a1fec63b2eeecb39468d8ac"
+    },
+    {
+      "name": "completed_macro_imports_supersede_rejected_staged_declarations_in_fresh_callers",
+      "sha256": "56189fcbce1a1f75450e24e22bc3d8d3b1871ff7d28ca0c37b92dc2af4ca72c4"
+    },
+    {
+      "name": "root_audit_staged_source_preserves_actual_macro_root_effect_before_later_failure",
+      "sha256": "7940d035cd6d4302027d85fd2916578931012b992b742081a82b98027662b62f"
+    },
+    {
+      "name": "executable_declaration_metadata_resolves_explicit_lexical_symbol_values",
+      "sha256": "af8696c408af405090875732f630e32b70f42f1aea0ff30f59aecb61a322c3f1"
+    }
+  ],
+  "helpers": [
+    "aot_missing_capability_report",
+    "canonical",
+    "expected",
+    "promotion_review_controls"
+  ]
+}

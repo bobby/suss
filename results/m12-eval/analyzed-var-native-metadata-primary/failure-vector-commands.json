@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/analyzed-var-native-metadata-primary-prepared/failure-vector-expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7014705683104694,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "failure-expression.sus": "a51f619011608b35e18a3f5664b02ca3daaa2fa712e2017cffd371d64a890b23",
+    "failure-vector-expression.clj": "24977dbdc5dfc002b964cbef66ca2d27e23a04bb0751a195ad4ecff54bcfe8f3",
+    "failure-vector-primary.stdout": "9ba918790a24ba95ada4172a32618c14036175cf5eb6cac6681222f2dcd20e31",
+    "failure-vector-primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Fresh primary only; exact two failed-definition metadata controls."
+}

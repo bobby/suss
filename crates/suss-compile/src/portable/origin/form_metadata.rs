@@ -209,6 +209,7 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         .collect::<Vec<_>>();
     let values = children.collect::<Vec<_>>();
     let kind = match &node.kind {
+        Kind::NativeConstant { owner, index } => Kind::NativeConstant { owner: *owner, index: *index },
         Kind::Nil => Kind::Nil,
         Kind::Bool(value) => Kind::Bool(*value),
         Kind::Number(value) => Kind::Number(*value),

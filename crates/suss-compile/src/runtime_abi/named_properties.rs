@@ -957,10 +957,14 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         array(&mut body, payload);
         body.push(ArrayLen);
         array(&mut body, table);
-        body.extend([ArrayLen, I32Ne, If(BlockType::Empty)]);
+        body.extend([ArrayLen, I32Ne, If(BlockType::Empty),
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR), I32Sub,
+            I32Const(1), I32LeU,
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR_UNBOUND), I32Sub,
+            I32Const(2), I32LeU, I32Or, I32Eqz, If(BlockType::Empty)]);
         nominal::error(&mut body);
         body.extend([
-            End,
+            End, End,
             LocalGet(table),
             LocalGet(1),
             I32Const(1),
@@ -971,12 +975,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32GeS,
             If(BlockType::Empty),
         ]);
-        array(&mut body, payload);
-        body.push(LocalGet(slot));
+        body.extend([LocalGet(0), LocalGet(slot)]);
         if writing {
-            body.extend([LocalGet(2), ArraySet(ARGS), LocalGet(2), Return]);
+            body.extend([LocalGet(2), Call(b.names["object-field-set"]), LocalGet(2), Return]);
         } else {
-            body.extend([ArrayGet(ARGS), Return]);
+            body.extend([Call(b.names["object-field-get"]), Return]);
         }
         body.push(End);
         if writing {

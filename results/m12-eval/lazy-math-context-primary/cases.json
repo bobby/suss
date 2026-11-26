@@ -1,0 +1,102 @@
+[
+  {
+    "name": "unused-integer",
+    "expression": "(binding [*math-context* :invalid] (try (eval '(+ 1 2)) (catch Throwable e :error)))",
+    "observed_edn": "3"
+  },
+  {
+    "name": "unused-quote",
+    "expression": "(binding [*math-context* :invalid] (try (eval '(quote :ok)) (catch Throwable e :error)))",
+    "observed_edn": ":ok"
+  },
+  {
+    "name": "unused-map",
+    "expression": "(binding [*math-context* {:precision 3}] (try (eval '(let [x 20] (+ x 22))) (catch Throwable e :error)))",
+    "observed_edn": "42"
+  },
+  {
+    "name": "read-keyword",
+    "expression": "(binding [*math-context* :invalid] (try (eval '*math-context*) (catch Throwable e :error)))",
+    "observed_edn": ":invalid"
+  },
+  {
+    "name": "caller-map-identity",
+    "expression": "(let [context {:bad 1N}] (binding [*math-context* context] (try (identical? context (eval '*math-context*)) (catch Throwable e :error))))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "decimal-consumption-effects",
+    "expression": "(do (def invalid-context-effects (atom [])) (let [result (binding [*math-context* :invalid] (try (eval '(do (swap! invalid-context-effects conj :before) (/ 1M 3M) (swap! invalid-context-effects conj :after))) (catch Throwable e :error)))] [result @invalid-context-effects]))",
+    "observed_edn": "[:error [:before]]"
+  },
+  {
+    "name": "macro-observes-keyword",
+    "expression": "(do (eval '(defmacro invalid-context-read [] (list 'quote *math-context*))) (binding [*math-context* :invalid] (try (eval '(invalid-context-read)) (catch Throwable e :error))))",
+    "observed_edn": ":invalid"
+  },
+  {
+    "name": "macro-observes-map",
+    "expression": "(do (eval '(defmacro invalid-context-map [] (list 'quote *math-context*))) (binding [*math-context* {:bad [1N 2/3 1.00M]}] (try (eval '(invalid-context-map)) (catch Throwable e :error))))",
+    "observed_edn": "{:bad [1N 2/3 1.00M]}"
+  },
+  {
+    "name": "raw-macro-observes-keyword",
+    "expression": "(binding [*math-context* :invalid] (try (let [v (eval '(defmacro invalid-context-raw [] (list 'quote *math-context*)))] (v nil nil)) (catch Throwable e :error)))",
+    "observed_edn": "(quote :invalid)"
+  },
+  {
+    "name": "macro-error-restores-context",
+    "expression": "(do (eval '(defmacro invalid-context-decimal [] (/ 1M 3M))) [(binding [*math-context* :invalid] (try (eval '(invalid-context-decimal)) (catch Throwable e :error))) (with-precision 3 (eval '(invalid-context-decimal))) *math-context*])",
+    "observed_edn": "[:error 0.333M nil]"
+  },
+  {
+    "name": "invalid-integer-binding",
+    "expression": "(binding [*math-context* 0] (try (eval '(+ 1 2)) (catch Throwable e :error)))",
+    "observed_edn": "3"
+  },
+  {
+    "name": "unused-function",
+    "expression": "(binding [*math-context* (fn [] :invalid)] (try (eval '(+ 1 2)) (catch Throwable e :error)))",
+    "observed_edn": "3"
+  },
+  {
+    "name": "unused-lazy-value",
+    "expression": "(let [effects (atom 0) context (lazy-seq (swap! effects inc) (list :invalid))] (binding [*math-context* context] [(try (eval '(+ 1 2)) (catch Throwable e :error)) @effects]))",
+    "observed_edn": "[3 0]"
+  },
+  {
+    "name": "unused-nested-function",
+    "expression": "(binding [*math-context* {:bad (fn [] :invalid)}] (try (eval '(quote :ok)) (catch Throwable e :error)))",
+    "observed_edn": ":ok"
+  },
+  {
+    "name": "raw-macro-opaque-context-consumption",
+    "expression": "(let [v (eval '(defmacro invalid-context-opaque-decimal [] (let [effects (atom []) result (try (do (swap! effects conj :before) (/ 1M 3M) (swap! effects conj :after)) (catch Throwable e :error))] [result @effects])))] (binding [*math-context* (fn [] :invalid)] (try (v nil nil) (catch Throwable e :error))))",
+    "observed_edn": "[:error [:before]]"
+  },
+  {
+    "name": "unused-lazy-macro-context",
+    "expression": "(do (eval '(defmacro invalid-context-safe [] (list 'quote :safe))) (let [effects (atom 0) context (lazy-seq (swap! effects inc) (list :invalid))] (binding [*math-context* context] [(try (eval '(invalid-context-safe)) (catch Throwable e :error)) @effects])))",
+    "observed_edn": "[:safe 0]"
+  },
+  {
+    "name": "opaque-raw-macro-overrides-precision",
+    "expression": "(let [v (eval '(defmacro context-override-raw [] (with-precision 3 (/ 1M 3M))))] (binding [*math-context* (fn [] :invalid)] (try (v nil nil) (catch Throwable e :error))))",
+    "observed_edn": "0.333M"
+  },
+  {
+    "name": "opaque-eval-macro-overrides-precision",
+    "expression": "(do (eval '(defmacro context-override-eval [] (with-precision 3 (/ 1M 3M)))) (binding [*math-context* (fn [] :invalid)] (try (eval '(context-override-eval)) (catch Throwable e :error))))",
+    "observed_edn": "0.333M"
+  },
+  {
+    "name": "lazy-context-remains-unrealized-through-override",
+    "expression": "(let [v (eval '(defmacro context-override-lazy [] (with-precision 3 (/ 1M 3M)))) effects (atom 0) context (lazy-seq (swap! effects inc) (list :invalid))] (binding [*math-context* context] [(try (v nil nil) (catch Throwable e :error)) @effects]))",
+    "observed_edn": "[0.333M 0]"
+  },
+  {
+    "name": "nested-nil-binding-preserves-own-exception",
+    "expression": "(let [v (eval '(defmacro context-override-error [] (binding [*math-context* nil] (throw (ex-info \"inside override\" {:inside true})))))] (binding [*math-context* (fn [] :invalid)] (try (v nil nil) (catch Throwable e (ex-data e)))))",
+    "observed_edn": "{:inside true}"
+  }
+]

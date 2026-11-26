@@ -1,0 +1,9 @@
+{
+  "macro-exception-data/expression.sus": "617d7cd6cf126be414d2156eb23570b795d175456dc109e343f3132f1580431a",
+  "macro-exception-data/primary.stdout": "107449868c3d07917ee10a9a09afab2d606eac96bf87fdc138efaa99e6354cc4",
+  "macro-exception-data/primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "macro-exception-data/primary.json": "1ed677c3fc088a6c001ef7f4a937b8997bc84fb48faa5df67fa3b20250c45137",
+  "macro-exception-data/native.stdout": "1e7baa5f334b85ca8ca518bfa0524a7a89eb9262cd0c003124f24ba16fe8b4b5",
+  "macro-exception-data/native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "macro-exception-data/native.json": "11fead2457e5e0c446b36eec4709c410ca067e1dbd46067e7fa546ec5ff706ef"
+}

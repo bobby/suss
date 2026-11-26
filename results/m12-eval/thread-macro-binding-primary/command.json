@@ -1,0 +1,60 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/thread-macro-binding-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7537012100219727,
+  "controls": 9,
+  "cases": [
+    {
+      "name": "selected-thread-function",
+      "expression": "(do (declare thread-macro-a) (let [v (eval '(defmacro ^:dynamic thread-macro-a [] 1))] [(binding [thread-macro-a (fn [& xs] 42)] [(.isMacro v) (eval '(thread-macro-a))]) (eval '(thread-macro-a))]))"
+    },
+    {
+      "name": "caller-owned-capture-effects",
+      "expression": "(do (declare thread-macro-b) (eval '(defmacro ^:dynamic thread-macro-b [] 1)) (let [events (atom []) f (fn [& xs] (swap! events conj :expanded) (list '+ 40 2))] [(binding [thread-macro-b f] (eval '(thread-macro-b))) @events]))"
+    },
+    {
+      "name": "full-form-env-and-explicit-argument",
+      "expression": "(do (declare thread-macro-c) (eval '(defmacro ^:dynamic thread-macro-c [] 1)) (binding [thread-macro-c (fn [form env x] (list 'quote [(first form) (contains? env 'lexical-control) x]))] (eval '(let [lexical-control 9] (thread-macro-c (+ 1 2))))))"
+    },
+    {
+      "name": "caller-reentrant-eval",
+      "expression": "(do (declare thread-macro-d) (eval '(defmacro ^:dynamic thread-macro-d [] 1)) (binding [thread-macro-d (fn [& xs] (eval '(+ 40 2)))] (eval '(thread-macro-d))))"
+    },
+    {
+      "name": "another-real-macro-root",
+      "expression": "(do (declare thread-macro-e thread-macro-other) (eval '(defmacro ^:dynamic thread-macro-e [] 1)) (eval '(defmacro thread-macro-other [] 2)) (binding [thread-macro-e @(var thread-macro-other)] (eval '(thread-macro-e))))"
+    },
+    {
+      "name": "selection-is-live-between-expansions",
+      "expression": "(do (declare thread-macro-f) (eval '(defmacro ^:dynamic thread-macro-f [] 1)) (binding [thread-macro-f (fn [& xs] (set! thread-macro-f (fn [& ys] 43)) 42)] (eval '[(thread-macro-f) (thread-macro-f)])))"
+    },
+    {
+      "name": "existing-function-result-keeps-identity",
+      "expression": "(do (declare thread-macro-g) (eval '(defmacro ^:dynamic thread-macro-g [] 1)) (let [f (fn [x] x)] (binding [thread-macro-g (fn [& xs] f)] (identical? f (eval '(thread-macro-g))))))"
+    },
+    {
+      "name": "existing-var-result-keeps-identity",
+      "expression": "(do (declare thread-macro-h) (eval '(defmacro ^:dynamic thread-macro-h [] 1)) (def thread-value 42) (let [v (var thread-value)] (binding [thread-macro-h (fn [& xs] v)] (identical? v (eval '(thread-macro-h))))))"
+    },
+    {
+      "name": "failed-expansion-retains-effects-and-restores-thread",
+      "expression": "(do (declare thread-macro-i) (eval '(defmacro ^:dynamic thread-macro-i [] 1)) (let [events (atom [])] [(try (binding [thread-macro-i (fn [& xs] (swap! events conj :before) (throw (ex-info \"stop\" {})))] (eval '(thread-macro-i))) (catch Throwable e :error)) @events (eval '(thread-macro-i))]))"
+    }
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "3fcb4e7eeb97f1a54eba1f9eb95c856c4bb237150c7b9cdf370840fcabc56a29",
+  "native_source_sha256": "8d5f57d9898938f8a505a5ed43e101c2541c820dea6a31dc2ad426bca46bc86a",
+  "stdout_sha256": "748f79037b227a6c2a65718aebab52b0383fa7a12c332eee074dad19b6992103",
+  "qualification": "Actual pinned Clojure selected macro thread binding, owned captures/effects/form/env/reentry/identity controls. No native pass claim."
+}

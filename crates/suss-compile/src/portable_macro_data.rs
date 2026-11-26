@@ -1,13 +1,17 @@
 //! Bounded native transport between reader forms and real compiled macro values.
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable::Diagnostic;
-use crate::portable_session::{RuntimeNumber, Session, SessionError, SessionValue, runtime_number};
+use crate::portable_session::{RuntimeNumber, Session, SessionHost, SessionError, SessionValue, CompilerRoot, runtime_number};
 use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
 
+mod borrowed_reader;
+mod exception;
+pub(crate) use exception::TransferredException;
+
 pub(crate) fn normalized_reader_metadata(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     form: &Form,
 ) -> Result<Vec<Form>, SessionError> {
     crate::portable::hir::reader_metadata_pairs_metered(form, &mut |work| {
@@ -148,7 +152,7 @@ impl DisplayCalls {
         })
     }
 }
-fn display_calls(session: &mut Session) -> Result<DisplayCalls, SessionError> {
+fn display_calls(session: &mut SessionHost<'_>) -> Result<DisplayCalls, SessionError> {
     let (future_is, future_status, stream_kind) = session.display_runtime_exports()?;
     Ok(DisplayCalls {
         future_is,
@@ -157,7 +161,7 @@ fn display_calls(session: &mut Session) -> Result<DisplayCalls, SessionError> {
     })
 }
 pub(crate) fn display_leaf(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     value: &SessionValue,
 ) -> Result<Option<DisplayLeaf>, SessionError> {
     let calls = display_calls(session)?;
@@ -218,54 +222,70 @@ enum DecodedKind<T> {
 
 /// Captured canonical class roots remain valid through redefinition and GC.
 /// A reset or another Store invalidates this bridge; construct a new one there.
-// Immutable native containers; their Wasm referents still require live checks.
+// Captured native containers; their Wasm referents still require live checks.
 struct BridgeCore {
-    roots: Vec<SessionValue>,
-    classes: BTreeMap<i64, (Class, SessionValue)>,
+    roots: Vec<CompilerRoot>,
+    classes: BTreeMap<i64, (Class, CompilerRoot)>,
     constructors: BTreeMap<Class, usize>,
-    factories: BTreeMap<&'static str, SessionValue>,
+    factories: BTreeMap<&'static str, CompilerRoot>,
+    // Runtime-interned keywords avoid repeated throwaway construction for
+    // metadata keys. This bounded cache owns roots, not external value handles.
+    keywords: std::sync::Mutex<BTreeMap<(Option<String>, String), wasmtime::OwnedRooted<AnyRef>>>,
 }
+#[derive(Clone)]
 pub struct FormBridge {
     core: Arc<BridgeCore>,
+    hash: CompilerRoot,
+    key_test: CompilerRoot,
+}
+
+// Native transport roots are scoped to the current value transfer. They must
+// never enter the compiler/linker's persistent evaluation constant pool.
+#[derive(Clone, Copy)]
+enum NativeFormValues<'a> {
+    Disabled,
+    Evaluation(u64),
+    Transport { owner: u64, values: &'a BTreeMap<u64, SessionValue> },
 }
 
 impl FormBridge {
     fn construct(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         class: Class,
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         let keyword = class == Class::Keyword;
         let class = &self.core.roots[self.core.constructors[&class]];
-        let value = session.data_construct(class, arguments)?;
+        let class = class.value(session)?;
+        let value = session.data_construct(&class, arguments)?;
         // Keywords are interned, as guest construction interns them (#361).
         if keyword { session.data_keyword_intern(&value) } else { Ok(value) }
     }
     fn array(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.data_array(values)
     }
     fn object_array(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.data_object_array(values)
     }
     fn seed(
         &self,
-        _session: &mut Session,
+        session: &mut SessionHost<'_>,
         name: &'static str,
     ) -> Result<SessionValue, SessionError> {
-        Ok(self.core.factories[name].clone())
+        self.core.factories[name].value(session)
     }
     pub(crate) fn with_form_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         shape: MetadataShape,
         value: &SessionValue,
         metadata: &SessionValue,
@@ -288,12 +308,29 @@ impl FormBridge {
             &fields.iter().collect::<Vec<_>>(),
         )
     }
-    pub fn new(session: &mut Session) -> Result<Self, SessionError> {
+    pub fn new(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
+        if let Some(bridge) = session.captured_form_bridge() {
+            let _budget = session.operation_budget_scope()?;
+            // Constructors keep their authenticated original identities. A new
+            // reader bridge captures its current hash/equality callbacks, as
+            // before, so reader occurrences retain their observable effects.
+            let hash = CompilerRoot::capture(&session.data_core_value("hash")?)?;
+            let key_test = CompilerRoot::capture(&session.data_core_value("key-test")?)?;
+            return Ok(Self { core: bridge.core.clone(), hash, key_test });
+        }
+        Self::capture(session, false)
+    }
+    pub(crate) fn capture_native(session: &mut SessionHost<'_>) -> Result<Self, SessionError> {
+        Self::capture(session, true)
+    }
+    fn capture(session: &mut SessionHost<'_>, native: bool) -> Result<Self, SessionError> {
+        let _budget = session.operation_budget_scope()?;
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
         for (name, class) in SOURCE_CLASSES {
-            let value = session.eval(&format!("suss.core/{name}"))?;
+            let value = if native { session.data_core_root(name)? }
+                else { session.eval(&format!("suss.core/{name}"))? };
             let id = session.inspect(&value, |mut store, value| {
                 // A class constructor is a universal closure (ADR-0004) whose
                 // environment is its descriptor.
@@ -309,47 +346,82 @@ impl FormBridge {
                 }
             })?;
             let descriptor = session.data_descriptor(&value, true)?;
-            if classes.insert(id, (class, descriptor)).is_some() {
+            if classes.insert(id, (class, CompilerRoot::capture(&descriptor)?)).is_some() {
                 return Err(SessionError::Host(error(
                     "Duplicate macro data class identity",
                 )));
             }
             constructors.insert(class, roots.len());
-            roots.push(value);
+            roots.push(CompilerRoot::capture(&value)?);
         }
         let mut factories = BTreeMap::new();
         for (name, source) in [
             ("hash", "suss.core/hash"),
             ("key-test", "suss.core/key-test"),
+            ("exception-message", "suss.core/ex-message"),
+            ("exception-data", "suss.core/ex-data"),
+            ("exception-cause", "suss.core/ex-cause"),
             // Empty literals lower to core's own EMPTY values; class
             // properties of built-in types are private to suss.core.
             ("empty-map", "{}"),
+            ("empty-vector", "[]"),
             ("empty-set", "#{}"),
             ("empty-list", "()"),
             ("empty-queue", "#queue []"),
             ("into", "suss.core/into"),
             ("with-meta", "suss.core/with-meta"),
-            ("lazy-sval", "(fn* [value] (.sval value))"),
+            ("lazy-sval", "suss.core/LazySeq"),
         ] {
-            factories.insert(name, session.eval(source)?);
+            let value = if name == "lazy-sval" {
+                let constructor = if native { session.data_core_root("LazySeq")? }
+                    else { session.eval(source)? };
+                session.data_object_method(&constructor, "sval")?
+            } else if !native { session.eval(source)? }
+            else if let Some(name) = source.strip_prefix("suss.core/") { session.data_core_root(name)? }
+            else {
+                let class = match name {
+                    "empty-map" => "PersistentArrayMap", "empty-vector" => "PersistentVector",
+                    "empty-set" => "PersistentHashSet", "empty-list" => "List", "empty-queue" => "PersistentQueue",
+                    _ => return Err(error("Unknown canonical data factory").into()),
+                };
+                let constructor = session.data_core_root(class)?;
+                session.data_static(&constructor, "EMPTY")?
+            };
+            factories.insert(name, CompilerRoot::capture(&value)?);
         }
         session.charge_host_work((std::mem::size_of::<BridgeCore>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
+        let hash = factories.remove("hash").expect("captured hash callback");
+        let key_test = factories.remove("key-test").expect("captured key callback");
         Ok(Self {
-            core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
+            core: Arc::new(BridgeCore { roots, classes, constructors, factories, keywords: Default::default() }),
+            hash, key_test,
         })
     }
-    fn check(&self, session: &mut Session) -> Result<(), SessionError> {
+    fn check(&self, session: &mut SessionHost<'_>) -> Result<(), SessionError> {
         for root in &self.core.roots {
-            session.inspect(root, |_, _| Ok(()))?;
+            root.check(session)?;
         }
         Ok(())
+    }
+    /// Recognize genuine source singletons by rooted identity. Payload shape,
+    /// class spellings and numeric descriptor IDs never establish this fact.
+    pub(crate) fn is_canonical_empty(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        self.check(session)?;
+        for name in ["empty-map", "empty-vector", "empty-set", "empty-list", "empty-queue"] {
+            session.charge_host_work(1)?;
+            let seed = self.core.factories[name].value(session)?;
+            if session.values_identical(value, &seed)? { return Ok(true); }
+        }
+        Ok(false)
     }
     /// Native canonical data construction preserves sharing in analysis graphs.
     /// Inputs and factories are rooted in this Store; no source is interpreted.
     pub fn scalar(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         literal: &crate::portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -357,7 +429,7 @@ impl FormBridge {
     }
     pub fn map_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -365,7 +437,7 @@ impl FormBridge {
     }
     fn map_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         entries: &[(SessionValue, SessionValue)],
     ) -> Result<SessionValue, SessionError> {
         if entries.is_empty() {
@@ -395,7 +467,7 @@ impl FormBridge {
             let hash = if entries.len() <= 8 {
                 0
             } else {
-                let hash = session.invoke(&self.core.factories["hash"], &[key])?;
+                let hash = session.invoke_compiler_root(&self.hash, &[key])?;
                 session.inspect(&hash, |mut store, hash| {
                     let Some(value) = number(&mut store, &hash)? else {
                         return Err(error("Compiler map hash requires a numeric scalar"));
@@ -417,7 +489,7 @@ impl FormBridge {
                         .is_some_and(|other| other == identifier)
                 } else {
                     let equal =
-                        session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1])?;
+                        session.invoke_compiler_root(&self.key_test, &[key, &pairs[index].1])?;
                     session.inspect(&equal, |mut store, value| {
                         Ok(sentinel(&mut store, &value)? == Some(4))
                     })?
@@ -475,7 +547,7 @@ impl FormBridge {
     // globals. Other user values retain the captured observable key-test path.
     fn identifier_key(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
     ) -> Result<Option<(Class, Vec<u16>)>, SessionError> {
         let interrupt = session.host_work_interrupt();
@@ -517,6 +589,7 @@ impl FormBridge {
             }
             let mut budget = Budget {
                 display: None,
+                native: None,
                 source_valid: None,
                 include_metadata: true,
                 interrupt,
@@ -532,7 +605,7 @@ impl FormBridge {
     }
     fn map_node(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         pairs: &[(u32, SessionValue, SessionValue)],
         shift: u32,
         nil: &SessionValue,
@@ -589,7 +662,7 @@ impl FormBridge {
 
     pub fn set_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -597,7 +670,7 @@ impl FormBridge {
     }
     fn set_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -609,7 +682,7 @@ impl FormBridge {
     }
     fn set_with_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         metadata: &SessionValue,
     ) -> Result<SessionValue, SessionError> {
@@ -628,7 +701,7 @@ impl FormBridge {
     /// The queue `#queue [items...]` reads as, with `metadata` unless nil.
     pub fn queue_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
@@ -638,16 +711,16 @@ impl FormBridge {
             empty
         } else {
             let elements = self.vector_values(session, items)?;
-            session.invoke(&self.core.factories["into"], &[&empty, &elements])?
+            session.invoke_compiler_root(&self.core.factories["into"], &[&empty, &elements])?
         };
         if let Some(metadata) = metadata {
-            queue = session.invoke(&self.core.factories["with-meta"], &[&queue, metadata])?;
+            queue = session.invoke_compiler_root(&self.core.factories["with-meta"], &[&queue, metadata])?;
         }
         Ok(queue)
     }
     pub fn vector_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -655,7 +728,7 @@ impl FormBridge {
     }
     fn vector_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -681,7 +754,7 @@ impl FormBridge {
     }
     fn vector_node(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
         shift: u32,
         nil: &SessionValue,
@@ -706,7 +779,7 @@ impl FormBridge {
 
     pub fn list_values(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
@@ -714,7 +787,7 @@ impl FormBridge {
     }
     fn list_values_inner(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         items: &[SessionValue],
     ) -> Result<SessionValue, SessionError> {
         session.charge_host_work(items.len() as u64)?;
@@ -734,13 +807,21 @@ impl FormBridge {
     }
     pub fn identifier(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         namespace: Option<&str>,
         name: &str,
         keyword: bool,
         metadata: Option<&SessionValue>,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
+        let cache_key = if keyword && metadata.is_none() {
+            session.charge_host_work((name.len() + namespace.map_or(0, str::len)) as u64 + 1)?;
+            Some((namespace.map(str::to_owned), name.to_owned()))
+        } else { None };
+        if let Some(key) = &cache_key {
+            let cached = self.core.keywords.lock().unwrap_or_else(|error| error.into_inner()).get(key).cloned();
+            if let Some(root) = cached { return session.root_value(&root); }
+        }
         let nil = self.scalar(session, &crate::portable::hir::Literal::Nil)?;
         let ns = if let Some(namespace) = namespace {
             self.scalar(
@@ -754,14 +835,12 @@ impl FormBridge {
             session,
             &crate::portable::hir::Literal::String(name.encode_utf16().collect()),
         )?;
-        let fqn = namespace.map_or_else(
-            || name.to_owned(),
-            |namespace| format!("{namespace}/{name}"),
-        );
-        let fqn = self.scalar(
-            session,
-            &crate::portable::hir::Literal::String(fqn.encode_utf16().collect()),
-        )?;
+        // An unqualified identifier's full spelling is its immutable name.
+        // Reuse that actual string instead of allocating/copying it twice.
+        let fqn = if let Some(namespace) = namespace {
+            let text = format!("{namespace}/{name}");
+            self.scalar(session, &crate::portable::hir::Literal::String(text.encode_utf16().collect()))?
+        } else { name_value.clone() };
         // The hash cache is private to core and starts empty; core's own hash
         // fills it on first use (design decision 2026-10-25).
         let memo = nil.clone();
@@ -771,10 +850,19 @@ impl FormBridge {
                     "Keyword compiler data cannot carry metadata",
                 )));
             }
-            self.construct(session,
+            let value = self.construct(session,
                 Class::Keyword,
                 &[&ns, &name_value, &fqn, &memo],
-            )
+            )?;
+            if let Some(key) = cache_key {
+                let mut cache = self.core.keywords.lock().unwrap_or_else(|error| error.into_inner());
+                if cache.len() >= 128 {
+                    session.charge_host_work(cache.len() as u64 + 1)?;
+                    cache.clear();
+                }
+                cache.insert(key, value.object()?.clone());
+            }
+            Ok(value)
         } else {
             self.construct(session,
                 Class::Symbol,
@@ -782,18 +870,31 @@ impl FormBridge {
             )
         }
     }
-    pub fn quote(&self, session: &mut Session, form: Form) -> Result<SessionValue, SessionError> {
+    pub fn quote(&self, session: &mut SessionHost<'_>, form: Form) -> Result<SessionValue, SessionError> {
         self.quote_ref(session, &form)
     }
     pub(crate) fn quote_ref(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         form: &Form,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        session.with_operation_budget(|session| self.form_value(session, &form))
+        session.with_operation_budget(|session| self.form_value(session, &form, NativeFormValues::Disabled))
     }
-    fn form_value(&self, session: &mut Session, form: &Form) -> Result<SessionValue, SessionError> {
+    pub(crate) fn quote_evaluation_ref(&self, session: &mut SessionHost<'_>, form: &Form, owner: u64) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.with_operation_budget(|session| self.form_value(session, form, NativeFormValues::Evaluation(owner)))
+    }
+    pub(crate) fn quote_transport_ref(
+        &self, session: &mut SessionHost<'_>, form: &Form, owner: u64,
+        values: &BTreeMap<u64, SessionValue>,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.with_operation_budget(|session| {
+            self.form_value(session, form, NativeFormValues::Transport { owner, values })
+        })
+    }
+    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form, native_values: NativeFormValues<'_>) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
         enum Task<'a> {
             Visit(&'a Form),
@@ -895,6 +996,20 @@ impl FormBridge {
                     let start = values.len() - take;
                     let built = values.split_off(start);
                     let mut result = match &form.kind {
+                        Kind::NativeConstant { owner, index } => {
+                            match native_values {
+                                NativeFormValues::Evaluation(allowed) if allowed == *owner => {
+                                    session.import_evaluation_constant(*owner, *index)?
+                                }
+                                NativeFormValues::Transport { owner: allowed, values } if allowed == *owner => {
+                                    let value = values.get(index).ok_or_else(|| failure(form, "Missing scoped native transport value"))?;
+                                    // Validate actual destination ownership, not only a numeric token.
+                                    session.inspect(value, |_, _| Ok(()))?;
+                                    value.clone()
+                                }
+                                _ => return Err(failure(form, "Native constants are not portable macro syntax")),
+                            }
+                        },
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
                         Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
@@ -959,14 +1074,21 @@ impl FormBridge {
                     if has_metadata {
                         // Preserve quotation order: realize children and the
                         // base collection before evaluating its metadata map.
-                        let pairs = normalized_reader_metadata(session, form)?;
-                        let metadata_form = Form {
-                            span: form.span.clone(),
-                            metadata: vec![],
-                            kind: Kind::Map(pairs),
+                        let metadata_form = match (native_values, form.metadata.as_slice()) {
+                            // A private transport read has already checked the
+                            // actual metadata map's canonical descriptor. Keep
+                            // its scoped root, including aliases with values
+                            // reached by another part of the same transport.
+                            (NativeFormValues::Transport { .. }, [metadata])
+                                if matches!(metadata.kind, Kind::NativeConstant { .. }) => metadata.clone(),
+                            _ => Form {
+                                span: form.span.clone(),
+                                metadata: vec![],
+                                kind: Kind::Map(normalized_reader_metadata(session, form)?),
+                            },
                         };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.form_value(session, &metadata_form)
+                            self.form_value(session, &metadata_form, native_values)
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;
@@ -1005,7 +1127,7 @@ impl FormBridge {
     /// expansion data to the supplied macro call site; never invent source bytes.
     pub fn read(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
         span: Range<usize>,
     ) -> Result<Form, SessionError> {
@@ -1013,21 +1135,66 @@ impl FormBridge {
     }
     fn read_with_metadata(
         &self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
         span: Range<usize>,
         include_metadata: bool,
     ) -> Result<Form, SessionError> {
+        self.read_with_context(session, value, span, include_metadata, None, true).map(|(form, _)| form)
+    }
+    /// Snapshot already materialized data without invoking a lazy sequence.
+    /// Dynamic-context transport must not execute an otherwise unused binding.
+    pub(crate) fn read_materialized(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+    ) -> Result<Form, SessionError> {
+        self.read_with_context(session, value, 0..0, true, None, false).map(|(form, _)| form)
+    }
+    pub(crate) fn read_evaluation(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+        span: Range<usize>, owner: u64, closure_test: wasmtime::Func,
+        class_test: wasmtime::Func, instance_test: wasmtime::Func, identity_test: wasmtime::Func,
+        var_class: wasmtime::OwnedRooted<AnyRef>,
+        unbound_class: wasmtime::OwnedRooted<AnyRef>,
+        meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    ) -> Result<Form, SessionError> {
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, unbound_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, identity_uid: None, constants: vec![], constants_by_uid: BTreeMap::new() };
+        let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
+        for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
+        Ok(form)
+    }
+    /// Read already materialized data while retaining genuine nested native
+    /// roots only in the returned bundle. Ordinary syntax/display readers keep
+    /// their existing rejection policy; no lazy sequence is forced here.
+    pub(crate) fn read_transport(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue, owner: u64,
+        closure_test: wasmtime::Func, class_test: wasmtime::Func,
+        instance_test: wasmtime::Func, identity_test: wasmtime::Func,
+        var_class: wasmtime::OwnedRooted<AnyRef>,
+        unbound_class: wasmtime::OwnedRooted<AnyRef>,
+        meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+        namespace_class: wasmtime::OwnedRooted<AnyRef>, array_test: wasmtime::Func,
+    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
+        let native = NativeRead { owner, closure_test, class_test, instance_test,
+            identity_test, var_class, unbound_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, identity_uid: Some(session.data_identity_uid_call()), constants: vec![], constants_by_uid: BTreeMap::new() };
+        self.read_with_context(session, value, 0..0, true, Some(native), false)
+    }
+    fn read_with_context(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue,
+        span: Range<usize>, include_metadata: bool, native: Option<NativeRead>, realize_lazy: bool,
+    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         self.check(session)?;
         session.with_operation_budget(|session| {
             let interrupt = session.host_work_interrupt();
+            let (native_kind, field_get, invoke_method) = session.data_live_sequence_calls();
+            let lazy = self.core.factories["lazy-sval"].value(session)?;
             session
                 .data_inspect_calls(
                     value,
-                    &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, _closure_new, function, undefined| {
+                    &lazy,
+                    |mut store, value, _args_new, _invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
+                native,
                             source_valid: None,
                             include_metadata,
                             interrupt,
@@ -1035,10 +1202,11 @@ impl FormBridge {
                         profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
                         host_fuel: std::cell::Cell::new(0),
                         lazy_calls: std::cell::Cell::new(0),
-                            calls: Some(ReadCalls {
-                                args_new,
-                                invoke,
+                            calls: realize_lazy.then_some(ReadCalls {
+                                invoke_method,
                                 function,
+                                native_kind,
+                                field_get,
                             }),
                             undefined: Some(undefined),
                         };
@@ -1046,7 +1214,7 @@ impl FormBridge {
                         if budget.profile {
                             eprintln!("macro-decode host-fuel={} lazy-calls={} success={}", budget.host_fuel.get(), budget.lazy_calls.get(), result.is_ok());
                         }
-                        result
+                        result.map(|form| (form, budget.native.map(|native| native.constants).unwrap_or_default()))
                     },
                 )
                 .map_err(|failure| match failure {
@@ -1114,7 +1282,7 @@ fn nil(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<boo
 fn metadata(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1125,8 +1293,16 @@ fn metadata(
     if nil(store, value)? {
         return Ok(vec![]);
     }
+    let transport = budget.native.as_ref()
+        .is_some_and(|native| native.purpose == NativeReadPurpose::Transport);
+    if transport && !matches!(object(store, value, classes)?.0,
+        Class::PersistentArrayMap | Class::PersistentHashMap)
+    {
+        return Err(error("Runtime macro metadata requires a canonical persistent map"));
+    }
     let form = decode(store, value, classes, span, depth + 1, budget)?;
-    if !matches!(form.kind, Kind::Map(_)) {
+    if !matches!(form.kind, Kind::Map(_))
+        && !(transport && matches!(form.kind, Kind::NativeConstant { .. })) {
         return Err(error(
             "Runtime macro metadata requires a canonical persistent map",
         ));
@@ -1169,7 +1345,7 @@ fn name(
 fn object(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
 ) -> wasmtime::Result<(Class, Vec<Val>)> {
     let storage = fields(store, value, 4)?;
     let descriptor = fields(store, &storage[0], 6)?;
@@ -1193,13 +1369,146 @@ fn absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
     // Nil (0) and undefined (6) both satisfy the pinned nil? storage test.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
+// Functions, real class values and Vars retain authenticated same-Store roots.
+// This authority is installed only for a public native eval read. Ordinary
+// macro/display/source readers retain their strict nominal syntax whitelist.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum NativeReadPurpose { Evaluation, Transport }
+struct NativeRead {
+    owner: u64,
+    closure_test: wasmtime::Func,
+    class_test: wasmtime::Func,
+    instance_test: wasmtime::Func,
+    identity_test: wasmtime::Func,
+    var_class: wasmtime::OwnedRooted<AnyRef>,
+    unbound_class: wasmtime::OwnedRooted<AnyRef>,
+    meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    namespace_class: Option<wasmtime::OwnedRooted<AnyRef>>,
+    array_test: Option<wasmtime::Func>,
+    purpose: NativeReadPurpose,
+    identity_uid: Option<wasmtime::Func>,
+    constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
+    // UID selects candidates only; actual roots/capabilities still decide
+    // identity, including deliberately colliding native values.
+    constants_by_uid: BTreeMap<i64, Vec<usize>>,
+}
+static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+impl NativeRead {
+    fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val,
+        classes: &BTreeMap<i64, (Class, CompilerRoot)>, depth: usize,
+        interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Kind>> {
+        // The transport's root is being materialized, not captured again.
+        // Capturing it would recursively re-export the same unsupported root.
+        if self.purpose == NativeReadPurpose::Transport && depth == 0 { return Ok(None); }
+        let mut result = [Val::I32(0)];
+        // Class constructors are represented by closures too. Class identity
+        // must win before deciding whether to materialize a function constant.
+        self.class_test.call(&mut *store, &[*value], &mut result)?;
+        let class = result[0].unwrap_i32() != 0;
+        if class && self.purpose == NativeReadPurpose::Transport { return Ok(None); }
+        let mut function = false;
+        if !class {
+            self.closure_test.call(&mut *store, &[*value], &mut result)?;
+            function = result[0].unwrap_i32() != 0;
+            if !function {
+                let class = Val::AnyRef(Some(self.meta_fn_class.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
+                function = result[0].unwrap_i32() != 0;
+            }
+        }
+        if !class && !function {
+            let class = Val::AnyRef(Some(self.var_class.to_rooted(&mut *store)));
+            self.instance_test.call(&mut *store, &[class, *value], &mut result)?;
+            let mut supported = result[0].unwrap_i32() != 0;
+            if !supported {
+                let unbound = Val::AnyRef(Some(self.unbound_class.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[unbound, *value], &mut result)?;
+                if result[0].unwrap_i32() != 0 {
+                    if self.purpose == NativeReadPurpose::Evaluation && depth != 0 {
+                        return Err(error("Cannot embed an Unbound value in compiled form data"));
+                    }
+                    supported = true;
+                }
+            }
+            if !supported && let Some(namespace) = &self.namespace_class {
+                let namespace = Val::AnyRef(Some(namespace.to_rooted(&mut *store)));
+                self.instance_test.call(&mut *store, &[namespace, *value], &mut result)?;
+                supported = result[0].unwrap_i32() != 0;
+            }
+            if !supported && let Some(array_test) = self.array_test {
+                let mut result = [Val::null_any_ref()];
+                array_test.call(&mut *store, &[*value], &mut result)?;
+                supported = crate::portable_session::sentinel_tag(&mut *store, &result[0])? == Some(crate::runtime_abi::TRUE as u32);
+            }
+            if !supported && self.purpose == NativeReadPurpose::Transport {
+                // Retain supported immutable nominal roots rather than
+                // flattening each occurrence independently. Descriptor identity
+                // comes from the bridge's captured classes, never a type name.
+                // Mutable arrays use live forwarding above; lazy sequences and
+                // implementation nodes still follow the strict decoder.
+                supported = object(store, value, classes).is_ok_and(|(class, _)| matches!(class,
+                    Class::Uuid | Class::Symbol | Class::List | Class::EmptyList
+                    | Class::PersistentVector | Class::PersistentArrayMap
+                    | Class::PersistentHashMap | Class::PersistentHashSet
+                    | Class::MapEntry | Class::PersistentQueue | Class::Cons | Class::LazySeq));
+            }
+            if !supported { return Ok(None); }
+        }
+        let materialize = function && depth != 0;
+        let root = reference(value)?;
+        // Transport can contain large shared compiler catalogs. Index its
+        // constants by the existing owner UID instead of comparing every prior
+        // constant for each entry. Evaluation retains its original pool walk.
+        let uid = if let Some(identity_uid) = self.identity_uid {
+            let mut value_uid = [Val::null_any_ref()];
+            identity_uid.call(&mut *store, &[*value], &mut value_uid)?;
+            let Some(RuntimeNumber::Long(uid)) = runtime_number(&mut *store, &value_uid[0])? else {
+                return Err(error("Invalid native constant UID"));
+            };
+            Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            Some(uid)
+        } else { None };
+        let candidates = match uid {
+            Some(uid) => self.constants_by_uid.get(&uid).map_or(&[][..], Vec::as_slice),
+            None => &[],
+        };
+        let count = if uid.is_some() { candidates.len() } else { self.constants.len() };
+        for position in 0..count {
+            Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            let slot = if uid.is_some() { candidates[position] } else { position };
+            let (index, previous, mode) = &self.constants[slot];
+            let previous = previous.to_rooted(&mut *store);
+            if *mode != materialize { continue; }
+            let same_root = wasmtime::Rooted::<AnyRef>::ref_eq(&*store, root, &previous)?;
+            let mut same_capability = [Val::I32(0)];
+            if !same_root {
+                self.identity_test.call(&mut *store, &[*value, Val::AnyRef(Some(previous))], &mut same_capability)?;
+            }
+            if same_root || same_capability[0].unwrap_i32() != 0 {
+                return Ok(Some(Kind::NativeConstant { owner: self.owner, index: *index }));
+            }
+        }
+        let index = NEXT_NATIVE_CONSTANT.fetch_update(
+            std::sync::atomic::Ordering::Relaxed, std::sync::atomic::Ordering::Relaxed,
+            |index| index.checked_add(1),
+        ).map_err(|_| error("Native constant identity exhausted"))?;
+        if let Some(uid) = uid {
+            Session::consume_host_work(store.as_context_mut(), 2, interrupt)?;
+            self.constants_by_uid.entry(uid).or_default().push(self.constants.len());
+        }
+        self.constants.push((index, root.to_owned_rooted(&mut *store)?, materialize));
+        Ok(Some(Kind::NativeConstant { owner: self.owner, index }))
+    }
+}
 struct ReadCalls {
-    args_new: wasmtime::Func,
-    invoke: wasmtime::Func,
+    invoke_method: wasmtime::Func,
     function: Val,
+    native_kind: wasmtime::Func,
+    field_get: wasmtime::Func,
 }
 struct Budget {
     display: Option<DisplayCalls>,
+    native: Option<NativeRead>,
     include_metadata: bool,
     // None for ordinary macro/display reads. Compiler source checks accumulate
     // invariant mismatches without treating them as a new source certificate.
@@ -1213,6 +1522,28 @@ struct Budget {
     profile: bool,
     host_fuel: std::cell::Cell<u64>,
     lazy_calls: std::cell::Cell<u64>,
+}
+// Live sequence proxies retain their source fields rather than snapshotting
+// mutable lazy state. Only authenticated Cons/LazySeq capabilities may use this
+// path, and forcing remains in the ordinary fueled reader/sval operation.
+fn object_with_budget(store: &mut StoreContextMut<'_, ()>, value: &Val,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>, budget: &Budget,
+) -> wasmtime::Result<(Class, Vec<Val>)> {
+    let (class, data) = object(store, value, classes)?;
+    if !data.is_empty() || !matches!(class, Class::Cons | Class::LazySeq) { return Ok((class, data)); }
+    let calls = budget.calls.as_ref().ok_or_else(|| error("Live sequence reads need fueled source access"))?;
+    let expected = if matches!(class, Class::Cons) { crate::runtime_abi::native_values::CONS } else { crate::runtime_abi::native_values::LAZY_SEQ };
+    charge_read_work(store, 5, budget)?;
+    let mut kind = [Val::I32(0)];
+    calls.native_kind.call(&mut *store, &[*value], &mut kind)?;
+    if kind[0].unwrap_i32() != expected { return Err(error("Invalid live sequence capability")); }
+    let mut fields = Vec::with_capacity(4);
+    for index in 0..4 {
+        let mut result = [Val::null_any_ref()];
+        calls.field_get.call(&mut *store, &[*value, Val::I32(index)], &mut result)?;
+        fields.push(result[0]);
+    }
+    Ok((class, fields))
 }
 fn unsupported_datum(budget: &Budget, name: &str) -> wasmtime::Error {
     if budget.display.is_some() {
@@ -1271,7 +1602,7 @@ fn leave_active(budget: &mut Budget, pushed: bool) {
 fn decode(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1281,7 +1612,7 @@ fn decode(
 fn decode_datum<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1302,12 +1633,17 @@ fn decode_datum<T: DatumTarget>(
 fn decode_datum_inner<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<T> {
     spend(store, budget)?;
+    if let Some(native) = &mut budget.native {
+        if let Some(kind) = native.constant(store, value, classes, depth, &budget.interrupt)? {
+            return Ok(T::plain(Form { span: span.clone(), metadata: vec![], kind }));
+        }
+    }
     if let Some(calls) = budget.display {
         if let Some(leaf) = calls.read(store, *value)? {
             return T::opaque(leaf);
@@ -1384,7 +1720,7 @@ fn decode_datum_inner<T: DatumTarget>(
             }
             DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::integer(*sign < 0, digits, *display == 0)))
         } else {
-            let (class, data) = object(store, value, classes)?;
+            let (class, data) = object_with_budget(store, value, classes, budget)?;
             let slot = match class {
                 Class::Symbol => Some(4),
                 Class::PersistentVector
@@ -1484,7 +1820,7 @@ fn decode_datum_inner<T: DatumTarget>(
                     if data.len() != 3 {
                         return Err(error("Invalid persistent hash set field layout"));
                     }
-                    let (map_class, map_data) = object(store, &data[1], classes)?;
+                    let (map_class, map_data) = object_with_budget(store, &data[1], classes, budget)?;
                     let entries = match map_class {
                         Class::PersistentHashMap => {
                             hash_map_pairs(store, &map_data, classes, budget)?
@@ -1582,7 +1918,7 @@ fn decode_datum_inner<T: DatumTarget>(
                     } else {
                         sequence(store, &data[2], classes, span, depth, budget)?
                     };
-                    let (rear_class, rear) = object(store, &data[3], classes)?;
+                    let (rear_class, rear) = object_with_budget(store, &data[3], classes, budget)?;
                     if rear_class != Class::PersistentVector {
                         return Err(error("Queue needs a persistent vector rear"));
                     }
@@ -1627,7 +1963,7 @@ fn decode_datum_inner<T: DatumTarget>(
 fn sequence<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1648,7 +1984,7 @@ fn sequence<T: DatumTarget>(
 fn sequence_inner<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -1683,7 +2019,7 @@ fn sequence_inner<T: DatumTarget>(
             }
             break;
         }
-        let (class, data) = object(store, &cursor, classes)?;
+        let (class, data) = object_with_budget(store, &cursor, classes, budget)?;
         match class {
             Class::LazySeq => {
                 if data.len() != 4 {
@@ -1699,16 +2035,9 @@ fn sequence_inner<T: DatumTarget>(
                     .calls
                     .as_ref()
                     .ok_or_else(|| error("Lazy data needs fueled source realization"))?;
-                let mut args = [Val::null_any_ref()];
-                calls
-                    .args_new
-                    .call(&mut *store, &[Val::I32(1)], &mut args)?;
-                args[0]
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&*store)?
-                    .ok_or_else(|| error("Invalid invocation arguments"))?
-                    .set(&mut *store, 0, cursor.clone())?;
+                // The captured sval is an Object method: use the runtime's
+                // receiver-aware dispatch, including exception-safe CURRENT_THIS
+                // restoration, rather than treating the method as an IFn.
                 let mut result = [Val::null_any_ref()];
                 budget.lazy_calls.set(budget.lazy_calls.get().saturating_add(1));
                 // Observational reads never replace an invocation error. This
@@ -1718,9 +2047,9 @@ fn sequence_inner<T: DatumTarget>(
                     eprintln!("macro-lazy-invoke call={} stage=before fuel={fuel_before:?}",
                         budget.lazy_calls.get());
                 }
-                let invoked = calls.invoke.call(
+                let invoked = calls.invoke_method.call(
                     &mut *store,
-                    &[calls.function.clone(), args[0].clone()],
+                    &[calls.function.clone(), cursor.clone()],
                     &mut result,
                 );
                 if budget.profile {
@@ -1740,7 +2069,7 @@ fn sequence_inner<T: DatumTarget>(
                 if !first_segment {
                     metadata(store, &data[2], classes, span, depth, budget)?;
                 }
-                let (class, chunk) = object(store, &data[0], classes)?;
+                let (class, chunk) = object_with_budget(store, &data[0], classes, budget)?;
                 if class != Class::ArrayChunk || chunk.len() != 3 {
                     return Err(error("Chunked cons needs canonical array chunk storage"));
                 }
@@ -1916,7 +2245,7 @@ fn sequence_inner<T: DatumTarget>(
                 if !first_segment {
                     metadata(store, &data[4], classes, span, depth, budget)?;
                 }
-                let (owner, vector_data) = object(store, &data[0], classes)?;
+                let (owner, vector_data) = object_with_budget(store, &data[0], classes, budget)?;
                 if !matches!(owner, Class::PersistentVector) || vector_data.len() != 6 {
                     return Err(error(
                         "Chunked vector sequence needs canonical vector storage",
@@ -1977,7 +2306,7 @@ fn sequence_inner<T: DatumTarget>(
 fn append_indexed<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2092,7 +2421,7 @@ fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result
 fn source_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     if let Some(elements) = object_array_elements(store, value, budget)? {
@@ -2136,11 +2465,11 @@ fn object_array_elements(
 fn node_elements(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     if !matches!(class, Class::VectorNode) || data.len() != 2 {
         return Err(error("Invalid persistent vector trie node"));
     }
@@ -2153,7 +2482,7 @@ fn node_elements(
 fn vector<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2177,7 +2506,7 @@ fn vector<T: DatumTarget>(
     }
     // persistent! clears only the root edit token. Descendant nodes may retain
     // their former token; the pinned persistent trie legitimately shares them.
-    let (_, root_data) = object(store, &data[3], classes)?;
+    let (_, root_data) = object_with_budget(store, &data[3], classes, budget)?;
     if root_data.len() != 2 || !nil(store, &root_data[0])? {
         return Err(error("Persistent vector root retains an active edit token"));
     }
@@ -2220,7 +2549,7 @@ fn vector_leaf(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
     index: usize,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     let count = integer(store, &data[1])?;
@@ -2233,7 +2562,7 @@ fn vector_leaf(
     } else {
         ((count - 1) >> 5) << 5
     };
-    let (_, root_data) = object(store, &data[3], classes)?;
+    let (_, root_data) = object_with_budget(store, &data[3], classes, budget)?;
     if root_data.len() != 2 || !nil(store, &root_data[0])? {
         return Err(error("Persistent vector root retains an active edit token"));
     }
@@ -2259,7 +2588,7 @@ fn vector_leaf(
 fn hash_map<T: DatumTarget>(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     span: &Range<usize>,
     depth: usize,
     budget: &mut Budget,
@@ -2275,7 +2604,7 @@ fn hash_map<T: DatumTarget>(
 fn hash_map_pairs(
     store: &mut StoreContextMut<'_, ()>,
     data: &[Val],
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     if data.len() != 6 {
@@ -2306,7 +2635,7 @@ fn hash_map_pairs(
 fn map_sequence_pairs(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
@@ -2326,7 +2655,7 @@ fn map_sequence_pairs(
 fn map_sequence_pairs_inner(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     cursor_depth: usize,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
@@ -2334,7 +2663,7 @@ fn map_sequence_pairs_inner(
         return Ok(Vec::new());
     }
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     let mut pairs = Vec::new();
     match class {
         Class::PersistentArrayMapSeq => {
@@ -2394,7 +2723,7 @@ fn map_sequence_pairs_inner(
             if data.len() != expected {
                 return Err(error("Invalid key cursor list layout"));
             }
-            let (entry_class, entry) = object(store, &data[1], classes)?;
+            let (entry_class, entry) = object_with_budget(store, &data[1], classes, budget)?;
             if !matches!(entry_class, Class::MapEntry) || entry.len() != 3 {
                 return Err(error("Key cursor list needs canonical map entries"));
             }
@@ -2428,7 +2757,7 @@ fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
 fn hash_node(
     store: &mut StoreContextMut<'_, ()>,
     value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
+    classes: &BTreeMap<i64, (Class, CompilerRoot)>,
     level: usize,
     budget: &mut Budget,
     pairs: &mut Vec<Val>,
@@ -2437,7 +2766,7 @@ fn hash_node(
         return Err(error("Hash trie depth exceeds 32-bit hash path"));
     }
     spend(store, budget)?;
-    let (class, data) = object(store, value, classes)?;
+    let (class, data) = object_with_budget(store, value, classes, budget)?;
     match class {
         Class::BitmapIndexedNode => {
             if data.len() != 3 {

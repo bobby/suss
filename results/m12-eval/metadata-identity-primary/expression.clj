@@ -1,0 +1,2 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (do (declare metadata-root-macro) (let [v (eval '(defmacro metadata-root-macro [] 1)) before (meta v)] [(identical? before (meta v)) (with-redefs [metadata-root-macro (fn [& xs] 42)] (let [one (meta v) two (meta v)] [(identical? one two) (identical? before one) (boolean (:macro one))])) (let [one (meta v) two (meta v)] [(identical? one two) (identical? before one) (boolean (:macro one))])])))

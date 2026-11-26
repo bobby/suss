@@ -1,0 +1,52 @@
+[
+  {
+    "name": "definition-result-is-interned",
+    "expression": "(identical? (def live-var 4) (var live-var))",
+    "expected": "true"
+  },
+  {
+    "name": "getter-observes-redefinition",
+    "expression": "(let [v (var live-var)] (eval '(def live-var 9)) [@v (identical? v (var live-var))])",
+    "expected": "[9 true]"
+  },
+  {
+    "name": "callable-reference-is-not-function",
+    "expression": "(let [v (var live-fn)] [(fn? v) (ifn? v) (v 20)])",
+    "expected": "[false true 21]"
+  },
+  {
+    "name": "dynamic-cell",
+    "expression": "[(binding [*live-var* 7] @(var *live-var*)) @(var *live-var*)]",
+    "expected": "[7 3]"
+  },
+  {
+    "name": "var-evaluates-to-itself",
+    "expression": "(let [v (var live-var)] (identical? (eval v) v))",
+    "expected": "true"
+  },
+  {
+    "name": "canonical-core-binding",
+    "expression": "(identical? (var +) (var clojure.core/+))",
+    "expected": "true"
+  },
+  {
+    "name": "declaration-metadata",
+    "expression": "(let [v (var live-var)] [(:name (meta v)) (str (ns-name (:ns (meta v))))])",
+    "expected": "[live-var \"user\"]"
+  },
+  {
+    "name": "replacement-retains-identity",
+    "expression": "(let [v (var live-var)] (eval '(def live-var 12)) [(identical? v (var live-var)) @v])",
+    "expected": "[true 12]"
+  },
+  {
+    "name": "failed-initializer-retains-live-root",
+    "expression": "(let [v (var live-var) result (try (eval '(def live-var (throw (ex-info \"failure\" {})))) (catch Throwable e :throw))] [result @v (identical? v (var live-var))])",
+    "expected": "[:throw 12 true]"
+  },
+  {
+    "name": "const-var-reads-live-root",
+    "expression": "(let [v (var live-const)] (eval '(def live-const 2)) [live-const @v])",
+    "expected": "[1 2]"
+  }
+]

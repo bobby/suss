@@ -96,7 +96,8 @@ fn erase_spans(form: &mut Form) {
             erase_spans(operator);
             erase_spans(target);
         }
-        Kind::Nil
+        Kind::NativeConstant { .. }
+        | Kind::Nil
         | Kind::Bool(_)
         | Kind::Number(_)
         | Kind::Long(_)

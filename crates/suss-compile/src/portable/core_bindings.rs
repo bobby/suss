@@ -121,6 +121,7 @@ pub fn compile_with_cells(
             &ConstExpr::extended([
                 runtime_abi::sentinel_value(runtime_abi::NIL),
                 Instruction::I32Const(0),
+                runtime_abi::sentinel_value(runtime_abi::NIL),
                 Instruction::StructNew(runtime_abi::BINDING),
             ]),
         );

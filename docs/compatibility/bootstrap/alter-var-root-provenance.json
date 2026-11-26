@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "upstream": "Clojure1.12.6",
+  "license": "EPL-1.0",
+  "jar-sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "entry": "clojure/core.clj",
+  "entry-sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "original": "(defn alter-var-root\n  \"Atomically alters the root binding of var v by applying f to its\n  current value plus any args\"\n  {:added \"1.0\"\n   :static true}\n  [^clojure.lang.Var v f & args] (.alterRoot v f args))",
+  "original-sha256": "6bac6c15c23eda7c9ee62eca4ff0266260f5fee0d141aaa62d48b2f1f073850b",
+  "source": "docs/compatibility/bootstrap/exact-integers.sus",
+  "adaptation": ";; BEGIN Clojure alter-var-root\n;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.\n;; See runtime/core-import/epl-v10.html and alter-var-root-provenance.json.\n(def ^{:doc \"Atomically alters the root binding of var v by applying f to its current value and args.\"\n       :added \"1.0\" :static true} alter-var-root\n  (fn [v f & args]\n    (let [getter (.-val v)\n          root (apply f (suss.bootstrap/binding-getter-root-get getter) args)]\n      (suss.bootstrap/binding-getter-root-set! getter root (instance? VarUnbound root)))))\n;; END Clojure alter-var-root",
+  "adaptation-sha256": "88b0866fba267b475e8a0be73987e843686cb4bbd674c001d4d6c9a4440975cf",
+  "contract": "Apply the actual callable to the actual root value and all arguments, then replace that root only on success. Dynamic entries are neither read nor written. Native Store ownership serializes execution; authenticated getter operations forward to the real owning cell. Provenance alone is not validation.",
+  "root-contract": "Unlike bindRoot, alterRoot preserves the macro flag. An actual Unbound result retains its real object and does not make a root bound. Validators/watches are not introduced by this adaptation."
+}

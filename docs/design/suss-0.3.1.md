@@ -115,8 +115,9 @@ resolved consistently in AOT, macros and REPL. Running programs see namespaces a
 Clojure's do. `*ns*` is bound to the namespace being loaded, to the REPL's
 namespace, or, in a macro, to the namespace being compiled; its root value is
 `suss.core`. `find-ns`, `the-ns`, `ns-name`, `all-ns`, `ns-aliases` and
-`ns-refers` read namespaces the compiler publishes in each phase. Suss has no
-runtime Vars, so `ns-refers` maps names to qualified symbols. A runtime
+`ns-refers` read namespaces the compiler publishes in each phase. Native
+compiled sessions intern live binding-cell Vars (2026-11-24 decision below).
+`ns-refers` retains its qualified-symbol values as a separate platform contract. A runtime
 resolution agrees with syntax quote's (`docs/runtime/runtime-namespaces.md`).
 Running programs read data with `read-string` and `suss.edn/read-string`,
 following `clojure.core/read-string` and `clojure.edn/read-string`, in both
@@ -140,12 +141,9 @@ keeps numbers unboxed wherever the compiler can, and the staging. Longs and
 doubles are distinct values with Clojure's arithmetic, overflow checks,
 contagion, `quot`, `rem` and `mod`, reading and printing (#335), and with
 Clojure's `=`, `hash`, 64-bit bit operations and range-checked casts (#336).
-Until the rest is implemented, `type` doesn't distinguish them, a quotient of longs that doesn't divide evenly is a double
-(#338). BigInt literals and signed addition, subtraction and multiplication
-execute exactly, including integers beyond the long range. The reader reads
-ratios and `M` literals but evaluating those runtime types still throws
-(#333, #338, #339). BigInt's other numeric operations and conversions remain
-incomplete; these are known gaps in the implementation. Arithmetic (`+ - * /`, `inc`, `dec`,
+Exact integer division, arbitrary-precision integers and ratios, and
+scale-preserving decimals follow ADR-0003. `type` distinguishes the numeric
+categories. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming
@@ -156,8 +154,8 @@ variadic comparison stops comparing at its first false pair.
 Source in the `suss.core` namespace keeps the pinned coercing operators
 internally (for example, `compare` orders strings and arrays), while core's
 public numeric functions check their operands. Unsupported numeric forms must
-produce diagnostics. Until ADR-0003 is implemented, exact WIT 64-bit integers
-use separate wrapper values.
+produce diagnostics. WIT integers use ordinary numeric values; an unsigned
+64-bit input above the signed long range is a BigInt.
 
 Strings are sequences of UTF-16 code units. Character literals are one-unit
 strings where ClojureScript treats them that way. Test astral characters, lone
@@ -610,3 +608,19 @@ implementation is a known gap.
 
 Upstream proposals and tool releases move. Recheck these sources when executing
 M0 and record actual tested revisions; do not equate an open proposal with support.
+
+
+2026-11-24 native Var decision (#515): public `var` and definition results
+refer to the native session's actual persistent binding cells. Intern one
+nominal Var per canonical phase/namespace/name in a compiler-owned hidden cell;
+its compiled getter reads the original live binding cell, including dynamic
+bindings, without retaining a root-value snapshot. Repeated lookup and eval
+return the same object across fragments and GC. Metadata belongs to that Var;
+redefinition retains identity while updating declaration metadata. Use the
+existing source-backed Var class and callable protocol machinery. This extends
+the earlier absence of runtime Vars; changing ns-refers' symbol-valued platform
+contract is separate work. A core Var's public qualified Symbol uses
+`clojure.core`, matching literal source data and Clojure's `symbol`/Var printing;
+its canonical binding key and metadata namespace object remain `suss.core`.
+Converting a Var constructs a fresh qualified Symbol without copying declaration
+metadata. Pure AOT does not acquire a hidden compiler service.

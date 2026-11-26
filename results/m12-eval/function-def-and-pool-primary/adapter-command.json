@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/function-def-and-pool-primary/adapted-oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.947512149810791,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "4c060c9d35ae88e0ad1ec33e30d9403c7514d55c57ce5df5bca9f3248cae8732",
+  "stdout_sha256": "2c4b0075ef918f58da55747a9ddb2c34f694d6994d9b2b260bf6da5c659365d4",
+  "original_cases_unchanged": "7f1f7a4226223157d4eff7b0cec508412259290368c4a8c51be57f4e2fefcb1b",
+  "qualification": "Specific positive Var-state controls use existing eval(var)/deref rather than unavailable public resolve/var-get. Actual bound-function observation is checked by fn? after deref, stronger than mere boundness for these known function values. Fresh Clojure output equals all5 original observations; no expected value/count/source primary change."
+}

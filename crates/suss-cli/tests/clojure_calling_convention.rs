@@ -124,8 +124,8 @@ fn values_that_arent_closures_are_called_out_of_line() {
         ("((Inv.) 5)", "[:inv 5]"),
         ("(apply (Inv.) [6])", "[:inv 6]"),
         ("(m nil)", ":one"),
-        // JVM Clojure appends the var, `: #'user/u`.
-        ("(do (def u) (u))", r#"[:error "Attempting to call unbound fn"]"#),
+        // The genuine Unbound callable identifies its actual Var, as Clojure does.
+        ("(do (def u) (u))", r#"[:error "Attempting to call unbound fn: #'user/u"]"#),
         // JVM Clojure throws ClassCastException (NullPointerException for
         // nil), naming JVM classes; Suss's message is its own.
         ("(1 2)", r#"[:error "Not callable"]"#),

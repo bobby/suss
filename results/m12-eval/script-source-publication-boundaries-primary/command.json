@@ -1,0 +1,30 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/script-source-publication-boundaries-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8285076171159744,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    {
+      "name": "later-native-macro-reassertion",
+      "source": "(do (eval '(defmacro publication-target [] 1)) (eval '(defmacro publication-reassert [] (eval '(defmacro publication-target [] 42)) 0)) [(load-string \"(defmacro publication-target [] 17) (def publication-answer [(publication-reassert) (publication-target)]) publication-answer\") (eval '(publication-target))])"
+    },
+    {
+      "name": "runtime-error-keeps-prefix-definition",
+      "source": "(do (try (load-string \"(eval '(def script-prefix-saved 21)) (throw (ex-info \\\"stop\\\" {})) 0\") (catch Throwable _ :caught)) (eval 'script-prefix-saved))"
+    }
+  ],
+  "source_sha256": "1932f9e0ff40c663efb8eb0249aab8dc1cac315a55474fdd56b186a5d57ca6c9",
+  "stdout_sha256": "440c36dcf012ad15539a74da8298bc2b7720ff7c48394993d4872612ead4eeed",
+  "qualification": "Pinned Clojure later actual native macro reassertion and Runtime failure prefix boundaries. Supplemental controls; no native pass claim."
+}

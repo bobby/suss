@@ -108,3 +108,14 @@ real scoped/munged UTF16 name, or an empty name when genuinely anonymous. Unset
 kernel names remain unavailable and raise a language exception when queried.
 This does not certify names for synthetic protocol/delegate/foreign callbacks,
 constructor display names or general JavaScript function-property interop.
+
+The retained 63-case JS storage corpus uses an uninitialized global as its
+undefined placeholder. Native Clojure Vars now read as genuine Unbound values,
+which are truthy callable objects rather than the internal undefined sentinel.
+The native harness explicitly initializes that placeholder from the already
+created user class's missing static. This preserves the original undefined
+property/native-slot controls and all observations without changing the corpus.
+It is a source setup adaptation, alongside the documented double-zero divisor,
+not a claim that uninitialized Clojure Vars behave like JavaScript undefined.
+The public eval primary controls separately exercise actual Unbound identity,
+Var ownership, IFn status, root replacement and failure messages.

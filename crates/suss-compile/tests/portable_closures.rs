@@ -333,7 +333,7 @@ fn bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions() {
 }
 
 /// Mark a cell bound and dynamic (`runtime_abi::CELL_BOUND | CELL_DYNAMIC`),
-/// so its reads call the imported binding-get these tests observe: a static
+/// so its reads call the imported binding-read these tests observe: a static
 /// cell's read is inline (#354).
 fn dynamic<T>(store: &mut Store<T>, cell: &Val) {
     let cell = cell.unwrap_anyref().unwrap().as_struct(&*store).unwrap().unwrap();
@@ -353,7 +353,7 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
     let maker = fragment(&mut store, &linker, "(fn [] (fn [a b] a))", &env);
     let maker = call(&mut store, maker, "eval", &[]);
     linker.allow_shadowing(true);
-    for name in ["binding-get", "invoke"] {
+    for name in ["binding-read", "invoke"] {
         let func = rt.get_func(&mut store, name).unwrap();
         let ty = func.ty(&store);
         let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
@@ -363,7 +363,7 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
                 caller.data_mut().push(format!("invoke:{count}"));
             }
             func.call(&mut caller, args, results)?;
-            if name == "binding-get" {
+            if name == "binding-read" {
                 let text = match runtime_number(&mut caller, &results[0])? {
                     Some(RuntimeNumber::Long(value)) => format!("read:{value}"),
                     Some(RuntimeNumber::Double(value)) => format!("read:{value:?}"),
@@ -580,14 +580,14 @@ fn non_callable_errors_happen_after_argument_effects() {
     let mut linker = Linker::new(&engine);
     linker.instance(&mut store, "suss.runtime", rt).unwrap();
     linker.allow_shadowing(true);
-    let getter = rt.get_func(&mut store, "binding-get").unwrap();
+    let getter = rt.get_func(&mut store, "binding-read").unwrap();
     let ty = getter.ty(&store);
     let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
         caller.data_mut().push("argument".into());
         getter.call(&mut caller, args, results)
     });
     linker
-        .define(&store, "suss.runtime", "binding-get", wrapper)
+        .define(&store, "suss.runtime", "binding-read", wrapper)
         .unwrap();
     let mut env = Environment::default();
     let id = env.declare_cell(Phase::Runtime, "app", "arg").unwrap();

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "definition-in-initializer",
+    "expression": "(do (def ^:dynamic init-effect-direct 1) (let [inside (binding [init-effect-direct (do (def ^:dynamic init-effect-direct 2) 3)] init-effect-direct)] [inside init-effect-direct]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "eval-definition-in-initializer",
+    "expression": "(do (def ^:dynamic init-effect-eval 1) (let [inside (binding [init-effect-eval (do (eval (quote (def ^:dynamic init-effect-eval 2))) 3)] init-effect-eval)] [inside init-effect-eval]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "failed-later-initializer-keeps-prefix",
+    "expression": "(do (def ^:dynamic init-effect-failed 1) (def ^:dynamic init-effect-second 0) [(try (binding [init-effect-failed (do (eval (quote (def ^:dynamic init-effect-failed 2))) 3) init-effect-second (throw (ex-info \"later\" {}))] :body) (catch Throwable e :caught)) init-effect-failed])",
+    "observed_edn": "[:caught 2]"
+  },
+  {
+    "name": "body-set-restores-prior-binding",
+    "expression": "(do (def ^:dynamic init-effect-body 1) (let [inside (binding [init-effect-body 3] (set! init-effect-body 4) init-effect-body)] [inside init-effect-body]))",
+    "observed_edn": "[4 1]"
+  },
+  {
+    "name": "nested-initializer-eval-keeps-outer-effect",
+    "expression": "(do (def ^:dynamic init-effect-nested 0) (binding [init-effect-nested 1] [(binding [init-effect-nested (do (eval (quote (set! init-effect-nested 2))) 3)] init-effect-nested) init-effect-nested]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "nested-initializer-set-keeps-outer-effect",
+    "expression": "(do (def ^:dynamic init-effect-direct-nested 0) (binding [init-effect-direct-nested 1] [(binding [init-effect-direct-nested (do (set! init-effect-direct-nested 2) 3)] init-effect-direct-nested) init-effect-direct-nested]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "earlier-initializer-keeps-later-binding-effect",
+    "expression": "(do (def ^:dynamic init-effect-cross-x 0) (def ^:dynamic init-effect-cross-y 0) (binding [init-effect-cross-x 1 init-effect-cross-y 1] (let [inside (binding [init-effect-cross-x (do (set! init-effect-cross-y 2) 3) init-effect-cross-y 4] [init-effect-cross-x init-effect-cross-y])] [inside init-effect-cross-y])))",
+    "observed_edn": "[[3 4] 2]"
+  },
+  {
+    "name": "unbound-initializer-eval-definition-keeps-new-root",
+    "expression": "(do (def ^:dynamic init-effect-unbound) (let [inside (binding [init-effect-unbound (do (eval (quote (def ^:dynamic init-effect-unbound 2))) 3)] init-effect-unbound)] [inside init-effect-unbound]))",
+    "observed_edn": "[3 2]"
+  },
+  {
+    "name": "later-initializer-keeps-earlier-binding-effect",
+    "expression": "(do (def ^:dynamic init-effect-late-x 0) (def ^:dynamic init-effect-late-y 0) (binding [init-effect-late-x 1 init-effect-late-y 1] (let [inside (binding [init-effect-late-x 3 init-effect-late-y (do (set! init-effect-late-x 2) 4)] [init-effect-late-x init-effect-late-y])] [inside init-effect-late-x])))",
+    "observed_edn": "[[3 4] 2]"
+  }
+]

@@ -135,7 +135,7 @@ fn host_value(
     })
 }
 
-impl Session {
+impl SessionHost<'_> {
     /// Install an explicit Runtime-only native-profile function with fixed arity.
     /// Filesystem source must be absent; errors and ambiguity never select native
     /// fallback. The returned controller survives reset with fresh Store roots.
@@ -179,27 +179,24 @@ impl Session {
                 wasmtime::Error::msg("Native profile cannot replace filesystem source").into(),
             );
         }
-        let own_namespace = self
-            .native_factories
+        let own_namespace = registry_lock(&self.native_factories)
             .iter()
             .any(|p| p.symbol.namespace.as_deref() == Some(namespace));
         if !own_namespace
-            && (self.environment.has_namespace(self.phase, namespace) || namespace == "suss.async")
+            && (registry_lock(&self.compiler).environment.has_namespace(self.phase, namespace) || namespace == "suss.async")
         {
             return Err(wasmtime::Error::msg(
                 "Native profile cannot replace an existing namespace",
             )
             .into());
         }
-        if self
-            .native_factories
+        if registry_lock(&self.native_factories)
             .iter()
             .any(|p| p.symbol == profile.symbol)
         {
             return Err(wasmtime::Error::msg("Native factory is already installed").into());
         }
-        if self
-            .environment
+        if registry_lock(&self.compiler).environment
             .resolve(self.phase, &profile.symbol, 0..0)
             .is_ok()
         {
@@ -207,11 +204,11 @@ impl Session {
                 wasmtime::Error::msg("Native factory target already has a source binding").into(),
             );
         }
-        self.native_factories
+        registry_lock(&self.native_factories)
             .try_reserve(1)
             .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
         self.budget()?;
-        let mut environment = self.environment.clone();
+        let mut environment = registry_lock(&self.compiler).environment.clone();
         let cell_identity = environment
             .declare_cell(self.phase, namespace, &profile.symbol.name)
             .map_err(SessionError::Compile)?;
@@ -348,7 +345,7 @@ impl Session {
             ),
             cell[0].clone(),
         )?;
-        let mut linker = self.linker.clone();
+        let mut linker = registry_lock(&self.compiler).linker.clone();
         linker.define(
             &scope,
             cell_identity.import_module(),
@@ -360,11 +357,14 @@ impl Session {
             .unwrap()
             .call(&mut scope, &[cell[0].clone(), closure], &mut [])?;
         drop(scope);
-        self.linker = linker;
-        self.cells.insert(cell_identity, global);
-        self.environment = environment;
-        self.provided.insert(provided);
-        self.native_factories.push(profile);
+        {
+            let mut code = registry_lock(&self.compiler);
+            code.linker = linker;
+            Arc::make_mut(&mut code.cells).insert(cell_identity, global);
+            code.environment = environment;
+            code.provided.insert(provided);
+        }
+        registry_lock(&self.native_factories).push(profile);
         Ok(())
     }
     /// Cancel producerless host requests only once source tasks and their
@@ -461,14 +461,14 @@ impl Session {
         )
     }
     pub(super) fn sweep_native_requests(&self) {
-        for profile in &self.native_factories {
+        for profile in registry_lock(&self.native_factories).clone() {
             registry_lock(&profile.queue.0)
                 .requests
                 .retain(|request| !request.is_cancelled());
         }
     }
     pub(super) fn discard_native_requests(&self) {
-        for profile in &self.native_factories {
+        for profile in registry_lock(&self.native_factories).clone() {
             profile.queue.discard(self.identity);
         }
     }
@@ -476,8 +476,10 @@ impl Session {
 
 // Cancel native producers and release registry/queued roots before Store field
 // destruction. This performs no Wasm or source cleanup: reset uses retirement.
-impl Drop for Session {
+impl Drop for SessionHost<'_> {
     fn drop(&mut self) {
+        if self.store.is_borrowed() { return; }
+        if let Some(evaluation) = self.evaluation.take() { evaluation.clear(); }
         let requests = registry_lock(&self.pending_host_futures).clone();
         for request in requests {
             if let Some(hook) = request.take_cancel() {
@@ -513,12 +515,11 @@ mod tests {
                         failures += 1;
                         assert_eq!(session.stats().binding_cells, before, "fuel={fuel}");
                         assert!(
-                            !session
-                                .environment
+                            !registry_lock(&session.compiler).environment
                                 .has_namespace(Phase::Runtime, "native.factory")
                         );
-                        assert!(session.native_factories.is_empty());
-                        assert!(!session.provided.contains(
+                        assert!(registry_lock(&session.native_factories).is_empty());
+                        assert!(!registry_lock(&session.compiler).provided.contains(
                             &ModuleIdentity::new(Phase::Runtime, "native.factory").unwrap()
                         ));
                         session.collect().unwrap();
@@ -534,8 +535,8 @@ mod tests {
     }
 }
 
-pub(super) fn recovery_candidates(
-    scope: &mut RootScope<&mut Store<()>>,
+pub(super) fn recovery_candidates<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
 ) -> wasmtime::Result<Vec<OwnedRooted<AnyRef>>> {
     let mut result = [Val::null_any_ref()];
@@ -555,8 +556,8 @@ pub(super) fn recovery_candidates(
     }
     Ok(candidates)
 }
-pub(super) fn recovered_owner(
-    scope: &mut RootScope<&mut Store<()>>,
+pub(super) fn recovered_owner<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     candidates: &[OwnedRooted<AnyRef>],
 ) -> wasmtime::Result<Option<OwnedRooted<AnyRef>>> {
@@ -585,14 +586,14 @@ pub(super) fn recovered_owner(
     }
     Ok(owner)
 }
-impl Session {
+impl SessionHost<'_> {
     /// Evidence that the last turn failed an exact owner, retired its scheduler
     /// work and restored the caller without a pending exception. Cleared on entry.
     pub fn last_async_turn_recovered(&self) -> bool {
-        self.last_async_recovered_owner.is_some()
+        registry_lock(&self.last_async_recovered_owner).is_some()
     }
     pub fn last_async_turn_recovered_owner(&self) -> Option<SessionValue> {
-        self.last_async_recovered_owner.as_ref().map(|owner| {
+        registry_lock(&self.last_async_recovered_owner).as_ref().map(|owner| {
             self.handles.fetch_add(1, Ordering::Relaxed);
             SessionValue {
                 identity: self.identity,

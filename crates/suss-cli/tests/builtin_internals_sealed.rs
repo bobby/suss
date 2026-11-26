@@ -188,3 +188,14 @@ fn core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden() 
         }
     }
 }
+
+#[test]
+fn unbound_var_field_is_public_final_and_retains_the_actual_var() {
+    for (phase, mut session) in sessions() {
+        session.eval("(def unbound-field-control)").unwrap();
+        let observation = "(identical? #'unbound-field-control (.-v @#'unbound-field-control))";
+        assert_eq!(observe(&mut session, observation), Observation::Bool(true), "{phase}");
+        assert!(session.eval("(set! (.-v @#'unbound-field-control) nil)").is_err(), "{phase}");
+        assert_eq!(observe(&mut session, observation), Observation::Bool(true), "{phase}");
+    }
+}

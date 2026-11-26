@@ -35,8 +35,9 @@ equal only if identical.
 
 ### Differences from Clojure
 
-- **No Vars.** Suss has no runtime `Var` objects, so `ns-refers` maps names to
-  qualified symbols instead of Vars.
+- **Refers values.** `ns-refers` maps names to qualified symbols. Native
+  compiled sessions now intern real live-cell Vars for `var` and definition
+  results; changing this namespace-map platform contract is separate work.
 - **Not implemented here:** `intern`, `ns-publics`, `ns-interns`, `ns-resolve`,
   `resolve`, `remove-ns` and `create-ns`.
 - **`in-ns`** is not a function. The REPL's `:in-ns` command switches namespaces.

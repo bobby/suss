@@ -1,0 +1,4 @@
+(defmacro inspect-nested-immutable-meta [f maker]
+  (let [m (meta f) a (:item m) b (:again m) returned (maker)]
+    (list 'quote [(identical? a b) (identical? a returned)
+                  (identical? (meta a) (meta returned)) (= a returned)])))

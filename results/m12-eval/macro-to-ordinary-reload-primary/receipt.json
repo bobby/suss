@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/macro-to-ordinary-reload-primary/classpath:/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/macro-to-ordinary-reload-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7181022190488875,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "classpath/tools.clj": "fcc306f2f1e67d9719e25cf78bd3cc4c8dff6111cb8a34c11857ac2deddf33e3",
+    "expression.clj": "c7374156eb9a23f2c1fbde8094f6cce12f2cab423a71ee97110ac75dbe123348",
+    "expression.sus": "03a22d59d1cb99714d3fd055976fdc75c7b02b5add2362b78719c653ad1c2fa4",
+    "first.sus": "04efefc24d921374312bec15000cbdb648992676a16681c561b1652624e0449e",
+    "ordinary.sus": "fcc306f2f1e67d9719e25cf78bd3cc4c8dff6111cb8a34c11857ac2deddf33e3",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "primary.stdout": "10fc47fe7357e9f7905a43cb49b2c62cdad81e030a3b164b229bcfccc7072304",
+    "setup.sus": "ec94fa4a87866d434d59f37a425bb900c0899b35cc6686d221adda237e0860ab"
+  },
+  "scope": "Reload of an already retained macro Var as an ordinary definition. Actual root, metadata, macro flag and old function are observed independently. Native require-macros syntax is an explicit phase adapter. Classpath tools.clj initially first.sus, retained ordinary.sus afterward."
+}

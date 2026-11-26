@@ -1,0 +1,435 @@
+{
+  "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+  "at": 1795632963.1342258,
+  "issue": {
+    "body": "## Objective\n\nProvide Clojure's public `eval` through the existing persistent compiled host. The complete unchanged eval namespace currently fails to load, leaving two BigInt/Ratio and one BigDecimal assertion required by #338/#339 unexecuted. Returning scalar data unchanged is insufficient to implement the public function or execute the complete affected body.\n\n## Specification and scope\n\nPinned Clojure1.12.6 `eval`, the accepted persistent compiled session/Macro architecture, and the original34-assertion vendored eval body. Runtime and isolated Macro hosts must compile form data through the existing analyzer/emitter and execute it against their own live bindings. Preserve current namespaces, closures, binding cells, dynamic scope, budgets and GC roots. Shipped code has no Java dependency or tree-walking evaluator.\n\nThis is a native compiled-host dependency. An AOT component without an explicit dynamic-compilation capability must retain its import contract and report an honest unsupported/missing-capability error; this issue does not promise a hidden compiler service in pure components.\n\n## Acceptance criteria\n\n- The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.\n- BigInt, Ratio and BigDecimal literals retain their actual categories and scale. Evaluate generated form data, including numeric applications, with the same arithmetic and source-overload rules as ordinary compiled code.\n- Resolve symbols in the current namespace and live binding environment. Respect dynamic bindings, including the math context; outer lexical locals are not implicitly captured. Existing function objects evaluate to themselves, and compiled function results remain callable and rooted after GC.\n- Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state.\n- Preserve actual primary failure/effect boundaries. Fresh primary observations show a top-level eval `do` can perform a prefix effect before a later form's compilation fails; a throwing definition initializer preserves its prior root. Do not silently roll back arbitrary prior runtime effects or publish fabricated successful definitions.\n- Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state.\n- Run fresh primary controls for literals, generated calls, functions, Var identity, namespace lookup, macros, loops, recursion, laziness, dynamic context, argument order and failures. The current24-control primary recording is research evidence, not a native pass claim.\n- Execute all34 ordered assertions of the complete unchanged vendored eval body against the pinned primary, preserving original count/skip rules and explicit guest-only judgments. Its two BigInt/Ratio and one BigDecimal rows must become independently matching host observations. Preserve prior observations and unrelated suite failures.\n- Retain source/license provenance and align inventory/handoff. Run focused regressions, relevant original numeric/module/macro/GC/artifact guards, Java/Node-free bootstrap reproduction, exact two-thread workspace baseline, independent promotion review and passing final-head CI before ready status. No merge without a later explicit instruction.\n\n## Dependencies and evidence\n\nRefs #338, #339 and #513. The published min-key capture at33382c1c has226/229 BigInt/Ratio matches and199/200 Decimal matches; eval accounts for two and one remaining rows respectively. The constantly/some-fn dependency is tracked separately in #512/#514. Primary fixture SHA256 remains449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7.\n\nThe new24-control Clojure1.12.6 recording returns0, retaining the complete upstream eval form, JAR/entry/source/stdout hashes and exact observations under `results/m12-eval/primary` in the active follow-up checkout. Publication follows at the next validated checkpoint; it is not implementation or issue acceptance evidence.\n",
+    "state": "OPEN",
+    "title": "[M12-17] Support eval through the persistent compiled host",
+    "url": "https://github.com/bobby/suss/issues/515"
+  },
+  "issue_body_sha256": "08f0e46321c0f9bb55e7fd8329d07a6b635d4b3f7d6d0da4e8f8124e6bfccba3",
+  "requirements": [
+    {
+      "ordinal": 1,
+      "exact_requirement": "The ordinary public one-argument function accepts form data, preserves Clojure's arity/error and argument-evaluation behavior, and compiles calls, special forms and macros through the existing pipeline. Strings remain strings; quoted lists execute, while the empty list evaluates to itself. Vectors/maps/sets evaluate their contained forms as Clojure does.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "compiled_eval_handles_literals_generated_calls_functions_and_dynamic_scope",
+        "compiled_eval_shares_real_namespace_vars_macros_and_effect_boundaries",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 2,
+      "exact_requirement": "BigInt, Ratio and BigDecimal literals retain their actual categories and scale. Evaluate generated form data, including numeric applications, with the same arithmetic and source-overload rules as ordinary compiled code.",
+      "actual_current_eval_controls": [
+        "eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry",
+        "eval_retains_actual_class_values_in_generated_numeric_forms"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 3,
+      "exact_requirement": "Resolve symbols in the current namespace and live binding environment. Respect dynamic bindings, including the math context; outer lexical locals are not implicitly captured. Existing function objects evaluate to themselves, and compiled function results remain callable and rooted after GC.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+        "actual_macro_eval_preserves_binding_body_root_definitions",
+        "actual_macro_eval_preserves_binding_initializer_effects",
+        "actual_macro_eval_preserves_invalid_math_context_consumption_and_binding_data",
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "actual_macro_eval_preserves_unbound_dynamic_frames",
+        "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+        "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+        "eval_invalid_math_context_is_validated_at_consumption_and_preserves_binding_data",
+        "eval_namespace_changes_follow_real_caller_binding_frames",
+        "public_alias_preserves_primary_state_errors_and_argument_order",
+        "public_eval_function_result_survives_gc_and_reads_the_live_root",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects",
+        "unbound_dynamic_frames_preserve_values_effects_and_eval_context"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 4,
+      "exact_requirement": "Support recursive eval and the ordinary Var operations required by the complete original body. Vars must refer to real live binding cells with stable identity, rather than fabricated marker values. Definitions and subsequent lookups must share the caller's persistent state.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+        "actual_macro_eval_preserves_binding_body_root_definitions",
+        "actual_macro_eval_preserves_binding_initializer_effects",
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+        "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+        "compiled_eval_is_reentrant_inside_actual_compiled_macro_functions",
+        "evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects",
+        "vars_retain_real_live_cells_identity_metadata_and_callability"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 5,
+      "exact_requirement": "Preserve actual primary failure/effect boundaries. Fresh primary observations show a top-level eval `do` can perform a prefix effect before a later form's compilation fails; a throwing definition initializer preserves its prior root. Do not silently roll back arbitrary prior runtime effects or publish fabricated successful definitions.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+        "actual_macro_eval_preserves_binding_body_root_definitions",
+        "actual_macro_eval_preserves_binding_initializer_effects",
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+        "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+        "eval_function_pool_initialization_preserves_construction_effects_and_arity_sharing",
+        "eval_preserves_primary_top_level_do_compilation_and_effect_boundaries",
+        "evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages",
+        "failed_macro_replacement_preserves_live_metadata_and_successful_nested_effects",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 6,
+      "exact_requirement": "Execute in both native Runtime and isolated Macro hosts with correct phase ownership, source diagnostics, cancellation and ordinary compilation/runtime allowances. Reentrant/recursive compilation must use safe host ownership; no replay of prior source to reconstruct state.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "isolated_macro_function_calls_share_the_original_caller_allowance",
+        "public_eval_and_repeated_reentry_consume_the_original_operation_allowance",
+        "public_eval_cancels_running_guest_code_and_leaves_the_session_usable",
+        "public_eval_diagnostics_preserve_the_actual_phase_and_unresolved_symbol",
+        "reentrant_macro_eval_cancels_in_its_own_store_and_returns_its_lease",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 7,
+      "exact_requirement": "Run fresh primary controls for literals, generated calls, functions, Var identity, namespace lookup, macros, loops, recursion, laziness, dynamic context, argument order and failures. The current24-control primary recording is research evidence, not a native pass claim.",
+      "actual_current_eval_controls": [
+        "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+        "actual_macro_eval_preserves_binding_body_root_definitions",
+        "actual_macro_eval_preserves_binding_initializer_effects",
+        "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+        "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+        "actual_macro_eval_preserves_root_metadata_identity",
+        "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+        "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+        "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+        "compiled_eval_handles_literals_generated_calls_functions_and_dynamic_scope",
+        "compiled_eval_shares_real_namespace_vars_macros_and_effect_boundaries",
+        "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+        "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+        "root_macro_status_and_source_duplicate_effects_match_primary",
+        "root_metadata_identity_survives_macro_status_clearing",
+        "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+        "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+        "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+        "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects"
+      ],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 8,
+      "exact_requirement": "Execute all34 ordered assertions of the complete unchanged vendored eval body against the pinned primary, preserving original count/skip rules and explicit guest-only judgments. Its two BigInt/Ratio and one BigDecimal rows must become independently matching host observations. Preserve prior observations and unrelated suite failures.",
+      "actual_current_eval_controls": [],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    },
+    {
+      "ordinal": 9,
+      "exact_requirement": "Retain source/license provenance and align inventory/handoff. Run focused regressions, relevant original numeric/module/macro/GC/artifact guards, Java/Node-free bootstrap reproduction, exact two-thread workspace baseline, independent promotion review and passing final-head CI before ready status. No merge without a later explicit instruction.",
+      "actual_current_eval_controls": [],
+      "completion_claim": false,
+      "qualification": "Executed controls support the requirement; control mapping is not complete semantic proof. Actual full workspace, full-scope independent xhigh review and final published-head CI remain separate gates."
+    }
+  ],
+  "retained_ci_passes": {
+    "source_head": "3c4a59e85d12773f1105c14c65b865fba8186a60",
+    "actual_passed": 176,
+    "targets": 34,
+    "conservation_verifier": "E/verify-fa0da-retained-ci-checkpoint.py"
+  },
+  "focused_actual_complete": true,
+  "focused_receipt": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/macro-flag-opcode-focused/commands.json",
+  "focused_receipt_sha256": "bf7500c73117e1f92b6853b1f3f8d545cc9581421cb639f1675f1b863b3644da",
+  "focused_groups": [
+    {
+      "target": "clojure_eval",
+      "passed": 59
+    },
+    {
+      "target": "clojure_raw_numeric_core",
+      "passed": 2
+    },
+    {
+      "target": "compiled_macro_publication_cells",
+      "passed": 2
+    },
+    {
+      "target": "portable_dynamic_bindings",
+      "passed": 11
+    },
+    {
+      "target": "portable_async_analysis",
+      "passed": 10
+    },
+    {
+      "target": "portable_closures",
+      "passed": 14
+    },
+    {
+      "target": "portable_dynamic_bindings",
+      "passed": 3
+    },
+    {
+      "target": "portable_resolution",
+      "passed": 14
+    },
+    {
+      "target": "portable_symbol_conversion",
+      "passed": 6
+    },
+    {
+      "target": "runtime_abi",
+      "passed": 62
+    },
+    {
+      "target": "runtime_async_scheduler",
+      "passed": 28
+    },
+    {
+      "target": "runtime_dynamic_switch",
+      "passed": 6
+    }
+  ],
+  "focused_targets_passed": 217,
+  "focused_host_passed": 119,
+  "focused_total_passed": 336,
+  "eval_tests": {
+    "declared": 57,
+    "imported_decoder_guards": 2,
+    "total": 59
+  },
+  "broader_commands": [
+    {
+      "name": "focused-source-and-primary-conservation",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 1.4473838806152344
+    },
+    {
+      "name": "source-provenance",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 0.07309174537658691
+    },
+    {
+      "name": "original-primary-provenance",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 0.1278374195098877
+    },
+    {
+      "name": "core-import",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 1.4510560035705566
+    },
+    {
+      "name": "sequence-provenance",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 0.2702000141143799
+    },
+    {
+      "name": "comparison-contract",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 0.1959221363067627
+    },
+    {
+      "name": "optimized-random-effect-guard",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 3.5447325706481934
+    },
+    {
+      "name": "java-node-free-bootstrap",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 73.8821976184845
+    },
+    {
+      "name": "fresh-complete-native-suite",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 338.262090921402
+    },
+    {
+      "name": "strict-current-complete-capture",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 1.1988708972930908
+    },
+    {
+      "name": "exact-workspace-baseline",
+      "complete": true,
+      "exit_code": 0,
+      "seconds": 10215.185958862305
+    }
+  ],
+  "current_strict_capture": {
+    "counts": {
+      "pass": 5354,
+      "guest-judged": 106,
+      "fail": 105,
+      "not-executed": 1374,
+      "skipped": 0,
+      "namespaces-failed": 63
+    },
+    "raw_rows": 5564,
+    "prior_comparable_successes_preserved": 5346,
+    "complete_bodies": {
+      "clojure.core-test.eval": {
+        "actual_rows": 34,
+        "host_matches": 29,
+        "guest_ordinals": [
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "clojure.core-test.symbol": {
+        "actual_rows": 61,
+        "host_matches": 61,
+        "guest_ordinals": []
+      },
+      "clojure.core-test.var-qmark": {
+        "actual_rows": 34,
+        "host_matches": 26,
+        "guest_ordinals": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    "numeric_subsets": {
+      "bigint-ratio": {
+        "primary_rows": 229,
+        "strict_host_matches": 229
+      },
+      "decimal": {
+        "primary_rows": 200,
+        "strict_host_matches": 200
+      }
+    },
+    "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+    "capture_sha256": "b7328a9e469faf968836eea515b7773386845434db89fb2d6d5678c9ffab82bd",
+    "baseline_sha256": "dea5db93e9548008d91e5c79ee11978920575975ec601f1852139ff063329d7f",
+    "original_native_exit_code": 0,
+    "baseline_written": false,
+    "qualification": "Fresh actual native0 on the current frozen source. The unchanged strict reviewer preserves all previous comparable successes, exact complete eval/symbol/Var bodies, all229/200 independently matching numeric tagged rows and the existing measured baseline. No new failures, skips or opaque judgments are accepted. Numeric source-form scope and workspace/review/CI remain separate gates."
+  },
+  "protected": {
+    "tests/oracle/clojure-test-suite-observations.json": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+    "tests/oracle/clojure-test-suite-known-failures.json": "dea5db93e9548008d91e5c79ee11978920575975ec601f1852139ff063329d7f",
+    "scripts/clojure_test_suite.py": "197166b70c16a1bc5e7a82d5061b069b5ba7a45453056a014704b1c345de617b"
+  },
+  "workspace": {
+    "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--locked",
+      "--",
+      "--test-threads=2"
+    ],
+    "complete": true,
+    "exit_code": 0,
+    "seconds": 10212.759862422943,
+    "inputs_unchanged": true,
+    "head_unchanged": true,
+    "recorder_pid": 2397190
+  },
+  "local_prerequisites_complete": true,
+  "ci": {
+    "run_id": 45650312818,
+    "head": "fa0da7ec4ce9e37ef5493f1fc99d652b0f2d25be",
+    "complete": true,
+    "all_required_success": true,
+    "conclusion": "success",
+    "status": "completed"
+  },
+  "independent_current_head_review": null,
+  "promotion_eligible": false,
+  "review_limits_to_assess": [
+    "Native raw root set! is an existing documented Suss contract; original JVM rejection and distinct legal bound control remain explicit. No raw-source match is claimed.",
+    "Explicit cross-phase nominal transport limits need assessment against unchanged515 criteria; no guest exemption may waive required behavior.",
+    "Manual def metadata :macro false/nil is rejected by existing source admission with native exit1 before metadata handling. This is not a measured false-value mismatch; assess whether full515 scope requires admission.",
+    "Bounded native local graphs retain actual initializers and namespace membership, while full compiler catalogs remain explicit. Review actual semantics/identity and fuel, not just observed counts."
+  ],
+  "qualification": "Current-source requirement/control/receipt audit. Local full completion, independent review, final-head CI and complete issue acceptance remain unproven unless authoritative evidence establishes each. Original criteria, source programs and primary/baseline/count/skip/opaque rules unchanged."
+}

@@ -1,0 +1,8 @@
+(require 'tools)
+(alias 't 'tools)
+(def held #'t/answer)
+(def held-root @held)
+(prn [(identical? held #'t/answer) (fn? @held) (if (fn? @held) (@held nil nil) @held) (.isMacro held) (boolean (:macro (meta held))) (:doc (meta held)) (held-root nil nil)])
+(spit "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/macro-to-ordinary-reload-primary/classpath/tools.clj" "(ns tools) (def answer \"ordinary\" 42)\n")
+(require 'tools :reload)
+(prn [(identical? held #'t/answer) (fn? @held) (if (fn? @held) (@held nil nil) @held) (.isMacro held) (boolean (:macro (meta held))) (:doc (meta held)) (held-root nil nil)])
