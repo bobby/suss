@@ -1,0 +1,83 @@
+{
+  "actual_native_exit_code": 101,
+  "capture_sha256": "105f2c7956243ef7eae8f9ba1e83f226dc86af08a2ddc0d0e9168787c8daaef9",
+  "complete_bodies": {
+    "clojure.core-test.eval": {
+      "actual_rows": 34,
+      "guest_ordinals": [
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "host_matches": 29
+    },
+    "clojure.core-test.symbol": {
+      "actual_rows": 61,
+      "guest_ordinals": [],
+      "host_matches": 61
+    },
+    "clojure.core-test.var-qmark": {
+      "actual_rows": 34,
+      "guest_ordinals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "host_matches": 26
+    }
+  },
+  "counts": {
+    "fail": 105,
+    "guest-judged": 106,
+    "namespaces-failed": 63,
+    "not-executed": 1374,
+    "pass": 5354,
+    "skipped": 0
+  },
+  "diagnostic_changes": [
+    {
+      "after": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unresolved Runtime name ref at bytes 250..14860",
+      "before": "clojure.core-test.add-watch (Some(\"<root>/clojure/core_test/add_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 250..14860",
+      "namespace": "clojure.core-test.add-watch"
+    },
+    {
+      "after": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name ref at bytes 238..8527",
+      "before": "clojure.core-test.remove-watch (Some(\"<root>/clojure/core_test/remove_watch.cljc\")): Unresolved Runtime name alter-var-root at bytes 238..8527",
+      "namespace": "clojure.core-test.remove-watch"
+    }
+  ],
+  "files": {
+    "complete-capture/suite-build.log": "86d2499ca95eb333f522591595bb34b7e73a898a142baf2bfb7af2b22436e2f7",
+    "complete-capture/suite-capture/suite-observations.json": "105f2c7956243ef7eae8f9ba1e83f226dc86af08a2ddc0d0e9168787c8daaef9",
+    "complete-capture/suite-commands.json": "9797f4d41643c7e43c7fd2b494dfc631e8c627a422f1bddfb0cd682613adf751",
+    "complete-capture/suite-lock.log": "e3e0bed0273fff25ac7bd2354bf91f9ecd23ada2981a8a2ed40d20f0ea8fb95b",
+    "complete-capture/suite-run.log": "6b393665b5b8db37575c9018f774a79edd7e10cb971119a8f999d11ab3267eeb",
+    "controller.json": "0d86cba1bfdc0590727c3b70737fd018de9df5553602e9a33c12b4e8b1c7e41b",
+    "controller.log": "8f60f6cdecb4ab72f48d082ef54f1618382b07f8f061c759893e1d9d3bdd3819"
+  },
+  "head": "9222862b48d3fef3aada8b1baf758eda0ff0e6f8",
+  "numeric_subsets": {
+    "bigint-ratio": {
+      "primary_rows": 229,
+      "strict_host_matches": 229
+    },
+    "decimal": {
+      "primary_rows": 200,
+      "strict_host_matches": 200
+    }
+  },
+  "observed_row_decisions_preserved": 5564,
+  "prior_comparable_successes_preserved": 5346,
+  "qualification": "Actual native101 retained. All5564 ordered assertion decisions, counts, skips, guest judgments and unrelated failures are unchanged. Only two still-blocked namespace diagnostics advance from alter-var-root to ref. Original strict reviewer passes after normalizing only those diagnostics in memory; raw capture remains unchanged. Native rerun/workspace/review/CI remain separate gates.",
+  "randomized_payload_changes": [
+    "clojure.core-test.constantly/test-constantly#31"
+  ],
+  "raw_rows": 5564
+}

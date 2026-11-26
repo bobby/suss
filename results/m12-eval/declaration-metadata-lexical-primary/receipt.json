@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/declaration-metadata-lexical-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8167311828583479,
+  "controls": 6,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "expression.clj": "c7a3ed518e5641dd2287c3c2744a409bc260b3621af2dc74c5f5ed71ccb52d8d",
+    "expression.sus": "159bfac7c846e0c18313cdaf72e477be70e20d0221f45b6fb1228a85e931002d",
+    "primary.stdout": "787fd34513595212eee76f532efe3b8ab79893b4833ec5d0d8f64cc0535ebc9d",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "qualification": "Pinned Clojure executable metadata controls. Raw compiler-declaration projection fixtures remain byte-for-byte inside explicit lexical symbol-value setup; no projection expectations are relaxed. This primary recording is not a native pass."
+}

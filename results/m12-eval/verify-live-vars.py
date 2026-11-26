@@ -163,6 +163,13 @@ paths += ['crates/suss-cli/tests/repl_value_display.rs',
           'crates/suss-compile/src/portable_session/evaluation/native_values.rs',
           'crates/suss-compile/tests/portable_calling_convention.rs',
           'crates/suss-compile/tests/portable_comparator_foundations.rs']
+primary = BASE / 'declaration-metadata-lexical-primary'
+receipt = json.loads((primary / 'receipt.json').read_text())
+assert receipt['exit_code'] == 0 and receipt['controls'] == 6
+assert all(sha(Path(n).read_bytes()) == h for n, h in receipt['jars'].items())
+assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
+paths += [str(f.relative_to(ROOT)) for f in sorted(primary.iterdir()) if f.is_file()]
+paths += ['crates/suss-cli/tests/compiled_macro_global_reference_asts.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

@@ -2854,3 +2854,10 @@ fn root_audit_macro_reload_to_ordinary_definition_updates_retained_var_root_and_
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
+
+#[test]
+fn executable_declaration_metadata_resolves_explicit_lexical_symbol_values() {
+    promotion_review_controls("declaration-metadata-lexical",
+        include_str!("../../../results/m12-eval/declaration-metadata-lexical-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/declaration-metadata-lexical-primary/primary.stdout"), 6);
+}
