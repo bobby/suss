@@ -33,6 +33,7 @@ mod compiler_state;
 use compiler_state::{CompilerState, SharedCompiler};
 mod store_access;
 mod reentry;
+pub(crate) mod suspended;
 mod evaluation;
 pub(crate) use evaluation::EvaluationMathContext;
 pub(crate) use reentry::ReentryProfile;
@@ -1376,6 +1377,14 @@ impl SessionHost<'_> {
         self.store.set_fuel(remaining)?;
         self.charge_host_work(0)?;
         Ok(remaining)
+    }
+    /// Settle a suspended parent's budget once. A child can already have spent
+    /// fuel by calling this ancestor, so subtracting again from the current
+    /// physical balance would charge that same work twice.
+    pub(crate) fn settle_nested_fuel(&mut self, saved: u64, spent: u64) -> Result<(), SessionError> {
+        let remaining = saved.checked_sub(spent).ok_or_else(|| wasmtime::Error::from(wasmtime::Trap::OutOfFuel))?;
+        self.store.set_fuel(remaining)?;
+        self.charge_host_work(0)
     }
     /// Capture before borrowing the Store for compiler-data traversal. This is
     /// the same cancellation flag used by this Session's epoch callback.

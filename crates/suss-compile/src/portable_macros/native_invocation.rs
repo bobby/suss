@@ -57,7 +57,7 @@ impl Drop for InterruptRelay {
     }
 }
 
-fn transferable_error(host: &mut MacroHost<'static>, error: SessionError) -> SessionError {
+fn transferable_error(host: &mut MacroHost<'_>, error: SessionError) -> SessionError {
     let SessionError::Language(value) = error else { return error };
     match host.bridge.transfer_exception(&mut host.session, &value) {
         Ok(payload) => SessionError::Host(wasmtime::Error::new(payload)),
@@ -157,24 +157,18 @@ impl MacroService {
         context: crate::portable_session::EvaluationMathContext,
         interrupt: Arc<AtomicBool>,
     ) -> Result<(Result<Form, SessionError>, u64), SessionError> {
-        let mut lease = self.lease();
-        let allowance = lease.limit_fuel(fuel);
-        lease.with_math_context(context, |host| {
-        let _budget = host.session.operation_budget_scope()?;
-        let _relay = InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
-        let result = (|| {
-            host.select_invocation_namespace(namespace)?;
-            let mut values = Vec::with_capacity(arguments.len());
-            for form in arguments {
-                values.push(host.bridge.quote(&mut host.session, form)?);
-            }
-            let refs = values.iter().collect::<Vec<_>>();
-            let result = host.session.invoke(root, &refs)?;
-            host.bridge.read(&mut host.session, &result, 0..0)
-        })()
-        .map_err(|error| transferable_error(host, error));
-        let spent = allowance.saturating_sub(host.session.operation_fuel_remaining()?);
-        Ok((result, spent))
+        self.with_request(fuel, Some(context), interrupt, |host| {
+            let result = (|| {
+                host.select_invocation_namespace(namespace)?;
+                let mut values = Vec::with_capacity(arguments.len());
+                for form in arguments {
+                    values.push(host.bridge.quote(&mut host.session, form)?);
+                }
+                let refs = values.iter().collect::<Vec<_>>();
+                let result = host.session.invoke(root, &refs)?;
+                host.bridge.read(&mut host.session, &result, 0..0)
+            })();
+            result.map_err(|error| transferable_error(host, error))
         })
     }
 }

@@ -22,6 +22,10 @@ pub(crate) struct ReentryProfile {
     last_async_recovered_owner: Arc<Mutex<Option<OwnedRooted<AnyRef>>>>,
 }
 impl SessionHost<'_> {
+    /// Lend this same Store for a strictly shorter synchronous entry.
+    pub(crate) fn reborrow(&mut self) -> SessionHost<'_> {
+        self.reentry_profile().bind(self.store.as_context_mut())
+    }
     /// Does not borrow the Store or retain a Session pointer. The resulting
     /// profile may bind only the same Store's active Caller, within this entry.
     pub(crate) fn reentry_profile(&self) -> ReentryProfile {

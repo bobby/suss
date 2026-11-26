@@ -716,14 +716,24 @@ impl MacroHost<'_> {
     }
 }
 impl MacroHost<'_> {
+    fn with_math_context<T>(&mut self, context: crate::portable_session::EvaluationMathContext,
+        operation: impl FnOnce(&mut MacroHost<'_>) -> Result<T, SessionError>) -> Result<T, SessionError> {
+        let _budget = self.session.operation_budget_scope()?;
+        let bridge = self.bridge.clone();
+        let checkpoint = self.session.enter_evaluation_math_context(context, &bridge)?;
+        let result = operation(self);
+        let restoration = self.session.leave_evaluation_math_context(&checkpoint);
+        match result { Err(error) => Err(error), Ok(value) => restoration.map(|()| value) }
+    }
     fn fallback_step<T>(&mut self, span: std::ops::Range<usize>, context: bool,
         operation: impl FnOnce(&mut dyn ExpansionHost) -> Result<T, Diagnostic>) -> Result<T, Diagnostic> {
         let service = self.fallback.clone().expect("native fallback service");
         let math = if context { Some(self.session.evaluation_math_context().map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?) } else { None };
         let allowance = self.session.operation_fuel_remaining().map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?;
-        let (result, spent) = service.preparation_step(allowance, math, self.session.host_work_interrupt(), span.clone(), operation)
+        let interrupt = self.session.host_work_interrupt();
+        let (result, spent) = crate::portable_session::suspended::scope(&mut self.session, || service.preparation_step(allowance, math, interrupt, span.clone(), operation))
             .map_err(|e| Diagnostic { span: span.clone(), message: e.to_string() })?;
-        self.session.charge_host_work(spent).map_err(|e| Diagnostic { span, message: e.to_string() })?;
+        self.session.settle_nested_fuel(allowance, spent).map_err(|e| Diagnostic { span, message: e.to_string() })?;
         result
     }
     fn fallback_expand(&mut self, form: &Form, context: ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {

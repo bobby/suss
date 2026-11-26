@@ -1,5 +1,5 @@
 //! Value display for the compiled native REPL, without evaluating source again.
-use crate::portable_session::{Session, SessionError, SessionValue};
+use crate::portable_session::{Session, SessionHost, SessionError, SessionValue};
 use wasmtime::Val;
 
 enum Output {
@@ -23,7 +23,7 @@ impl NativeDisplay {
     /// session without core displays only strings, numbers and literals.
     pub fn display(
         &mut self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
     ) -> Result<String, SessionError> {
         if let Some(leaf) = crate::portable_macro_data::display_leaf(session, value)? {
@@ -52,12 +52,12 @@ impl NativeDisplay {
             .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("pr-str must return a string")))
     }
 }
-pub fn display(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
+pub fn display(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<String, SessionError> {
     NativeDisplay::default().display(session, value)
 }
 /// A string's text, with lone surrogates escaped, or None for another value.
 fn string_text(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     value: &SessionValue,
 ) -> Result<Option<String>, SessionError> {
     session.inspect(value, |mut store, value| {
@@ -87,7 +87,7 @@ fn string_text(
         Ok(Some(text))
     })
 }
-fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output, SessionError> {
+fn inspect_display(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<Output, SessionError> {
     let output = session.inspect(value, |mut store, value| {
         if let Some(tag) = crate::portable_session::sentinel_tag(&mut store, &value)? {
             return Ok(Output::Literal(match tag as i32 {
@@ -156,7 +156,7 @@ fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output
     Ok(output)
 }
 
-pub fn error_display(session: &mut Session, error: &SessionError) -> String {
+pub fn error_display(session: &mut SessionHost<'_>, error: &SessionError) -> String {
     match error {
         SessionError::Language(value) => match exception_text(session, value) {
             Ok(value) => format!("Uncaught language exception: {value}"),
@@ -167,7 +167,7 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
 }
 /// A thrown error's message, as Clojure's REPL reports one, or else the thrown
 /// value as `pr-str` prints it (#288).
-fn exception_text(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
+fn exception_text(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<String, SessionError> {
     if let Ok(ex_message) = session.eval("suss.core/ex-message") {
         let message = session.invoke(&ex_message, &[value])?;
         if let Some(text) = string_text(session, &message)? {

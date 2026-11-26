@@ -419,6 +419,10 @@ impl SessionHost<'_> {
         let service = registry_lock(&state.external).clone()?;
         Some(authority.with_fallback(service))
     }
+    pub(crate) fn owned_macro_authority(&self) -> Option<MacroAuthority> {
+        let state = self.evaluation.as_ref()?;
+        registry_lock(&state.own).clone()
+    }
     pub(super) fn evaluation_input_scope(
         &mut self,
         input: bool,

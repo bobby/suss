@@ -1,0 +1,71 @@
+{
+  "head": "00707ea00e66dad25d4f8c780186223cdc9973d1",
+  "actual_terminal": true,
+  "all_five_commands_passed": true,
+  "counts": {
+    "registry-rust-check": 0,
+    "suspended-registry-regressions": 3,
+    "host-library-budget-and-ownership": 123,
+    "complete-public-eval-controls": 74,
+    "source-script-module-aot-and-repl-guards": 58
+  },
+  "distinct_broad_tests": 255,
+  "recorded_input_count": 8959,
+  "all_recorded_inputs_conserved_before_publication": true,
+  "allowed_publication_delta": {
+    "path": "docs/roadmap/handoff.md",
+    "before": "11209f03655fb4b6a950cc265f133194e6d72cb8a550ba26f20ac49eff60ae74",
+    "after": "d60f6a6e61d1254c8d2f4e16c050a9b44ee4a4aa23e1887b684f40cf9aa3a430"
+  },
+  "evidence": [
+    {
+      "source": "results/m12-eval/suspended-host-registry-working/commands.json",
+      "sha256": "6453672b56b4f3fb92c1ef4f8d8f6a085c6a3e20398f07bc131cbdba04ab9653",
+      "archive": "suspended-host-registry-working--commands.json.gz",
+      "archive_sha256": "d2f4e22af8cf0b2af61b1ea116e80c0abf8525c7992ccec1f06c9496f5dcc196"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-working/registry-rust-check.log",
+      "sha256": "9323c68db8f274fb5a029f5db33b703c92846ec215c3f1241f86088a97d4a499",
+      "archive": "suspended-host-registry-working--registry-rust-check.log.gz",
+      "archive_sha256": "b14ebd36bc139e1829bd8af89a687ac8187aaa7b7508b74a49f5234b171132de"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/commands.json",
+      "sha256": "8726304e763d3ae9bf3d1b902400498667dc4e1828960640be0204ae7a9f54a1",
+      "archive": "suspended-host-registry-borrowed-display-working--commands.json.gz",
+      "archive_sha256": "ff4016a07b40f3919ddb003d28fbc90200bee6787f30caa24d8c4b2bbd5f7724"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/complete-public-eval-controls.log",
+      "sha256": "caa1e534689e6c2284e379e7f5a639980273a46720ad56a5ee8f5d110e35de03",
+      "archive": "suspended-host-registry-borrowed-display-working--complete-public-eval-controls.log.gz",
+      "archive_sha256": "a6c31b7839fa9320163a27208c2f481350a1d89e3f4678ef5c62ea1bdd8aabd9"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/host-library-budget-and-ownership.log",
+      "sha256": "c34a169af6ed4c62174913330ec020c50f196eec285316b9c743eb1edc3591ce",
+      "archive": "suspended-host-registry-borrowed-display-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "7f9f270f10679ec501cec995831080dbbb5223b6d4caa779c4b423a684e5a38b"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/registry-rust-check.log",
+      "sha256": "efb4fffcedc892eb496469f1a6d252be4b63f666b3afa8e9b9b765cc3daa8ff3",
+      "archive": "suspended-host-registry-borrowed-display-working--registry-rust-check.log.gz",
+      "archive_sha256": "7a7b1707bbb2d917d98bd15739753c4988e03ab364bbb5e32b89ba89b74d87c8"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "3b807eb870fdd42d24a0db70b0cc84987cdd57c3825543fd4ab4429f0907fcf4",
+      "archive": "suspended-host-registry-borrowed-display-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "f588afbfbebbff7b244478e3ccb6107ab44cec729d26ee5c2d400828d4edc1af"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-registry-borrowed-display-working/suspended-registry-regressions.log",
+      "sha256": "78e6f237929336ee55b799ca291bf4ce0bf773dcf2678d8e9c426ebb0c9458de",
+      "archive": "suspended-host-registry-borrowed-display-working--suspended-registry-regressions.log.gz",
+      "archive_sha256": "62ac6c72f976b886da35e477e4732b77fa25b59df5d73a8fcd37287e4aedc5e1"
+    }
+  ],
+  "qualification": "Safe scoped host borrowing is infrastructure only. No Fn/Var transport, complete issue/full baseline/promotion/merge claim."
+}

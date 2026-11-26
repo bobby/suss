@@ -4,6 +4,7 @@ use super::*;
 use std::sync::Condvar;
 
 struct SharedHost {
+    owner: u64,
     available: Mutex<Option<MacroHost<'static>>>,
     returned: Condvar,
     operation: Mutex<(Option<std::thread::ThreadId>, usize)>,
@@ -31,6 +32,7 @@ pub(crate) struct MacroLease {
 impl MacroService {
     fn new(host: MacroHost<'static>) -> Self {
         Self(Arc::new(SharedHost {
+            owner: host.session.native_owner(),
             available: Mutex::new(Some(host)),
             returned: Condvar::new(),
             operation: Mutex::new((None, 0)),
@@ -75,21 +77,10 @@ impl MacroService {
         span: std::ops::Range<usize>,
         operation: impl FnOnce(&mut dyn ExpansionHost) -> Result<T, Diagnostic>,
     ) -> Result<(Result<T, Diagnostic>, u64), SessionError> {
-        let mut lease = self.lease();
-        let allowance = lease.limit_fuel(fuel);
-        let run = |host: &mut MacroHost<'static>| -> Result<Result<T, Diagnostic>, SessionError> {
-            let _budget = host.session.operation_budget_scope()?;
-            let _relay = super::native_invocation::InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
-            Ok(operation(host))
-        };
-        let result = match context {
-            Some(context) => lease.with_math_context(context, run),
-            None => run(lease.host()),
-        };
-        let remaining = lease.host().session.operation_fuel_remaining()?;
-        Ok((result.unwrap_or_else(|error| Err(Diagnostic { span, message: error.to_string() })),
-            allowance.saturating_sub(remaining)))
+        let (result, spent) = self.with_request(fuel, context, interrupt, |host| Ok(operation(host)))?;
+        Ok((result.unwrap_or_else(|error| Err(Diagnostic { span, message: error.to_string() })), spent))
     }
+
     pub(crate) fn contains_source_macro(&self, namespace: &str, name: &str) -> bool {
         self.with_host(|host| catalog(&host.catalog).definitions.contains_key(&(namespace.to_owned(), name.to_owned())))
     }
@@ -114,18 +105,55 @@ impl MacroService {
         ),
         SessionError,
     > {
-        let mut lease = self.lease();
-        let allowance = lease.limit_fuel(fuel);
-        lease.with_math_context(context, |host| {
-        let _budget = host.session.operation_budget_scope()?;
-        let _relay = super::native_invocation::InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
-        let result = host.prepare_native_evaluation(snapshot, form);
-        let remaining = host.session.operation_fuel_remaining()?;
-        Ok((result, allowance.saturating_sub(remaining)))
+        self.with_request(fuel, Some(context), interrupt, |host| host.prepare_native_evaluation(snapshot, form))
+    }
+    /// Both owned and suspended hosts keep their actual state. A nested entry
+    /// may cap physical fuel, but cannot refill an active operation. Restore the
+    /// saved budget minus total child work, including any ancestor reentry.
+    pub(super) fn with_request<T>(
+        &self,
+        fuel: u64,
+        context: Option<crate::portable_session::EvaluationMathContext>,
+        interrupt: Arc<std::sync::atomic::AtomicBool>,
+        operation: impl FnOnce(&mut MacroHost<'_>) -> Result<T, SessionError>,
+    ) -> Result<(Result<T, SessionError>, u64), SessionError> {
+        self.with_host(|host| {
+            struct FuelLimit<'a, 's> { host: &'a mut MacroHost<'s>, previous: u64 }
+            impl Drop for FuelLimit<'_, '_> {
+                fn drop(&mut self) { self.host.set_operation_fuel(self.previous); }
+            }
+            let previous = host.session.options().fuel_per_operation;
+            let limited = FuelLimit { host, previous };
+            limited.host.set_operation_fuel(previous.min(fuel));
+            let _budget = limited.host.session.operation_budget_scope()?;
+            let saved = limited.host.session.operation_fuel_remaining()?;
+            let allowance = limited.host.session.cap_operation_fuel(fuel.min(previous))?;
+            let result = (|| {
+                let _relay = super::native_invocation::InterruptRelay::start(interrupt, limited.host.session.interrupt_handle())?;
+                match context {
+                    Some(context) => limited.host.with_math_context(context, operation),
+                    None => operation(limited.host),
+                }
+            })();
+            let remaining = limited.host.session.operation_fuel_remaining()?;
+            let spent = allowance.saturating_sub(remaining);
+            limited.host.session.settle_nested_fuel(saved, spent)?;
+            Ok((result, spent))
         })
     }
-    fn with_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
+    fn with_owned_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         operation(self.lease().host())
+    }
+    pub(super) fn with_host<T>(&self, operation: impl FnOnce(&mut MacroHost<'_>) -> T) -> T {
+        let _operation = self.operation();
+        let mut operation = Some(operation);
+        if let Some(output) = crate::portable_session::suspended::with_host(self.0.owner, |session| {
+            let authority = session.owned_macro_authority().expect("suspended Macro Store authority");
+            operation.take().unwrap()(&mut authority.bind(session.reborrow()))
+        }) {
+            return output;
+        }
+        operation.take().unwrap()(self.lease().host())
     }
 }
 impl MacroLease {
@@ -195,13 +223,13 @@ impl CompiledMacros {
     fn with_host_mut<T>(&mut self, operation: impl FnOnce(&mut MacroHost<'static>) -> T) -> T {
         match &mut self.active {
             Some(lease) => operation(lease.host()),
-            None => self.service.with_host(operation),
+            None => self.service.with_owned_host(operation),
         }
     }
     fn read_host<T>(&self, operation: impl FnOnce(&MacroHost<'static>) -> T) -> T {
         match &self.active {
             Some(lease) => operation(lease.host.as_ref().expect("live Macro lease")),
-            None => self.service.with_host(|host| operation(host)),
+            None => self.service.with_owned_host(|host| operation(host)),
         }
     }
     pub fn current_namespace(&self) -> String {
@@ -384,6 +412,52 @@ impl ExpansionHost for CompiledMacros {
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn suspended_macro_service_uses_its_live_store_and_catalog_without_releasing_the_owner() {
+        use std::sync::atomic::AtomicBool;
+        use crate::portable_session::suspended;
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro suspended-known [] 17)").unwrap();
+        let service = macros.service();
+        let mut lease = service.lease();
+        let host = lease.host();
+        let owner = host.session.native_owner();
+        let original_limit = host.session.options().fuel_per_operation;
+        let budget = host.session.operation_budget_scope().unwrap();
+        host.session.cap_operation_fuel(2_000_000).unwrap();
+        let saved = host.session.operation_fuel_remaining().unwrap();
+        let interrupt = Arc::new(AtomicBool::new(false));
+        let (result, spent) = suspended::scope(&mut host.session, || {
+            assert!(service.contains_source_macro("user", "suspended-known"));
+            service.with_request(1_000_000, None, interrupt, |borrowed| {
+                assert_eq!(borrowed.session.native_owner(), owner);
+                assert!(borrowed.session.options().fuel_per_operation <= 1_000_000);
+                borrowed.session.eval("(do (def suspended-live-value 42) suspended-live-value)")
+            })
+        }).unwrap();
+        let value = result.unwrap();
+        assert!(spent > 0 && spent < 1_000_000);
+        assert_eq!(host.session.operation_fuel_remaining().unwrap(), saved - spent);
+        host.session.settle_nested_fuel(saved, spent).unwrap();
+        assert_eq!(host.session.operation_fuel_remaining().unwrap(), saved - spent, "ancestor work is not debited twice");
+        assert_eq!(host.session.options().fuel_per_operation, original_limit);
+        assert_eq!(host.bridge.read(&mut host.session, &value, 0..0).unwrap().kind, Kind::Long(42));
+        let root = host.session.eval("suspended-live-value").unwrap();
+        assert_eq!(host.bridge.read(&mut host.session, &root, 0..0).unwrap().kind, Kind::Long(42));
+        let (result, spent) = suspended::scope(&mut host.session, || {
+            service.with_request(100, None, Arc::new(AtomicBool::new(false)), |borrowed| {
+                borrowed.session.charge_host_work(101)
+            })
+        }).unwrap();
+        assert_eq!(spent, 100);
+        assert!(matches!(result, Err(SessionError::Trap(ref error)) if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)));
+        assert_eq!(host.session.options().fuel_per_operation, original_limit);
+        drop(budget);
+        drop(lease);
+        macros.define("(defmacro after-suspended-entry [] 42)").unwrap();
+        assert!(service.contains_source_macro("user", "after-suspended-entry"));
+    }
 
     #[test]
     fn source_link_releases_macro_operation_before_runtime_waits_for_compilation() {

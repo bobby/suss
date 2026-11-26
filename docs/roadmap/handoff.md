@@ -35719,3 +35719,31 @@ reader identifiers cannot collide with nested eval.
 Isolated source function/Var transport, mixed source/native root forwarding,
 full current workspace/bootstrap validation and a fresh independent review
 remain required. These focused passes do not establish issue completion.
+
+### Scoped suspended-ancestor Store access
+
+The suspended-host-registry-borrowed-display-working receipt records all five
+actual commands returning0 with source/HEAD/Binaryen conserved. Exact commands
+and input hashes are archived with logs under
+results/m12-eval/suspended-host-registry-checkpoint. The three focused mechanical
+controls also run in host123; public eval74 and source/frontend58 bring broad
+coverage to255 distinct target executions. The initial Rust check101 for an
+owned-only display signature remains a separate negative receipt.
+
+A synchronous scoped registry now lends actual suspended ancestor SessionHosts
+without Store pointers, captured lifetime extensions, cross-thread Store access
+or guards held across guest execution. Selecting a host removes it from the
+registry until its next real Caller lends it again. Native code forbids unsafe
+code; native-only scoped-tls-hkt0.1.5 supplies scoped mutable TLS. The lockfile
+adds only this dependency and package. MacroService may borrow its own suspended
+Store/catalog instead of trying to reacquire its owned lease. Nested requests cap
+existing physical fuel and settle saved-parent-minus-total-child-work, preserving
+reentrant work without a second debit. Temporary limits are restored on unwind.
+Borrowed displays use the same printer/error helpers as owned sessions.
+
+The tests execute real Runtime/Macro/Macro Wasmtime callbacks through64levels,
+check linear guest fuel, finite exhaustion/recovery, selection uniqueness, panic
+cleanup, roots/GC/reset identity and live MacroService effects. They do not
+implement or prove Fn/Var transport. Actual value proxies, cross-phase metadata/
+Namespace/live-cell behavior, retirement and cancellation forwarding still need
+implementation and language acceptance before complete workspace/review gates.
