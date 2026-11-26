@@ -1,0 +1,16 @@
+{
+  "phase": "root-metadata-display-qualification",
+  "prior_phase": "root-metadata-index-qualification",
+  "test_only_input_delta": [
+    "crates/suss-cli/tests/repl_value_display.rs",
+    "results/m12-eval/live-vars-source-provenance.json",
+    "results/m12-eval/verify-live-vars.py"
+  ],
+  "documentation_sha256": {
+    "docs/roadmap/handoff.md": "3b3df1723775df09fa78ff5cb37e5c6af1847e901a3bbba32372e3e47a11e305",
+    "docs/compatibility/README.md": "6219475918f3ad361405c1e13eb3d40be07a340cdf82a403ea4d888416eaf9cf",
+    "docs/runtime/native-var-values.md": "fa7957991ede2076ffcd3143322d545827165aecbca0f83dba10d6db2f9ca12f",
+    "results/m12-eval/README.md": "9ae4073d68b6471e5ce211bd421384ffd1556df10d7cb81109e4f9e43de5daf1"
+  },
+  "qualification": "Documentation publication only after the two frozen batches and verified test-only input delta. No full native/workspace, issue-completion, promotion or merge claim."
+}

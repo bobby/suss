@@ -706,6 +706,7 @@ pub enum Nominal {
     BindingSnapshot,
     /// Compiler-only root definition, independent of the current dynamic frame.
     BindingRootSet,
+    BindingRootDefine,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -876,7 +877,7 @@ impl Nominal {
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::BindingGetter | Self::BindingGetterMacro | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
-                Self::BindingRootSet | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
+                Self::BindingRootSet | Self::BindingRootDefine | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
@@ -1217,6 +1218,9 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// Only the compiler's converted top-level macro declaration preserves
+        /// an enrolled staging root. Nested/user definitions are real writes.
+        compiler_root: bool,
         /// Native Var result after a successful write; absent during bootstrap.
         result: Option<Box<Hir>>,
         /// An initialized scalar constant revision, published with its live var.
@@ -1771,6 +1775,7 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
                 result: None,
                 constant: None,
                         global: fallback.clone(),
@@ -2669,6 +2674,7 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
                 result,
                 constant: constant_cell,
                 global,
@@ -4935,6 +4941,20 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    // Mark the converted declaration before namespace/native-pool wrappers.
+    // Only its result definition owns the staging write; initializer bodies,
+    // declaration metadata and hidden helper definitions remain real writes.
+    if origin.is_some_and(super::SourceOrigin::is_macro_definition) {
+        fn mark_root(hir: &mut Hir) -> Result<(), Diagnostic> {
+            let span = hir.span.clone();
+            match hir.kind_mut() {
+                Expression::Definition { compiler_root, .. } => { *compiler_root = true; Ok(()) }
+                Expression::Do(items) if !items.is_empty() => mark_root(items.last_mut().unwrap()),
+                _ => Err(Diagnostic { span, message: "Converted macro definition lost its root declaration".into() }),
+            }
+        }
+        mark_root(&mut hir)?;
+    }
     let source_span = hir.span.clone();
     division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;

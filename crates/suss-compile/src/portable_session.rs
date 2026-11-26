@@ -1321,6 +1321,9 @@ impl SessionHost<'_> {
     /// A single fueled operation inside the normal inspection/root/exception
     /// scope. Compiler-data decoding may call a captured source closure without
     /// escaping raw references or replenishing fuel per sequence element.
+    pub(crate) fn data_identity_uid_call(&mut self) -> Func {
+        self.runtime.get_func(&mut self.store, "identity-uid").unwrap()
+    }
     pub(crate) fn data_live_sequence_calls(&mut self) -> (Func, Func, Func) {
         (self.runtime.get_func(&mut self.store, "native-value-kind").unwrap(),
          self.runtime.get_func(&mut self.store, "object-field-get").unwrap(),
@@ -1510,6 +1513,15 @@ impl SessionHost<'_> {
         let value = structure.field(&mut roots, 0)?;
         own(&mut roots, value, self.identity, &self.handles)
     }
+    pub(crate) fn identical_rooted_value(&mut self, root: &OwnedRooted<AnyRef>, value: &SessionValue)
+        -> Result<bool, SessionError> {
+        self.check(value)?;
+        let Some(value) = &value.value else { return Ok(false); };
+        let mut roots = RootScope::new(&mut self.store);
+        let root = root.to_rooted(&mut roots);
+        let value = value.to_rooted(&mut roots);
+        Ok(wasmtime::Rooted::ref_eq(&roots, &root, &value)?)
+    }
     pub(crate) fn identical_values(&mut self, left: &SessionValue, right: &SessionValue) -> Result<bool, SessionError> {
         self.check(left)?;
         self.check(right)?;
@@ -1621,6 +1633,46 @@ impl SessionHost<'_> {
         checkpoint.values.insert(identity.clone(), (value, flags));
         checkpoint.environment.advance_declarations(&code.environment, std::slice::from_ref(identity), self.phase);
         Ok(())
+    }
+    pub(crate) fn source_root_staged(&mut self, identity: &CellIdentity)
+        -> Result<Option<bool>, SessionError> {
+        if identity.phase() != self.phase { return Err(SessionError::ForeignValue); }
+        let global = registry_lock(&self.compiler).cells.get(identity).copied();
+        let Some(global) = global else { return Ok(None); };
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = global.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        Ok(Some(cell.field(&mut roots, 1)?.unwrap_i32() & runtime_abi::CELL_STAGED_ROOT != 0))
+    }
+    pub(crate) fn mark_source_root(&mut self, identity: &CellIdentity, staged: bool)
+        -> Result<(), SessionError> {
+        if identity.phase() != self.phase { return Err(SessionError::ForeignValue); }
+        let global = registry_lock(&self.compiler).cells.get(identity).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Missing staged source binding"))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = global.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        let flags = cell.field(&mut roots, 1)?.unwrap_i32();
+        let flags = if staged { flags | runtime_abi::CELL_STAGED_ROOT } else { flags & !runtime_abi::CELL_STAGED_ROOT };
+        cell.set_field(&mut roots, 1, Val::I32(flags))?;
+        Ok(())
+    }
+    // A prior language write becomes the rollback baseline before another
+    // compiler declaration can overwrite it. Existing declaration facts remain
+    // the checkpoint's facts; a newly exposed binding adopts its actual facts.
+    pub(crate) fn advance_runtime_root_checkpoint(&mut self, checkpoint: &mut BindingCheckpoint,
+        identity: &CellIdentity) -> Result<bool, SessionError> {
+        let code = registry_lock(&self.compiler);
+        let Some(global) = code.cells.get(identity).copied() else { return Ok(false); };
+        let introduced = !checkpoint.environment.has_binding(self.phase, identity.namespace(), identity.name());
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = global.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        let value = cell.field(&mut roots, 0)?.unwrap_anyref()
+            .map(|value| value.to_owned_rooted(&mut roots)).transpose()?;
+        let flags = cell.field(&mut roots, 1)?.unwrap_i32();
+        checkpoint.values.insert(identity.clone(), (value, flags));
+        if introduced {
+            checkpoint.environment.advance_declarations(&code.environment, std::slice::from_ref(identity), self.phase);
+        }
+        Ok(introduced)
     }
     pub(crate) fn restore_bindings(
         &mut self,
@@ -1804,6 +1856,20 @@ impl SessionHost<'_> {
         linked: &mut bool,
         on_link: impl FnOnce(&mut Self) -> Result<(), SessionError>,
     ) -> Result<SessionValue, SessionError> {
+        self.eval_prepared_callbacks(prepared, linked, on_link, |_| Ok(()))
+    }
+    pub(crate) fn eval_prepared_for_macro(
+        &mut self, prepared: portable::modules::PreparedInput,
+        on_input: impl FnOnce(&mut Self) -> Result<(), SessionError>,
+    ) -> Result<SessionValue, SessionError> {
+        self.eval_prepared_callbacks(prepared, &mut false, |_| Ok(()),
+            on_input)
+    }
+    fn eval_prepared_callbacks(
+        &mut self, prepared: portable::modules::PreparedInput, linked: &mut bool,
+        on_link: impl FnOnce(&mut Self) -> Result<(), SessionError>,
+        on_input: impl FnOnce(&mut Self) -> Result<(), SessionError>,
+    ) -> Result<SessionValue, SessionError> {
         let PreparedFragment {
             wasm,
             environment,
@@ -1822,6 +1888,7 @@ impl SessionHost<'_> {
         on_link(self)?;
         let input = instances.pop().unwrap();
         self.initialize_modules(prepared.modules, instances)?;
+        on_input(self)?;
         self.eval_instance(input, true)
     }
     /// Load source once and preserve the caller's namespace scope. Successful

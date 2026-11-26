@@ -391,6 +391,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::BindingGetterMacroSet => { names.insert("binding-getter-macro-set!"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
                         Nominal::BindingRootSet => { names.insert("binding-root-set"); }
+                        Nominal::BindingRootDefine => { names.insert("binding-root-define"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -938,7 +939,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
             "binding-getter-root-set!" => (vec![VALUE; 3], vec![VALUE]),
-            "binding-root-set" | "binding-getter-unbound-init!" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
+            "binding-root-set" | "binding-root-define" | "binding-getter-unbound-init!" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -2680,7 +2681,7 @@ fn emit_function(
                     // Macro metadata does not change boundness or frame
                     // selection. Keep every other flag's existing behavior.
                     function
-                        .instruction(&I32Const(!(runtime_abi::CELL_MACRO | runtime_abi::CELL_DECLARED)))
+                        .instruction(&I32Const(!(runtime_abi::CELL_MACRO | runtime_abi::CELL_DECLARED | runtime_abi::CELL_STAGED_ROOT)))
                         .instruction(&I32And)
                         .instruction(&I32Const(runtime_abi::CELL_BOUND))
                         .instruction(&I32Eq)
@@ -4451,6 +4452,7 @@ fn emit_function(
                         | Nominal::BindingGetterMacroSet
                         | Nominal::BindingSnapshot
                         | Nominal::BindingRootSet
+                        | Nominal::BindingRootDefine
                         | Nominal::DecimalContextNew
                         | Nominal::DecimalContextGetter
                         | Nominal::CoerceString
@@ -4541,6 +4543,7 @@ fn emit_function(
                                 Nominal::BindingGetterMacroSet => "binding-getter-macro-set!",
                                 Nominal::BindingSnapshot => "binding-snapshot",
                                 Nominal::BindingRootSet => "binding-root-set",
+                                Nominal::BindingRootDefine => "binding-root-define",
                                 Nominal::DecimalContextNew => "decimal-context-new",
                                 Nominal::DecimalContextGetter => "decimal-context-getter-install",
                                 Nominal::CoerceString => "coerce-string",

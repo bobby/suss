@@ -14,11 +14,18 @@ use wasmtime::{AsContext, ExternRef, FieldType, StorageType, StructRef, StructRe
 
 #[derive(Default)]
 pub(super) struct Values {
-    exports: Mutex<Vec<Weak<ForeignValue>>>,
+    exports: Mutex<ExportCache>,
     imports: Mutex<Vec<Imported>>,
     depth: AtomicUsize,
     invoke: Mutex<Option<Func>>,
     capability: Mutex<Option<StructType>>,
+}
+#[derive(Default)]
+struct ExportCache {
+    // UID narrows the search; ref_eq on the actual root decides identity.
+    by_uid: BTreeMap<i64, Vec<Weak<ForeignValue>>>,
+    sweep_cursor: Option<i64>,
+    sweep_until: Option<i64>,
 }
 struct Imported {
     source: Arc<ForeignValue>,
@@ -211,24 +218,64 @@ impl SessionHost<'_> {
             .call(&mut roots, &[value], &mut result)?;
         capability(roots.as_context_mut(), result[0]).map_err(Into::into)
     }
+    pub(crate) fn matches_imported_function_root(&mut self, value: &SessionValue, expected: &SessionValue)
+        -> Result<bool, SessionError> {
+        self.charge_host_work(4)?;
+        let Some(endpoint) = self.native_value_endpoint(value)? else { return Ok(false); };
+        if endpoint.owner != expected.identity || !matches!(&endpoint.kind, NativeKind::Function { .. }) {
+            return Ok(false);
+        }
+        let _state = endpoint.state.upgrade().filter(|state| !state.retired.load(Ordering::SeqCst))
+            .ok_or_else(|| wasmtime::Error::msg("Native function source has retired"))?;
+        let Some(service) = &endpoint.service else { return Ok(false); };
+        service.identical_source_function_root(&endpoint.root, expected)
+    }
+    fn native_value_uid(&mut self, value: &SessionValue) -> Result<i64, SessionError> {
+        let runtime = self.runtime;
+        let mut roots = RootScope::new(&mut self.store);
+        let input = value.val(&mut roots.as_context_mut());
+        let mut result = [Val::null_any_ref()];
+        runtime.get_func(&mut roots, "identity-uid").unwrap().call(&mut roots, &[input], &mut result)?;
+        let mut integer = [Val::I64(0)];
+        runtime.get_func(&mut roots, "long-unbox").unwrap().call(&mut roots, &result, &mut integer)?;
+        Ok(integer[0].unwrap_i64())
+    }
     fn existing_native_value(
-        &mut self,
-        state: &Arc<Evaluation>,
-        value: &SessionValue,
+        &mut self, state: &Arc<Evaluation>, value: &SessionValue,
     ) -> Result<Option<Arc<ForeignValue>>, SessionError> {
-        let Ok(root) = value.object() else {
-            return Ok(None);
+        let Ok(root) = value.object() else { return Ok(None); };
+        // Scalar data and class constructors have no exported owner identity.
+        // Check actual runtime types before asking the UID intrinsic to read it.
+        let supported = {
+            let runtime = self.runtime;
+            let mut roots = RootScope::new(&mut self.store);
+            let input = value.val(&mut roots.as_context_mut());
+            let Some(object) = root.to_rooted(&mut roots).as_struct(&roots)? else { return Ok(None); };
+            if object.ty(&roots)?.fields().len() == 1 { return Ok(None); }
+            let mut result = [Val::I32(0)];
+            runtime.get_func(&mut roots, "class-value-is").unwrap().call(&mut roots, &[input], &mut result)?;
+            if result[0].unwrap_i32() != 0 { return Ok(None); }
+            runtime.get_func(&mut roots, "closure-value-test").unwrap().call(&mut roots, &[input], &mut result)?;
+            if result[0].unwrap_i32() != 0 { true } else {
+                runtime.get_func(&mut roots, "object-same-descriptor").unwrap().call(&mut roots, &[input, input], &mut result)?;
+                if result[0].unwrap_i32() != 0 { true } else {
+                    let mut result = [Val::null_any_ref()];
+                    runtime.get_func(&mut roots, "object-array-test").unwrap().call(&mut roots, &[input], &mut result)?;
+                    sentinel_tag(&mut roots.as_context_mut(), &result[0])? == Some(runtime_abi::TRUE as u32)
+                }
+            }
         };
-        let mut exports = registry_lock(&state.values.exports);
-        exports.retain(|entry| entry.strong_count() != 0);
-        for previous in exports.iter().filter_map(Weak::upgrade) {
-            self.charge_host_work(1)?;
+        if !supported { return Ok(None); }
+        let uid = self.native_value_uid(value)?;
+        self.charge_host_work(1)?;
+        let exports = registry_lock(&state.values.exports);
+        let Some(candidates) = exports.by_uid.get(&uid) else { return Ok(None); };
+        self.charge_host_work(candidates.len() as u64)?;
+        for previous in candidates.iter().filter_map(Weak::upgrade) {
             let mut roots = RootScope::new(&mut self.store);
             let first = root.to_rooted(&mut roots);
             let second = previous.root.to_rooted(&mut roots);
-            if wasmtime::Rooted::ref_eq(&roots, &first, &second)? {
-                return Ok(Some(previous));
-            }
+            if wasmtime::Rooted::ref_eq(&roots, &first, &second)? { return Ok(Some(previous)); }
         }
         Ok(None)
     }
@@ -241,24 +288,8 @@ impl SessionHost<'_> {
         let service = registry_lock(&state.value_service)
             .as_ref()
             .and_then(MacroServiceWeak::upgrade);
-        let uid = {
-            let runtime = self.runtime;
-            let mut roots = RootScope::new(&mut self.store);
-            let input = value.val(&mut roots.as_context_mut());
-            let mut result = [Val::null_any_ref()];
-            runtime.get_func(&mut roots, "identity-uid").unwrap().call(
-                &mut roots,
-                &[input],
-                &mut result,
-            )?;
-            let mut integer = [Val::I64(0)];
-            runtime.get_func(&mut roots, "long-unbox").unwrap().call(
-                &mut roots,
-                &result,
-                &mut integer,
-            )?;
-            integer[0].unwrap_i64()
-        };
+        let uid = self.native_value_uid(value)?;
+        self.charge_host_work(4)?;
         let endpoint = Arc::new(ForeignValue {
             owner: self.identity,
             state: Arc::downgrade(state),
@@ -267,7 +298,30 @@ impl SessionHost<'_> {
             uid,
             kind,
         });
-        registry_lock(&state.values.exports).push(Arc::downgrade(&endpoint));
+        let mut exports = registry_lock(&state.values.exports);
+        exports.by_uid.entry(uid).or_default().push(Arc::downgrade(&endpoint));
+        // Sweep one bucket per insertion. A fixed frontier makes each cycle
+        // finish even while newly assigned UIDs continue arriving. This keeps
+        // dead weak entries bounded without a large cleanup charge on a later
+        // small request. No strong GC roots are retained by this index.
+        if exports.sweep_until.is_none() {
+            exports.sweep_until = exports.by_uid.last_key_value().map(|(uid, _)| *uid);
+        }
+        if let Some(frontier) = exports.sweep_until {
+            use std::ops::Bound::{Excluded, Included, Unbounded};
+            let start = exports.sweep_cursor.map_or(Unbounded, Excluded);
+            let next = exports.by_uid.range((start, Included(frontier))).next().map(|(uid, _)| *uid);
+            if let Some(next) = next {
+                let bucket = exports.by_uid.get_mut(&next).unwrap();
+                self.charge_host_work(bucket.len() as u64 + 1)?;
+                bucket.retain(|entry| entry.strong_count() != 0);
+                if bucket.is_empty() { exports.by_uid.remove(&next); }
+                exports.sweep_cursor = Some(next);
+            } else {
+                exports.sweep_cursor = None;
+                exports.sweep_until = None;
+            }
+        }
         Ok(Transfer::Native(endpoint))
     }
     fn export_materialized_value(
@@ -1129,6 +1183,35 @@ mod tests {
                 "return transport must recover the exact source root"
             );
         }
+    }
+
+    #[test]
+    fn native_transport_uid_collisions_preserve_distinct_functions_and_repeated_aliases() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let left = source.eval("(def left (fn [] 1)) left").unwrap();
+        let right = source.eval("(def right (fn [] 2)) right").unwrap();
+        let _retained = source.export_value(&left).unwrap();
+        // Deliberately collide the private UID. It may narrow an index lookup,
+        // but it must never authenticate a different function object.
+        {
+            let mut roots = RootScope::new(&mut source.store);
+            let a = left.object().unwrap().to_rooted(&mut roots).as_struct(&roots).unwrap().unwrap();
+            let b = right.object().unwrap().to_rooted(&mut roots).as_struct(&roots).unwrap().unwrap();
+            let uid = a.field(&mut roots, runtime_abi::CLOSURE_UID as usize).unwrap();
+            b.set_field(&mut roots, runtime_abi::CLOSURE_UID as usize, uid).unwrap();
+        }
+        let original = source.eval("[left right left]").unwrap();
+        let imported = target.import_value(source.export_value(&original).unwrap()).unwrap();
+        let inspect = target.eval("(fn [v] (if (and (not (identical? (nth v 0) (nth v 1))) (identical? (nth v 0) (nth v 2)) (= 1 ((nth v 0))) (= 2 ((nth v 1)))) 42 -1))").unwrap();
+        for _ in 0..2 {
+            source.collect().unwrap();
+            target.collect().unwrap();
+            let result = super::super::super::suspended::scope(&mut source, || target.invoke(&inspect, &[&imported])).unwrap();
+            assert_eq!(target.inspect(&result, |mut store, value| runtime_number(&mut store, &value)).unwrap(), Some(RuntimeNumber::Long(42)));
+        }
+        let returned = source.import_value(target.export_value(&imported).unwrap()).unwrap();
+        assert!(source.identical_values(&original, &returned).unwrap());
     }
 
     #[test]

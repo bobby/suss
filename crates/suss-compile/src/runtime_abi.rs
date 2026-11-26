@@ -60,7 +60,7 @@ mod string_char_at;
 mod type_values;
 pub(crate) mod numeric_classes;
 
-pub const VERSION: u32 = 13;
+pub const VERSION: u32 = 14;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -218,6 +218,10 @@ pub(crate) const CELL_DYNAMIC: i32 = 2;
 /// including with-redefs restoration, clears it; declaration metadata sets it.
 pub(crate) const CELL_MACRO: i32 = 16;
 pub(crate) const CELL_DECLARED: i32 = 32;
+/// Transient compiler ownership of an isolated source declaration's root.
+/// Language root writes clear it, even when they write the identical function.
+/// It is neither Var metadata nor authority to access another cell/Store.
+pub(crate) const CELL_STAGED_ROOT: i32 = 64;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
@@ -1997,7 +2001,7 @@ fn build_module() -> Vec<u8> {
         StructSet { struct_type_index: BINDING, field_index: 2 }, End,
         LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)),
         LocalGet(3), RefCastNonNull(HeapType::Concrete(BINDING)),
-        StructGet { struct_type_index: BINDING, field_index: 1 }, I32Const(!CELL_BOUND), I32And,
+        StructGet { struct_type_index: BINDING, field_index: 1 }, I32Const(!(CELL_BOUND | CELL_STAGED_ROOT)), I32And,
         LocalGet(2), GlobalGet(TRUE_GLOBAL), RefEq,
         If(BlockType::Result(ValType::I32)), I32Const(0), Else, I32Const(CELL_BOUND), End,
         I32Or, StructSet { struct_type_index: BINDING, field_index: 1 }, LocalGet(1),

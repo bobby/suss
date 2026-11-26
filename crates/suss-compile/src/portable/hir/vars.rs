@@ -95,6 +95,33 @@ impl Analyzer<'_> {
         result
     }
 
+    fn evaluate_var_metadata(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
+        self.expander.charge_expansion_work(1, form.span.clone())?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            let items = match &form.kind {
+                Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) => items,
+                Kind::Keyword(_) | Kind::Tagged { .. } => return self.quote_var_metadata(form),
+                Kind::List(items) if items.is_empty() => return self.quote_var_metadata(form),
+                _ => return self.form(form),
+            };
+            // Evaluate expressions against the user's current bindings. Only
+            // the compiler's literal containers use its original core roots.
+            let values = items.iter().map(|item| self.evaluate_var_metadata(item))
+                .collect::<Result<Vec<_>, _>>()?;
+            let privileged = std::mem::replace(&mut self.privileged, true);
+            let constants = std::mem::take(&mut self.constant_definitions);
+            let result = match &form.kind {
+                Kind::Vector(_) => self.vector_values(form, values),
+                Kind::Map(_) => self.map_values(form, items, values),
+                Kind::Set(_) => self.set_values(form, items, values),
+                _ => unreachable!(),
+            };
+            self.constant_definitions = constants;
+            self.privileged = privileged;
+            result
+        })
+    }
+
     pub(super) fn binding_var(
         &mut self,
         form: &Form,
@@ -144,13 +171,12 @@ impl Analyzer<'_> {
                 kind: Kind::String(doc.clone()),
             });
         }
-        let metadata = self.quote_var_metadata(
-            &Form {
-                span: form.span.clone(),
-                metadata: vec![],
-                kind: Kind::Map(pairs),
-            },
-        )?;
+        let metadata_form = Form {
+            span: form.span.clone(), metadata: vec![], kind: Kind::Map(pairs),
+        };
+        let metadata = if update {
+            self.evaluate_var_metadata(&metadata_form)?
+        } else { self.quote_var_metadata(&metadata_form)? };
         // Metadata construction can contain its own HIR bindings. Evaluate it
         // once and refer to the local in both the initial and update paths;
         // cloning executable HIR would duplicate binding identities/effects.
@@ -162,6 +188,7 @@ impl Analyzer<'_> {
             vec![getter, namespace, name, metadata_value.clone()],
         )?;
         let initialize = node(Expression::Definition {
+            compiler_root: false,
             result: None,
             constant: None,
             global: cell.clone(),

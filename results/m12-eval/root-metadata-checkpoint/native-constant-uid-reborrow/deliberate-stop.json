@@ -1,0 +1,7 @@
+{
+  "time_utc": "2026-11-26T13:56:39.658421+00:00",
+  "pid": 842518,
+  "command": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/compiled_macro_compiler_catalog-7dbc6c14053e32fa failed_macro_reload_keeps_published_policy_then_successful_reload_recovers --exact --nocapture --test-threads=2 ",
+  "signal": "SIGTERM",
+  "reason": "Deliberately end this already unsuccessful batch after new unit compilation failed. Source inspection confirms a second quadratic all-export scan in existing_native_value. This is a known implementation defect, not an observation timeout; no pass is claimed. Recorder and cargo remain live to capture their own actual terminal statuses."
+}

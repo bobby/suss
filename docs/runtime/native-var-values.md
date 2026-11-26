@@ -59,3 +59,6 @@ Canonical class/EMPTY/method roots use private GC handles. New reader bridges
 capture current hash/equality callbacks to preserve reader occurrence effects;
 no helper lookup fragments are installed. See the source-import checkpoint
 for exact positive and negative receipts and the remaining validation gates.
+
+
+Compiler-owned staging writes are distinguished from language writes on the actual binding cell. Real root replacement or identity writes survive rejection of later unlinked source. Metadata expressions execute in the current user environment; their compiler-owned literal containers use original core constructors. Completed macro-to-ordinary reloads update the existing Var rather than preserving stale macro roots. Imported-function body proofs are reused only after native function identity authentication. Transport UID indexes select candidates and verify actual roots/capabilities; weak export entries are collected incrementally. See the [frozen checkpoint](../../results/m12-eval/root-metadata-checkpoint/summary.json) for exact executed commands, preserved failures and scope.

@@ -1157,7 +1157,7 @@ impl FormBridge {
         unbound_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, unbound_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, unbound_class, meta_fn_class, namespace_class: None, array_test: None, purpose: NativeReadPurpose::Evaluation, identity_uid: None, constants: vec![], constants_by_uid: BTreeMap::new() };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
@@ -1175,7 +1175,7 @@ impl FormBridge {
         namespace_class: wasmtime::OwnedRooted<AnyRef>, array_test: wasmtime::Func,
     ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
         let native = NativeRead { owner, closure_test, class_test, instance_test,
-            identity_test, var_class, unbound_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, constants: vec![] };
+            identity_test, var_class, unbound_class, meta_fn_class, namespace_class: Some(namespace_class), array_test: Some(array_test), purpose: NativeReadPurpose::Transport, identity_uid: Some(session.data_identity_uid_call()), constants: vec![], constants_by_uid: BTreeMap::new() };
         self.read_with_context(session, value, 0..0, true, Some(native), false)
     }
     fn read_with_context(
@@ -1386,7 +1386,11 @@ struct NativeRead {
     namespace_class: Option<wasmtime::OwnedRooted<AnyRef>>,
     array_test: Option<wasmtime::Func>,
     purpose: NativeReadPurpose,
+    identity_uid: Option<wasmtime::Func>,
     constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
+    // UID selects candidates only; actual roots/capabilities still decide
+    // identity, including deliberately colliding native values.
+    constants_by_uid: BTreeMap<i64, Vec<usize>>,
 }
 static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 impl NativeRead {
@@ -1452,10 +1456,27 @@ impl NativeRead {
         }
         let materialize = function && depth != 0;
         let root = reference(value)?;
-        // Clojure's constant pool preserves repeated source object aliases.
-        // Compare actual roots and meter comparisons; no pointer is serialized.
-        for (index, previous, mode) in &self.constants {
+        // Transport can contain large shared compiler catalogs. Index its
+        // constants by the existing owner UID instead of comparing every prior
+        // constant for each entry. Evaluation retains its original pool walk.
+        let uid = if let Some(identity_uid) = self.identity_uid {
+            let mut value_uid = [Val::null_any_ref()];
+            identity_uid.call(&mut *store, &[*value], &mut value_uid)?;
+            let Some(RuntimeNumber::Long(uid)) = runtime_number(&mut *store, &value_uid[0])? else {
+                return Err(error("Invalid native constant UID"));
+            };
             Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            Some(uid)
+        } else { None };
+        let candidates = match uid {
+            Some(uid) => self.constants_by_uid.get(&uid).map_or(&[][..], Vec::as_slice),
+            None => &[],
+        };
+        let count = if uid.is_some() { candidates.len() } else { self.constants.len() };
+        for position in 0..count {
+            Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+            let slot = if uid.is_some() { candidates[position] } else { position };
+            let (index, previous, mode) = &self.constants[slot];
             let previous = previous.to_rooted(&mut *store);
             if *mode != materialize { continue; }
             let same_root = wasmtime::Rooted::<AnyRef>::ref_eq(&*store, root, &previous)?;
@@ -1471,6 +1492,10 @@ impl NativeRead {
             std::sync::atomic::Ordering::Relaxed, std::sync::atomic::Ordering::Relaxed,
             |index| index.checked_add(1),
         ).map_err(|_| error("Native constant identity exhausted"))?;
+        if let Some(uid) = uid {
+            Session::consume_host_work(store.as_context_mut(), 2, interrupt)?;
+            self.constants_by_uid.entry(uid).or_default().push(self.constants.len());
+        }
         self.constants.push((index, root.to_owned_rooted(&mut *store)?, materialize));
         Ok(Some(Kind::NativeConstant { owner: self.owner, index }))
     }

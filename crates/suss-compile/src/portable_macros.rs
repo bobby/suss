@@ -22,6 +22,14 @@ pub(crate) enum CompilerCatalogMode {
     Full,
     RecordBindings,
 }
+// These body proofs apply only to this exact immutable function object. An
+// imported caller root must authenticate that identity before reusing them.
+struct MacroFunctionProofs {
+    root: SessionValue,
+    environment_free: bool,
+    caller_form_free: bool,
+    compiler_catalog: Option<CompilerCatalogMode>,
+}
 /// The phase Store and catalog. Callback views borrow that same Store and
 /// share its catalog; they never reconstruct a macro host.
 pub(crate) struct MacroHost<'store> {
@@ -479,8 +487,11 @@ impl MacroHost<'_> {
                 let depth = catalog(&self.catalog).declaration_transactions.len() as u64;
                 // Reserve key copies, completed-write roots and later native
                 // rollback comparisons before the declaration invokes Wasm.
-                self.session.charge_host_work(((namespace.len() + name.name.len()) as u64 * 4 + 24)
+                self.session.charge_host_work(((namespace.len() + name.name.len()) as u64 * 4 + 128)
                     .saturating_mul(depth).saturating_add(1))?;
+                if self.session.source_root_staged(&global)? == Some(false) {
+                    self.preserve_runtime_root_before_staging(&global)?;
+                }
                 for transaction in &mut catalog(&self.catalog).declaration_transactions {
                     if transaction.globals.insert(global.clone()) {
                         if let Some(before) = &before { transaction.metadata.insert(global.clone(), before.clone()); }
@@ -492,7 +503,8 @@ impl MacroHost<'_> {
                 std::slice::from_mut(&mut declaration), environment, phase,
             ).map_err(SessionError::Compile)?;
             let span = declaration.span.clone();
-            self.define_form_with_origin(declaration, span, Some(&module.origin))?;
+            let pending = self.prepare_macro_definition(&declaration, span, Some(&module.origin))?;
+            self.commit_staged_macro_definition(pending)?;
             if let Some(global) = metadata_global {
                 // Native metadata reads only; no guest call under this guard.
                 for transaction in &mut catalog(&self.catalog).declaration_transactions {
@@ -704,7 +716,22 @@ impl MacroHost<'_> {
                             self,
                             Some(&origin),
                         )?;
+                        let replaced = prepared.fragment.definition.as_ref().map(|definition| definition.global.clone())
+                            .filter(|global| catalog(&self.catalog).definitions.contains_key(&(global.namespace().to_owned(), global.name().to_owned())));
+                        let depth = catalog(&self.catalog).declaration_transactions.len() as u64;
+                        if let Some(global) = &replaced {
+                            self.session.charge_host_work(((global.namespace().len() + global.name().len()) as u64 * 4 + 512)
+                                .saturating_mul(depth).saturating_add(1))?;
+                        }
                         self.session.eval_prepared(prepared)?;
+                        if let Some(global) = replaced {
+                            self.preserve_completed_source_macro(&global)?;
+                            if let Some((owner, phase)) = destination {
+                                let target = crate::portable::resolve::Environment::default()
+                                    .declare_cell(phase, global.namespace(), global.name()).map_err(SessionError::Compile)?;
+                                self.session.project_source_macro_var(owner, &target, true)?;
+                            }
+                        }
                     }
                 }
                 self.session
@@ -722,6 +749,32 @@ impl MacroHost<'_> {
         })();
         self.session.enter_namespace(&caller)?;
         result
+    }
+    fn preserve_runtime_root_before_staging(&mut self, global: &crate::portable::resolve::Global)
+        -> Result<(), SessionError> {
+        let key = (global.namespace().to_owned(), global.name().to_owned());
+        let current = {
+            let state = catalog(&self.catalog);
+            state.definitions.get(&key).map(|value| (value.clone(),
+                state.declaration_sources.get(&key).cloned(),
+                state.environment_free.contains(&key), state.compiler_catalog_macros.get(&key).copied(),
+                state.caller_form_free.contains(&key)))
+        };
+        for transaction in &mut catalog(&self.catalog).declaration_transactions {
+            if let Some(checkpoint) = &mut transaction.checkpoint {
+                let introduced = self.session.advance_runtime_root_checkpoint(&mut checkpoint.0, global)?;
+                if introduced {
+                    if let Some((value, source, environment_free, mode, caller_form_free)) = &current {
+                        checkpoint.1.insert(key.clone(), value.clone());
+                        if let Some(source) = source { checkpoint.2.insert(key.clone(), source.clone()); }
+                        if *environment_free { checkpoint.3.insert(key.clone()); }
+                        if let Some(mode) = mode { checkpoint.4.insert(key.clone(), *mode); }
+                        if *caller_form_free { checkpoint.5.insert(key.clone()); }
+                    }
+                }
+            }
+        }
+        Ok(())
     }
     fn preserve_completed_source_macro(&mut self, global: &crate::portable::resolve::Global)
         -> Result<(), SessionError> {
@@ -954,14 +1007,29 @@ impl ExpansionHost for MacroHost<'_> {
         let local = if !commit {
             (|| {
                 if let Some(checkpoint) = transaction.checkpoint {
-                    self.restore_bindings(checkpoint, &transaction.globals.into_iter().collect::<Vec<_>>())?;
+                    let mut owned = Vec::new();
+                    for global in &transaction.globals {
+                        if self.session.source_root_staged(global)? == Some(true) { owned.push(global.clone()); }
+                    }
+                    self.restore_bindings(checkpoint, &owned)?;
                 }
                 for checkpoint in transaction.metadata.into_values() {
                     self.session.restore_var_metadata(checkpoint)?;
                 }
                 Ok(())
             })().map_err(|error: SessionError| Diagnostic { span: 0..0, message: error.to_string() })
-        } else { Ok(()) };
+        } else {
+            (|| {
+                for global in &transaction.globals {
+                    let outer = catalog(&self.catalog).declaration_transactions.iter()
+                        .any(|transaction| transaction.globals.contains(global));
+                    if !outer && self.session.source_root_staged(global)?.is_some() {
+                        self.session.mark_source_root(global, false)?;
+                    }
+                }
+                Ok(())
+            })().map_err(|error: SessionError| Diagnostic { span: 0..0, message: error.to_string() })
+        };
         let service = self.fallback.clone();
         // Read the journal while it is live, then always finish its cleanup,
         // including when collection or publication exhausts the allowance.
@@ -1335,13 +1403,49 @@ impl ExpansionHost for MacroHost<'_> {
                 };
                 Some(selected)
             } else { function }
-        } else { function };
+        } else if let Some(original) = function {
+            let global = crate::portable::resolve::Environment::default()
+                .declare_cell(self.session.phase(), &target.0, &target.1)?;
+            if self.session.native_macro_enabled(&global).map_err(|error| Diagnostic {
+                span: form.span.clone(), message: error.to_string(),
+            })? == Some(false) { return Ok(None); }
+            let selected = self.session.binding_value(&global).map_err(|error| Diagnostic {
+                span: form.span.clone(), message: error.to_string(),
+            })?;
+            binding_override = !self.session.identical_values(&original, &selected).map_err(|error| Diagnostic {
+                span: form.span.clone(), message: error.to_string(),
+            })?;
+            Some(selected)
+        } else { None };
         let Some(function) = function else {
             if !self.fallback.as_ref().is_some_and(|service| service.contains_source_macro(&target.0, &target.1)) {
                 return Ok(None);
             }
             return self.fallback_expand(form, context);
         };
+        let (mut caller_form_free, mut environment_free, mut compiler_catalog) = {
+            let state = catalog(&self.catalog);
+            (!binding_override && state.caller_form_free.contains(&target),
+             !binding_override && state.environment_free.contains(&target),
+             if binding_override { None } else { state.compiler_catalog_macros.get(&target).copied() })
+        };
+        // A canonical caller Var owns its cell even when its function still
+        // belongs to the isolated source Store. Authenticate the function,
+        // rather than deriving its body proofs from the cell's owner.
+        if native && binding_override {
+            self.session.charge_host_work((target.0.len() + target.1.len()) as u64 * 4 + 32)
+                .map_err(|error| Diagnostic { span: form.span.clone(), message: error.to_string() })?;
+            let proof = self.fallback.as_ref().and_then(|service| service.source_macro_function_proofs(&target));
+            if let Some(proof) = proof {
+                let matches = self.session.matches_imported_function_root(&function, &proof.root)
+                    .map_err(|error| Diagnostic { span: form.span.clone(), message: error.to_string() })?;
+                if matches {
+                    caller_form_free = proof.caller_form_free;
+                    environment_free = proof.environment_free;
+                    compiler_catalog = proof.compiler_catalog;
+                }
+            }
+        }
         catalog(&self.catalog).source_expansions += 1;
         let native_owner = context.origin.and_then(|origin| origin.native_owner());
         let before = native.then(|| self.session.compilation_snapshot().environment);
@@ -1369,7 +1473,7 @@ impl ExpansionHost for MacroHost<'_> {
                     self.bridge.quote_evaluation_ref(session, form, owner)
                 } else { self.bridge.quote_ref(session, form) }
             };
-            let caller_form = if !binding_override && catalog(&self.catalog).caller_form_free.contains(&target) {
+            let caller_form = if caller_form_free {
                 self.bridge.quote(session, Form { span: form.span.clone(), metadata: vec![], kind: Kind::Nil })?
             } else {
                 quote(session, &caller_data)?
@@ -1378,7 +1482,7 @@ impl ExpansionHost for MacroHost<'_> {
             // A macro that cannot read &env receives nil instead of a
             // materialized analysis graph; nothing else can observe it.
             stage = "caller &env input transport".into();
-            let caller_environment = if !binding_override && catalog(&self.catalog).environment_free.contains(&target) {
+            let caller_environment = if environment_free {
                 self.bridge.quote(
                     session,
                     Form {
@@ -1390,7 +1494,7 @@ impl ExpansionHost for MacroHost<'_> {
             } else {
                 catalog(&self.catalog).environment_materializations += 1;
                 let mut graph = AnalysisGraph::new(&self.bridge, session);
-                let mode = if binding_override { None } else { catalog(&self.catalog).compiler_catalog_macros.get(&target).copied() };
+                let mode = compiler_catalog;
                 match mode {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?

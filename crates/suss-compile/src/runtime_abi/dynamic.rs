@@ -266,6 +266,9 @@ fn set_binding(lookup: u32, restore: bool, check: u32) -> Vec<Instruction<'stati
     body
 }
 fn root_set() -> Vec<Instruction<'static>> {
+    root_store(!(CELL_MACRO | CELL_STAGED_ROOT))
+}
+fn root_store(mask: i32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let mut body = vec![
         LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
@@ -274,7 +277,7 @@ fn root_set() -> Vec<Instruction<'static>> {
     ];
     body.extend(flags());
     body.extend([
-        I32Const(!CELL_MACRO), I32And, I32Const(CELL_BOUND), I32Or,
+        I32Const(mask), I32And, I32Const(CELL_BOUND), I32Or,
         StructSet { struct_type_index: BINDING, field_index: 1 },
     ]);
     body
@@ -284,6 +287,12 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
     let mut root = root_set();
     root.push(LocalGet(1));
     b.function("binding-root-set", &[VALUE, VALUE], &[VALUE], &root);
+    // A definition owns only a root enrolled by its native compiler boundary.
+    // Preserve that ownership across the store and metadata evaluation; actual
+    // language root writes (including alterRoot) always clear it.
+    let mut define = root_store(!CELL_MACRO);
+    define.push(LocalGet(1));
+    b.function("binding-root-define", &[VALUE, VALUE], &[VALUE], &define);
     let set_in = b.function_with_locals(
         "binding-set-in",
         &[VALUE, VALUE, VALUE],

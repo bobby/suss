@@ -160,6 +160,24 @@ impl MacroService {
         self.with_request(fuel, None, interrupt, |host|
             host.project_namespace_macros(owner, phase, namespace))
     }
+    pub(super) fn source_macro_function_proofs(&self, key: &(String, String)) -> Option<MacroFunctionProofs> {
+        self.with_host(|host| {
+            let state = catalog(&host.catalog);
+            Some(MacroFunctionProofs {
+                root: state.definitions.get(key)?.clone(),
+                environment_free: state.environment_free.contains(key),
+                caller_form_free: state.caller_form_free.contains(key),
+                compiler_catalog: state.compiler_catalog_macros.get(key).copied(),
+            })
+        })
+    }
+    pub(crate) fn identical_source_function_root(&self,
+        actual: &wasmtime::OwnedRooted<wasmtime::AnyRef>, expected: &SessionValue,
+    ) -> Result<bool, SessionError> {
+        // Native reference comparison only: no metadata guard or language call
+        // crosses the lease, and inspecting identity cannot run user callbacks.
+        self.with_host(|host| host.session.identical_rooted_value(actual, expected))
+    }
     pub(crate) fn contains_source_macro(&self, namespace: &str, name: &str) -> bool {
         self.with_host(|host| catalog(&host.catalog).definitions.contains_key(&(namespace.to_owned(), name.to_owned())))
     }

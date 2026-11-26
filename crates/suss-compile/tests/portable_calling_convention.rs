@@ -128,13 +128,14 @@ fn a_locally_called_closure_needs_no_call_entry() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_13_and_prior_abis_are_rejected() {
-    // ABI 13 roots canonical Unbound values in binding cells.
+fn artifacts_record_runtime_abi_14_and_prior_abis_are_rejected() {
+    // ABI 14 distinguishes compiler definition writes from ordinary root binds.
+    // ABI 14 distinguishes compiler staging writes from language root writes.
     // ABI 12 adds immutable MathContext values; ABI 11 adds Decimals.
     // ABI 10 adds immutable Ratios.
     // ABI 7 (#448) makes CODE extensible for primitive signature subtypes;
     // ABI 6's eqref closure parameter and call-site caches remain.
-    assert_eq!(runtime_abi::VERSION, 13);
+    assert_eq!(runtime_abi::VERSION, 14);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -149,8 +150,8 @@ fn artifacts_record_runtime_abi_13_and_prior_abis_are_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(13), &expected), Ok(()));
-    for abi in [5, 6, 7, 8, 9, 10, 11, 12] {
+    assert_eq!(runtime_abi::verify_artifact(&module(14), &expected), Ok(()));
+    for abi in [5, 6, 7, 8, 9, 10, 11, 12, 13] {
         let error = runtime_abi::verify_artifact(&module(abi), &expected).unwrap_err();
         assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
     }

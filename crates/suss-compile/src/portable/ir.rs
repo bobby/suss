@@ -505,6 +505,7 @@ impl<'a> Lowerer<'a> {
                 result
             }
             Expression::Definition {
+                compiler_root,
                 global,
                 result: var,
                 initializer,
@@ -552,7 +553,7 @@ impl<'a> Lowerer<'a> {
                             let cell = self.emit(Operation::GlobalCell(global_for_write), Type::Value, hir.span.clone())?;
                             let value = self.emit(
                                 Operation::Nominal {
-                                    operation: Nominal::BindingRootSet,
+                                    operation: if *compiler_root { Nominal::BindingRootDefine } else { Nominal::BindingRootSet },
                                     arguments: vec![cell, value],
                                 },
                                 Type::Value,
@@ -574,7 +575,7 @@ impl<'a> Lowerer<'a> {
                         let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
                         let written = self.emit(
                             Operation::Nominal {
-                                operation: Nominal::BindingRootSet,
+                                operation: if *compiler_root { Nominal::BindingRootDefine } else { Nominal::BindingRootSet },
                                 arguments: vec![cell, value],
                             },
                             Type::Value,
