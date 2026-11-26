@@ -369,8 +369,19 @@
       (cljs.core/pos? x)
       (throw (suss.bootstrap/error "pos? requires number operands")))))
 
-(def ^number m3-hash-unencoded-chars (fn [in]
-  (let [h1 (loop [i 1 h1 m3-seed]
+(def ^number m3-hash-unencoded-chars
+  (let [original-seed m3-seed
+        original-k1 m3-mix-K1
+        original-h1 m3-mix-H1
+        original-fmix m3-fmix
+        same? identical?]
+    (fn [in]
+      (if (and (same? m3-seed original-seed)
+               (same? m3-mix-K1 original-k1)
+               (same? m3-mix-H1 original-h1)
+               (same? m3-fmix original-fmix))
+        (suss.bootstrap/hash-unencoded-chars in)
+        (let [h1 (loop [i 1 h1 m3-seed]
              (if (< i (.-length in))
                (recur (+ i 2)
                  (m3-mix-H1 h1
@@ -381,7 +392,7 @@
         h1 (if (== (bit-and (.-length in) 1) 1)
              (bit-xor h1 (m3-mix-K1 (.charCodeAt in (dec (.-length in)))))
              h1)]
-    (m3-fmix h1 (imul 2 (.-length in))))))
+    (m3-fmix h1 (imul 2 (.-length in))))))))
 
 (def hash-string* (fn [s]
   (if-not (nil? s)
@@ -5469,7 +5480,7 @@
   (-deref [_] (val))
   IMeta
   (-meta [_]
-    (if (suss.bootstrap/binding-getter-macro? val) _meta
+    (if (or (suss.bootstrap/binding-getter-macro? val) (not (:macro _meta))) _meta
       (do (set! _meta (dissoc _meta :macro)) _meta)))
   IEquiv
   (-equiv [this other] (identical? this other))
@@ -12713,6 +12724,73 @@ reduces them without incurring seq initialization"
   (fn [form] (suss.bootstrap/evaluate-form form)))
 ;; END Clojure eval
 
+;; BEGIN Clojure ns-interns
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+;; Clojure1.12.6 namespace-map filtering is supplied by the native compiled
+;; host's actual binding cells. Pure components require that explicit capability.
+(def ^{:doc "Returns a map of the intern mappings for the namespace."
+       :added "1.0" :static true} ns-interns
+  (fn [ns] (suss.bootstrap/namespace-interns (the-ns ns))))
+;; END Clojure ns-interns
+
+
+;; BEGIN Clojure Var.Unbound
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html and var-unbound-provenance.json.
+(deftype VarUnbound [v]
+  Object
+  (toString [_] (str_ "Unbound: " v))
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IFn
+  (-invoke [_]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 rest]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v)))))
+;; END Clojure Var.Unbound
 
 ;; Original native Var construction adapters. Compiler-owned hidden cells
 ;; intern the result; the getter is compiled directly against its live cell.
@@ -12721,12 +12799,14 @@ reduces them without incurring seq initialization"
     (suss.bootstrap/binding-getter-macro-set! getter (boolean (:macro metadata)))
     ;; Binding keys and namespace objects keep the platform's canonical core
     ;; identity. Public Var symbols use Clojure's core spelling for source data.
-    (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
+    (let [v (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
       ;; Keep Var interning independent of the mutable IndexedSeq constructor
       ;; used by variadic argument packing. Both metadata updates are fixed arity.
       (let [name (symbol name)
             namespace (the-ns (symbol namespace))]
-        (assoc (assoc metadata :name name) :ns namespace)))))
+        (assoc (assoc metadata :name name) :ns namespace)))]
+      (suss.bootstrap/binding-getter-unbound-init! getter (VarUnbound. v))
+      v)))
 (def ^:private update-binding-var-meta!
   (fn [v metadata]
     (set! (.-_meta v)
@@ -12751,3 +12831,14 @@ reduces them without incurring seq initialization"
       (if (number? x) x
         (throw (suss.bootstrap/error "Cannot cast value to Number"))))))
 ;; END Clojure num checked Number projection
+
+;; BEGIN Clojure alter-var-root
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html and alter-var-root-provenance.json.
+(def ^{:doc "Atomically alters the root binding of var v by applying f to its current value and args."
+       :added "1.0" :static true} alter-var-root
+  (fn [v f & args]
+    (let [getter (.-val v)
+          root (apply f (suss.bootstrap/binding-getter-root-get getter) args)]
+      (suss.bootstrap/binding-getter-root-set! getter root (instance? VarUnbound root)))))
+;; END Clojure alter-var-root

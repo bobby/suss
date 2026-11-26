@@ -524,6 +524,7 @@ impl<'a> Lowerer<'a> {
                 result
             }
             Expression::Definition {
+                compiler_root,
                 global,
                 result: var,
                 initializer,
@@ -532,6 +533,16 @@ impl<'a> Lowerer<'a> {
                 constant,
                 ..
             } => {
+                // Record execution independently of initialization. Native eval
+                // also admits Vars during analysis, including untaken defs.
+                if var.is_some() {
+                    let declared = self.clone_global(global, &hir.span)?;
+                    let cell = self.emit(Operation::GlobalCell(declared), Type::Value, hir.span.clone())?;
+                    self.emit(Operation::Bitwise {
+                        operation: super::hir::Bitwise::DeclareBinding,
+                        arguments: vec![cell],
+                    }, Type::Value, hir.span.clone())?;
+                }
                 if let Some(initializer) = initializer {
                     if *once {
                         let global_for_test = self.clone_global(global, &hir.span)?;
@@ -561,7 +572,7 @@ impl<'a> Lowerer<'a> {
                             let cell = self.emit(Operation::GlobalCell(global_for_write), Type::Value, hir.span.clone())?;
                             let value = self.emit(
                                 Operation::Nominal {
-                                    operation: Nominal::BindingRootSet,
+                                    operation: if *compiler_root { Nominal::BindingRootDefine } else { Nominal::BindingRootSet },
                                     arguments: vec![cell, value],
                                 },
                                 Type::Value,
@@ -583,7 +594,7 @@ impl<'a> Lowerer<'a> {
                         let cell = self.emit(Operation::GlobalCell(global), Type::Value, hir.span.clone())?;
                         let written = self.emit(
                             Operation::Nominal {
-                                operation: Nominal::BindingRootSet,
+                                operation: if *compiler_root { Nominal::BindingRootDefine } else { Nominal::BindingRootSet },
                                 arguments: vec![cell, value],
                             },
                             Type::Value,
@@ -1453,7 +1464,7 @@ fn loop_safe(operation: &Operation) -> bool {
         | Operation::Array { .. }
         | Operation::MakeClosure { .. }
         | Operation::MakeGeneralClosure { .. } => true,
-        Operation::Bitwise { operation, .. } => !matches!(operation, super::hir::Bitwise::RandomDouble | super::hir::Bitwise::EvaluateForm),
+        Operation::Bitwise { operation, .. } => !matches!(operation, super::hir::Bitwise::RandomDouble | super::hir::Bitwise::EvaluateForm | super::hir::Bitwise::NamespaceInterns | super::hir::Bitwise::DeclareBinding | super::hir::Bitwise::HashUnencodedChars | super::hir::Bitwise::BindingGetterUnboundInit | super::hir::Bitwise::BindingGetterRootSet | super::hir::Bitwise::BindingGetterRootGet),
         Operation::Comparison { operation, .. } => !matches!(operation, C::Less | C::LessEqual | C::Greater | C::GreaterEqual),
         Operation::Arithmetic { coercing, .. } => !coercing,
         Operation::Nominal { operation, .. } => {

@@ -30,9 +30,9 @@ impl FormBridge {
         if depth > 256 { return Err(wasmtime::Error::msg("Exception cause transfer exceeds nesting allowance").into()); }
         // These accessor roots were captured when the isolated Macro host was
         // built, before user source can replace its public core bindings.
-        let message = session.invoke(&self.core.factories["exception-message"], &[value])?;
-        let data = session.invoke(&self.core.factories["exception-data"], &[value])?;
-        let cause = session.invoke(&self.core.factories["exception-cause"], &[value])?;
+        let message = session.invoke_compiler_root(&self.core.factories["exception-message"], &[value])?;
+        let data = session.invoke_compiler_root(&self.core.factories["exception-data"], &[value])?;
+        let cause = session.invoke_compiler_root(&self.core.factories["exception-cause"], &[value])?;
         let absent = |session: &mut SessionHost<'_>, value: &SessionValue| {
             session.inspect(value, |_, value| Ok(value.unwrap_anyref().is_none()))
         };

@@ -11,6 +11,7 @@ mod macro_function;
 mod macro_binding;
 pub(super) mod function_pool;
 mod math_context;
+mod native_values;
 pub(crate) use math_context::EvaluationMathContext;
 
 #[derive(Clone)]
@@ -21,16 +22,26 @@ struct MacroMetadata {
 
 #[derive(Default)]
 pub(super) struct Evaluation {
+    values: native_values::Values,
+    value_service: Mutex<Option<crate::portable_macros::MacroServiceWeak>>,
+    retired: AtomicBool,
     profile: Mutex<Option<Arc<ReentryProfile>>>,
     bridge: Mutex<Option<Arc<FormBridge>>>,
     external: Mutex<Option<MacroService>>,
     own: Mutex<Option<MacroAuthority>>,
+    local: Mutex<Option<MacroAuthority>>,
+    compiler_helpers: Mutex<BTreeMap<&'static str, OwnedRooted<AnyRef>>>,
     namespace: Mutex<Option<NamespaceAccess>>,
     input_base: Mutex<Option<OwnedRooted<AnyRef>>>,
     input_active: AtomicBool,
     var_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    unbound_class: Mutex<Option<OwnedRooted<AnyRef>>>,
+    projected_macros: Mutex<std::collections::BTreeSet<CellIdentity>>,
+    catalog_keys: Mutex<BTreeMap<CellIdentity, OwnedRooted<AnyRef>>>,
+    sequence_classes: Mutex<BTreeMap<&'static str, OwnedRooted<AnyRef>>>,
     meta_fn_class: Mutex<Option<OwnedRooted<AnyRef>>>,
     metadata_lookup: Mutex<Option<OwnedRooted<AnyRef>>>,
+    syntax_tests: Mutex<Vec<OwnedRooted<AnyRef>>>,
     macro_metadata: Mutex<BTreeMap<CellIdentity, MacroMetadata>>,
     exception_info: Mutex<Option<OwnedRooted<AnyRef>>>,
 }
@@ -148,18 +159,17 @@ impl NamespaceAccess {
     }
     fn read(&self, session: &mut SessionHost<'_>) -> Result<String, SessionError> {
         session.charge_host_work(16)?;
-        let runtime = session.runtime;
+        let namespace = {
+            let mut roots = RootScope::new(&mut session.store);
+            let get = session.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = self.cell.get(&mut roots);
+            call(&mut roots, session.runtime, get, &[cell], session.identity, &session.handles)?
+        };
+        self.value_name(session, &namespace)
+    }
+    fn value_name(&self, session: &mut SessionHost<'_>, namespace: &SessionValue) -> Result<String, SessionError> {
+        if let Some(name) = session.native_namespace_name(namespace)? { return Ok(name); }
         let mut roots = RootScope::new(&mut session.store);
-        let get = runtime.get_func(&mut roots, "binding-get").unwrap();
-        let cell = self.cell.get(&mut roots);
-        let namespace = call(
-            &mut roots,
-            runtime,
-            get,
-            &[cell],
-            session.identity,
-            &session.handles,
-        )?;
         let namespace = namespace.val(&mut roots.as_context_mut());
         fn fields(
             store: &mut StoreContextMut<'_, ()>,
@@ -226,26 +236,42 @@ impl NamespaceAccess {
 }
 impl Evaluation {
     pub(super) fn clear(&self) {
+        self.retired.store(true, Ordering::SeqCst);
+        self.values.clear();
+        registry_lock(&self.value_service).take();
         // Drop compiler services and roots outside the locks. Their teardown may
         // retire native requests in another isolated phase Store.
         let profile = registry_lock(&self.profile).take();
         let bridge = registry_lock(&self.bridge).take();
         let external = registry_lock(&self.external).take();
         let own = registry_lock(&self.own).take();
+        let local = registry_lock(&self.local).take();
+        let compiler_helpers = std::mem::take(&mut *registry_lock(&self.compiler_helpers));
         let namespace = registry_lock(&self.namespace).take();
         let input_base = registry_lock(&self.input_base).take();
         self.input_active.store(false, Ordering::SeqCst);
         let var_class = registry_lock(&self.var_class).take();
+        let unbound_class = registry_lock(&self.unbound_class).take();
+        let sequence_classes = std::mem::take(&mut *registry_lock(&self.sequence_classes));
+        registry_lock(&self.projected_macros).clear();
+        let catalog_keys = std::mem::take(&mut *registry_lock(&self.catalog_keys));
         let metadata_lookup = registry_lock(&self.metadata_lookup).take();
+        let syntax_tests = std::mem::take(&mut *registry_lock(&self.syntax_tests));
         drop((
             profile,
             bridge,
             external,
             own,
+            local,
+            compiler_helpers,
             namespace,
             var_class,
+            unbound_class,
+            sequence_classes,
+            catalog_keys,
             input_base,
             metadata_lookup,
+            syntax_tests,
         ));
     }
     fn bridge(&self, view: &mut SessionHost<'_>) -> Result<Arc<FormBridge>, SessionError> {
@@ -275,11 +301,42 @@ impl Evaluation {
         input: Val,
     ) -> Result<SessionValue, SessionError> {
         let mut view = profile.bind(caller);
+        let _values = view.native_values_scope();
         view.charge_host_work(1)?;
         let value = {
             let mut roots = RootScope::new(&mut view.store);
             own(&mut roots, input, view.identity, &view.handles)?
         };
+        // Already materialized non-syntax values need no macro serialization.
+        // Use retained compiled predicates, so rebinding public core names cannot
+        // change this compiler boundary. Nested constants still go through the
+        // ordinary constant compiler and retain its Clojure rejection rules.
+        let direct_literal = {
+            let mut roots = RootScope::new(&mut view.store);
+            let input = value.val(&mut roots.as_context_mut());
+            let test = view.runtime.get_func(&mut roots, "evaluation-direct-literal-test")
+                .ok_or_else(|| wasmtime::Error::msg("Missing evaluation literal classifier"))?;
+            let mut result = [Val::I32(0)];
+            test.call(&mut roots, &[input], &mut result)?;
+            result[0].unwrap_i32() != 0
+        };
+        if direct_literal {
+            let tests = registry_lock(&self.syntax_tests).clone();
+            let mut syntax = false;
+            for test in tests {
+                let test = {
+                    let mut roots = RootScope::new(&mut view.store);
+                    let value = Val::AnyRef(Some(test.to_rooted(&mut roots)));
+                    own(&mut roots, value, view.identity, &view.handles)?
+                };
+                let result = view.invoke(&test, &[&value])?;
+                let enabled = view.inspect(&result, |mut store, value| {
+                    Ok(sentinel_tag(&mut store, &value)? == Some(runtime_abi::TRUE as u32))
+                })?;
+                if enabled { syntax = true; break; }
+            }
+            if !syntax { return Ok(value); }
+        }
         let bridge = self.bridge(&mut view)?;
         let form = view.read_native_evaluation(&bridge, &value, 0..0)?;
         // Clojure evaluates a scalar literal to the actual argument object.
@@ -299,80 +356,21 @@ impl Evaluation {
         ) {
             return Ok(value);
         }
-        let namespace_access = registry_lock(&self.namespace)
-            .clone()
-            .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
         let authority = registry_lock(&self.own).clone();
         if let Some(authority) = authority {
-            // This Store owns the active Macro authority and its real catalog.
             return authority.bind(view).evaluate_native_form(form);
         }
         let service = self.service()?;
-        let mut pending = vec![form];
-        let mut result = None;
-        while let Some(form) = pending.pop() {
-            let namespace = namespace_access.read(&mut view)?;
-            let mut snapshot = view.compilation_snapshot();
-            let original = snapshot
-                .environment
-                .current_namespace(view.phase)
-                .to_owned();
-            snapshot
-                .environment
-                .enter_namespace(view.phase, &namespace)
-                .map_err(SessionError::Compile)?;
-            snapshot.environment.replace_evaluation_aliases(
-                view.phase,
-                namespace_access.aliases(&mut view, &bridge)?,
-            );
-            view.synchronize_evaluation_macros(&mut snapshot)?;
-            snapshot.environment.native_evaluation_namespace = true;
-            let publish_namespace = view.evaluation_updates_input_namespace()?;
-            let prepared = if view.has_native_macro_binding_override(&snapshot)? {
-                // A thread-bound transformer lives in this Store. Invoke it
-                // here, releasing the Macro Store between compiler steps.
-                macro_binding::prepare(&mut view, &service, &bridge, &snapshot, form)
-            } else {
-                let context = view.evaluation_math_context()?;
-                let allowance = view.operation_fuel_remaining()?;
-                let (prepared, spent) = service.prepare_evaluation(
-                    &snapshot, form, allowance, context, view.interrupt.clone())?;
-                view.charge_host_work(spent)?;
-                prepared
-            };
-            match prepared? {
-                PreparedEvaluation::MacroDeclaration(form) => {
-                    let prepared =
-                        view.prepare_native_macro_declaration(&service, &snapshot, form)?;
-                    let outcome = view.eval_prepared(prepared);
-                    result = Some(outcome?);
-                }
-                PreparedEvaluation::TopLevelDo(forms) => {
-                    view.charge_host_work(forms.len() as u64 + 1)?;
-                    pending.extend(forms.into_iter().rev());
-                }
-                PreparedEvaluation::Fragment(mut prepared) => {
-                    prepared
-                        .fragment
-                        .environment
-                        .enter_namespace(view.phase, &original)
-                        .map_err(SessionError::Compile)?;
-                    let outcome = view.eval_prepared(prepared);
-                    if publish_namespace {
-                        match view
-                            .evaluation_namespace()
-                            .and_then(|namespace| view.enter_namespace(&namespace))
-                        {
-                            Ok(()) => {}
-                            Err(error) if outcome.is_ok() => return Err(error),
-                            Err(_) => {} // Preserve the original execution failure.
-                        }
-                    }
-                    result = Some(outcome?);
-                }
+        let existing = registry_lock(&self.local).clone();
+        let authority = match existing {
+            Some(authority) => authority,
+            None => {
+                let authority = MacroAuthority::native(&mut view, bridge, service.clone())?;
+                *registry_lock(&self.local) = Some(authority.clone());
+                authority
             }
-        }
-        result.ok_or_else(|| wasmtime::Error::msg("No compiled eval unit produced a value").into())
+        };
+        authority.with_fallback(service).bind(view).evaluate_native_form(form)
     }
 }
 
@@ -386,6 +384,77 @@ impl Drop for InputNamespaceScope {
 }
 
 impl SessionHost<'_> {
+    /// Retained before user code runs, independently of public root
+    /// redefinitions and thread bindings (including helpers without AOT links).
+    pub(crate) fn original_core_function(&mut self, name: &str) -> Result<SessionValue, SessionError> {
+        let state = self.evaluation.as_ref().ok_or_else(|| wasmtime::Error::msg("Missing native compiler helper authority"))?;
+        let function = registry_lock(&state.compiler_helpers).get(name).cloned()
+            .ok_or_else(|| wasmtime::Error::msg(format!("Missing original compiled core helper {name}")))?;
+        let mut roots = RootScope::new(&mut self.store);
+        let value = Val::AnyRef(Some(function.to_rooted(&mut roots)));
+        own(&mut roots, value, self.identity, &self.handles)
+    }
+    pub(crate) fn enter_compilation_namespace(&mut self, namespace: &SessionValue) -> Result<DynamicCheckpoint, SessionError> {
+        self.check(namespace)?;
+        self.charge_host_work(1)?;
+        let cell = self.core_cell("*ns*")?;
+        let mut scope = RootScope::new(&mut self.store);
+        let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
+        let result = (|| -> Result<(), SessionError> {
+        let input = cell.get(&mut scope);
+        let mut invoke = |name: &str, args: &[Val]| -> Result<SessionValue, SessionError> {
+            let function = self.runtime.get_func(&mut scope, name).ok_or_else(|| wasmtime::Error::msg("Missing namespace frame primitive"))?;
+            call(&mut scope, self.runtime, function, args, self.identity, &self.handles)
+        };
+        let old = invoke("binding-snapshot", &[input])?;
+        let entries = invoke("args-new", &[Val::I32(3)])?;
+        let array = entries.object()?.to_rooted(&mut scope).as_array(&scope)?.unwrap();
+        let old = old.val(&mut scope.as_context_mut());
+        let new = namespace.val(&mut scope.as_context_mut());
+        for (index, value) in [input, old, new].into_iter().enumerate() { array.set(&mut scope, index as u32, value)?; }
+        let entries = entries.val(&mut scope.as_context_mut());
+        let push = self.runtime.get_func(&mut scope, "dynamic-push").unwrap();
+        // call() restores its own checkpoint and would immediately undo this
+        // frame. The caller owns this explicit checkpoint until leave below.
+        let mut result = [Val::null_any_ref()];
+        if let Err(error) = push.call(&mut scope, &[entries], &mut result) {
+            return Err(execution_error(&mut scope, self.runtime, error, self.identity, &self.handles));
+        }
+        Ok(())
+        })();
+        if let Err(error) = result {
+            let _ = restore_dynamic(&mut scope, self.runtime, &checkpoint);
+            return Err(error);
+        }
+        Ok(checkpoint)
+    }
+    pub(crate) fn leave_compilation_namespace(&mut self, checkpoint: &DynamicCheckpoint) -> Result<(), SessionError> {
+        let mut scope = RootScope::new(&mut self.store);
+        restore_dynamic(&mut scope, self.runtime, checkpoint)
+    }
+    pub(crate) fn captured_form_bridge(&self) -> Option<Arc<FormBridge>> {
+        let state = self.evaluation.as_ref()?;
+        registry_lock(&state.bridge).clone()
+    }
+    pub(crate) fn ensure_source_macro_authority(&mut self) -> Result<(), SessionError> {
+        let state = self.evaluation.clone().ok_or_else(|| wasmtime::Error::msg("Missing source compiler authority"))?;
+        if registry_lock(&state.local).is_some() { return Ok(()); }
+        let service = registry_lock(&state.external).clone().ok_or_else(|| wasmtime::Error::msg("Missing source macro service"))?;
+        let bridge = state.bridge(self)?;
+        let authority = MacroAuthority::native(self, bridge, service)?;
+        *registry_lock(&state.local) = Some(authority);
+        Ok(())
+    }
+    pub(crate) fn local_macro_authority(&self) -> Option<MacroAuthority> {
+        let state = self.evaluation.as_ref()?;
+        let authority = registry_lock(&state.local).clone()?;
+        let service = registry_lock(&state.external).clone()?;
+        Some(authority.with_fallback(service))
+    }
+    pub(crate) fn owned_macro_authority(&self) -> Option<MacroAuthority> {
+        let state = self.evaluation.as_ref()?;
+        registry_lock(&state.own).clone()
+    }
     pub(super) fn evaluation_input_scope(
         &mut self,
         input: bool,
@@ -447,133 +516,76 @@ impl SessionHost<'_> {
             .ok_or_else(|| wasmtime::Error::msg("Missing native namespace authority"))?;
         namespace.read(self)
     }
-    /// A failed ordinary initializer installs analysis facts before execution,
-    /// but never clears its existing Var's macro metadata. Consult that actual
-    /// phase-owned Var on the next eval instead of rolling back prior effects.
-    pub(crate) fn synchronize_evaluation_macros(
-        &mut self,
-        snapshot: &mut CompilationSnapshot,
-    ) -> Result<(), SessionError> {
-        let mut statuses = BTreeMap::new();
-        let mut declarations = Vec::new();
-        for global in snapshot.environment.native_macro_declarations() {
-            self.charge_host_work(
-                (global.namespace().len() + global.name().len()) as u64 * 4 + 16,
-            )?;
-            if global.phase() == self.phase {
-                declarations.push(global);
-            }
+    /// A snapshot is useful for resolution, but authorization follows the real
+    /// Var at each use: an earlier transformer can recursively replace its root.
+    pub(crate) fn native_macro_enabled(&mut self, global: &CellIdentity) -> Result<Option<bool>, SessionError> {
+        self.charge_host_work((global.namespace().len() + global.name().len()) as u64 * 4 + 16)?;
+        if global.phase() != self.phase { return Ok(None); }
+        let cell = registry_lock(&self.compiler).environment.existing_var_cell(global);
+        let Some(cell) = cell else { return Ok(None); };
+        if !registry_lock(&self.compiler).cells.contains_key(&cell) { return Ok(None); }
+        let variable = self.binding_value(&cell)?;
+        if variable.value.is_none() { return Ok(None); }
+        let state = self.evaluation.clone().ok_or_else(|| wasmtime::Error::msg("Missing evaluation authority"))?;
+        let descriptor = registry_lock(&state.var_class).clone().ok_or_else(|| wasmtime::Error::msg("Missing Var authority"))?;
+        let actual = self.data_descriptor(&variable, false)?;
+        let matches = {
+            let mut roots = RootScope::new(&mut self.store);
+            let actual = actual.object()?.to_rooted(&mut roots);
+            let expected = descriptor.to_rooted(&mut roots);
+            wasmtime::Rooted::ref_eq(&roots, &actual, &expected)?
+        };
+        if !matches { return Err(wasmtime::Error::msg("Macro Var has a foreign descriptor").into()); }
+        let fields = self.data_fields(&variable)?;
+        if fields.len() != 3 { return Err(wasmtime::Error::msg("Macro Var has invalid fields").into()); }
+        let root_is_macro = {
+            let mut roots = RootScope::new(&mut self.store);
+            let getter = fields[0].object()?.to_rooted(&mut roots);
+            let check = self.runtime.get_func(&mut roots, "binding-getter-macro?")
+                .ok_or_else(|| wasmtime::Error::msg("Missing Var macro flag reader"))?;
+            let mut result = [Val::I32(0)];
+            check.call(&mut roots, &[Val::AnyRef(Some(getter))], &mut result)?;
+            result[0].unwrap_i32() != 0
+        };
+        if !root_is_macro { return Ok(Some(false)); }
+        let cached = registry_lock(&state.macro_metadata).get(global).cloned();
+        if let Some(cached) = cached {
+            let same = match (&fields[2].value, &cached.metadata) {
+                (None, None) => true,
+                (Some(current), Some(previous)) => {
+                    let mut roots = RootScope::new(&mut self.store);
+                    let current = current.to_rooted(&mut roots);
+                    let previous = previous.to_rooted(&mut roots);
+                    wasmtime::Rooted::ref_eq(&roots, &current, &previous)?
+                }
+                _ => false,
+            };
+            if same { return Ok(Some(cached.enabled)); }
         }
-        if declarations.is_empty() {
-            snapshot.environment.replace_native_macro_status(statuses);
-            return Ok(());
-        }
-        let state = self
-            .evaluation
-            .clone()
-            .ok_or_else(|| wasmtime::Error::msg("Missing evaluation authority"))?;
-        let descriptor = registry_lock(&state.var_class)
-            .clone()
-            .ok_or_else(|| wasmtime::Error::msg("Missing Var authority"))?;
         let bridge = state.bridge(self)?;
-        let lookup = registry_lock(&state.metadata_lookup)
-            .clone()
+        let lookup = registry_lock(&state.metadata_lookup).clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native metadata lookup"))?;
         let lookup = {
             let mut roots = RootScope::new(&mut self.store);
             let lookup = Val::AnyRef(Some(lookup.to_rooted(&mut roots)));
             own(&mut roots, lookup, self.identity, &self.handles)?
         };
-        let key = bridge.quote(
-            self,
-            suss_reader::forms::Form {
-                span: 0..0,
-                metadata: vec![],
-                kind: suss_reader::forms::Kind::Keyword(suss_reader::Keyword::new("macro")),
-            },
-        )?;
-        let false_value = bridge.quote(
-            self,
-            suss_reader::forms::Form {
-                span: 0..0,
-                metadata: vec![],
-                kind: suss_reader::forms::Kind::Bool(false),
-            },
-        )?;
-        for global in declarations {
-            let Some(cell) = snapshot.environment.existing_var_cell(&global) else {
-                continue;
-            };
-            if !registry_lock(&self.compiler).cells.contains_key(&cell) {
-                continue;
-            }
-            let variable = self.binding_value(&cell)?;
-            if variable.value.is_none() {
-                continue;
-            }
-            let actual = self.data_descriptor(&variable, false)?;
-            let matches = {
-                let mut roots = RootScope::new(&mut self.store);
-                let actual = actual.object()?.to_rooted(&mut roots);
-                let expected = descriptor.to_rooted(&mut roots);
-                wasmtime::Rooted::ref_eq(&roots, &actual, &expected)?
-            };
-            if !matches {
-                return Err(wasmtime::Error::msg("Macro Var has a foreign descriptor").into());
-            }
-            let fields = self.data_fields(&variable)?;
-            if fields.len() != 3 {
-                return Err(wasmtime::Error::msg("Macro Var has invalid fields").into());
-            }
-            // Var.bindRoot clears macro status even when it restores an old
-            // transformer. The metadata object's old :macro key is not enough
-            // to authorize catalog expansion after an actual root replacement.
-            let root_is_macro = {
-                let mut roots = RootScope::new(&mut self.store);
-                let getter = fields[0].object()?.to_rooted(&mut roots);
-                let check = self.runtime.get_func(&mut roots, "binding-getter-macro?")
-                    .ok_or_else(|| wasmtime::Error::msg("Missing Var macro flag reader"))?;
-                let mut result = [Val::I32(0)];
-                check.call(&mut roots, &[Val::AnyRef(Some(getter))], &mut result)?;
-                result[0].unwrap_i32() != 0
-            };
-            if !root_is_macro {
-                statuses.insert(global, false);
-                continue;
-            }
-            // Metadata is compiler-created persistent data. Reuse only an
-            // unchanged actual object identity, never a name or structural
-            // guess; root clearing above still takes precedence on every read.
-            let cached = registry_lock(&state.macro_metadata).get(&global).cloned();
-            if let Some(cached) = cached {
-                let same = match (&fields[2].value, &cached.metadata) {
-                    (None, None) => true,
-                    (Some(current), Some(previous)) => {
-                        let mut roots = RootScope::new(&mut self.store);
-                        let current = current.to_rooted(&mut roots);
-                        let previous = previous.to_rooted(&mut roots);
-                        wasmtime::Rooted::ref_eq(&roots, &current, &previous)?
-                    }
-                    _ => false,
-                };
-                if same { statuses.insert(global, cached.enabled); continue; }
-            }
-            let flag = self.invoke(&lookup, &[&fields[2], &key])?;
-            // The public isMacro getter uses Clojure truthiness, too. Looking
-            // up just this key avoids decoding unrelated opaque metadata.
-            let enabled = match flag.value.as_ref() {
-                None => false,
-                Some(flag) => {
-                    let mut roots = RootScope::new(&mut self.store);
-                    let flag = flag.to_rooted(&mut roots);
-                    let false_value = false_value.object()?.to_rooted(&mut roots);
-                    !wasmtime::Rooted::ref_eq(&roots, &flag, &false_value)?
-                }
-            };
-            registry_lock(&state.macro_metadata).insert(global.clone(), MacroMetadata {
-                metadata: fields[2].value.clone(), enabled,
-            });
-            statuses.insert(global, enabled);
+        let key = bridge.quote(self, suss_reader::forms::Form {
+            span: 0..0, metadata: vec![], kind: suss_reader::forms::Kind::Keyword(suss_reader::Keyword::new("macro")),
+        })?;
+        let flag = self.invoke(&lookup, &[&fields[2], &key])?;
+        let enabled = self.inspect(&flag, |mut store, value| {
+            Ok(!matches!(sentinel_tag(&mut store, &value)?, Some(tag) if tag == runtime_abi::NIL as u32 || tag == runtime_abi::FALSE as u32))
+        })?;
+        registry_lock(&state.macro_metadata).insert(global.clone(), MacroMetadata {
+            metadata: fields[2].value.clone(), enabled,
+        });
+        Ok(Some(enabled))
+    }
+    pub(crate) fn synchronize_evaluation_macros(&mut self, snapshot: &mut CompilationSnapshot) -> Result<(), SessionError> {
+        let mut statuses = BTreeMap::new();
+        for global in snapshot.environment.native_macro_declarations(self.identity) {
+            if let Some(enabled) = self.native_macro_enabled(&global)? { statuses.insert(global, enabled); }
         }
         snapshot.environment.replace_native_macro_status(statuses);
         Ok(())
@@ -634,6 +646,17 @@ impl SessionHost<'_> {
             return Ok(());
         }
         let state = Arc::new(Evaluation::default());
+        // Capture the initialized core's real objects/functions directly. No
+        // source lookup fragments, recreated singletons or wrapper body.
+        *registry_lock(&state.bridge) = Some(Arc::new(FormBridge::capture_native(self)?));
+        for name in ["intern-namespace", "enter-macro-namespace!", "ex-message", "meta", "dissoc", "assoc", "make-binding-var"] {
+            let cell = self.core_cell(name)?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            let value = call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?;
+            registry_lock(&state.compiler_helpers).insert(name, value.object()?.clone());
+        }
         *registry_lock(&state.namespace) = Some(NamespaceAccess::capture(self)?);
         let cell = self.core_cell("Var")?;
         let value = {
@@ -651,6 +674,37 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.var_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("Var", value.object()?.clone());
+        let unbound_constructor = {
+            let cell = self.core_cell("VarUnbound")?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        let descriptor = self.data_descriptor(&unbound_constructor, true)?;
+        *registry_lock(&state.unbound_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("VarUnbound", unbound_constructor.object()?.clone());
+        let namespace_constructor = {
+            let cell = self.core_cell("Namespace")?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+        };
+        registry_lock(&state.compiler_helpers).insert("Namespace", namespace_constructor.object()?.clone());
+        for name in ["Cons", "LazySeq"] {
+            let constructor = {
+                let cell = self.core_cell(name)?;
+                let mut roots = RootScope::new(&mut self.store);
+                let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+                let cell = cell.get(&mut roots);
+                call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?
+            };
+            let descriptor = self.data_descriptor(&constructor, true)?;
+            registry_lock(&state.sequence_classes).insert(name, descriptor.object()?.clone());
+            registry_lock(&state.compiler_helpers).insert(name, constructor.object()?.clone());
+        }
         let cell = self.core_cell("MetaFn")?;
         let value = {
             let mut roots = RootScope::new(&mut self.store);
@@ -660,6 +714,7 @@ impl SessionHost<'_> {
         };
         let descriptor = self.data_descriptor(&value, true)?;
         *registry_lock(&state.meta_fn_class) = Some(descriptor.object()?.clone());
+        registry_lock(&state.compiler_helpers).insert("MetaFn", value.object()?.clone());
 
         // Retain core's original get function. The generic native invocation
         // ABI takes callable functions; keyword application is compiler lowering.
@@ -678,6 +733,16 @@ impl SessionHost<'_> {
             )?
         };
         *registry_lock(&state.metadata_lookup) = Some(value.object()?.clone());
+        let mut syntax_tests = Vec::new();
+        for name in ["coll?", "symbol?"] {
+            let cell = self.core_cell(name)?;
+            let mut roots = RootScope::new(&mut self.store);
+            let get = self.runtime.get_func(&mut roots, "binding-get").unwrap();
+            let cell = cell.get(&mut roots);
+            let test = call(&mut roots, self.runtime, get, &[cell], self.identity, &self.handles)?;
+            syntax_tests.push(test.object()?.clone());
+        }
+        *registry_lock(&state.syntax_tests) = syntax_tests;
         // Capture the original constructor before exposing this Session to user
         // source; restoring an exception must not consult a rebound ex-info.
         let cell = self.core_cell("ex-info")?;
@@ -723,6 +788,8 @@ impl SessionHost<'_> {
             .call(&mut self.store, &[Val::FuncRef(Some(callback))], &mut [])?;
         self.evaluation = Some(state);
         self.refresh_evaluation_profile();
+        self.install_native_identity(&self.evaluation.as_ref().unwrap().clone())?;
+        self.install_native_operations(&self.evaluation.as_ref().unwrap().clone())?;
         Ok(())
     }
     fn throw_evaluation_error<T>(&mut self, error: SessionError) -> wasmtime::Result<T> {
@@ -821,6 +888,8 @@ impl SessionHost<'_> {
             .runtime
             .get_func(&mut self.store, "object-instance")
             .ok_or_else(|| wasmtime::Error::msg("Missing nominal instance classifier"))?;
+        let identity_test = self.runtime.get_func(&mut self.store, "native-identical-test")
+            .ok_or_else(|| wasmtime::Error::msg("Missing native identity test"))?;
         let evaluation = self
             .evaluation
             .as_ref()
@@ -828,6 +897,8 @@ impl SessionHost<'_> {
         let var_class = registry_lock(&evaluation.var_class)
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native Var authority"))?;
+        let unbound_class = registry_lock(&evaluation.unbound_class).clone()
+            .ok_or_else(|| wasmtime::Error::msg("Missing native Unbound authority"))?;
         let meta_fn_class = registry_lock(&evaluation.meta_fn_class).clone()
             .ok_or_else(|| wasmtime::Error::msg("Missing native metadata-function authority"))?;
         bridge.read_evaluation(
@@ -838,7 +909,9 @@ impl SessionHost<'_> {
             closure_test,
             class_test,
             instance_test,
+            identity_test,
             var_class,
+            unbound_class,
             meta_fn_class,
         )
     }

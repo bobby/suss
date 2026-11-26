@@ -2,6 +2,114 @@ The numeric integration retains the parent eval evidence below at its exact
 recorded source. Fresh validation of the combined tree remains separate; the
 parent-specific checkpoint verifier does not certify numeric changes.
 
+### Root and metadata follow-up evidence
+
+Compiler declaration staging now distinguishes its own writes from real root effects, including an identical root write, metadata execution and later restaging. Only the converted declaration root uses the ABI14 definition setter; nested/user definitions retain ordinary write semantics. Reloading a source macro as an ordinary value updates the retained caller Var's actual root, metadata and macro status. Declaration metadata executes user expressions while its literal containers retain original core constructors.
+
+Imported functions recover declaration-body transport proofs only after authenticating the actual isolated function root. This preserves compiler-catalog policy and default-budget stream expansion. Native transport indexes candidate roots by existing owner UID and still verifies exact root/capability identity; a forced-collision/GC/round-trip regression prevents the index from becoming authority. The export index holds weak references and sweeps one paid bucket per insertion. No operation allowance is increased.
+
+Fifteen successful command groups across two frozen batches return actual0: complete-public-eval=103, ci-macro-and-stream-targets=14, ownership-library=138, source-frontends=58, runtime-abi-and-structural-guards=71, named-calling-hash-sealing-and-ci-display=33, persistent-repl-display-controls=8, java-node-free-bootstrap=4. Only the REPL display test and its provenance verification files change between the two batches; production inputs are identical. The original display-target101 remains in its receipt. Python tests, original/source/core/sequence provenance and Java/Node-free bootstrap also return0. These local results do not replace fresh complete native conformance, the exact two-thread workspace baseline, issue acceptance, independent review or final-head CI.
+
+Run `python3 results/m12-eval/root-metadata-checkpoint/verify.py --current` to reconstruct all recorded inputs and verify current source plus the explicit documentation publication. Omit `--current` for historical verification after later implementation.
+
+The display correction checks every output byte while deriving only valid identity hex values, checks matching array identity spellings and distinct IDs, and adds repeated-value identity stability. Allocation order of compiler-owned identities is not a Clojure contract.
+
+The archive retains every failed attempt, including missing constructors, misplaced root annotation, lost compiler policy, fuel exhaustion, a bad provenance assumption and unit compilation errors. Two deliberate stops preserve their exact source/runner/log inputs and stop reasons; their Cargo101 results remain failures and are not coverage passes. Original fixtures, count/skip/opaque rules and operation allowances remain unchanged.
+
+Earlier validation follows.
+
+### Canonical source Var publication and reload evidence
+
+The [source-import checkpoint](source-import-checkpoint/summary.json) retains
+33 exact source/runner/tool/log histories on base `eaea90d0`.
+Its final frozen overlay completes all eleven commands with actual exit0:
+public eval101, ownership137, source frontends58, ABI/structural
+71, and named-property,
+calling/hash/sealing/display/namespace
+32 test executions.
+Python tests, source/primary/core/sequence provenance and Java/Node-free
+bootstrap reproduction also return0. These are local overlay results, not
+final-head CI or the complete workspace/native-conformance gate.
+
+Source macros publish their actual isolated transformer in the caller's
+canonical Var, including explicit reload and public namespace loaders. A
+completed dependency advances active declaration journals, so rejecting or
+restaging later caller source cannot restore its old root over that dependency.
+Retained old functions remain callable. Native namespace identity and lazy
+realization/cache/GC boundaries retain their actual owners. Original class
+and method roots use private GC handles; each new reader bridge captures its
+current hash/equality callbacks without compiling lookup fragments.
+
+Run `python3 results/m12-eval/source-import-checkpoint/verify.py --current`
+from the repository root to reconstruct every recorded input and check current
+nonresult source against the final overlay plus the explicit documentation
+publication. Omitting `--current` verifies historical receipts after later
+implementation. The archive preserves all observed failures, including stale
+reloads, rollback over completed dependencies, lost reader hash effects,
+missed helper signatures, the wrongly selected nonexistent hash target and
+stale source-provenance hashes. Original primary/count/skip/opaque rules and
+ordinary operation budgets are unchanged. Full native capture, the exact
+workspace baseline, remaining issue acceptance, independent promotion review,
+parent integration into #518 and final published-head CI remain separate gates.
+
+Earlier validation follows.
+
+### Literal roots, false metadata and GC validation
+
+The frozen literal/metadata follow-up returns0 for complete public eval62
+(including retained original-object roots across forced GC in both phases)
+and host119. The production-identical full runtime ABI62 also returns0; its
+source/target/fixtures are conserved across the separate new GC test and
+provenance additions. These243 distinct target executions do not include the
+supplemental repeated new2 controls. Original13 pinned primary controls retain
+actual values and explicit nested-Atom rejection. The initial2-test101 for the
+reserved ExceptionInfo descriptor remains a negative receipt.
+
+Run `python3 results/m12-eval/verify-self-values-metadata-checkpoint.py` to
+check actual terminals and preserve every executed input across this explicit
+prose/evidence publication. Later production changes require new relevant
+validation; old full-workspace/CI passes remain specific to their old inputs.
+The retained macro-live-state-before controls still show the caller-global and
+nested-definition mismatches, and function/Var macro transport remains to fix.
+No complete issue, promotion or merge is established by this checkpoint.
+
+### Literal and false metadata review controls
+
+The first frozen working-overlay command returns101: both new aggregate tests
+reach an unsupported ExceptionInfo literal. A per-case diagnostic records the
+other12 controls matching, including the original Atom/Delay failures, unchanged
+nested-Atom rejection and false/nil metadata/identity. Runtime-owned exception
+descriptors reserve identities below the source descriptor counter and do not
+carry the core privacy flag; the direct-literal classifier now includes them.
+The next frozen command returns0 for both13-control native/actual-Macro tests
+and the complete62-test runtime ABI target, with source/HEAD/tools unchanged.
+These working receipts are under self-values-false-metadata-reserved-errors-working.
+A separate retained-root GC regression and broader checks remain to execute.
+
+An additional pinned primary/native comparison under macro-live-state-before
+records caller-global reads/atom updates and nested-eval definitions diverging
+inside eval-defined macros. Function/Var transport and live macro-state work
+remain required; the positive literal/metadata receipts do not cover those cases.
+
+### Native literal and false metadata review regressions
+
+Independent xhigh review at42aa08e8 confirms four remaining mismatches: function/Var
+arguments through ordinary macros, macro authorization after an earlier expansion
+changes its actual Var, top-level Atom/Delay literals, and false/nil macro metadata.
+Exact unchanged-source primary/native receipts are under
+results/m12-eval/review-42aa-before. Existing positive fa0da workspace/CI receipts
+remain specific to their tested inputs; they do not cover these counterexamples.
+
+The working follow-up separates top-level non-syntax core objects from portable
+macro syntax, retaining actual roots. Original compiled predicates and the checked
+nominal ABI distinguish symbols/collections and user type constant contexts;
+nested opaque constants retain their existing compilation errors. False/nil macro
+metadata is admitted and retained without enabling expansion. Thirteen new pinned
+Clojure1.12.6 controls return0 under self-values-and-false-metadata-primary, with
+native and actual-Macro regressions added. These source changes have not yet been
+built or executed. Function/Var macro transport and live in-unit authorization
+still require fixes; current broader/full/review/final-head CI remain separate.
+
 ### Macro flag opcode guard alignment
 
 The3c4a clean run returns0 for its first five commands, including all34 observed
@@ -817,3 +925,18 @@ Those broader results are historical after this runtime change. Fresh native
 capture, Java/Node-free bootstrap, exact two-thread workspace validation,
 independent follow-up review and passing final-head CI retain separate gates.
 No primary, baseline, count/skip/opaque rule or unrelated suite judgment changes.
+
+
+Recorded validation at code `fa0da7ec`: exact
+`cargo test --workspace --locked -- --test-threads=2` returns actual Cargo 0 in
+10212.760 seconds with source/HEAD unchanged. The run records
+377 successful groups, 2578 passed test executions and
+15 existing ignores. All 336 focused controls and ten broader
+commands return 0. Separately, 176 prior CI-target passes across 34 targets are
+conserved from production-identical `3c4a59e8`, rather than fresh fa0da runs.
+The broader gates include Java/Node-free bootstrap, complete native execution
+and strict comparison of 5,564 rows with prior successes and explicit failures/
+guest judgments retained. Source conservation is checked by
+`python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
+controls and limits remain under `results/m12-eval/`. Independent full-scope review
+and final published-head CI are separate requirements.

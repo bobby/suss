@@ -1,0 +1,30 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-script-catalog-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7958196671679616,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    {
+      "setup": "(eval '(defmacro entry-caller-context [] (list 'quote (ns-name *ns*))))",
+      "source": "(ns entry.a) (def one (user/entry-caller-context)) (ns entry.b) [entry.a/one (user/entry-caller-context)]"
+    },
+    {
+      "setup": "(eval '(defmacro entry-caller-made [] (eval '(def carried 41)) 42))",
+      "source": "(def staged (entry-caller-made)) [staged carried]"
+    }
+  ],
+  "source_sha256": "c1f19832b7fb5b22b280ece3ce02f0df09dbbd276339feb3e2d354d90157b203",
+  "stdout_sha256": "310adfc74163912c92c8a62b7466f0f0fffefe07b438c3f3b55969268904d85e",
+  "qualification": "Pinned caller-defined macro call-site namespace and actual nested compilation effects across subsequent script entries. Native separate Store isolation control is an architectural invariant and is not claimed as a JVM match."
+}

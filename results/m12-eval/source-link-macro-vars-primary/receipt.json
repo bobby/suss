@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/source-link-macro-vars-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7524360232055187,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "script.sus": "712e42c27a80d0b2c5f227770e21160bd8df9307e7968f093720e55612294aa2",
+    "staged_vars.sus": "d642165051c125d4d41ccd806f291b0046eed8449199bfa0a9c4c486904157f5",
+    "expression.clj": "0787f4fa21af20e941de8b2434d70dc0bcafbe3df4f1d194be19802187aa35b9",
+    "primary.stdout": "8f5e4ad5c193bf2600e1dffd17cffa72ccfe051b57ad8a75c37b34dcafb13b50",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "Actual source macro Var/root/identity after source compilation; script result pinned, corresponding module source is a native lifecycle regression."
+}

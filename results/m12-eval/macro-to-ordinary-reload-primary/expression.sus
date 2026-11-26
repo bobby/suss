@@ -1,0 +1,1 @@
+[(identical? held #'t/answer) (fn? @held) (if (fn? @held) (@held nil nil) @held) (.isMacro held) (boolean (:macro (meta held))) (:doc (meta held)) (held-root nil nil)]

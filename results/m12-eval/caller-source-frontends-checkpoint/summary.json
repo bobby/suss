@@ -1,0 +1,332 @@
+{
+  "tested_head": "ba9170297b6450161c8c193e2fdcb3ca982dc50e",
+  "tested_dirty_overlay": true,
+  "all_six_actual_exit_zero": true,
+  "unique_target_test_executions": 249,
+  "supplemental_repeated_focused_executions": 2,
+  "counts": {
+    "caller-authority-rust-check": 0,
+    "original-reset-display-handle-guard": 1,
+    "source-link-releases-compiler-before-runtime": 1,
+    "source-script-module-aot-and-repl-guards": 55,
+    "complete-public-eval-controls": 74,
+    "host-library-budget-and-ownership": 120
+  },
+  "inputs_unchanged_at_actual_terminal": true,
+  "binaryen_unchanged": true,
+  "archives": [
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-working/caller-authority-rust-check.log.gz",
+      "sha256": "92be0a4134138724038f6513877f58e4332061dd3c1827d3a9f9e25ac155cfa5",
+      "archive_sha256": "04d8d9a16f48d521c9cbe1f6a15177910c90bb192514663b8049f6ff052f5561"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-working/commands.json.gz",
+      "sha256": "8f87cbd8fb837906d30bcd9ab5e6f1dece4da20e20574edae744fdcae26c7789",
+      "archive_sha256": "32cc816e27b06fbdc310ac49a93d57a88f4a6e08401fd16c94346f4f0a54168b"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-working/source-host-isolation-and-original-helpers.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-working/source-host-isolation-and-original-helpers.log.gz",
+      "sha256": "0761a5acff01d5868d64ec3177c8997f7454899a8a1551baa87e0439dfa7e54c",
+      "archive_sha256": "67d8b9ff3c0dd781e12aa30d9ed928457e70c02a7121e3b0214ed8d357b9038b"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-frame-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-frame-working/caller-authority-rust-check.log.gz",
+      "sha256": "65e338bc5c7467b003b93e2c348a506bff96aca4dfe8ba3558ddfd24f20c2da3",
+      "archive_sha256": "32951ec5535b54a059fccbf598e0ee1cccdf73506dceaefa2bd1eaa85c037c03"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-frame-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-frame-working/commands.json.gz",
+      "sha256": "49f620345037c7863afca85d7097db262b12f0dae966df732143209100bb90ab",
+      "archive_sha256": "c95cc97fb2c96e6fb93e1c85edf6f759b572ae8cb8222590fc1fe9e62e21e34d"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-frame-working/source-host-isolation-and-original-helpers.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-frame-working/source-host-isolation-and-original-helpers.log.gz",
+      "sha256": "66aa31dd75461d51dc442bbd55bf750548a367f12f328dae71d83b206fa6f8e3",
+      "archive_sha256": "6d69c539e50cb03678ef789f748284ed430818b6eb2376d9ba0f00d6865f32b9"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/caller-authority-rust-check.log.gz",
+      "sha256": "5099af8e7c4b8d211bc6115c8480e9ee1a33f2e82374545e4b37454900ad2f13",
+      "archive_sha256": "b41c7a802e2a0edb6ca2e11e803c475da6f2a41fa45000396c829441e3ac8638"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/caller-catalog-source-entry-and-namespace-roots.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/caller-catalog-source-entry-and-namespace-roots.log.gz",
+      "sha256": "52083a5a95c5efd9c2735c5ae5aa58a6a98bbf672459b3baa763c18920057999",
+      "archive_sha256": "826ca38ba1488ef2e28803aa7f3e4cacc3ab2dd888050195da21ee8cfcfd1406"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/caller-state-both-phases-and-actual-macro.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/caller-state-both-phases-and-actual-macro.log.gz",
+      "sha256": "b66696d5c7802f9aa05439be2f0b333fd30d2f64507fdb37a3bb8a143a3fef67",
+      "archive_sha256": "68030266bca557aca529576266f2986b046d33d119c20a4951e9cb4a70713646"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/caller-truthy-metadata-and-native-compilation-effects.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/caller-truthy-metadata-and-native-compilation-effects.log.gz",
+      "sha256": "67005847ffc9b6020cb31921573a91cc87e58be34b1ccea8935b97e0e81920a4",
+      "archive_sha256": "82aa82f315c50deb98ff4385362931282c66fa11770197aa90e3e7f1075d46e6"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/commands.json.gz",
+      "sha256": "bbd0d70e64133e8be5bcf128cc0a06b159801a3d00bf027f30ad2a9d633de1d5",
+      "archive_sha256": "a82e4a0ce3b5220e6831aef7ff6dfe3b95e19305f01f1a34dca6a9336d64bdd6"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-namespace-contract-working/source-host-isolation-and-original-helpers.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-namespace-contract-working/source-host-isolation-and-original-helpers.log.gz",
+      "sha256": "3cdc15a3e4fe4914dc019eac90eba51b227c206f752b72d9efac0f635d2d0742",
+      "archive_sha256": "2dc8241d7c85ec98685c266bbf7d8ca18db16b8732e6c32a1498a705a7dd281a"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-broader-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-broader-working/commands.json.gz",
+      "sha256": "59e682691c192f21192e1888f36f05aff1a87b5de18b6671ef2fd7cc7eea8a7e",
+      "archive_sha256": "f833cdc4bfb694374a7b669ae2519c913275cffebd90137fa72a2223a8ff2ce9"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-broader-working/complete-public-eval-controls.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-broader-working/complete-public-eval-controls.log.gz",
+      "sha256": "88c19e31c6cb1f274e780392c9a280436e4e95da5980edb1757d82a4bd864dca",
+      "archive_sha256": "84ac31cfe82d0d3b8e5fef94a345b3981c3cbba56bfc20466528ef09ce3f0163"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-context-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-context-working/caller-authority-rust-check.log.gz",
+      "sha256": "48f1cc9487529be8173f5b1d51391194f2f5de882e61916f9ecadf41d0f46d6b",
+      "archive_sha256": "42996c9a39ff72021caf670461b266ef90d8feaad01b0d13606111d91ffcf71b"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-context-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-context-working/commands.json.gz",
+      "sha256": "ae3d9e8a21318644132a197dd7fcd82e0b35cf291104d49c4b93c4074435b525",
+      "archive_sha256": "60df1c416f2c8f212f55733dace5c0f5ef0a234804b531f5ee7ecf113336c062"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-context-working/raw-eval-macro-caller-fuel.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-context-working/raw-eval-macro-caller-fuel.log.gz",
+      "sha256": "ec4ea96ec0b3a02fb57f98a9e5eebc6cc0a1b87b9b2942805036a5242ff680fe",
+      "archive_sha256": "fac2e24994386ffa257cb0a4152ad4fd2aa719a2d59a62a9cd7fb461809906a3"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-context-working/separate-compile-and-runtime-allowances.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-context-working/separate-compile-and-runtime-allowances.log.gz",
+      "sha256": "c1aa3549ba2eff8d2dd65e6db26f59e895d806f9bb9a19d1862be69d8b978e81",
+      "archive_sha256": "71d004047085e90c85932a2df2ef04583b4f18b88b6f62bb3f0bd899c2d0bf1f"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/caller-authority-rust-check.log.gz",
+      "sha256": "365521e8aa3d6827adad5ea68810b3eb3f658c71beb6af68a21cb1754af6db91",
+      "archive_sha256": "a3c7e4e0c390daedddc56207cb08087e1a6b3da4d09473bafaa8a128a8fa903a"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/commands.json.gz",
+      "sha256": "d4d7ebbcc2330bba88e0bfdeded5827be91c669a661c251573dbdd9a44e40bd1",
+      "archive_sha256": "51ee4f708d2c8b515a94feb6d268dfeab7e816f19c23c62f8ae9a1b84600f757"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/isolated-source-fuel-and-cancellation.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/isolated-source-fuel-and-cancellation.log.gz",
+      "sha256": "a7ba1b189b94703b4e34b2f18ecb4db4aeeffb91411235fc1cb116c0ae2bf8ce",
+      "archive_sha256": "ed2fef5d7fc433b35bce4c05075fd40b4214dad83880197ba6c1478ef991f7a8"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/raw-eval-macro-caller-cancellation.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/raw-eval-macro-caller-cancellation.log.gz",
+      "sha256": "ebb6cbbab50394d727254fc8614d2df363956cb002ba59ddd8ffa1c443ab3138",
+      "archive_sha256": "a3af355b45dfcd51174cbaaf9293aa7f4766bb46b99f7296b8fff8d7d9b58619"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/raw-eval-macro-caller-fuel.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/raw-eval-macro-caller-fuel.log.gz",
+      "sha256": "0c8e25d6584f555ef8141a99427eeef3a23084e4262915bf0f93fee46d377fb7",
+      "archive_sha256": "86f63087cc69ff030dc57ea27322b70c7d05bbdf7fe9fa73b2fed10f4848d72b"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-budget-markers-working/separate-compile-and-runtime-allowances.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-budget-markers-working/separate-compile-and-runtime-allowances.log.gz",
+      "sha256": "924cf63a5c644cde1f0600920bd680e28dbf8347fffe5f85d1314586db6acdde",
+      "archive_sha256": "c032bf0ed3b60a006648589f6a9beacacc42d3f0012b41406c4ed275cbb696c4"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-budget-broader-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-budget-broader-working/commands.json.gz",
+      "sha256": "c8d61cb12cb2f929a3a5815a6ea01f610f5dc5c52cb63b4e91869d34657cb2d4",
+      "archive_sha256": "cd44964245b8abdd13c9a6879667687c89ea9a2b6fd2c6fbbf0d6ffbdd9e29c2"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-budget-broader-working/complete-public-eval-controls.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-budget-broader-working/complete-public-eval-controls.log.gz",
+      "sha256": "1dce9ab5d715329619ccaeb1df8eaaff41443cd8088edc9c4c01ef51249763ae",
+      "archive_sha256": "81f095c8cc616061a7b027772740f7f17ca458a1e19bf0d755c263edccaafb07"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-budget-broader-working/context-ledger-original-setup.rs.txt",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-budget-broader-working/context-ledger-original-setup.rs.txt.gz",
+      "sha256": "0077eb6e6194fc0be5043a137fd87d6c2a4ea7ac48236613f842bcc6c7c67c75",
+      "archive_sha256": "7431326fff84f34d6cb34e0dcd0786a5ea32d293d2738601158ce6bee662c399"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-budget-broader-working/host-library-budget-and-ownership.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-budget-broader-working/host-library-budget-and-ownership.log.gz",
+      "sha256": "4d79d5ef360add81b9521109aaf904c92956f36c1a3363b57ba1580df4a1c742",
+      "archive_sha256": "16391ffcfd0167662f2c4f90ea479f6fa6605da1ce4263e9067bcf11c89c9435"
+    },
+    {
+      "original": "results/m12-eval/caller-owned-source-budget-broader-working/source-macro-module-and-repl-interop.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/caller-owned-source-budget-broader-working/source-macro-module-and-repl-interop.log.gz",
+      "sha256": "2ed80fcbe999baf1b22a3b1975ad1da23680157c8f864f292d7327f83badae20",
+      "archive_sha256": "79877f1cd740ffc3ba75378cbc2d7504e0088e5955228a1e9e6021f2a106fc39"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-before/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-before/commands.json.gz",
+      "sha256": "76cee3906e85746029a8fa198bf080d4c6670cd0de8d613641775b9ecd4b8e28",
+      "archive_sha256": "56ee19d1f22e3688fec009894f3e69ecfddc6fe7858135828df3ffdcc0ea8005"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-before/native-repl-catalog-regressions.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-before/native-repl-catalog-regressions.log.gz",
+      "sha256": "0156b6dbae0de1fb07a2d3d6d074593253456b88b16a1d7d7ea11529f6b44c66",
+      "archive_sha256": "ece423408cfe184808bfda84215d350bf6c5e7d788a449f46e50013f5b04a525"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-working/caller-authority-rust-check.log.gz",
+      "sha256": "cb4566c6ea20a4825dd81ed6430d44a45886e1c77a0ad1e11d7cb8183e92f712",
+      "archive_sha256": "e337234555e455ffe0a15a1af5352e02837153fcc5e6298049089c6290fc3011"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-working/commands.json.gz",
+      "sha256": "1fab7eb5193d4bd17cd68868e5793930093582620b56387534290fe9ce0e27b0",
+      "archive_sha256": "a8e92df162ebb7b4ca3b9a98b06ebd89495b06d45b85b681f77d4397a98d6ed6"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-working/context-ledger-unqualified-wrapper.rs.txt",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-working/context-ledger-unqualified-wrapper.rs.txt.gz",
+      "sha256": "a510de878a1c4912a117086aa77e8e26142421fd431ec581df6fdef39f6eb7fe",
+      "archive_sha256": "b40caad1ff7dc83086647816e52013127b7227285a660374cc7e67d1cc7a722e"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-working/isolated-source-context-snapshot-ledger.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-working/isolated-source-context-snapshot-ledger.log.gz",
+      "sha256": "e90a9b99b5c176d68de32b1944e3831e8d540e4f877b4fbf5d779a845cafae2f",
+      "archive_sha256": "c4571d76a6edd151611a810d05874b2c2d44c83d469c27af2845a67c968108df"
+    },
+    {
+      "original": "results/m12-eval/native-entrypoint-catalog-working/native-repl-catalog-regressions.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-entrypoint-catalog-working/native-repl-catalog-regressions.log.gz",
+      "sha256": "03c33849a1f41fe5740dbcd0c19d8dc6781d1554a0398a5c5d623d4bd1b14e23",
+      "archive_sha256": "5e846e984c3cd0021ee130850bdb73deb0816543a092c90008bbe061a735f27e"
+    },
+    {
+      "original": "results/m12-eval/isolated-source-ledger-qualified-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/isolated-source-ledger-qualified-working/commands.json.gz",
+      "sha256": "bda1e17de62d1184ed13ba321b6983623ef05f7155c4f35432184fc84e51ffb9",
+      "archive_sha256": "595986c282f6496fce0490f4c0e1ed23354e5b5bbd339bedfeaf5f7aaa59ede6"
+    },
+    {
+      "original": "results/m12-eval/isolated-source-ledger-qualified-working/isolated-source-context-snapshot-ledger.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/isolated-source-ledger-qualified-working/isolated-source-context-snapshot-ledger.log.gz",
+      "sha256": "70adb0daaf2eff92cb0a49a7931135eaabfb21ce255eca5389eab0bd70520b69",
+      "archive_sha256": "f1f230e0a7df51ed0b53241945c181333d273f5f49c97325731135a2375dda5c"
+    },
+    {
+      "original": "results/m12-eval/source-ledger-and-script-catalog-before/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/source-ledger-and-script-catalog-before/commands.json.gz",
+      "sha256": "e909f76b8bd9201d4de5754781aaf5fb29537c257e4f4f5a186c064529b217a5",
+      "archive_sha256": "e11f79f9f7f0002515bbd6fde401647574d7dfb2811901a73eb5b39c0b38f32e"
+    },
+    {
+      "original": "results/m12-eval/source-ledger-and-script-catalog-before/isolated-source-context-snapshot-ledger.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/source-ledger-and-script-catalog-before/isolated-source-context-snapshot-ledger.log.gz",
+      "sha256": "60544dd029f4111ee0e76e658df6f12de686bcd8e8c8277a372334c4af5d5634",
+      "archive_sha256": "ac005788c647f665ef2c8a14f66c339020a378a6aecb45070d129e0c68ff8f1b"
+    },
+    {
+      "original": "results/m12-eval/source-ledger-and-script-catalog-before/native-script-catalog-regressions.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/source-ledger-and-script-catalog-before/native-script-catalog-regressions.log.gz",
+      "sha256": "5b9e8b7f355aec66c489d94574583a40dacb33e1fb6d8232022d9a0f575c1163",
+      "archive_sha256": "afe1ae98fcf7a00fe6aeabfe4c8a70577c6cb2b3a3da861167b8f607f005013a"
+    },
+    {
+      "original": "results/m12-eval/native-script-catalog-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-catalog-working/caller-authority-rust-check.log.gz",
+      "sha256": "f2000e7dec79990cdecfc745add73003ea2257a04faf1d5281d13706c3c0f68f",
+      "archive_sha256": "89bdec68d400b54a9352d65447e6c6468a5b5e6e72c456335ecbd6725578da81"
+    },
+    {
+      "original": "results/m12-eval/native-script-catalog-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-catalog-working/commands.json.gz",
+      "sha256": "a21c90e36ac9d3d64c88177128b3d2e61efa1044ac1acff25982f8f60b1574de",
+      "archive_sha256": "506c6560280e4e8fba581144c7cf91f19a2aee75bb51ecfee2eea12711d67517"
+    },
+    {
+      "original": "results/m12-eval/native-script-catalog-working/native-script-and-repl-catalog-regressions.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-catalog-working/native-script-and-repl-catalog-regressions.log.gz",
+      "sha256": "573f96442a0cc227c7ca1b74edef172d622fb7d697c4cb1ff96d8487335b4f5e",
+      "archive_sha256": "6a1b8fbd258bc12727904bc79745e2fe63955293f70ef4646a96e616a7524a8d"
+    },
+    {
+      "original": "results/m12-eval/native-script-catalog-working/source-script-module-aot-and-repl-guards.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-catalog-working/source-script-module-aot-and-repl-guards.log.gz",
+      "sha256": "9ce6b07bc6cc2afa178086f536eb5630d82c8fe87ed0867bb91636ce05f8785d",
+      "archive_sha256": "7ba9b9cac76e3c043b5f73947acec7046f0d244e8cb84c1846d5648b48b3878d"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/caller-authority-rust-check.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/caller-authority-rust-check.log.gz",
+      "sha256": "98ac6971e838c9870cf32816cf93d9d7b38e530acedefff8dd0f5b0b35ac48b4",
+      "archive_sha256": "1e9fd68256c525b048e5d7bd7ca1155c508f45bf88fe491f98bb5fbf6248b4e0"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/commands.json",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/commands.json.gz",
+      "sha256": "6633dd4c2e65ffe937eabc7743d00896b6586b47e8ef2d54c1131570d1bc137e",
+      "archive_sha256": "277efe36b96ef2f72c9dfbd2179770f32307eca2a6a500231d86970351a4817f"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/complete-public-eval-controls.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/complete-public-eval-controls.log.gz",
+      "sha256": "a0de4b4f446837480ca442e7d2bbe19e60adea647880bfa8eedd528c2783ee0c",
+      "archive_sha256": "916d409eab9313a3f78d26a02808815f4d8fa8de223731d985ef19e0233b185a"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/host-library-budget-and-ownership.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/host-library-budget-and-ownership.log.gz",
+      "sha256": "022c74ed06552a93b1ad4d2a3a04c60ace6ce368317e1df17990d22dedcb2110",
+      "archive_sha256": "0ea63c499fa48185dad74395e9382e1122e0e6b106eaefaf0e0091d4d47fa156"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/original-reset-display-handle-guard.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/original-reset-display-handle-guard.log.gz",
+      "sha256": "104ed9d1d8081d6f06e699bbdb2eb198c504fe6428625e5ab3fd0e6d23e0722d",
+      "archive_sha256": "fdfe2500b7b9e25301d679cd9c60c4f3c5b4e67f982fa52f034e059272180621"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/source-link-releases-compiler-before-runtime.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/source-link-releases-compiler-before-runtime.log.gz",
+      "sha256": "91082ccb8e2e806723500c6e056265cc08afbfc87d5e83ceec5c8c24b019ec35",
+      "archive_sha256": "ad0c51bc4e9f337df901f7e16c1c6f04a0ef6c3dd628b912d2560501a706384b"
+    },
+    {
+      "original": "results/m12-eval/native-script-link-and-internal-roots-working/source-script-module-aot-and-repl-guards.log",
+      "archive": "results/m12-eval/caller-source-frontends-checkpoint/native-script-link-and-internal-roots-working/source-script-module-aot-and-repl-guards.log.gz",
+      "sha256": "90dc9d5d3bf71d994f315cf6e83c25536b01f167668da9f601b7f06962ad159a",
+      "archive_sha256": "338b1951aefba0a899752a484e4c9800ff65536dfa53c4ad1af9f214350db7e5"
+    }
+  ],
+  "qualification": "Source/frontend/ownership checkpoint only. Fresh script native-publication probe records two failures and one control pass. Native isolated Fn/Var transport remains unsupported at foreign Store ownership. No current full-workspace, final review/CI or closure evidence."
+}

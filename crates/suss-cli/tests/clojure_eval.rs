@@ -431,10 +431,22 @@ fn public_eval_function_result_survives_gc_and_reads_the_live_root() {
 
 #[test]
 fn actual_aot_public_eval_reports_the_missing_explicit_compiler_capability() {
+    aot_missing_capability_report(
+        "(ns eval-capability) (def report (fn [] (try (str (eval '(+ 1N 1/2))) (catch :default e (.-message e)))))",
+        "Compiled evaluation capability is unavailable");
+}
+
+#[test]
+fn actual_aot_namespace_catalog_reports_the_missing_explicit_capability() {
+    aot_missing_capability_report(
+        "(ns eval-capability) (def report (fn [] (try (str (ns-interns *ns*)) (catch :default e (.-message e)))))",
+        "Native namespace catalog capability is unavailable");
+}
+
+fn aot_missing_capability_report(program: &str, required: &str) {
     use std::process::Command;
     let root = tempfile::tempdir().unwrap();
-    std::fs::write(root.path().join("app.sus"),
-        "(ns eval-capability) (def report (fn [] (try (str (eval '(+ 1N 1/2))) (catch :default e (.-message e)))))").unwrap();
+    std::fs::write(root.path().join("app.sus"), program).unwrap();
     std::fs::write(
         root.path().join("app.wit"),
         "package test:eval-capability; world w { export report: func() -> string; }",
@@ -496,7 +508,7 @@ fn actual_aot_public_eval_reports_the_missing_explicit_compiler_capability() {
     );
     assert_eq!(
         String::from_utf8(executed.stdout).unwrap().trim_end(),
-        "Compiled evaluation capability is unavailable"
+        required
     );
 }
 
@@ -908,24 +920,13 @@ fn actual_reentrant_macro_eval_publishes_in_its_own_store() {
 }
 
 #[test]
-fn isolated_macro_function_calls_share_the_original_caller_allowance() {
-    use std::sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    };
+fn eval_macro_function_calls_share_the_original_caller_allowance() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        let observations = Arc::new(AtomicUsize::new(0));
-        let observer = observations.clone();
-        macros
-            .install_observation_hook(move |_, _| {
-                observer.fetch_add(1, Ordering::SeqCst);
-                Ok(0)
-            })
-            .unwrap();
+        session.eval("(def raw-budget-observations (atom 0))").unwrap();
         session
             .eval_with_macros(
-                "(eval '(defmacro raw-budget-once [] (suss.harness.observation/capture 1) 1))",
+                "(eval '(defmacro raw-budget-once [] (swap! raw-budget-observations inc) 1))",
                 &mut macros,
             )
             .unwrap();
@@ -935,10 +936,10 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
                 &mut macros,
             )
             .unwrap();
-        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (suss.harness.observation/capture 2) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
+        let looping = session.eval_with_macros("(do (eval '(defmacro raw-budget-loop [] (swap! raw-budget-observations inc) (loop [] (recur)))) @(eval '(var raw-budget-loop)))", &mut macros).unwrap();
         let nil = session.eval("nil").unwrap();
         for (function, args) in [(&repeated, vec![]), (&looping, vec![&nil, &nil])] {
-            observations.store(0, Ordering::SeqCst);
+            session.eval("(reset! raw-budget-observations 0)").unwrap();
             session.set_operation_fuel(200_000);
             let start = std::time::Instant::now();
             let interrupt = session.interrupt_handle();
@@ -960,11 +961,11 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
                 "the original caller allowance must exhaust before the watchdog: {error}"
             );
             assert!(start.elapsed() < std::time::Duration::from_secs(5));
-            assert!(
-                observations.load(Ordering::SeqCst) > 0,
-                "the actual Macro body must run before exhaustion"
-            );
             session.set_operation_fuel(10_000_000);
+            let ran = session.eval("(pos? @raw-budget-observations)").unwrap();
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &ran).unwrap(), Observation::Bool(true),
+                "the actual caller-owned Macro body must run before exhaustion");
             let value = session
                 .eval_with_macros("(eval '(+ 1N 1/2))", &mut macros)
                 .unwrap();
@@ -978,10 +979,15 @@ fn isolated_macro_function_calls_share_the_original_caller_allowance() {
 }
 
 #[test]
-fn runtime_cancellation_reaches_an_isolated_macro_function_and_returns_the_lease() {
+fn runtime_cancellation_reaches_eval_macro_code_and_preserves_source_service() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     let (signal, observed) = std::sync::mpsc::sync_channel(1);
+    let runtime_signal = signal.clone();
+    session.install_observation_hook(move |_, _| {
+        let _ = runtime_signal.try_send(());
+        Ok(0)
+    }).unwrap();
     macros
         .install_observation_hook(move |_, _| {
             let _ = signal.try_send(());
@@ -1184,11 +1190,11 @@ fn var_metadata_uses_original_core_data_without_changing_user_resolution() {
                 .eval("(def ^{:probe [0 [0]]} metadata-target 0)")
                 .unwrap();
             let retained = session.eval("(var metadata-target)").unwrap();
-            let observe = session.eval("(let [vector vector var? var? meta meta get get key :probe] (fn [v] (vector (var? v) @v (get (meta v) key))))").unwrap();
+            let observe = session.eval("(let [vector vector var? var? meta meta get get key :probe computed :computed] (fn [v] (vector (var? v) @v (get (meta v) key) (get (meta v) computed))))").unwrap();
             session.eval(&format!("(ns suss.core) (def count (fn [x] 99)) (def {constant}PersistentVector nil) (def {constant}Keyword nil)")).unwrap();
             session.enter_namespace("user").unwrap();
             for (root, metadata) in [(42, 17), (43, 18)] {
-                session.eval(&format!("(def ^{{:probe [{metadata} [{}]]}} metadata-target {root}) (def public-count-result (let [f count] (f 123)))", metadata + 2)).unwrap();
+                session.eval(&format!("(def ^{{:probe [{metadata} [{}]] :computed (let [f count] (f 123))}} metadata-target {root}) (def public-count-result (let [f count] (f 123)))", metadata + 2)).unwrap();
                 session.collect().unwrap();
                 let value = session.invoke(&observe, &[&retained]).unwrap();
                 decoder.refill(40_000);
@@ -1201,6 +1207,7 @@ fn var_metadata_uses_original_core_data_without_changing_user_resolution() {
                             Observation::Long(metadata),
                             Observation::Vector(vec![Observation::Long(metadata + 2)]),
                         ]),
+                        Observation::Long(99),
                     ]),
                     "{:?} {constant}", session.phase()
                 );
@@ -1696,6 +1703,49 @@ fn actual_macro_eval_preserves_root_expanded_function_and_collection_identity() 
 
 
 #[test]
+fn eval_preserves_self_evaluating_objects_and_false_macro_metadata() {
+    promotion_review_controls("self-values-and-false-metadata",
+        include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/primary.stdout"), 13);
+}
+
+#[test]
+fn actual_macro_eval_preserves_self_values_and_false_macro_metadata() {
+    let primary = include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/primary.stdout");
+    let forms = suss_reader::forms::read_forms(primary).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let source = include_str!("../../../results/m12-eval/self-values-and-false-metadata-primary/expression.sus");
+        macros.define(&format!("(defmacro self-value-metadata-controls [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(self-value-metadata-controls)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn eval_self_values_retain_their_actual_roots_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let evaluate = session.eval_with_macros("(fn [x] (eval x))", &mut macros).unwrap();
+        let identity = session.eval("(fn [x y] (identical? x y))").unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        for source in ["(atom 7)", "(delay 7)", "(ex-info \"held\" {:x 1})", "(the-ns 'user)"] {
+            let original = session.eval_with_macros(source, &mut macros).unwrap();
+            session.collect().unwrap();
+            let evaluated = session.invoke(&evaluate, &[&original]).unwrap();
+            session.collect().unwrap();
+            let result = session.invoke(&identity, &[&original, &evaluated]).unwrap();
+            decoder.refill(20_000);
+            assert_eq!(decoder.decode_session(&mut session, &result).unwrap(), Observation::Bool(true),
+                "{:?} {source}", session.phase());
+        }
+    }
+}
+
+#[test]
 fn root_macro_flags_stay_private_when_ordinary_source_enters_core() {
     fn expect(session: &mut Session, source: &str, wanted: &str) {
         let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
@@ -1750,4 +1800,1057 @@ fn root_macro_flags_stay_private_when_ordinary_source_enters_core() {
             "[true false]");
         session.enter_namespace("user").unwrap();
     }
+}
+
+#[test]
+fn native_eval_macros_use_caller_state_and_recheck_live_authorization() {
+    promotion_review_controls("caller-owned-macro-state",
+        include_str!("../../../results/m12-eval/caller-owned-macro-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/caller-owned-macro-primary/primary.stdout"), 5);
+}
+
+#[test]
+fn actual_macro_eval_uses_caller_state_and_live_authorization() {
+    let source = include_str!("../../../results/m12-eval/caller-owned-macro-primary/expression.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/caller-owned-macro-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(&format!("(defmacro native-caller-state-probe [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(native-caller-state-probe)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn native_eval_macro_catalog_survives_source_entries_without_changing_namespace_roots() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let namespace = session.eval("(fn [] (ns-name *ns*))").unwrap();
+        let before = session.invoke(&namespace, &[]).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let before = decoder.decode_session(&mut session, &before).unwrap();
+        session.eval_with_macros("(eval '(defmacro native-next-source [] 42))", &mut macros).unwrap();
+        session.collect().unwrap();
+        let value = session.eval_with_macros("(native-next-source)", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+        let value = session.invoke(&namespace, &[]).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), before);
+        let value = session.eval_with_macros("(do (eval '(defmacro native-source-ns [] (list 'quote (ns-name *ns*)))) (eval '(native-source-ns)))", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "user".encode_utf16().collect()));
+    }
+}
+
+#[test]
+fn native_eval_macro_effects_survive_outer_analysis_and_truthy_metadata() {
+    promotion_review_controls("caller-macro-effects",
+        include_str!("../../../results/m12-eval/caller-macro-effects-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/caller-macro-effects-primary/primary.stdout"), 7);
+}
+
+#[test]
+fn actual_macro_eval_preserves_compilation_effects_and_truthy_metadata() {
+    let source = include_str!("../../../results/m12-eval/caller-macro-effects-primary/expression.sus")
+        .replace("(catch Throwable ", "(catch :default ");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/caller-macro-effects-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(&format!("(defmacro native-macro-effects-probe [] (list 'quote {source}))")).unwrap();
+        let value = session.eval_with_macros("(native-macro-effects-probe)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 80_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted);
+    }
+}
+
+#[test]
+fn native_source_macro_declarations_keep_the_isolated_source_host() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("isolation.sus"), "(ns isolation) (defmacro step [] (swap! user/source-phase-state inc) 42) (def answer (step))").unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro source-phase-seed [] (eval '(def source-phase-state (atom 0))) 42)").unwrap();
+        session.eval_with_macros("(source-phase-seed)", &mut macros).unwrap();
+        session.eval("(def source-phase-state (atom 0))").unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        session.eval_with_macros("(ns user (:require [isolation])) isolation/answer", &mut macros).unwrap();
+        macros.define("(defmacro source-phase-read [] (list 'quote @source-phase-state))").unwrap();
+        let value = session.eval_with_macros("[@source-phase-state (source-phase-read)]", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(),
+            Observation::Vector(vec![Observation::Long(0), Observation::Long(1)]));
+    }
+}
+
+#[test]
+fn native_source_macro_authority_retains_original_compiler_helpers() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(r#"
+          (with-redefs [suss.core/intern-namespace (fn [& xs] (throw :redirected-interner))
+                        suss.core/enter-macro-namespace! (fn [& xs] (throw :redirected-setter))
+                        suss.core/ex-message (fn [& xs] (throw :redirected-message))]
+            (eval '(defmacro native-retained-helper [] 42)))"#, &mut macros).unwrap_or_else(|error| panic!("{}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        let value = session.eval_with_macros("(native-retained-helper)", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn native_source_macro_context_tracks_each_module_without_changing_roots() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("caller.sus"), include_str!("../../../results/m12-eval/native-source-context-primary/caller.sus")).unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        let namespace = session.eval("(fn [] (ns-name *ns*))").unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let before = session.invoke(&namespace, &[]).unwrap();
+        let before = decoder.decode_session(&mut session, &before).unwrap();
+        // Accepted namespace contract: the raw native root is suss.core.
+        // Source execution binds user or the namespace currently being loaded.
+        assert_eq!(before, Observation::Symbol(None, "suss.core".encode_utf16().collect()));
+        session.eval_with_macros("(eval '(defmacro native-source-context [] (list 'quote (ns-name *ns*))))", &mut macros).unwrap();
+        let value = session.eval_with_macros("(ns user (:require [caller])) caller/answer", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "caller".encode_utf16().collect()));
+        let value = session.invoke(&namespace, &[]).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), before);
+        let value = session.eval_with_macros("(ns-name *ns*)", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Symbol(None, "user".encode_utf16().collect()));
+    }
+}
+
+#[test]
+fn native_source_macro_reassertion_supersedes_staged_foreign_owner() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("mixed.sus"), include_str!("../../../results/m12-eval/native-source-context-primary/mixed.sus")).unwrap();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.enter_namespace("mixed").unwrap();
+        session.eval_with_macros("(eval '(defmacro shared [] 1))", &mut macros).unwrap();
+        session.enter_namespace("user").unwrap();
+        session.eval_with_macros("(eval '(defmacro native-reassert-shared [] (eval '(defmacro shared [] 42)) :done))", &mut macros).unwrap();
+        let value = session.eval_with_macros("(ns user (:require [mixed])) mixed/answer", &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_macro_fuel_remains_bounded_after_native_eval() {
+    use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let observations = Arc::new(AtomicUsize::new(0));
+        let observer = observations.clone();
+        macros.install_observation_hook(move |_, _| { observer.fetch_add(1, Ordering::SeqCst); Ok(0) }).unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        macros.define("(defmacro isolated-source-fuel-loop [] (suss.harness.observation/capture 3) (loop [] (recur)))").unwrap();
+        macros.set_operation_fuel(200_000);
+        let interrupt = session.interrupt_handle();
+        let (done, waiting) = std::sync::mpsc::channel();
+        let watchdog = std::thread::spawn(move || {
+            if waiting.recv_timeout(std::time::Duration::from_secs(5)).is_err() { interrupt.interrupt(); }
+        });
+        let start = std::time::Instant::now();
+        let error = session.eval_with_macros("(isolated-source-fuel-loop)", &mut macros).unwrap_err();
+        let _ = done.send(());
+        watchdog.join().unwrap();
+        assert!(error.to_string().to_lowercase().contains("fuel"), "{error}");
+        assert!(start.elapsed() < std::time::Duration::from_secs(5));
+        assert!(observations.load(Ordering::SeqCst) > 0, "actual source Macro body must run");
+        macros.set_operation_fuel(10_000_000);
+        session.set_operation_fuel(10_000_000);
+        macros.define("(defmacro isolated-source-fuel-resumed [] 42)").unwrap();
+        let value = session.eval_with_macros("(isolated-source-fuel-resumed)", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_macro_cancellation_returns_its_service_after_native_eval() {
+    let mut session = Session::new_repl().unwrap();
+    let mut macros = CompiledMacros::new().unwrap();
+    let (signal, observed) = std::sync::mpsc::sync_channel(1);
+    macros.install_observation_hook(move |_, _| { let _ = signal.try_send(()); Ok(0) }).unwrap();
+    session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+    macros.define("(defmacro isolated-source-cancel-loop [] (suss.harness.observation/capture 77) (loop [] (recur)))").unwrap();
+    session.set_operation_fuel(u64::MAX);
+    macros.set_operation_fuel(u64::MAX);
+    let interrupt = session.interrupt_handle();
+    let controller = std::thread::spawn(move || {
+        let ran = observed.recv_timeout(std::time::Duration::from_secs(5)).is_ok();
+        interrupt.interrupt();
+        ran
+    });
+    let error = session.eval_with_macros("(isolated-source-cancel-loop)", &mut macros).unwrap_err();
+    assert!(controller.join().unwrap(), "actual source Macro body must reach its observer");
+    assert!(error.to_string().contains("Interrupted"), "{error}");
+    session.set_operation_fuel(10_000_000);
+    macros.set_operation_fuel(10_000_000);
+    macros.define("(defmacro isolated-source-cancel-resumed [] 42)").unwrap();
+    let value = session.eval_with_macros("(isolated-source-cancel-resumed)", &mut macros).unwrap();
+    let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+    assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+}
+
+#[test]
+fn native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+        session.set_operation_fuel(20_000);
+        macros.set_operation_fuel(1_000_000);
+        let source = format!("{}42", " ".repeat(50_000));
+        let value = session.eval_with_macros(&source, &mut macros).unwrap();
+        session.set_operation_fuel(10_000_000);
+        macros.set_operation_fuel(10_000_000);
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Long(42));
+    }
+}
+
+
+#[test]
+fn namespace_catalog_requires_the_registered_namespace_identity() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        let forged = session.eval_privileged("(Namespace. (symbol \"suss.core\") (array))").unwrap();
+        let query = session.eval_with_macros("(fn [n] (ns-interns n))", &mut macros).unwrap();
+        let error = session.invoke(&query, &[&forged]).unwrap_err();
+        assert!(suss_compile::portable_repl::error_display(&mut session, &error)
+            .contains("registered canonical Namespace"));
+        let value = session.eval_with_macros("(let [n (:ns (meta #'identity))] (identical? n (the-ns (ns-name n))))", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), Observation::Bool(true));
+    }
+}
+
+#[test]
+fn native_eval_def_metadata_obeys_primary_root_and_publication_boundaries() {
+    promotion_review_controls("generated-def-metadata",
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/primary.stdout"), 3);
+    promotion_review_controls("failed-def-metadata",
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/failure-expression.sus"),
+        include_str!("../../../results/m12-eval/analyzed-var-native-metadata-primary/failure-vector-primary.stdout"), 2);
+}
+
+#[test]
+fn namespace_catalog_core_functions_reuse_live_var_cells() {
+    promotion_review_controls("core-function-catalog",
+        include_str!("../../../results/m12-eval/namespace-core-functions-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/namespace-core-functions-primary/primary.stdout"), 3);
+}
+
+#[test]
+fn native_eval_namespace_catalog_preserves_analysis_interning_boundaries() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/namespace-declaration-boundaries-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/namespace-declaration-boundaries-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 5);
+    assert_eq!(rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for (case, required) in cases.iter().zip(rows) {
+            let name = case["name"].as_str().unwrap();
+            let body = case["expression"].as_str().unwrap().replace("(catch Throwable ", "(catch :default ");
+            let program = format!("(eval '{body})");
+            match session.eval_with_macros(&program, &mut macros) {
+                Ok(value) => {
+                    session.collect().unwrap();
+                    decoder.refill(40_000);
+                    let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                    let required = canonical(expected(required));
+                    if actual == required { eprintln!("namespace-boundary-primary-match {phase:?} {name}"); }
+                    else { failures.push(format!("{phase:?} {name}: {actual:?}, expected {required:?}")); }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn namespace_catalog_returns_actual_user_core_and_macro_vars() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/namespace-interns-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/namespace-interns-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 2);
+    assert_eq!(rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        for (case, required) in cases.iter().zip(rows) {
+            let name = case["name"].as_str().unwrap();
+            match session.eval_with_macros(case["expression"].as_str().unwrap(), &mut macros) {
+                Ok(value) => {
+                    session.collect().unwrap();
+                    decoder.refill(40_000);
+                    let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                    let required = canonical(expected(required));
+                    if actual == required { eprintln!("namespace-catalog-primary-match {phase:?} {name}"); }
+                    else { failures.push(format!("{phase:?} {name}: {actual:?}, expected {required:?}")); }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn isolated_source_macros_preserve_nested_immutable_metadata_aliases() {
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/immutable-native-graph-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(rows.len(), 9);
+    let wanted = canonical(expected(&primary[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        // Compile the transformer in the isolated service, then pass actual
+        // caller functions and captures through public eval's form-data path.
+        macros.define(include_str!(
+            "../../../results/m12-eval/immutable-native-graph-primary/setup.sus"
+        )).unwrap();
+        let value = session.eval_with_macros(include_str!(
+            "../../../results/m12-eval/immutable-native-graph-primary/expression.sus"
+        ), &mut macros).unwrap_or_else(|error| panic!("{}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted,
+            "{:?} isolated source metadata aliases", session.phase());
+    }
+}
+
+#[test]
+fn isolated_source_macros_preserve_actual_function_var_and_namespace_values() {
+    let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
+        "../../../results/m12-eval/isolated-source-call-primary/cases.json"
+    )).unwrap();
+    let primary = suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/isolated-source-call-primary/primary.stdout"
+    )).unwrap();
+    let Kind::Vector(expected_rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 20);
+    assert_eq!(expected_rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        // These must be true isolated source transformers. Defining them with
+        // caller eval would sidestep the Store boundary this regression tests.
+        let setup = include_str!("../../../results/m12-eval/isolated-source-call-primary/setup.sus");
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            if let Err(error) = macros.define(&setup[declaration.span.clone()]) {
+                failures.push(format!("{phase:?} source declaration at {:?}: {error}", declaration.span));
+            }
+        }
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        let mut retained = Vec::new();
+        for (row, expected_row) in cases.iter().zip(expected_rows) {
+            let name = row["name"].as_str().unwrap();
+            let program = row["expression"].as_str().unwrap().replace("(catch Throwable ", "(catch :default ");
+            match session.eval_with_macros(&program, &mut macros) {
+                Ok(value) => {
+                    decoder.refill(20_000);
+                    match decoder.decode_session(&mut session, &value) {
+                        Ok(observed) => {
+                            let observed = canonical(observed);
+                            let required = canonical(expected(expected_row));
+                            if observed == required {
+                                eprintln!("isolated-source-primary-match {phase:?} {name}");
+                                retained.push((value, expected_row, name));
+                            } else { failures.push(format!("{phase:?} {name}: {observed:?}, expected {required:?}")); }
+                        }
+                        Err(error) => failures.push(format!("{phase:?} {name}: {error:?}")),
+                    }
+                }
+                Err(error) => failures.push(format!("{phase:?} {name}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+        session.collect().unwrap();
+        for (value, expected_row, name) in retained {
+            decoder.refill(20_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(expected_row)), "{phase:?} {name} after GC");
+        }
+    }
+    assert!(failures.is_empty(), "isolated source value mismatches:\n{}", failures.join("\n"));
+}
+
+#[test]
+fn isolated_source_callback_preserves_typed_cancellation_and_recovers() {
+    use std::{sync::{Mutex, mpsc}, thread, time::Duration};
+    use suss_compile::portable_session::SessionError;
+    {
+        let mut session = Session::new_repl().unwrap();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define("(defmacro isolated-callback-cancel [f] (list 'quote (f)))").unwrap();
+        let (entered, waiting) = mpsc::sync_channel(1);
+        let (requested, resume) = mpsc::sync_channel(1);
+        let resume = Mutex::new(resume);
+        session.install_observation_hook(move |_, _| {
+            entered.send(()).map_err(|e| wasmtime::Error::msg(e.to_string()))?;
+            resume.lock().unwrap().recv_timeout(Duration::from_secs(5))
+                .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
+            Ok(0)
+        }).unwrap();
+        let function = session.eval_with_macros(
+            "(fn [] (try (eval (list 'user/isolated-callback-cancel (fn [] (suss.harness.observation/capture 1) (loop [] (recur))))) (catch :default e [:incorrectly-caught (ex-message e)])))",
+            &mut macros).unwrap();
+        let interrupt = session.interrupt_handle();
+        let controller = thread::spawn(move || {
+            let observed = waiting.recv_timeout(Duration::from_secs(5)).is_ok();
+            interrupt.interrupt();
+            let _ = requested.send(());
+            observed
+        });
+        let result = session.invoke(&function, &[]);
+        let observed = controller.join().unwrap();
+        if !observed {
+            let detail = match &result {
+                Err(error) => suss_compile::portable_repl::error_display(&mut session, error),
+                Ok(value) => {
+                    let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+                    format!("{:?}", decoder.decode_session(&mut session, value))
+                }
+            };
+            panic!("actual source callback must execute before cancellation: {detail}");
+        }
+        let error = result.expect_err("cancellation must remain uncatchable through the source macro");
+        assert!(matches!(&error, SessionError::Trap(error)
+            if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt)),
+            "callback cancellation must retain the typed interrupt: {error}");
+        let recovered = session.eval_with_macros("(eval '(+ 40 2))", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &recovered).unwrap(), Observation::Long(42));
+    }
+}
+
+#[test]
+fn isolated_source_function_metadata_retains_identity_between_macro_requests() {
+    let setup = include_str!("../../../results/m12-eval/function-metadata-map-identity-primary/setup.sus");
+    let expected = expected(&suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/function-metadata-map-identity-primary/primary.stdout"
+    )).unwrap()[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        for form in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[form.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(
+            "(let [f (with-meta (fn [] 42) {:tag :kept})] (eval (list 'identity-remember f)) (eval (list 'identity-check f)))",
+            &mut macros).unwrap();
+        for _ in 0..2 {
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), expected,
+                "source-held functions and their actual metadata retain identity across requests");
+            session.collect().unwrap();
+        }
+    }
+}
+
+#[test]
+fn isolated_source_nested_function_metadata_retains_actual_callbacks() {
+    let setup = include_str!("../../../results/m12-eval/nested-function-metadata-primary/setup.sus");
+    let query = include_str!("../../../results/m12-eval/nested-function-metadata-primary/query.sus");
+    let required = expected(&suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/nested-function-metadata-primary/primary.stdout"
+    )).unwrap()[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[declaration.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(query, &mut macros).unwrap_or_else(|error| {
+            panic!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))
+        });
+        for _ in 0..2 {
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), required,
+                "{phase:?}: nested metadata aliases must preserve the actual callback and its captured effects");
+            session.collect().unwrap();
+        }
+    }
+}
+
+#[test]
+fn native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior() {
+    promotion_review_controls("unbound-values",
+        include_str!("../../../results/m12-eval/unbound-values-behavior-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/unbound-values-behavior-primary/primary.stdout"), 4);
+}
+
+#[test]
+fn native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries() {
+    promotion_review_controls("alter-var-root",
+        include_str!("../../../results/m12-eval/alter-var-root-primary/expression.sus"),
+        include_str!("../../../results/m12-eval/alter-var-root-primary/primary.stdout"), 4);
+}
+
+#[test]
+fn isolated_source_callbacks_preserve_real_unbound_values_and_root_writes() {
+    let source = include_str!("../../../results/m12-eval/isolated-unbound-primary/expression.sus");
+    let setup = include_str!("../../../results/m12-eval/isolated-unbound-primary/setup.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/isolated-unbound-primary/primary.stdout")).unwrap();
+    assert_eq!(forms.len(), 1);
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(setup).unwrap();
+        let source = source.replace("(catch Throwable ", "(catch :default ");
+        let value = session.eval_with_macros(&source, &mut macros)
+            .unwrap_or_else(|error| panic!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error)));
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{phase:?}");
+    }
+}
+
+#[test]
+fn source_macro_var_roots_match_primary_identity_replacement_and_namespace_context() {
+    let source = include_str!("../../../results/m12-eval/macro-root-projection-primary/expression.sus");
+    let primary = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/macro-root-projection-primary/primary.stdout")).unwrap();
+    let input = suss_reader::forms::read_forms(source).unwrap();
+    let Kind::Vector(cases) = &input[0].kind else { panic!("input vector") };
+    let Kind::Vector(rows) = &primary[0].kind else { panic!("primary vector") };
+    assert_eq!(cases.len(), 5);
+    assert_eq!(rows.len(), cases.len());
+    let mut failures = Vec::new();
+    for (index, (case, required)) in cases.iter().zip(rows).enumerate() {
+      for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(include_str!("../../../results/m12-eval/macro-root-projection-primary/setup.sus")).unwrap();
+        // Match the primary's existing caller namespace without requiring a
+        // new public create-ns adapter or sharing any Namespace marker value.
+        session.eval_with_macros("(ns projected.caller)", &mut macros).unwrap();
+        session.eval_with_macros("(ns user)", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            let program = &source[case.span.clone()];
+            match session.eval_with_macros(program, &mut macros) {
+                Ok(value) => {
+                    session.collect().unwrap();
+                    decoder.refill(40_000);
+                    let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                    let required = canonical(expected(required));
+                    if actual == required { eprintln!("macro-root-primary-match {phase:?} {index}"); }
+                    else { failures.push(format!("{phase:?} macro root {index}: actual {actual:?}, expected {required:?}")); }
+                }
+                Err(error) => failures.push(format!("{phase:?} macro root {index}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+
+#[test]
+fn source_macro_function_namespace_preserves_unused_and_non_namespace_values() {
+    let setup = include_str!("../../../results/m12-eval/function-namespace-boundaries-primary/setup.sus");
+    let source = include_str!("../../../results/m12-eval/function-namespace-boundaries-primary/expression.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/function-namespace-boundaries-primary/primary.stdout")).unwrap();
+    assert_eq!(forms.len(), 1);
+    let wanted = canonical(expected(&forms[0]));
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[declaration.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(source, &mut macros).unwrap_or_else(|error| {
+            panic!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))
+        });
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), wanted, "{phase:?}");
+    }
+}
+
+#[test]
+fn isolated_source_lazy_sequences_preserve_realization_effects_and_cache_after_gc() {
+    let setup = include_str!("../../../results/m12-eval/live-sequence-effects-primary/setup.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/live-sequence-effects-primary/primary.stdout")).unwrap();
+    let Kind::Vector(rows) = &forms[0].kind else { panic!("primary vector") };
+    assert_eq!(rows.len(), 2);
+    let Kind::Vector(retained_rows) = &rows[1].kind else { panic!("retained vector") };
+    assert_eq!(retained_rows.len(), 2);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(setup).unwrap();
+        let simple = session.eval_with_macros(include_str!("../../../results/m12-eval/live-sequence-effects-primary/simple.sus"), &mut macros).unwrap_or_else(|error| {
+            panic!("{phase:?} simple: {}", suss_compile::portable_repl::error_display(&mut session, &error))
+        });
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &simple).unwrap()), canonical(expected(&rows[0])), "{phase:?} simple");
+        let observer = session.eval_with_macros(include_str!("../../../results/m12-eval/live-sequence-effects-primary/retained.sus"), &mut macros).unwrap_or_else(|error| {
+            panic!("{phase:?} retained: {}", suss_compile::portable_repl::error_display(&mut session, &error))
+        });
+        for (index, required) in retained_rows.iter().enumerate() {
+            session.collect().unwrap();
+            let observed = session.invoke(&observer, &[]).unwrap_or_else(|error| panic!("{phase:?} invocation {index}: {error}"));
+            session.collect().unwrap();
+            decoder.refill(40_000);
+            assert_eq!(canonical(decoder.decode_session(&mut session, &observed).unwrap()), canonical(expected(required)), "{phase:?} invocation {index}");
+        }
+    }
+}
+
+
+#[test]
+fn namespace_catalog_includes_source_macro_vars_without_prior_var_references() {
+    let setup = include_str!("../../../results/m12-eval/catalog-without-macro-reference-primary/setup.sus");
+    let source = include_str!("../../../results/m12-eval/catalog-without-macro-reference-primary/expression.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/catalog-without-macro-reference-primary/primary.stdout")).unwrap();
+    assert_eq!(forms.len(), 1);
+    let wanted = canonical(expected(&forms[0]));
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.define(setup).unwrap();
+        match session.eval_with_macros(source, &mut macros) {
+            Ok(value) => {
+                session.collect().unwrap();
+                let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+                let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                if actual != wanted { failures.push(format!("{phase:?}: {actual:?}, expected {wanted:?}")); }
+            }
+            Err(error) => failures.push(format!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn staged_source_scripts_publish_real_macro_var_roots_after_linking() {
+    let source = include_str!("../../../results/m12-eval/source-link-macro-vars-primary/script.sus");
+    let primary = include_str!("../../../results/m12-eval/source-link-macro-vars-primary/primary.stdout");
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        match suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, source, None) {
+            Ok(actual) if actual.trim() == primary.trim() => {}
+            Ok(actual) => failures.push(format!("{phase:?}: {actual}, expected {primary}")),
+            Err(error) => failures.push(format!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn staged_source_modules_publish_real_macro_var_roots_after_linking() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("staged_vars.sus"), include_str!("../../../results/m12-eval/source-link-macro-vars-primary/staged_vars.sus")).unwrap();
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/source-link-macro-vars-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        match session.eval_with_macros("(ns user (:require [staged-vars])) staged-vars/result", &mut macros) {
+            Ok(value) => {
+                session.collect().unwrap();
+                let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+                let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+                if actual != wanted { failures.push(format!("{phase:?}: {actual:?}, expected {wanted:?}")); }
+            }
+            Err(error) => failures.push(format!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+
+#[test]
+fn staged_source_redefinitions_preserve_var_identity_and_reject_unlinked_roots() {
+    let first = include_str!("../../../results/m12-eval/source-link-redefinition-ordered-primary/first.sus");
+    let second = include_str!("../../../results/m12-eval/source-link-redefinition-ordered-primary/second.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/source-link-redefinition-ordered-primary/primary.stdout")).unwrap();
+    let Kind::Vector(rows) = &forms[0].kind else { panic!("primary vector") };
+    assert_eq!(rows.len(), 2);
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for (index, (source, required)) in [first, second].into_iter().zip(rows).enumerate() {
+            if index == 1 {
+                session.eval_with_macros(include_str!("../../../results/m12-eval/source-link-redefinition-ordered-primary/native-change.sus"), &mut macros).unwrap();
+            }
+            suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, source, None)
+                .unwrap_or_else(|error| panic!("{phase:?} stage {index}: {}", suss_compile::portable_repl::error_display(&mut session, &error)));
+            let input = suss_reader::forms::read_forms(source).unwrap();
+            let query = &source[input.last().unwrap().span.clone()];
+            let value = session.eval_with_macros(query, &mut macros).unwrap();
+            session.collect().unwrap();
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(required)), "{phase:?} stage {index}");
+        }
+        // Compiled source prepares every unit before linking or Runtime work.
+        // This checks its declaration journal, distinct from JVM load-string.
+        suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            include_str!("../../../results/m12-eval/source-link-redefinition-ordered-primary/rejected.sus"), None).unwrap_err();
+        let input = suss_reader::forms::read_forms(second).unwrap();
+        let query = &second[input.last().unwrap().span.clone()];
+        let value = session.eval_with_macros(query, &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&rows[1])), "{phase:?} rejected source retains linked root and metadata");
+        // A fresh caller must see the restored source declaration too, rather
+        // than benefiting only from the earlier caller's retained canonical Var.
+        let mut fresh = if phase == suss_compile::portable::resolve::Phase::Macro {
+            Session::new_macro().unwrap()
+        } else { Session::new_repl().unwrap() };
+        let value = fresh.eval_with_macros("(let [v (get (ns-interns 'user) 'staged-reload)] [((deref v) nil nil) (:doc (meta v))])", &mut macros).unwrap();
+        fresh.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut fresh, 40_000).unwrap();
+        let Kind::Vector(required) = &rows[1].kind else { panic!("second row") };
+        let wanted = Observation::Vector(vec![expected(&required[1]), expected(&required[2])]);
+        let actual = decoder.decode_session(&mut fresh, &value).unwrap();
+        if actual != wanted { failures.push(format!("{phase:?} fresh caller after rejection: {actual:?}, expected {wanted:?}")); }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+
+#[test]
+fn forwarded_source_functions_retain_actual_current_namespace_identity() {
+    let setup = include_str!("../../../results/m12-eval/function-namespace-identity-primary/setup.sus");
+    let source = include_str!("../../../results/m12-eval/function-namespace-identity-primary/expression.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/function-namespace-identity-primary/primary.stdout")).unwrap();
+    let wanted = canonical(expected(&forms[0]));
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[declaration.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(source, &mut macros).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+        if actual != wanted { failures.push(format!("{phase:?}: {actual:?}, expected {wanted:?}")); }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn public_namespace_loaders_publish_canonical_source_macro_vars_and_reload_roots() {
+    let root = tempfile::tempdir().unwrap();
+    let first = include_str!("../../../results/m12-eval/public-loader-source-vars-primary/first.sus");
+    let second = include_str!("../../../results/m12-eval/public-loader-source-vars-primary/second.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/public-loader-source-vars-primary/primary.stdout")).unwrap();
+    let Kind::Vector(rows) = &forms[0].kind else { panic!("primary vector") };
+    assert_eq!(rows.len(), 3);
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        std::fs::write(root.path().join("staged_vars.sus"), first).unwrap();
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        if let Err(error) = session.load_namespace_with_macros("staged-vars", &mut macros) {
+            failures.push(format!("{phase:?} load: {}", suss_compile::portable_repl::error_display(&mut session, &error)));
+            continue;
+        }
+        let value = session.eval_with_macros("staged-vars/result", &mut macros).unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&rows[0])), "{phase:?} first load");
+        let held = session.eval_with_macros("(var staged-vars/staged-var)", &mut macros).unwrap();
+        std::fs::write(root.path().join("staged_vars.sus"), second).unwrap();
+        if let Err(error) = session.reload_namespace_with_macros("staged-vars", false, &mut macros) {
+            failures.push(format!("{phase:?} reload: {}", suss_compile::portable_repl::error_display(&mut session, &error)));
+            continue;
+        }
+        session.collect().unwrap();
+        let value = session.eval_with_macros("staged-vars/result", &mut macros).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(canonical(decoder.decode_session(&mut session, &value).unwrap()), canonical(expected(&rows[1])), "{phase:?} reload");
+        let current = session.eval_with_macros("(var staged-vars/staged-var)", &mut macros).unwrap();
+        let identity = session.eval_with_macros("(fn [a b] (identical? a b))", &mut macros).unwrap();
+        let same = session.invoke(&identity, &[&held, &current]).unwrap();
+        decoder.refill(40_000);
+        assert_eq!(decoder.decode_session(&mut session, &same).unwrap(), expected(&rows[2]), "{phase:?} reload preserves Var");
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn source_declaration_rollback_preserves_later_metadata_effects() {
+    let base = include_str!("../../../results/m12-eval/source-journal-metadata-effect-primary/base.sus");
+    let rejected = include_str!("../../../results/m12-eval/source-journal-metadata-effect-primary/native-rejected.sus");
+    let forms = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/source-journal-metadata-effect-primary/primary.stdout")).unwrap();
+    let wanted = expected(&forms[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, base, None).unwrap();
+        suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, rejected, None).unwrap_err();
+        let mut fresh = if phase == suss_compile::portable::resolve::Phase::Macro {
+            Session::new_macro().unwrap()
+        } else { Session::new_repl().unwrap() };
+        let value = fresh.eval_with_macros("(:doc (meta (get (ns-interns 'user) 'staged-reload)))", &mut macros).unwrap();
+        fresh.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut fresh, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut fresh, &value).unwrap(), wanted, "{phase:?}: retain subsequent metadata effect rather than restoring compiler declaration metadata");
+    }
+}
+
+#[test]
+fn source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function() {
+    let root = tempfile::tempdir().unwrap();
+    let first = include_str!("../../../results/m12-eval/imported-macro-reload-primary/first.sus");
+    let second = include_str!("../../../results/m12-eval/imported-macro-reload-primary/second.sus");
+    let setup = include_str!("../../../results/m12-eval/imported-macro-reload-primary/setup.sus");
+    let expression = include_str!("../../../results/m12-eval/imported-macro-reload-primary/expression.sus");
+    let primary = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/imported-macro-reload-primary/primary.stdout")).unwrap();
+    assert_eq!(primary.len(), 2);
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        std::fs::write(root.path().join("tools.sus"), first).unwrap();
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) }
+            else { Session::new_repl_with_options(options) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(setup, &mut macros).unwrap();
+        for (index, wanted) in primary.iter().enumerate() {
+            if index == 1 {
+                std::fs::write(root.path().join("tools.sus"), second).unwrap();
+                session.eval_with_macros("(ns user (:require-macros ^{:reload :reload} [tools :as t]))", &mut macros).unwrap();
+            }
+            let value = session.eval_with_macros(expression, &mut macros).unwrap();
+            session.collect().unwrap();
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+            let wanted = canonical(expected(wanted));
+            if actual != wanted { failures.push(format!("{phase:?} stage{index}: {actual:?}, expected {wanted:?}")); }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn source_macro_imports_preserve_once_loading_completed_prefixes_and_reload_recovery() {
+    let root = tempfile::tempdir().unwrap();
+    let first = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/first.sus");
+    let second = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/second.sus");
+    let rejected = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/rejected.sus");
+    let repaired = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/repaired.sus");
+    let setup = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/setup.sus");
+    let expression = include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/expression.sus");
+    let primary = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/imported-macro-reload-prefix-primary/primary.stdout")).unwrap();
+    assert_eq!(primary.len(), 5);
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        let file = root.path().join("tools.sus");
+        std::fs::write(&file, first).unwrap();
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) }
+            else { Session::new_repl_with_options(options) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(setup, &mut macros).unwrap();
+        for (index, wanted) in primary.iter().enumerate() {
+            match index {
+                0 => {}
+                1 => {
+                    std::fs::write(&file, second).unwrap();
+                    session.eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros).unwrap();
+                }
+                2 | 4 => {
+                    if index == 4 { std::fs::write(&file, repaired).unwrap(); }
+                    session.eval_with_macros("(ns user (:require-macros ^{:reload :reload} [tools :as t]))", &mut macros).unwrap();
+                }
+                3 => {
+                    std::fs::write(&file, rejected).unwrap();
+                    let error = session.eval_with_macros("(ns user (:require-macros ^{:reload :reload} [tools :as t]))", &mut macros).unwrap_err();
+                    assert!(error.to_string().contains("missing-after-completed-macro"), "{phase:?}: {error}");
+                }
+                _ => unreachable!(),
+            }
+            let value = session.eval_with_macros(expression, &mut macros).unwrap();
+            session.collect().unwrap();
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+            let wanted = canonical(expected(wanted));
+            if actual != wanted { failures.push(format!("{phase:?} stage{index}: {actual:?}, expected {wanted:?}")); }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn completed_macro_imports_supersede_rejected_staged_declarations_in_fresh_callers() {
+    let root = tempfile::tempdir().unwrap();
+    let first = include_str!("../../../results/m12-eval/imported-macro-reload-primary/first.sus");
+    let second = include_str!("../../../results/m12-eval/imported-macro-reload-primary/second.sus");
+    for macro_phase in [false, true] {
+      for rejected in [
+        r#"(ns tools) (defmacro answer "staged" [] 99) (ns user (:require-macros ^{:reload :reload} [tools :as t])) missing-after-import"#,
+        r#"(ns tools) (defmacro spare [] nil) (ns user (:require-macros ^{:reload :reload} [tools :as t])) (ns tools) (defmacro answer "rejected-after-import" [] 99) (ns user) missing-after-import"#,
+      ] {
+        std::fs::write(root.path().join("tools.sus"), first).unwrap();
+        let options = suss_compile::portable_session::SessionOptions {
+            source_paths: vec![root.path().to_owned()], ..Default::default()
+        };
+        let mut session = if macro_phase { Session::new_macro_with_options(options.clone()) }
+            else { Session::new_repl_with_options(options.clone()) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros).unwrap();
+        std::fs::write(root.path().join("tools.sus"), second).unwrap();
+        // Compiled source declarations are staged. Required namespaces that
+        // really finish loading remain published after a later source error,
+        // including when they replace the same staged Macro cell.
+        let error = suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros,
+            rejected, None).unwrap_err();
+        assert!(error.to_string().contains("missing-after-import"), "{phase:?}: {error}");
+        let mut fresh = if macro_phase { Session::new_macro_with_options(options) }
+            else { Session::new_repl_with_options(options) }.unwrap();
+        let value = fresh.eval_with_macros("(ns user (:require-macros [tools :as t])) [((deref #'t/answer) nil nil) (:doc (meta #'t/answer)) (eval '(t/answer))]", &mut macros).unwrap();
+        fresh.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut fresh, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut fresh, &value).unwrap(), Observation::Vector(vec![Observation::Long(23), Observation::String("second".encode_utf16().collect()), Observation::Long(23)]), "{phase:?}: retain completed dependency rather than the rejected staged binding");
+      }
+    }
+}
+
+#[test]
+fn root_audit_staged_source_preserves_actual_macro_root_effect_before_later_failure() {
+    let cases = [
+        ("replacement",
+         include_str!("../../../results/m12-eval/staged-macro-root-effect-primary/effect.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-root-effect-primary/rejected.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-root-effect-primary/primary.stdout")),
+        ("identical",
+         include_str!("../../../results/m12-eval/staged-macro-root-identity-primary/effect.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-root-identity-primary/rejected.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-root-identity-primary/primary.stdout")),
+        ("metadata",
+         include_str!("../../../results/m12-eval/staged-macro-metadata-root-primary/effect.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-metadata-root-primary/rejected.sus"),
+         include_str!("../../../results/m12-eval/staged-macro-metadata-root-primary/primary.stdout")),
+    ];
+    let expression = include_str!("../../../results/m12-eval/staged-macro-root-effect-primary/expression.sus");
+    let mut failures = Vec::new();
+    for (label, effects, rejected, primary) in cases {
+      let primary = suss_reader::forms::read_forms(primary).unwrap();
+      let wanted = canonical(expected(&primary[0]));
+      for restage in [false, true] {
+       for macro_phase in [false, true] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.enter_namespace("tools").unwrap();
+        macros.define("(defmacro answer [] 17)").unwrap();
+        if !effects.is_empty() { macros.define(effects).unwrap(); }
+        let mut session = if macro_phase { Session::new_macro() } else { Session::new_repl() }.unwrap();
+        let phase = session.phase();
+        // The source compiler stages declarations independently from the JVM
+        // load-string boundary. Any additional unlinked declaration must undo
+        // to the completed runtime effect, whose value the primary records.
+        let rejected = if restage { rejected.replace("missing-after-root-effect", "(defmacro answer [] 77) missing-after-root-effect") } else { rejected.to_owned() };
+        let error = suss_compile::portable_repl::evaluate_script_compiled(&mut session, &mut macros, &rejected, None).unwrap_err();
+        assert!(error.to_string().contains("missing-after-root-effect"), "{phase:?} {label}: {error}");
+        let mut fresh = if macro_phase { Session::new_macro() } else { Session::new_repl() }.unwrap();
+        fresh.eval_with_macros("(ns tools)", &mut macros).unwrap();
+        fresh.eval_with_macros("(ns user)", &mut macros).unwrap();
+        let value = fresh.eval_with_macros(expression, &mut macros).unwrap();
+        fresh.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut fresh, 40_000).unwrap();
+        let actual = canonical(decoder.decode_session(&mut fresh, &value).unwrap());
+        if actual != wanted { failures.push(format!("{phase:?} {label} restage={restage}: {actual:?}, expected {wanted:?}")); }
+       }
+      }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn root_audit_macro_reload_to_ordinary_definition_updates_retained_var_root_and_status() {
+    let root = tempfile::tempdir().unwrap();
+    let first = include_str!("../../../results/m12-eval/macro-to-ordinary-reload-primary/first.sus");
+    let ordinary = include_str!("../../../results/m12-eval/macro-to-ordinary-reload-primary/ordinary.sus");
+    let setup = include_str!("../../../results/m12-eval/macro-to-ordinary-reload-primary/setup.sus");
+    let expression = include_str!("../../../results/m12-eval/macro-to-ordinary-reload-primary/expression.sus");
+    let primary = suss_reader::forms::read_forms(include_str!("../../../results/m12-eval/macro-to-ordinary-reload-primary/primary.stdout")).unwrap();
+    assert_eq!(primary.len(), 2);
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        let file = root.path().join("tools.sus");
+        std::fs::write(&file, first).unwrap();
+        let options = suss_compile::portable_session::SessionOptions { source_paths: vec![root.path().to_owned()], ..Default::default() };
+        let mut session = if macro_phase { Session::new_macro_with_options(options) } else { Session::new_repl_with_options(options) }.unwrap();
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        session.eval_with_macros(setup, &mut macros).unwrap();
+        for (index, expected_row) in primary.iter().enumerate() {
+            if index == 1 {
+                std::fs::write(&file, ordinary).unwrap();
+                session.eval_with_macros("(ns user (:require-macros ^{:reload :reload} [tools :as t]))", &mut macros).unwrap();
+            }
+            let value = session.eval_with_macros(expression, &mut macros).unwrap();
+            session.collect().unwrap();
+            let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+            let actual = canonical(decoder.decode_session(&mut session, &value).unwrap());
+            let wanted = canonical(expected(expected_row));
+            if actual != wanted { failures.push(format!("{phase:?} stage{index}: {actual:?}, expected {wanted:?}")); }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

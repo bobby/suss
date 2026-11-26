@@ -1,0 +1,204 @@
+{
+  "head": "dc1364d0eb1c1c6cd9a5b7371c3a18d5a3222c07",
+  "utc": "2026-11-26T05:10:14.406788+00:00",
+  "python": "3.14.8",
+  "runner_sha256": "fb2209889dd6095fe36ff9ff89a091a4e77c890005cbcc81f71ba17da330455e",
+  "inputs_unchanged": true,
+  "head_unchanged": true,
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 18.751340709161013,
+      "log": "00.log.gz",
+      "output_sha256": "67daf648b3f880d7ae7316614620d4e685cb9cf250ab9c69e2c5fd20d0138d32"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/cljs_inventory.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.29926210595294833,
+      "log": "01.log.gz",
+      "output_sha256": "69fdb2770db81046b95d2b1a8ecdd5fb52225b233dd3bff58758266fadf2236e"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/cljs_reviews.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.4163894532248378,
+      "log": "02.log.gz",
+      "output_sha256": "aac1ed2f77085aed7ed9d98f6b2ecfc52f428070d1e4152cd9bc63eff8f3e75e"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 1.3829876827076077,
+      "log": "03.log.gz",
+      "output_sha256": "05d17b17d9fe2442b7b221d4f705ec42cc12975f21ae209b780360a70ca9bd22"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/reader_core_catalog.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.4757004347629845,
+      "log": "04.log.gz",
+      "output_sha256": "3fb333e1c745e400096788b97d3611b8381fb476ecbf9ee4a2ae799593b4b001"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/apply_bootstrap.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.3344290740787983,
+      "log": "05.log.gz",
+      "output_sha256": "5bdb53d5b984bde01e2214e0e9b386231b60dd5cf1da82a9ae84b3ae6c66153e"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/sequence_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.27949064085260034,
+      "log": "06.log.gz",
+      "output_sha256": "93628118cf46a3ab9b11b7a0dbd7cd11dc7821a5ae866c495b023e27405573d9"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_transducer_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.3411272941157222,
+      "log": "07.log.gz",
+      "output_sha256": "0229ff9a4a1ac5ba3bf8c07d16d187b3e0876ffa98b1eb001d7d3ba8c0c2a118"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_when_let_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.048731822054833174,
+      "log": "08.log.gz",
+      "output_sha256": "150d9a7865662baad72b40794b2f39aa6822c6d447fca87f03fb7c2855cbcae4"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/bitwise_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04215440899133682,
+      "log": "09.log.gz",
+      "output_sha256": "e1fbd6c01dc8516dba88a1d6a73b38b32daac9617034dc459d3eb86cfee46d5c"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/wasi_lock.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.053167251870036125,
+      "log": "10.log.gz",
+      "output_sha256": "d2e2fedccd215d0b67c40a6643444bdcfeef5d4a3ab39bd2d5e804b9655f8fc0"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.04313969286158681,
+      "log": "11.log.gz",
+      "output_sha256": "081e403746c9a4758034db7fe4c4f4178a7d5a4ebb56b42b67781814651bdda4"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/jvm_array_oracle.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.028093694243580103,
+      "log": "12.log.gz",
+      "output_sha256": "dc1d873a2c52ff25e2be2d49d4ca5f438320d98ba4ae93e112d54e6a9dc1b849"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/clojure_test_suite.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06122628226876259,
+      "log": "13.log.gz",
+      "output_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "overlap"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06838649697601795,
+      "log": "14.log.gz",
+      "output_sha256": "9570d69f8ba9c1b7375a20e14241a0d6a7275d7524d1476e524aed84b00aed4e"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_record_macro_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.17228001495823264,
+      "log": "15.log.gz",
+      "output_sha256": "3291e97de0d0e70e35a634a7c887aac97090df9100551ed9ba5185a1a959714b"
+    }
+  ],
+  "scope": "Exact foundation inventory/scanner step plus named-property provenance check only; no workspace, bootstrap, integration or promotion claim.",
+  "archives": {
+    "00.log.gz": "48cc14f1c2d4e77fbd86fe1e65ce13bf032a351a4c97a8f70dd78caf1a9d62be",
+    "01.log.gz": "198135b0b523ab10207772576a9d30ce5e77d2c4f9e50130ca2ee902fb29a53f",
+    "02.log.gz": "67c2134f45e452774dbca9c1451cbac42103df8ce08feb07de65f2517db85511",
+    "03.log.gz": "69cb110d12ba8a78ac1e9cbd8b52cddc79c1176829b375c88b387242da058782",
+    "04.log.gz": "f27077da37c41c4a9d8d0cee0609eac96f8fc983a3ebc379ae85e41a15eaaee4",
+    "05.log.gz": "7802733e4826bf3024198c1ad6c9783bac83fdfe465bb495e70c7df12eda9a91",
+    "06.log.gz": "793766ace44947ce019361430d9248239f1aae6011acbbea9c13b7649ed1cf3f",
+    "07.log.gz": "5a1947a3a30808cd201046411b93426e54636aadfdebc4691088dbe0821f65aa",
+    "08.log.gz": "6154f7809c77cd81a2c179c581855187cd54025b66b80e4383cc99b4043335c5",
+    "09.log.gz": "8b5fba60238e16739cd642adf0edde0f19bfee7c7be1a1d021725a670340ca55",
+    "10.log.gz": "1b2147afa01906c1622be0e8e03e2bd3df0dac0616b49de27eb9246bdb705d1e",
+    "11.log.gz": "742184dc81dd3b3f5b11f5b02de85f5eef78b86ec0eadb27fd8bd3fe71764a2d",
+    "12.log.gz": "5904ba0dc4289000887a48525a4ce4b657bd19f4f53265266e13558885941899",
+    "13.log.gz": "5597824e4c0507e2e5f5306f428896f7db8e833e493c5f64c32dc7b1f5caeb7b",
+    "14.log.gz": "489ff31fe6782d7df77cc605fe41e7e940a8677c8c92e641a581602f1237c42d",
+    "15.log.gz": "6e51371d062c3f8a4ea79025a1c283b7b3ef201d57d5c1e7bc2557097ad6eda3",
+    "inputs.json.gz": "fcf409eac6b2e597118d4d2d0532db3eb7d338747aef2d24ef60b46131953a67",
+    "runner.py.gz": "e5407d6f0e806721389a3e87153a57ca64c7833b72370d07909e1fd9e96c2dea"
+  }
+}

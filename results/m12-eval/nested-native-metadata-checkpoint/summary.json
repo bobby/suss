@@ -1,0 +1,73 @@
+{
+  "base_head": "74db1fb3b9bdd08eab5cd772d01f7a801fa7f74c",
+  "source_files": [
+    "crates/suss-compile/src/portable_macro_data.rs",
+    "crates/suss-compile/src/portable_session/evaluation/native_values.rs",
+    "crates/suss-cli/tests/clojure_eval.rs"
+  ],
+  "current_commands": 8,
+  "test_counts": {
+    "library-typecheck": 0,
+    "isolated-nested-metadata": 1,
+    "private-native-capability": 8,
+    "metadata-map-identity": 1,
+    "ownership-library": 134,
+    "strict-self-values-metadata": 2,
+    "typed-callback-interrupt": 1,
+    "source-macro-frontend": 6
+  },
+  "distinct_target_executions": 145,
+  "executions_with_private_repeats": 153,
+  "prose_delta": {
+    "docs/compatibility/README.md": {
+      "tested": "dd3365251f50b32d3848ed8f97b9b122e396825a0cb65182fd3a370f648d8724",
+      "published": "a9eb99bc9bcb4f3bb23b78317e6add42312f4059dc45ef6e036df01cd4ef68d4"
+    },
+    "docs/roadmap/handoff.md": {
+      "tested": "03534e7cb2ec4bc6e623a7cd64b1f09072b6d027d6facccf7b4d169c02d733ed",
+      "published": "b36135715dfbf4623f65ec58e94972712bd3cb78f761df22292aa40c0b0271d4"
+    }
+  },
+  "negative": "Fresh primary0; native before101 fails Runtime at nested function metadata, not an all-phase native execution.",
+  "root_guarded_negative": "Private capability and ownership-library targets fail the same lifetime assertion while the dynamic last-callee cache still owns g; exact negative source overlay retained. Final control verifies replacement and collection.",
+  "first_working_limit": "All four terminal0 with conserved recorded inputs; root guard and formatting differ from current source. No full independently archived source overlay for this intermediate historical source.",
+  "current_limit": "Focused source-specific validation only. Original full20 aggregate and current full workspace/bootstrap/native/conformance gates remain required. No Closes, promotion or merge claim.",
+  "before_source_reconstruction": "Every before input is available either at recorded base_head or unchanged in the current source; checked by verify.py.",
+  "archive_hashes": {
+    "tested-source.patch.gz": "d9527eedb514d88305de259bfe5a48dda1f06fa50e9ae65f2919c9feb5c85a62",
+    "before/commands.json.gz": "03321bede602b7a9d143b0e9878013b870e9cf4e4ccfe8d9162b35106a40a85c",
+    "before/isolated-nested-metadata.log.gz": "5f8bf7099f6fdab59da7b9473e4c322cc050a9f9c37dc48ab12f27bc4d423ee5",
+    "working/commands.json.gz": "6a4c307483396e7437ae9997afab82cea23109556618ac6a776f748c7b1f0126",
+    "working/library-typecheck.log.gz": "e1c2e25055b2868cb982641a06537317ee2e39604b8ac0ef52eb9d16ea9d1d23",
+    "working/isolated-nested-metadata.log.gz": "afb4ee59d6212f0914ac0dff50cfff9fc3ef379ac533aac743a408e76cf38e2e",
+    "working/private-native-capability.log.gz": "d481f92667f4357d1d3200b0c2ebaef053f4f89956fe73143dcb35d6896bf208",
+    "working/metadata-map-identity.log.gz": "95c594cb52a73531a7a08b994a6915d5a881cc856c89123ff5dd940f33e28351",
+    "root-guarded/commands.json.gz": "e68f8ad8ae62450c16d6ff9bd8df5b7d1da4f74e9a239c24b12e9fdc6bf5749b",
+    "root-guarded/library-typecheck.log.gz": "6c118d08a11316dec7df90e16c4d3507ed43c8cf966b0b6d3ee3b47f13ecf3d1",
+    "root-guarded/isolated-nested-metadata.log.gz": "6495fc9008963771fc06702c3e30b57fbd376b66bb8f6e51f2fe25f3563b53b8",
+    "root-guarded/private-native-capability.log.gz": "766553dee501e351478a3622e6cdf9ed69a15fd2e841e811a857c898b0eb1b2d",
+    "root-guarded/metadata-map-identity.log.gz": "80306aabcb7265db5a1562eb604038d861e88ffed8176af67ed6867e36179a25",
+    "root-guarded/ownership-library.log.gz": "0196e49d3fffd0434dba4ebafe849628f9ab43ba81d04ae6e152b22a0d44b4d8",
+    "root-guarded/strict-self-values-metadata.log.gz": "2fba4f642ef70cf058094b3c41d5f7bcb22cf8a5bff24ff6eb18444978f655ac",
+    "root-guarded/typed-callback-interrupt.log.gz": "7c5c1e290691108c2a0066be0621dbcd6ad98807ff1658e178d81c321716d602",
+    "root-guarded/source-macro-frontend.log.gz": "79cb76c36e5705f23e9fd393bc12cb7be37d4a6d37a20a27d4dd31dc225b368d",
+    "cache-evicted/commands.json.gz": "d28f21d7bc5a4b2dd691b9e8933ac91c64d12e4a78a1f711ab50151bf8a5a9a2",
+    "cache-evicted/library-typecheck.log.gz": "68425c68f6ef5d5a098cc51e0c0691eaa4485f7fd27ea836dfbb5b2175806381",
+    "cache-evicted/isolated-nested-metadata.log.gz": "6fc39d611adc1f18a60a2152eeb87973750795d3782a9a9b94a865b31b1c4986",
+    "cache-evicted/private-native-capability.log.gz": "d52f6eeffcb59a0a97416c09f886a9536aada89fbadd7d6b483b82f2c03f986d",
+    "cache-evicted/metadata-map-identity.log.gz": "b291193adab76b82c1ad316ff9c876d5cbdc28630916c7b994110786f82c075f",
+    "cache-evicted/ownership-library.log.gz": "9e8df893db9b583de8ddc7d5c6359cef284673ee8cf8d6d90f6dbe44c93aa791",
+    "cache-evicted/strict-self-values-metadata.log.gz": "3963fcde1eeb5acd5658d79742866fadf385f554497ca24a3f10e43c4caa0f99",
+    "cache-evicted/typed-callback-interrupt.log.gz": "d0142022f87f60494781bd6b78207ff914f6399f71de915195dc2dc51bf1983a",
+    "cache-evicted/source-macro-frontend.log.gz": "b840ce11d3516083b294e8a8e27135d116dc0f85e50cea577b00f3d9800f7ba7",
+    "runners/run-nested-native-metadata-first.py.gz": "7e9373aaa36171ff318ab65c525ba4e4528fbf9acd048209e9ba2329ec9c302f",
+    "runners/run-nested-native-metadata-root-guarded.py.gz": "93d01f9051746bd3fa35762755ba457ed2d255bd1f22d9dd202987d7c9533dd9",
+    "runners/run-nested-native-metadata.py.gz": "ab77d809ee5f71e4a4489a945d3426d6791cbf76e69e2dd458784af3a53cdbda",
+    "root-guarded-overlay/crates/suss-compile/src/portable_macro_data.rs.gz": "a84a78768390e289bb65fdf5aff04dd9ce8479dc917b5fd808a1795cad3044d3",
+    "root-guarded-overlay/crates/suss-compile/src/portable_session/evaluation/native_values.rs.gz": "6f1011e99957e1738829a66f04104bffffc6f8838d48c86876e7567fa5aa078a",
+    "root-guarded-overlay/crates/suss-cli/tests/clojure_eval.rs.gz": "f2bf95d8ff635780e8c55da56559cf53f7bde5008dd6846f041e1c5a8e540510",
+    "overlay/crates/suss-cli/tests/clojure_eval.rs.gz": "f2bf95d8ff635780e8c55da56559cf53f7bde5008dd6846f041e1c5a8e540510",
+    "overlay/crates/suss-compile/src/portable_macro_data.rs.gz": "a84a78768390e289bb65fdf5aff04dd9ce8479dc917b5fd808a1795cad3044d3",
+    "overlay/crates/suss-compile/src/portable_session/evaluation/native_values.rs.gz": "c53d59b3fc1f872ead204aa1073e0ebfc990a158af6952a3cf54631a43927f30"
+  }
+}

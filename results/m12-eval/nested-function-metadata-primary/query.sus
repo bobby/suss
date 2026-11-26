@@ -1,0 +1,1 @@
+(let [trace (atom 41) g (fn [] (swap! trace inc)) f (with-meta (fn [] 1) {:callback g :again g})] (eval (list 'nested-meta-remember f)) [(eval (list 'nested-meta-check f g)) @trace])

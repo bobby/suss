@@ -1,0 +1,12 @@
+{
+  "atom-self": "(let [a (atom 7)] (identical? a (eval a)))",
+  "delay-self": "(let [d (delay 7)] (identical? d (eval d)))",
+  "quoted-atom": "(let [a (atom 7)] (identical? a (eval (list 'quote a))))",
+  "function-when-let": "(let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x))))",
+  "var-when-let": "(let [v #'identity] (identical? v (eval (list 'when-let ['x v] 'x))))",
+  "function-macro": "(do (eval '(defmacro passthrough [x] x)) (let [f (fn [] 42)] ((eval (list 'passthrough f)))))",
+  "var-macro": "(do (eval '(defmacro passthrough [x] x)) (let [v #'identity] (identical? v (eval (list 'passthrough v)))))",
+  "def-macro-false": "(let [v (eval '(def ^{:macro false} metadata-false 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)])",
+  "def-macro-nil": "(let [v (eval '(def ^{:macro nil} metadata-nil 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)])",
+  "empty-list-opaque-meta": "(let [v (with-meta '() {:a (atom 7)})] (identical? v (eval v)))"
+}

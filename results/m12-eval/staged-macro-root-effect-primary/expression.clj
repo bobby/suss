@@ -1,0 +1,5 @@
+(load-string "(ns tools) (defmacro answer [] 17)\n(defmacro bump [] (alter-var-root #'answer (fn [_] (fn [& xs] 42))) nil)\n")
+(in-ns 'user)
+(assert (= :failed (try (load-string "(ns tools) (defmacro answer [] 99) (bump) missing-after-root-effect\n") :unexpected (catch Throwable e :failed))))
+(in-ns 'user)
+(prn (let [v (get (ns-interns 'tools) 'answer)] [((deref v) nil nil) (eval '(tools/answer))]))

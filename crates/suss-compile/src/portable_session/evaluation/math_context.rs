@@ -81,7 +81,7 @@ impl SessionHost<'_> {
         }
     }
 
-    fn deferred_context_error(
+    pub(super) fn deferred_context_error(
         &mut self,
         bridge: &FormBridge,
         message: &str,

@@ -191,6 +191,22 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
         "binding-snapshot", &[VALUE], &[VALUE],
         &[(1, VALUE), (1, ValType::I32)], &selected_binding(lookup, snapshot),
     );
+    // Ordinary source reads expose a real Var's Unbound object. Compiler-only
+    // cells still use undefined; frame snapshots retain their separate marker.
+    let mut read = vec![LocalGet(0)];
+    read.extend(flags());
+    read.extend([
+        I32Const(CELL_BOUND), I32And, If(BlockType::Result(VALUE)),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 0 }, Else,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 2 }, RefIsNull,
+        If(BlockType::Result(VALUE)), sentinel_value(UNDEFINED), Else,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)),
+        StructGet { struct_type_index: BINDING, field_index: 2 }, End, End,
+    ]);
+    b.function_with_locals("binding-read-unforced", &[VALUE], &[VALUE],
+        &[(1, VALUE), (1, ValType::I32)], &selected_binding(lookup, read));
     // Unsupported native context transport is reported on the binding read,
     // never while constructing an otherwise unused dynamic frame. A private
     // cell holds the GC-owned message; ordinary Vars are nominal objects, not
@@ -198,7 +214,7 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
     const DEFERRED_ERROR: i32 = 4;
     b.function("binding-delay-error", &[VALUE], &[VALUE], &[
         LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)),
-        I32Const(DEFERRED_ERROR), StructNew(BINDING),
+        I32Const(DEFERRED_ERROR), sentinel_value(NIL), StructNew(BINDING),
     ]);
     b.function("binding-force", &[VALUE], &[VALUE], &[
         LocalGet(0), RefTestNonNull(HeapType::Concrete(BINDING)), If(BlockType::Empty),
@@ -213,7 +229,7 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
         StructNew(LANGUAGE_ERROR), Throw(0), End, End,
         LocalGet(0),
     ]);
-    for (name, select) in [("binding-get", "binding-get-unforced"), ("binding-read", "binding-snapshot")] {
+    for (name, select) in [("binding-get", "binding-get-unforced"), ("binding-read", "binding-read-unforced")] {
         b.function(name, &[VALUE], &[VALUE], &[
             LocalGet(0), Call(b.names[select]), Call(b.names["binding-force"]),
         ]);
@@ -250,6 +266,9 @@ fn set_binding(lookup: u32, restore: bool, check: u32) -> Vec<Instruction<'stati
     body
 }
 fn root_set() -> Vec<Instruction<'static>> {
+    root_store(!(CELL_MACRO | CELL_STAGED_ROOT))
+}
+fn root_store(mask: i32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let mut body = vec![
         LocalGet(0), RefCastNonNull(HeapType::Concrete(BINDING)), LocalGet(1),
@@ -258,7 +277,7 @@ fn root_set() -> Vec<Instruction<'static>> {
     ];
     body.extend(flags());
     body.extend([
-        I32Const(!CELL_MACRO), I32And, I32Const(CELL_BOUND), I32Or,
+        I32Const(mask), I32And, I32Const(CELL_BOUND), I32Or,
         StructSet { struct_type_index: BINDING, field_index: 1 },
     ]);
     body
@@ -268,6 +287,12 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
     let mut root = root_set();
     root.push(LocalGet(1));
     b.function("binding-root-set", &[VALUE, VALUE], &[VALUE], &root);
+    // A definition owns only a root enrolled by its native compiler boundary.
+    // Preserve that ownership across the store and metadata evaluation; actual
+    // language root writes (including alterRoot) always clear it.
+    let mut define = root_store(!CELL_MACRO);
+    define.push(LocalGet(1));
+    b.function("binding-root-define", &[VALUE, VALUE], &[VALUE], &define);
     let set_in = b.function_with_locals(
         "binding-set-in",
         &[VALUE, VALUE, VALUE],

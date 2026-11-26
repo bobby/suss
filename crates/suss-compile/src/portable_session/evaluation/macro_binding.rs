@@ -18,7 +18,7 @@ impl SessionHost<'_> {
         self.identical_values(&selected, &root).map(|same| !same)
     }
     pub(super) fn has_native_macro_binding_override(&mut self, snapshot: &CompilationSnapshot) -> Result<bool, SessionError> {
-        for global in snapshot.environment.native_macro_declarations() {
+        for global in snapshot.environment.native_macro_declarations(self.identity) {
             if global.phase() != self.phase || snapshot.environment.source_macro_overridden(
                 self.phase, global.namespace(), global.name()) { continue; }
             if !registry_lock(&self.compiler).cells.contains_key(&global) { continue; }
@@ -43,9 +43,13 @@ impl CallerExpansion<'_, '_> {
         let allowance = self.caller.operation_fuel_remaining().map_err(|e| diagnostic(span.clone(), e))?;
         let context = if context { Some(self.caller.evaluation_math_context().map_err(|e| diagnostic(span.clone(), e))?) } else { None };
         let (result, spent) = self.service.preparation_step(allowance, context,
-            self.caller.interrupt.clone(), span.clone(), operation).map_err(|e| diagnostic(span.clone(), e))?;
-        self.caller.charge_host_work(spent).map_err(|e| diagnostic(span, e))?;
-        result
+            self.caller.interrupt.clone(), operation).map_err(|e| diagnostic(span.clone(), e))?;
+        self.caller.charge_host_work(spent).map_err(|e| diagnostic(span.clone(), e))?;
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span, message }
+        })
     }
     fn invoke(&mut self, global: &CellIdentity, form: &Form, context: ExpansionContext<'_>) -> Result<Form, SessionError> {
         // Read at each invocation: a transformer may change this thread's
@@ -70,6 +74,19 @@ impl CallerExpansion<'_, '_> {
     }
 }
 impl ExpansionHost for CallerExpansion<'_, '_> {
+    fn intern_native_var(&mut self, owner: u64, global: &crate::portable::resolve::Global,
+        declaration: &Form, doc: Option<&[u16]>) -> Result<(), Diagnostic> {
+        let result = if owner == self.caller.native_owner() {
+            self.caller.intern_analyzed_var(global, declaration, doc)
+        } else {
+            Err(wasmtime::Error::msg("Native Var admission has a foreign owner").into())
+        };
+        result.map_err(|error| {
+            let message = error.to_string();
+            self.invocation_error = Some(error);
+            Diagnostic { span: declaration.span.clone(), message }
+        })
+    }
     fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> { Some(&self.service) }
     fn expansion_work_fuel(&self) -> u64 { self.caller.options.fuel_per_operation }
     fn begin_expansion_request(&mut self, span: Range<usize>) -> Result<(), Diagnostic> {
@@ -113,7 +130,7 @@ impl ExpansionHost for CallerExpansion<'_, '_> {
         if let Kind::List(items) = &form.kind {
             if let Some(Form { kind: Kind::Symbol(symbol), .. }) = items.first() {
                 if let Some((namespace, name)) = context.environment.resolve_source_macro(context.phase, symbol) {
-                    if let Some(global) = context.environment.native_macro_global(context.phase, &namespace, &name) {
+                    if let Some(global) = context.environment.native_macro_global(context.phase, &namespace, &name, self.caller.native_owner()) {
                         if !context.environment.source_macro_overridden(context.phase, &namespace, &name)
                             && self.caller.native_macro_binding_differs(&global).map_err(|e| diagnostic(form.span.clone(), e))? {
                             return match self.invoke(&global, form, context) {

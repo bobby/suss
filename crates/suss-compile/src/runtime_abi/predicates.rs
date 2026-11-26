@@ -182,6 +182,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(2),
         LocalGet(3),
         RefEq,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(1),
+        Else,
+        LocalGet(2),
+        LocalGet(3),
+        Call(b.names["native-identical-test"]),
+        End,
     ]);
     boolean(&mut body);
     let identical = b.function_with_locals(

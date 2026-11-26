@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(do (declare changing-macro) (eval '(defmacro ^:dynamic changing-macro [] 1)) (let [f (fn [& xs] (if (empty? xs) 43 (do (eval '(def ^:dynamic changing-macro (fn [] 45))) 42)))] (binding [changing-macro f] (eval '[(changing-macro) (changing-macro)]))))"
+  ],
+  "result": "timeout_after_55_seconds",
+  "runner_exit_code": 1,
+  "native_exit_code": "not_recorded_successfully",
+  "source_sha256": "cf6db0c22fc285a00f934ef3d6a3e379240029a4f77d66a8eb8022d7f01005ae",
+  "head": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "binary_sha256": "169dba83f98ffbd2d73020a974664249253a792611f902323263c0c582574243",
+  "qualification": "Additional bare standalone recheck raised subprocess.TimeoutExpired after55s and was terminated by subprocess.run; not a successful native terminal or a separate semantic finding. The earlier complete supplemental batch has actual native0 and wrong first/second immutable result vectors."
+}

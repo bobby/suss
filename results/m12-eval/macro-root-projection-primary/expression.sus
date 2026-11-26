@@ -1,0 +1,9 @@
+[(let [v #'when-let f @v n (:ns (meta v))]
+ [(var? v) (fn? f) (.isMacro v) (identical? v (get (ns-interns n) 'when-let))])
+ (let [f @#'when-let] (eval (f '(when-let [x 42] x) nil '[x 42] 'x)))
+ (let [v #'when-let original @v replacement (fn [form env & args] '42)]
+  (try (alter-var-root v (constantly replacement))
+   [(identical? replacement @v) (.isMacro v) (eval '(when-let [x 1] x))]
+   (finally (alter-var-root v (constantly original)))))
+ (binding [*ns* (the-ns 'projected.caller)] (eval '(user/projected-source-context)))
+ (binding [*ns* (the-ns 'projected.caller)] (second ((deref #'user/projected-source-context) nil nil)))]

@@ -89,59 +89,27 @@ impl SessionHost<'_> {
         function: bool,
     ) -> Result<(), SessionError> {
         self.charge_host_work(1)?;
+        let value = {
+            let mut scope = RootScope::new(&mut self.store);
+            let source = source.get(&mut scope);
+            let get = self.runtime.get_func(&mut scope, "binding-get").unwrap();
+            call(
+                &mut scope,
+                self.runtime,
+                get,
+                &[source],
+                self.identity,
+                &self.handles,
+            )?
+        };
+        let value = if function {
+            self.materialize_native_function(&value)?
+        } else {
+            value
+        };
         let runtime = self.runtime;
         let mut scope = RootScope::new(&mut self.store);
-        let mut result = [Val::null_any_ref()];
-        let source = source.get(&mut scope);
-        runtime.get_func(&mut scope, "binding-get").unwrap().call(
-            &mut scope,
-            &[source],
-            &mut result,
-        )?;
-        if function {
-            let mut classified = [Val::I32(0)];
-            runtime
-                .get_func(&mut scope, "closure-value-test")
-                .unwrap()
-                .call(&mut scope, &result, &mut classified)?;
-            if classified[0].unwrap_i32() == 0 {
-                return Err(wasmtime::Error::msg(
-                    "Cannot initialize a metadata-wrapped function constant",
-                )
-                .into());
-            }
-            let object = result[0]
-                .unwrap_anyref()
-                .ok_or_else(|| wasmtime::Error::msg("Missing function constant"))?
-                .as_struct(&scope)?
-                .ok_or_else(|| wasmtime::Error::msg("Invalid function constant layout"))?;
-            let ty = object.ty(&scope)?;
-            let mut fields = object.fields(&mut scope)?.collect::<Vec<_>>();
-            // Universal capture-free factories have runtime invocation/arity
-            // bookkeeping and a nil environment, rather than lexical captures.
-            let universal = fields.len() == runtime_abi::UNIVERSAL_MAX as usize + 1
-                && matches!(
-                    fields[runtime_abi::UNIVERSAL_ENVIRONMENT as usize],
-                    Val::AnyRef(None)
-                )
-                && matches!(
-                    fields[runtime_abi::UNIVERSAL_INVOKE as usize],
-                    Val::FuncRef(Some(_))
-                )
-                && matches!(fields[runtime_abi::UNIVERSAL_MIN as usize], Val::I32(_))
-                && matches!(fields[runtime_abi::UNIVERSAL_MAX as usize], Val::I32(_));
-            if fields.len() != runtime_abi::CLOSURE_FIELDS as usize && !universal {
-                return Err(wasmtime::Error::msg(
-                    "Cannot initialize a function constant with captured values",
-                )
-                .into());
-            }
-            fields[runtime_abi::CLOSURE_PROPERTIES as usize] = Val::null_any_ref();
-            fields[runtime_abi::CLOSURE_UID as usize] = Val::null_any_ref();
-            let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
-            let fresh = wasmtime::StructRef::new(&mut scope, &allocator, &fields)?;
-            result[0] = Val::AnyRef(Some(fresh.to_anyref()));
-        }
+        let result = [value.val(&mut scope.as_context_mut())];
         let target = target.get(&mut scope);
         runtime.get_func(&mut scope, "binding-set").unwrap().call(
             &mut scope,
@@ -149,5 +117,65 @@ impl SessionHost<'_> {
             &mut [],
         )?;
         Ok(())
+    }
+    pub(super) fn materialize_native_function(
+        &mut self,
+        value: &SessionValue,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(value)?;
+        self.charge_host_work(1)?;
+        if let Some(value) = self.construct_foreign_function(value)? {
+            return Ok(value);
+        }
+        let runtime = self.runtime;
+        let mut scope = RootScope::new(&mut self.store);
+        let result = [value.val(&mut scope.as_context_mut())];
+        let mut classified = [Val::I32(0)];
+        runtime
+            .get_func(&mut scope, "closure-value-test")
+            .unwrap()
+            .call(&mut scope, &result, &mut classified)?;
+        if classified[0].unwrap_i32() == 0 {
+            return Err(wasmtime::Error::msg(
+                "Cannot initialize a metadata-wrapped function constant",
+            )
+            .into());
+        }
+        let object = result[0]
+            .unwrap_anyref()
+            .ok_or_else(|| wasmtime::Error::msg("Missing function constant"))?
+            .as_struct(&scope)?
+            .ok_or_else(|| wasmtime::Error::msg("Invalid function constant layout"))?;
+        let ty = object.ty(&scope)?;
+        let mut fields = object.fields(&mut scope)?.collect::<Vec<_>>();
+        // Universal capture-free factories have runtime invocation/arity
+        // bookkeeping and a nil environment, rather than lexical captures.
+        let universal = fields.len() == runtime_abi::UNIVERSAL_MAX as usize + 1
+            && matches!(
+                fields[runtime_abi::UNIVERSAL_ENVIRONMENT as usize],
+                Val::AnyRef(None)
+            )
+            && matches!(
+                fields[runtime_abi::UNIVERSAL_INVOKE as usize],
+                Val::FuncRef(Some(_))
+            )
+            && matches!(fields[runtime_abi::UNIVERSAL_MIN as usize], Val::I32(_))
+            && matches!(fields[runtime_abi::UNIVERSAL_MAX as usize], Val::I32(_));
+        if fields.len() != runtime_abi::CLOSURE_FIELDS as usize && !universal {
+            return Err(wasmtime::Error::msg(
+                "Cannot initialize a function constant with captured values",
+            )
+            .into());
+        }
+        fields[runtime_abi::CLOSURE_PROPERTIES as usize] = Val::null_any_ref();
+        fields[runtime_abi::CLOSURE_UID as usize] = Val::null_any_ref();
+        let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
+        let fresh = wasmtime::StructRef::new(&mut scope, &allocator, &fields)?;
+        own(
+            &mut scope,
+            Val::AnyRef(Some(fresh.to_anyref())),
+            self.identity,
+            &self.handles,
+        )
     }
 }

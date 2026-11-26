@@ -1,0 +1,1 @@
+(let [d (delay 7)] (identical? d (eval d)))

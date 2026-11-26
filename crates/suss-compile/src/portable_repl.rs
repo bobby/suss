@@ -1,5 +1,5 @@
 //! Value display for the compiled native REPL, without evaluating source again.
-use crate::portable_session::{Session, SessionError, SessionValue};
+use crate::portable_session::{Session, SessionHost, SessionError, SessionValue};
 use wasmtime::Val;
 
 enum Output {
@@ -23,7 +23,7 @@ impl NativeDisplay {
     /// session without core displays only strings, numbers and literals.
     pub fn display(
         &mut self,
-        session: &mut Session,
+        session: &mut SessionHost<'_>,
         value: &SessionValue,
     ) -> Result<String, SessionError> {
         if let Some(leaf) = crate::portable_macro_data::display_leaf(session, value)? {
@@ -52,12 +52,12 @@ impl NativeDisplay {
             .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("pr-str must return a string")))
     }
 }
-pub fn display(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
+pub fn display(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<String, SessionError> {
     NativeDisplay::default().display(session, value)
 }
 /// A string's text, with lone surrogates escaped, or None for another value.
 fn string_text(
-    session: &mut Session,
+    session: &mut SessionHost<'_>,
     value: &SessionValue,
 ) -> Result<Option<String>, SessionError> {
     session.inspect(value, |mut store, value| {
@@ -87,7 +87,7 @@ fn string_text(
         Ok(Some(text))
     })
 }
-fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output, SessionError> {
+fn inspect_display(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<Output, SessionError> {
     let output = session.inspect(value, |mut store, value| {
         if let Some(tag) = crate::portable_session::sentinel_tag(&mut store, &value)? {
             return Ok(Output::Literal(match tag as i32 {
@@ -156,7 +156,7 @@ fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output
     Ok(output)
 }
 
-pub fn error_display(session: &mut Session, error: &SessionError) -> String {
+pub fn error_display(session: &mut SessionHost<'_>, error: &SessionError) -> String {
     match error {
         SessionError::Language(value) => match exception_text(session, value) {
             Ok(value) => format!("Uncaught language exception: {value}"),
@@ -167,7 +167,7 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
 }
 /// A thrown error's message, as Clojure's REPL reports one, or else the thrown
 /// value as `pr-str` prints it (#288).
-fn exception_text(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
+fn exception_text(session: &mut SessionHost<'_>, value: &SessionValue) -> Result<String, SessionError> {
     if let Ok(ex_message) = session.eval("suss.core/ex-message") {
         let message = session.invoke(&ex_message, &[value])?;
         if let Some(text) = string_text(session, &message)? {
@@ -313,25 +313,50 @@ pub fn evaluate_script_compiled(
     runtime.attach_expander(macros);
     let forms = read_script_forms(source)?;
     let origin = crate::portable::SourceOrigin::new(source, path);
-    let prepared = prepare_script_compiled(
-        runtime.compilation_snapshot(),
-        macros,
-        forms,
-        source.len(),
-        &origin,
-    )?;
+    let ((prepared, completed, catalog), preparation) = runtime.prepare_source_input(macros, |snapshot, expander| {
+        let (prepared, completed) = prepare_script_module(snapshot.clone(), expander, forms, source.len(), &origin)?;
+        let mut namespaces = std::collections::BTreeSet::new();
+        let mut meter = |work| expander.charge_expansion_work(work, 0..source.len());
+        for input in &prepared {
+            if let Some(publication) = input.publication() { namespaces.extend(publication.macro_namespaces(&mut meter).map_err(SessionError::Compile)?); }
+        }
+        let catalog = completed.environment.macro_catalog_publication(&namespaces, &mut meter).map_err(SessionError::Compile)?;
+        catalog.charge(&mut meter).map_err(SessionError::Compile)?;
+        Ok((prepared, completed, catalog))
+    })?;
+    runtime.reserve_source_identities(&completed.environment);
+    let mut catalog = Some(catalog);
+    let mut preparation = Some(preparation);
     // All runtime compilation succeeds before any input/dependency initializer.
+    let mut linked = false;
+    let outcome = (|| {
     let mut result = "nil".to_owned();
     let mut display = NativeDisplay::default();
     let mut prepared = prepared.into_iter().peekable();
     while let Some(input) = prepared.next() {
         let final_form = prepared.peek().is_none();
         match input {
-            PreparedScript::Macro(value) if final_form => result = value,
-            PreparedScript::Macro(_) => {}
-            PreparedScript::Runtime(input) => {
+            PreparedScript::Macro(value, _) if final_form => result = value,
+            PreparedScript::Macro(_, _) => {}
+            PreparedScript::Runtime(mut input, publication) => {
                 let definition = input.fragment.definition.clone();
-                let value = runtime.eval_prepared(input)?;
+                let value = {
+                let _budget = runtime.operation_budget_scope()?;
+                if let Some(publication) = publication {
+                    let mut environment = runtime.compilation_snapshot().environment;
+                    let mut meter = |work| runtime.charge_host_work(work).map_err(|error| crate::portable::Diagnostic { span: 0..source.len(), message: error.to_string() });
+                    if let Some(catalog) = &catalog { catalog.apply_catalog(&mut environment, &mut meter).map_err(SessionError::Compile)?; }
+                    publication.apply_runtime(&mut environment, &mut meter).map_err(SessionError::Compile)?;
+                    input.fragment.environment = environment;
+                }
+                runtime.eval_prepared_with_link(input, &mut linked, |runtime| {
+                    catalog.take();
+                    match preparation.take() {
+                        Some(preparation) => runtime.finish_source_input(preparation, macros, true),
+                        None => Ok(()),
+                    }
+                })?
+                };
                 if final_form {
                     result = match result_var(runtime, definition, &value)? {
                         Some(var) => var,
@@ -341,7 +366,19 @@ pub fn evaluate_script_compiled(
             }
         }
     }
+    if let Some(catalog) = catalog.take() {
+        let _budget = runtime.operation_budget_scope()?;
+        let mut environment = runtime.compilation_snapshot().environment;
+        catalog.apply_catalog(&mut environment, &mut |work| runtime.charge_host_work(work).map_err(|error| crate::portable::Diagnostic { span: 0..source.len(), message: error.to_string() })).map_err(SessionError::Compile)?;
+        runtime.publish_source_catalog(environment);
+    }
     Ok(result)
+    })();
+    let cleanup = match preparation {
+        Some(preparation) => runtime.finish_source_input(preparation, macros, outcome.is_ok()),
+        None => Ok(()),
+    };
+    match outcome { Err(error) => Err(error), Ok(value) => { cleanup?; Ok(value) } }
 }
 
 pub(crate) fn read_script_forms(
@@ -360,24 +397,19 @@ pub(crate) fn read_script_forms(
 /// Shared staged source preparation: compiler facts and compiled macro effects,
 /// with no Runtime execution or Store requirement.
 pub(crate) enum PreparedScript {
-    Runtime(crate::portable::modules::PreparedInput),
-    Macro(String),
+    Runtime(crate::portable::modules::PreparedInput, Option<crate::portable::resolve::Publication>),
+    Macro(String, Option<crate::portable::resolve::Publication>),
 }
-pub(crate) fn prepare_script_compiled(
-    snapshot: crate::portable_session::CompilationSnapshot,
-    macros: &mut crate::portable_macros::CompiledMacros,
-    forms: Vec<suss_reader::forms::Form>,
-    source_len: usize,
-    origin: &crate::portable::SourceOrigin,
-) -> Result<Vec<PreparedScript>, SessionError> {
-    prepare_script_compiled_batch(snapshot, macros, forms, source_len, origin)
-        .map(|(prepared, _)| prepared)
+impl PreparedScript {
+    fn publication(&self) -> Option<&crate::portable::resolve::Publication> {
+        match self { Self::Runtime(_, publication) | Self::Macro(_, publication) => publication.as_ref() }
+    }
 }
 /// Return the completed immutable input snapshot for multi-source AOT batches.
 /// The ordinary script entrypoint retains its existing result and transaction.
 pub(crate) fn prepare_script_compiled_batch(
     snapshot: crate::portable_session::CompilationSnapshot,
-    macros: &mut crate::portable_macros::CompiledMacros,
+    macros: &mut dyn crate::portable::ExpansionHost,
     forms: Vec<suss_reader::forms::Form>,
     source_len: usize,
     origin: &crate::portable::SourceOrigin,
@@ -388,20 +420,29 @@ pub(crate) fn prepare_script_compiled_batch(
     ),
     SessionError,
 > {
+    let _operation = macros.persistent_macro_context()
+        .and_then(|context| context.downcast_ref::<crate::portable_macros::MacroService>())
+        .map(crate::portable_macros::MacroService::operation);
     crate::portable::ExpansionHost::begin_declarations(macros).map_err(SessionError::Compile)?;
-    if let Err(error) = crate::portable::ExpansionHost::begin_source_module(macros, &forms, origin) {
-        crate::portable::ExpansionHost::end_declarations(macros, false).map_err(SessionError::Compile)?;
-        return Err(SessionError::Compile(error));
-    }
+    let result = prepare_script_module(snapshot, macros, forms, source_len, origin);
+    let cleanup = crate::portable::ExpansionHost::end_declarations(macros, result.is_ok()).map_err(SessionError::Compile);
+    match result { Err(error) => Err(error), Ok(value) => { cleanup?; Ok(value) } }
+}
+fn prepare_script_module(
+    snapshot: crate::portable_session::CompilationSnapshot,
+    macros: &mut dyn crate::portable::ExpansionHost,
+    forms: Vec<suss_reader::forms::Form>,
+    source_len: usize,
+    origin: &crate::portable::SourceOrigin,
+) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
+    macros.begin_source_module(&forms, origin).map_err(SessionError::Compile)?;
     let result = prepare_script_declarations(snapshot, macros, forms, source_len, origin);
-    let finished = crate::portable::ExpansionHost::end_source_module(macros);
-    crate::portable::ExpansionHost::end_declarations(macros, result.is_ok() && finished.is_ok()).map_err(SessionError::Compile)?;
-    finished.map_err(SessionError::Compile)?;
-    result
+    let cleanup = macros.end_source_module().map_err(SessionError::Compile);
+    match result { Err(error) => Err(error), Ok(value) => { cleanup?; Ok(value) } }
 }
 fn prepare_script_declarations(
     mut snapshot: crate::portable_session::CompilationSnapshot,
-    macros: &mut crate::portable_macros::CompiledMacros,
+    macros: &mut dyn crate::portable::ExpansionHost,
     forms: Vec<suss_reader::forms::Form>, source_len: usize,
     origin: &crate::portable::SourceOrigin,
 ) -> Result<(Vec<PreparedScript>, crate::portable_session::CompilationSnapshot), SessionError> {
@@ -411,33 +452,32 @@ fn prepare_script_declarations(
             if matches!(items.first().map(|head| &head.kind),
                 Some(suss_reader::forms::Kind::Symbol(symbol))
                 if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), symbol, "defmacro")));
-            if definition {
+            let var = if definition {
                 let namespace = snapshot.environment.current_namespace(snapshot.phase()).to_owned();
-                let var = match defined_name(&form) {
+                Some(match defined_name(&form) {
                     Some(name) => var_text(&namespace, name),
                     None => String::new(),
-                };
-                macros
-                    .define_inline_macro(&form, &snapshot.environment, snapshot.phase())
-                    .map_err(|error| macro_definition_error(error, 0..source_len))?;
-                if let Some(names) = crate::portable::ExpansionHost::declared_macro_exports(macros, &namespace) {
-                    snapshot.environment.declare_macro_exports(snapshot.phase(), &namespace, &names)
-                        .map_err(SessionError::Compile)?;
-                }
-                prepared.push(PreparedScript::Macro(var));
-            } else {
-                let input = snapshot.prepare_with_origin(
-                    vec![form],
-                    0..source_len,
-                    macros,
-                    Some(origin),
-                )?;
-                snapshot.environment = input.fragment.environment.clone();
-                snapshot
-                    .provided
-                    .extend(input.modules.iter().map(|module| module.identity.clone()));
-                prepared.push(PreparedScript::Runtime(input));
+                })
+            } else { None };
+            // Source declarations use the same analyzer/expander path as
+            // dependency modules. Their real phase owner enters the snapshot;
+            // caller-owned eval declarations remain in their native catalog.
+            let mut selected = snapshot.clone();
+            let capture = snapshot.native_owner.map(|_| selected.environment.begin_publication());
+            let mut input = selected.prepare_with_origin(
+                vec![form], 0..source_len, macros, Some(origin),
+            )?;
+            input.fragment.environment.clear_publication();
+            let publication = capture.map(|capture| capture.finish());
+            if let Some(publication) = &publication {
+                publication.charge(&mut |work| macros.charge_expansion_work(work, 0..source_len)).map_err(SessionError::Compile)?;
             }
+            snapshot.environment = input.fragment.environment.clone();
+            snapshot.provided.extend(input.modules.iter().map(|module| module.identity.clone()));
+            prepared.push(match var {
+                Some(var) => PreparedScript::Macro(var, publication),
+                None => PreparedScript::Runtime(input, publication),
+            });
         }
     Ok((prepared, snapshot))
 }
@@ -481,14 +521,9 @@ fn evaluate_forms_compiled(
             }
         }
     }
-    let prepared = runtime.compilation_snapshot().prepare_with_origin(
-        forms,
-        0..source_len,
-        macros,
-        Some(origin),
-    )?;
-    let definition = prepared.fragment.definition.clone();
-    let value = runtime.eval_prepared(prepared)?;
+    let (value, definition) = runtime.eval_input_with_macros(macros, |snapshot, expander| {
+        snapshot.prepare_with_origin(forms, 0..source_len, expander, Some(origin))
+    })?;
     Ok(match result_var(runtime, definition, &value)? {
         Some(var) => CompiledValue::Var(var),
         None => CompiledValue::Runtime(value),

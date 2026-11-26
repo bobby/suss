@@ -1,0 +1,17 @@
+(prn [(eval '(do (declare catalog-unbound-probe)
+ (let [v #'catalog-unbound-probe u @v]
+  [(identical? u @v) (ifn? u) (fn? u) (var? u) (identical? v (.-v u))
+   (str u)
+   (try (u) (catch Throwable e (ex-message e)))
+   (try (u 1 2 3) (catch Throwable e (ex-message e)))
+   (do (alter-var-root v (constantly 42))
+    [(identical? v #'catalog-unbound-probe) @v (str u)
+     (try (u) (catch Throwable e (ex-message e)))])])))
+ (eval '(do (declare catalog-unbound-read)
+  (let [u catalog-unbound-read] [(identical? u @#'catalog-unbound-read) (ifn? u) (fn? u)])))
+ (eval '(do (declare catalog-unbound-redefs)
+  (let [v #'catalog-unbound-redefs u @v]
+   [(with-redefs [catalog-unbound-redefs 17] @v) (identical? u @v)])))
+ (eval '(do (declare catalog-unbound-self)
+  (let [u @#'catalog-unbound-self] [(identical? u (eval u)) (try (eval [u]) false (catch Throwable e (boolean (ex-message e))))])))]
+)

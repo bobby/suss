@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/staged-macro-root-effect-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8086548913270235,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "effect.sus": "b7de6779ee1773dabf9231991789292bb72dd648417061fba98744a7ad8eda9a",
+    "expression.clj": "cfa68b5f0773d3aea4dcd4e8841f5774270e7fd3cb917f3e017b77baf0913971",
+    "expression.sus": "bfb316e292df0cf0a666b64c10d392374a5eef239225213be8df4670ba9b23a6",
+    "first.sus": "196f2908aef053e803c35efe03d0dba60661f9273df0ae7222872de3d3f6f881",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "primary.stdout": "c787324642ba93d0f15361ac2d54371dddc2749314bdade145f80bfb34db3acf",
+    "rejected.sus": "8787fa364b4103129eb0aa4fee44d856e637a17ad4217429ea4dfa1eb03a10d2"
+  },
+  "scope": "A real macro alters the actual Var root before a later compile error; this effect must remain callable and macro-expandable. Native compiled source stages declarations separately; this observation checks the runtime root effect, not JVM load-string declaration rollback."
+}

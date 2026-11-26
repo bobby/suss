@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "(let [v (eval '(def ^{:macro nil} metadata-nil 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)])"
+  ],
+  "head": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "exit_code": 1,
+  "seconds": 36.99057412147522,
+  "binary_sha256": "169dba83f98ffbd2d73020a974664249253a792611f902323263c0c582574243",
+  "binary_unchanged": true,
+  "head_unchanged": true,
+  "production_inputs_unchanged": true,
+  "source_sha256": "848960972da7384d4b8874b092f71663e0933e68cf90e1f2599562f3a5721107",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "matches_primary": false
+}

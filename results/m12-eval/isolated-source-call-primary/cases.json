@@ -1,0 +1,82 @@
+[
+  {
+    "name": "shipped-function",
+    "expression": "(let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x))))"
+  },
+  {
+    "name": "shipped-var",
+    "expression": "(let [v #'identity] (identical? v (eval (list 'when-let ['x v] 'x))))"
+  },
+  {
+    "name": "source-function",
+    "expression": "(let [f (fn [] 42)] ((eval (list 'isolated-pass f))))"
+  },
+  {
+    "name": "source-var",
+    "expression": "(let [v #'identity] (identical? v (eval (list 'isolated-pass v))))"
+  },
+  {
+    "name": "invoke-captured-function",
+    "expression": "(let [trace (atom []) n 41 f (fn [] (swap! trace conj :called) (+ n 1))] [(eval (list 'isolated-call f)) @trace])"
+  },
+  {
+    "name": "dynamic-live-var",
+    "expression": "(do (declare ^:dynamic isolated-dynamic) (eval '(def ^:dynamic isolated-dynamic 11)) (binding [isolated-dynamic 42] (eval (list 'isolated-read-var #'isolated-dynamic))))"
+  },
+  {
+    "name": "var-aliases-metadata-identity",
+    "expression": "(let [v #'identity] (eval (list 'isolated-vars v v)))"
+  },
+  {
+    "name": "function-metadata-and-call",
+    "expression": "(let [f (with-meta (fn [] 42) {:tag :kept})] (eval (list 'isolated-fn-meta f)))"
+  },
+  {
+    "name": "scalar-captured-function-return",
+    "expression": "(let [cell (atom 42) f (fn [] @cell)] (identical? f (eval (list 'isolated-pass f))))"
+  },
+  {
+    "name": "nested-captured-function-construction-rejected",
+    "expression": "(let [cell (atom 42) f (fn [] @cell)] (try (eval (list 'when-let ['x f] 'x)) :accepted (catch Throwable e :rejected)))"
+  },
+  {
+    "name": "recursive-eval-in-callback",
+    "expression": "(let [f (fn [] (eval '(+ 1 41)))] (eval (list 'isolated-call f)))"
+  },
+  {
+    "name": "callback-owned-exception",
+    "expression": "(let [f (fn [] (throw (ex-info \"bridge\" {:tag :owned})))] (eval (list 'isolated-catch f)))"
+  },
+  {
+    "name": "callback-current-math-context",
+    "expression": "(let [f (fn [] (/ 1M 3M))] (eval (list 'isolated-precision f)))"
+  },
+  {
+    "name": "var-root-changes-during-callback",
+    "expression": "(do (eval '(def isolated-mutable 40)) (let [f (fn [] (eval '(def isolated-mutable 41)))] [(eval (list 'isolated-change-var (eval '(var isolated-mutable)) f)) (eval 'isolated-mutable)]))"
+  },
+  {
+    "name": "var-macro-status-changes-during-callback",
+    "expression": "(do (eval '(defmacro isolated-cleared [] 1)) (let [f (fn [] (eval '(def isolated-cleared (fn [] 42))))] (eval (list 'isolated-clear-var (eval '(var isolated-cleared)) f))))"
+  },
+  {
+    "name": "function-aliases-and-metadata",
+    "expression": "(let [f (with-meta (fn [] 42) {:tag :kept})] (eval (list 'isolated-fns f f)))"
+  },
+  {
+    "name": "form-argument-aliases",
+    "expression": "(let [f (fn [] 42)] (eval (list 'isolated-form f)))"
+  },
+  {
+    "name": "actual-caller-var-namespace-catalog",
+    "expression": "(do (eval '(def isolated-ns-value 42)) (eval (list 'isolated-var-namespace (eval '(var isolated-ns-value)))))"
+  },
+  {
+    "name": "caller-namespace-mutation",
+    "expression": "(do (eval (list 'isolated-var-alias (eval '(var isolated-ns-value)))) (contains? (ns-aliases *ns*) 'isolated-forwarded))"
+  },
+  {
+    "name": "retained-caller-function",
+    "expression": "(let [f (fn [] 42)] (eval (list 'isolated-remember f)) (eval '(isolated-recall)))"
+  }
+]

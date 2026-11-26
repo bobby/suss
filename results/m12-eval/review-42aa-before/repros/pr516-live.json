@@ -1,0 +1,110 @@
+{
+  "baseRefOid": "5ce2826cd6b032ebaf7c589d80df396e4521b399",
+  "body": "Refs #515, #338, #339.\n\nIndependent xhigh review has confirmed additional required gaps: live atom constants are rejected by `eval`, function constants passed through an ordinary shipped macro can fail Store ownership transport, and macro status can remain stale after a transformer changes its Var during the same evaluation unit. Fresh pinned Clojure counterexamples are retained. These findings block #515 completion; the fixes and final-head validation remain pending. The positive receipts below apply to their recorded inputs and do not establish these uncovered behaviors.\n\nPublic one-argument `eval` compiles form data through the persistent Runtime and isolated Macro hosts using the existing analyzer/emitter. It uses the caller's live namespaces, real Var cells, dynamic bindings and math context. Functions retain their identity and remain callable after GC; definitions, recursive evaluation, macros, owned exceptions and prefix effects share persistent state. Fuel and cancellation retain the ordinary host contract. Pure AOT requires an explicit dynamic-compilation capability.\n\nRoot redefinition updates actual macro status and invokes the currently selected transformer in its owning Store. Duplicate `with-redefs` source keys retain the last initializer at the first key position; distinct aliases resolving to the same Var preserve both effects before the duplicate-key error. Generic source-loaded core Vars retain their own metadata without native root-flag authority. Ordinary global reads mask the macro metadata bit before the existing bound/frame selection. Privacy, operand order, identity, failed initialization, restoration and recursive compiler ownership have dedicated controls.\n\nValidation at tested code `fa0da7ec`, published with evidence checkpoint `42aa08e8`:\n\n- Exact `cargo test --workspace --locked -- --test-threads=2`: actual Cargo exit 0 in 10,212.760 seconds; 2,578 passing test executions across 377 successful groups. The same 15 existing ignored cases remain explicit and match the preceding successful baseline by name.\n- All six focused and eleven broader commands return 0 with the recorded source, HEAD and tools unchanged. Fresh focused execution covers 217 eval/ABI/dynamic/async/legacy-Var/publication/AOT tests (eval59, including all15 root/privacy controls) and119 host-library tests. Original primary/provenance/comparison checks, the explicitly selected optimized random guard and Java/Node-free bootstrap pass.\n- Fresh native execution and strict comparison retain all5,564 ordered observations,5,346 prior comparable successes, all34 original eval rows (29 host and the same5 guest judgments),61 symbol/34 Var rows and229/200 independently matching tagged numeric rows. Existing105 failures,106 guest judgments,1,374 unexecuted rows and63 failed namespaces remain explicit, with zero skips. This is reviewed-baseline conformance, not whole-language or numeric-source closure.\n- [Code-head CI45650312818](https://github.com/bobby/suss/actions/runs/45650312818) passed all ten required checks. Its eight integration logs record2,267 passing executions across367 target executions; all91 prior failing tests across all37 failed targets now pass remotely. Historical failures remain failures. [Checkpoint-head CI45680273352](https://github.com/bobby/suss/actions/runs/45680273352) is queued/running and must pass on the final published head before Ready.\n\n[Published workspace summary](https://github.com/bobby/suss/blob/42aa08e8558c73acb7771b55f648dcfb5c6c85a6/results/m12-eval/full-workspace-after-macro-flag-opcode/summary.json), [source-conservation check](https://github.com/bobby/suss/blob/42aa08e8558c73acb7771b55f648dcfb5c6c85a6/results/m12-eval/verify-fa0da-workspace-checkpoint.py). The checkpoint changes three prose files and adds validation evidence; every executed production, test and fixture input is conserved. Original primary, baseline, source programs, count/skip/opaque rules and allowances are unchanged.\n\nIndependent full-scope xhigh review, resolution of findings and passing final published-head CI still gate Ready. Numeric source-body closure belongs to #518. Its current combined-source batch continues unchanged; subsequent full validation is held until these shared fixes are integrated. This PR remains draft; no merge is authorized.\n",
+  "headRefOid": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "isDraft": true,
+  "state": "OPEN",
+  "statusCheckRollup": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-25T18:56:54Z",
+      "conclusion": "SKIPPED",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273163/job/139438664010",
+      "name": "compare",
+      "startedAt": "2026-11-25T18:56:54Z",
+      "status": "COMPLETED",
+      "workflowName": "quiet-performance"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-25T19:03:10Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438659391",
+      "name": "foundation",
+      "startedAt": "2026-11-25T18:56:56Z",
+      "status": "COMPLETED",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660525",
+      "name": "integration (0)",
+      "startedAt": "2026-11-25T18:56:56Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660955",
+      "name": "integration (1)",
+      "startedAt": "2026-11-25T18:56:57Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-25T19:11:55Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660347",
+      "name": "integration (2)",
+      "startedAt": "2026-11-25T18:56:56Z",
+      "status": "COMPLETED",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660310",
+      "name": "integration (3)",
+      "startedAt": "2026-11-25T18:56:56Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660438",
+      "name": "integration (4)",
+      "startedAt": "2026-11-25T19:11:56Z",
+      "status": "IN_PROGRESS",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660455",
+      "name": "integration (5)",
+      "startedAt": "2026-11-25T18:56:54Z",
+      "status": "QUEUED",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660513",
+      "name": "integration (6)",
+      "startedAt": "2026-11-25T18:56:54Z",
+      "status": "QUEUED",
+      "workflowName": "prototype-baseline"
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "detailsUrl": "https://github.com/bobby/suss/actions/runs/45680273352/job/139438660494",
+      "name": "integration (7)",
+      "startedAt": "2026-11-25T18:56:54Z",
+      "status": "QUEUED",
+      "workflowName": "prototype-baseline"
+    }
+  ],
+  "title": "Support eval through the persistent compiled host"
+}

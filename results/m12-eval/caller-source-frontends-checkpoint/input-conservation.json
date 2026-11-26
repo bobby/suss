@@ -1,0 +1,10 @@
+{
+  "recorded_receipt": "results/m12-eval/native-script-link-and-internal-roots-working/commands.json",
+  "recorded_receipt_sha256": "6633dd4c2e65ffe937eabc7743d00896b6586b47e8ef2d54c1131570d1bc137e",
+  "recorded_inputs": 8867,
+  "all_recorded_inputs_except_explicit_prose_unchanged": true,
+  "explicit_prose_delta": [
+    "docs/roadmap/handoff.md"
+  ],
+  "qualification": "This checkpoint adds primary/reproduction receipts, compressed evidence and a handoff command/result/limitation entry. Every other recorded input is byte-conserved; no new execution is claimed."
+}

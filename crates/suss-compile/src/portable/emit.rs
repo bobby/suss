@@ -369,17 +369,19 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::BoxDoubleObject => {},
                         Nominal::NumCheck => { names.insert("number-test"); names.insert("language-error-new"); },
-                        Nominal::PackedGet(_) => {
+                        Nominal::PackedGet(kind) => {
+                            if *kind == 6 { names.insert("native-value-kind"); }
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
                         }
-                        Nominal::PackedSet(_) => {
+                        Nominal::PackedSet(kind) => {
+                            if *kind == 6 { names.insert("native-value-kind"); }
                             names.insert("packed-array-set-3");
                             names.insert("language-error-new");
                         }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean | Nominal::IsUndefined => {}
-                        Nominal::Identical => { names.insert("identical-value"); }
+                        Nominal::Identical => { names.insert("identical-value"); names.insert("native-identical-test"); }
                         Nominal::AllSmallIntegers | Nominal::IsLongValue | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
@@ -391,6 +393,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::BindingGetterMacroSet => { names.insert("binding-getter-macro-set!"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
                         Nominal::BindingRootSet => { names.insert("binding-root-set"); }
+                        Nominal::BindingRootDefine => { names.insert("binding-root-define"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
@@ -806,7 +809,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             name if name.starts_with("int32-") && name.ends_with("-raw") =>
                 (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
             "future-pending-new" | "dynamic-fork" | "dynamic-save" | "random-double" => (vec![], vec![VALUE]),
-            "evaluate-form" => (vec![VALUE], vec![VALUE]),
+            "evaluate-form" | "namespace-interns" | "binding-declare" | "hash-unencoded-chars" => (vec![VALUE], vec![VALUE]),
             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" | "root-redefs-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
             "dynamic-pop" => (vec![VALUE], vec![]),
@@ -822,7 +825,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "binding-defined" | "binding-getter-macro?" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "binding-getter-macro?" | "native-value-kind" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
             "list-function" => (vec![VALUE; 5], vec![VALUE]),
             "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
@@ -831,7 +834,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "apply" => (vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
             "apply-bounded-length" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
-            "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
+            "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" | "native-identical-test" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
             "primitive-int" | "primitive-bit-not" | "int32-int" | "int32-bit-count" => (vec![VALUE], vec![VALUE]),
@@ -927,7 +930,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-get-unforced" | "binding-snapshot" | "binding-read" | "binding-getter" | "binding-bound" | "number-negate" | "value-negate"
+            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-get-unforced" | "binding-snapshot" | "binding-read" | "binding-getter" | "binding-getter-root-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
@@ -937,7 +940,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
-            "binding-root-set" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
+            "binding-getter-root-set!" => (vec![VALUE; 3], vec![VALUE]),
+            "binding-root-set" | "binding-root-define" | "binding-getter-unbound-init!" | "binding-getter-macro-set!" | "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -2743,15 +2747,16 @@ fn emit_function(
                         },
                     ];
                     // A bound cell that no binding frame has held reads its
-                    // root inline (#354). Otherwise an unbound cell reads as
-                    // undefined, and a dynamic one reads its selected frame.
+                    // root inline (#354). A real unbound Var reads its cached
+                    // Unbound object; internal cells retain undefined. Dynamic
+                    // cells read their selected frame.
                     for instruction in &flags {
                         function.instruction(instruction);
                     }
                     // Macro metadata does not change boundness or frame
                     // selection. Keep every other flag's existing behavior.
                     function
-                        .instruction(&I32Const(!runtime_abi::CELL_MACRO))
+                        .instruction(&I32Const(!(runtime_abi::CELL_MACRO | runtime_abi::CELL_DECLARED | runtime_abi::CELL_STAGED_ROOT)))
                         .instruction(&I32And)
                         .instruction(&I32Const(runtime_abi::CELL_BOUND))
                         .instruction(&I32Eq)
@@ -2762,18 +2767,12 @@ fn emit_function(
                             field_index: 0,
                         })
                         .instruction(&Else);
-                    for instruction in &flags {
-                        function.instruction(instruction);
-                    }
+                    // The shared slow path selects dynamic frames and the
+                    // canonical Unbound/undefined value. Keep that uncommon
+                    // branch out of every fragment's static-root fast path.
                     function
-                        .instruction(&I32Const(runtime_abi::CELL_DYNAMIC))
-                        .instruction(&I32And)
-                        .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-read")))
-                        .instruction(&Else)
-                        .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
-                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -3194,10 +3193,17 @@ fn emit_function(
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&I32Eqz)
                         .instruction(&BrIf(0))
+                        .instruction(&Block(BlockType::Result(ValType::Ref(RefType { nullable: false,
+                            heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Array } }))))
                         .instruction(&LocalGet(array))
                         .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 })
-                        .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Array }))
+                        .instruction(&BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF,
+                            to_ref_type: RefType { nullable: false,
+                                heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Array } } })
+                        .instruction(&Drop)
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&ArrayLen)
                         .instruction(&LocalTee(field_index_local))
                         .instruction(&I32Const(1 << 30))
@@ -3280,6 +3286,7 @@ fn emit_function(
                             let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
                             // Canonical small integers and identical references avoid
                             // the runtime helper. Distinct doubles are never identical.
+                            // Distinct native proxies authenticate the actual source object.
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             let by_value = |function: &mut Function| {
                                 function
@@ -3288,6 +3295,10 @@ fn emit_function(
                                     .instruction(&Call(index("identical-value")))
                                     .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                                     .instruction(&RefEq);
+                            };
+                            let by_capability = |function: &mut Function| {
+                                function.instruction(&LocalGet(a)).instruction(&LocalGet(b))
+                                    .instruction(&Call(index("native-identical-test")));
                             };
                             function
                                 .instruction(&LocalGet(a))
@@ -3316,9 +3327,9 @@ fn emit_function(
                                 .instruction(&Else)
                                 .instruction(&LocalGet(a))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&I32Const(0))
-                                .instruction(&Else);
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            by_capability(&mut function);
+                            function.instruction(&Else);
                             for (index, ty) in [runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
                                 function.instruction(&LocalGet(a)).instruction(&RefTestNonNull(HeapType::Concrete(ty)));
                                 if index > 0 {
@@ -3327,9 +3338,9 @@ fn emit_function(
                             }
                             function.instruction(&If(BlockType::Result(ValType::I32)));
                             by_value(&mut function);
+                            function.instruction(&Else);
+                            by_capability(&mut function);
                             function
-                                .instruction(&Else)
-                                .instruction(&I32Const(0))
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)
@@ -3511,6 +3522,7 @@ fn emit_function(
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
                             code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            code.extend([LocalGet(field_index_local), LocalGet(storage), ArrayLen, I32GeU, BrIf(0)]);
                             code.extend([LocalGet(storage), LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(1), End]);
                             code.extend([GlobalGet(cache), LocalGet(object), LocalGet(name), Call(index("named-site-get")), End]);
                             for instruction in &code {
@@ -3548,6 +3560,8 @@ fn emit_function(
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
                             code.extend([LocalTee(field_index_local), I32Const(0), I32GeS, If(BlockType::Empty),
+                                LocalGet(field_index_local), LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
+                                ArrayLen, I32GeU, BrIf(1),
                                 LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
                                 LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(2), End]);
                             code.extend(site(runtime_abi::SITE_EPOCH));
@@ -3587,7 +3601,8 @@ fn emit_function(
                             } else {
                                 code.extend([LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 1 }]);
                             }
-                            code.extend([LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
+                            code.extend([LocalTee(storage_locals + 6), ArrayLen, LocalGet(field_index_local), I32LeU, BrIf(0),
+                                LocalGet(storage_locals + 6), LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
                                 LocalGet(value), Br(1), End, GlobalGet(cache), LocalGet(object),
                                 LocalGet(name), LocalGet(value), Call(index("named-site-set")), End]);
                             for instruction in code { function.instruction(&instruction); }
@@ -3845,6 +3860,14 @@ fn emit_function(
                                 code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
                                     Call(index("language-error-new")), Throw(0)]);
                             };
+                            if object {
+                                code.extend([LocalGet(array), Call(index("native-value-kind")),
+                                    I32Const(runtime_abi::native_values::OBJECT_ARRAY), I32Eq, If(BlockType::Empty)]);
+                                for argument in arguments { locals.push_boxed(&mut code, *argument); }
+                                code.push(Call(index(if set { "packed-array-set-3" } else { "packed-array-get-2" })));
+                                if raw_result { code.extend([Drop, LocalGet(locals.raw(arguments[2]))]); }
+                                code.extend([Br(1), End]);
+                            }
                             error(&mut code);
                             code.push(End);
                             if !set && !object && locals.of(inst.result) == unboxed::Repr::Boxed {
@@ -4502,6 +4525,7 @@ fn emit_function(
                         | Nominal::BindingGetterMacroSet
                         | Nominal::BindingSnapshot
                         | Nominal::BindingRootSet
+                        | Nominal::BindingRootDefine
                         | Nominal::DecimalContextNew
                         | Nominal::DecimalContextGetter
                         | Nominal::CoerceString
@@ -4592,6 +4616,7 @@ fn emit_function(
                                 Nominal::BindingGetterMacroSet => "binding-getter-macro-set!",
                                 Nominal::BindingSnapshot => "binding-snapshot",
                                 Nominal::BindingRootSet => "binding-root-set",
+                                Nominal::BindingRootDefine => "binding-root-define",
                                 Nominal::DecimalContextNew => "decimal-context-new",
                                 Nominal::DecimalContextGetter => "decimal-context-getter-install",
                                 Nominal::CoerceString => "coerce-string",

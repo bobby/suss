@@ -1,0 +1,40 @@
+{
+  "baseline_head": "133b7024762d5006d4c784416e66ecef5a73f6b8",
+  "baseline_path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/full-workspace-after-portable-reference-alignment",
+  "baseline_exit": 0,
+  "prior_ignored": [
+    "test_cond_thread_first",
+    "test_cond_thread_first_false",
+    "test_print_no_newline",
+    "test_println_basic",
+    "test_println_multiple_args",
+    "test_println_no_args",
+    "test_println_number",
+    "test_prn_basic",
+    "test_some_thread_first",
+    "test_when_first",
+    "record_case_catalog",
+    "record_known_failures",
+    "record_observations",
+    "optimized_selected_random_import_preserves_draws",
+    "crates/suss-compile/src/lib.rs - (line 20)"
+  ],
+  "current_ignored": [
+    "test_cond_thread_first",
+    "test_cond_thread_first_false",
+    "test_print_no_newline",
+    "test_println_basic",
+    "test_println_multiple_args",
+    "test_println_no_args",
+    "test_println_number",
+    "test_prn_basic",
+    "test_some_thread_first",
+    "test_when_first",
+    "record_case_catalog",
+    "record_known_failures",
+    "record_observations",
+    "optimized_selected_random_import_preserves_draws",
+    "crates/suss-compile/src/lib.rs - (line 20)"
+  ],
+  "same_names": true
+}

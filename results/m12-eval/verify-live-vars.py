@@ -123,6 +123,46 @@ assert (p/'primary.stdout').read_text().strip()=='[true false false false]'
 paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
 paths += ['crates/suss-cli/tests/clojure_chunk_effects.rs','crates/suss-cli/tests/compiled_macro_declaration_functions.rs','crates/suss-cli/tests/core_sorted_interfaces.rs','crates/suss-cli/tests/portable_bitwise_hash.rs','crates/suss-cli/tests/portable_murmur_hash.rs','crates/suss-cli/tests/portable_numeric_hash.rs']
 paths += ['crates/suss-cli/tests/compiled_native_entrypoints.rs']
+# Public eval has a separate top-level literal boundary. The pinned negative
+# nested-Atom cases remain failures; false/nil metadata does not authorize macros.
+p=BASE/'self-values-and-false-metadata-primary'
+literals=json.loads((p/'command.json').read_text())
+assert literals['exit_code']==0 and literals['case_count']==13
+assert all(sha(Path(name).read_bytes())==digest for name,digest in literals['jars'].items())
+assert sha((p/'expression.clj').read_bytes())==literals['source_sha256']
+assert sha((p/'expression.sus').read_bytes())==literals['native_source_sha256']
+assert sha((p/'primary.stdout').read_bytes())==literals['stdout_sha256']
+rows=json.loads((p/'cases.json').read_text());assert len(rows)==13
+source='[\n'+'\n'.join(row['expression'] for row in rows)+'\n]\n'
+assert (p/'expression.clj').read_text()=='(prn '+source.strip()+')\n'
+assert (p/'expression.sus').read_text()==source.replace('(catch Throwable ', '(catch :default ')
+paths += [str(path.relative_to(ROOT)) for path in sorted(p.iterdir()) if path.is_file()]
+paths += ['crates/suss-compile/src/runtime_abi/nominal.rs']
+paths += [
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs',
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/function_namespace.rs',
+ 'crates/suss-compile/src/portable_session/evaluation/native_values/namespace_catalog.rs',
+ 'crates/suss-compile/src/portable_macro_data/borrowed_reader.rs',
+ 'crates/suss-compile/src/portable_macros/definitions.rs',
+ 'crates/suss-compile/src/portable_macros/facade.rs',
+ 'crates/suss-compile/src/portable/source.rs',
+]
+# New pinned source-boundary controls retain exact executable inputs and outputs.
+for name in ['staged-macro-root-effect-primary', 'staged-macro-root-identity-primary',
+             'staged-macro-metadata-root-primary', 'macro-to-ordinary-reload-primary']:
+    primary = BASE / name
+    receipt = json.loads((primary / 'receipt.json').read_text())
+    assert receipt['exit_code'] == 0
+    assert all(sha(Path(n).read_bytes()) == h for n, h in receipt['jars'].items())
+    assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
+    assert any(n.endswith('/clojure/1.12.6/clojure-1.12.6.jar') and h == '21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca' for n, h in receipt['jars'].items())
+    paths += [str(f.relative_to(ROOT)) for f in sorted(primary.rglob('*')) if f.is_file()]
+paths += ['crates/suss-cli/tests/repl_value_display.rs',
+          'crates/suss-compile/src/portable/hir/nominal.rs',
+          'crates/suss-compile/src/portable/hir/quotes.rs',
+          'crates/suss-compile/src/portable_session/evaluation/native_values.rs',
+          'crates/suss-compile/tests/portable_calling_convention.rs',
+          'crates/suss-compile/tests/portable_comparator_foundations.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')

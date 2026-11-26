@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "--fuel",
+    "10000000",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/function-namespace-identity-primary/native.sus"
+  ],
+  "exit_code": 1,
+  "seconds": 0.002613477874547243,
+  "binary_sha256": "ca453aca490c7830745e47b8ddc90db48b6c278c20ea35fe17f7d2277e558ad8",
+  "files": {
+    "native.sus": "46781bcc14329b6bfa7bb994333e78d81605b4700c3c3b8df64ffef2eda386f7",
+    "native-before.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-before.stderr": "9c72d4def86d08fbb109fb7388bc7970fe8e45a4c50fdc7c6ba968acfa21570f"
+  },
+  "scope": "Supplemental actual current CLI execution, separate from the running frozen Rust controller; lineage limited to its recorded binary digest. Do not claim a Runtime/Macro two-phase Rust target pass."
+}

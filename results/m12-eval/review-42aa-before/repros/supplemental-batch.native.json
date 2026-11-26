@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "[(try (do (declare changing-macro) (eval '(defmacro ^:dynamic changing-macro [] 1)) (let [f (fn [& xs] (if (empty? xs) 43 (do (eval '(def ^:dynamic changing-macro (fn [] 45))) 42)))] (binding [changing-macro f] (eval '[(changing-macro) (changing-macro)])))) (catch :default outer-error (ex-message outer-error))) (try (do (eval '(defmacro own-changing-macro [] (eval '(def own-changing-macro (fn [] 43))) 42)) (eval '[(own-changing-macro) (own-changing-macro)])) (catch :default outer-error (ex-message outer-error))) (try (do (eval '(defmacro actual-macro-native-probes [] (list 'quote [(try (let [a (atom 7)] (identical? a (eval a))) (catch :default e (ex-message e))) (try (let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x)))) (catch :default e (ex-message e))) (try (let [v (eval '(def ^{:macro false} macro-metadata-false 42))] [(contains? (meta v) :macro) (:macro (meta v)) (.isMacro v)]) (catch :default e (ex-message e)))]))) (eval '(actual-macro-native-probes))) (catch :default outer-error (ex-message outer-error)))]"
+  ],
+  "exit_code": 0,
+  "seconds": 39.73180317878723,
+  "source_sha256": "2aa42da53bf2f5303570c6232c339dff04c33d3b5ba27b0ebffd0117a64aa598",
+  "stdout_sha256": "7b23b2ef853928fa22b5f46728e9d0acaf25910556cf459a0900a5759d322a39",
+  "head": "42aa08e8558c73acb7771b55f648dcfb5c6c85a6",
+  "binary_sha256": "169dba83f98ffbd2d73020a974664249253a792611f902323263c0c582574243",
+  "provenance": "native-provenance.json",
+  "binary_unchanged": true,
+  "production_inputs_unchanged": true,
+  "head_unchanged": true,
+  "tracked_source_clean": true
+}

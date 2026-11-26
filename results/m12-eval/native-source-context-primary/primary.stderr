@@ -1,0 +1,1 @@
+WARNING: first already refers to: #'clojure.core/first in namespace: mixed, being replaced by: #'mixed/first

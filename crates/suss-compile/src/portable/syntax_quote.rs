@@ -34,6 +34,9 @@ pub struct ReaderState {
 }
 
 impl ReaderState {
+    pub(crate) fn reserve(&mut self, prepared: &Self) {
+        self.next_gensym = self.next_gensym.max(prepared.next_gensym);
+    }
     /// Expand resolved reader forms, including templates inside quoted data.
     /// The caller must supply original reader spans, not synthetic macro spans.
     pub fn expand(

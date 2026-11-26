@@ -15,6 +15,7 @@ pub(crate) fn prepare_with_expander(
     mut form: Form,
     expander: &mut dyn ExpansionHost,
 ) -> Result<PreparedEvaluation, SessionError> {
+        let mut environment = snapshot.environment.clone();
         let span = form.span.clone();
         let origin = crate::portable::SourceOrigin::native_evaluation(
             snapshot.native_owner.ok_or_else(|| wasmtime::Error::msg("Missing native compilation owner"))?
@@ -24,8 +25,7 @@ pub(crate) fn prepare_with_expander(
                 .map_err(SessionError::Compile)?;
             request
                 .charge_expansion_work(
-                    snapshot
-                        .environment
+                    environment
                         .current_namespace(snapshot.phase())
                         .len() as u64
                         + 1,
@@ -33,7 +33,7 @@ pub(crate) fn prepare_with_expander(
                 )
                 .map_err(SessionError::Compile)?;
             let namespace = Arc::new(crate::portable::hir::SourceNamespace::capture(
-                &snapshot.environment,
+                &environment,
                 snapshot.phase(),
             ));
             let locals = Default::default();
@@ -45,7 +45,7 @@ pub(crate) fn prepare_with_expander(
                     .charge_expansion_work(1, form.span.clone())
                     .map_err(SessionError::Compile)?;
                 let context = ExpansionContext {
-                    environment: &snapshot.environment,
+                    environment: &environment,
                     namespace_snapshot: &namespace,
                     origin: Some(&origin),
                     phase: snapshot.phase(),
@@ -54,17 +54,16 @@ pub(crate) fn prepare_with_expander(
                     fields: &fields,
                     function_scopes: &[],
                 };
-                match request
-                    .expand(&form, context)
-                    .map_err(SessionError::Compile)?
-                {
+                let expanded = request.expand(&form, context).map_err(SessionError::Compile)?;
+                request.refresh_native_environment(&mut environment, form.span.clone()).map_err(SessionError::Compile)?;
+                match expanded {
                     Some(expanded) => form = expanded,
                     None => break,
                 }
             }
         }
         if matches!(&form.kind, Kind::List(items) if matches!(items.first().map(|head| &head.kind),
-            Some(Kind::Symbol(name)) if snapshot.environment.resolves_bootstrap_name(snapshot.phase(), name, "defmacro"))) {
+            Some(Kind::Symbol(name)) if environment.resolves_bootstrap_name(snapshot.phase(), name, "defmacro"))) {
             // Normalize aliases only after resolution against the caller's real
             // environment. The existing declaration converter validates the rest.
             let Kind::List(items) = &mut form.kind else { unreachable!() };
@@ -101,7 +100,7 @@ pub(crate) fn prepare_with_expander(
                 _ => true,
             };
             let origin=origin.with_native_direct_constants(direct);
-            snapshot
+            CompilationSnapshot::new(environment, snapshot.phase(), snapshot.source_paths.clone(), snapshot.provided.clone())
                 .prepare_with_origin(vec![form], span, expander, Some(&origin))
                 .map(PreparedEvaluation::Fragment)
         }
@@ -109,10 +108,38 @@ pub(crate) fn prepare_with_expander(
 }
 
 impl MacroHost<'_> {
+    /// Prepare native source against the persistent caller catalog. Execution
+    /// stays in the ordinary owned Session entry, with its own runtime budget.
+    pub(crate) fn prepare_native_input<T>(
+        &mut self,
+        prepare: impl FnOnce(&CompilationSnapshot, &mut dyn ExpansionHost) -> Result<T, SessionError>,
+    ) -> Result<T, SessionError> {
+        let _operation = self.fallback.as_ref().map(MacroService::operation);
+        self.begin_declarations().map_err(SessionError::Compile)?;
+        let outcome = (|| {
+        let name = self.session.current_namespace().to_owned();
+        let name = self.bridge.quote(&mut self.session, Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol::new(name)) })?;
+        let namespace = self.session.invoke_compiler_root(&self.namespace_interner, &[&name])?;
+        let checkpoint = self.session.enter_compilation_namespace(&namespace)?;
+        let snapshot = self.session.compilation_snapshot();
+        let prepared = prepare(&snapshot, self);
+        let outcome = self.native_preparation_result(prepared);
+        let restoration = self.session.leave_compilation_namespace(&checkpoint);
+        let outcome = match outcome { Err(error) => Err(error), Ok(value) => restoration.map(|()| value) };
+        outcome
+        })();
+        if outcome.is_err() { self.end_declarations(false).map_err(SessionError::Compile)?; }
+        outcome
+    }
+    pub(crate) fn finish_native_source(&mut self, linked: bool) -> Result<(), SessionError> {
+        self.end_declarations(linked).map_err(SessionError::Compile)
+    }
     pub(super) fn prepare_native_evaluation(
         &mut self, snapshot: &CompilationSnapshot, form: Form,
     ) -> Result<PreparedEvaluation, SessionError> {
-        prepare_with_expander(snapshot, form, self)
+        let _operation = self.fallback.as_ref().map(MacroService::operation);
+        let result = prepare_with_expander(snapshot, form, self);
+        self.native_preparation_result(result)
     }
 
     pub(crate) fn evaluate_native_form(
@@ -139,7 +166,9 @@ impl MacroHost<'_> {
                     self.enter_namespace(&namespace)?;
                     let outcome = (|| {
                         let origin = crate::portable::SourceOrigin::native_evaluation(self.session.native_owner());
-                        let mut pending = self.prepare_macro_definition(&form, form.span.clone(), Some(&origin))?;
+                        let _operation = self.fallback.as_ref().map(MacroService::operation);
+                        let prepared = self.prepare_macro_definition(&form, form.span.clone(), Some(&origin));
+                        let mut pending = self.native_preparation_result(prepared)?;
                         pending.prepared.fragment.environment.enter_namespace(phase, &original).map_err(SessionError::Compile)?;
                         self.commit_macro_definition(pending).map(|(_function, variable)| variable)
                     })();

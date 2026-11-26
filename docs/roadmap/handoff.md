@@ -1,3 +1,196 @@
+### Root effects, executable metadata and native transport
+
+Compiler declaration staging now distinguishes its own writes from real root effects, including an identical root write, metadata execution and later restaging. Only the converted declaration root uses the ABI14 definition setter; nested/user definitions retain ordinary write semantics. Reloading a source macro as an ordinary value updates the retained caller Var's actual root, metadata and macro status. Declaration metadata executes user expressions while its literal containers retain original core constructors.
+
+Imported functions recover declaration-body transport proofs only after authenticating the actual isolated function root. This preserves compiler-catalog policy and default-budget stream expansion. Native transport indexes candidate roots by existing owner UID and still verifies exact root/capability identity; a forced-collision/GC/round-trip regression prevents the index from becoming authority. The export index holds weak references and sweeps one paid bucket per insertion. No operation allowance is increased.
+
+Fifteen successful command groups across two frozen batches return actual0: complete-public-eval=103, ci-macro-and-stream-targets=14, ownership-library=138, source-frontends=58, runtime-abi-and-structural-guards=71, named-calling-hash-sealing-and-ci-display=33, persistent-repl-display-controls=8, java-node-free-bootstrap=4. Only the REPL display test and its provenance verification files change between the two batches; production inputs are identical. The original display-target101 remains in its receipt. Python tests, original/source/core/sequence provenance and Java/Node-free bootstrap also return0. These local results do not replace fresh complete native conformance, the exact two-thread workspace baseline, issue acceptance, independent review or final-head CI.
+
+Run `python3 results/m12-eval/root-metadata-checkpoint/verify.py --current` to reconstruct all recorded inputs and verify current source plus the explicit documentation publication. Omit `--current` for historical verification after later implementation.
+
+The display correction checks every output byte while deriving only valid identity hex values, checks matching array identity spellings and distinct IDs, and adds repeated-value identity stability. Allocation order of compiler-owned identities is not a Clojure contract.
+
+The archive retains every failed attempt, including missing constructors, misplaced root annotation, lost compiler policy, fuel exhaustion, a bad provenance assumption and unit compilation errors. Two deliberate stops preserve their exact source/runner/log inputs and stop reasons; their Cargo101 results remain failures and are not coverage passes. Original fixtures, count/skip/opaque rules and operation allowances remain unchanged.
+
+Earlier validation follows.
+
+### Source macro import and journal checkpoint
+
+Use `python3 results/m12-eval/source-import-checkpoint/verify.py --current`
+to verify the final overlay, 33 historical source/runner/tool/log
+receipts and explicit documentation publication. All eleven final commands
+return0 with source/HEAD/Binaryen conserved: public eval101, ownership137,
+source58, ABI/structural71,
+named/calling/hash/sealing/display/namespace32,
+Python tests, source/primary/core/sequence provenance and Java/Node-free
+bootstrap. The runners retain exact commands and their own actual terminals.
+These local results do not replace the complete native capture, exact
+`cargo test --workspace --locked -- --test-threads=2`, issue acceptance,
+independent promotion review, numeric parent integration or final-head CI.
+
+Canonical source Var roots/metadata now publish after completed source linking
+or an imported dependency definition. Completed imports advance every active
+journal baseline, including when later source stages that same name again.
+The fresh-caller and retained-function controls preserve the actual new root,
+metadata, identity and completed prefix effects. Reader callback counts/order
+and lazy-sequence realization, default budgets, cancellation and GC boundaries
+keep their original assertions. All negative receipts remain explicit.
+
+Earlier validation follows.
+
+### Native namespace and Unbound receipts
+
+The source-frozen ordinary-unbound-working overlay on 214d999f completes all ten
+recorded commands. Public eval returns 101 with 87/88 tests passing: the sole
+failure is the unresolved core macro Var `when-let`, in both Runtime and Macro.
+The unchanged full20 transport test now matches all20 observations in each phase.
+All five namespace declaration-boundary controls match in each phase, including
+failed initializers, untaken/uncalled definitions and analysis before a later
+compile error. Generated metadata and the new genuine Unbound/actual-root
+controls pass. The same overlay returns0 for runtime ABI62, ownership137,
+built-in sealing8, the original string/hash3, Python364 and core import checking.
+
+The subsequent ABI13 overlay changes only runtime_abi::VERSION from12 to13 in
+nonresult inputs. Its six commands all return0: runtime ABI62, the two Unbound
+regression tests, two actual no-import AOT capability tests, the core-function
+catalog, Python364 and core import checking. These67 Rust test executions are a
+focused follow-up; the complete88-test eval target and full workspace have not
+been rerun on ABI13. Exact sources/HEAD/runner/pinned Binaryen remain conserved
+within each batch. The ABI bump accounts for the added Var-owned Unbound GC root
+in the shared cell layout. See docs/runtime/native-var-values.md for behavior.
+
+Run `python3 results/m12-eval/namespace-native-values-checkpoint/verify.py --current`
+to check fifteen exact historical source/runner/log receipts, the one-line ABI
+change, explicit prose-only publication deltas and current source conservation.
+Omitting --current checks historical evidence after later source changes.
+Negative receipts retain catalog fuel exhaustion, the unguarded hashing failure
+on live helper replacement, generated-metadata publication errors, private-field
+and ordinary-read mismatches, and a mistakenly selected nonexistent CLI ABI
+target. The latter executed no ABI tests; the actual runtime_abi target is in
+suss-compile and passes62 in the final two batches. Original protected fixtures,
+primary/comparison/count/skip rules and operation allowances stay unchanged.
+
+Core/mixed source macro Var publication still needs the actual caller-owned Var
+with its real isolated transformer root, correct caller namespace, live root
+replacement and source-link publication boundaries without initializer replay.
+Full workspace/bootstrap/native/conformance, numeric-parent integration and
+independent promotion review/final-head CI remain separate gates. GitHub issues
+remain the authoritative acceptance records; this checkpoint makes no closure,
+promotion or merge claim.
+
+### Immutable metadata transport checks
+
+The source-frozen overlay on 0c2914c4 passes the 137-test ownership library,
+nine-case public isolated-macro test in both phases, two strict eval self-value
+tests, 58 source/module/REPL/AOT tests and record-macro provenance. The 198 distinct
+current passing test executions include exact original-object return, compiler
+cell-count conservation, GC release and the existing private capability guards.
+The initial identity regression returns 101 before the fix. A separate earlier
+working revision typechecks and passes the focused regression and 11 private
+tests; its twelve passing executions repeat coverage with weaker lifetime checks.
+
+Run `python3 results/m12-eval/immutable-native-values-checkpoint/verify.py --current`
+to verify exact sources, runner/command/log hashes, pinned primary inputs and the
+explicit publication prose delta. Without --current, verification checks the
+recorded historical inputs even after subsequent implementation changes.
+The complete unchanged full20 test still returns 101 with 19 matches per phase
+for the missing ns-interns/dependent catalog declarations. Genuine user/core
+interning and mixed source/native Var-root publication remain required behavior;
+fresh full workspace/bootstrap/conformance/numeric integration and promotion
+review/CI are separate gates. The three original M12 issues remain authoritative
+on GitHub; these receipts make no issue-completion or promotion claim.
+
+### Named-property provenance follow-up
+
+On dc1364d0 plus the corrected named-property source-file hash, the exact
+15-command CI inventory/scanner step and a separate record-macro provenance
+check all return 0. The Python suite executes all 364 tests. Source inputs and
+HEAD stay unchanged through the commands; compressed logs, runner and input
+manifest are in results/m12-eval/provenance-followup-dc136/commands.json.
+The source-file hash accounts for the live nominal-field forwarding changes;
+the named-property guard hash, algorithm, license and upstream pins are unchanged.
+CI run 45758336090 failed on the prior source-file hash. This follow-up validates
+that failure's fix locally; bootstrap execution, Rust tests and remote CI are
+separate checks. The earlier live-value checkpoint verifier applies to dc1364d0;
+its current-tree conservation assertion intentionally excludes later changes.
+
+### Caller-owned macro source and frontend checks
+
+The source-frozen working overlay on ba917029 returns actual0 for Rust checking,
+the unchanged reset/display1handle guard, synchronized independent-Macro worker
+compilation during Runtime, all55source/script/module/AOT/REPL tests, public74
+and host120. The broad targets contain249 unique test executions; the two focused
+controls repeat members of those targets. Exact commands, compressed original
+positive/negative receipts, pinned primary controls and limits are under
+results/m12-eval/caller-source-frontends-checkpoint. Source declarations retain
+the isolated Store; native eval declarations use real caller-owned bindings.
+Script Runtime execution still follows complete preparation. Source journals
+finish at linking before dependency/Runtime code. Compiler helper and predicate
+roots retain GC ownership without inflating external handle accounting.
+
+The separate script-native-publication probe records native exit1 for retained
+Runtime definitions and const names after a later prepared input; explicit future
+source redefinition is a passing control. Foreign-Store function/Var transport
+also remains unsupported. These results do not replace a fresh exact workspace,
+independent final review or final published-head CI. Original protected programs,
+primary/baseline observations, count/skip/opaque policies and allowances remain.
+
+### Literal roots, false metadata and GC validation
+
+The frozen literal/metadata follow-up returns0 for complete public eval62
+(including retained original-object roots across forced GC in both phases)
+and host119. The production-identical full runtime ABI62 also returns0; its
+source/target/fixtures are conserved across the separate new GC test and
+provenance additions. These243 distinct target executions do not include the
+supplemental repeated new2 controls. Original13 pinned primary controls retain
+actual values and explicit nested-Atom rejection. The initial2-test101 for the
+reserved ExceptionInfo descriptor remains a negative receipt.
+
+Run `python3 results/m12-eval/verify-self-values-metadata-checkpoint.py` to
+check actual terminals and preserve every executed input across this explicit
+prose/evidence publication. Later production changes require new relevant
+validation; old full-workspace/CI passes remain specific to their old inputs.
+The retained macro-live-state-before controls still show the caller-global and
+nested-definition mismatches, and function/Var macro transport remains to fix.
+No complete issue, promotion or merge is established by this checkpoint.
+
+### Literal and false metadata review controls
+
+The first frozen working-overlay command returns101: both new aggregate tests
+reach an unsupported ExceptionInfo literal. A per-case diagnostic records the
+other12 controls matching, including the original Atom/Delay failures, unchanged
+nested-Atom rejection and false/nil metadata/identity. Runtime-owned exception
+descriptors reserve identities below the source descriptor counter and do not
+carry the core privacy flag; the direct-literal classifier now includes them.
+The next frozen command returns0 for both13-control native/actual-Macro tests
+and the complete62-test runtime ABI target, with source/HEAD/tools unchanged.
+These working receipts are under self-values-false-metadata-reserved-errors-working.
+A separate retained-root GC regression and broader checks remain to execute.
+
+An additional pinned primary/native comparison under macro-live-state-before
+records caller-global reads/atom updates and nested-eval definitions diverging
+inside eval-defined macros. Function/Var transport and live macro-state work
+remain required; the positive literal/metadata receipts do not cover those cases.
+
+### Native literal and false metadata review regressions
+
+Independent xhigh review at42aa08e8 confirms four remaining mismatches: function/Var
+arguments through ordinary macros, macro authorization after an earlier expansion
+changes its actual Var, top-level Atom/Delay literals, and false/nil macro metadata.
+Exact unchanged-source primary/native receipts are under
+results/m12-eval/review-42aa-before. Existing positive fa0da workspace/CI receipts
+remain specific to their tested inputs; they do not cover these counterexamples.
+
+The working follow-up separates top-level non-syntax core objects from portable
+macro syntax, retaining actual roots. Original compiled predicates and the checked
+nominal ABI distinguish symbols/collections and user type constant contexts;
+nested opaque constants retain their existing compilation errors. False/nil macro
+metadata is admitted and retained without enabling expansion. Thirteen new pinned
+Clojure1.12.6 controls return0 under self-values-and-false-metadata-primary, with
+native and actual-Macro regressions added. These source changes have not yet been
+built or executed. Function/Var macro transport and live in-unit authorization
+still require fixes; current broader/full/review/final-head CI remain separate.
+
 ### Macro flag opcode guard alignment
 
 The3c4a clean run returns0 for its first five commands, including all34 observed
@@ -36086,3 +36279,212 @@ actual1 before execution when its parent full run exposed the genuine101
 interruption for the CI defect. Original numeric source/primary/comparison and
 explicit failure contracts remain intact. Heavy validation runs sequentially
 after the parent exact workspace terminal.
+
+
+Recorded validation at code `fa0da7ec`: exact
+`cargo test --workspace --locked -- --test-threads=2` returns actual Cargo 0 in
+10212.760 seconds with source/HEAD unchanged. The run records
+377 successful groups, 2578 passed test executions and
+15 existing ignores. All 336 focused controls and ten broader
+commands return 0. Separately, 176 prior CI-target passes across 34 targets are
+conserved from production-identical `3c4a59e8`, rather than fresh fa0da runs.
+The broader gates include Java/Node-free bootstrap, complete native execution
+and strict comparison of 5,564 rows with prior successes and explicit failures/
+guest judgments retained. Source conservation is checked by
+`python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
+controls and limits remain under `results/m12-eval/`. Independent full-scope review
+and final published-head CI are separate requirements.
+
+### Static script publication and executed native definitions
+
+The script-source-publication-metered-working receipt records all six actual
+commands returning0 with source/HEAD/Binaryen conserved. It includes Rust check,
+three repeated focused publication controls, source/script/module/AOT/REPL58,
+public eval74 and host ownership/budget120:252 distinct target executions.
+Run the exact commands from the archived commands.json under
+results/m12-eval/script-source-publication-checkpoint; raw logs and input hashes
+are retained there as deterministic gzip files. Earlier Rust visibility errors
+and pre-metering execution are retained as separate historical receipts.
+
+Scripts now publish each reached form's static declarations onto the actual
+live compiler catalog, preserving definitions created by earlier native eval,
+future explicit source precedence, actual later macro reassertions and linked
+prefix effects before Runtime errors. Static publication contains no Runtime
+values or initializer replay. Pure AOT does not capture native declarations.
+Source identities are reserved before Runtime so private function pools and
+reader identifiers cannot collide with nested eval.
+
+Isolated source function/Var transport, mixed source/native root forwarding,
+full current workspace/bootstrap validation and a fresh independent review
+remain required. These focused passes do not establish issue completion.
+
+### Scoped suspended-ancestor Store access
+
+The suspended-host-registry-borrowed-display-working receipt records all five
+actual commands returning0 with source/HEAD/Binaryen conserved. Exact commands
+and input hashes are archived with logs under
+results/m12-eval/suspended-host-registry-checkpoint. The three focused mechanical
+controls also run in host123; public eval74 and source/frontend58 bring broad
+coverage to255 distinct target executions. The initial Rust check101 for an
+owned-only display signature remains a separate negative receipt.
+
+A synchronous scoped registry now lends actual suspended ancestor SessionHosts
+without Store pointers, captured lifetime extensions, cross-thread Store access
+or guards held across guest execution. Selecting a host removes it from the
+registry until its next real Caller lends it again. Native code forbids unsafe
+code; native-only scoped-tls-hkt0.1.5 supplies scoped mutable TLS. The lockfile
+adds only this dependency and package. MacroService may borrow its own suspended
+Store/catalog instead of trying to reacquire its owned lease. Nested requests cap
+existing physical fuel and settle saved-parent-minus-total-child-work, preserving
+reentrant work without a second debit. Temporary limits are restored on unwind.
+Borrowed displays use the same printer/error helpers as owned sessions.
+
+The tests execute real Runtime/Macro/Macro Wasmtime callbacks through64levels,
+check linear guest fuel, finite exhaustion/recovery, selection uniqueness, panic
+cleanup, roots/GC/reset identity and live MacroService effects. They do not
+implement or prove Fn/Var transport. Actual value proxies, cross-phase metadata/
+Namespace/live-cell behavior, retirement and cancellation forwarding still need
+implementation and language acceptance before complete workspace/review gates.
+
+### Source analysis placeholders and interrupted dynamic restoration
+
+The cancellation-restoration-and-analyzer-fixed-working receipt records all seven
+actual commands returning0 with source/HEAD/Binaryen conserved. Commands and
+input hashes are archived under results/m12-eval/cancellation-analyzer-checkpoint.
+Source/frontend58, public eval74, host126, analyzer18 and macro analysis/source
+metadata15 give291 distinct passing test executions; focus6 repeats host tests.
+The exact positive source overlay and the reconstructed pre-fix overlay (all six
+modified source hashes verified against the negative receipt) are archived too.
+
+The source analyzer now marks only compiled macro-declaration placeholders.
+The declaration remains represented in its owning phase without another Runtime
+nil AST; real source nils and genuine nil-valued macro expansions remain visible.
+This fixes the four analyzer_edn failures from CI45724644593/integration0 on00707;
+that failed log remains evidence, not a green result. The local pre-fix analyzer
+run retained13 passes and5 failures, including the new nil-preservation control.
+
+Suspended-parent cancellation now reaches guest loops and native host work.
+Only the target consumes its own request; ancestors consume theirs while
+unwinding. Same-engine/exact-parent flags avoid an extra relay thread; distinct
+engines/unregistered parents keep the existing relay. Wasmtime51's epoch hook
+has read-only Store access, so interrupt fuel is exhausted at execution_error,
+then preserved through cleanup. A private scoped guard allows only finite runtime
+frame/cell restoration to finish while the ancestor request remains pending.
+It does not mask source bodies, finally handlers or the current session's own
+requests. The strengthened guest control first failed during math-frame restore
+and now verifies restoration, nil context, exhausted fuel and recovery.
+
+Native function/Var transport and actual mixed source/native Var-root forwarding
+remain unimplemented. These passes do not establish complete issue acceptance,
+a current full workspace/bootstrap/conformance pass or promotion review.
+
+### Native function and immutable metadata capabilities
+
+The current partial native transport checkpoint executes real caller closures
+through isolated source macros, retaining their captured effects, recursive eval,
+math context and owned exceptions. GC-held authenticated capabilities share one
+invocation callback per destination; source lookup is weak and destination roots
+are scoped to an operation. Same-source handles retain logical identity and hash,
+including immutable function metadata. Canonical empty roots use actual source
+root identity and keywords retain destination interning. Mutable/opaque nested
+values still report unsupported transport; no marker data substitutes for Vars
+or Namespaces.
+
+Request-scoped error transfer now preserves a typed interrupt through an actual
+source function callback. The negative reached guest execution and returned
+OutOfFuel; its positive preserves Interrupt and recovery. The earlier published
+CI cancellation race has a guest/controller handshake with the same2,000,000 fuel
+and unchanged REPL/AOT recovery assertions.
+
+Both current frozen batches reached their actual terminals with all input and
+Binaryen hashes conserved: host131, ABI62, source/REPL/module/AOT58 and identity
+hash4 return0. Public eval returns101 with76 passes and the one full20
+Var/Namespace fixture failing (12/20 matching controls in each phase, all40
+attempted). Private capability5 and focused metadata/callback2 repeat within
+those broader targets. Fresh pinned Clojure metadata identity yields five true
+relations; native before the fix yielded true,true,true,false,true, and the
+regression now matches in both phases after GC.
+
+Exact commands, actual failures, input manifests, current source overlay and
+historical source-reconstruction limits are under
+results/m12-eval/native-values-checkpoint. Historical full workspace passes do
+not cover these production changes. Genuine Var/Namespace/state-array transport,
+ns-interns, actual mixed source/native root projection, current full validation
+and independent promotion review remain to do.
+
+### Scoped nested function metadata
+
+Native function metadata now carries actual nested callable roots in a temporary
+transport bundle. Repeated handles preserve logical identity and hashes, call
+the real captured state and survive GC. Both source and destination compiler
+cell counts remain unchanged by transfer; collecting the bundle releases its
+nested endpoints after replacing the ordinary call-site cache's last callee.
+An initial root-guarded run retained that independently cached callee and failed
+its lifetime assertion; both actual negative targets and their exact source
+overlay remain archived. The final control exercises cache replacement before
+requiring collection. Ordinary syntax/display readers and nested Atom rejection
+retain their existing contracts. Transport root handling is distinct from eval
+constant handling, so an opaque root is not recursively captured as its own child.
+
+A fresh pinned Clojure1.12.6 control returns [[true true true true true 42] 42].
+The native before run returns101 at the Runtime metadata boundary. The final guarded
+implementation matches in Runtime and Macro, including retained results after
+GC. All eight frozen commands return0 with source, HEAD and Binaryen unchanged:
+ownership library134, source-macro6 and five focused eval tests pass. The eight
+private capability tests repeat within library134; there are145 distinct target
+executions and153 including those repeats. The focus checks retain strict
+self-value/opaque rejection, metadata map identity and typed callback interruption.
+
+Commands, exact current source overlay, frozen manifests and actual negative
+receipts are under results/m12-eval/nested-native-metadata-checkpoint. Its verifier
+accounts for only this documentation delta after testing. The first working
+receipt predates the root guard and lacks a complete independently archived
+source overlay; it is supplemental historical evidence. The before overlay is
+reconstructible from the recorded base plus the unchanged new CLI test.
+
+Var/Namespace live fields and state arrays, complete namespace interning, nested
+Namespace values and mixed source/native Var-root projection are still required.
+The original20-control aggregate is unchanged and was not rerun in this focused
+checkpoint. Its76-pass/one-failure full eval receipt belongs to74db1fb3. Current
+full workspace/bootstrap/native/conformance/provenance validation and independent
+promotion review follow completion of the remaining behavior. Numeric integration
+continues to await those completed shared changes.
+
+### Authenticated live Vars and Namespaces
+
+Native isolated macros now retain the caller's actual Vars, Namespace objects
+and namespace state arrays. Operations borrow the actual source Store or lease
+its owning Macro service, preserving live cells, identity/hash, metadata and
+macro flags after callbacks. Shared operation callbacks use GC-owned private
+capabilities, not numeric/name authority or one permanent callback per value.
+Namespace reads made by the host use the same actual descriptor validation.
+Ordinary syntax/display readers and opaque Atom rejection keep their contracts.
+
+The unchanged20-control source fixture now matches19/20 in each Runtime and
+Macro phase, attempting all40 observations. The remaining declaration and
+catalog failure is the missing ns-interns function. Actual Var root updates,
+dynamic reads, macro-status changes, metadata aliases and Namespace mutation
+match the pinned primary. A separate ownership regression confirms round-trip
+unwrapping of the exact original Var and mutation of the original state array.
+
+An array regression exposed direct alength casting private native storage as a
+local array. Guarded lowering now declines that path; hinted object-array reads
+and writes also forward authenticated native arrays. The regression exercises
+aliases, clone independence, overlapping copy, range failure before writes,
+elements, GC, exact return identity and source retirement. The actual initial
+cast failures and complete source overlays remain in the evidence archive.
+
+The final10-command frozen batch returns0 for typecheck, library136, ABI62,
+source/REPL/module/AOT58 and four focused eval tests; full20 remains actual101
+with only the stated ns-interns errors. These are260 distinct passing target
+executions and one failing aggregate; separate live1 and private10 repeat library
+controls. Source, HEAD and pinned Binaryen are conserved through actual terminal.
+Exact commands, logs, complete current/negative source overlays and reconstruction
+checks are under results/m12-eval/live-native-values-checkpoint.
+
+Namespace interning must cover real user and core cells, and mixed source/native
+Var-root publication still needs completion without replaying initializers.
+Fresh primary research for immutable nested metadata sharing and user/core Var
+catalogs is separate from these native results; no native pass is claimed for it.
+Current complete workspace/bootstrap/native/conformance/provenance validation
+and independent promotion review remain after the required implementation.

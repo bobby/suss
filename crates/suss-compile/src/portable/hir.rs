@@ -290,6 +290,12 @@ pub enum Bitwise {
     /// Execution-time entropy; never a compiler constant or a pure operation.
     RandomDouble,
     EvaluateForm,
+    NamespaceInterns,
+    DeclareBinding,
+    HashUnencodedChars,
+    BindingGetterUnboundInit,
+    BindingGetterRootSet,
+    BindingGetterRootGet,
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
@@ -445,6 +451,12 @@ impl Bitwise {
             Self::F64TimeClip => "primitive-f64-time-clip",
             Self::RandomDouble => "random-double",
             Self::EvaluateForm => "evaluate-form",
+            Self::NamespaceInterns => "namespace-interns",
+            Self::DeclareBinding => "binding-declare",
+            Self::HashUnencodedChars => "hash-unencoded-chars",
+            Self::BindingGetterUnboundInit => "binding-getter-unbound-init!",
+            Self::BindingGetterRootSet => "binding-getter-root-set!",
+            Self::BindingGetterRootGet => "binding-getter-root-get",
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
@@ -493,7 +505,8 @@ impl Bitwise {
     pub(crate) fn arity(self) -> usize {
         match self {
             Self::RandomDouble => 0,
-            Self::EvaluateForm => 1,
+            Self::BindingGetterRootSet => 3,
+            Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::HashUnencodedChars | Self::BindingGetterRootGet => 1,
             Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
@@ -552,7 +565,7 @@ impl Bitwise {
                 | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
             Type::Value
         } else {
             Type::Number
@@ -700,6 +713,7 @@ pub enum Nominal {
     BindingSnapshot,
     /// Compiler-only root definition, independent of the current dynamic frame.
     BindingRootSet,
+    BindingRootDefine,
     ObjectDescriptor,
     MethodGet,
     /// A non-object receiver's native or default implementation of a
@@ -871,7 +885,7 @@ impl Nominal {
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsMathContext | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::BindingGetter | Self::BindingGetterMacro | Self::BindingSnapshot | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
-                Self::BindingRootSet | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
+                Self::BindingRootSet | Self::BindingRootDefine | Self::BindingGetterMacroSet | Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
@@ -1065,6 +1079,10 @@ pub enum SourceNode {
 }
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
+    /// A source macro declaration was already recorded in its owning phase.
+    /// Its compiler-generated nil keeps the Runtime pipeline staged, but is not
+    /// another source form. Real nils and nil-valued macro calls remain nodes.
+    pub(crate) declaration_placeholder: bool,
     /// Set only for analyzer-generated body regions, before runtime lowering.
     pub is_body: bool,
     pub tags: SourceTags,
@@ -1208,6 +1226,9 @@ pub enum Expression {
     /// Private cell identity for a captured live protocol fallback.
     GlobalCell(Global),
     Definition {
+        /// Only the compiler's converted top-level macro declaration preserves
+        /// an enrolled staging root. Nested/user definitions are real writes.
+        compiler_root: bool,
         /// Native Var result after a successful write; absent during bootstrap.
         result: Option<Box<Hir>>,
         /// An initialized scalar constant revision, published with its live var.
@@ -1586,17 +1607,30 @@ impl Analyzer<'_> {
                         fields: &self.fields,
                         function_scopes: &self.function_scopes,
                     };
-                    if let Some(expanded) = self.expander.expand(form, expansion_context)? {
+                    let expanded = self.expander.expand(form, expansion_context)?;
+                    self.expander.refresh_native_environment(&mut self.environment, form.span.clone())?;
+                    if let Some(expanded) = expanded {
+                        let mut declaration_placeholder = false;
                         if self.environment.resolves_bootstrap_name(self.phase, symbol, "defmacro") {
                             let namespace = self.environment.current_namespace(self.phase).to_owned();
                             if let Some(names) = self.expander.declared_macro_exports(&namespace) {
+                                declaration_placeholder = matches!(expanded.kind, Kind::Nil);
                                 self.environment.declare_macro_exports(self.phase, &namespace, &names)?;
                                 if let Some(Form { kind: Kind::Symbol(name), .. }) = items.get(1) {
                                     self.environment.record_macro_declaration(self.phase, &namespace, &name.name);
+                                    self.environment.record_macro_owner(self.phase, &namespace, &name.name,
+                                        self.expander.macro_binding_owner(&namespace, &name.name));
                                 }
                             }
                         }
-                        return self.form_in_named(&expanded, context, tail, name_hint);
+                        return self.form_in_named(&expanded, context, tail, name_hint).map(|mut value| {
+                            if declaration_placeholder {
+                                if let Some(source) = &mut value.source {
+                                    std::sync::Arc::make_mut(source).declaration_placeholder = true;
+                                }
+                            }
+                            value
+                        });
                     }
                     // Bootstrap binding forms lower before source facts are
                     // recorded. let shares the pinned function-pattern binder;
@@ -1710,6 +1744,7 @@ impl Analyzer<'_> {
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                 )?;
                 let mut source = SourceAnalysis {
+                    declaration_placeholder: false,
                     is_body: false,
                     tags,
                     form: form.clone(),
@@ -1774,6 +1809,7 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
                 result: None,
                 constant: None,
                         global: fallback.clone(),
@@ -2465,21 +2501,19 @@ impl Analyzer<'_> {
         // cross-namespace access remains callable (the pinned analyzer emits a
         // warning, not an access error). Warning emission/namespace filtering
         // remain separate unfinished namespace acceptance requirements.
-        for metadata in &args[0].metadata {
-            let unsupported = |form: &Form| {
-                matches!(&form.kind, Kind::Keyword(key)
+        // False and nil are ordinary declaration metadata, not permission to
+        // expand a Var as a macro. Retain those exact values on the real Var.
+        let macro_enabled = reader_metadata_pairs(&args[0])?.chunks_exact(2).any(|pair| {
+            matches!(&pair[0].kind, Kind::Keyword(key)
                 if key.namespace.is_none() && key.name == "macro")
-            };
-            if !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition())
-                && (unsupported(metadata)
-                || matches!(&metadata.kind, Kind::Map(entries)
-                if entries.chunks_exact(2).any(|entry| unsupported(&entry[0]))))
-            {
-                return Err(fail(
-                    args[0].span.clone(),
-                    "Definition const/macro attributes are not implemented yet",
-                ));
-            }
+                && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+        });
+        let native_macro = macro_enabled && self.origin.as_ref().is_some_and(|origin| origin.native_owner().is_some());
+        if macro_enabled && !native_macro && !self.origin.as_ref().is_some_and(|origin| origin.is_macro_definition()) {
+            return Err(fail(
+                args[0].span.clone(),
+                "Definition const/macro attributes are not implemented yet",
+            ));
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         if name
@@ -2562,6 +2596,10 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
+        if let Some(owner) = self.origin.as_ref().and_then(|origin| origin.native_owner()) {
+            self.expander.intern_native_var(owner, &global, &definition.declaration,
+                definition.docstring.as_deref())?;
+        }
         // Register shipped core's direct link before analyzing the initializer,
         // so a self-recursive core function also calls its own definition.
         let dynamic = Self::dynamic_metadata(&args[0]) || prior_dynamic;
@@ -2621,6 +2659,13 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition);
         }
+        if native_macro {
+            // A native def with truthy :macro metadata is an ordinary real Var
+            // transformer. Its root executes in this same Store; no isolated
+            // source catalog entry or unused-parameter proof is manufactured.
+            self.environment.record_native_macro_definition(self.phase, &namespace, &name.name,
+                self.origin.as_ref().and_then(|origin| origin.native_owner()).expect("native macro origin"));
+        }
         // Direct linking (#360): in an AOT build, a user var defined as a
         // function with no captures publishes its closure as a new link, and
         // later calls of the var call that definition, as Clojure's
@@ -2664,6 +2709,7 @@ impl Analyzer<'_> {
             metadata: form.metadata.clone(),
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Definition {
+                compiler_root: false,
                 result,
                 constant: constant_cell,
                 global,
@@ -3769,6 +3815,11 @@ impl Analyzer<'_> {
                 "f64-time-clip" => Some(Bitwise::F64TimeClip),
                 "random-double" => Some(Bitwise::RandomDouble),
                 "evaluate-form" => Some(Bitwise::EvaluateForm),
+                "namespace-interns" => Some(Bitwise::NamespaceInterns),
+                "hash-unencoded-chars" => Some(Bitwise::HashUnencodedChars),
+                "binding-getter-unbound-init!" => Some(Bitwise::BindingGetterUnboundInit),
+                "binding-getter-root-set!" => Some(Bitwise::BindingGetterRootSet),
+                "binding-getter-root-get" => Some(Bitwise::BindingGetterRootGet),
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
@@ -4312,8 +4363,22 @@ impl Analyzer<'_> {
         if bare && symbol.name == "var" {
             if args.len() != 1 { return Err(fail(form.span.clone(), "var requires exactly one symbol")); }
             let Kind::Symbol(target) = &args[0].kind else { return Err(fail(args[0].span.clone(), "var requires a symbol")); };
-            let binding = self.environment.resolve(self.phase, target, args[0].span.clone())?;
-            let global = binding.global().clone();
+            let mut resolved = self.environment.resolve(self.phase, target, args[0].span.clone()).map(|binding| binding.global().clone());
+            if resolved.is_err() {
+                if let Some(owner) = self.environment.native_compilation_owner {
+                    self.expander.charge_expansion_work((target.namespace.as_ref().map_or(0, String::len) + target.name.len() + self.environment.current_namespace(self.phase).len()) as u64 * 4 + 1, form.span.clone())?;
+                    for global in self.environment.macro_var_candidates(self.phase, target) {
+                        self.expander.charge_expansion_work((global.namespace().len() + global.name().len()) as u64 + 1, form.span.clone())?;
+                        if let Some(actual_owner) = self.expander.intern_source_macro_var(owner, &global, form.span.clone())? {
+                            self.environment.declare_cell(self.phase, global.namespace(), global.name())?;
+                            self.environment.record_native_macro_definition(self.phase, global.namespace(), global.name(), actual_owner);
+                            resolved = self.environment.resolve(self.phase, &suss_reader::Symbol::namespaced(global.namespace(), global.name()), args[0].span.clone()).map(|binding| binding.global().clone());
+                            break;
+                        }
+                    }
+                }
+            }
+            let global = resolved?;
             return self.binding_var(form, &global, false);
         }
         if bare && symbol.name == "def" {
@@ -4916,6 +4981,20 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    // Mark the converted declaration before namespace/native-pool wrappers.
+    // Only its result definition owns the staging write; initializer bodies,
+    // declaration metadata and hidden helper definitions remain real writes.
+    if origin.is_some_and(super::SourceOrigin::is_macro_definition) {
+        fn mark_root(hir: &mut Hir) -> Result<(), Diagnostic> {
+            let span = hir.span.clone();
+            match hir.kind_mut() {
+                Expression::Definition { compiler_root, .. } => { *compiler_root = true; Ok(()) }
+                Expression::Do(items) if !items.is_empty() => mark_root(items.last_mut().unwrap()),
+                _ => Err(Diagnostic { span, message: "Converted macro definition lost its root declaration".into() }),
+            }
+        }
+        mark_root(&mut hir)?;
+    }
     let source_span = hir.span.clone();
     division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;

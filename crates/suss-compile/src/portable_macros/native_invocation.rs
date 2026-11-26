@@ -13,15 +13,18 @@ use std::{
 // Forward cancellation through the public engine/flag handle, never a Store
 // pointer. One operation owns the relay; it is joined before the lease returns.
 // The condition variable wakes teardown immediately (no per-operation delay).
-pub(super) struct InterruptRelay {
-    finished: Arc<(Mutex<bool>, Condvar)>,
+pub(crate) struct InterruptRelay {
+    finished: Option<Arc<(Mutex<bool>, Condvar)>>,
     thread: Option<JoinHandle<()>>,
 }
 impl InterruptRelay {
-    pub(super) fn start(
+    pub(crate) fn start(
         parent: Arc<AtomicBool>,
         target: crate::portable_session::InterruptHandle,
     ) -> Result<Self, SessionError> {
+        if target.has_suspended_parent(&parent) {
+            return Ok(Self { finished: None, thread: None });
+        }
         let finished = Arc::new((Mutex::new(false), Condvar::new()));
         let worker = finished.clone();
         let thread = std::thread::Builder::new()
@@ -41,14 +44,15 @@ impl InterruptRelay {
             })
             .map_err(|error| wasmtime::Error::msg(error.to_string()))?;
         Ok(Self {
-            finished,
+            finished: Some(finished),
             thread: Some(thread),
         })
     }
 }
 impl Drop for InterruptRelay {
     fn drop(&mut self) {
-        let (lock, changed) = &*self.finished;
+        let Some(finished) = &self.finished else { return };
+        let (lock, changed) = &**finished;
         *lock.lock().unwrap_or_else(|error| error.into_inner()) = true;
         changed.notify_one();
         if let Some(thread) = self.thread.take() {
@@ -57,7 +61,7 @@ impl Drop for InterruptRelay {
     }
 }
 
-fn transferable_error(host: &mut MacroHost<'static>, error: SessionError) -> SessionError {
+pub(super) fn transferable_error(host: &mut MacroHost<'_>, error: SessionError) -> SessionError {
     let SessionError::Language(value) = error else { return error };
     match host.bridge.transfer_exception(&mut host.session, &value) {
         Ok(payload) => SessionError::Host(wasmtime::Error::new(payload)),
@@ -157,24 +161,18 @@ impl MacroService {
         context: crate::portable_session::EvaluationMathContext,
         interrupt: Arc<AtomicBool>,
     ) -> Result<(Result<Form, SessionError>, u64), SessionError> {
-        let mut lease = self.lease();
-        let allowance = lease.limit_fuel(fuel);
-        lease.with_math_context(context, |host| {
-        let _budget = host.session.operation_budget_scope()?;
-        let _relay = InterruptRelay::start(interrupt, host.session.interrupt_handle())?;
-        let result = (|| {
-            host.select_invocation_namespace(namespace)?;
-            let mut values = Vec::with_capacity(arguments.len());
-            for form in arguments {
-                values.push(host.bridge.quote(&mut host.session, form)?);
-            }
-            let refs = values.iter().collect::<Vec<_>>();
-            let result = host.session.invoke(root, &refs)?;
-            host.bridge.read(&mut host.session, &result, 0..0)
-        })()
-        .map_err(|error| transferable_error(host, error));
-        let spent = allowance.saturating_sub(host.session.operation_fuel_remaining()?);
-        Ok((result, spent))
+        self.with_request(fuel, Some(context), interrupt, |host| {
+            let result = (|| {
+                host.select_invocation_namespace(namespace)?;
+                let mut values = Vec::with_capacity(arguments.len());
+                for form in arguments {
+                    values.push(host.bridge.quote(&mut host.session, form)?);
+                }
+                let refs = values.iter().collect::<Vec<_>>();
+                let result = host.session.invoke(root, &refs)?;
+                host.bridge.read(&mut host.session, &result, 0..0)
+            })();
+            result.map_err(|error| transferable_error(host, error))
         })
     }
 }
@@ -198,13 +196,13 @@ impl MacroHost<'_> {
                     kind: Kind::Symbol(suss_reader::Symbol::new(namespace)),
                 },
             )?;
-            let object = self.session.invoke(&self.namespace_interner, &[&name])?;
+            let object = self.session.invoke_compiler_root(&self.namespace_interner, &[&name])?;
             catalog(&self.catalog)
                 .namespace_objects
                 .insert(namespace.to_owned(), object.clone());
             object
         };
-        self.session.invoke(&self.namespace_setter, &[&object])?;
+        self.session.invoke_compiler_root(&self.namespace_setter, &[&object])?;
         catalog(&self.catalog).macro_namespace = Some(namespace.to_owned());
         Ok(())
     }
@@ -213,6 +211,20 @@ impl MacroHost<'_> {
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn suspended_cancellation_uses_ancestor_flags_without_creating_relay_threads() {
+        let mut parent = Session::new().unwrap();
+        let child = Session::with_options_in(crate::portable_session::SessionOptions::default(), crate::portable::resolve::Phase::Macro).unwrap();
+        let flag = parent.host_work_interrupt();
+        crate::portable_session::suspended::scope(&mut parent, || {
+            let direct = InterruptRelay::start(flag, child.interrupt_handle()).unwrap();
+            assert!(direct.thread.is_none());
+            assert!(direct.finished.is_none());
+            let independent = InterruptRelay::start(Arc::new(AtomicBool::new(false)), child.interrupt_handle()).unwrap();
+            assert!(independent.thread.is_some(), "unregistered parents still need the original relay");
+        });
+    }
 
     #[test]
     fn declaration_cancellation_restores_namespace_before_returning_the_lease() {
@@ -230,7 +242,7 @@ mod tests {
                 Ok(((), u64::MAX))
             },
         );
-        assert!(matches!(result, Err(ref error) if error.is_interrupt()));
+        assert!(matches!(result, Err(ref error) if error.is_interrupt()), "{result:?}");
         assert_eq!(macros.current_namespace(), original);
         macros.define("(defmacro recovered-declaration [] 42)").unwrap();
         assert_eq!(macros.current_namespace(), original);
@@ -253,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn macro_context_snapshot_work_is_debited_before_child_allowance() {
+    fn isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance() {
         use crate::portable_session::EvaluationMathContext;
         use std::sync::atomic::AtomicUsize;
         let mut failures = Vec::new();
@@ -266,8 +278,16 @@ mod tests {
                 seen.fetch_add(1, Ordering::SeqCst);
                 Ok(0)
             }).unwrap();
-            caller.eval_with_macros("(eval '(defmacro context-ledger-marker [] (suss.harness.observation/capture 1) 42))", &mut macros).unwrap();
-            let wrapper = caller.eval_with_macros("(let [f @(eval '(var context-ledger-marker))] (fn [context] (binding [*math-context* context] (f nil nil))))", &mut macros).unwrap();
+            // A genuine source declaration retains the isolated Store. Public
+            // eval declarations instead belong to the caller's live catalog.
+            macros.define("(defmacro context-ledger-marker [] (suss.harness.observation/capture 1) 42)").unwrap();
+            // Measure the same resident compiler/bridge used throughout the
+            // boundary search, rather than charging one cold initialization
+            // only to the separately measured snapshot.
+            caller.eval_with_macros("(eval '(+ 0 0))", &mut macros).unwrap();
+            // Raw function calls have the core namespace root, independently
+            // of the source input's user namespace frame.
+            let wrapper = caller.eval_with_macros("(fn [context] (binding [*math-context* context] (eval '(user/context-ledger-marker))))", &mut macros).unwrap();
             let namespace = caller.current_namespace();
             let service = macros.service();
             let root = {
@@ -294,6 +314,20 @@ mod tests {
                 };
                 assert!(snapshot_cost > 0);
                 let nil = Form { span: 0..0, metadata: vec![], kind: Kind::Nil };
+                // Prove both real entrypoints reach the marker before using
+                // its presence as a monotonic fuel-search observation.
+                observations.store(0, Ordering::SeqCst);
+                let (control, _) = service.invoke_root(&root, &namespace, vec![nil.clone(), nil.clone()], 400_000_000,
+                    EvaluationMathContext::Data(form.clone()), Arc::new(AtomicBool::new(false))).unwrap();
+                assert!(control.is_ok(), "{phase:?} elements={count}: direct child control: {control:?}");
+                assert!(observations.load(Ordering::SeqCst) > 0);
+                caller.set_operation_fuel(400_000_000);
+                observations.store(0, Ordering::SeqCst);
+                let control = caller.invoke(&wrapper, &[&context]);
+                if let Err(error) = control {
+                    panic!("{phase:?} elements={count}: public control: {}", crate::portable_repl::error_display(&mut caller, &error));
+                }
+                assert!(observations.load(Ordering::SeqCst) > 0);
                 let child_minimum = first_effect_fuel(|fuel| {
                     observations.store(0, Ordering::SeqCst);
                     let _ = service.invoke_root(&root, &namespace, vec![nil.clone(), nil.clone()], fuel,

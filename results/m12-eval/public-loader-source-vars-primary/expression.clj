@@ -1,0 +1,5 @@
+(load-file "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/public-loader-source-vars-primary/first.sus")
+(def first-result staged-vars/result)
+(def held-source-var (var staged-vars/staged-var))
+(load-file "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/public-loader-source-vars-primary/second.sus")
+(prn [first-result staged-vars/result (identical? held-source-var (var staged-vars/staged-var))])

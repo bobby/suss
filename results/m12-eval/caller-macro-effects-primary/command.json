@@ -1,0 +1,22 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/caller-macro-effects-primary-prepared/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 1.3739094734191895,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "controls": 7,
+  "source_sha256": "70d97df7de28bcb5ddb3ed0d96cbd3f79185a9f57d15769996512c9e8dd176a6",
+  "native_source_sha256": "c273ec5a412995563e67d571710e0e2126141de696d38603521252482d3a952e",
+  "stdout_sha256": "4a100c20ead827062f82233cede45f2cc6cec979236c20c5b4643e4a7f31a260",
+  "qualification": "Fresh primary observation only. No native or acceptance pass."
+}

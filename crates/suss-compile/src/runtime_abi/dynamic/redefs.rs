@@ -61,7 +61,7 @@ pub(super) fn push(b: &mut Builder, dynamic_push: u32) -> u32 {
         Block(BlockType::Empty), Loop(BlockType::Empty), LocalGet(3), LocalGet(4), I32GeU, BrIf(1)]);
     array(&mut body, 0); body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(2)]);
     body.push(LocalGet(2)); body.push(LocalGet(2)); body.extend(flags());
-    body.extend([I32Const(CELL_BOUND), I32And, I32Const(ROOT), I32Or, StructNew(BINDING), LocalSet(5)]);
+    body.extend([I32Const(CELL_BOUND), I32And, I32Const(ROOT), I32Or, sentinel_value(NIL), StructNew(BINDING), LocalSet(5)]);
     array(&mut body, 1); body.extend([LocalGet(3), LocalGet(5), ArraySet(ARGS)]);
     array(&mut body, 1); body.extend([LocalGet(3), I32Const(1), I32Add,
         LocalGet(2), RefCastNonNull(HeapType::Concrete(BINDING)),

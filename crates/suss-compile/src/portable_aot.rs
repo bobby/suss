@@ -666,7 +666,7 @@ fn prepare_inputs_with_hints(
             prepared_sources.insert(identity);
         }
         for input in prepared {
-            let PreparedScript::Runtime(input) = input else {
+            let PreparedScript::Runtime(input, _) = input else {
                 continue;
             };
             // All declarations are already staged by the common source pipeline.

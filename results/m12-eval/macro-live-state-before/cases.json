@@ -1,0 +1,14 @@
+[
+  {
+    "name": "macro-reads-caller-global",
+    "expression": "(do (eval '(def bridge-caller-value 41)) (eval '(defmacro bridge-caller-global [] (inc bridge-caller-value))) (eval '(bridge-caller-global)))"
+  },
+  {
+    "name": "macro-updates-caller-atom",
+    "expression": "(do (eval '(def bridge-caller-state (atom 0))) (eval '(defmacro bridge-caller-increment [] (list 'quote (swap! bridge-caller-state inc)))) [(eval '(bridge-caller-increment)) (deref (eval 'bridge-caller-state))])"
+  },
+  {
+    "name": "macro-nested-eval-publishes-caller-definition",
+    "expression": "(do (eval '(defmacro bridge-caller-def [] (eval '(def bridge-made 42)) (list 'quote :done))) (eval '(bridge-caller-def)) (eval 'bridge-made))"
+  }
+]

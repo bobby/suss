@@ -445,6 +445,7 @@ pub(crate) fn namespace(
                         requirement.reload,
                         requirement.namespace.span.clone(),
                     )?;
+                    expander.refresh_native_environment(env, requirement.namespace.span.clone())?;
                     env.declare_macro_exports(phase, namespace, &exports)?;
                     located(env.record_requirement(phase, namespace, true), requirement.namespace)?;
                     if let Some(alias) = requirement.alias {

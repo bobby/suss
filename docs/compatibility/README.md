@@ -2,6 +2,192 @@ The numeric integration retains the parent eval evidence below at its exact
 recorded source. Fresh validation of the combined tree remains separate; the
 parent-specific checkpoint verifier does not certify numeric changes.
 
+### Nested immutable metadata identity
+
+Private native transport retains supported immutable nominal values in its
+scoped root bundle. Repeated values inside function metadata and actual callback
+returns preserve identity, metadata identity and equality. Metadata maps are
+validated against captured canonical descriptors before they can become private
+transport tokens; ordinary syntax and display admission is unchanged.
+
+Nine fresh pinned Clojure controls match in both Runtime and isolated Macro
+execution: vectors, lists, small/large maps, sets, symbols, metadata-bearing empty
+collections and nested sharing. The working overlay on 0c2914c4 returns 0 for
+137 ownership-library tests, the nine-case public test, two strict self-value
+tests and 58 frontend tests (198 distinct test executions), plus provenance.
+The unchanged full20 aggregate still returns 101 with 19/20 matches per phase
+because ns-interns and its dependent catalog declaration remain unresolved.
+Exact source/runner reconstructions, the original failing identity regression,
+current logs and limits are in results/m12-eval/immutable-native-values-checkpoint.
+These focused results do not replace full issue, workspace or numeric validation.
+
+### Authenticated live Vars and Namespaces
+
+Native isolated macros now retain the caller's actual Vars, Namespace objects
+and namespace state arrays. Operations borrow the actual source Store or lease
+its owning Macro service, preserving live cells, identity/hash, metadata and
+macro flags after callbacks. Shared operation callbacks use GC-owned private
+capabilities, not numeric/name authority or one permanent callback per value.
+Namespace reads made by the host use the same actual descriptor validation.
+Ordinary syntax/display readers and opaque Atom rejection keep their contracts.
+
+The unchanged20-control source fixture now matches19/20 in each Runtime and
+Macro phase, attempting all40 observations. The remaining declaration and
+catalog failure is the missing ns-interns function. Actual Var root updates,
+dynamic reads, macro-status changes, metadata aliases and Namespace mutation
+match the pinned primary. A separate ownership regression confirms round-trip
+unwrapping of the exact original Var and mutation of the original state array.
+
+An array regression exposed direct alength casting private native storage as a
+local array. Guarded lowering now declines that path; hinted object-array reads
+and writes also forward authenticated native arrays. The regression exercises
+aliases, clone independence, overlapping copy, range failure before writes,
+elements, GC, exact return identity and source retirement. The actual initial
+cast failures and complete source overlays remain in the evidence archive.
+
+The final10-command frozen batch returns0 for typecheck, library136, ABI62,
+source/REPL/module/AOT58 and four focused eval tests; full20 remains actual101
+with only the stated ns-interns errors. These are260 distinct passing target
+executions and one failing aggregate; separate live1 and private10 repeat library
+controls. Source, HEAD and pinned Binaryen are conserved through actual terminal.
+Exact commands, logs, complete current/negative source overlays and reconstruction
+checks are under results/m12-eval/live-native-values-checkpoint.
+
+Namespace interning must cover real user and core cells, and mixed source/native
+Var-root publication still needs completion without replaying initializers.
+Fresh primary research for immutable nested metadata sharing and user/core Var
+catalogs is separate from these native results; no native pass is claimed for it.
+Current complete workspace/bootstrap/native/conformance/provenance validation
+and independent promotion review remain after the required implementation.
+
+### Scoped nested function metadata
+
+Native function metadata now carries actual nested callable roots in a temporary
+transport bundle. Repeated handles preserve logical identity and hashes, call
+the real captured state and survive GC. Both source and destination compiler
+cell counts remain unchanged by transfer; collecting the bundle releases its
+nested endpoints after replacing the ordinary call-site cache's last callee.
+An initial root-guarded run retained that independently cached callee and failed
+its lifetime assertion; both actual negative targets and their exact source
+overlay remain archived. The final control exercises cache replacement before
+requiring collection. Ordinary syntax/display readers and nested Atom rejection
+retain their existing contracts. Transport root handling is distinct from eval
+constant handling, so an opaque root is not recursively captured as its own child.
+
+A fresh pinned Clojure1.12.6 control returns [[true true true true true 42] 42].
+The native before run returns101 at the Runtime metadata boundary. The final guarded
+implementation matches in Runtime and Macro, including retained results after
+GC. All eight frozen commands return0 with source, HEAD and Binaryen unchanged:
+ownership library134, source-macro6 and five focused eval tests pass. The eight
+private capability tests repeat within library134; there are145 distinct target
+executions and153 including those repeats. The focus checks retain strict
+self-value/opaque rejection, metadata map identity and typed callback interruption.
+
+Commands, exact current source overlay, frozen manifests and actual negative
+receipts are under results/m12-eval/nested-native-metadata-checkpoint. Its verifier
+accounts for only this documentation delta after testing. The first working
+receipt predates the root guard and lacks a complete independently archived
+source overlay; it is supplemental historical evidence. The before overlay is
+reconstructible from the recorded base plus the unchanged new CLI test.
+
+Var/Namespace live fields and state arrays, complete namespace interning, nested
+Namespace values and mixed source/native Var-root projection are still required.
+The original20-control aggregate is unchanged and was not rerun in this focused
+checkpoint. Its76-pass/one-failure full eval receipt belongs to74db1fb3. Current
+full workspace/bootstrap/native/conformance/provenance validation and independent
+promotion review follow completion of the remaining behavior. Numeric integration
+continues to await those completed shared changes.
+
+### Native function and immutable metadata capabilities
+
+The current partial native transport checkpoint executes real caller closures
+through isolated source macros, retaining their captured effects, recursive eval,
+math context and owned exceptions. GC-held authenticated capabilities share one
+invocation callback per destination; source lookup is weak and destination roots
+are scoped to an operation. Same-source handles retain logical identity and hash,
+including immutable function metadata. Canonical empty roots use actual source
+root identity and keywords retain destination interning. Mutable/opaque nested
+values still report unsupported transport; no marker data substitutes for Vars
+or Namespaces.
+
+Request-scoped error transfer now preserves a typed interrupt through an actual
+source function callback. The negative reached guest execution and returned
+OutOfFuel; its positive preserves Interrupt and recovery. The earlier published
+CI cancellation race has a guest/controller handshake with the same2,000,000 fuel
+and unchanged REPL/AOT recovery assertions.
+
+Both current frozen batches reached their actual terminals with all input and
+Binaryen hashes conserved: host131, ABI62, source/REPL/module/AOT58 and identity
+hash4 return0. Public eval returns101 with76 passes and the one full20
+Var/Namespace fixture failing (12/20 matching controls in each phase, all40
+attempted). Private capability5 and focused metadata/callback2 repeat within
+those broader targets. Fresh pinned Clojure metadata identity yields five true
+relations; native before the fix yielded true,true,true,false,true, and the
+regression now matches in both phases after GC.
+
+Exact commands, actual failures, input manifests, current source overlay and
+historical source-reconstruction limits are under
+results/m12-eval/native-values-checkpoint. Historical full workspace passes do
+not cover these production changes. Genuine Var/Namespace/state-array transport,
+ns-interns, actual mixed source/native root projection, current full validation
+and independent promotion review remain to do.
+
+### Literal roots, false metadata and GC validation
+
+The frozen literal/metadata follow-up returns0 for complete public eval62
+(including retained original-object roots across forced GC in both phases)
+and host119. The production-identical full runtime ABI62 also returns0; its
+source/target/fixtures are conserved across the separate new GC test and
+provenance additions. These243 distinct target executions do not include the
+supplemental repeated new2 controls. Original13 pinned primary controls retain
+actual values and explicit nested-Atom rejection. The initial2-test101 for the
+reserved ExceptionInfo descriptor remains a negative receipt.
+
+Run `python3 results/m12-eval/verify-self-values-metadata-checkpoint.py` to
+check actual terminals and preserve every executed input across this explicit
+prose/evidence publication. Later production changes require new relevant
+validation; old full-workspace/CI passes remain specific to their old inputs.
+The retained macro-live-state-before controls still show the caller-global and
+nested-definition mismatches, and function/Var macro transport remains to fix.
+No complete issue, promotion or merge is established by this checkpoint.
+
+### Literal and false metadata review controls
+
+The first frozen working-overlay command returns101: both new aggregate tests
+reach an unsupported ExceptionInfo literal. A per-case diagnostic records the
+other12 controls matching, including the original Atom/Delay failures, unchanged
+nested-Atom rejection and false/nil metadata/identity. Runtime-owned exception
+descriptors reserve identities below the source descriptor counter and do not
+carry the core privacy flag; the direct-literal classifier now includes them.
+The next frozen command returns0 for both13-control native/actual-Macro tests
+and the complete62-test runtime ABI target, with source/HEAD/tools unchanged.
+These working receipts are under self-values-false-metadata-reserved-errors-working.
+A separate retained-root GC regression and broader checks remain to execute.
+
+An additional pinned primary/native comparison under macro-live-state-before
+records caller-global reads/atom updates and nested-eval definitions diverging
+inside eval-defined macros. Function/Var transport and live macro-state work
+remain required; the positive literal/metadata receipts do not cover those cases.
+
+### Native literal and false metadata review regressions
+
+Independent xhigh review at42aa08e8 confirms four remaining mismatches: function/Var
+arguments through ordinary macros, macro authorization after an earlier expansion
+changes its actual Var, top-level Atom/Delay literals, and false/nil macro metadata.
+Exact unchanged-source primary/native receipts are under
+results/m12-eval/review-42aa-before. Existing positive fa0da workspace/CI receipts
+remain specific to their tested inputs; they do not cover these counterexamples.
+
+The working follow-up separates top-level non-syntax core objects from portable
+macro syntax, retaining actual roots. Original compiled predicates and the checked
+nominal ABI distinguish symbols/collections and user type constant contexts;
+nested opaque constants retain their existing compilation errors. False/nil macro
+metadata is admitted and retained without enabling expansion. Thirteen new pinned
+Clojure1.12.6 controls return0 under self-values-and-false-metadata-primary, with
+native and actual-Macro regressions added. These source changes have not yet been
+built or executed. Function/Var macro transport and live in-unit authorization
+still require fixes; current broader/full/review/final-head CI remain separate.
+
 ### Macro flag opcode guard alignment
 
 The3c4a clean run returns0 for its first five commands, including all34 observed
@@ -1874,3 +2060,34 @@ conservation across the associated prose/evidence publication is checked by
 results/m12-eval/verify-133b-workspace-checkpoint.py. Full command receipts and
 limits remain in results/m12-eval/README.md; independent review and passing
 final-head CI remain separate requirements.
+
+
+Recorded validation at code `fa0da7ec`: exact
+`cargo test --workspace --locked -- --test-threads=2` returns actual Cargo 0 in
+10212.760 seconds with source/HEAD unchanged. The run records
+377 successful groups, 2578 passed test executions and
+15 existing ignores. All 336 focused controls and ten broader
+commands return 0. Separately, 176 prior CI-target passes across 34 targets are
+conserved from production-identical `3c4a59e8`, rather than fresh fa0da runs.
+The broader gates include Java/Node-free bootstrap, complete native execution
+and strict comparison of 5,564 rows with prior successes and explicit failures/
+guest judgments retained. Source conservation is checked by
+`python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
+controls and limits remain under `results/m12-eval/`. Independent full-scope review
+and final published-head CI are separate requirements.
+
+
+The canonical source-Var/import follow-up preserves actual isolated transformer
+roots, caller Var identity, source-link/initializer boundaries, completed
+import prefixes, redefinition metadata and later caller rejection. The local
+frozen [checkpoint](../../results/m12-eval/source-import-checkpoint/summary.json)
+returns0 for all eleven commands: public eval101, ownership137, source58,
+ABI/structural71,
+named/calling/hash/sealing/display/namespace32,
+Python/provenance and Java/Node-free bootstrap. Historical negative receipts
+retain failures and mistaken target selections. Complete native/workspace,
+remaining issue acceptance, independent review, numeric integration and
+final published-head CI remain separate gates.
+
+
+The [root/metadata checkpoint](../../results/m12-eval/root-metadata-checkpoint/summary.json) records executable declaration metadata, real staged-source root effects, macro-to-ordinary reloads and authenticated imported-function body proofs. Fifteen successful command groups across two frozen batches return actual0: complete-public-eval=103, ci-macro-and-stream-targets=14, ownership-library=138, source-frontends=58, runtime-abi-and-structural-guards=71, named-calling-hash-sealing-and-ci-display=33, persistent-repl-display-controls=8, java-node-free-bootstrap=4. Only the REPL display test and its provenance verification files change between the two batches; production inputs are identical. The original display-target101 remains in its receipt. Python tests, original/source/core/sequence provenance and Java/Node-free bootstrap also return0. These local results do not replace fresh complete native conformance, the exact two-thread workspace baseline, issue acceptance, independent review or final-head CI.

@@ -1,0 +1,7 @@
+{
+  "time_utc": "2026-11-26T14:11:24.917328+00:00",
+  "pid": 886020,
+  "command": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_eval-41b0f2a184a1227e --nocapture --test-threads=2 ",
+  "signal": "SIGTERM",
+  "reason": "Batch was launched despite a newly added provenance precheck failing before --record could refresh its receipt. Wrong assertion required fixture source to repeat version string; pinned JVM JAR hash already establishes1.12.6. End unsuccessful batch, capture actual cargo/controller status, archive inputs, then correct verifier before rerunning. No source inputs changed while live; no pass claim."
+}

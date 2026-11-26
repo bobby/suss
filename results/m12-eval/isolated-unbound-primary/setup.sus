@@ -1,0 +1,3 @@
+(defmacro isolated-unbound-source [f]
+ (eval '(declare isolated-unbound-target))
+ (let [u (eval '(deref (var isolated-unbound-target)))] (list 'quote (f u))))

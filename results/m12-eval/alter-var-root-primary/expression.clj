@@ -1,0 +1,12 @@
+(prn [(eval '(do (def ^:dynamic root-dynamic-control 10)
+ [(binding [root-dynamic-control 99]
+   [(alter-var-root #'root-dynamic-control + 1) root-dynamic-control]) root-dynamic-control]))
+ (eval '(do (def root-argument-control 10)
+ [(alter-var-root #'root-argument-control (fn [old a b] (+ old a b)) 2 3) root-argument-control]))
+ (eval '(do (def root-failure-control 10) (def root-failure-effect 0)
+ (try (alter-var-root #'root-failure-control (fn [old] (def root-failure-effect 9) (throw (ex-info "root-failure" {}))))
+  (catch Throwable e nil)) [root-failure-control root-failure-effect]))
+ (eval '(do (def root-false-control 10)
+ [(alter-var-root #'root-false-control (constantly nil)) root-false-control
+  (alter-var-root #'root-false-control (constantly false)) root-false-control]))]
+)

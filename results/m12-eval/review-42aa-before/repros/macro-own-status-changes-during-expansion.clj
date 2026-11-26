@@ -1,0 +1,2 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (do (eval '(defmacro own-changing-macro [] (eval '(def own-changing-macro (fn [] 43))) 42)) (eval '[(own-changing-macro) (own-changing-macro)])))

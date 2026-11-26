@@ -4,7 +4,7 @@ use super::*;
 pub(super) struct PendingMacroDefinition {
     pub prepared: crate::portable::modules::PreparedInput,
     pub template: Form,
-    binding: crate::portable::resolve::Global,
+    pub(super) binding: crate::portable::resolve::Global,
     name: String,
     namespace: String,
     reads_environment: bool,
@@ -203,18 +203,47 @@ impl MacroHost<'_> {
         &mut self,
         pending: PendingMacroDefinition,
     ) -> Result<(SessionValue, SessionValue), SessionError> {
+        self.commit_macro_definition_using(pending, false)
+    }
+    pub(super) fn commit_staged_macro_definition(
+        &mut self, pending: PendingMacroDefinition,
+    ) -> Result<(SessionValue, SessionValue), SessionError> {
+        self.commit_macro_definition_using(pending, true)
+    }
+    fn commit_macro_definition_using(
+        &mut self, pending: PendingMacroDefinition, staged: bool,
+    ) -> Result<(SessionValue, SessionValue), SessionError> {
         let PendingMacroDefinition {
             prepared,
             binding,
             name,
             namespace,
-            reads_environment,
-            reads_caller_form,
-            compiler_catalog,
+            mut reads_environment,
+            mut reads_caller_form,
+            mut compiler_catalog,
             provenance,
             ..
         } = pending;
-        let variable = self.session.eval_prepared(prepared)?;
+        let depth = catalog(&self.catalog).declaration_transactions.len() as u64;
+        self.session.charge_host_work(((binding.namespace().len() + binding.name().len()) as u64 * 4 + 128)
+            .saturating_mul(depth).saturating_add(16))?;
+        let authority = self.authority();
+        let target = binding.clone();
+        let result = self.session.eval_prepared_for_macro(prepared, |session| {
+            let mut host = authority.bind(session.reborrow());
+            if host.session.source_root_staged(&target)? == Some(false) {
+                host.preserve_runtime_root_before_staging(&target)?;
+            }
+            host.session.mark_source_root(&target, true)
+        });
+        let owned = self.session.source_root_staged(&binding)? == Some(true);
+        if !staged && self.session.source_root_staged(&binding)?.is_some() {
+            self.session.mark_source_root(&binding, false)?;
+        }
+        let variable = result?;
+        // Metadata may replace the just-defined function. Proofs over the
+        // declaration body authorize only the compiler's own resulting root.
+        if !owned { reads_environment = true; reads_caller_form = true; compiler_catalog = None; }
         let value = self.session.binding_value(&binding)?;
         let key = (namespace.clone(), name.clone());
         if reads_caller_form {
@@ -240,12 +269,7 @@ impl MacroHost<'_> {
         catalog(&self.catalog)
             .declaration_sources
             .insert((namespace.clone(), name.clone()), provenance);
-        let exports = catalog(&self.catalog)
-            .definitions
-            .keys()
-            .filter(|(ns, _)| ns == &namespace)
-            .map(|(_, name)| name.clone())
-            .collect::<Vec<_>>();
+        let exports = self.declared_macro_exports(&namespace).unwrap_or_default();
         self.session.declare_macro_exports(&namespace, &exports)?;
         self.session.record_macro_declaration(&namespace, &name);
         Ok((value, variable))

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/function-metadata-map-identity-primary-prepared/expression.sus"
+  ],
+  "binary_sha256": "7ebe41d8fa41e11c2d19b4f3a3b3dc72d7bb44a398a8205759b5c163f4d13949",
+  "head": "546d0e1a424eb5a73374a043b9d25fd15a65fc00",
+  "tested_overlay_receipt": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/native-functions-typed-callback-owner-scope-working/commands.json",
+  "tested_overlay_receipt_sha256": "9f883f4efe03ef60452d6b8f4f10bb65725eccefebbe3d4a9f9e85f57e007574",
+  "exit_code": 0,
+  "seconds": 24.98745584487915,
+  "source_sha256": "d3e9ffec3cee093726f48005c775c8d01b004ae826a8eb55183cbdfc53b97b8f",
+  "stdout_sha256": "af8497bab661d95ba6fd27f381e33ef25e8196e4e41142ed68e13e796156c4ac",
+  "primary_stdout": "[true true true true true]\n",
+  "matches_primary": false,
+  "inputs_unchanged": true,
+  "qualification": "Actual native CLI execution of the unchanged fresh-primary query before immutable metadata identity transport; an exit0 process is not a semantic match."
+}

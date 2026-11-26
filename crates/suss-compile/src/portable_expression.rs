@@ -93,7 +93,7 @@ pub(crate) fn prepare_with_compile_fuel(
     let inputs = prepared
         .into_iter()
         .filter_map(|input| match input {
-            PreparedScript::Runtime(input) => Some(input),
+            PreparedScript::Runtime(input, _) => Some(input),
             _ => None,
         })
         .collect();
