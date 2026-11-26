@@ -1,5 +1,8 @@
 # Native Var and namespace values
 
+See [the host/Macro boundary contract](host-macro-boundary.md) for ownership,
+retirement, metadata evaluation and the Var publication transition table.
+
 A native Var refers to its owning Session's actual phase-qualified binding cell.
 A compiler-owned hidden cell interns the Var object. Namespace catalogs validate
 the actual registered Namespace, enumerate its declared/bound public cells, and
@@ -61,4 +64,4 @@ no helper lookup fragments are installed. See the source-import checkpoint
 for exact positive and negative receipts and the remaining validation gates.
 
 
-Compiler-owned staging writes are distinguished from language writes on the actual binding cell. Real root replacement or identity writes survive rejection of later unlinked source. Metadata expressions execute in the current user environment; their compiler-owned literal containers use original core constructors. Completed macro-to-ordinary reloads update the existing Var rather than preserving stale macro roots. Imported-function body proofs are reused only after native function identity authentication. Transport UID indexes select candidates and verify actual roots/capabilities; weak export entries are collected incrementally. See the [frozen checkpoint](../../results/m12-eval/root-metadata-checkpoint/summary.json) for exact executed commands, preserved failures and scope.
+Compiler-owned staging writes are distinguished from language writes on the actual binding cell. Real root replacement or identity writes survive rejection of later unlinked source. Metadata expressions execute in the current user environment; their compiler-owned literal containers use original core constructors. Completed macro-to-ordinary reloads update the existing Var rather than preserving stale macro roots. Imported-function body proofs are reused only after native function identity authentication. Transport UID indexes select candidates and verify actual roots/capabilities; weak export entries are collected incrementally. See the [frozen checkpoint](https://github.com/bobby/suss/blob/9222862b48d3fef3aada8b1baf758eda0ff0e6f8/results/m12-eval/root-metadata-checkpoint/summary.json) for exact executed commands, preserved failures and scope.
