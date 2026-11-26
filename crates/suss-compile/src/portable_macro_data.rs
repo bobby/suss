@@ -233,6 +233,15 @@ pub struct FormBridge {
     core: Arc<BridgeCore>,
 }
 
+// Native transport roots are scoped to the current value transfer. They must
+// never enter the compiler/linker's persistent evaluation constant pool.
+#[derive(Clone, Copy)]
+enum NativeFormValues<'a> {
+    Disabled,
+    Evaluation(u64),
+    Transport { owner: u64, values: &'a BTreeMap<u64, SessionValue> },
+}
+
 impl FormBridge {
     fn construct(
         &self,
@@ -812,13 +821,22 @@ impl FormBridge {
         form: &Form,
     ) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        session.with_operation_budget(|session| self.form_value(session, &form, None))
+        session.with_operation_budget(|session| self.form_value(session, &form, NativeFormValues::Disabled))
     }
     pub(crate) fn quote_evaluation_ref(&self, session: &mut SessionHost<'_>, form: &Form, owner: u64) -> Result<SessionValue, SessionError> {
         self.check(session)?;
-        session.with_operation_budget(|session| self.form_value(session, form, Some(owner)))
+        session.with_operation_budget(|session| self.form_value(session, form, NativeFormValues::Evaluation(owner)))
     }
-    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form, native_owner: Option<u64>) -> Result<SessionValue, SessionError> {
+    pub(crate) fn quote_transport_ref(
+        &self, session: &mut SessionHost<'_>, form: &Form, owner: u64,
+        values: &BTreeMap<u64, SessionValue>,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        session.with_operation_budget(|session| {
+            self.form_value(session, form, NativeFormValues::Transport { owner, values })
+        })
+    }
+    fn form_value(&self, session: &mut SessionHost<'_>, form: &Form, native_values: NativeFormValues<'_>) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
         enum Task<'a> {
             Visit(&'a Form),
@@ -921,8 +939,18 @@ impl FormBridge {
                     let built = values.split_off(start);
                     let mut result = match &form.kind {
                         Kind::NativeConstant { owner, index } => {
-                            if native_owner != Some(*owner) { return Err(failure(form, "Native constants are not portable macro syntax")); }
-                            session.import_evaluation_constant(*owner, *index)?
+                            match native_values {
+                                NativeFormValues::Evaluation(allowed) if allowed == *owner => {
+                                    session.import_evaluation_constant(*owner, *index)?
+                                }
+                                NativeFormValues::Transport { owner: allowed, values } if allowed == *owner => {
+                                    let value = values.get(index).ok_or_else(|| failure(form, "Missing scoped native transport value"))?;
+                                    // Validate actual destination ownership, not only a numeric token.
+                                    session.inspect(value, |_, _| Ok(()))?;
+                                    value.clone()
+                                }
+                                _ => return Err(failure(form, "Native constants are not portable macro syntax")),
+                            }
                         },
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
@@ -995,7 +1023,7 @@ impl FormBridge {
                             kind: Kind::Map(pairs),
                         };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.form_value(session, &metadata_form, native_owner)
+                            self.form_value(session, &metadata_form, native_values)
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;
@@ -1063,10 +1091,24 @@ impl FormBridge {
         var_class: wasmtime::OwnedRooted<AnyRef>,
         meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
     ) -> Result<Form, SessionError> {
-        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, constants: vec![] };
+        let native = NativeRead { owner, closure_test, class_test, instance_test, identity_test, var_class, meta_fn_class, purpose: NativeReadPurpose::Evaluation, constants: vec![] };
         let (form, constants) = self.read_with_context(session, value, span, true, Some(native), true)?;
         for (index, value, function) in constants { session.retain_native_constant(index, value, function)?; }
         Ok(form)
+    }
+    /// Read already materialized data while retaining genuine nested native
+    /// roots only in the returned bundle. Ordinary syntax/display readers keep
+    /// their existing rejection policy; no lazy sequence is forced here.
+    pub(crate) fn read_transport(
+        &self, session: &mut SessionHost<'_>, value: &SessionValue, owner: u64,
+        closure_test: wasmtime::Func, class_test: wasmtime::Func,
+        instance_test: wasmtime::Func, identity_test: wasmtime::Func,
+        var_class: wasmtime::OwnedRooted<AnyRef>,
+        meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    ) -> Result<(Form, Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>), SessionError> {
+        let native = NativeRead { owner, closure_test, class_test, instance_test,
+            identity_test, var_class, meta_fn_class, purpose: NativeReadPurpose::Transport, constants: vec![] };
+        self.read_with_context(session, value, 0..0, true, Some(native), false)
     }
     fn read_with_context(
         &self, session: &mut SessionHost<'_>, value: &SessionValue,
@@ -1251,6 +1293,8 @@ fn absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<
 // Functions, real class values and Vars retain authenticated same-Store roots.
 // This authority is installed only for a public native eval read. Ordinary
 // macro/display/source readers retain their strict nominal syntax whitelist.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum NativeReadPurpose { Evaluation, Transport }
 struct NativeRead {
     owner: u64,
     closure_test: wasmtime::Func,
@@ -1259,17 +1303,22 @@ struct NativeRead {
     identity_test: wasmtime::Func,
     var_class: wasmtime::OwnedRooted<AnyRef>,
     meta_fn_class: wasmtime::OwnedRooted<AnyRef>,
+    purpose: NativeReadPurpose,
     constants: Vec<(u64, wasmtime::OwnedRooted<AnyRef>, bool)>,
 }
 static NEXT_NATIVE_CONSTANT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 impl NativeRead {
     fn constant(&mut self, store: &mut StoreContextMut<'_, ()>, value: &Val, depth: usize,
         interrupt: &std::sync::atomic::AtomicBool) -> wasmtime::Result<Option<Kind>> {
+        // The transport's root is being materialized, not captured again.
+        // Capturing it would recursively re-export the same unsupported root.
+        if self.purpose == NativeReadPurpose::Transport && depth == 0 { return Ok(None); }
         let mut result = [Val::I32(0)];
         // Class constructors are represented by closures too. Class identity
         // must win before deciding whether to materialize a function constant.
         self.class_test.call(&mut *store, &[*value], &mut result)?;
         let class = result[0].unwrap_i32() != 0;
+        if class && self.purpose == NativeReadPurpose::Transport { return Ok(None); }
         let mut function = false;
         if !class {
             self.closure_test.call(&mut *store, &[*value], &mut result)?;

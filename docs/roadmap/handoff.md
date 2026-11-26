@@ -35813,3 +35813,41 @@ results/m12-eval/native-values-checkpoint. Historical full workspace passes do
 not cover these production changes. Genuine Var/Namespace/state-array transport,
 ns-interns, actual mixed source/native root projection, current full validation
 and independent promotion review remain to do.
+
+### Scoped nested function metadata
+
+Native function metadata now carries actual nested callable roots in a temporary
+transport bundle. Repeated handles preserve logical identity and hashes, call
+the real captured state and survive GC. Both source and destination compiler
+cell counts remain unchanged by transfer; collecting the bundle releases its
+nested endpoints after replacing the ordinary call-site cache's last callee.
+An initial root-guarded run retained that independently cached callee and failed
+its lifetime assertion; both actual negative targets and their exact source
+overlay remain archived. The final control exercises cache replacement before
+requiring collection. Ordinary syntax/display readers and nested Atom rejection
+retain their existing contracts. Transport root handling is distinct from eval
+constant handling, so an opaque root is not recursively captured as its own child.
+
+A fresh pinned Clojure1.12.6 control returns [[true true true true true 42] 42].
+The native before run returns101 at the Runtime metadata boundary. The final guarded
+implementation matches in Runtime and Macro, including retained results after
+GC. All eight frozen commands return0 with source, HEAD and Binaryen unchanged:
+ownership library134, source-macro6 and five focused eval tests pass. The eight
+private capability tests repeat within library134; there are145 distinct target
+executions and153 including those repeats. The focus checks retain strict
+self-value/opaque rejection, metadata map identity and typed callback interruption.
+
+Commands, exact current source overlay, frozen manifests and actual negative
+receipts are under results/m12-eval/nested-native-metadata-checkpoint. Its verifier
+accounts for only this documentation delta after testing. The first working
+receipt predates the root guard and lacks a complete independently archived
+source overlay; it is supplemental historical evidence. The before overlay is
+reconstructible from the recorded base plus the unchanged new CLI test.
+
+Var/Namespace live fields and state arrays, complete namespace interning, nested
+Namespace values and mixed source/native Var-root projection are still required.
+The original20-control aggregate is unchanged and was not rerun in this focused
+checkpoint. Its76-pass/one-failure full eval receipt belongs to74db1fb3. Current
+full workspace/bootstrap/native/conformance/provenance validation and independent
+promotion review follow completion of the remaining behavior. Numeric integration
+continues to await those completed shared changes.

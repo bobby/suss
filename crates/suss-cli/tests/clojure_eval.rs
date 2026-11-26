@@ -2149,3 +2149,28 @@ fn isolated_source_function_metadata_retains_identity_between_macro_requests() {
         }
     }
 }
+
+#[test]
+fn isolated_source_nested_function_metadata_retains_actual_callbacks() {
+    let setup = include_str!("../../../results/m12-eval/nested-function-metadata-primary/setup.sus");
+    let query = include_str!("../../../results/m12-eval/nested-function-metadata-primary/query.sus");
+    let required = expected(&suss_reader::forms::read_forms(include_str!(
+        "../../../results/m12-eval/nested-function-metadata-primary/primary.stdout"
+    )).unwrap()[0]);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let phase = session.phase();
+        let mut macros = CompiledMacros::new().unwrap();
+        for declaration in suss_reader::forms::read_forms(setup).unwrap() {
+            macros.define(&setup[declaration.span.clone()]).unwrap();
+        }
+        let value = session.eval_with_macros(query, &mut macros).unwrap_or_else(|error| {
+            panic!("{phase:?}: {}", suss_compile::portable_repl::error_display(&mut session, &error))
+        });
+        for _ in 0..2 {
+            let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
+            assert_eq!(decoder.decode_session(&mut session, &value).unwrap(), required,
+                "{phase:?}: nested metadata aliases must preserve the actual callback and its captured effects");
+            session.collect().unwrap();
+        }
+    }
+}

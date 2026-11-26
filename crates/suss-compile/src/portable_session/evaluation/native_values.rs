@@ -30,8 +30,13 @@ struct ForeignValue {
     kind: NativeKind,
 }
 enum NativeKind {
-    Function { metadata: Option<Transfer> },
-    Materialized(Form),
+    Function {
+        metadata: Option<Transfer>,
+    },
+    Materialized {
+        form: Form,
+        constants: BTreeMap<u64, Transfer>,
+    },
 }
 pub(crate) struct ValuesScope(Arc<Evaluation>);
 impl Drop for ValuesScope {
@@ -252,21 +257,52 @@ impl SessionHost<'_> {
         value: &SessionValue,
     ) -> Result<Transfer, SessionError> {
         if let Some(endpoint) = self.native_value_endpoint(value)?
-            && matches!(&endpoint.kind, NativeKind::Materialized(_))
+            && matches!(&endpoint.kind, NativeKind::Materialized { .. })
         {
             return Ok(Transfer::Native(endpoint));
         }
         let state = self.value_state()?;
         if let Some(endpoint) = self.existing_native_value(&state, value)?
-            && matches!(&endpoint.kind, NativeKind::Materialized(_))
+            && matches!(&endpoint.kind, NativeKind::Materialized { .. })
         {
             return Ok(Transfer::Native(endpoint));
         }
         let bridge = state.bridge(self)?;
-        // This reader validates the original builtin descriptors and rejects
-        // opaque/mutable values and unrealized sequences. It does not invoke
-        // user code or turn unsupported objects into successful data.
-        let form = bridge.read_materialized(self, value)?;
+        // Temporary nested roots are authenticated by the original builtin
+        // descriptors. They never enter the persistent compiler constant pool.
+        // Opaque/mutable objects and unrealized sequences remain unsupported.
+        let runtime = self.runtime;
+        let closure_test = runtime
+            .get_func(&mut self.store, "closure-value-test")
+            .unwrap();
+        let class_test = runtime.get_func(&mut self.store, "class-value-is").unwrap();
+        let instance_test = runtime
+            .get_func(&mut self.store, "object-instance")
+            .unwrap();
+        let identity_test = runtime
+            .get_func(&mut self.store, "native-identical-test")
+            .unwrap();
+        let var_class = registry_lock(&state.var_class).clone().unwrap();
+        let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
+        let (form, roots) = bridge.read_transport(
+            self,
+            value,
+            self.identity,
+            closure_test,
+            class_test,
+            instance_test,
+            identity_test,
+            var_class,
+            meta_fn_class,
+        )?;
+        let mut constants = BTreeMap::new();
+        for (index, root, _) in roots {
+            self.charge_host_work(1)?;
+            let value = self.root_value(&root)?;
+            let transfer =
+                stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.export_value(&value))?;
+            constants.insert(index, transfer);
+        }
         let nominal = {
             let runtime = self.runtime;
             let mut roots = RootScope::new(&mut self.store);
@@ -285,9 +321,15 @@ impl SessionHost<'_> {
             || matches!(&form.kind, Kind::Keyword(_))
             || bridge.is_canonical_empty(self, value)?
         {
+            if !constants.is_empty() {
+                return Err(wasmtime::Error::msg(
+                    "Scalar or canonical singleton cannot contain scoped native roots",
+                )
+                .into());
+            }
             return Ok(Transfer::Data(form));
         }
-        self.retain_native_value(&state, value, NativeKind::Materialized(form))
+        self.retain_native_value(&state, value, NativeKind::Materialized { form, constants })
     }
     fn export_value(&mut self, value: &SessionValue) -> Result<Transfer, SessionError> {
         self.check(value)?;
@@ -460,8 +502,19 @@ impl SessionHost<'_> {
         }
         let cap = self.new_value_capability(&state, endpoint)?;
         let value = match &endpoint.kind {
-            NativeKind::Materialized(form) => {
-                let value = state.bridge(self)?.quote_ref(self, form)?;
+            NativeKind::Materialized { form, constants } => {
+                let mut values = BTreeMap::new();
+                for (index, transfer) in constants {
+                    self.charge_host_work(1)?;
+                    let value = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+                        self.import_value_ref(transfer)
+                    })?;
+                    values.insert(*index, value);
+                }
+                let value =
+                    state
+                        .bridge(self)?
+                        .quote_transport_ref(self, form, endpoint.owner, &values)?;
                 self.attach_value_capability(&value, &cap, endpoint.uid)?
             }
             NativeKind::Function { metadata } => {
@@ -945,6 +998,191 @@ mod tests {
                 "return transport must recover the exact source root"
             );
         }
+    }
+
+    #[test]
+    fn native_function_capability_nested_metadata_uses_scoped_roots() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let original = source.eval(
+            "(let [counter (atom 41) g (fn [] (swap! counter inc))] (with-meta (fn [] 1) {:callback g :again g}))"
+        ).unwrap();
+        let inspect = target.eval(
+            "(fn [a b] (let [g (:callback (meta a)) h (:again (meta b))] (if (and (identical? (meta a) (meta b)) (identical? g h) (= (hash g) (hash h))) (g) -1)))"
+        ).unwrap();
+        let compiler_sizes = |session: &Session| {
+            let compiler = registry_lock(&session.compiler);
+            (compiler.cells.len(), compiler.native_function_cells.len())
+        };
+        let source_before = compiler_sizes(&source);
+        let target_before = compiler_sizes(&target);
+        let first = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        let second = target
+            .import_value(source.export_value(&original).unwrap())
+            .unwrap();
+        assert_eq!(
+            compiler_sizes(&source),
+            source_before,
+            "transport must not retain nested source roots in the compiler constant pool"
+        );
+        assert_eq!(
+            compiler_sizes(&target),
+            target_before,
+            "destination transport constants must remain scoped"
+        );
+        for expected in [42, 43] {
+            source.collect().unwrap();
+            target.collect().unwrap();
+            let result = super::super::super::suspended::scope(&mut source, || {
+                target.invoke(&inspect, &[&first, &second])
+            })
+            .unwrap();
+            assert_eq!(
+                target
+                    .inspect(&result, |mut store, value| runtime_number(
+                        &mut store, &value
+                    ))
+                    .unwrap(),
+                Some(RuntimeNumber::Long(expected))
+            );
+        }
+        let endpoint = target.native_value_endpoint(&first).unwrap().unwrap();
+        let function = Arc::downgrade(&endpoint);
+        let NativeKind::Function {
+            metadata: Some(Transfer::Native(metadata)),
+        } = &endpoint.kind
+        else {
+            panic!("actual metadata endpoint");
+        };
+        let NativeKind::Materialized { constants, .. } = &metadata.kind else {
+            panic!("materialized metadata");
+        };
+        let nested: Vec<_> = constants
+            .values()
+            .filter_map(|value| match value {
+                Transfer::Native(endpoint) => Some(Arc::downgrade(endpoint)),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            nested.len(),
+            1,
+            "repeated nested function aliases share one transport root"
+        );
+        let metadata = Arc::downgrade(metadata);
+        drop(endpoint);
+        drop(original);
+        drop(first);
+        drop(second);
+        target.collect().unwrap();
+        source.collect().unwrap();
+        assert!(function.upgrade().is_none());
+        assert!(
+            metadata.upgrade().is_none(),
+            "nested transport must not become a persistent metadata root"
+        );
+        // The compiled `(g)` call above has a normal #378 last-callee cache.
+        // Its latest callee remains an independent owner after the transport
+        // bundle is gone. Replacing that callee must release the old endpoint;
+        // transport must not create another persistent per-value owner.
+        assert!(nested.iter().all(|root| root.upgrade().is_some()));
+        let replacement = target
+            .eval("(let [g (fn [] 0)] (with-meta (fn [] 1) {:callback g :again g}))")
+            .unwrap();
+        let value = target
+            .invoke(&inspect, &[&replacement, &replacement])
+            .unwrap();
+        assert_eq!(
+            target
+                .inspect(&value, |mut store, value| runtime_number(
+                    &mut store, &value
+                ))
+                .unwrap(),
+            Some(RuntimeNumber::Long(0))
+        );
+        target.collect().unwrap();
+        source.collect().unwrap();
+        assert!(
+            nested.into_iter().all(|root| root.upgrade().is_none()),
+            "replacing the independent last-callee cache must release every old nested endpoint"
+        );
+        let opaque = source
+            .eval("(with-meta (fn [] 1) {:opaque (atom 42)})")
+            .unwrap();
+        assert!(
+            source.export_value(&opaque).is_err(),
+            "nested opaque mutable data must retain its existing rejection"
+        );
+    }
+
+    #[test]
+    fn native_function_capability_transport_reader_does_not_recapture_its_root() {
+        let mut source = Session::new_repl().unwrap();
+        let value = source.eval("#'identity").unwrap();
+        let state = source.value_state().unwrap();
+        let bridge = state.bridge(&mut source).unwrap();
+        let runtime = source.runtime;
+        let closure_test = runtime
+            .get_func(&mut source.store, "closure-value-test")
+            .unwrap();
+        let class_test = runtime
+            .get_func(&mut source.store, "class-value-is")
+            .unwrap();
+        let instance_test = runtime
+            .get_func(&mut source.store, "object-instance")
+            .unwrap();
+        let identity_test = runtime
+            .get_func(&mut source.store, "native-identical-test")
+            .unwrap();
+        let var_class = registry_lock(&state.var_class).clone().unwrap();
+        let meta_fn_class = registry_lock(&state.meta_fn_class).clone().unwrap();
+        let owner = source.identity;
+        let result = bridge.read_transport(
+            &mut source,
+            &value,
+            owner,
+            closure_test,
+            class_test,
+            instance_test,
+            identity_test,
+            var_class,
+            meta_fn_class,
+        );
+        assert!(
+            matches!(result, Err(SessionError::Compile(_))),
+            "an opaque root must not recursively capture/re-export itself"
+        );
+        assert!(source.eval("(+ 40 2)").is_ok());
+    }
+
+    #[test]
+    fn native_function_capability_scoped_tokens_require_actual_destination_roots() {
+        let mut source = Session::new_repl().unwrap();
+        let mut target = Session::new_macro().unwrap();
+        let foreign = source.eval("(fn [] 42)").unwrap();
+        let owner = source.identity;
+        let form = Form {
+            span: 0..0,
+            metadata: vec![],
+            kind: Kind::NativeConstant { owner, index: 1 },
+        };
+        let bridge = target.value_state().unwrap().bridge(&mut target).unwrap();
+        let values = BTreeMap::from([(1, foreign)]);
+        assert!(matches!(
+            bridge.quote_transport_ref(&mut target, &form, owner, &values),
+            Err(SessionError::ForeignValue)
+        ));
+        assert!(matches!(
+            bridge.quote_transport_ref(&mut target, &form, owner + 1, &values),
+            Err(SessionError::Compile(_))
+        ));
+        assert!(matches!(
+            bridge.quote_transport_ref(&mut target, &form, owner, &BTreeMap::new()),
+            Err(SessionError::Compile(_))
+        ));
+        assert!(target.eval("(+ 40 2)").is_ok());
     }
 
     #[test]
