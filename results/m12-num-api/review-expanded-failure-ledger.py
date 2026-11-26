@@ -4,6 +4,8 @@ import gzip,hashlib,json,subprocess,sys
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'scripts'))
 import clojure_test_suite as suite
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from reviewed_root_diagnostics import advance_root_diagnostics
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
 def archived(path):
     return path.read_bytes() if path.exists() else gzip.decompress(path.with_name(path.name+'.gz').read_bytes())
@@ -21,7 +23,7 @@ def main():
     before=json.loads(gzip.decompress((out/'baseline-before-expansion.json.gz').read_bytes()))
     observed=json.loads(archived(out/'capture/suite-capture/suite-observations.json'))
     counts,after=suite.compare(json.loads(primary),observed)
-    assert json.loads((ROOT/'tests/oracle/clojure-test-suite-known-failures.json').read_bytes())==after
+    assert json.loads((ROOT/'tests/oracle/clojure-test-suite-known-failures.json').read_bytes())==advance_root_diagnostics(after)
     assert before['tests']==after['tests'] and before['skip-mismatches']==after['skip-mismatches']==[]
     added={f'clojure.core-test.num/test-num#{n}':('count:26/18' if n<=18 else 'unexpected-assertion') for n in range(1,27)}
     added['clojure.core-test.remove/test-remove#18']='verdict:fail'
@@ -65,6 +67,7 @@ def main():
       'vendor/clojure-test-suite/upstream/test/clojure/core_test/remove.cljc':'e0e443aed3f83f024be9747f993022628a9f07958a87b3dacd484a85c984959f'}
     assert all(sha((ROOT/p).read_bytes())==h for p,h in contracts.items())
     print(json.dumps({'historical_capture_counts':counts,'preserved_numeric_tagged_host_matches':preserved['numeric_tagged_host_matches'],
+        'reviewed_root_diagnostic_advances':['clojure.core-test.add-watch','clojure.core-test.remove-watch'],
         'current_ledger_sha256':sha((ROOT/'tests/oracle/clojure-test-suite-known-failures.json').read_bytes()),
         'primary_unchanged':True,'comparator_unchanged':True,'loaded_namespaces':sorted(loaded),'advanced_dependencies':advanced,
         'new_explicit_failures':added,'complete_default_num':dc,'contracts':contracts,

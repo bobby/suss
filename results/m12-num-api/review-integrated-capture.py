@@ -4,6 +4,8 @@ import gzip,hashlib,json,subprocess,sys
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'scripts'))
 import clojure_test_suite as suite
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from reviewed_root_diagnostics import advance_root_diagnostics
 sha=lambda raw:hashlib.sha256(raw).hexdigest()
 def archived(path):
     return path.read_bytes() if path.exists() else gzip.decompress(path.with_name(path.name+'.gz').read_bytes())
@@ -22,7 +24,8 @@ def main():
     primary=json.loads((ROOT/'tests/oracle/clojure-test-suite-observations.json').read_bytes())
     assert [(r['test'],r['ordinal']) for r in observed['assertions']]==[(r['test'],r['ordinal']) for r in old['assertions']]
     counts,failures=suite.compare(primary,observed)
-    assert (counts,failures)==suite.compare(primary,old)
+    old_counts,old_failures=suite.compare(primary,old)
+    assert counts==old_counts and failures==advance_root_diagnostics(old_failures)
     assert failures==json.loads((ROOT/'tests/oracle/clojure-test-suite-known-failures.json').read_bytes())
     refs={r['id']:r for r in primary['assertions']};actual={r['test']+'#'+str(r['ordinal']):r for r in observed['assertions']}
     preserved=0
