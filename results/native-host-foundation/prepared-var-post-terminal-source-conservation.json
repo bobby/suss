@@ -1,0 +1,30 @@
+{
+  "tested_implementation_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "qualification": "Post-terminal technical evidence edits only; all runtime/test/fixture/tool/manifest/config inputs are conserved from the exact successful a97 full baseline. No later-head CI or independent-review success claim.",
+  "full_frozen_inputs": 8964,
+  "unchanged_full_inputs": 8961,
+  "only_changed_frozen_inputs": [
+    "docs/roadmap/handoff.md",
+    "results/native-host-foundation/current-acceptance-validation.json",
+    "results/native-host-foundation/fresh-var-checkpoint-finding.json"
+  ],
+  "broader_runtime_test_fixture_contract_inputs_conserved": 3251,
+  "new_paths_are_technical_receipts_and_audits": true,
+  "new_technical_paths": [
+    "results/native-host-foundation/audit-prepared-var-ci.py.gz",
+    "results/native-host-foundation/audit-prepared-var-full.py.gz",
+    "results/native-host-foundation/audit-prepared-var-workspace-capture.py.gz",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/capture/fixture-observations.json",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/capture/map-transport-observations.json",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/capture/suite-observations.json",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/commands.json",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/deleted.json",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/exact-two-thread-workspace.log",
+    "results/native-host-foundation/exact-workspace-prepared-var-checkpoint/runner.py.gz",
+    "results/native-host-foundation/prepared-var-ci-audit.json",
+    "results/native-host-foundation/prepared-var-current-ci-regressions.json",
+    "results/native-host-foundation/prepared-var-exact-workspace-audit.json",
+    "results/native-host-foundation/prepared-var-post-terminal-source-conservation.json",
+    "results/native-host-foundation/prepared-var-workspace-capture-audit.json"
+  ]
+}

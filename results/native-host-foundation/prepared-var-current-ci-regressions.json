@@ -1,0 +1,18 @@
+{
+  "head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "run": 45956702088,
+  "job": {
+    "job": "integration (4)",
+    "id": "140364730553",
+    "conclusion": "success",
+    "log_sha256": "5807324539a957426d801d97dde2e210dcc33a3f7c0bcba2f8fc42d2e91afa04",
+    "passed_groups": 46,
+    "passed_test_executions": 261
+  },
+  "all_three_current_regressions_passed": [
+    "review_regression_evaluation_capability_preserves_actual_unary_operand_types",
+    "review_regression_fresh_staged_var_metadata_restores_escaped_identity",
+    "review_regression_staged_metadata_rolls_back_after_publication_fuel_cut"
+  ],
+  "qualification": "Actual current-head integration4 terminal success; whole CI, exact local full and follow-up review remain pending."
+}
