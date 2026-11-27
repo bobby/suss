@@ -1,0 +1,7 @@
+{
+  "comparison_actual_exit": 1,
+  "native_actual_exit": 0,
+  "actual": "false\n",
+  "expected": "true",
+  "native_receipt_sha256": "5f6eb861c9c37f71f5aff252d4433a5193ded0536dda3b88679b5d2e40d80599"
+}

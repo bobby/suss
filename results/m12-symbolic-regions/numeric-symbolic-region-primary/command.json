@@ -1,0 +1,41 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-symbolic-region-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 1.0240332488901913,
+  "source_sha256": "aaac9c2633c4cb2fe1a80f7bad846220fd3adef19e1f8e419631f943a4e7360b",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "forms": [
+    "(let [f (fn [x] (if x ##NaN (try ##NaN (finally nil))))] (identical? (f true) (f false)))",
+    "(let [f (fn [x] (if x ##Inf (try ##Inf (finally nil))))] (identical? (f true) (f false)))",
+    "(let [f (fn [x] (if x ##NaN (binding [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "(let [f (fn [x] (if x 1.5 (try 1.5 (finally nil))))] (identical? (f true) (f false)))",
+    "(let [f (fn [] (try 1.5 (finally nil)))] (identical? (f) (f)))",
+    "(let [f (fn [x] (if x ##NaN (try ((fn [] ##NaN)) (finally nil))))] (identical? (f true) (f false)))",
+    "(let [f (fn ([] ##NaN) ([x] (try ##NaN (finally nil))))] (identical? (f) (f 0)))",
+    "(let [a (atom nil) f (fn [] (try ##NaN (finally (reset! a ##NaN))))] (identical? (f) @a))",
+    "(let [f (fn [x] (if x ##NaN (try (throw (ex-info \"x\" {})) (catch Throwable e ##NaN))))] (identical? (f true) (f false)))"
+  ],
+  "observations": [
+    "true",
+    "true",
+    "true",
+    "false",
+    "true",
+    "false",
+    "true",
+    "true",
+    "true"
+  ],
+  "qualification": "Supplemental pinned primary controls for compiler region sharing and real nested-function/finite-literal boundaries. No native result or defect claim."
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "try-nan",
+    "expression": "(let [f (fn [x] (if x ##NaN (try ##NaN (finally nil))))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x ##NaN (try ##NaN (finally nil))))] (identical? (f true) (f false)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "try-infinity",
+    "expression": "(let [f (fn [x] (if x ##Inf (try ##Inf (finally nil))))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x ##Inf (try ##Inf (finally nil))))] (identical? (f true) (f false)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "binding-nan",
+    "expression": "(let [f (fn [x] (if x ##NaN (binding [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x ##NaN (binding [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "distinct-finite-regions",
+    "expression": "(let [f (fn [x] (if x 1.5 (try 1.5 (finally nil))))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x 1.5 (try 1.5 (finally nil))))] (identical? (f true) (f false)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "retained-finite-region",
+    "expression": "(let [f (fn [] (try 1.5 (finally nil)))] (identical? (f) (f)))",
+    "native_expression": "(let [f (fn [] (try 1.5 (finally nil)))] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "nested-real-function",
+    "expression": "(let [f (fn [x] (if x ##NaN (try ((fn [] ##NaN)) (finally nil))))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x ##NaN (try ((fn [] ##NaN)) (finally nil))))] (identical? (f true) (f false)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "method-and-region",
+    "expression": "(let [f (fn ([] ##NaN) ([x] (try ##NaN (finally nil))))] (identical? (f) (f 0)))",
+    "native_expression": "(let [f (fn ([] ##NaN) ([x] (try ##NaN (finally nil))))] (identical? (f) (f 0)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "cleanup-shares-pool",
+    "expression": "(let [a (atom nil) f (fn [] (try ##NaN (finally (reset! a ##NaN))))] (identical? (f) @a))",
+    "native_expression": "(let [a (atom nil) f (fn [] (try ##NaN (finally (reset! a ##NaN))))] (identical? (f) @a))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "catch-shares-pool",
+    "expression": "(let [f (fn [x] (if x ##NaN (try (throw (ex-info \"x\" {})) (catch Throwable e ##NaN))))] (identical? (f true) (f false)))",
+    "native_expression": "(let [f (fn [x] (if x ##NaN (try (throw (ex-info \"x\" {})) (catch :default e ##NaN))))] (identical? (f true) (f false)))",
+    "observed_edn": "true"
+  }
+]

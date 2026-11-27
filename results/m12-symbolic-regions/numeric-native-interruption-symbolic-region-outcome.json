@@ -1,0 +1,11 @@
+{
+  "head": "9c33e2277bd36ce5b778d60ea926cc8bad34918a",
+  "actual_outer_exit": 101,
+  "actual_interrupted_target": "portable_aot_wit_numbers",
+  "actual_signal": "SIGTERM",
+  "reason": "Intentional cancellation after independent region-sharing mismatch. No completed native acceptance is claimed.",
+  "source_tools_runner_conserved_and_archived": true,
+  "receipt_sha256": "31c62bdc4e4b58f0ac1ed2e322d42ecd31f9c51794c4f9be24aded4e1dada4b4",
+  "log_sha256": "ea792445aef175aad401ee3f1798c57cf8f389d5ba9025ad6c05a6931fd6a053",
+  "stop_helper_observation": "A post-signal guard raised AssertionError before persisting the target PID list. The initial request remains unchanged; exact signaled descendant IDs were not recorded. The actual native log preserves the SIGTERM outcome."
+}
