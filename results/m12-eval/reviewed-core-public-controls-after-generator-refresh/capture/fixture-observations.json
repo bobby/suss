@@ -1,0 +1,722 @@
+{
+  "assertions": [
+    {
+      "head": null,
+      "kind": "value",
+      "ordinal": 1,
+      "source-head": null,
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "let",
+      "kind": "value",
+      "ordinal": 2,
+      "source-head": "let",
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 3,
+      "source-head": "and",
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "value": {
+        "tag": "long",
+        "value": "1"
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": null,
+      "kind": "value",
+      "ordinal": 4,
+      "source-head": null,
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "value": {
+        "name": {
+          "tag": "string",
+          "units": [
+            107,
+            119
+          ]
+        },
+        "namespace": {
+          "tag": "nil"
+        },
+        "tag": "keyword"
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 5,
+      "source-head": "p/thrown?",
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    107
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    107
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/values-and-throws",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/templates-and-effects",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "3"
+        },
+        {
+          "tag": "long",
+          "value": "3"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/templates-and-effects",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "0"
+        },
+        {
+          "tag": "long",
+          "value": "0"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/templates-and-effects",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/templates-and-effects",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/templates-and-effects",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "3"
+        },
+        {
+          "tag": "long",
+          "value": "3"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "tag": "long",
+                "value": "1"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  120
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  120
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            97,
+            98
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            97,
+            98
+          ]
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "8000000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "8000000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "2"
+        },
+        {
+          "tag": "long",
+          "value": "2"
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.harness-test.basics/predicates",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98,
+                  101,
+                  102,
+                  111,
+                  114,
+                  101
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98,
+                  101,
+                  102,
+                  111,
+                  114,
+                  101
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.fixtures/second-test",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98,
+                  101,
+                  102,
+                  111,
+                  114,
+                  101
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98,
+                  101,
+                  102,
+                  111,
+                  114,
+                  101
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.harness-test.fixtures/first-test",
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.harness-test.basics",
+      "status": "loaded"
+    },
+    {
+      "namespace": "clojure.harness-test.fixtures",
+      "status": "loaded"
+    },
+    {
+      "diagnostic": "clojure.harness-test.skips (Some(\"<root>/clojure/harness_test/skips.cljc\")): Unresolved Runtime name host-only-fn at bytes 371..455",
+      "namespace": "clojure.harness-test.skips",
+      "stage": "namespace",
+      "status": "failure"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

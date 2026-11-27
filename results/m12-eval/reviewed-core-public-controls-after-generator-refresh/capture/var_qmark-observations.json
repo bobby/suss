@@ -1,0 +1,626 @@
+{
+  "assertions": [
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.var-qmark/test-var?",
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.var-qmark",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

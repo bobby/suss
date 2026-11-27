@@ -1,0 +1,110 @@
+{
+  "source_head": "41725409c6f4ae29bc4cb56f2fedf6ebc079343b",
+  "phase": "reviewed-core-public-controls-after-generator-refresh",
+  "actual_exit": 0,
+  "frozen_inputs": 12617,
+  "inputs_head_runner_tools_jars_conserved": true,
+  "runner_archived": true,
+  "rust_test_executions": 119,
+  "counts_by_command": {
+    "complete-public-eval-controls": 90,
+    "inherited-core-repair-regressions": 3,
+    "complete-original-upstream-bodies-and-guards": 22,
+    "java-node-free-bootstrap": 4,
+    "core-import-source-check": 0,
+    "final-source-provenance": 0
+  },
+  "fresh_primary_controls": 24,
+  "fresh_primary_receipt": {
+    "phase": "reviewed-core-public-controls",
+    "head": "41725409c6f4ae29bc4cb56f2fedf6ebc079343b",
+    "receipt_sha256": "fbec22d5af92c0012a6f7c3c2434248462fc290f003856982ecdefa840e9010a",
+    "commands": [
+      {
+        "name": "source-provenance",
+        "command": [
+          "python3",
+          "results/m12-eval/verify-live-vars.py"
+        ],
+        "complete": true,
+        "pid": 3281837,
+        "exit_code": 0,
+        "seconds": 0.15350062306970358,
+        "stdout_sha256": "2928287639289a63e06682a3f19a24886094e0c23f2aa491933a54c8f9179941",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "retained-primary-fixtures",
+        "command": [
+          "python3",
+          "results/m12-eval/verify-primary.py"
+        ],
+        "complete": true,
+        "pid": 3281895,
+        "exit_code": 0,
+        "seconds": 0.1887227250263095,
+        "stdout_sha256": "7f48faed53e8d4b512974122f7c62f8611f8f61223bd0824bab28ca911269c90",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "fresh-primary-controls",
+        "command": [
+          "java",
+          "-Xmx512m",
+          "-cp",
+          "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+          "clojure.main",
+          "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/primary/oracle.clj"
+        ],
+        "complete": true,
+        "pid": 3281909,
+        "exit_code": 0,
+        "seconds": 1.188858747947961,
+        "stdout_sha256": "23d5e859d4430c4af3aa58b3a335a46dbc952f042aea81217f0e2a371e623c76",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "primary_controls": 24,
+        "ordered_primary_observations_equal": true,
+        "semantic_check_exit_code": 0
+      }
+    ],
+    "all_prior_source_inputs_still_conserved": true,
+    "qualification": "Prior source/primary commands actually passed on identical source. Only the cached generator build artifact was refreshed; no native test executed in that failed-build attempt."
+  },
+  "complete_original_eval_body": {
+    "rows": 34,
+    "host_matches": 29,
+    "guest_ordinals": [
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "unexecuted": 0,
+    "skips": 0,
+    "numeric_rows_independent_host_matches": [
+      5,
+      6,
+      7
+    ]
+  },
+  "full_capture_rows": 5564,
+  "parent_capture_rows": 5530,
+  "all_parent_ids_order_and_decisions_preserved": true,
+  "only_new_ids_are_the_original_34_eval_rows": true,
+  "counts": {
+    "pass": 5354,
+    "guest-judged": 106,
+    "fail": 105,
+    "not-executed": 1374,
+    "skipped": 0,
+    "namespaces-failed": 63
+  },
+  "failure_ledger_exact": true,
+  "protected_original_files": {
+    "crates/suss-compile/tests/support/pinned_eval_body.rs": "850134f328f985e80db35f684a30077565d926b9a44d4f887fb8b3478d98ea83",
+    "vendor/clojure-test-suite/upstream/test/clojure/core_test/eval.cljc": "10e081daf9f51f5859c5bdce9354ebb90c1760aaec2660c6f2018bbe500635e1"
+  },
+  "capture_sha256": "7e9bb4491c742753233d1ed9eb75c826b12c92869ba0c42461e576bc39a761e3",
+  "qualification": "Actual scoped native consumer execution/capture and bootstrap only. Exact consumer workspace, independent promotion review and final published-head CI remain required. Complete numeric criteria/tagged host corpus remain in the numeric consumer."
+}
