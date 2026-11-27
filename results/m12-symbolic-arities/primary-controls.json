@@ -1,0 +1,52 @@
+[
+  {
+    "name": "fixed-nan",
+    "expression": "(let [f (fn ([] ##NaN) ([x] ##NaN))] [(identical? (f) (f)) (identical? (f 0) (f 1)) (identical? (f) (f 0))])",
+    "observed_edn": "[true true true]"
+  },
+  {
+    "name": "fixed-infinity",
+    "expression": "(let [f (fn ([] ##Inf) ([x] ##Inf))] (identical? (f) (f 0)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "fixed-finite-double",
+    "expression": "(let [f (fn ([] 1.5) ([x] 1.5))] (identical? (f) (f 0)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "separate-function-nan",
+    "expression": "(let [f (fn [] ##NaN) g (fn [] ##NaN)] (identical? (f) (g)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "fixed-negative-infinity",
+    "expression": "(let [f (fn ([] ##-Inf) ([x] ##-Inf))] (identical? (f) (f 0)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "variadic-nan",
+    "expression": "(let [f (fn ([] ##NaN) ([x & xs] ##NaN))] [(identical? (f) (f 0)) (identical? (f) (f 0 1))])",
+    "observed_edn": "[true true]"
+  },
+  {
+    "name": "same-function-instances",
+    "expression": "(let [make (fn [] (fn ([] ##NaN) ([x] ##NaN))) f (make) g (make)] [(identical? (f) (g)) (identical? (f) (g 0))])",
+    "observed_edn": "[true true]"
+  },
+  {
+    "name": "nested-function-boundaries",
+    "expression": "(let [f (fn ([] (fn [] ##NaN)) ([x] (fn [] ##NaN)))] (identical? ((f)) ((f 0))))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "distinct-finite-literal-sites",
+    "expression": "(let [f (fn ([] 1N) ([x] 1N))] [(identical? (f) (f)) (identical? (f 0) (f 1)) (identical? (f) (f 0))])",
+    "observed_edn": "[true true false]"
+  },
+  {
+    "name": "independent-infinity-functions",
+    "expression": "(let [f (fn [] ##Inf) g (fn [] ##Inf)] (identical? (f) (g)))",
+    "observed_edn": "false"
+  }
+]

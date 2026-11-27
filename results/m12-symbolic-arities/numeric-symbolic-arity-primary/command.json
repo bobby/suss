@@ -1,0 +1,31 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-symbolic-arity-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 3.4420919101685286,
+  "source_sha256": "2dfbaa5db248592c1d52f4f2f3c84856efadc8a58f1ab59a0909ebd3f8ccafd6",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "forms": [
+    "(let [f (fn ([] ##NaN) ([x] ##NaN))] [(identical? (f) (f)) (identical? (f 0) (f 1)) (identical? (f) (f 0))])",
+    "(let [f (fn ([] ##Inf) ([x] ##Inf))] (identical? (f) (f 0)))",
+    "(let [f (fn ([] 1.5) ([x] 1.5))] (identical? (f) (f 0)))",
+    "(let [f (fn [] ##NaN) g (fn [] ##NaN)] (identical? (f) (g)))"
+  ],
+  "observations": [
+    "[true true true]",
+    "true",
+    "false",
+    "false"
+  ],
+  "qualification": "Four supplemental pinned primary controls only; no current native execution or defect claim."
+}
