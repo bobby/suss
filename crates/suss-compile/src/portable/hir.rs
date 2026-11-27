@@ -562,7 +562,7 @@ impl Bitwise {
                 | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
             Type::Value
         } else {
             Type::Number

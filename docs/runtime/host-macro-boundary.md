@@ -58,6 +58,10 @@ private capabilities after selecting candidates. Returning a live object to its
 source must unwrap the original root. Strings are actual i16 arrays, not lossy
 UTF-8 conversions. Numeric semantics themselves are defined by ADR-0003.
 
+The evaluation capability returns a general value. Its compiler result type
+cannot promise a number: an evaluated string, boolean or collection must retain
+its actual category, including when unary arithmetic checks the returned value.
+
 ## Context, errors and resources
 
 The executing owner supplies namespace state and cells. Borrowed execution uses
@@ -119,6 +123,11 @@ their completed writes become the journal baseline before that publication.
 Ordinary helper writes remain language writes, including during a later staged
 declaration. Rollback consults both the actual metadata root and its independent
 ownership marker; root equality alone cannot identify the last writer.
+
+Declaration execution records actual staged metadata on both success and failure,
+before propagating the execution result. Publication can precede a later fuel
+trap. The reserved native journal reads also run with exhausted guest fuel and
+execute no guest code; the original execution failure keeps its category.
 
 Compiler publication derives macro status from raw declaration metadata. A
 statically absent literal `:macro` key yields false without per-definition core

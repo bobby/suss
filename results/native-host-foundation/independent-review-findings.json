@@ -1,0 +1,95 @@
+{
+  "review_head": "4cc4e29059239e8b59bf49ce9c56222900c1904a",
+  "reviewer": "/root/review_foundation_521_final_xhigh",
+  "scope": "Full actual main5ce-to-foundation4cc diff; both seven-criterion issues retained. Reviewer confirmed57 mapped passes and2643 source/fixture hashes.",
+  "findings": [
+    {
+      "id": "metadata-publication-cut",
+      "severity": "P2",
+      "path": "crates/suss-compile/src/portable_macros.rs",
+      "line_at_review": 519,
+      "before": "A compilation fuel error at cuts8761..8789 restores root23 but leaves rejected metadata doc after instead of before, in Runtime and Macro.",
+      "cause": "Normal-return-only journal recording skips already published staged metadata on error.",
+      "fix": "Record actual staged metadata after declaration execution on either outcome, then propagate the original result/error category.",
+      "regression": "review_regression_staged_metadata_rolls_back_after_publication_fuel_cut"
+    },
+    {
+      "id": "evaluation-result-type",
+      "severity": "P2",
+      "path": "crates/suss-compile/src/portable/hir.rs",
+      "line_at_review": 565,
+      "before": "Unary arithmetic accepts strings/booleans from EvaluateForm while equivalent identity operands throw.",
+      "cause": "EvaluateForm defaults to Type::Number and bypasses the unary operand check.",
+      "fix": "Return Type::Value for EvaluateForm.",
+      "regression": "review_regression_evaluation_capability_preserves_actual_unary_operand_types"
+    }
+  ],
+  "negative_probe_qualification": "Broad scan execute exit42 denotes detection, not conformance. Terminal-adjacent narrow probe found no leak; the earlier publication window did. Refined execute0 denotes completed observations, including repeated leaks, not a semantic pass. Original source/head/library hashes are retained in receipts.",
+  "before_regression": {
+    "phase": "review-findings-before-compiled-fixture",
+    "actual_cargo_exit": 101,
+    "passed": 0,
+    "failed": 2,
+    "both_phases_observed": true,
+    "valid_metadata_mismatches": 6
+  },
+  "invalid_initial_test_compile": {
+    "phase": "review-findings-before",
+    "actual_cargo_exit": 101,
+    "qualification": "Test expected-vector construction required Clone, which Observation does not implement. No tests executed; fixed without changing expectations and retained separately."
+  },
+  "after_regression": {
+    "phase": "review-findings-after",
+    "actual_cargo_exit": 0,
+    "passed": 2,
+    "failed": 0,
+    "seconds": 188.16155473329127,
+    "qualification": "Current dirty source with both implementation fixes; frozen-source receipt and overlay archived. Broader checks, fresh full baseline, follow-up review and final-head CI remain required."
+  },
+  "copied_probe_files": [
+    "probe.rs",
+    "broad_probe.rs",
+    "refined_probe.rs",
+    "run.py",
+    "broad_run.py",
+    "refined_run.py",
+    "commands.json",
+    "compile.stderr",
+    "compile.stdout",
+    "execute.stderr",
+    "execute.stdout",
+    "broad-scan/commands.json",
+    "broad-scan/compile.stderr",
+    "broad-scan/compile.stdout",
+    "broad-scan/execute.stderr",
+    "broad-scan/execute.stdout",
+    "refined/commands.json",
+    "refined/compile.stderr",
+    "refined/compile.stdout",
+    "refined/execute.stderr",
+    "refined/execute.stdout"
+  ],
+  "file_sha256": {
+    "probe.rs": "74e4e32209e368745c203aa55dfb93e82801747b372da5249c78b0cf72253f6d",
+    "broad_probe.rs": "da492fb926eefcc8c20e875a1a9566d2228c8333806db2feee27e10d3c404526",
+    "refined_probe.rs": "f72078a8b219c95704c13bdf50be9770a79a1993d9ed33c82d2a184df7cfc097",
+    "run.py": "66a4563d54688b8dbe0da1fb17a4993f72915c95e393cafd1c5ac23ce3fc4516",
+    "broad_run.py": "7c1421eee7c9bca8fe20b4d728da4b536cde3eb894a7de65d67638ade117acc5",
+    "refined_run.py": "9effb9630950b384bc1bcdaccd55d104d6a6f9bf58d1e26a06a88d2b9ed1b721",
+    "commands.json": "6662e5e0a3d251d413dbf75aaf421fdac7600c1a64340c4b523446517d7772a5",
+    "compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "execute.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "execute.stdout": "02a2cea5187aa87e38d3f951bb60248f57d09916cc793749c786fcdb4611b16d",
+    "broad-scan/commands.json": "775d4ef08618e6bd4ad320807f36cc4dc33b78438a4c682865f8910e7cf5235c",
+    "broad-scan/compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "broad-scan/compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "broad-scan/execute.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "broad-scan/execute.stdout": "c1f039eec8a29a7bfcc2ffe903a95dcfef4129a5b48289cad172c31192415602",
+    "refined/commands.json": "8227706781edc8d801ee2a93221250f9215274781875d13facfff58335bf7f1e",
+    "refined/compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "refined/compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "refined/execute.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "refined/execute.stdout": "6e1c9f38ccfcf5f4329cfc982a9bcf781490cd0e0ffff215785a37418890946e"
+  }
+}

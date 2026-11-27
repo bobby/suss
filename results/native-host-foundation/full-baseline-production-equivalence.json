@@ -9,5 +9,6 @@
   "source_input_map": "results/native-host-foundation/current-acceptance-validation.json#latest_production_input_hashes",
   "validation_index_sha256": "c45ec1f57d2630c0ac3348b50a0c329d95619e78f9481b84ca5c62af10266b21",
   "receipt": "results/native-host-foundation/exact-workspace-artifact-publication/commands.json",
-  "qualification": "The follow-up publishes the original actual full execution receipt/capture/audit and technical handoff. Tested production source and fixtures remain byte-exact; the full command ran on4b, not on a later evidence-only commit. Independent review/fixes and passing final-head CI remain required."
+  "qualification": "Historical equivalence proof for evidence-only checkpoint4cc against tested implementation4b. This does not assert unchanged production after later review fixes. Use the review-fix receipts/current index and its next exact full execution for repaired-source validation.",
+  "evidence_checkpoint": "4cc4e29059239e8b59bf49ce9c56222900c1904a"
 }

@@ -516,16 +516,23 @@ impl MacroHost<'_> {
             ).map_err(SessionError::Compile)?;
             let span = declaration.span.clone();
             let pending = self.prepare_macro_definition(&declaration, span, Some(&module.origin), true)?;
-            self.commit_staged_macro_definition(pending)?;
-            if let Some(global) = metadata_global {
-                // Native metadata reads only; no guest call under this guard.
-                for transaction in &mut catalog(&self.catalog).declaration_transactions {
-                    if let Some(checkpoint) = transaction.metadata.get_mut(&global) {
-                        self.session.record_var_metadata_write(checkpoint)?;
+            let initialized = self.commit_staged_macro_definition(pending);
+            // Publication can finish before a later fuel trap. Record its
+            // actual metadata even on failure, before rejecting the input.
+            // These native reads were reserved before entering Wasm and do
+            // not execute guest code or require remaining guest fuel.
+            let recorded = (|| {
+                if let Some(global) = metadata_global {
+                    for transaction in &mut catalog(&self.catalog).declaration_transactions {
+                        if let Some(checkpoint) = transaction.metadata.get_mut(&global) {
+                            self.session.record_var_metadata_write(checkpoint)?;
+                        }
                     }
                 }
-            }
-            Ok(())
+                Ok(())
+            })();
+            // Preserve the original failure category if recording also fails.
+            initialized.and(recorded)
         })();
         catalog(&self.catalog).inline_modules.push(module);
         result
