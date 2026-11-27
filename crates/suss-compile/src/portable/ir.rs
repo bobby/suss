@@ -196,6 +196,12 @@ pub struct GeneralClosureBody {
 }
 type SymbolicNumberSites = HashMap<u64, std::sync::Arc<()>>;
 
+#[derive(Clone, Copy)]
+enum LiteralPool {
+    NewFunction,
+    EnclosingFunction,
+}
+
 struct Lowerer<'a> {
     suspendable: bool,
     function: Function,
@@ -355,15 +361,83 @@ impl<'a> Lowerer<'a> {
         let ty = value.ty();
         self.emit(Operation::Literal(value), ty, span)
     }
-    fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
-        self.charge(expression_preallocation_work(hir), &hir.span)?;
-        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.expression_inner(hir))
+    fn closure(
+        &mut self, hir: &Hir, parameters: &[super::hir::Parameter],
+        captures: &[BindingId], body: &Hir, pool: LiteralPool,
+    ) -> Result<ValueId, Diagnostic> {
+        self.charge(captures.len().saturating_mul(2), &hir.span)?;
+        let mut captured = Vec::new();
+        let mut capture_types = Vec::new();
+        let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
+        for id in captures {
+            let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
+                span: hir.span.clone(),
+                message: "Undefined HIR capture".into(),
+            })?;
+            let ty = self.function.values[value.0].ty;
+            captured.push(value);
+            capture_types.push(ty);
+            inner_parameters.push((*id, ty, hir.span.clone()));
+        }
+        for parameter in parameters {
+            inner_parameters.push((parameter.id, Type::Value, parameter.span.clone()));
+        }
+        let inherited = matches!(pool, LiteralPool::EnclosingFunction)
+            .then(|| std::mem::take(&mut self.symbolic_number_sites));
+        let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
+        if let Some(sites) = inherited { inner.symbolic_number_sites = sites; }
+        for (id, ty, span) in inner_parameters {
+            inner.parameter(id, ty, span)?;
+            if let Some((_, slot)) = self.recursive.get(&id) {
+                inner.recursive.insert(id, (inner.bindings[&id], *slot));
+            }
+        }
+        let (function, sites) = inner.finish_with_sites(body)?;
+        if matches!(pool, LiteralPool::EnclosingFunction) {
+            self.symbolic_number_sites = sites;
+        }
+        let display_name = self.display_name(hir)?;
+        let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
+        self.emit(
+            Operation::MakeClosure {
+                body: Box::new(ClosureBody {
+                    display_name,
+                    arity_name: super::function_names::arity_name(hir),
+                    variadic: false,
+                    capture_types,
+                    arity: parameters.len(),
+                    primitive,
+                    function,
+                }),
+                captures: captured,
+            },
+            Type::Closure(parameters.len()),
+            hir.span.clone(),
+        )
     }
-    fn expression_inner(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+    fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+        self.expression_in(hir, LiteralPool::NewFunction)
+    }
+    fn expression_in(&mut self, hir: &Hir, pool: LiteralPool) -> Result<Option<ValueId>, Diagnostic> {
+        self.charge(expression_preallocation_work(hir), &hir.span)?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.expression_inner(hir, pool))
+    }
+    fn expression_inner(&mut self, hir: &Hir, pool: LiteralPool) -> Result<Option<ValueId>, Diagnostic> {
         // Divergent operands stop lowering following effects, including publication.
         macro_rules! operand {
             ($value:expr) => {
                 match self.expression($value)? {
+                    Some(value) => value,
+                    None => return Ok(None),
+                }
+            };
+        }
+
+        // These are compiler-created control regions, not source function
+        // definitions. Their constants belong to the enclosing function.
+        macro_rules! region {
+            ($value:expr) => {
+                match self.expression_in($value, LiteralPool::EnclosingFunction)? {
                     Some(value) => value,
                     None => return Ok(None),
                 }
@@ -455,7 +529,7 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
                 operands.extend(values);
-                operands.push(operand!(body));
+                operands.push(region!(body));
                 self.emit(
                     Operation::DynamicScope { roots: *roots, globals, operands },
                     Type::Value,
@@ -469,9 +543,9 @@ impl<'a> Lowerer<'a> {
             }
             Expression::Try { regions } => {
                 let regions = [
-                    operand!(&regions[0]),
-                    operand!(&regions[1]),
-                    operand!(&regions[2]),
+                    region!(&regions[0]),
+                    region!(&regions[1]),
+                    region!(&regions[2]),
                 ];
                 self.emit(Operation::Try { regions }, Type::Value, hir.span.clone())?
             }
@@ -650,54 +724,8 @@ impl<'a> Lowerer<'a> {
                 }
                 self.emit(Operation::Call { operands, primitive }, Type::Value, hir.span.clone())?
             }
-            Expression::Function {
-                parameters,
-                captures,
-                body,
-            } => {
-                self.charge(captures.len().saturating_mul(2), &hir.span)?;
-                let mut captured = Vec::new();
-                let mut capture_types = Vec::new();
-                let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
-                for id in captures {
-                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
-                        span: hir.span.clone(),
-                        message: "Undefined HIR capture".into(),
-                    })?;
-                    let ty = self.function.values[value.0].ty;
-                    captured.push(value);
-                    capture_types.push(ty);
-                    inner_parameters.push((*id, ty, hir.span.clone()));
-                }
-                for parameter in parameters {
-                    inner_parameters.push((parameter.id, Type::Value, parameter.span.clone()));
-                }
-                let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
-                for (id, ty, span) in inner_parameters {
-                    inner.parameter(id, ty, span)?;
-                    if let Some((_, slot)) = self.recursive.get(&id) {
-                        inner.recursive.insert(id, (inner.bindings[&id], *slot));
-                    }
-                }
-                let function = inner.finish(body)?;
-                let display_name = self.display_name(hir)?;
-                let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
-                self.emit(
-                    Operation::MakeClosure {
-                        body: Box::new(ClosureBody {
-                            display_name,
-                            arity_name: super::function_names::arity_name(hir),
-                            variadic: false,
-                            capture_types,
-                            arity: parameters.len(),
-                            primitive,
-                            function,
-                        }),
-                        captures: captured,
-                    },
-                    Type::Closure(parameters.len()),
-                    hir.span.clone(),
-                )?
+            Expression::Function { parameters, captures, body } => {
+                self.closure(hir, parameters, captures, body, pool)?
             }
             Expression::GeneralFunction {
                 methods,
