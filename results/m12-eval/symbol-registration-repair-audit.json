@@ -1,0 +1,29 @@
+{
+  "full_head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+  "full_phase": "exact-workspace-reviewed-core-eval-disk-tmp",
+  "full_actual_exit": 0,
+  "full_passes": 2694,
+  "full_successful_groups": 378,
+  "full_original_ignores": 15,
+  "focused_head": "19f6fe2d4368f7477240333829be87f19569e92e",
+  "focused_phase": "registered-public-var-symbol-controls",
+  "focused_actual_exit": 0,
+  "focused_passes": 8,
+  "registered_test_names": [
+    "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+    "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+    "private_utf16_storage_handles_empty_search_surrogates_and_invalid_bounds",
+    "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+    "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding",
+    "retained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases",
+    "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities",
+    "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding"
+  ],
+  "only_changed_input": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+  "diff": "diff --git a/crates/suss-compile/tests/portable_symbol_conversion.rs b/crates/suss-compile/tests/portable_symbol_conversion.rs\nindex 11ffff6a..ba4b9d09 100644\n--- a/crates/suss-compile/tests/portable_symbol_conversion.rs\n+++ b/crates/suss-compile/tests/portable_symbol_conversion.rs\n@@ -290,0 +291 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_wi\n+}\n@@ -419,2 +419,0 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases()\n-\n-}\n",
+  "repair": "Move two previously nested regression functions to module scope; all test bodies, fixture and budget bytes remain unchanged.",
+  "frozen_input_count": 12660,
+  "inputs_head_runner_binaryen_conserved": true,
+  "archived": true,
+  "qualification": "The exact full command passed2694 on052668a3. After the registration-only change, the complete affected eight-test target passed on19f6fe2d. Six controls repeat the full baseline; two controls are newly registered and actually executed. This is source-qualified full-plus-focused evidence, not a claim that one exact full command executed2696 on19f6fe2d. Final-head independent review and CI remain required."
+}

@@ -34470,3 +34470,12 @@ There are 239 Rust test executions in this scoped batch. Source fixtures,
 case200M/map300M, artifact bounds 3900/128/+32 and guest/skip/comparator rules are
 unchanged. The earlier full success is tied to implementation `4b3a95c5`, before
 these repairs; it is not a repaired-source full-run result.
+
+
+### 2026-11-27: public eval workspace and registered Var controls
+
+- On `052668a3`, `cargo test --workspace --locked -- --test-threads=2` returned0 in12,551.37s:2,694 passing executions,378 successful groups and15 original ignores. All12,660 frozen inputs, HEAD, runner and Binaryen tools were conserved through terminal and archived before edits. See `results/m12-eval/exact-workspace-reviewed-core-eval-disk-tmp/` and `reviewed-exact-workspace-audit.json`.
+- The first exact attempt exited101 with EDQUOT122 during the unchanged build-cache copy on quota-enabled `/tmp`. All seven original cache guards subsequently passed with a task-owned workspace-disk TMPDIR, also used by the successful full command; both terminal attempts and the correction are retained.
+- Declaration/count reconciliation found two added tests nested inside another test. The actual baseline binary listed six symbol/Var tests and omitted those two functions. `19f6fe2d` moves only their enclosing brace: no runtime, fixture, test body or budget change. The rebuilt binary lists eight tests, and the complete `portable_symbol_conversion` target passed all eight in8.12s. Its actual source/tool hashes and runner are archived under `registered-public-var-symbol-controls/`; `symbol-registration-repair-audit.json` retains the source qualification. The exact full command executed2,694 on052668a3; it is not described as a2,696-test command on19f6fe2d.
+- The full capture contains5,564 rows, preserving all5,530 prior ordered IDs/decisions and adding only the unchanged34-row eval body:29 independent host matches, five original guest judgments, zero skipped/unexecuted eval rows. Numeric ordinals5/6/7 host-match independently. The global ledger remains105 known failures,63 blocked namespaces and1,374 unexecuted cases.
+- Independent review and published-head CI retain their own source identities. Complete numeric acceptance remains a separate consumer; no whole-language or numeric acceptance follows from this capture.

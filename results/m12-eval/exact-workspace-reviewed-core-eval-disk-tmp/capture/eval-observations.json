@@ -1,0 +1,1039 @@
+{
+  "assertions": [
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "0"
+        },
+        {
+          "tag": "long",
+          "value": "0"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "-1"
+        },
+        {
+          "tag": "long",
+          "value": "-1"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        },
+        {
+          "bits": "3ff0000000000000",
+          "tag": "f64"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bigint",
+          "value": "1"
+        },
+        {
+          "tag": "bigint",
+          "value": "1"
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "scale": 1,
+          "tag": "decimal",
+          "unscaled": "10"
+        },
+        {
+          "scale": 1,
+          "tag": "decimal",
+          "unscaled": "10"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "denominator": "2",
+          "numerator": "1",
+          "tag": "ratio"
+        },
+        {
+          "denominator": "2",
+          "numerator": "1",
+          "tag": "ratio"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            97,
+            32,
+            115,
+            116,
+            114,
+            105,
+            110,
+            103
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            97,
+            32,
+            115,
+            116,
+            114,
+            105,
+            110,
+            103
+          ]
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            40,
+            43,
+            32,
+            49,
+            32,
+            50,
+            41
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            40,
+            43,
+            32,
+            49,
+            32,
+            50,
+            41
+          ]
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": [
+            120
+          ]
+        },
+        {
+          "tag": "string",
+          "units": [
+            120
+          ]
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": true
+        },
+        {
+          "tag": "bool",
+          "value": true
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        },
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "nil"
+        },
+        {
+          "tag": "nil"
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              45,
+              107,
+              101,
+              121,
+              119,
+              111,
+              114,
+              100
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              45,
+              107,
+              101,
+              121,
+              119,
+              111,
+              114,
+              100
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "keyword"
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "var?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "var?",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "42"
+        },
+        {
+          "tag": "long",
+          "value": "42"
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        },
+        {
+          "entries": [
+            [
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    97
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              },
+              {
+                "name": {
+                  "tag": "string",
+                  "units": [
+                    98
+                  ]
+                },
+                "namespace": {
+                  "tag": "nil"
+                },
+                "tag": "keyword"
+              }
+            ]
+          ],
+          "tag": "map"
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "tag": "long",
+              "value": "42"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  97
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  98
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "keyword"
+            },
+            {
+              "tag": "long",
+              "value": "42"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        },
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "5"
+        },
+        {
+          "tag": "long",
+          "value": "5"
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "6"
+        },
+        {
+          "tag": "long",
+          "value": "6"
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "42"
+        },
+        {
+          "tag": "long",
+          "value": "42"
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "42"
+        },
+        {
+          "tag": "long",
+          "value": "42"
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "43"
+        },
+        {
+          "tag": "long",
+          "value": "43"
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "43"
+        },
+        {
+          "tag": "long",
+          "value": "43"
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "eval",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "name": {
+                "tag": "string",
+                "units": [
+                  114,
+                  97,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              "namespace": {
+                "tag": "nil"
+              },
+              "tag": "symbol"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "reason": "Host error: ABI2 decoder range bounds/traversal limit",
+        "tag": "opaque"
+      },
+      "source-head": "eval",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "long",
+          "value": "1"
+        },
+        {
+          "tag": "long",
+          "value": "1"
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.eval/test-eval",
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.eval",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}
