@@ -999,6 +999,91 @@ fn metadata_normalization_and_language_writes_preserve_the_primary_map_identity(
 }
 
 #[test]
+fn review_regression_staged_metadata_rolls_back_after_publication_fuel_cut() {
+    use std::sync::{Arc, atomic::{AtomicU64, Ordering}};
+    use suss_compile::portable_repl;
+
+    let inspect = "(let [v (get (ns-interns 'user) 'staged-reload)] [(:doc (meta v)) ((deref v) nil nil)])";
+    let replacement = "(defmacro ^{:probe (do (suss.harness.observation/capture 99) nil)} staged-reload \"after\" [] 99)";
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        let session_for_phase = || if macro_phase {
+            Session::new_macro().unwrap()
+        } else { Session::new_repl().unwrap() };
+        let mut macros = CompiledMacros::new().unwrap();
+        let remaining = Arc::new(AtomicU64::new(u64::MAX));
+        let requested = remaining.clone();
+        macros.install_observation_hook(move |mut store, _| {
+            let fuel = requested.load(Ordering::SeqCst);
+            if fuel != u64::MAX { store.set_fuel(fuel)?; }
+            Ok(0)
+        }).unwrap();
+        // The ordinary setup/inspection allowance does not mask the fault:
+        // the observation callback cuts the actual declaration below 9k fuel.
+        // These values straddle the independently reproduced publication cut.
+        for fuel in [8750, 8760, 8761, 8768, 8789] {
+            remaining.store(u64::MAX, Ordering::SeqCst);
+            macros.set_operation_fuel(200_000_000);
+            macros.define("(defmacro staged-reload \"before\" [] 23)").unwrap();
+            let mut session = session_for_phase();
+            assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros, inspect).unwrap(), "[\"before\" 23]");
+            remaining.store(fuel, Ordering::SeqCst);
+            let error = portable_repl::evaluate_script_compiled(&mut session, &mut macros, replacement, None).unwrap_err();
+            remaining.store(u64::MAX, Ordering::SeqCst);
+            macros.set_operation_fuel(200_000_000);
+            let message = portable_repl::repl_error_display(&mut session, &macros, &error);
+            assert!(message.contains("fuel"), "macro phase {macro_phase}, cut {fuel}: {message}");
+            let mut fresh = session_for_phase();
+            fresh.collect().unwrap();
+            let observed = portable_repl::evaluate_compiled(&mut fresh, &mut macros, inspect).unwrap();
+            if observed != "[\"before\" 23]" {
+                failures.push(format!("macro phase {macro_phase}, cut {fuel}: {observed}"));
+            }
+        }
+        // The same declaration must publish normally once the cut is removed.
+        let mut session = session_for_phase();
+        portable_repl::evaluate_script_compiled(&mut session, &mut macros, replacement, None).unwrap();
+        let mut fresh = session_for_phase();
+        fresh.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut fresh, &mut macros, inspect).unwrap(), "[\"after\" 99]");
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn review_regression_evaluation_capability_preserves_actual_unary_operand_types() {
+    let program = r#"[
+        (try (+ (suss.bootstrap/evaluate-form "x")) :accepted (catch :default e (ex-message e)))
+        (try (+ (identity "x")) :accepted (catch :default e (ex-message e)))
+        (try (* (suss.bootstrap/evaluate-form false)) :accepted (catch :default e (ex-message e)))
+        (try (* (identity false)) :accepted (catch :default e (ex-message e)))
+        (try (+ (suss.bootstrap/evaluate-form nil)) :accepted (catch :default e (ex-message e)))
+        (try (+ (identity nil)) :accepted (catch :default e (ex-message e)))
+        (try (* (suss.bootstrap/evaluate-form [1])) :accepted (catch :default e (ex-message e)))
+        (try (* (identity [1])) :accepted (catch :default e (ex-message e)))
+    ]"#;
+    let wanted = expected(&suss_reader::forms::read_forms(r#"[
+        "+ requires number operands" "+ requires number operands"
+        "* requires number operands" "* requires number operands"
+        "+ requires number operands" "+ requires number operands"
+        "* requires number operands" "* requires number operands"
+    ]"#).unwrap()[0]);
+    let mut failures = Vec::new();
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let result = session.eval(program).unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        let observed = decoder.decode_session(&mut session, &result).unwrap();
+        if observed != wanted { failures.push(format!("{:?}: {observed:?}, expected {wanted:?}", session.phase())); }
+        let result = session.eval("(let [a (suss.bootstrap/evaluate-form 0) b (suss.bootstrap/evaluate-form 1N) c (suss.bootstrap/evaluate-form 1/3) d (suss.bootstrap/evaluate-form 1.50M)] [(identical? a (+ a)) (identical? a (* a)) (identical? b (+ b)) (identical? b (* b)) (identical? c (+ c)) (identical? c (* c)) (identical? d (+ d)) (identical? d (* d))])").unwrap();
+        session.collect().unwrap();
+        let mut decoder = Decoder::capture(&mut session, 40_000).unwrap();
+        assert_eq!(decoder.decode_session(&mut session, &result).unwrap(), Observation::Vector((0..8).map(|_| Observation::Bool(true)).collect()), "{:?}", session.phase());
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
 fn compiler_metadata_publication_keeps_original_helpers_and_live_user_expressions() {
     let forms = suss_reader::forms::read_forms("[:kept :user-replacement]").unwrap();
     let wanted = expected(&forms[0]);

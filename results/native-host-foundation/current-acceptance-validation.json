@@ -1,30 +1,8 @@
 {
-  "qualification": "Published implementation4b3a95c5 passes all scoped checks and the actual exact two-thread full workspace baseline, with archived source/runner/Binaryen conservation. The fresh full-run capture preserves original ordered IDs/decisions and reviewed failures. Historical negatives/interrupted runs retain exact qualifications. Independent review/fixes and passing final-head CI still gate promotion.",
+  "qualification": "Current repaired source passes both independent-review regressions and all12 broader scoped stages with frozen source/runner/Binaryen receipts. Original fixtures, budgets, artifact bounds and comparison rules are unchanged. The earlier exact full success ran on implementation4b and remains historical; a fresh full baseline, follow-up xhigh review and final-head CI are required for these repairs.",
   "commands": [
     {
-      "phase": "artifact-frame-discarded-publication-result",
-      "name": "all-namespace-and-artifact-frame-contracts",
-      "command": [
-        "cargo",
-        "test",
-        "--workspace",
-        "--locked",
-        "--test",
-        "runtime_namespaces",
-        "--",
-        "--nocapture",
-        "--test-threads=2"
-      ],
-      "complete": true,
-      "env_overrides": {},
-      "pid": 1971202,
-      "exit_code": 0,
-      "seconds": 192.15593343321234,
-      "rust_test_executions": 10
-    },
-    {
-      "phase": "artifact-frame-discarded-publication-result",
-      "name": "all-native-host-boundary",
+      "name": "all-native-host-boundaries-after-review",
       "command": [
         "cargo",
         "test",
@@ -38,14 +16,14 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1977147,
+      "pid": 2485283,
       "exit_code": 0,
-      "seconds": 94.79902503360063,
-      "rust_test_executions": 48
+      "seconds": 94.4901357376948,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 50
     },
     {
-      "phase": "artifact-frame-discarded-publication-result",
-      "name": "all-portable-library",
+      "name": "all-core-ownership-reentry-transport-library",
       "command": [
         "cargo",
         "test",
@@ -59,13 +37,34 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1980171,
+      "pid": 2488300,
       "exit_code": 0,
-      "seconds": 170.66101953200996,
+      "seconds": 167.69234396377578,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 140
     },
     {
-      "phase": "artifact-followup-broader-gates",
+      "name": "all-namespace-and-artifact-contracts",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_namespaces",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2493860,
+      "exit_code": 0,
+      "seconds": 14.50912473211065,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 10
+    },
+    {
       "name": "original-aot-metadata-constructor-control",
       "command": [
         "cargo",
@@ -81,13 +80,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1991369,
+      "pid": 2494352,
       "exit_code": 0,
-      "seconds": 38.217105623334646,
+      "seconds": 37.114376111887395,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 1
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "runtime-capability-contract",
       "command": [
         "cargo",
@@ -102,13 +101,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1992688,
+      "pid": 2495566,
       "exit_code": 0,
-      "seconds": 2.81362042715773,
+      "seconds": 2.6289734384045005,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 2
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "var-and-symbol-primary-controls",
       "command": [
         "cargo",
@@ -123,14 +122,14 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1992841,
+      "pid": 2495662,
       "exit_code": 0,
-      "seconds": 8.06575486715883,
+      "seconds": 7.993771984707564,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 6
     },
     {
-      "phase": "artifact-followup-broader-gates",
-      "name": "all-original-suite-guards",
+      "name": "original-six-pinned-source-and-budget-guards",
       "command": [
         "cargo",
         "test",
@@ -138,19 +137,20 @@
         "--locked",
         "--test",
         "clojure_test_suite",
+        "pinned_",
         "--",
         "--nocapture",
         "--test-threads=2"
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 1993144,
+      "pid": 2495945,
       "exit_code": 0,
-      "seconds": 611.9211044968106,
-      "rust_test_executions": 19
+      "seconds": 60.94899359205738,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 9
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "java-node-free-bootstrap",
       "command": [
         "sh",
@@ -158,13 +158,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 2011699,
+      "pid": 2497892,
       "exit_code": 0,
-      "seconds": 72.08274297509342,
+      "seconds": 70.64480162179098,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 4
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "core-import-source-verification",
       "command": [
         "python3",
@@ -173,12 +173,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 2014077,
+      "pid": 2500207,
       "exit_code": 0,
-      "seconds": 1.3055473561398685
+      "seconds": 1.3839787198230624,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 0
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "live-var-provenance-verification",
       "command": [
         "python3",
@@ -186,12 +187,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 2014119,
+      "pid": 2500274,
       "exit_code": 0,
-      "seconds": 0.11558971367776394
+      "seconds": 0.1203653309494257,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 0
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "original-metadata-and-source-projections",
       "command": [
         "cargo",
@@ -214,13 +216,13 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 2014160,
+      "pid": 2500279,
       "exit_code": 0,
-      "seconds": 249.80245347786695,
+      "seconds": 246.69307063985616,
+      "phase": "review-fixes-core-gates",
       "rust_test_executions": 17
     },
     {
-      "phase": "artifact-followup-broader-gates",
       "name": "python-script-tests",
       "command": [
         "python3",
@@ -234,30 +236,11 @@
       ],
       "complete": true,
       "env_overrides": {},
-      "pid": 2021731,
+      "pid": 2507845,
       "exit_code": 0,
-      "seconds": 17.67419056966901,
-      "python_tests": 364
-    },
-    {
-      "name": "exact-two-thread-workspace",
-      "command": [
-        "cargo",
-        "test",
-        "--workspace",
-        "--locked",
-        "--",
-        "--test-threads=2"
-      ],
-      "complete": true,
-      "env_overrides": {},
-      "pid": 2024420,
-      "exit_code": 0,
-      "seconds": 12892.661821860354,
-      "phase": "exact-workspace-artifact-publication",
-      "rust_test_executions": 2588,
-      "successful_test_groups": 377,
-      "existing_ignored_tests": 15
+      "seconds": 18.61392005905509,
+      "phase": "review-fixes-core-gates",
+      "rust_test_executions": 0
     }
   ],
   "source_inputs_conserved_per_batch": true,
@@ -273,7 +256,8 @@
       "skipped": 0,
       "namespaces-failed": 64
     },
-    "all_before_decisions_preserved": true
+    "all_before_decisions_preserved": true,
+    "qualification": "Historical capture of implementation4b; no fresh full repaired-source capture is claimed before the next exact workspace terminal."
   },
   "ledger_namespace_only_changes": 5,
   "independent_core_counterparts": 26,
@@ -595,6 +579,264 @@
       "exit_code": 0,
       "rust_test_executions": 8,
       "seconds": 13.936411396600306
+    },
+    {
+      "phase": "artifact-frame-discarded-publication-result",
+      "name": "all-namespace-and-artifact-frame-contracts",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_namespaces",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1971202,
+      "exit_code": 0,
+      "seconds": 192.15593343321234,
+      "rust_test_executions": 10
+    },
+    {
+      "phase": "artifact-frame-discarded-publication-result",
+      "name": "all-native-host-boundary",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "native_host_boundary",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1977147,
+      "exit_code": 0,
+      "seconds": 94.79902503360063,
+      "rust_test_executions": 48
+    },
+    {
+      "phase": "artifact-frame-discarded-publication-result",
+      "name": "all-portable-library",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--lib",
+        "portable_",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1980171,
+      "exit_code": 0,
+      "seconds": 170.66101953200996,
+      "rust_test_executions": 140
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "original-aot-metadata-constructor-control",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_aot_options",
+        "option_schema_survives_core_function_and_constructor_redefinition",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1991369,
+      "exit_code": 0,
+      "seconds": 38.217105623334646,
+      "rust_test_executions": 1
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "runtime-capability-contract",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_evaluation",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1992688,
+      "exit_code": 0,
+      "seconds": 2.81362042715773,
+      "rust_test_executions": 2
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "var-and-symbol-primary-controls",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_symbol_conversion",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1992841,
+      "exit_code": 0,
+      "seconds": 8.06575486715883,
+      "rust_test_executions": 6
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "all-original-suite-guards",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 1993144,
+      "exit_code": 0,
+      "seconds": 611.9211044968106,
+      "rust_test_executions": 19
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "java-node-free-bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2011699,
+      "exit_code": 0,
+      "seconds": 72.08274297509342,
+      "rust_test_executions": 4
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "core-import-source-verification",
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2014077,
+      "exit_code": 0,
+      "seconds": 1.3055473561398685
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "live-var-provenance-verification",
+      "command": [
+        "python3",
+        "results/m12-eval/verify-live-vars.py"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2014119,
+      "exit_code": 0,
+      "seconds": 0.11558971367776394
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "original-metadata-and-source-projections",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_export_metadata",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--test",
+        "compiled_macro_source_hint_boundaries",
+        "--test",
+        "compiled_macro_binding_records",
+        "--test",
+        "compiled_macro_field_records",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2014160,
+      "exit_code": 0,
+      "seconds": 249.80245347786695,
+      "rust_test_executions": 17
+    },
+    {
+      "phase": "artifact-followup-broader-gates",
+      "name": "python-script-tests",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2021731,
+      "exit_code": 0,
+      "seconds": 17.67419056966901,
+      "python_tests": 364
+    },
+    {
+      "name": "exact-two-thread-workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2024420,
+      "exit_code": 0,
+      "seconds": 12892.661821860354,
+      "phase": "exact-workspace-artifact-publication",
+      "rust_test_executions": 2588,
+      "successful_test_groups": 377,
+      "existing_ignored_tests": 15
     }
   ],
   "latest_production_inputs_conserved_across_batches": true,
@@ -885,7 +1127,7 @@
     "crates/suss-cli/tests/loop_invariant_reads.rs": "c5788899ff22f81877e0973588b600629c0883353d5f4d8d22377a697f7f7759",
     "crates/suss-cli/tests/map_lookups.rs": "85dfcf09d633bbaa2c54bdb79a08106a3c3c5c2f3f6b5999ee531e6adbf59f04",
     "crates/suss-cli/tests/namespace_session.rs": "44a67c629889698648ca0df1d22f68b16d8ea42d784355e2775af3b1e7eba97c",
-    "crates/suss-cli/tests/native_host_boundary.rs": "745459395d8323ab3164612b4b9dde21b229a1e0e81e43c8d894de826e6a17c9",
+    "crates/suss-cli/tests/native_host_boundary.rs": "a1014bb9540558bee2edf876cb26c188ec5355d41a5a24db297e96d93bdef10c",
     "crates/suss-cli/tests/native_repl_async_io.rs": "4adbcfe21031221fb659f3de6cb01db747331ea022c6a6ab57f0911630157c1a",
     "crates/suss-cli/tests/native_repl_async_pty.rs": "7ea81fe1aee48a2213bbcaff9f735b886194096b080b3e098547f1779daabac4",
     "crates/suss-cli/tests/numeric_operand_types.rs": "8d0709a33fc832191c398f1d86c3b246f924f04b82e837677a532e5d2d88ce41",
@@ -1047,7 +1289,7 @@
     "crates/suss-compile/src/portable/emit/unboxed/numeric_casts.rs": "8ae8eec83a26ca1f50754e38f2752b386fa7986267c9c6d94eba8a771a9e8411",
     "crates/suss-compile/src/portable/emit/unboxed/numeric_core.rs": "8490e76d65f83f18cb8b1d07ccfc06d5f2a9f94c8a6f0f03875cdf18315a117c",
     "crates/suss-compile/src/portable/function_names.rs": "3d0ccf5daa3798139ea86f1eb8afd7fcdf193cabe5c4bf66a8998b5220bcc7b7",
-    "crates/suss-compile/src/portable/hir.rs": "d2e522d888eb02fd027723957264b491775339344436eae7134fc4536609d689",
+    "crates/suss-compile/src/portable/hir.rs": "c5143ee24d549f25a9f7f1ea158602e32487286c1940420ed6800d39adcbe82b",
     "crates/suss-compile/src/portable/hir/arrays.rs": "e21204e50675313cde869e47f14a3e0c75bd1c329a3a463d7b460c9611bf63f8",
     "crates/suss-compile/src/portable/hir/bitwise.rs": "1b4b7797e3ce2e5f39a93da9bf4ba7a0849272f2985c3cdf860844dfd251a831",
     "crates/suss-compile/src/portable/hir/callable_signatures.rs": "71fd96242f893d9bef4e24ac95d341c6da89d2b770ec9e7b247bb4b81cc0f378",
@@ -1113,7 +1355,7 @@
     "crates/suss-compile/src/portable_macro_graph/plan_scratch_tests.rs": "d9c0fc740044d74365783c3882dcc22165f28b38aa4905ff97ea1790961bd781",
     "crates/suss-compile/src/portable_macro_graph/raw_heads.rs": "9e2ebf16f040130c0a2aea66dd337913b4cc181cc879d1dcde77a9cb0dce49ab",
     "crates/suss-compile/src/portable_macro_graph/raw_keys.rs": "3a8712f924f2f83e3d56422f883a766cd40f58173fcdf225e6aad0372e9cec0e",
-    "crates/suss-compile/src/portable_macros.rs": "b31de94a6c6c12251beb43ec7cbd4b3aa186aeeb934303cb74c3f0bee3f2c19f",
+    "crates/suss-compile/src/portable_macros.rs": "bbb791e0599744f39c350420b32532b5afbbeacfa0570024dc6653080f3917e3",
     "crates/suss-compile/src/portable_macros/definitions.rs": "8d7e8b5a8f7e9741c868b78916ec08131fec1ad22f9ab3d3dd22d941edc8f73e",
     "crates/suss-compile/src/portable_macros/evaluation.rs": "88198ac959a6af82ebef7a6be4dfad38ae8ac9ba3bc780ddc4ac7333f69c5864",
     "crates/suss-compile/src/portable_macros/facade.rs": "07d93fc832d4ac6d93c2c8a4410948f06ba2e91bb99e1a2feacf88483e1d5b36",
@@ -3373,24 +3615,46 @@
     "scripts/verify_bootstrap_identity.py": "db067a553f4e9b36e4278154e0d122c3cdf89872b09469cd499c6786f4ff86eb",
     "scripts/wasi_lock.py": "4a08b72c039d817474bbb69edf364ea010aca24da71f8295f1d2d69d4aae1e26"
   },
-  "exact_full_workspace": {
-    "source_head": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
-    "phase": "exact-workspace-artifact-publication",
-    "exit_code": 0,
-    "seconds": 12892.661821860354,
-    "rust_test_executions": 2588,
-    "successful_test_groups": 377,
-    "existing_ignored_tests": 15,
-    "frozen_input_count": 8784,
-    "inputs_unchanged": true,
+  "historical_exact_full_workspaces": [
+    {
+      "source_head": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
+      "phase": "exact-workspace-artifact-publication",
+      "exit_code": 0,
+      "seconds": 12892.661821860354,
+      "rust_test_executions": 2588,
+      "successful_test_groups": 377,
+      "existing_ignored_tests": 15,
+      "frozen_input_count": 8784,
+      "inputs_unchanged": true,
+      "binaryen_unchanged": true,
+      "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+      "runner_archive": "results/native-host-foundation/exact-workspace-artifact-publication/runner.py.gz",
+      "deleted_inputs": [],
+      "capture_audit": "results/native-host-foundation/artifact-workspace-capture-audit.json",
+      "qualification": "Actual complete successful baseline on clean4b. Later evidence/handoff edits do not change the tested implementation; preserve this original source identity."
+    }
+  ],
+  "review_fix_validation": {
+    "findings": "results/native-host-foundation/independent-review-findings.json",
+    "source_base": "4cc4e29059239e8b59bf49ce9c56222900c1904a",
+    "before_phase": "review-findings-before-compiled-fixture",
+    "before_cargo_exit": 101,
+    "before_failed_tests": 2,
+    "after_phase": "review-findings-after",
+    "after_cargo_exit": 0,
+    "after_passed_tests": 2,
+    "broader_phase": "review-fixes-core-gates",
+    "all12_commands_exit0": true,
+    "source_inputs_unchanged": true,
+    "runner_archived": true,
     "binaryen_unchanged": true,
-    "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
-    "runner_archive": "results/native-host-foundation/exact-workspace-artifact-publication/runner.py.gz",
-    "deleted_inputs": [],
-    "capture_audit": "results/native-host-foundation/artifact-workspace-capture-audit.json",
-    "qualification": "Actual complete successful baseline on clean4b. Later evidence/handoff edits do not change the tested implementation; preserve this original source identity."
+    "scope": "MemoryMax6G TasksMax256 CPUQuota200%; Cargo jobs1, tests2, Binaryen1; no RUSTFLAGS overrides",
+    "rust_test_executions": 239,
+    "python_tests": 364,
+    "full_workspace_for_repairs": "not yet executed",
+    "followup_review_required": true
   },
-  "full_workspace_capture": {
+  "historical_native_capture_before_review_fixes": {
     "phase": "exact-workspace-artifact-publication",
     "capture_sha256": "ff3bcfecd1582ab1a86fcd299086db065f78fafd0055f9105263f7e4b6e82893",
     "counts": {

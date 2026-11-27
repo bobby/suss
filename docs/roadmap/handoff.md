@@ -34258,8 +34258,57 @@ required after this documentation-only correction.
 
 ## Exact frozen-source host/Var workspace execution (2026-11-27)
 
-On implementation `4b3a95c531c6809d1e7f391b80504bc89200e49b`, `cargo test --workspace --locked -- --test-threads=2` returned0 after12892.661821860354 seconds:2588 test executions passed across377 successful result groups;15 pre-existing ignored tests remain explicit. All8784 captured inputs, HEAD, recorder and both Binaryen tools remained unchanged through the actual terminal. `results/native-host-foundation/exact-workspace-artifact-publication/commands.json` retains the complete receipt; its runner and deletion record are archived beside the raw log and capture. The three earlier interrupted full executions retain their actual negative terminals.
+On implementation `4b3a95c531c6809d1e7f391b80504bc89200e49b`,
+`cargo test --workspace --locked -- --test-threads=2` returned 0 after
+12,892.661821860354 seconds: 2,588 test executions passed across 377 successful
+result groups; 15 existing ignored tests remain explicit. All 8,784 captured
+inputs, HEAD, recorder and both Binaryen tools remained unchanged through the
+actual terminal. The complete receipt, raw log, capture and archived runner are
+under `results/native-host-foundation/exact-workspace-artifact-publication/`.
+The three earlier interrupted full executions retain their actual negative
+terminals.
 
-The fresh native capture retains5530 ordered rows and identical per-row decisions and reviewed failures. Its comparison reports5325 host passes,101 guest judgments,105 known failures,64 failed namespaces,1408 unexecuted and0 skips; this is baseline conservation, not complete language success. `artifact-workspace-capture-audit.json` links the raw capture hash and comparison. The foundation capture has no public eval binding. The original397-case source corpus, host48, namespace10/strict artifact bounds, compiler-library252, catalog5, some-fn372 controls/47 uncached components, AOT constructor regression, WIT numeric14 and ABI62 all execute successfully within the full run.
+The fresh capture retains 5,530 ordered IDs and identical per-row decisions and
+reviewed failures. Its comparison reports 5,325 host passes, 101 guest judgments,
+105 known failures, 64 failed namespaces, 1,408 unexecuted and 0 skips. This is
+baseline conservation, not complete language success; the capture has no public
+eval binding. `artifact-workspace-capture-audit.json` retains the capture hash and
+comparison. Host 48, namespace 10 with strict artifact bounds, compiler library
+252, catalog 5, some-fn's 372 controls/47 uncached components, the original AOT
+constructor regression, 397 pinned pipeline cases, WIT numeric 14 and ABI 62 all
+execute successfully within that full run. Bootstrap/source/provenance/Python
+receipts retain their separate source qualifications.
 
-Java/Node-free bootstrap reproduction, four bootstrap artifact tests, source/provenance checks, original projection controls and Python364 retain their separate current-source terminal receipts in the acceptance index. The implementation-choice measurement remains historical performance evidence, separate from current execution. This follow-up changes evidence and this technical handoff; production source, fixtures, comparator, fuel, size bounds, skip rules and guest judgments are unchanged.
+## Interrupted metadata publication and evaluation result typing controls (2026-11-27)
+
+Independent review of `4cc4e290` reproduced rejected metadata surviving a fuel
+cut after publication: both caller phases restored root 23 but retained doc
+"after" instead of "before". Cuts 8,761 through 8,789 exposed the leak; 8,768
+repeated three times per phase. The broad standalone probe returned 42 to signal
+detection. Its refined run completed observations including leaks; that exit 0
+is not a conformance pass. Original source/head/library hashes and the earlier
+terminal-adjacent negative probe are preserved under
+`results/native-host-foundation/review-publication-cut/`. The same probe showed
+unary arithmetic accepting strings and booleans returned by the internal
+evaluation capability while equivalent identity controls threw.
+
+Declaration execution now records actual staged metadata on either return
+outcome before propagating the original result. Reserved native journal reads
+require no guest execution or fuel. `EvaluateForm` returns the compiler's general
+value type so arithmetic checks the actual operand. New black-box Runtime/Macro
+regressions retain old-root/old-metadata expectations at five fuel cuts and
+normal publication without the cut, plus invalid arithmetic operands and numeric
+identity/scale controls. They return actual Cargo 101 before the fixes and 0
+afterward. An initial expected-vector construction compile error is retained
+separately and is not execution evidence.
+
+All 12 commands in `results/native-host-foundation/review-fixes-core-gates/commands.json`
+return 0 with inputs, runner and Binaryen conserved: 50 host tests, 140 library
+controls, 10 namespace tests, the original AOT constructor regression, two runtime
+capability tests, six Var/Symbol tests, nine pinned source/budget test executions
+across workspace targets, Java/Node-free bootstrap with four artifact tests,
+17 metadata/source projections, provenance/import checks and 364 Python tests.
+There are 239 Rust test executions in this scoped batch. Source fixtures,
+case200M/map300M, artifact bounds 3900/128/+32 and guest/skip/comparator rules are
+unchanged. The earlier full success is tied to implementation `4b3a95c5`, before
+these repairs; it is not a repaired-source full-run result.
