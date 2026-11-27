@@ -57,7 +57,7 @@
   "source_files": {
     "crates/suss-compile/src/portable/hir/vars.rs": "3d4cad744356cf489e2314ebf77157670defa24f41239a7696333a0a30a40ba5",
     "crates/suss-compile/src/portable/hir.rs": "f797fc20baf48147b6d3ed1937ce0b968430706ba4163ec1e6e7e9aac1b5def7",
-    "crates/suss-compile/src/portable/ir.rs": "efcc61f61994de7a6a332e13cc05306d5ba0de1dabe34c0a4dde40a888142cca",
+    "crates/suss-compile/src/portable/ir.rs": "c9386578c4b7896ce89cd9261a06d5286c745066f0bf1ae68914c598c532047f",
     "crates/suss-compile/src/portable/resolve.rs": "c85c863674da059313e936acaa406c02af4e98f0d1af3e3f756b9e4c7cfa226a",
     "crates/suss-compile/src/portable_session/evaluation.rs": "fdaf4613958788d020142a41038f41ea70671870ccbb161715b1694f2b52bda7",
     "crates/suss-compile/src/portable_macros.rs": "c5670f6e9705e91d7097207dc718a3c0c545815ab18af3e4d0acbd313df5535d",

@@ -194,6 +194,8 @@ pub struct GeneralClosureBody {
     pub self_capture: bool,
     pub rest_class: Option<Global>,
 }
+type SymbolicNumberSites = HashMap<u64, std::sync::Arc<()>>;
+
 struct Lowerer<'a> {
     suspendable: bool,
     function: Function,
@@ -203,7 +205,7 @@ struct Lowerer<'a> {
     callables: HashMap<ValueId, super::primitive::Shape>,
     closures: HashSet<ValueId>,
     /// Symbolic reader doubles share objects only within this original function.
-    symbolic_number_sites: HashMap<u64, std::sync::Arc<()>>,
+    symbolic_number_sites: SymbolicNumberSites,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 }
@@ -248,13 +250,16 @@ impl<'a> Lowerer<'a> {
         self.function.blocks[0].parameters.push(value);
         Ok(())
     }
-    fn finish(mut self, hir: &Hir) -> Result<Function, Diagnostic> {
+    fn finish(self, hir: &Hir) -> Result<Function, Diagnostic> {
+        self.finish_with_sites(hir).map(|(function, _)| function)
+    }
+    fn finish_with_sites(mut self, hir: &Hir) -> Result<(Function, SymbolicNumberSites), Diagnostic> {
         let value = self.expression(hir)?;
         if let Some(value) = value {
             self.charge(1, &hir.span)?;
             self.function.blocks[self.current].terminator = Terminator::Return(value);
         }
-        Ok(self.function)
+        Ok((self.function, self.symbolic_number_sites))
     }
     fn value(&mut self, ty: Type, span: Range<usize>) -> Result<ValueId, Diagnostic> {
         self.charge(1, &span)?;
@@ -713,6 +718,10 @@ impl<'a> Lowerer<'a> {
                 }
                 self.charge(methods.len(), &hir.span)?;
                 let mut lowered = Vec::new();
+                // Clojure's original function owns the symbolic constant pool
+                // across all its methods. Nested function definitions start
+                // their own pools; ordinary literal occurrences stay distinct.
+                let mut symbolic_number_sites = HashMap::new();
                 for method in methods {
                     self.charge(
                         captures
@@ -724,6 +733,7 @@ impl<'a> Lowerer<'a> {
                     let primitive = super::primitive::signature(&method.parameters, &method.body, &mut *self.meter)?;
                     let mut inner =
                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
+                    inner.symbolic_number_sites = symbolic_number_sites;
                     for (id, ty) in captures.iter().zip(&capture_types) {
                         inner.parameter(*id, *ty, hir.span.clone())?;
                         if let Some((_, slot)) = self.recursive.get(id) {
@@ -739,6 +749,8 @@ impl<'a> Lowerer<'a> {
                     for parameter in &method.parameters {
                         inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
                     }
+                    let (function, sites) = inner.finish_with_sites(&method.body)?;
+                    symbolic_number_sites = sites;
                     lowered.push(ClosureBody {
                         display_name: None,
                         arity_name: None,
@@ -746,7 +758,7 @@ impl<'a> Lowerer<'a> {
                         capture_types: environment_types,
                         arity: method.parameters.len(),
                         primitive,
-                        function: inner.finish(&method.body)?,
+                        function,
                     });
                 }
                 let display_name = self.display_name(hir)?;

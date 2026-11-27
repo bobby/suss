@@ -407,7 +407,7 @@ mod tests {
         // The second graph can result from copying a source site during
         // inlining. It has identical Debug fields but a different alias
         // partition. That partition crosses nested original function bodies.
-        for source in ["(do 1N 1N)", "(fn [x] (if x 1N 1N))"] {
+        for source in ["(do 1N 1N)", "(fn [x] (if x 1N 1N))", "(fn ([] 1N) ([x] 1N))"] {
             let distinct = graph(source);
             let mut shared = distinct.clone();
             share_sites(&mut shared, &mut None);
