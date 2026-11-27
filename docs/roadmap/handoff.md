@@ -1,5 +1,37 @@
 Public eval consumes the independent core foundation (#521). Its original criteria and wrapper tests remain here; scoped core receipts do not validate this consumer tree.
 
+All foundation results below retain their a97 source identity; this consumer requires its own native validation.
+
+## Exact workspace and capture validation (2026-11-27)
+
+On clean `a97bfaac7fe72bb2366297a263108fb347fb74aa`, the exact command
+`cargo test --workspace --locked -- --test-threads=2` returned 0 after
+12,787.013811258134 seconds. The terminal audit counts 2,591 passing test
+executions in 377 successful groups, with the same 15 existing ignores as the
+earlier baseline. The only additional executions are the three repair
+regressions. All 8,964 captured inputs, HEAD, runner and both Binaryen tools
+stayed unchanged through terminal. The runner and deletion record were archived
+before technical edits under
+`results/native-host-foundation/exact-workspace-prepared-var-checkpoint`.
+
+`prepared-var-workspace-capture-audit.json` checks all 5,530 original ordered IDs
+and decisions against the earlier complete capture and the pinned primary.
+Counts remain 5,325 host matches, 101 guest judgments, 105 failures, 64 blocked
+namespaces, 1,408 unexecuted and zero skips; the reviewed failure ledger is exact.
+These counts retain their comparator meanings, rather than forming a disjoint
+partition or a full-language success claim. Public eval remains absent here.
+The raw capture SHA256 is
+`bbb01270f45af03a5b93af3bd620de9c2011a4839281dea98a09d074332c24ad`.
+
+CI 45956702088 on the same a97 implementation completed successfully: all 10
+jobs, all 8 integration shards and 2,603 test executions, including all three
+repair regressions. `prepared-var-ci-audit.json` records terminal job log hashes
+and metadata/head verification; raw CI logs are also retained in the external
+orchestration archive and on GitHub. Independent follow-up review and CI on any
+later published head retain their own evidence. Earlier entries below keep
+their original source and validation context; no fixture, fuel, count, guest,
+skip, artifact or ABI rule was weakened.
+
 ## Prepared declaration metadata checkpoint (2026-11-27)
 
 The final fresh-Var correction captures a missing journal entry after

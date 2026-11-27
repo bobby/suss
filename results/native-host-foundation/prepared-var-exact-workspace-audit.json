@@ -1,0 +1,31 @@
+{
+  "phase": "exact-workspace-prepared-var-checkpoint",
+  "head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "actual_exit": 0,
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "seconds": 12787.013811258134,
+  "frozen_input_count": 8964,
+  "inputs_head_runner_binaryen_conserved": true,
+  "runner_archive_verified": true,
+  "deleted_inputs": [],
+  "historical_source": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
+  "historical_totals": {
+    "passed": 2588,
+    "ignored": 15,
+    "groups": 377
+  },
+  "current_totals": {
+    "passed": 2591,
+    "ignored": 15,
+    "groups": 377
+  },
+  "additional_regressions": 3,
+  "qualification": "Actual complete exact workspace execution only. Capture audit, independent follow-up review and final-head CI require their own evidence."
+}

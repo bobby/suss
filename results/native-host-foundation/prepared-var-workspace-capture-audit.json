@@ -1,0 +1,16 @@
+{
+  "phase": "exact-workspace-prepared-var-checkpoint",
+  "capture_sha256": "bbb01270f45af03a5b93af3bd620de9c2011a4839281dea98a09d074332c24ad",
+  "counts": {
+    "pass": 5325,
+    "guest-judged": 101,
+    "fail": 105,
+    "not-executed": 1408,
+    "skipped": 0,
+    "namespaces-failed": 64
+  },
+  "raw_rows": 5530,
+  "ordered_ids_and_decisions_equal_to_prior_scoped_run": true,
+  "failures_equal_to_reviewed_baseline": true,
+  "public_eval_absent": true
+}
