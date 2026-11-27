@@ -1,0 +1,171 @@
+{
+  "head": "56e030f6e139951f50640e8371a7a0ebc862f4e3",
+  "review_base": "ac0b485ef0ff3f6dbd8364a6eb8fdb808440a613",
+  "fixture_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "capture_sha256": "7b18614ba3946c4c7028993db7e14d3b4d863e3bb75e84693c2fdbfe96c2d808",
+  "suite_counts": {
+    "pass": 5354,
+    "guest-judged": 106,
+    "fail": 105,
+    "not-executed": 1374,
+    "skipped": 0,
+    "namespaces-failed": 63
+  },
+  "eval": {
+    "rows": 34,
+    "host_matches": 29,
+    "guest_ordinals": [
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "numeric_actual_rows": [
+      {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "tag": "bigint",
+            "value": "1"
+          },
+          {
+            "tag": "bigint",
+            "value": "1"
+          }
+        ],
+        "ordinal": 5,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "source-head": "=",
+        "test": "clojure.core-test.eval/test-eval",
+        "verdict": "pass"
+      },
+      {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "scale": 1,
+            "tag": "decimal",
+            "unscaled": "10"
+          },
+          {
+            "scale": 1,
+            "tag": "decimal",
+            "unscaled": "10"
+          }
+        ],
+        "ordinal": 6,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "source-head": "=",
+        "test": "clojure.core-test.eval/test-eval",
+        "verdict": "pass"
+      },
+      {
+        "head": "=",
+        "kind": "predicate",
+        "operands": [
+          {
+            "denominator": "2",
+            "numerator": "1",
+            "tag": "ratio"
+          },
+          {
+            "denominator": "2",
+            "numerator": "1",
+            "tag": "ratio"
+          }
+        ],
+        "ordinal": 7,
+        "result": {
+          "tag": "bool",
+          "value": true
+        },
+        "source-head": "=",
+        "test": "clojure.core-test.eval/test-eval",
+        "verdict": "pass"
+      }
+    ]
+  },
+  "prior_5530_ordered_ids_and_decisions_preserved": true,
+  "original_eval_source_unchanged": true,
+  "raw_workspace_totals": {
+    "groups": 378,
+    "passed": 2694,
+    "failed": 0,
+    "ignored": 15
+  },
+  "baseline_head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+  "registration_repair": {
+    "full_head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+    "full_phase": "exact-workspace-reviewed-core-eval-disk-tmp",
+    "full_actual_exit": 0,
+    "full_passes": 2694,
+    "full_successful_groups": 378,
+    "full_original_ignores": 15,
+    "focused_head": "19f6fe2d4368f7477240333829be87f19569e92e",
+    "focused_phase": "registered-public-var-symbol-controls",
+    "focused_actual_exit": 0,
+    "focused_passes": 8,
+    "registered_test_names": [
+      "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+      "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+      "private_utf16_storage_handles_empty_search_surrogates_and_invalid_bounds",
+      "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+      "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding",
+      "retained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases",
+      "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities",
+      "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding"
+    ],
+    "only_changed_input": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "diff": "diff --git a/crates/suss-compile/tests/portable_symbol_conversion.rs b/crates/suss-compile/tests/portable_symbol_conversion.rs\nindex 11ffff6a..ba4b9d09 100644\n--- a/crates/suss-compile/tests/portable_symbol_conversion.rs\n+++ b/crates/suss-compile/tests/portable_symbol_conversion.rs\n@@ -290,0 +291 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_wi\n+}\n@@ -419,2 +419,0 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases()\n-\n-}\n",
+    "repair": "Move two previously nested regression functions to module scope; all test bodies, fixture and budget bytes remain unchanged.",
+    "frozen_input_count": 12660,
+    "inputs_head_runner_binaryen_conserved": true,
+    "archived": true,
+    "qualification": "The exact full command passed2694 on052668a3. After the registration-only change, the complete affected eight-test target passed on19f6fe2d. Six controls repeat the full baseline; two controls are newly registered and actually executed. This is source-qualified full-plus-focused evidence, not a claim that one exact full command executed2696 on19f6fe2d. Final-head independent review and CI remain required."
+  },
+  "independent_refined_probe": {
+    "primary_controls": 15,
+    "phase_matches": 30,
+    "host_root_checks": 2,
+    "retained_values_after_gc": 30,
+    "comparison": "exact printed observations; host live-root checks use actual held SessionValues and runtime_number/sentinel inspection"
+  },
+  "independent_actual_commands": [
+    {
+      "name": "rustc-version",
+      "exit_code": 0,
+      "seconds": 0.03633570671081543
+    },
+    {
+      "name": "compile-probe",
+      "exit_code": 0,
+      "seconds": 0.5431103706359863
+    },
+    {
+      "name": "native-probe",
+      "exit_code": 0,
+      "seconds": 51.41340899467468
+    },
+    {
+      "name": "fresh-primary",
+      "exit_code": 0,
+      "seconds": 0.7369208335876465
+    }
+  ],
+  "changed_frozen_probe_inputs": [],
+  "probe_input_count": 12672,
+  "source_baseline_differences": [
+    "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "docs/roadmap/handoff.md"
+  ],
+  "complete": true
+}

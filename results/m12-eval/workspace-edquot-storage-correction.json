@@ -1,0 +1,20 @@
+{
+  "original_phase": "exact-workspace-reviewed-core-eval",
+  "actual_exit": 101,
+  "failure": "build_cache.rs copy_tree std::fs::copy EDQUOT122 Disk quota exceeded",
+  "source_unchanged": true,
+  "tmp_mount": "TARGET SOURCE FSTYPE OPTIONS\n/tmp   tmpfs  tmpfs  rw,nosuid,nodev,nr_inodes=1048576,inode64,huge=advise,usrquota",
+  "default_tmp_disk_usage": {
+    "total": 8297857024,
+    "used": 3206914048,
+    "free": 5090942976
+  },
+  "task_disk_usage": {
+    "total": 497941479424,
+    "used": 452473991168,
+    "free": 41209974784
+  },
+  "cache_seed_disk_bytes": 1171981709,
+  "correction": "Use a dedicated task-owned TMPDIR on the workspace disk for validation subprocesses. No system mount/quota setting, source/test/fixture/fuel change, or unrelated temporary-file deletion.",
+  "qualification": "Actual EDQUOT on quota-enabled /tmp establishes the failure class. The exact per-user quota limit has not been measured. Original seven-test cache target and exact full baseline still require successful reruns."
+}

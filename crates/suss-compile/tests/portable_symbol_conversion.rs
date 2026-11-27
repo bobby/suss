@@ -288,6 +288,7 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_wi
         }
         assert_eq!(exercised, 40);
     }
+}
 
 #[test]
 fn retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities() {
@@ -415,6 +416,4 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
         }
         assert_eq!(exercised, 40);
     }
-}
-
 }

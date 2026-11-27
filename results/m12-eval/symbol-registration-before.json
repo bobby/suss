@@ -1,0 +1,13 @@
+{
+  "head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/portable_symbol_conversion-557272f8b8926ce0",
+    "--list"
+  ],
+  "exit_code": 0,
+  "stdout": "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout: test\nportable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing: test\nprivate_utf16_storage_handles_empty_search_surrogates_and_invalid_bounds: test\nretained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding: test\nretained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases: test\nretained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding: test\n\n6 tests, 0 benchmarks\n",
+  "stderr": "",
+  "executable_sha256": "836d48a54a377b3adfa7840ff92c6a9c6ff5658aca9308f59c7f20203b48ff44",
+  "source_sha256": "dbea04da0aeb6f1088f4e988975d437f3b3e4758991041e115a75e8472c92fb7",
+  "qualification": "Actual baseline binary registration. The two added nested test functions are absent, so declaration count was not execution proof."
+}

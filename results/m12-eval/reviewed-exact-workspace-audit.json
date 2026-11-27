@@ -1,0 +1,183 @@
+{
+  "head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+  "phase": "exact-workspace-reviewed-core-eval-disk-tmp",
+  "actual_exit": 0,
+  "auditor_sha256": "d6caf091b96dee0edb5319e9ce25890cdcabf90f40630b527f8f2c541def04fa",
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "seconds": 12551.365164808929,
+  "frozen_input_count": 12660,
+  "inputs_head_runner_binaryen_conserved": true,
+  "runner_archive_verified": true,
+  "deleted_inputs": [],
+  "foundation_totals": {
+    "passed": 2591,
+    "ignored": 15,
+    "groups": 377
+  },
+  "current_totals": {
+    "passed": 2694,
+    "ignored": 15,
+    "groups": 378
+  },
+  "additional_test_declarations": {
+    "crates/suss-cli/tests/clojure_eval.rs": [
+      "actual_aot_public_eval_reports_the_missing_explicit_compiler_capability",
+      "actual_macro_eval_distinguishes_root_redefinitions_from_thread_bindings",
+      "actual_macro_eval_preserves_binding_body_root_definitions",
+      "actual_macro_eval_preserves_binding_initializer_effects",
+      "actual_macro_eval_preserves_compilation_effects_and_truthy_metadata",
+      "actual_macro_eval_preserves_invalid_math_context_consumption_and_binding_data",
+      "actual_macro_eval_preserves_root_expanded_function_and_collection_identity",
+      "actual_macro_eval_preserves_root_macro_status_and_source_duplicate_effects",
+      "actual_macro_eval_preserves_root_metadata_identity",
+      "actual_macro_eval_preserves_root_thread_selected_macro_bindings",
+      "actual_macro_eval_preserves_self_values_and_false_macro_metadata",
+      "actual_macro_eval_preserves_unbound_dynamic_frames",
+      "actual_macro_eval_uses_caller_state_and_live_authorization",
+      "actual_reentrant_macro_eval_publishes_in_its_own_store",
+      "binding_bodies_keep_root_definitions_separate_from_dynamic_assignment",
+      "binding_initializers_preserve_definition_eval_and_outer_frame_effects",
+      "compiled_eval_handles_literals_generated_calls_functions_and_dynamic_scope",
+      "compiled_eval_is_reentrant_inside_actual_compiled_macro_functions",
+      "compiled_eval_shares_real_namespace_vars_macros_and_effect_boundaries",
+      "completed_macro_imports_supersede_rejected_staged_declarations_in_fresh_callers",
+      "eval_compiles_nested_function_and_var_constants_including_quotation",
+      "eval_function_constant_initialization_preserves_unit_effects_and_aliases",
+      "eval_function_constant_materialization_preserves_primary_identity_and_errors",
+      "eval_function_pool_context_preserves_direct_def_and_distinct_nested_pools",
+      "eval_function_pool_initialization_preserves_construction_effects_and_arity_sharing",
+      "eval_invalid_math_context_is_validated_at_consumption_and_preserves_binding_data",
+      "eval_macro_function_calls_share_the_original_caller_allowance",
+      "eval_math_context_scopes_preserve_rounding_nil_and_exception_restoration",
+      "eval_metadata_functions_preserve_top_roots_and_nested_unit_boundaries",
+      "eval_namespace_changes_follow_real_caller_binding_frames",
+      "eval_preserves_existing_scalar_roots_in_runtime_macro_and_reentry",
+      "eval_preserves_primary_top_level_do_compilation_and_effect_boundaries",
+      "eval_preserves_self_evaluating_objects_and_false_macro_metadata",
+      "eval_retains_actual_class_values_in_generated_numeric_forms",
+      "eval_self_values_retain_their_actual_roots_after_gc",
+      "evaluated_macro_calls_inherit_the_primary_caller_math_context",
+      "evaluated_macro_declarations_publish_real_vars_functions_and_one_expansion",
+      "evaluated_macro_environment_keeps_nil_top_level_and_actual_lexical_names",
+      "evaluated_macro_exceptions_preserve_exact_data_cause_plain_and_nil_messages",
+      "evaluated_macro_function_survives_gc_owner_drop_and_another_macro_service",
+      "evaluated_macro_language_exceptions_preserve_primary_message_and_data",
+      "executable_declaration_metadata_resolves_explicit_lexical_symbol_values",
+      "failed_macro_replacement_preserves_live_metadata_and_successful_nested_effects",
+      "isolated_source_callback_preserves_typed_cancellation_and_recovers",
+      "isolated_source_callbacks_preserve_real_unbound_values_and_root_writes",
+      "isolated_source_function_metadata_retains_identity_between_macro_requests",
+      "isolated_source_lazy_sequences_preserve_realization_effects_and_cache_after_gc",
+      "isolated_source_macro_cancellation_returns_its_service_after_native_eval",
+      "isolated_source_macro_fuel_remains_bounded_after_native_eval",
+      "isolated_source_macros_preserve_actual_function_var_and_namespace_values",
+      "isolated_source_macros_preserve_nested_immutable_metadata_aliases",
+      "isolated_source_nested_function_metadata_retains_actual_callbacks",
+      "native_eval_alter_var_root_preserves_actual_root_and_failure_boundaries",
+      "native_eval_def_metadata_obeys_primary_root_and_publication_boundaries",
+      "native_eval_keeps_source_compilation_allowance_separate_from_runtime_fuel",
+      "native_eval_macro_catalog_survives_source_entries_without_changing_namespace_roots",
+      "native_eval_macro_effects_survive_outer_analysis_and_truthy_metadata",
+      "native_eval_macros_use_caller_state_and_recheck_live_authorization",
+      "native_eval_namespace_catalog_preserves_analysis_interning_boundaries",
+      "native_eval_unbound_values_retain_actual_var_identity_and_callable_behavior",
+      "native_source_macro_authority_retains_original_compiler_helpers",
+      "native_source_macro_context_tracks_each_module_without_changing_roots",
+      "native_source_macro_declarations_keep_the_isolated_source_host",
+      "native_source_macro_reassertion_supersedes_staged_foreign_owner",
+      "public_eval_and_repeated_reentry_consume_the_original_operation_allowance",
+      "public_eval_cancels_running_guest_code_and_leaves_the_session_usable",
+      "public_eval_diagnostics_preserve_the_actual_phase_and_unresolved_symbol",
+      "public_eval_function_result_survives_gc_and_reads_the_live_root",
+      "reentrant_macro_eval_cancels_in_its_own_store_and_returns_its_lease",
+      "reentrant_macro_eval_keeps_its_own_nested_constants",
+      "root_audit_staged_source_preserves_actual_macro_root_effect_before_later_failure",
+      "root_expanded_function_and_collection_contexts_preserve_primary_identity",
+      "root_macro_flags_stay_private_when_ordinary_source_enters_core",
+      "root_macro_status_and_source_duplicate_effects_match_primary",
+      "root_metadata_identity_survives_macro_status_clearing",
+      "root_redefinitions_restore_roots_and_respect_existing_thread_bindings",
+      "root_thread_macro_cancels_actual_caller_code_and_returns_macro_service",
+      "root_thread_macro_inherits_caller_fuel_and_restores_binding_after_exhaustion",
+      "root_thread_selected_macro_bindings_preserve_forms_identity_and_effects",
+      "runtime_cancellation_reaches_eval_macro_code_and_preserves_source_service",
+      "source_declaration_rollback_preserves_later_metadata_effects",
+      "source_macro_import_reload_updates_retained_canonical_var_and_preserves_old_function",
+      "source_macro_imports_preserve_once_loading_completed_prefixes_and_reload_recovery",
+      "source_macro_var_roots_match_primary_identity_replacement_and_namespace_context",
+      "staged_source_redefinitions_preserve_var_identity_and_reject_unlinked_roots",
+      "symbol_conversion_uses_public_var_names_and_clojure_two_argument_admission",
+      "unbound_dynamic_frames_preserve_values_effects_and_eval_context",
+      "vars_retain_real_live_cells_identity_metadata_and_callability"
+    ],
+    "crates/suss-cli/tests/compiled_native_entrypoints.rs": [
+      "native_eval_catalog_keeps_script_declarations_in_the_isolated_source_store",
+      "native_eval_catalog_reaches_script_preparation_in_both_phases",
+      "script_publication_keeps_definitions_before_a_runtime_exception",
+      "script_publication_retains_a_later_native_macro_reassertion",
+      "scripts_preserve_executed_native_definitions_and_future_source_precedence"
+    ],
+    "crates/suss-cli/tests/compiled_repl_macros.rs": [
+      "native_eval_catalog_reaches_repl_inputs_in_both_phases",
+      "native_eval_catalog_reaches_the_repl_command"
+    ],
+    "crates/suss-compile/tests/portable_symbol_conversion.rs": [
+      "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+      "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities"
+    ],
+    "crates/suss-compile/tests/support/pinned_eval_body.rs": [
+      "complete_eval_body_keeps_exact_numeric_fields_as_host_matches",
+      "complete_symbol_body_uses_real_vars_and_strict_two_argument_conversion",
+      "complete_var_predicate_body_preserves_original_opaque_judgments"
+    ],
+    "crates/suss-compile/src/portable_macros/facade.rs": [
+      "source_link_releases_macro_operation_before_runtime_waits_for_compilation"
+    ],
+    "crates/suss-compile/src/portable_macros/native_invocation.rs": [
+      "isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance"
+    ],
+    "crates/suss-compile/src/portable_session/evaluation/native_values.rs": [
+      "native_function_capability_live_var_namespace_and_state_keep_real_owners"
+    ]
+  },
+  "additional_shared_decoder_executions": 2,
+  "declared_but_unregistered_regressions": [
+    "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+    "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities"
+  ],
+  "capture_sha256": "7b18614ba3946c4c7028993db7e14d3b4d863e3bb75e84693c2fdbfe96c2d808",
+  "prior_5530_ordered_decisions_preserved": true,
+  "original_eval_body": {
+    "rows": 34,
+    "host_matches": 29,
+    "original_guest_ordinals": [
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "numeric_independent_host_matches": [
+      5,
+      6,
+      7
+    ]
+  },
+  "counts": {
+    "pass": 5354,
+    "guest-judged": 106,
+    "fail": 105,
+    "not-executed": 1374,
+    "skipped": 0,
+    "namespaces-failed": 63
+  },
+  "failure_ledger_exact": true,
+  "qualification": "Exact successful baseline on052668a3 and fresh capture only. Two added nested test functions were not registered in this binary and require a separately executed registration repair before review. Full-command passes are2694, not2696. Independent promotion review and final published-head CI require separate evidence. Numeric acceptance remains in its own consumer."
+}
