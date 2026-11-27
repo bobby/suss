@@ -1,0 +1,27 @@
+{
+  "tested_implementation_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "independently_reviewed_head": "d4674f2a8da5688921ef3d8546fa8863dccc0db7",
+  "qualification": "Post-review technical receipts and handoff only. All validated runtime, tests, fixtures, tools, config and manifests are unchanged from a97 and reviewed d467. Final published-head CI remains required.",
+  "frozen_inputs": 8964,
+  "unchanged_frozen_inputs": 8961,
+  "only_changed_frozen_inputs": [
+    "docs/roadmap/handoff.md",
+    "results/native-host-foundation/current-acceptance-validation.json",
+    "results/native-host-foundation/fresh-var-checkpoint-finding.json"
+  ],
+  "technical_followup_paths": [
+    "docs/roadmap/handoff.md",
+    "results/native-host-foundation/current-acceptance-validation.json",
+    "results/native-host-foundation/fresh-var-checkpoint-finding.json",
+    "results/native-host-foundation/independent-review-followup.json",
+    "results/native-host-foundation/review-followup-d4674f2a/commands.json",
+    "results/native-host-foundation/review-followup-d4674f2a/compile.stderr",
+    "results/native-host-foundation/review-followup-d4674f2a/compile.stdout",
+    "results/native-host-foundation/review-followup-d4674f2a/execute.stderr",
+    "results/native-host-foundation/review-followup-d4674f2a/execute.stdout",
+    "results/native-host-foundation/review-followup-d4674f2a/probe.rs",
+    "results/native-host-foundation/review-followup-d4674f2a/run.py",
+    "results/native-host-foundation/review-followup-d4674f2a/runner.py.gz",
+    "results/native-host-foundation/prepared-var-post-review-source-conservation.json"
+  ]
+}

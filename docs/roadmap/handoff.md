@@ -1,8 +1,74 @@
+Numeric prerequisites now include public-eval evidence source `052668a3` and reviewed foundation `5d8a608d`. The integration changes only technical receipts and this handoff; the numeric runtime and acceptance sources remain unchanged from `fe33d5ea`. Parent test results retain their original source qualifications. This numeric tree still requires its own fresh native/full/bootstrap/review and final-head CI evidence.
+
+## Public eval native controls and capture (2026-11-27)
+
+On clean consumer `41725409c6f4ae29bc4cb56f2fedf6ebc079343b`, fresh pinned
+Clojure 1.12.6 controls returned 0 and matched all 24 ordered observations and the
+retained stdout hash. After a generator-only cache refresh, the focused native
+run returned 0 for all 90 public-eval tests, three inherited core repair
+regressions, all 22 original upstream body/guard tests, and four Java/Node-free
+bootstrap artifact tests: 119 Rust test executions. Source/provenance checks
+also returned 0. All 12,617 inputs, HEAD, runner, Binaryen tools and primary JARs
+were conserved through terminal; runner and deletion records are archived in
+`results/m12-eval/reviewed-core-public-controls-after-generator-refresh`.
+
+The unchanged original eval body executes all 34 ordered assertions: 29 host
+matches and the original five guest judgments at ordinals 15 through 19, with
+no failures, skips or unexecuted rows. BigInt/Ratio rows 5/6 and Decimal row 7 are
+independently matching host observations. The full scoped capture adds exactly
+those 34 rows to the foundation's 5,530 rows. All prior IDs, order and decisions
+are unchanged, and the reviewed failure ledger is exact. Counts are 5,354 host
+matches, 106 guest judgments, 105 failures, 63 blocked namespaces, 1,374 unexecuted
+and zero skips; comparator meanings and coverage limits remain explicit.
+
+`reviewed-core-native-audit.json` records these checks, original fixture/guard
+hashes and the raw capture hash. The earlier native build attempt returned 101
+before tests when the source-fingerprint guard detected a cached foundation
+generator in the shared target. That actual negative, source conservation and
+positive primary controls remain in `reviewed-core-public-controls`. A package
+cache clean normalized one lockfile entry's order; the clean-source guard stopped
+the retry before execution, and exact original bytes were restored with all
+dependency fields unchanged. No source, dependency, budget, fixture or comparison
+rule was changed to resolve the build cache issue.
+
+The reviewed final core evidence was subsequently merged without changing
+runtime, test, fixture, tool, config or manifest inputs. These are scoped native
+results; this consumer's exact full workspace, independent promotion review and
+published-head CI require their own receipts. Complete numeric criteria and the
+229/200 tagged host corpus retain their numeric-consumer evidence.
+
+Public eval consumes the independent core foundation (#521). Its original criteria and wrapper tests remain here; scoped core receipts do not validate this consumer tree.
+
+Earlier prerequisite integration records (historical source qualifications):
+
 Numeric prerequisites are integrated through public-eval source `a06e0c30` and repaired foundation `d05aa8ef`. Historical commands and results below retain their original source qualifications; execution of this merged numeric source requires fresh receipts.
 
 The numeric branch now inherits the focused core checkpoint ec2f4208 through #516. The parent records28 scoped Rust test executions and its primary/source qualifications; those do not validate this numeric tree. Core ownership, Var metadata and publication work belongs in #521 (#519/#520), public eval in #516, numeric completion here. See docs/runtime/host-macro-boundary.md and the parent scoped receipts.
 
 All foundation results below retain their a97 source identity; this consumer requires its own native validation.
+
+## Independent follow-up review controls (2026-11-27)
+
+Independent xhigh review of `d4674f2a8da5688921ef3d8546fa8863dccc0db7` against
+main `5ce2826cd6b032ebaf7c589d80df396e4521b399` returned no actionable findings.
+The review checked all fourteen original core acceptance criteria and the raw
+baseline results for all 57 mapped controls plus three repair regressions.
+
+Standalone probes returned compile 0 / execute 0 in both phases. They checked
+unary nonnumeric evaluation results, fresh escaped Vars at fourteen post-effect
+fuel cuts including 0/8761/8768/20000, later source rejection, and completed
+nested native definitions with metadata and roots 37/38 surviving an enclosing
+rejected declaration. Source, implementation library, CLI and review HEAD hashes
+were conserved; the root agent reverified those hashes before reusing artifacts.
+Raw probe source, runner, receipt and output are in
+`results/native-host-foundation/review-followup-d4674f2a`; the structured review
+record is `independent-review-followup.json`. The probe binary stays external.
+
+Runtime, tests, fixtures, tools, configuration and manifests remain byte-identical
+to the successful a97 implementation. Review records and handoff are technical
+evidence changes; any later published head retains its own CI requirement.
+Compatibility coverage limits and separate public-eval/numeric scope remain
+explicit in the baseline and audit records below.
 
 ## Exact workspace and capture validation (2026-11-27)
 
