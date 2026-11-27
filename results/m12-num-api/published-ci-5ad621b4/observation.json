@@ -1,0 +1,8 @@
+{
+  "run": 45868728125,
+  "job": 140078439472,
+  "head": "5ad621b40574a00e0771ca63e2c6c92e6e37bc6b",
+  "log_command_exit": 0,
+  "log_sha256": "c454f8af2eef389bbfacdfcd3342c0e61d79be42615004da38db6f635b95da56",
+  "qualification": "Published older numeric head failure, not a failure or success result for the unpublished refreshed candidate. No CI rerun triggered."
+}

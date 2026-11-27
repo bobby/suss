@@ -166,7 +166,6 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Bool(_) => 2,
                         Kind::Number(_) | Kind::Long(_) => 9,
                         Kind::Uuid(_) => 17,
-                        Kind::Pattern(_) => return Ok(None),
                         Kind::Exact(v) => 9usize.saturating_add(v.text.len()),
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
                         Kind::Symbol(v) => identifier_size(v.namespace.as_deref(), &v.name),
