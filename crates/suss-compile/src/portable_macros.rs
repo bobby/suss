@@ -412,6 +412,25 @@ impl MacroHost<'_> {
         }
         Ok(())
     }
+    fn checkpoint_prepared_metadata(&mut self, global: &crate::portable::resolve::Global,
+        declaration: &Form) -> Result<(), SessionError> {
+        let missing = catalog(&self.catalog).declaration_transactions.iter()
+            .any(|transaction| transaction.globals.contains(global) && !transaction.metadata.contains_key(global));
+        if !missing { return Ok(()); }
+        // Converted source macros admit their Var during execution. Preparation
+        // must succeed before we admit it for journaling; invalid declarations
+        // must not create Vars. Work was reserved before preparation, and the
+        // initial metadata is captured before guest expressions can retain it.
+        self.session.intern_analyzed_var(global, declaration, None)?;
+        let before = self.session.checkpoint_var_metadata(global)?
+            .ok_or_else(|| wasmtime::Error::msg("Missing admitted Var metadata checkpoint"))?;
+        for transaction in &mut catalog(&self.catalog).declaration_transactions {
+            if transaction.globals.contains(global) {
+                transaction.metadata.entry(global.clone()).or_insert_with(|| before.clone());
+            }
+        }
+        Ok(())
+    }
     pub(crate) fn define_inline_macro(
         &mut self, form: &Form, environment: &crate::portable::resolve::Environment,
         phase: crate::portable::resolve::Phase,
@@ -516,6 +535,10 @@ impl MacroHost<'_> {
             ).map_err(SessionError::Compile)?;
             let span = declaration.span.clone();
             let pending = self.prepare_macro_definition(&declaration, span, Some(&module.origin), true)?;
+            if let Some(global) = metadata_global.as_ref() {
+                let Kind::List(items) = &declaration.kind else { unreachable!() };
+                self.checkpoint_prepared_metadata(global, &items[1])?;
+            }
             let initialized = self.commit_staged_macro_definition(pending);
             // Publication can finish before a later fuel trap. Record its
             // actual metadata even on failure, before rejecting the input.
