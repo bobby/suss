@@ -24,6 +24,7 @@ assert sha((p/'stdout.log').read_bytes())==command['stdout_sha256']
 rows=json.loads((p/'cases.json').read_text());assert len(rows)==10
 assert [row['expected'] for row in rows]==[json.loads(line) for line in (p/'stdout.log').read_text().splitlines()]
 paths=['crates/suss-compile/src/portable/hir/vars.rs','crates/suss-compile/src/portable/hir.rs','crates/suss-compile/src/portable/ir.rs','crates/suss-compile/src/portable/resolve.rs','crates/suss-compile/src/portable_session/evaluation.rs','crates/suss-compile/src/portable_macros.rs','crates/suss-compile/src/portable_session.rs','docs/compatibility/bootstrap/exact-integers.sus','docs/compatibility/patches/expression-Var.json','docs/compatibility/core-import.json','runtime/core-import/manifest.json','runtime/core-import/suss/core.sus','crates/suss-cli/tests/native_host_boundary.rs','results/m12-eval/live-vars-primary/cases.json','results/m12-eval/live-vars-primary/setup.sus']
+paths += ['crates/suss-cli/tests/runtime_namespaces.rs']
 paths += ['crates/suss-compile/src/portable/emit.rs','crates/suss-compile/src/runtime_abi.rs','crates/suss-compile/src/portable/origin.rs','crates/suss-compile/src/portable_macro_data.rs','crates/suss-compile/src/portable_macros/definitions.rs','crates/suss-compile/src/portable_macros/native_invocation.rs','crates/suss-compile/src/portable_macros/evaluation.rs','crates/suss-compile/src/portable_macros/facade.rs','crates/suss-compile/src/portable_session/evaluation/macro_function.rs','crates/suss-reader/src/forms.rs','crates/suss-reader/src/edn/source.rs','crates/suss-compile/tests/runtime_evaluation.rs','crates/suss-compile/tests/portable_symbol_conversion.rs','results/m12-eval/macro-declaration-primary/cases.json','results/m12-eval/var-implementation-primary/cases.json']
 paths += ['crates/suss-compile/src/portable_macro_graph.rs','crates/suss-compile/src/portable/mod.rs','crates/suss-compile/src/portable/analysis_record.rs','crates/suss-compile/src/portable/modules.rs','crates/suss-cli/tests/compiled_macro_binding_records.rs','crates/suss-cli/tests/compiled_macro_declaration_functions.rs','crates/suss-cli/tests/compiled_macro_source_environment.rs','results/m12-eval/alias-primary/cases.json','results/m12-eval/macro-environment-primary/cases.json','results/m12-eval/macro-failure-primary/cases.json']
 paths += ['docs/compatibility/patches/expression-symbol.json','results/m12-eval/symbol-primary/cases.json']
@@ -170,7 +171,7 @@ assert all(sha(Path(n).read_bytes()) == h for n, h in receipt['jars'].items())
 assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
 paths += [str(f.relative_to(ROOT)) for f in sorted(primary.iterdir()) if f.is_file()]
 paths += ['crates/suss-cli/tests/compiled_macro_global_reference_asts.rs']
-for directory in ['quoted-declaration-primary', 'definition-transition-primary']:
+for directory in ['quoted-declaration-primary', 'definition-transition-primary', 'identical-metadata-primary', 'unbound-replacement-primary']:
     primary = ROOT / 'results/native-host-foundation' / directory
     receipt = json.loads((primary / 'receipt.json').read_text())
     assert receipt['exit_code'] == 0
@@ -178,6 +179,10 @@ for directory in ['quoted-declaration-primary', 'definition-transition-primary']
     assert all(sha((primary / n).read_bytes()) == h for n, h in receipt['files'].items())
     paths += [str(f.relative_to(ROOT)) for f in sorted(primary.iterdir()) if f.is_file()]
 paths += ['crates/suss-cli/tests/compiled_export_metadata.rs', 'crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs']
+paths += ['crates/suss-compile/src/runtime_abi/native_values.rs', 'crates/suss-compile/src/runtime_abi/nominal.rs',
+          'crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs',
+          'crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs',
+          'docs/runtime/host-macro-boundary.md']
 paths += ['crates/suss-cli/tests/clojure_eval.rs', 'crates/suss-compile/tests/support/pinned_eval_body.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'

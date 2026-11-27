@@ -306,7 +306,9 @@ pub(crate) struct BindingCheckpoint {
 #[derive(Clone)]
 pub(crate) struct VarMetadataCheckpoint {
     variable: OwnedRooted<AnyRef>,
+    cell: Global,
     before: Option<OwnedRooted<AnyRef>>,
+    before_staged: bool,
     written: Vec<Option<OwnedRooted<AnyRef>>>,
 }
 /// Owned compiler inputs permit macro expansion to execute in this same phase
@@ -1690,14 +1692,16 @@ impl SessionHost<'_> {
                     .unwrap();
                 // A frame that held the cell since the checkpoint may still be
                 // reachable from a saved context, so the cell stays dynamic.
-                let dynamic = cell.field(&mut scope, 1)?.unwrap_i32() & crate::runtime_abi::CELL_DYNAMIC;
+                let current = cell.field(&mut scope, 1)?.unwrap_i32();
+                let dynamic = current & crate::runtime_abi::CELL_DYNAMIC;
+                let metadata = current & crate::runtime_abi::CELL_STAGED_METADATA;
                 if let Some((value, bound)) = checkpoint.values.get(identity) {
                     let value = Val::AnyRef(value.as_ref().map(|value| value.to_rooted(&mut scope)));
                     cell.set_field(&mut scope, 0, value)?;
-                    cell.set_field(&mut scope, 1, Val::I32(*bound | dynamic))?;
+                    cell.set_field(&mut scope, 1, Val::I32((*bound & !crate::runtime_abi::CELL_STAGED_METADATA) | dynamic | metadata))?;
                 } else {
                     cell.set_field(&mut scope, 0, Val::AnyRef(None))?;
-                    cell.set_field(&mut scope, 1, Val::I32(dynamic))?;
+                    cell.set_field(&mut scope, 1, Val::I32(dynamic | metadata))?;
                 }
             }
         }

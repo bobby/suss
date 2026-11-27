@@ -1,0 +1,40 @@
+{
+  "qualification": "Review of actual native101 before ledger correction. Only two completely executed namespaces are removed and three observed diagnostics advance. Public eval remains absent on the core foundation. No numeric or full workspace completion claim.",
+  "capture_sha256": "b427a0354995381f550f2732f31b0578bee0da9a1b92c1dbb988762ad7153c99",
+  "old_full_capture_sha256": "9fd9c7c33212d2cea78319932ca49622be569c162ff54c92a07b0a5551c1404f",
+  "primary_sha256": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7",
+  "baseline_before_sha256": "6fedd3e20fe35172c12e45c7760d6ce6e1859980e15ad3c6e2f25f4646f1992e",
+  "counts": {
+    "pass": 5325,
+    "guest-judged": 101,
+    "fail": 105,
+    "not-executed": 1408,
+    "skipped": 0,
+    "namespaces-failed": 64
+  },
+  "raw_rows": 5530,
+  "all_non_eval_prior_decisions_preserved": 5530,
+  "newly_loaded_bodies": {
+    "clojure.core-test.symbol": {
+      "rows": 61,
+      "host_matches": 61,
+      "guest_ordinals": []
+    },
+    "clojure.core-test.var-qmark": {
+      "rows": 34,
+      "host_matches": 26,
+      "guest_ordinals": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    }
+  },
+  "namespace_only_changes": 5,
+  "actual_exit_before": 101
+}

@@ -46,7 +46,7 @@ impl SessionHost<'_> {
         let bridge_service = service.clone();
         let span = form.span.clone();
         let origin = portable::SourceOrigin::native_evaluation(self.identity)
-            .for_macro_definition(self.identity);
+            .for_macro_definition(self.identity, false);
         let context = self.evaluation_math_context()?;
         let allowance = self.operation_fuel_remaining()?;
         let (prepared, spent) = service.declare_evaluation(

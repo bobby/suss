@@ -2650,6 +2650,15 @@
         (assoc (assoc metadata :name name) :ns namespace)))]
       (suss.bootstrap/binding-getter-unbound-init! getter (VarUnbound. v))
       v)))
+(def ^:private binding-var-metadata
+  (fn [v metadata]
+    ;; A converted declaration has temporarily replaced its root, before
+    ;; publishing new macro metadata. Do not run IMeta's lazy flag cleanup
+    ;; merely to retrieve these canonical compiler-owned keys.
+    (let [current (.-_meta v)
+          name (:name current)
+          namespace (:ns current)]
+      (assoc (assoc metadata :name name) :ns namespace))))
 (def ^:private update-binding-var-meta!
   (fn [v metadata]
     (set! (.-_meta v)

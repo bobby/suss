@@ -391,6 +391,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::BindingGetter => { names.insert("binding-getter"); }
                         Nominal::BindingGetterMacro => { names.insert("binding-getter-macro?"); }
                         Nominal::BindingGetterMacroSet => { names.insert("binding-getter-macro-set!"); }
+                        Nominal::VarMetadataDefine { .. } => { names.insert("var-metadata-define"); }
                         Nominal::BindingSnapshot => { names.insert("binding-snapshot"); }
                         Nominal::BindingRootSet => { names.insert("binding-root-set"); }
                         Nominal::BindingRootDefine => { names.insert("binding-root-define"); }
@@ -871,6 +872,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-number-positive"
             | "comparison-number-negative" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "var-metadata-define" => (vec![VALUE, VALUE, VALUE, ValType::I32], vec![VALUE]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" | "protocol-class-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -2094,6 +2096,25 @@ fn emit_function(
         Entry::Future => 2,
         Entry::Method(body) | Entry::Primitive(body) => 1 + u32::try_from(bodies[body].arity).map_err(|_| fail("Too many parameters"))?,
     };
+    // Publication still executes when a grouped definition discards its Var
+    // result. Avoid storing that duplicate reference in an unread SSA local.
+    // Resumable frames retain their complete spill layout.
+    let metadata_result_used = (matches!(entry, Entry::Eval) && continuation.is_none()).then(|| {
+        let mut used = vec![false; ir.values.len()];
+        for block in &ir.blocks {
+            for instruction in &block.instructions {
+                for value in ir::operands(&instruction.operation) { used[value.0] = true; }
+            }
+            match &block.terminator {
+                Terminator::Return(value) | Terminator::Throw(value) => used[value.0] = true,
+                Terminator::Branch { condition, .. } => used[condition.0] = true,
+                Terminator::Jump { arguments, .. } => {
+                    for value in arguments { used[value.0] = true; }
+                }
+            }
+        }
+        used
+    });
     let scratch = count
         .checked_add(offset)
         .ok_or_else(|| fail("Too many IR locals"))?;
@@ -4351,6 +4372,16 @@ fn emit_function(
                                 function.instruction(&LocalGet(arguments[2].0 as u32 + offset));
                             }
                         }
+                        Nominal::VarMetadataDefine { staged, macro_flag } => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            if let Some(flag) = macro_flag {
+                                function.instruction(&runtime_abi::sentinel_in(if *flag { runtime_abi::TRUE } else { runtime_abi::FALSE }, sentinels));
+                            }
+                            function.instruction(&I32Const(i32::from(*staged)))
+                                .instruction(&Call(index("var-metadata-define")));
+                        }
                         Nominal::FieldSet(field) => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -4663,7 +4694,11 @@ fn emit_function(
                             })));
                         }
                     }
-                    if matches!(locals.of(inst.result), unboxed::Repr::Flag | unboxed::Repr::Long | unboxed::Repr::Double) {
+                    if matches!(operation, Nominal::VarMetadataDefine { .. })
+                        && metadata_result_used.as_ref().is_some_and(|used| !used[inst.result.0])
+                    {
+                        function.instruction(&Drop);
+                    } else if matches!(locals.of(inst.result), unboxed::Repr::Flag | unboxed::Repr::Long | unboxed::Repr::Double) {
                         // Its i32 truth value (#387), or a parameter cast's
                         // raw long or double (#385); uses that need a value
                         // take it boxed.
