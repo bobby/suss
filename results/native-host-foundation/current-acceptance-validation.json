@@ -1,5 +1,5 @@
 {
-  "qualification": "Final prepared-declaration checkpoint source passes all12 broader scoped commands:240 Rust executions and364 Python tests. Frozen source/HEAD/runner/Binaryen were conserved and archived. Original114 bodies and26 independent core counterparts are conserved. Fresh exact workspace, capture audit, follow-up independent review and final-head CI remain pending; earlier full/CI successes are historical.",
+  "qualification": "Prepared-declaration checkpoint implementation a97 passes all12 scoped commands (240 Rust executions/364 Python tests), the actual exact workspace baseline (2591 executions/377 successful groups/15 existing ignores), and all10 CI jobs (2603 executions). Full8964 inputs, HEAD, runner and Binaryen were conserved through terminal and archived. The5530-row native capture preserves ordered IDs/decisions and the reviewed failure ledger, including explicit coverage limits. Independent xhigh follow-up review and CI on any later published head remain separate gates.",
   "commands": [
     {
       "phase": "fresh-var-prepared-core-gates",
@@ -246,8 +246,9 @@
   ],
   "source_inputs_conserved_per_batch": true,
   "native_capture": {
-    "phase": "artifact-followup-broader-gates",
-    "sha256": "7492f2b2c01e70cc1bf55a9bb0d3ac80aee98c2a46a1be1100227103d077259b",
+    "phase": "exact-workspace-prepared-var-checkpoint",
+    "source_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+    "sha256": "bbb01270f45af03a5b93af3bd620de9c2011a4839281dea98a09d074332c24ad",
     "raw_rows": 5530,
     "counts": {
       "pass": 5325,
@@ -258,7 +259,9 @@
       "namespaces-failed": 64
     },
     "all_before_decisions_preserved": true,
-    "qualification": "Historical capture of implementation4b; no fresh full repaired-source capture is claimed before the next exact workspace terminal."
+    "failures_equal_to_reviewed_baseline": true,
+    "public_eval_absent": true,
+    "qualification": "Current a97 full capture matches the reviewed compatibility baseline; known failures, guest judgments and unexecuted coverage remain explicit. Public eval and complete numeric acceptance belong to their consumer source trees."
   },
   "ledger_namespace_only_changes": 5,
   "independent_core_counterparts": 26,
@@ -4502,7 +4505,31 @@
     "scope": "MemoryMax6G TasksMax256 CPUQuota200%; Cargo jobs1, tests2, Binaryen1; no RUSTFLAGS overrides",
     "rust_test_executions": 239,
     "python_tests": 364,
-    "full_workspace_for_repairs": "d05 attempt deliberately stopped after fresh-cell defect; Cargo-15, not a full pass",
+    "full_workspace_for_repairs": {
+      "source_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+      "phase": "exact-workspace-prepared-var-checkpoint",
+      "exit_code": 0,
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--",
+        "--test-threads=2"
+      ],
+      "seconds": 12787.013811258134,
+      "rust_test_executions": 2591,
+      "successful_test_groups": 377,
+      "existing_ignored_tests": 15,
+      "frozen_input_count": 8964,
+      "inputs_head_runner_binaryen_conserved": true,
+      "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+      "runner_archive": "exact-workspace-prepared-var-checkpoint/runner.py.gz",
+      "deleted_inputs": [],
+      "full_audit": "prepared-var-exact-workspace-audit.json",
+      "capture_audit": "prepared-var-workspace-capture-audit.json",
+      "qualification": "Actual successful exact command on clean a97. Later technical evidence edits do not change the tested implementation; independent follow-up review and later-head CI retain separate evidence."
+    },
     "followup_review_required": true
   },
   "historical_native_capture_before_review_fixes": {
@@ -4533,8 +4560,82 @@
     "dirty_source_archived": true,
     "inputs_head_runner_binaryen_conserved": true,
     "source_conservation": "fresh-var-prepared-source-conservation.json",
-    "exact_workspace": "pending on next clean commit",
+    "exact_workspace": {
+      "source_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+      "phase": "exact-workspace-prepared-var-checkpoint",
+      "exit_code": 0,
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--",
+        "--test-threads=2"
+      ],
+      "seconds": 12787.013811258134,
+      "rust_test_executions": 2591,
+      "successful_test_groups": 377,
+      "existing_ignored_tests": 15,
+      "frozen_input_count": 8964,
+      "inputs_head_runner_binaryen_conserved": true,
+      "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+      "runner_archive": "exact-workspace-prepared-var-checkpoint/runner.py.gz",
+      "deleted_inputs": [],
+      "full_audit": "prepared-var-exact-workspace-audit.json",
+      "capture_audit": "prepared-var-workspace-capture-audit.json",
+      "qualification": "Actual successful exact command on clean a97. Later technical evidence edits do not change the tested implementation; independent follow-up review and later-head CI retain separate evidence."
+    },
     "followup_review": "pending",
-    "final_head_ci": "pending"
-  }
+    "final_head_ci": "a97 actual complete success; any later published evidence/review-fix head needs its own CI",
+    "ci_for_tested_implementation": {
+      "head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+      "run": 45956702088,
+      "url": "https://github.com/bobby/suss/actions/runs/45956702088",
+      "all10_jobs_actual_success": true,
+      "test_executions": 2603,
+      "audit": "prepared-var-ci-audit.json"
+    }
+  },
+  "exact_full_workspace": {
+    "source_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+    "phase": "exact-workspace-prepared-var-checkpoint",
+    "exit_code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--locked",
+      "--",
+      "--test-threads=2"
+    ],
+    "seconds": 12787.013811258134,
+    "rust_test_executions": 2591,
+    "successful_test_groups": 377,
+    "existing_ignored_tests": 15,
+    "frozen_input_count": 8964,
+    "inputs_head_runner_binaryen_conserved": true,
+    "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+    "runner_archive": "exact-workspace-prepared-var-checkpoint/runner.py.gz",
+    "deleted_inputs": [],
+    "full_audit": "prepared-var-exact-workspace-audit.json",
+    "capture_audit": "prepared-var-workspace-capture-audit.json",
+    "qualification": "Actual successful exact command on clean a97. Later technical evidence edits do not change the tested implementation; independent follow-up review and later-head CI retain separate evidence."
+  },
+  "historical_native_captures": [
+    {
+      "phase": "artifact-followup-broader-gates",
+      "sha256": "7492f2b2c01e70cc1bf55a9bb0d3ac80aee98c2a46a1be1100227103d077259b",
+      "raw_rows": 5530,
+      "counts": {
+        "pass": 5325,
+        "guest-judged": 101,
+        "fail": 105,
+        "not-executed": 1408,
+        "skipped": 0,
+        "namespaces-failed": 64
+      },
+      "all_before_decisions_preserved": true,
+      "qualification": "Historical capture of implementation4b; no fresh full repaired-source capture is claimed before the next exact workspace terminal."
+    }
+  ]
 }
