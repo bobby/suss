@@ -1,3 +1,67 @@
+## Prepared declaration metadata checkpoint (2026-11-27)
+
+The final fresh-Var correction captures a missing journal entry after
+`prepare_macro_definition` succeeds and before compiled declaration execution.
+Only then does it admit the canonical unbound Var and retain its initial
+metadata. Original validation and root-write ownership ordering remain unchanged;
+the ordinary native-admission callback is unchanged. Converted source origins
+have no native owner, so their Var admission otherwise occurs in guest execution.
+Hidden Var identity is deterministic over the actual phase-qualified binding.
+
+`fresh-var-prepared-checkpoint-after` returns Cargo0 for all3 review regressions,
+with inputs, HEAD, runner and Binaryen conserved and archived. The extended
+fresh-cell control checks rejected metadata, retained Atom effect and Var identity,
+subsequent accepted metadata/root17, and absence of a bare Var when a qualified
+macro name is rejected with the original diagnostic. The earlier eager-admission
+candidate passed12 broader commands (240 Rust executions/364 Python tests) but
+failed that stronger rejection guard in both phases; those passes are not final
+implementation validation. An initial diagnostic wording mismatch is retained
+separately from the corrected semantic negative. The ordinary native-admission
+hook candidate still leaked fresh metadata and returned101, so it was removed.
+
+`fresh-var-prepared-core-gates` records all12 commands returning0 on the final
+source:240 Rust executions and364 Python tests. All51 host-boundary tests,
+140 portable library controls, namespace10, AOT1, runtime2, Var/Symbol6,
+pinned guards9, bootstrap4 and metadata/source projections17 pass; source,
+HEAD, runner and Binaryen remain conserved through terminal and archived.
+Read-only conservation verifies all114 original bodies and26 independent
+core counterparts without changing fixture/budget/comparator rules.
+
+The final source still requires an exact workspace terminal and capture
+audit, follow-up independent review and final-head CI. The original
+fresh-cell leak and deliberately stopped d05 full run remain qualified below.
+No original source fixture, body, count, skip, guest judgment, fuel allowance,
+artifact bound or ABI layout was weakened.
+
+## Fresh staged Var metadata retention (2026-11-27)
+
+The read-only `fresh-var-metadata-probe` reproduces a missing fresh-cell journal
+entry in both caller phases. Declaration metadata stores its newly interned Var
+in an existing Atom, then a later source error rejects staging. The root becomes
+Unbound but the escaped Var retains doc "rejected". The probe returns42 to signal
+this defect, with source/head/library hashes conserved; this is not conformance
+success. The exact workspace run on d05 was deliberately stopped for this known
+semantic defect: actual Cargo-15 after6655.318455873989s, outer exit241, with1114
+completed passing test executions/243groups. Inputs, runner and both Binaryen
+tools were conserved and archived before edits. The run is not a full pass.
+
+`fresh-var-checkpoint-before` returns Cargo101: the two earlier review regressions
+pass and the new fresh-Var regression fails in Runtime and Macro. Its normal-link
+and retained-identity controls also execute successfully. Admitting the canonical
+unbound Var before the metadata snapshot makes all3 regressions pass in
+`fresh-var-checkpoint-after`. Root ownership is additionally sampled before
+admission, preserving the separation between compiler admission and completed
+language writes. This ordering refinement requires the subsequent broader-source
+receipts; the initial3-test pass is not full validation of the final source.
+
+The new control preserves the completed Atom effect, restores the Var's original
+metadata/root on rejection, and requires a later successful link to reuse the
+same Var with accepted metadata and root17. All original fixtures, source bodies,
+fuel limits, artifact bounds and comparator/guest/skip rules remain unchanged.
+The green d05 CI (10jobs/2602executions) predates this fresh-cell repair. Fresh
+broader checks, exact full execution, follow-up independent review and final-head
+CI require their own source-qualified evidence.
+
 ### Broader metadata publication checks
 
 `artifact-followup-broader-gates/commands.json` records actual0 for the original AOT constructor-redefinition regression, runtime capability2, Var/Symbol6, all19 original suite guards, Java/Node-free bootstrap reproduction with4 artifact tests, source/provenance checks,17 metadata/source/record projections and Python364. Code inputs match the earlier namespace10/host48/library140 positive batch; each run conserved its source/HEAD/runner/Binaryen and has a terminal archive.

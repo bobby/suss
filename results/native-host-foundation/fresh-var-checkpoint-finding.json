@@ -1,0 +1,104 @@
+{
+  "issue": 520,
+  "criteria": [
+    1,
+    2,
+    3,
+    5,
+    7
+  ],
+  "severity": "P2",
+  "origin": "Author read-only audit after initial independent-review fixes; not an additional independent reviewer finding.",
+  "source_head": "d05aa8ef6ce7c5043b3dd8abc7762db16a929e71",
+  "reproduction": {
+    "phase": "fresh-var-metadata-probe",
+    "actual_exit": 42,
+    "both_phases": true,
+    "before": "[false nil :unbound]",
+    "after_rejection": "[true \"rejected\" :unbound]",
+    "inputs_and_head_conserved": true,
+    "qualification": "Exit42 signals detected leakage, not conformance success."
+  },
+  "cause": "The metadata checkpoint was taken before a fresh canonical Var existed, so its escaped metadata had no rollback entry.",
+  "fix": "After macro declaration preparation succeeds and before compiled execution, admit the canonical unbound Var only for missing staged metadata checkpoint entries and capture initial metadata. Keep original root ownership and validation ordering; ordinary native-admission callback unchanged.",
+  "regression": "review_regression_fresh_staged_var_metadata_restores_escaped_identity",
+  "before": {
+    "phase": "fresh-var-checkpoint-before",
+    "actual_cargo_exit": 101,
+    "passed": 2,
+    "failed": 1,
+    "both_phases_mismatched": true,
+    "later_success_and_identity_controls_passed": true
+  },
+  "first_after": {
+    "phase": "fresh-var-checkpoint-after",
+    "actual_cargo_exit": 0,
+    "passed": 3,
+    "qualification": "Initial admission fix passed all3 review regressions. Subsequent root-ownership sampling refinement requires its own broader current-source checks."
+  },
+  "stopped_full": {
+    "phase": "exact-workspace-after-review-fixes",
+    "actual_cargo_exit": -15,
+    "outer_exec_exit": 241,
+    "seconds": 6655.318455873989,
+    "completed_rust_test_executions": 1114,
+    "completed_groups": 243,
+    "reason": "Deliberately stopped after the independently executable fresh-Var leak was confirmed, not a timeout or spontaneous test failure.",
+    "inputs_and_tools_conserved": true,
+    "archive_preserved": true
+  },
+  "validation_pending": [
+    "final-source broader gates",
+    "fresh exact workspace baseline",
+    "follow-up independent xhigh review",
+    "actual final-head CI"
+  ],
+  "historical_ci": "d05 CI45940948916 all10jobs success/2602executions predates this newly found defect and repair; not validation of changed source.",
+  "candidate_history": [
+    {
+      "phase": "fresh-var-checkpoint-core-gates",
+      "actual_exit": 0,
+      "commands": 12,
+      "rust_test_executions": 240,
+      "python_tests": 364,
+      "qualification": "Early-admission candidate. Broader gates passed but subsequent stronger invalid-name guard exposed unintended bare Var admission; not final validation."
+    },
+    {
+      "phase": "fresh-var-admission-frontier-before",
+      "actual_exit": 101,
+      "qualification": "Initial new guard expected ordinary-def wording instead of the actual macro-name diagnostic; harness mismatch retained, not semantic boundary evidence."
+    },
+    {
+      "phase": "fresh-var-admission-frontier-before-corrected-diagnostic",
+      "actual_exit": 101,
+      "passed": 2,
+      "failed": 1,
+      "qualification": "Both phases expose a bare Var after rejected qualified macro name on eager-admission candidate; metadata and later-link/identity controls pass."
+    },
+    {
+      "phase": "fresh-var-admission-hook-after",
+      "actual_exit": 101,
+      "passed": 2,
+      "failed": 1,
+      "qualification": "Ordinary native-admission callback is not used for source macro origin (native_owner=None); fresh metadata still leaked, while invalid-name guard passed."
+    }
+  ],
+  "current_targeted_after": {
+    "phase": "fresh-var-prepared-checkpoint-after",
+    "actual_exit": 0,
+    "passed": 3,
+    "seconds": 182.11936984909698,
+    "inputs_head_runner_tools_conserved": true,
+    "archived": true,
+    "qualification": "Final prepared/execution boundary. Includes fresh metadata rollback, retained effect/identity and normal linking, invalid-name no-admission guard, plus two prior review regressions."
+  },
+  "final_broader_validation": {
+    "phase": "fresh-var-prepared-core-gates",
+    "all12_commands_actual0": true,
+    "rust_test_executions": 240,
+    "python_tests": 364,
+    "inputs_head_runner_tools_conserved": true,
+    "archived": true,
+    "qualification": "Fresh exact full/capture/review/final-head CI still required."
+  }
+}

@@ -1051,6 +1051,54 @@ fn review_regression_staged_metadata_rolls_back_after_publication_fuel_cut() {
 }
 
 #[test]
+fn review_regression_fresh_staged_var_metadata_restores_escaped_identity() {
+    use suss_compile::portable_repl;
+
+    let rejected = "(defmacro ^{:probe (do (reset! (:box (meta (var holder))) (var fresh-stage)) nil)} fresh-stage \"rejected\" [] 99)\n(no-such-source-initializer)\n";
+    let mut failures = Vec::new();
+    for macro_phase in [false, true] {
+        let session_for_phase = || if macro_phase {
+            Session::new_macro().unwrap()
+        } else { Session::new_repl().unwrap() };
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.enter_namespace("user").unwrap();
+        macros.define("(defmacro ^{:box (atom nil)} holder [] nil)").unwrap();
+        // Do not look up fresh-stage before the rejected declaration: that
+        // would pre-intern its Var and miss the fresh-cell checkpoint path.
+        macros.define("(defmacro inspect-escaped [] (list 'quote (let [v @(:box (meta (var holder)))] [(var? v) (:doc (meta v)) (try (@v nil nil) (catch :default e :unbound))])))").unwrap();
+        let mut session = session_for_phase();
+        assert_eq!(portable_repl::evaluate_compiled(&mut session, &mut macros, "(inspect-escaped)").unwrap(), "[false nil :unbound]");
+        let error = portable_repl::evaluate_script_compiled(&mut session, &mut macros, rejected, None).unwrap_err();
+        assert!(portable_repl::repl_error_display(&mut session, &macros, &error).contains("no-such-source-initializer"));
+        let mut fresh = session_for_phase();
+        fresh.collect().unwrap();
+        let observed = portable_repl::evaluate_compiled(&mut fresh, &mut macros, "(inspect-escaped)").unwrap();
+        if observed != "[true nil :unbound]" {
+            failures.push(format!("macro phase {macro_phase}: {observed}"));
+        }
+        // The completed reset! effect and its genuine Var survive rejection.
+        // A later successful link reuses that identity and publishes normally.
+        portable_repl::evaluate_script_compiled(&mut fresh, &mut macros, "(defmacro fresh-stage \"accepted\" [] 17)", None).unwrap();
+        macros.define("(defmacro check-escaped-identity [] (list 'quote (identical? @(:box (meta (var holder))) (var fresh-stage))))").unwrap();
+        let mut after = session_for_phase();
+        after.collect().unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut after, &mut macros, "[(inspect-escaped) (check-escaped-identity)]").unwrap(), "[[true \"accepted\" 17] true]", "macro phase {macro_phase}");
+        // Journal setup must not pre-intern a bare name for a declaration
+        // which the normal analyzer rejects before Var admission.
+        macros.define("(defmacro rejected-name-present [] (list 'quote (contains? (ns-interns 'user) 'invalid-fresh-root)))").unwrap();
+        assert_eq!(portable_repl::evaluate_compiled(&mut after, &mut macros, "(rejected-name-present)").unwrap(), "false");
+        let error = portable_repl::evaluate_script_compiled(&mut after, &mut macros,
+            "(defmacro other.scope/invalid-fresh-root [] 0)", None).unwrap_err();
+        assert!(portable_repl::repl_error_display(&mut after, &macros, &error).contains("Macro definition name must be unqualified"));
+        let observed = portable_repl::evaluate_compiled(&mut after, &mut macros, "(rejected-name-present)").unwrap();
+        if observed != "false" {
+            failures.push(format!("macro phase {macro_phase}: invalid declaration admitted a Var: {observed}"));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
 fn review_regression_evaluation_capability_preserves_actual_unary_operand_types() {
     let program = r#"[
         (try (+ (suss.bootstrap/evaluate-form "x")) :accepted (catch :default e (ex-message e)))

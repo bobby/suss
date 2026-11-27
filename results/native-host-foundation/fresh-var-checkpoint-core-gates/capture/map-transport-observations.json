@@ -1,0 +1,2296 @@
+{
+  "assertions": [
+    {
+      "head": "fn?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: Unsupported ABI2 value layout",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "fn?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "vector"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 7,
+      "source-head": "and",
+      "test": "clojure.core-test.map/test-map",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "and",
+      "kind": "value",
+      "ordinal": 8,
+      "source-head": "and",
+      "test": "clojure.core-test.map/test-map",
+      "value": {
+        "tag": "bool",
+        "value": true
+      },
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "items": [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      107
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      118
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "items": [
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      107
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                },
+                {
+                  "name": {
+                    "tag": "string",
+                    "units": [
+                      118
+                    ]
+                  },
+                  "namespace": {
+                    "tag": "nil"
+                  },
+                  "tag": "keyword"
+                }
+              ],
+              "tag": "vector"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "set"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "1"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            }
+          ],
+          "tag": "set"
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "string",
+              "units": [
+                97
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                100
+              ]
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "string",
+              "units": [
+                97
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                98
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                99
+              ]
+            },
+            {
+              "tag": "string",
+              "units": [
+                100
+              ]
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "2"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "3"
+            },
+            {
+              "tag": "long",
+              "value": "6"
+            },
+            {
+              "tag": "long",
+              "value": "9"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 41,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 42,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 43,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 44,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 45,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/lazy-seq?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "reason": "Host error: ABI2 decoder cannot force unrealized lazy sequence",
+          "tag": "opaque"
+        }
+      ],
+      "ordinal": 46,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "p/lazy-seq?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "not",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "bool",
+          "value": false
+        }
+      ],
+      "ordinal": 47,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "not",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            },
+            {
+              "tag": "long",
+              "value": "16"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            },
+            {
+              "tag": "long",
+              "value": "16"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 48,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 49,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 50,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 51,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 52,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "4"
+            },
+            {
+              "tag": "long",
+              "value": "8"
+            },
+            {
+              "tag": "long",
+              "value": "12"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 53,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 54,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 55,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 56,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 57,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 58,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 59,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 60,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "empty?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 61,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "empty?",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 62,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 63,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "vector"
+        },
+        {
+          "items": [
+            {
+              "tag": "long",
+              "value": "0"
+            },
+            {
+              "tag": "long",
+              "value": "5"
+            },
+            {
+              "tag": "long",
+              "value": "10"
+            },
+            {
+              "tag": "long",
+              "value": "15"
+            },
+            {
+              "tag": "long",
+              "value": "20"
+            }
+          ],
+          "tag": "seq"
+        }
+      ],
+      "ordinal": 64,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.map/test-map",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 65,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 66,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 67,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 68,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": false,
+      "verdict": "fail"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 69,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 70,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.map/test-map",
+      "threw": true,
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.map",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}
