@@ -1,0 +1,2560 @@
+{
+  "assertions": [
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 1,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 2,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 3,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 4,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 5,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 6,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 7,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 8,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 9,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 10,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 11,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 12,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 13,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 14,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 15,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 16,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 17,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 18,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 19,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 20,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 21,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 22,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 23,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 24,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 25,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 26,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 27,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 28,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 29,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 30,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 31,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              99,
+              108,
+              111,
+              106,
+              117,
+              114,
+              101,
+              46,
+              99,
+              111,
+              114,
+              101
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              99,
+              108,
+              111,
+              106,
+              117,
+              114,
+              101,
+              46,
+              99,
+              111,
+              114,
+              101
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 32,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 33,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 34,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 35,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 36,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 37,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 38,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 39,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 40,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 41,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 42,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 43,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              42
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 44,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              43
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 45,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              33
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 46,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              45
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 47,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              95
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 48,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              63
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 49,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              60
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 50,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              62
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 51,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              46,
+              100,
+              101,
+              102
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 52,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "namespace": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99,
+              42,
+              43,
+              33,
+              45,
+              95,
+              39,
+              63,
+              60,
+              62,
+              61
+            ]
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 53,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 54,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        },
+        {
+          "name": {
+            "tag": "string",
+            "units": [
+              97,
+              98,
+              99
+            ]
+          },
+          "namespace": {
+            "tag": "nil"
+          },
+          "tag": "symbol"
+        }
+      ],
+      "ordinal": 55,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "nil?",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "nil"
+        }
+      ],
+      "ordinal": 56,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "nil?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "=",
+      "kind": "predicate",
+      "operands": [
+        {
+          "tag": "string",
+          "units": []
+        },
+        {
+          "tag": "string",
+          "units": []
+        }
+      ],
+      "ordinal": 57,
+      "result": {
+        "tag": "bool",
+        "value": true
+      },
+      "source-head": "=",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 58,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 59,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 60,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "threw": true,
+      "verdict": "pass"
+    },
+    {
+      "head": "p/thrown?",
+      "kind": "thrown",
+      "ordinal": 61,
+      "source-head": "p/thrown?",
+      "test": "clojure.core-test.symbol/test-symbol",
+      "threw": true,
+      "verdict": "pass"
+    }
+  ],
+  "namespaces": [
+    {
+      "namespace": "clojure.core-test.symbol",
+      "status": "loaded"
+    }
+  ],
+  "schema": 1,
+  "skips": [],
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "test-failures": []
+}

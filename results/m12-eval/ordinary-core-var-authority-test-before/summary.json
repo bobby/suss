@@ -1,0 +1,10 @@
+{
+  "actual_new_test_exit": 101,
+  "source_overlay_unchanged": true,
+  "diagnostic_actual_cli_exits": [
+    0,
+    0,
+    0
+  ],
+  "qualification": "The new authority test itself attempted a protected canonical Var field read from ordinary source. Actual current CLI catch controls identify the existing private-field rejection; direct .isMacro remains true. Correct the test setup using explicit privileged host extraction, then exercise only unprivileged helper calls. No generic-core/native-root fix pass is inferred."
+}

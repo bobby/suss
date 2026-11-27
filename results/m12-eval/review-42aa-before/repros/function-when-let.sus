@@ -1,0 +1,1 @@
+(let [f (fn [] 42)] ((eval (list 'when-let ['x f] 'x))))

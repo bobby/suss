@@ -20,6 +20,8 @@ mod assertion_head_transport;
 mod pinned_min_key_body;
 #[path = "support/pinned_some_fn_bodies.rs"]
 mod pinned_some_fn_bodies;
+#[path = "support/pinned_eval_body.rs"]
+mod pinned_eval_body;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;

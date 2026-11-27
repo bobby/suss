@@ -1,3 +1,5 @@
+Public eval is layered above the native host/Macro foundation; its original acceptance criteria and full34 assertion guard remain in #515/#516. Numeric completion remains in #518. Historical execution receipts in this branch predate the extraction and do not establish current final-head validation.
+
 ### Native host/Macro and live Var contract
 
 See [the core boundary contract](../runtime/host-macro-boundary.md) for actual Store ownership, authenticated live-value transport, dynamic/error restoration and the Var definition/publication transition table. Runtime and isolated Macro namespaces retain their existing separation. Public eval and numeric completion are separate consumers. Source/license provenance and raw primary observations are retained; successful execution must be established on each final source tree.

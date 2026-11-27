@@ -2541,6 +2541,13 @@
     (fn [n] (int (rand n)))))
 ;; END Clojure rand-int
 
+;; BEGIN Clojure eval
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+(def ^{:doc "Evaluates the form data structure (not text!) and returns the result."
+       :added "1.0" :static true} eval
+  (fn [form] (suss.bootstrap/evaluate-form form)))
+;; END Clojure eval
 
 ;; BEGIN Clojure ns-interns
 ;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.

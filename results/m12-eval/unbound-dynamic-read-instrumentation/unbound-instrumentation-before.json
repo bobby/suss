@@ -1,0 +1,5 @@
+{
+  "crates/suss-compile/tests/portable_resolution.rs": "b063aefd3c58069a6ee9cbb73398dfe4ac9ce460d033902336834a7455b08a79",
+  "crates/suss-compile/tests/portable_closures.rs": "e2e4d9b13d2e13b84ff0becad191bceb70c1fda2e639a5849a4a08a46801edd8",
+  "crates/suss-compile/tests/portable_dynamic_bindings.rs": "477397bc976137018b449c410502e0a948cd98fc0791415d96dcff6dc196cbea"
+}

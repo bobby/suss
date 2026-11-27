@@ -1,0 +1,73 @@
+{
+  "review_kind": "independent xhigh promotion review",
+  "head": "56e030f6e139951f50640e8371a7a0ebc862f4e3",
+  "base": "ac0b485ef0ff3f6dbd8364a6eb8fdb808440a613",
+  "issue": 515,
+  "pr": 516,
+  "findings": [
+    {
+      "severity": "P3",
+      "file": "docs/roadmap/handoff.md",
+      "line": 15,
+      "title": "Correct numeric assertion category/ordinal mapping",
+      "trigger": "Read the handoff guidance while locating independently decoded numeric eval observations.",
+      "actual": "Handoff says BigInt/Ratio rows 5/6 and Decimal row 7.",
+      "expected": "BigInt row5, Decimal row6, Ratio row7.",
+      "reproduction": "In the unchanged vendored eval body, 1N is ordinal5, 1.0M ordinal6, 1/2 ordinal7. Inspect operands in the retained full capture: row5 {tag:bigint,value:1}; row6 {tag:decimal,unscaled:10,scale:1}; row7 {tag:ratio,numerator:1,denominator:2}.",
+      "impact": "The evidence navigation attributes scale-preserving Decimal evidence to the wrong assertion; actual host observations all pass. No runtime failure."
+    }
+  ],
+  "runtime_findings": [],
+  "criteria": [
+    {
+      "number": 1,
+      "assessment": "Satisfied by ordinary compiled eval function over capability; first-class/redefined eval, generated calls/collections, special forms/macros and arity operand effects covered in original native controls and independent fresh controls. The production source addition is the seven-line authored/generated core binding."
+    },
+    {
+      "number": 2,
+      "assessment": "Source-qualified passing: exact categories/Decimal scale independently decoded in original rows5/6/7 and broader24 primary controls; generated numeric calls and result-type checks pass. Complete numeric issue acceptance remains outside this PR."
+    },
+    {
+      "number": 3,
+      "assessment": "Live namespace/dynamic math/lexical noncapture controls pass. Independent host-held eval-produced function remains callable after GC and macro-service drop and sees redefined root42."
+    },
+    {
+      "number": 4,
+      "assessment": "Recursive eval and genuine phase-qualified Var cells, identity, deref, metadata, namespace state/callback boundaries have source and executed regressions. Independent held original/retrieved Var identity and live closures pass in both phases."
+    },
+    {
+      "number": 5,
+      "assessment": "Top-level eval do units preserve prefix effects before later analysis failure. Throwing initializers retain old roots and completed effects. Independent nested do/throw/macro-publication controls match fresh primary."
+    },
+    {
+      "number": 6,
+      "assessment": "Safe Caller-borrowed SessionHost, scoped suspended ancestor registry, short metadata locks and persistent authorities retain actual Stores without replay. Existing public eval cancellation/fuel/source diagnostics tests actually pass in full run. Public raw/actual macro/source macro cases cover both phases; no new native ownership production code in this diff."
+    },
+    {
+      "number": 7,
+      "assessment": "Retained24 controls have fresh pinned1.12.6 command receipt on identical source and native independent decode matches both phases. Review adds fresh15-control primary and30 matching phase observations plus2 actual held-root checks; initial diagnostics retained separately, never counted as native passes."
+    },
+    {
+      "number": 8,
+      "assessment": "Independently audited all34 ordered original eval assertions:29 host matches, original5 guests at15..19, no eval fail/skip/unexecuted. Ordinals5/6/7 independently match categories. All5530 prior ordered IDs/decisions preserved;105 known failures,63 failed namespaces,1374 unexecuted,0skips remain explicit."
+    },
+    {
+      "number": 9,
+      "assessment": "Source/license and generated recipe/manifest aligned except P3 handoff category mapping. Raw full baseline actually2694 on052668a3,378 successful groups,15 original ignores; registration-only repair complete affected8-test target actually passes on19f6fe2d. The full-plus-focused qualification is sound and does not establish a2696-test exact full command on reviewHEAD. Independent review now performed. Final published-headCI is still required before Ready; older publishedde734268 greenCI cannot satisfy it."
+    }
+  ],
+  "initial_control_scope": {
+    "receipt": "initial-controls/commands.json; actual native process0/fresh primary0, not a blanket conformance pass",
+    "embedded_atom": "Fresh Clojure and Suss both reject embedding local Atom objects in generated nested forms/metadata; direct self-evaluation of Atom and ExceptionInfo preserves identity in both. Do not infer nested-constant support from direct self-evaluation.",
+    "outer_source_topology": "Fresh Clojure Compiler.eval splits an outer top-level do, so source `(do (eval '(def x ...)) ... (var x))` can admit x before later compilation. Session::eval_with_macros prepares its entire source input before runtime; an unresolved direct var in that same already-being-prepared input fails before eval executes. Both original topology failures are retained. Public eval of the equivalent do form itself compiles its ordered units and passes in both phases. The moved-inner control is not counted as fixing outer source semantics.",
+    "scope_conclusion": "This source-entry distinction is not an actionable regression in the public form-data eval consumer. Accepted design7 specifies incremental input compilation and no binding changes on a compile error; docs/runtime/compiled-repl-macros.md specifies failed input compilation publishes no Runtime input bindings. The unchanged script_compile_failure_preserves_existing_runtime_bindings regression enforces whole source preparation (`(def keep99) unresolved` retains17). #515 requires compilation units within the form passed to ordinary public eval and persistent state for subsequent prepared inputs/lookups, which are satisfied. Broadening ordinary source preparation to JVM Compiler.eval top-level unit timing would alter established source atomicity and is separate from this binding."
+  },
+  "limitations": [
+    "No second3.5-hour full run performed; reviewed raw exact baseline plus unchanged runtime/source-qualified complete affected test target.",
+    "Independent15 controls compare exact printed results; existing suite/primary native regressions use independent structural decoding. Two additional root checks hold actual SessionValues and inspect runtime numeric/sentinel results after GC, rather than relying only on a primary scalar.",
+    "Review does not certify complete numeric issues338/339, whole-language conformance, memory admission, arbitrary opaque native categories, or unexecuted suite rows.",
+    "No source edits, source worktree mutations, pushes, promotion or merge performed. Final published-headCI remains pending."
+  ],
+  "evidence": "independent-audit.json; commands.json; inputs-and-receipts.tar.gz; initial-controls/ retained negative/topology receipts",
+  "all_jobs_terminal": true
+}

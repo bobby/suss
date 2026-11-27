@@ -1,0 +1,1 @@
+(let [v #'identity] (identical? v (eval (list 'when-let ['x v] 'x))))

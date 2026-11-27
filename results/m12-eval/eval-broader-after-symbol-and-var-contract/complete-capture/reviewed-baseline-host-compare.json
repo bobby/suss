@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "scripts/clojure_test_suite.py",
+    "compare",
+    "--suite",
+    "suite",
+    "--observations",
+    "results/m12-eval/eval-broader-after-symbol-and-var-contract/complete-capture/suite-capture/suite-observations.json"
+  ],
+  "exit_code": 0,
+  "seconds": 0.21816754341125488,
+  "capture_sha256": "298d8edf0785f7cc5b2f3fe2691415be3b538baa8959d7cc6bf5b05e6c4902df",
+  "baseline_sha256": "dea5db93e9548008d91e5c79ee11978920575975ec601f1852139ff063329d7f",
+  "qualification": "Unchanged host comparator applied to the retained actual native101 capture; not a fresh native execution."
+}

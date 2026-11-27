@@ -1,0 +1,19 @@
+{
+  "focused_receipt": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/unbound-dynamic-focused/commands.json",
+  "all_five_commands_actual0": true,
+  "original_semantic_sources_preserved": true,
+  "allowed_only_instrumentation_and_provenance_changes": [
+    "crates/suss-compile/tests/portable_closures.rs",
+    "crates/suss-compile/tests/portable_dynamic_bindings.rs",
+    "crates/suss-compile/tests/portable_resolution.rs",
+    "results/m12-eval/live-vars-source-provenance.json",
+    "results/m12-eval/verify-live-vars.py"
+  ],
+  "files": {
+    "crates/suss-compile/tests/portable_closures.rs": "8787b27e15baf4c3f879ec05af8cba3d7e57b86c3b6d3b891c5cb5e9abc830ca",
+    "crates/suss-compile/tests/portable_dynamic_bindings.rs": "f0ec6395d2310165764d33ba3e2d6977eac1d1ff413cfe152a334e2bd10d2e26",
+    "crates/suss-compile/tests/portable_resolution.rs": "f9a48b2187b0668d988b7792306b20fe3286c9198cdedab4e510481a9c67db32",
+    "results/m12-eval/live-vars-source-provenance.json": "e1d28b141382936a36cb0eddee125bb9428a331db3c8a931ee9950384d00b451",
+    "results/m12-eval/verify-live-vars.py": "684ae8308b320d3b8f21796d0da5afb12021882e7608ae3e2ea0ab110cec39f8"
+  }
+}

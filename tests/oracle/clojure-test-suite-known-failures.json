@@ -46,10 +46,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
   },
-  "clojure.core-test.eval": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unresolved Runtime name eval at bytes 293..3071"
-  },
   "clojure.core-test.ffirst": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.ffirst (Some(\"<root>/clojure/core_test/ffirst.cljc\")): Unresolved Runtime name ffirst at bytes 251..1277"

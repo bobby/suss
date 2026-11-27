@@ -1,0 +1,20 @@
+{
+  "head": "50d70b62522e3d442d479fa71bac23d91a7a106e",
+  "workspace": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/full-workspace-after-binding-effects-fix/command.json",
+  "recorder_pid": 1295885,
+  "cargo_pid": 1295973,
+  "test_pids": [
+    1365013
+  ],
+  "descendants": [
+    1365013,
+    1365017
+  ],
+  "reason": "Deliberate interruption for independently confirmed with-redefs root restoration/current-binding semantic regression in50d7, not a timeout. Primary0/native0/comparator1 with4/6wrongvalues. Need distinguish root redefinition from dynamic binding while retaining initializer/root-definition fixes.",
+  "comparison": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/with-redefs-root-scope-before-v2/comparison.json",
+  "complete": true,
+  "actual_workspace_exit_code": 101,
+  "actual_workspace_seconds": 1831.857748746872,
+  "inputs_unchanged": true,
+  "head_unchanged": true
+}

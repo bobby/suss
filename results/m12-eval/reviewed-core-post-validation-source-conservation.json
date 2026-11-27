@@ -1,0 +1,14 @@
+{
+  "tested_native_head": "41725409c6f4ae29bc4cb56f2fedf6ebc079343b",
+  "core_review_evidence_merge_head": "b2e73bdcf8c1d82cc1d22a5f7ba1c80f071c918a",
+  "merged_foundation": "5d8a608d5a7a02415973fef537090a749fae0ddf",
+  "frozen_inputs": 12617,
+  "unchanged_frozen_inputs": 12614,
+  "only_changed_frozen_inputs": [
+    "docs/roadmap/handoff.md",
+    "results/native-host-foundation/current-acceptance-validation.json",
+    "results/native-host-foundation/fresh-var-checkpoint-finding.json"
+  ],
+  "runtime_tests_fixtures_tools_config_manifests_conserved": true,
+  "qualification": "Post-terminal technical receipts/handoff and reviewed foundation evidence only. Exact consumer baseline/review/final-head CI remain separate."
+}

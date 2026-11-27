@@ -1,0 +1,109 @@
+{
+  "tested_source_head": "58470278815e4433c4bc6462ed885b318f455e71",
+  "actual_exit_code": 0,
+  "commands": [
+    {
+      "label": "native-capability-owner-guards",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_evaluation",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 1.76393461227417
+    },
+    {
+      "label": "nested-native-constants",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_eval",
+        "eval_compiles_nested_function_and_var_constants_including_quotation",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 3.785200357437134
+    },
+    {
+      "label": "complete-public-controls",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_eval",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 36.13217639923096
+    },
+    {
+      "label": "retained-symbol-var-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "portable_symbol_conversion",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 8.04002046585083
+    },
+    {
+      "label": "aot-namespace-size",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "runtime_namespaces",
+        "aot_namespace_frame_size_is_bounded_per_form",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 7.835139989852905
+    },
+    {
+      "label": "complete-original-eval-body",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "complete_eval_body_keeps_exact_numeric_fields_as_host_matches",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 10.653943538665771
+    }
+  ],
+  "head_unchanged": true,
+  "all_recorded_inputs_unchanged": true,
+  "recorded_input_count": 7778,
+  "qualification": "The receipt establishes only these six focused commands. Publication adds evidence/handoff and read-only provenance checks; executable Rust, core source, generated core artifacts, manifests, lockfile, primary cases and test bodies remain identical. Evaluated macro declarations, broader full capture, full workspace, bootstrap reproduction, independent promotion review and final-head CI remain outstanding."
+}

@@ -1,0 +1,34 @@
+[
+  [
+    "unused-invalid-context-long",
+    "(binding [*math-context* :invalid] (try (eval '(+ 1 2)) (catch Throwable e :error)))"
+  ],
+  [
+    "unused-invalid-context-quote",
+    "(binding [*math-context* :invalid] (try (eval '(quote :ok)) (catch Throwable e :error)))"
+  ],
+  [
+    "thread-binding-priority-root-def",
+    "(do (def ^:dynamic review-scope-x 1) [(with-redefs [review-scope-x 2] (binding [review-scope-x 3] [(eval 'review-scope-x) (do (eval '(def ^:dynamic review-scope-x 4)) (eval 'review-scope-x))])) review-scope-x])"
+  ],
+  [
+    "cross-initializer-root-effects",
+    "(do (def review-init-a 1) (def review-init-b 2) [(with-redefs [review-init-a (do (eval '(def review-init-b 9)) 3) review-init-b 4] [review-init-a review-init-b]) [review-init-a review-init-b]])"
+  ],
+  [
+    "failed-initializer-keeps-earlier-root",
+    "(do (def review-failed-a 1) (def review-failed-b 2) [(try (with-redefs [review-failed-a (do (eval '(def review-failed-b 9)) 3) review-failed-b (throw (ex-info \"stop\" {}))] :body) (catch Throwable e :error)) [review-failed-a review-failed-b]])"
+  ],
+  [
+    "duplicate-redefinitions-and-initializer-order",
+    "(do (def review-dup 1) (def review-events (atom [])) [(with-redefs [review-dup (do (swap! review-events conj :a) 3) review-dup (do (swap! review-events conj :b) 4)] review-dup) review-dup @review-events])"
+  ],
+  [
+    "macro-redefinition-existing-macro-root",
+    "(try (do (declare review-macro-a review-macro-b) (eval '(defmacro review-macro-a [] 1)) (eval '(defmacro review-macro-b [] 2)) (with-redefs [review-macro-a @(var review-macro-b)] (eval '(review-macro-a)))) (catch Throwable e :error))"
+  ],
+  [
+    "macro-redefinition-runtime-function",
+    "(do (declare review-macro-c) (eval '(defmacro review-macro-c [] 1)) (with-redefs [review-macro-c (fn [& args] 42)] (eval '(review-macro-c))))"
+  ]
+]

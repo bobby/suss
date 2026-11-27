@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "[\n(try [:ok (do (eval '(def bridge-caller-value 41)) (eval '(defmacro bridge-caller-global [] (inc bridge-caller-value))) (eval '(bridge-caller-global)))] (catch :default e [:error (ex-message e)]))\n(try [:ok (do (eval '(def bridge-caller-state (atom 0))) (eval '(defmacro bridge-caller-increment [] (list 'quote (swap! bridge-caller-state inc)))) [(eval '(bridge-caller-increment)) (deref (eval 'bridge-caller-state))])] (catch :default e [:error (ex-message e)]))\n(try [:ok (do (eval '(defmacro bridge-caller-def [] (eval '(def bridge-made 42)) (list 'quote :done))) (eval '(bridge-caller-def)) (eval 'bridge-made))] (catch :default e [:error (ex-message e)]))\n]\n"
+  ],
+  "binary_sha256": "0a9db98eceb9865aa52ac81db0bc06d364848e0a0302cd1c0cb4263d5ae72faf",
+  "qualification": "Immutable CLI from recorded initial R3/R4 working build, whose only subsequent source delta is reserved-error literal classification; not claimed as a new final-head build.",
+  "exit_code": 0,
+  "seconds": 28.593430519104004,
+  "binary_unchanged": true
+}

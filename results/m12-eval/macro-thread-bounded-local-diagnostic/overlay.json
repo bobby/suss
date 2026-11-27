@@ -1,0 +1,14 @@
+{
+  "at": 1795615737.441325,
+  "head": "6b435045cf92549531fb99d6d344670b5464334d",
+  "tracked_changes": {
+    "crates/suss-cli/tests/clojure_eval.rs": "e2f7c02764d1bd2c9fe3b7234bf9971c67582765f15db2c059829aa4106ace7f",
+    "crates/suss-compile/src/portable/resolve.rs": "7cbc79372d9a1466fde1e7c1270cbe87c08479c19ecefe6aa5036b6d5095a6af",
+    "crates/suss-compile/src/portable_macro_graph.rs": "b57a322477a404cc0349f6b7c42b37f80b072957d2277d036bccf7f99dfd517a",
+    "crates/suss-compile/src/portable_macros/evaluation.rs": "7cf5a8a7ce9976caee9c429290707013a1d807356a206edf97e3c2e0abe2aee6",
+    "crates/suss-compile/src/portable_session/evaluation.rs": "4751c80c8746191fc91c9b4f4dbec13a857fb868f69e93f72048c82428fd0de9"
+  },
+  "active_diagnostic_session": 6861,
+  "active_diagnostic_log": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/thread-macro-bounded-env-focused.log",
+  "qualification": "Working-tree state observed during a bounded diagnostic execution, not an initial frozen-source receipt or final-head gate. Required current clean-commit validation remains separate."
+}

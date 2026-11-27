@@ -1,0 +1,12 @@
+primary 24 primary expressions/observations/jars verified
+live-vars-primary 10 primary expressions/observations/jars verified
+do-boundary-primary 11 primary expressions/observations/jars verified
+namespace-primary 15 primary expressions/observations/jars verified
+review-corrections-primary 14 primary expressions/observations/jars verified
+var-implementation-primary 2 primary expressions/observations/jars verified
+macro-declaration-primary 22 primary expressions/observations/jars verified
+alias-primary 15 primary expressions/observations/jars verified
+macro-environment-primary 3 primary expressions/observations/jars verified
+macro-failure-primary 5 primary expressions/observations/jars verified
+symbol-primary 27 primary expressions/observations/jars verified
+Public eval adaptation hash verified; native execution has separate receipts

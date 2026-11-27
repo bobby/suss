@@ -1,0 +1,1 @@
+[[true false false :error :error :error] [["boom" {:value 1N}] ["boom" {:value 1N}]] [0.333M 0.333M 0.333M] [3 :ok [[3 3] 1] [[3 4] [1 9]] [:error [1 9]] [4 1 [:a :b]] 1 1]]

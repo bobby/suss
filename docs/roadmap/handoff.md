@@ -1,3 +1,44 @@
+## Public eval native controls and capture (2026-11-27)
+
+On clean consumer `41725409c6f4ae29bc4cb56f2fedf6ebc079343b`, fresh pinned
+Clojure 1.12.6 controls returned 0 and matched all 24 ordered observations and the
+retained stdout hash. After a generator-only cache refresh, the focused native
+run returned 0 for all 90 public-eval tests, three inherited core repair
+regressions, all 22 original upstream body/guard tests, and four Java/Node-free
+bootstrap artifact tests: 119 Rust test executions. Source/provenance checks
+also returned 0. All 12,617 inputs, HEAD, runner, Binaryen tools and primary JARs
+were conserved through terminal; runner and deletion records are archived in
+`results/m12-eval/reviewed-core-public-controls-after-generator-refresh`.
+
+The unchanged original eval body executes all 34 ordered assertions: 29 host
+matches and the original five guest judgments at ordinals 15 through 19, with
+no failures, skips or unexecuted rows. BigInt row 5, Decimal row 6 and Ratio row 7
+are independently matching host observations. The full scoped capture adds exactly
+those 34 rows to the foundation's 5,530 rows. All prior IDs, order and decisions
+are unchanged, and the reviewed failure ledger is exact. Counts are 5,354 host
+matches, 106 guest judgments, 105 failures, 63 blocked namespaces, 1,374 unexecuted
+and zero skips; comparator meanings and coverage limits remain explicit.
+
+`reviewed-core-native-audit.json` records these checks, original fixture/guard
+hashes and the raw capture hash. The earlier native build attempt returned 101
+before tests when the source-fingerprint guard detected a cached foundation
+generator in the shared target. That actual negative, source conservation and
+positive primary controls remain in `reviewed-core-public-controls`. A package
+cache clean normalized one lockfile entry's order; the clean-source guard stopped
+the retry before execution, and exact original bytes were restored with all
+dependency fields unchanged. No source, dependency, budget, fixture or comparison
+rule was changed to resolve the build cache issue.
+
+The reviewed final core evidence was subsequently merged without changing
+runtime, test, fixture, tool, config or manifest inputs. These are scoped native
+results; this consumer's exact full workspace, independent promotion review and
+published-head CI require their own receipts. Complete numeric criteria and the
+229/200 tagged host corpus retain their numeric-consumer evidence.
+
+Public eval consumes the independent core foundation (#521). Its original criteria and wrapper tests remain here; scoped core receipts do not validate this consumer tree.
+
+All foundation results below retain their a97 source identity; this consumer requires its own native validation.
+
 ## Independent follow-up review controls (2026-11-27)
 
 Independent xhigh review of `d4674f2a8da5688921ef3d8546fa8863dccc0db7` against
@@ -34429,3 +34470,19 @@ There are 239 Rust test executions in this scoped batch. Source fixtures,
 case200M/map300M, artifact bounds 3900/128/+32 and guest/skip/comparator rules are
 unchanged. The earlier full success is tied to implementation `4b3a95c5`, before
 these repairs; it is not a repaired-source full-run result.
+
+
+### 2026-11-27: public eval workspace and registered Var controls
+
+- On `052668a3`, `cargo test --workspace --locked -- --test-threads=2` returned0 in12,551.37s:2,694 passing executions,378 successful groups and15 original ignores. All12,660 frozen inputs, HEAD, runner and Binaryen tools were conserved through terminal and archived before edits. See `results/m12-eval/exact-workspace-reviewed-core-eval-disk-tmp/` and `reviewed-exact-workspace-audit.json`.
+- The first exact attempt exited101 with EDQUOT122 during the unchanged build-cache copy on quota-enabled `/tmp`. All seven original cache guards subsequently passed with a task-owned workspace-disk TMPDIR, also used by the successful full command; both terminal attempts and the correction are retained.
+- Declaration/count reconciliation found two added tests nested inside another test. The actual baseline binary listed six symbol/Var tests and omitted those two functions. `19f6fe2d` moves only their enclosing brace: no runtime, fixture, test body or budget change. The rebuilt binary lists eight tests, and the complete `portable_symbol_conversion` target passed all eight in8.12s. Its actual source/tool hashes and runner are archived under `registered-public-var-symbol-controls/`; `symbol-registration-repair-audit.json` retains the source qualification. The exact full command executed2,694 on052668a3; it is not described as a2,696-test command on19f6fe2d.
+- The full capture contains5,564 rows, preserving all5,530 prior ordered IDs/decisions and adding only the unchanged34-row eval body:29 independent host matches, five original guest judgments, zero skipped/unexecuted eval rows. Numeric ordinals5/6/7 host-match independently. The global ledger remains105 known failures,63 blocked namespaces and1,374 unexecuted cases.
+- Independent review and published-head CI retain their own source identities. Complete numeric acceptance remains a separate consumer; no whole-language or numeric acceptance follows from this capture.
+
+
+### 2026-11-27: independent public eval review evidence
+
+Independent xhigh review of `56e030f6` against merged main `ac0b485e` found one P3 authored-handoff category/ordinal mapping error, corrected above against the unchanged source and independently decoded capture: BigInt5, Decimal6 (unscaled10, scale1), Ratio7 (1/2). No runtime finding was reported. Fifteen freshly recorded Clojure controls matched in both native phases, and two additional held-value checks retained Var identity and live closure roots after GC. All12,672 frozen probe/source/tool inputs remained unchanged through actual terminal and archive. The original and refined diagnostic/control outcomes remain distinct in `independent-review-56e030f6/`.
+
+The review retains the accepted source-preparation distinction: ordinary source input is prepared before its execution and preserves compile-error atomicity; public eval separately compiles the ordered units of its form argument. Moving a control into eval's form is not evidence that an outer already-being-prepared source form has JVM Compiler.eval unit timing. Embedded local Atom constants are rejected by both pinned Clojure and native controls, while direct eval of Atom and ExceptionInfo preserves identity. Final published-head CI retains a separate source identity.

@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-27T11:07:02.537444+00:00",
+  "head": "41725409c6f4ae29bc4cb56f2fedf6ebc079343b",
+  "cause": "Unqualified package cache clean normalized Cargo.lock package order; preflight clean-source guard rejected restart before native execution.",
+  "before_sha256": "9a33c8b342a8d0f604913e3029de671190b6555a2c54bc41790ec97954f40068",
+  "after_clean_sha256": "bf535892d7a62e6636bc1c89c0000aba563cae4b0fdf5d72aaf2f18aa9ab56b0",
+  "dependency_versions_checksums_and_fields_unchanged": true,
+  "diff": "diff --git i/Cargo.lock w/Cargo.lock\nindex 3b43fac3..2192ba08 100644\n--- i/Cargo.lock\n+++ w/Cargo.lock\n@@ -1617,6 +1617,12 @@ dependencies = [\n  \"winapi-util\",\n ]\n \n+[[package]]\n+name = \"scoped-tls-hkt\"\n+version = \"0.1.5\"\n+source = \"registry+https://github.com/rust-lang/crates.io-index\"\n+checksum = \"e9603871ffe5df3ac39cb624790c296dbd47a400d202f56bf3e414045099524d\"\n+\n [[package]]\n name = \"semver\"\n version = \"1.0.27\"\n@@ -1627,12 +1633,6 @@ dependencies = [\n  \"serde_core\",\n ]\n \n-[[package]]\n-name = \"scoped-tls-hkt\"\n-version = \"0.1.5\"\n-source = \"registry+https://github.com/rust-lang/crates.io-index\"\n-checksum = \"e9603871ffe5df3ac39cb624790c296dbd47a400d202f56bf3e414045099524d\"\n-\n [[package]]\n name = \"serde\"\n version = \"1.0.228\"\n",
+  "restored_exact_original": true,
+  "future_cache_clean_requires_locked": true
+}

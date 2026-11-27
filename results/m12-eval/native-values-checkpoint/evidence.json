@@ -1,0 +1,361 @@
+{
+  "archives": [
+    {
+      "source": "results/m12-eval/isolated-native-values-all-controls-before/commands.json",
+      "sha256": "ff039949c5e0881d9a7525f9185db27711bfa4a23677cf0d84f4f59bc64c2a02",
+      "archive": "isolated-native-values-all-controls-before--commands.json.gz",
+      "archive_sha256": "c3a51215b01df4a5de8e5378fab7eba0e7f057eff1144da200592aa9f870f50e"
+    },
+    {
+      "source": "results/m12-eval/isolated-native-values-all-controls-before/full-isolated-source-values-before.log",
+      "sha256": "4f4351cbd7bc63acb8652d6683d15786b16bddcf639781abbb622b21ce0b0379",
+      "archive": "isolated-native-values-all-controls-before--full-isolated-source-values-before.log.gz",
+      "archive_sha256": "1a8067aa5febc1c701ccb91094d078e46e3b2fedfc5660ded26b47dd7ac81391"
+    },
+    {
+      "source": "results/m12-eval/native-functions-first-working/commands.json",
+      "sha256": "3aa48341637b3191eababf8bfe2e83dc298fffc22722d932739853d481abcdc0",
+      "archive": "native-functions-first-working--commands.json.gz",
+      "archive_sha256": "41f0bd26e4fa52aec3c195529628ac5fbd70796384b019f2a3a19d048a6865a7"
+    },
+    {
+      "source": "results/m12-eval/native-functions-first-working/native-function-rust-check.log",
+      "sha256": "a409282dc0943fba21f953a129df31d6922279a6ff4ddf88cac2f41d8abce435",
+      "archive": "native-functions-first-working--native-function-rust-check.log.gz",
+      "archive_sha256": "f068f171121b6cf80364c75d88adf42681d2719b42273786d35fbbc121ab3fa3"
+    },
+    {
+      "source": "results/m12-eval/native-functions-visible-working/commands.json",
+      "sha256": "8b76df211df6cfc5a4e1c625529a9d182fa4b900c87ec8a1b78b70df18f53fc8",
+      "archive": "native-functions-visible-working--commands.json.gz",
+      "archive_sha256": "1046e27462ddb27761286a879279fb7ee91830c4c938c31627ad95b5b0a64dff"
+    },
+    {
+      "source": "results/m12-eval/native-functions-visible-working/full-isolated-source-value-diagnostics.log",
+      "sha256": "1b20d4e995798e96725f4235e08e7d413b560fc78a9c7feb96c05e941fa2c7ad",
+      "archive": "native-functions-visible-working--full-isolated-source-value-diagnostics.log.gz",
+      "archive_sha256": "3c4820d8015777cb44028d40faf34cdb4bac67ff1859854d3d845ca2414c24b2"
+    },
+    {
+      "source": "results/m12-eval/native-functions-visible-working/native-function-rust-check.log",
+      "sha256": "da64d1491e44e8d0484d839392e78236c0c3178dad8d6b5207fc1fb1cbb756df",
+      "archive": "native-functions-visible-working--native-function-rust-check.log.gz",
+      "archive_sha256": "54d4ea37de1098ba4973a303794a6ecb9942ff82d2243eec809c1b586685a732"
+    },
+    {
+      "source": "results/m12-eval/native-functions-callable-construction-working/commands.json",
+      "sha256": "0947f5eb91c249ac8a2f6b756f8f35e29e18b086577483e72142d2ab5acd7d38",
+      "archive": "native-functions-callable-construction-working--commands.json.gz",
+      "archive_sha256": "51c425f645600f80131c4e7060af2f30cd203f8881e7bc86ba362f29e525c5e1"
+    },
+    {
+      "source": "results/m12-eval/native-functions-callable-construction-working/full-isolated-source-value-diagnostics.log",
+      "sha256": "7789d6ea9a2b7dab0a242f846daab5a8f9ae0c1f81f021a779ade666f5593494",
+      "archive": "native-functions-callable-construction-working--full-isolated-source-value-diagnostics.log.gz",
+      "archive_sha256": "ecb4f5472b9ab36aabceb7b102104eba25d697e16cec1df56409c2f0290338da"
+    },
+    {
+      "source": "results/m12-eval/native-functions-callable-construction-working/native-function-gc-retirement-and-identity.log",
+      "sha256": "69a4279a4a10200d34c39de1907e11e0e2aba11549bc3dd988eb8b55afc01523",
+      "archive": "native-functions-callable-construction-working--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "6a9f094aa7fcabe56f0b75cfe79087d450d4e6f534f09e7cb371cd348209eeff"
+    },
+    {
+      "source": "results/m12-eval/native-functions-callable-construction-working/native-function-rust-check.log",
+      "sha256": "1c810af66b5d769c0ac22a46e87467df4c3fda6f1d4ce49a7d7c8c1cdec758f6",
+      "archive": "native-functions-callable-construction-working--native-function-rust-check.log.gz",
+      "archive_sha256": "32b6f075c33262c3690f313374fdfefb85b7d7af7306567feb4c4e7b5b1fb792"
+    },
+    {
+      "source": "results/m12-eval/native-functions-identity-and-cancellation-working/commands.json",
+      "sha256": "8fd5cb956cbdbe6d6e8c049ae5680b2481f50bf4a26e2195170316a714072bb9",
+      "archive": "native-functions-identity-and-cancellation-working--commands.json.gz",
+      "archive_sha256": "5a72191a57879ba6641803a6778cc2d1007f28ac736a93dbd20622209c7614ca"
+    },
+    {
+      "source": "results/m12-eval/native-functions-identity-and-cancellation-working/complete-compiled-macro-fuel-regressions.log",
+      "sha256": "29deb902b8c9f6ebf4904e0068657244727a26acd88bcd8734f761ec849daddd",
+      "archive": "native-functions-identity-and-cancellation-working--complete-compiled-macro-fuel-regressions.log.gz",
+      "archive_sha256": "380eaf5bada5dd1bd9a9f979fc7712917d02a687f08a3e649721c2da2b037618"
+    },
+    {
+      "source": "results/m12-eval/native-functions-identity-and-cancellation-working/full-isolated-source-value-diagnostics.log",
+      "sha256": "08c29856d0efa3041bf47f6c2e98bf02465a935504e7b2afb50c189b79d82a3a",
+      "archive": "native-functions-identity-and-cancellation-working--full-isolated-source-value-diagnostics.log.gz",
+      "archive_sha256": "e1fcd8570f642bb15069257d2036a68f479270015cfa26f3308025e9545bb69d"
+    },
+    {
+      "source": "results/m12-eval/native-functions-identity-and-cancellation-working/native-function-gc-retirement-and-identity.log",
+      "sha256": "bf41dd03633e1ac90b2b96aef9887db4dcb353b47132c752aaa85c20ded8d8f6",
+      "archive": "native-functions-identity-and-cancellation-working--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "234f48f5c45ac97605d2dd099583f4245e9e2f2584b866827460c9cf5d0f2828"
+    },
+    {
+      "source": "results/m12-eval/native-functions-identity-and-cancellation-working/native-function-rust-check.log",
+      "sha256": "1591fa35f262657221ac9d42c1ea7d703ef16eb34258254dfbdb4c40f8b300e0",
+      "archive": "native-functions-identity-and-cancellation-working--native-function-rust-check.log.gz",
+      "archive_sha256": "a59e7a1839bb1719f32dce706cf8f7a6f6cbfa1a28b063a342bee4947f80e9d2"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/commands.json",
+      "sha256": "be9bdfe40510acd62e6bee0846665131cb72ef218f9478a0828dffd9c92b4bc9",
+      "archive": "native-functions-inline-identity-and-callback-before--commands.json.gz",
+      "archive_sha256": "e3322d93e02b34d9143a894dd290b5bc9a0f3b78d5697a90fa0a16a5da5ce7cd"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/complete-compiled-macro-fuel-regressions.log",
+      "sha256": "4a54c1d70c2d4c2ac473b0565e3f163eca4628bc5f1f93cd7c96ae4a242f433c",
+      "archive": "native-functions-inline-identity-and-callback-before--complete-compiled-macro-fuel-regressions.log.gz",
+      "archive_sha256": "9223fefb950d3ae1386f5365d154915959230ebbf7f079270d02832c5b19f95e"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/full-isolated-source-value-diagnostics.log",
+      "sha256": "80c72506531c9c993f292b04c22fded0dbafbe70307e0fd65c25124610678668",
+      "archive": "native-functions-inline-identity-and-callback-before--full-isolated-source-value-diagnostics.log.gz",
+      "archive_sha256": "ea60b0c9b8ff0adb9bf902f3cf84187eb0f6e1478081b1bd0ddc558591dc4c65"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/native-function-gc-retirement-and-identity.log",
+      "sha256": "4ed02c4a814dfe40e74d64101987c35744041682c89f6e2397a45e2349d4457c",
+      "archive": "native-functions-inline-identity-and-callback-before--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "87639230c8cc50b6a94ebf350663b56d4466a666eed9880b4da1211900f9bea0"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/native-function-rust-check.log",
+      "sha256": "863f2b88e3ff3d34f45dabe05c948f4623b979f29192aabab240663459c09438",
+      "archive": "native-functions-inline-identity-and-callback-before--native-function-rust-check.log.gz",
+      "archive_sha256": "d5f5c7a5777041134a48af9f4195305165761f0c9bb67d408ae119e915eb01f9"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/native-inline-predicate-regressions.log",
+      "sha256": "e4abb8b548a7d1c6dd0cd68679afcadb2a86154697ee08c10d83c9cd202775ab",
+      "archive": "native-functions-inline-identity-and-callback-before--native-inline-predicate-regressions.log.gz",
+      "archive_sha256": "a03c101c3a5fe9d793316472629b1353d6cf21a3b67fdc177615c3694617c8eb"
+    },
+    {
+      "source": "results/m12-eval/native-functions-inline-identity-and-callback-before/typed-source-callback-cancellation-before.log",
+      "sha256": "8bb42bf0c317d65b59b82ceacb00c9278e4aae1fe02278b3535e8443e4beafbb",
+      "archive": "native-functions-inline-identity-and-callback-before--typed-source-callback-cancellation-before.log.gz",
+      "archive_sha256": "c6501b5401d77c82c706624b39bb8d0a4b8e45fd3990dfcf5a08800d88843d44"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/commands.json",
+      "sha256": "02158d021e12fbbc5172e56eb61d9e7e48d17adaf991d73e76fb7ed384f564b6",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--commands.json.gz",
+      "archive_sha256": "13dae0dd6f90712250b439d73197dad49f03fdd4fb5ebb579fba4e681ba519e9"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/complete-compiled-macro-fuel-regressions.log",
+      "sha256": "778a4c72c3ed0cd66e6400700104ed6dac869a7762b7a4d0fd32522f8d4c4e7e",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--complete-compiled-macro-fuel-regressions.log.gz",
+      "archive_sha256": "6527c84bb234d029996425c52690a96d750155806dc252c5f1c90a69b071fb2c"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/full-isolated-source-value-diagnostics.log",
+      "sha256": "7e72f0755dcf63cdd78e702de76f65d38164cb4af747457f713bdabb09baf1e0",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--full-isolated-source-value-diagnostics.log.gz",
+      "archive_sha256": "0144e63841a94111e24f725b03d2aeaf4a859759bb1dc0dec424fc022591ab7f"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/native-function-gc-retirement-and-identity.log",
+      "sha256": "6a96b93769fa05aa9a19fb2a7609735dc97c4d0213467c2a1480cd5bce708034",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "73af3bda785af52f827cac43490ebf69957fac93e5e768fbf610c028ac646b3e"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/native-function-rust-check.log",
+      "sha256": "f435d67b33ba789a113f5d467a930c15a5975f58e7b77a0a1d9642e6aca3349b",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--native-function-rust-check.log.gz",
+      "archive_sha256": "c3a477e0474eab0103b1277d87d228f3458b19f4016a252d2c92b2abaf2ff3b6"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/native-inline-predicate-regressions.log",
+      "sha256": "ef38af52487627741e7bd238eda03749b5c3f3b87c6ec417ba733613f935f00f",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--native-inline-predicate-regressions.log.gz",
+      "archive_sha256": "997ce2f2140a8b4591d609750b76d534b1153330d4c201e285efe0dfd4346019"
+    },
+    {
+      "source": "results/m12-eval/native-functions-authenticated-prototypes-and-callback-diagnostics/typed-source-callback-cancellation-before.log",
+      "sha256": "6352f66cdd99114a633715c548366f5c61db60145e0cda7291a1bd1bd2c81d09",
+      "archive": "native-functions-authenticated-prototypes-and-callback-diagnostics--typed-source-callback-cancellation-before.log.gz",
+      "archive_sha256": "cba34894dac62549a8dbda2a48919d23f3a5cd6f83ee90496169bde62bfd45cb"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/commands.json",
+      "sha256": "f7001376fd781af034dd518158a788c729cda2efc66909429fa75d6c07734abb",
+      "archive": "native-functions-qualified-callback-and-eval-working--commands.json.gz",
+      "archive_sha256": "daf508836e25d5789a7fcaf316e722d438615f6950617bfcdb3703a016f9e7a3"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/complete-native-identity-hash-regressions.log",
+      "sha256": "4e3e96346bf04befdce37229f93672c499f6b73056398aa12ec2a202875c1515",
+      "archive": "native-functions-qualified-callback-and-eval-working--complete-native-identity-hash-regressions.log.gz",
+      "archive_sha256": "e49c5e2141a24bca42efc024a27451ca72f6ec205af19415d67c8d2ef6c7b915"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/complete-public-eval-regressions.log",
+      "sha256": "5190cc688a4da56dc4c60019e58487933105a02218560c89f20e85a87a694853",
+      "archive": "native-functions-qualified-callback-and-eval-working--complete-public-eval-regressions.log.gz",
+      "archive_sha256": "9bd09265149bd2bccd85f9c3ce8044ce0a69ac14be6d1404c648ec30529bbbc2"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/native-eval-test-typecheck.log",
+      "sha256": "8e50c5c46f1322d393707cf08aeb10bc9cf0dc4dae26cd1487527154ad2a09a8",
+      "archive": "native-functions-qualified-callback-and-eval-working--native-eval-test-typecheck.log.gz",
+      "archive_sha256": "f2ea1998caa52a2e2f12240198fcde2b304591741d1501fb2599670c84c457c7"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/native-function-gc-retirement-and-identity.log",
+      "sha256": "e66295a8e574761fb5bf3f55fe12fd1d7b5e337e8ae0ac88b32378692ee1b0bb",
+      "archive": "native-functions-qualified-callback-and-eval-working--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "62c198de4fcf107950e9c8d1f10cc0649d0e3dbc624865b34dbcba73dfa61f82"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/native-library-test-typecheck.log",
+      "sha256": "dfe4a369e968a0848bbe807cefbaaba7f20b2684b4ed0995d42af528d8ad3f49",
+      "archive": "native-functions-qualified-callback-and-eval-working--native-library-test-typecheck.log.gz",
+      "archive_sha256": "b8e14036b565dad753a346fe8c415553392ca8c3f540dcc2447f8c92a07e1e60"
+    },
+    {
+      "source": "results/m12-eval/native-functions-qualified-callback-and-eval-working/typed-qualified-source-callback-before.log",
+      "sha256": "e09472b2ed2fa059b29eeb66c451fb14101131589194ecb503f22ee0b85a021d",
+      "archive": "native-functions-qualified-callback-and-eval-working--typed-qualified-source-callback-before.log.gz",
+      "archive_sha256": "01d9690550e152f428d7ef057fc08f3f919446fec0658cfcc106d4d497bd6780"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-and-eval-working/commands.json",
+      "sha256": "75e6dc8eced7c05fa0b6399b94d325f8b0fc858a6286f079c881fb421d7173ec",
+      "archive": "native-functions-typed-callback-and-eval-working--commands.json.gz",
+      "archive_sha256": "90d1c6d9cfbccc76c53aaaa57037471c0fba5d6ce667e0dead3d179a1e1813c0"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-and-eval-working/native-library-test-typecheck.log",
+      "sha256": "757b5650619c24f830ae64e746332061bd505a5d8977b9542b52e3ed6cfc42c8",
+      "archive": "native-functions-typed-callback-and-eval-working--native-library-test-typecheck.log.gz",
+      "archive_sha256": "0ec6fced53e886e16eb1ba3a38caf8936635347d36f0964423600d6cdd5aa250"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/commands.json",
+      "sha256": "9f883f4efe03ef60452d6b8f4f10bb65725eccefebbe3d4a9f9e85f57e007574",
+      "archive": "native-functions-typed-callback-owner-scope-working--commands.json.gz",
+      "archive_sha256": "de7246a8aa93788252edf229e974c6f0ff1b278c6462641c229bf7e9bd9789a9"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/complete-native-identity-hash-regressions.log",
+      "sha256": "967a9727751ba04dddf5dcfe4994ab0552cc4007de26f7750b1b44767bcf7875",
+      "archive": "native-functions-typed-callback-owner-scope-working--complete-native-identity-hash-regressions.log.gz",
+      "archive_sha256": "ba16db850a13cfdc6102680860c566b8ba95b3bf328c3721c200aeef969bee91"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/complete-public-eval-regressions.log",
+      "sha256": "e0d2b5e533dd924256dc2dcc42c5f73f4ad465f32f4ed81b8e2c743dc733c470",
+      "archive": "native-functions-typed-callback-owner-scope-working--complete-public-eval-regressions.log.gz",
+      "archive_sha256": "6e6d0c10ce86dfb2688947210671c24e253497a12fb7d9333c8424a9409b6682"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/native-eval-test-typecheck.log",
+      "sha256": "2b3e0705d9a0dec804f545f449c613167524ace7bcc04dd853490d362ef4b322",
+      "archive": "native-functions-typed-callback-owner-scope-working--native-eval-test-typecheck.log.gz",
+      "archive_sha256": "f42148610c575509e72dfa15aaa962e5d7c44d1ac7db69610ab5f474e148d86a"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/native-function-gc-retirement-and-identity.log",
+      "sha256": "0bda20cd4ff0331de88dbe353ac022386f1ac4bf332480da29e13bd733604f4f",
+      "archive": "native-functions-typed-callback-owner-scope-working--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "8b2711dc28e3c0833c42882447bb5137b17c342572f71856925f7008c4057008"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/native-library-test-typecheck.log",
+      "sha256": "12fdf779463010ed4c54edd843bdeb3744183e6e352513f6e4017bb1ec2ebd47",
+      "archive": "native-functions-typed-callback-owner-scope-working--native-library-test-typecheck.log.gz",
+      "archive_sha256": "bda2a3068fa1028fb1ab9895e5cbddad4274a904bd54e6d799ef4f177df4ba4e"
+    },
+    {
+      "source": "results/m12-eval/native-functions-typed-callback-owner-scope-working/typed-qualified-source-callback-before.log",
+      "sha256": "0825fd79fbff261c94b97675006da2701e24f0e7ae710063176413df56562e21",
+      "archive": "native-functions-typed-callback-owner-scope-working--typed-qualified-source-callback-before.log.gz",
+      "archive_sha256": "484583d09177cc7291e0b2e3f1d78101867caadb1dffdbe7bd8895840fd4d62a"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/commands.json",
+      "sha256": "6fcad72c7428f71f9413d0873a7e6445abe4ade2776cb96ea6074e1e689d43b2",
+      "archive": "native-immutable-metadata-identity-working--commands.json.gz",
+      "archive_sha256": "d52e1f1d8d2cebe086fe4a2936d485e017228f4ab0d0bfb7f79a26f17f83e5f2"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/complete-native-identity-hash-regressions.log",
+      "sha256": "34e1101d07fa2a4d303685c04e3507178822f8b5590a78ed08d185ae29c52bc2",
+      "archive": "native-immutable-metadata-identity-working--complete-native-identity-hash-regressions.log.gz",
+      "archive_sha256": "8b5485424b7ff8257cdffd70baf7640c2491701614fb44da1425c92d65c70984"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/complete-public-eval-regressions.log",
+      "sha256": "325a44f8c4dc3f201549f9096e8f47010187b39ac03cd817863469973c1ad993",
+      "archive": "native-immutable-metadata-identity-working--complete-public-eval-regressions.log.gz",
+      "archive_sha256": "091f508936f9df076183ca0cb3baa2a9022b498bdc2b72b93c6cf71e64cbf20a"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/immutable-metadata-identity-primary-regression.log",
+      "sha256": "f2a50895a266d4a2d3544b0d5e536e72d5fcf22dd0ec235831d901c1a1d60d65",
+      "archive": "native-immutable-metadata-identity-working--immutable-metadata-identity-primary-regression.log.gz",
+      "archive_sha256": "92450f4b8e5e80cb35749adc350f9455660619d3447f72d01a675f06067138a3"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/native-eval-test-typecheck.log",
+      "sha256": "e444d220e52701efa44d8b0d527a69ea92d303cc030b711edcce82017cd35642",
+      "archive": "native-immutable-metadata-identity-working--native-eval-test-typecheck.log.gz",
+      "archive_sha256": "1e1cfa21d2170bd0bcdcf07d24daa9c75ccbf207c42a7e910c3fa512e304b5e2"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/native-function-gc-retirement-and-identity.log",
+      "sha256": "fe85c62c1740beb9fa313c27bf8f5ceabda64edd386f8d0e7ea0f91ab371805b",
+      "archive": "native-immutable-metadata-identity-working--native-function-gc-retirement-and-identity.log.gz",
+      "archive_sha256": "93cf3c1c57108f202915b3349f4931c0299ec1108521afd36dc46ce3b0772957"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/native-library-test-typecheck.log",
+      "sha256": "8e8c27c8b7e6106d70488ea9e2714f8ab9cb96d99765a24d06a2e2abbe5604de",
+      "archive": "native-immutable-metadata-identity-working--native-library-test-typecheck.log.gz",
+      "archive_sha256": "168d6a5bb55373fbefedbb4e81b9d13638d21ee8e5f8807bf75cb5a60258d142"
+    },
+    {
+      "source": "results/m12-eval/native-immutable-metadata-identity-working/typed-qualified-source-callback-before.log",
+      "sha256": "0abb13696b41ec16d534b706ca5e44e44cd1c6a1414fbbbffdadf0fde9e07a77",
+      "archive": "native-immutable-metadata-identity-working--typed-qualified-source-callback-before.log.gz",
+      "archive_sha256": "fb419ed9e41cb1b64260dd8517dfb946e865c975fc022da91e182bc952104d04"
+    },
+    {
+      "source": "results/m12-eval/native-values-ownership-abi-and-frontends-working/commands.json",
+      "sha256": "70a038202ee4d8e8af8a65c0e3ced2abc07311d18ebb73d9c4dd41e0c0fcdd7a",
+      "archive": "native-values-ownership-abi-and-frontends-working--commands.json.gz",
+      "archive_sha256": "5ba692569efabb7b262e3df8713697be0def830e7444b568815b1d1b08b73bb7"
+    },
+    {
+      "source": "results/m12-eval/native-values-ownership-abi-and-frontends-working/complete-runtime-abi-and-prototype-guards.log",
+      "sha256": "5784016cf4dcddc8b1817962de5fc60b834e1e3013c10121698c574b879ff1ed",
+      "archive": "native-values-ownership-abi-and-frontends-working--complete-runtime-abi-and-prototype-guards.log.gz",
+      "archive_sha256": "34ca4851aeb2af044adc1a4d2d6f5fe3b2f3703a77c879e9dd24708d5d9e9db9"
+    },
+    {
+      "source": "results/m12-eval/native-values-ownership-abi-and-frontends-working/host-library-budget-and-ownership.log",
+      "sha256": "363f7aa9dbb60ee003007a9e9b1cac95a53a582a8c782319e883a5bb41fc93f3",
+      "archive": "native-values-ownership-abi-and-frontends-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "3ec1dfedee2e0ab7182943dba7c1c456a1f5ca498f0dde3e114102b941de00bd"
+    },
+    {
+      "source": "results/m12-eval/native-values-ownership-abi-and-frontends-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "2c9346901cf93c3631b295d68564e06f385e3160507084588fefd258b7863472",
+      "archive": "native-values-ownership-abi-and-frontends-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "9cab13c66a44f6bf7f4ff5cd8d0a9ceda04d5764653be7b5c90ea158730c3fd9"
+    }
+  ],
+  "negative_source_limit": "Historical working-run receipts preserve input and binary digests. Their exact intermediate source overlays were not all archived; this archive contains the current source overlay only. No historical receipt is claimed to prove a current pass.",
+  "ci": {
+    "run": 45732871244,
+    "job": 139619058782,
+    "sha256": "24d69ece8f257077b782f53df0c83845c6d1b195061102e5e1ad2d651b145173",
+    "conclusion": "failure",
+    "test": "interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting",
+    "reason": "Expected explicit interruption; actual fuel exhaustion. Seven other integration partitions and foundation passed at published546d; aggregate test failed from this partition."
+  }
+}

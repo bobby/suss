@@ -1,0 +1,35 @@
+{
+  "head": "59ee4f6a9d74e185bd343fed11ceb6a04f1690cd",
+  "capture_sha256": "15b4cfbf2673dcc0aeed3fa8de31f871474661ce17d109bfdecca6fd41791b00",
+  "raw_rows": 5564,
+  "counts": {
+    "pass": 5349,
+    "guest-judged": 106,
+    "fail": 110,
+    "not-executed": 1374,
+    "skipped": 0,
+    "namespaces-failed": 63
+  },
+  "prior_comparable_successes_preserved": 5346,
+  "numeric_subsets": {
+    "bigint-ratio": {
+      "primary_rows": 229,
+      "strict_host_matches": 229
+    },
+    "decimal": {
+      "primary_rows": 200,
+      "strict_host_matches": 200
+    }
+  },
+  "introduced_symbol_mismatches": [
+    "clojure.core-test.symbol/test-symbol#32",
+    "clojure.core-test.symbol/test-symbol#58",
+    "clojure.core-test.symbol/test-symbol#59",
+    "clojure.core-test.symbol/test-symbol#60",
+    "clojure.core-test.symbol/test-symbol#61"
+  ],
+  "native_suite_exit_code": 101,
+  "review_exit_code": 1,
+  "baseline_written": false,
+  "qualification": "Read-only audit of the original terminal capture. All prior comparable successes and exact numeric rows match, but five introduced symbol mismatches prevent accepting the baseline. Fixes require new native receipts and a fresh complete capture."
+}

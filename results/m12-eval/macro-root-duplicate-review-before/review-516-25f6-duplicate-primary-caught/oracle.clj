@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(def ^:dynamic review-dup-kind 1)
+(prn (let [a (atom [])] [(try (with-redefs [review-dup-kind (do (swap! a conj :a) 3) review-dup-kind (do (swap! a conj :b) 4)] review-dup-kind) (catch Throwable e :error)) @a]))
+(prn (let [a (atom [])] [(try (with-redefs [review-dup-kind (do (swap! a conj :a) 3) user/review-dup-kind (do (swap! a conj :b) 4)] review-dup-kind) (catch Throwable e :error)) @a]))
+(prn (let [a (atom [])] [(try (binding [review-dup-kind (do (swap! a conj :a) 3) review-dup-kind (do (swap! a conj :b) 4)] review-dup-kind) (catch Throwable e :error)) @a]))

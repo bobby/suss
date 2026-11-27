@@ -1,0 +1,1 @@
+(let [v (with-meta '() {:a (atom 7)})] (identical? v (eval v)))

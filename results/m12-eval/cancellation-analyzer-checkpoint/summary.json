@@ -1,0 +1,161 @@
+{
+  "head": "6fca43995a7ed72efb49021987381382e147311d",
+  "actual_terminal": true,
+  "all_seven_commands_passed": true,
+  "counts": {
+    "rust-check": 0,
+    "suspended-cancellation-and-dynamic-restoration": 6,
+    "analyzer-round-trip-and-source-nil": 18,
+    "macro-analysis-and-source-metadata-guards": 15,
+    "host-library-budget-and-ownership": 126,
+    "complete-public-eval-controls": 74,
+    "source-script-module-aot-and-repl-guards": 58
+  },
+  "distinct_broad_tests": 291,
+  "repeated_focused_executions": 6,
+  "recorded_input_count": 8968,
+  "all_recorded_inputs_conserved_before_publication": true,
+  "allowed_publication_delta": {
+    "path": "docs/roadmap/handoff.md",
+    "before": "d60f6a6e61d1254c8d2f4e16c050a9b44ee4a4aa23e1887b684f40cf9aa3a430",
+    "after": "b14d9dae60a31baf9b3c6acc6f639f5829e00ee606d7216c53ba45313e064e94"
+  },
+  "positive_overlay_sha256": "7c8476fb86b4aebe32e6b1ec6a9d9af159d39aead8c87fcad599dc201d85698e",
+  "negative_source_overlay_reconstructed_and_verified": {
+    "crates/suss-cli/tests/analyzer_edn.rs": "085a27e6e7baf36267f952b1c88f0952bbf396a5e1b165e56c1a522b120926e1",
+    "crates/suss-compile/src/portable/hir.rs": "994e206c7f9d14bc462b25df881d406b1836d6855b260809c7d0267a670d9381",
+    "crates/suss-compile/src/portable_analyze.rs": "1151fa9b3c1593d84bf33ba7f2dca6a3b23c6e95090592bdcc2423ff6d3e345b",
+    "crates/suss-compile/src/portable_macros/native_invocation.rs": "628f7b49a768ffe17f0c7b2635b7b6ef4626f5c1223b52e3aeccffd4cb3e960a",
+    "crates/suss-compile/src/portable_session.rs": "b2d8fbc1e3973d76c584b6169fad7fc2575d048328259f7975c9c035a1ff875e",
+    "crates/suss-compile/src/portable_session/suspended.rs": "3b4b9ef8bacf331762177792d8e6bec0ddb8819bebc9c2849f1c5fa5536d2cc7"
+  },
+  "evidence": [
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-cancellation-working/commands.json",
+      "sha256": "5bd292eb426a77dfd4d44367a2a6c78401467a7f62b85ea7ba6b6226f6b56e8e",
+      "archive": "suspended-host-ancestor-cancellation-working--commands.json.gz",
+      "archive_sha256": "6ccac7e149f0a5db86216238860e802b10e4d6df93432c25e3b8b9dec2704361"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-cancellation-working/registry-rust-check.log",
+      "sha256": "46d43680f91961bcbdd3866b9c1ea3977184ee7d704fd8a3d073efcc0009206a",
+      "archive": "suspended-host-ancestor-cancellation-working--registry-rust-check.log.gz",
+      "archive_sha256": "bd913facfc1adc571d470bf91e79152299c9e9d374da89618db7a7451276009f"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/commands.json",
+      "sha256": "12afe42f59e1f0e7e0e87a0a401a9b61e27913fb5f43cf8da0a708d4052cc9fa",
+      "archive": "suspended-host-ancestor-error-settlement-working--commands.json.gz",
+      "archive_sha256": "7b9ece07c739ecf2531f70eea5328c827cd50fc5108b8514a15fc896ea4d842e"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/complete-public-eval-controls.log",
+      "sha256": "7ff35c80782eb5d1d130e29086237ffe82f4d9ce8a84fe0d6fd2307d6e648b8f",
+      "archive": "suspended-host-ancestor-error-settlement-working--complete-public-eval-controls.log.gz",
+      "archive_sha256": "7835625391c3ffcafbf60adbee1dfc85aa0389fe2fd0c90bccce46ed9d2c22ab"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/host-library-budget-and-ownership.log",
+      "sha256": "4845210921699375bd92c51120a2439db2a83d9d99e192abb9c24029eed5addf",
+      "archive": "suspended-host-ancestor-error-settlement-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "fd22c42f041597ec50593cf66164e118b622495ac08cc0725ce40df58868645e"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/registry-rust-check.log",
+      "sha256": "96730b1991cb1fccf47fa7be89edc9363a7939c8b5027260d172a8162a229814",
+      "archive": "suspended-host-ancestor-error-settlement-working--registry-rust-check.log.gz",
+      "archive_sha256": "6567ddf0b1a1e80028526f37a19c477cd215f6adb5edcf132050877137d70efc"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "a5dc96b9baefdeecb73dd9401bed6b7045e6873a656ddaffee4cd4e52f87bef9",
+      "archive": "suspended-host-ancestor-error-settlement-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "3ba3235d5b9b6944721d3135a651ac6e78f3a72c579d941b7e6fb945d893e71a"
+    },
+    {
+      "source": "results/m12-eval/suspended-host-ancestor-error-settlement-working/suspended-registry-regressions.log",
+      "sha256": "608eb54fe539f05576d7d80082b0dd73bea08c5b82b76ec7658a43d72fe484bc",
+      "archive": "suspended-host-ancestor-error-settlement-working--suspended-registry-regressions.log.gz",
+      "archive_sha256": "8b8bcae7a3dd899e09fd72140568b18ac86562f5b72f11cc850feda5b995c06f"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restore-and-analyzer-before/analyzer-round-trip-and-source-nil-before.log",
+      "sha256": "be82fcb4e190407f4ec1e69dc501704d42c8a6101641e920c0a84108c416b3e7",
+      "archive": "cancellation-restore-and-analyzer-before--analyzer-round-trip-and-source-nil-before.log.gz",
+      "archive_sha256": "7cb4bd17debe5442ecee98fbbf229a371865bdbf2487b049d1383d25620460c4"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restore-and-analyzer-before/commands.json",
+      "sha256": "1ab03d862160060eaeb5c85c02966ad220c0c78ddcd9b61bc3cec27e2d97896d",
+      "archive": "cancellation-restore-and-analyzer-before--commands.json.gz",
+      "archive_sha256": "4b03c991c1945203771dd9deca2998c6404bbd9052dd498c6a6b2dcd914fefaf"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restore-and-analyzer-before/suspended-dynamic-frame-restoration-before.log",
+      "sha256": "d6e1ebafbc5ae2949e77ff993a2fa6e6bac4030f0ac2b0b91e662e10f0c1de3d",
+      "archive": "cancellation-restore-and-analyzer-before--suspended-dynamic-frame-restoration-before.log.gz",
+      "archive_sha256": "0cb061b74d68b26f913ff4d7c8eccb4de41b2b2fc3cb72eeb6eb3735bceceb4c"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/analyzer-round-trip-and-source-nil.log",
+      "sha256": "a86a4df1307cc6ac201a0d4571597dfb209a79752542744f1aa237d304b485c0",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--analyzer-round-trip-and-source-nil.log.gz",
+      "archive_sha256": "041439593766eccc080119e767ec69c4205e93aeee757f33a27c60c22dc70780"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/commands.json",
+      "sha256": "d65e10d334f44557846e7a1f63eb783ac3a41d2b8ed179b6a48061a4e6992230",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--commands.json.gz",
+      "archive_sha256": "9c2aada305abfa5ba83c8913b99511586e8e92a5e31829540341f25987ef6072"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/complete-public-eval-controls.log",
+      "sha256": "21d5c9eac05a6b9b57caf8bd51be48d5a19c3a8ebde2dabfa1721430ac51d519",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--complete-public-eval-controls.log.gz",
+      "archive_sha256": "b3fabd555b44952bb1a16debbc2a539633475432fa642555e991a4ed2ac9e788"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/host-library-budget-and-ownership.log",
+      "sha256": "e202686a6287427a8a999135ef88591d82fad5f3ad7899773203bb8aea795e0e",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--host-library-budget-and-ownership.log.gz",
+      "archive_sha256": "778d3478e4065dccb8a07b2714c6ad1cc4eb05c64b956db6dffac7c216b0b26c"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/macro-analysis-and-source-metadata-guards.log",
+      "sha256": "ff3d3791a97375a4e9bca7f207565dd67504b06e851119014d72b70076e0fde1",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--macro-analysis-and-source-metadata-guards.log.gz",
+      "archive_sha256": "6fe5cff04e5d2963db7b54956de1dad796483e7ab34e999a613911cef9a5eb88"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/rust-check.log",
+      "sha256": "f8ea03724c81653a7c5be4e130e04da1b71bac3e029bf874083c9afa0b3ab8df",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--rust-check.log.gz",
+      "archive_sha256": "36b5e24b11c3ae7a0cf1c5633c70c4c69f930bc47352a9058a4d95801522f60a"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/source-script-module-aot-and-repl-guards.log",
+      "sha256": "1f56ec6c80d3231027b13511d9685da27895c54bb41d18843b22213156be6f09",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--source-script-module-aot-and-repl-guards.log.gz",
+      "archive_sha256": "a7f1f8f9ee9ca13ca665bf68f76e19525c2c13d71577e167e39d620fe179fdfc"
+    },
+    {
+      "source": "results/m12-eval/cancellation-restoration-and-analyzer-fixed-working/suspended-cancellation-and-dynamic-restoration.log",
+      "sha256": "fac93a4bedb916f4f84468e5ca25b17b999a967866f52314c0f6d054daf2766a",
+      "archive": "cancellation-restoration-and-analyzer-fixed-working--suspended-cancellation-and-dynamic-restoration.log.gz",
+      "archive_sha256": "57970577e23c9206e1af8cf68005618080ce0913ebd46ce6fb1823c83fa600b0"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pr516-00707-ci-integration0/job.log",
+      "sha256": "eb547b53c65fe85ecc9b9fe1719d1297d5db139e223ed1414bfdfc1df5a2abc8",
+      "archive": "ci-00707-integration0--job.log.gz",
+      "archive_sha256": "adf14fda1f47570381d7ddebee7b7950f5806734f68756753b52e0dac4c6cb7c"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pr516-00707-ci-integration0/fetch-allowed.json",
+      "sha256": "ff8b508703668ef96f8a3abd0ba750c5da6ff9a1da699f4e381e127db1d6f4fe",
+      "archive": "ci-00707-integration0--fetch-allowed.json.gz",
+      "archive_sha256": "378f92693f31217889aab5d02aeddd2dba1a56959acef78ebe3427b128b32b64"
+    }
+  ],
+  "qualification": "Fixes known analyzer CI regression and private cancellation cleanup. Fn/Var transport, mixed live-root publication, complete current issue/workspace/bootstrap/conformance/xhigh/finalCI remain. No Closes/Ready/merge."
+}

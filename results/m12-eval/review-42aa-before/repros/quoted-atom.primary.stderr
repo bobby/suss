@@ -1,0 +1,5 @@
+Syntax error compiling fn* at (/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/review-516-42aa-independent-repros/quoted-atom.clj:2:1).
+Can't embed object in code, maybe print-dup not defined: clojure.lang.Atom@6a1ebcff
+
+Full report at:
+/tmp/clojure-10255499062972820902.edn

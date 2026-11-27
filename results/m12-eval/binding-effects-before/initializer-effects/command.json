@@ -1,0 +1,50 @@
+{
+  "head": "c266e1c354fd3ef032fa2473309ce9bd3b1c8c30",
+  "scope": "suss-m12-binding-initializer-effect-probe-v2.scope",
+  "recorder_pid": 1212342,
+  "inputs": {
+    "crates/suss-compile/src/portable/ir.rs": "ba244d1e311b532d43b5fe5b9dff942b29871369e007a04ec43c093b5d200947",
+    "crates/suss-compile/src/portable/emit.rs": "d789ed153e89882f903ab3a48aac92b670ab7285683e9733cb80ff447d54a354",
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": "ddca02c83cf029e550d8e9b9177928bc5a28d2c0fc5eebbc9c8bbde64d6f0883",
+    "crates/suss-compile/src/portable_session/evaluation/math_context.rs": "3118e399f693ddc75bd1fee3326d58e17785ed7cf205ca73fe24e7e2890e4b72"
+  },
+  "binary": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+  "binary_sha256": "22cc6471d268e5d706de69e729c41c4e0be8ac284301da86779fe08206b29488",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "commands": [
+    {
+      "label": "primary",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-initializer-effects-validated-primary-before/expression.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 1.8113319873809814
+    },
+    {
+      "label": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/binding-initializer-effects-before/isolated-cache",
+        "-e",
+        "[(do (def ^:dynamic init-effect-direct 1) (let [inside (binding [init-effect-direct (do (def ^:dynamic init-effect-direct 2) 3)] init-effect-direct)] [inside init-effect-direct]))\n(do (def ^:dynamic init-effect-eval 1) (let [inside (binding [init-effect-eval (do (eval (quote (def ^:dynamic init-effect-eval 2))) 3)] init-effect-eval)] [inside init-effect-eval]))\n(do (def ^:dynamic init-effect-failed 1) (def ^:dynamic init-effect-second 0) [(try (binding [init-effect-failed (do (eval (quote (def ^:dynamic init-effect-failed 2))) 3) init-effect-second (throw (ex-info \"later\" {}))] :body) (catch :default e :caught)) init-effect-failed])\n(do (def ^:dynamic init-effect-body 1) (let [inside (binding [init-effect-body 3] (set! init-effect-body 4) init-effect-body)] [inside init-effect-body]))\n(do (def ^:dynamic init-effect-nested 0) (binding [init-effect-nested 1] [(binding [init-effect-nested (do (eval (quote (set! init-effect-nested 2))) 3)] init-effect-nested) init-effect-nested]))]\n"
+      ],
+      "exit_code": 0,
+      "seconds": 3.898787498474121
+    }
+  ],
+  "complete": true,
+  "qualification": "Read-only actual pinned JVM and existing current-head CLI probe of binding initializer effects; independent external build/cache directory. No shared target rebuilt, no source/HEAD changes or baseline edits. Full workspace continues; this is not its terminal.",
+  "head_unchanged": true,
+  "inputs_unchanged": true,
+  "binary_unchanged": true
+}

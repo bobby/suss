@@ -1,0 +1,19 @@
+{
+  "reason": "Confirmed current-head CI and existing local regression fail: binding an unbound dynamic Var strictly reads its unbound root while saving the old frame. Required binding-state snapshot/kernel correction, not timeout or speculative restart.",
+  "head": "4003dc28a054d5e10d4009a15fcc819cebe0dab3",
+  "ci_run": 45541143411,
+  "ci_failed_job": 138959675678,
+  "local_repro": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/unbound-frame-snapshot-before/command.json",
+  "complete": true,
+  "at": 1795579842.312087,
+  "recorder_pid": 846290,
+  "cargo_pid": 846324,
+  "signalled_descendants": [
+    901330
+  ],
+  "actual_cargo_exit_code": 101,
+  "actual_seconds": 1483.6318683624268,
+  "inputs_unchanged": true,
+  "head_unchanged": true,
+  "actual_workspace_receipt": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/full-workspace-after-context-fuel-fix/command.json"
+}

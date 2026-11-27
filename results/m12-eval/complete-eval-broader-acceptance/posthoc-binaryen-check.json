@@ -1,0 +1,8 @@
+{
+  "source_head": "b7d344dfdbc5b674b6cb0ba7b7736528d0503492",
+  "checked_after_terminal": true,
+  "unchanged": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-opt": true,
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-merge": true
+  }
+}

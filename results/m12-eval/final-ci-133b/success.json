@@ -1,0 +1,91 @@
+{
+  "head": "133b7024762d5006d4c784416e66ecef5a73f6b8",
+  "run_id": 45586341822,
+  "actual_complete": true,
+  "all_required_success": true,
+  "actual_conclusion": "success",
+  "required_jobs": [
+    {
+      "databaseId": 139108796153,
+      "name": "foundation",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:32:19Z",
+      "completedAt": "2026-11-25T09:37:57Z"
+    },
+    {
+      "databaseId": 139108796401,
+      "name": "integration (6)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T10:04:16Z",
+      "completedAt": "2026-11-25T10:27:50Z"
+    },
+    {
+      "databaseId": 139108796467,
+      "name": "integration (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:32:19Z",
+      "completedAt": "2026-11-25T09:51:52Z"
+    },
+    {
+      "databaseId": 139108796548,
+      "name": "integration (3)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:32:19Z",
+      "completedAt": "2026-11-25T09:52:55Z"
+    },
+    {
+      "databaseId": 139108796577,
+      "name": "integration (4)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:51:54Z",
+      "completedAt": "2026-11-25T10:11:18Z"
+    },
+    {
+      "databaseId": 139108796698,
+      "name": "integration (1)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:32:19Z",
+      "completedAt": "2026-11-25T10:04:14Z"
+    },
+    {
+      "databaseId": 139108796727,
+      "name": "integration (7)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T10:07:26Z",
+      "completedAt": "2026-11-25T10:45:44Z"
+    },
+    {
+      "databaseId": 139108796839,
+      "name": "integration (5)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:52:57Z",
+      "completedAt": "2026-11-25T10:08:15Z"
+    },
+    {
+      "databaseId": 139108797264,
+      "name": "integration (0)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T09:32:20Z",
+      "completedAt": "2026-11-25T10:07:25Z"
+    },
+    {
+      "databaseId": 139149284347,
+      "name": "test",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-25T10:45:47Z",
+      "completedAt": "2026-11-25T10:45:50Z"
+    }
+  ],
+  "observed_at": 1795603660.7448692,
+  "qualification": "Actual complete exact-head CI0, not local full-workspace or promotion-review success. Original failed C9 CI remains retained."
+}

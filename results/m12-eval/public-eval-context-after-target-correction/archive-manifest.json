@@ -1,0 +1,18 @@
+{
+  "commands.json.gz": {
+    "raw_sha256": "c84d6b9b6ff28d320bad9198957c8aeda9b06948a3007e4960c8d3910c63a7c9",
+    "gzip_sha256": "2701c839acdc75f1e7e7237a9ab4c2c2113b280ddcd641a199edb3e6700f5eff"
+  },
+  "complete-public-controls.log.gz": {
+    "raw_sha256": "1a4646cbdce664434dfd37a08be09dfc79afc9a149891888b1a772f65605d2a0",
+    "gzip_sha256": "dcf1dbe4e5d0a9aab052539f17b57cc032782913913ad1d49f5c02d74fece48d"
+  },
+  "recorder.log.gz": {
+    "raw_sha256": "2748bf2338fa22bc253845210b159a37c1128934a16c42ce69b615acc81d5f99",
+    "gzip_sha256": "bbc2c568d78efee32b78339492fb005a34d2483c14645a26f6c7029fb6faf729"
+  },
+  "reentrant-public-eval.log.gz": {
+    "raw_sha256": "19819e33d3fc09af6c05f566750a839da843dfdc3be69b95e1e424de417dc005",
+    "gzip_sha256": "465ae7d13293d078fb99029af2ed6a94a137bb94d1c6a132fdde3006dc9c8bf5"
+  }
+}

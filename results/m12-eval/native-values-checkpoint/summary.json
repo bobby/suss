@@ -1,0 +1,208 @@
+{
+  "base_head": "546d0e1a424eb5a73374a043b9d25fd15a65fc00",
+  "actual_terminal": true,
+  "commands": [
+    {
+      "name": "native-library-test-typecheck",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "seconds": 41.89020490646362
+    },
+    {
+      "name": "native-eval-test-typecheck",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_eval"
+      ],
+      "exit_code": 0,
+      "seconds": 28.56881022453308
+    },
+    {
+      "name": "native-function-gc-retirement-and-identity",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "native_function_capability_",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 144.82835388183594
+    },
+    {
+      "name": "immutable-metadata-identity-primary-regression",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_eval",
+        "isolated_source_function_metadata_retains_identity_between_macro_requests",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 159.9188747406006
+    },
+    {
+      "name": "typed-qualified-source-callback-before",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_eval",
+        "isolated_source_callback_preserves_typed_cancellation_and_recovers",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 2.6734719276428223
+    },
+    {
+      "name": "complete-native-identity-hash-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "portable_identity_hash",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 11.741233348846436
+    },
+    {
+      "name": "complete-public-eval-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_eval",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 101,
+      "seconds": 135.43154740333557
+    },
+    {
+      "name": "host-library-budget-and-ownership",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--lib",
+        "portable_",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 176.44876313209534
+    },
+    {
+      "name": "complete-runtime-abi-and-prototype-guards",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 167.40732765197754
+    },
+    {
+      "name": "source-script-module-aot-and-repl-guards",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_native_entrypoints",
+        "--test",
+        "compiled_repl_macros",
+        "--test",
+        "inline_module_macros",
+        "--test",
+        "compiled_source_macros",
+        "--test",
+        "compiled_macro_imports",
+        "--test",
+        "compiled_macro_reload",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 123.34921097755432
+    }
+  ],
+  "current_inputs_conserved": true,
+  "current_tools_conserved": true,
+  "counts": {
+    "host_library": 131,
+    "runtime_abi": 62,
+    "source_frontends": 58,
+    "identity_hash": 4,
+    "public_eval_passed": 76,
+    "public_eval_failed": 1,
+    "private_capability_tests_repeated_in_host": 5,
+    "focused_metadata_and_callback_repeated_in_public": 2
+  },
+  "distinct_target_scoped_passes": 331,
+  "distinct_target_scoped_failures": 1,
+  "scope": "Partial implementation. Unchanged full20 source transport fixture still matches12/20 in each phase; Var/Namespace/ns-interns and actual mixed roots remain. Complete workspace/bootstrap/native/comparison, final review and CI remain required after all fixes. No closing reference or Ready.",
+  "allowed_publication_delta": {
+    "docs/roadmap/handoff.md": {
+      "before": "b14d9dae60a31baf9b3c6acc6f639f5829e00ee606d7216c53ba45313e064e94",
+      "after": "03534e7cb2ec4bc6e623a7cd64b1f09072b6d027d6facccf7b4d169c02d733ed"
+    },
+    "docs/compatibility/README.md": {
+      "before": "27ecde0128b98dd2eb57a6ce9248c210855a8a3389e1c675d29b4515e477d0fe",
+      "after": "dd3365251f50b32d3848ed8f97b9b122e396825a0cb65182fd3a370f648d8724"
+    }
+  }
+}

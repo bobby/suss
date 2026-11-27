@@ -1,0 +1,86 @@
+{
+  "head": "c9eecf80df791baba8fc51c19cc7d6e1ea136179",
+  "scope": "suss-m12-portable-dynamic-primary.scope",
+  "pid": 1504435,
+  "inputs": {
+    "crates/suss-compile/src/portable/ir.rs": "88e1ccbf6c3cf2e1534cc9e7f3f52aed6ab4c8f00fd32de366abd1540502f9ac",
+    "crates/suss-compile/src/runtime_abi/dynamic.rs": "c42bf89f451cd1771b715d54dfd1a5fcafe63bef09380ccccb398d9072ecad84",
+    "crates/suss-compile/src/runtime_abi/dynamic/redefs.rs": "e6c0bb2a2853d05dae27652f779f030625b54df7841875350a43b5ab429c76ca",
+    "tests/oracle/portable-cases.json": "65c4bea5bc76ceea7fe2c8c8bcf307336e2478782deef65e6af3a02032834601"
+  },
+  "binary_sha256": "f2ac9b79071e93dd5d4001b961aa585ec0f3e695ef4e6218fe87c5ad20c3406b",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "commands": [
+    {
+      "name": "original-0",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/original-0.clj"
+      ],
+      "exit_code": 1,
+      "seconds": 1.0121991634368896
+    },
+    {
+      "name": "original-1",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/original-1.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7902963161468506
+    },
+    {
+      "name": "primary-controls",
+      "command": [
+        "java",
+        "-Xmx128m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/controls.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 0.748140811920166
+    },
+    {
+      "name": "native-original",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/cache",
+        "-e",
+        "[(do (def ^:dynamic *snapshot* 1) (binding [*snapshot* (do (set! *snapshot* 2) 7)] *snapshot*) *snapshot*)\n(do (def ^:dynamic *defined* 1) (binding [*defined* 7] (def *defined* 9)) *defined*)]"
+      ],
+      "exit_code": 0,
+      "seconds": 38.50050640106201
+    },
+    {
+      "name": "native-adapted",
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+        "--build-dir",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/cache",
+        "-e",
+        "[(do (def ^:dynamic *snapshot* 1) (binding [*snapshot* 1] (binding [*snapshot* (do (set! *snapshot* 2) 7)] *snapshot*) *snapshot*))\n(do (def ^:dynamic *defined* 1) (binding [*defined* 7] (def ^:dynamic *defined* 9)) *defined*)]"
+      ],
+      "exit_code": 0,
+      "seconds": 2.2223644256591797
+    }
+  ],
+  "complete": true,
+  "head_unchanged": true,
+  "inputs_unchanged": true,
+  "binary_unchanged": true
+}

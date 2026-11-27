@@ -183,6 +183,7 @@ paths += ['crates/suss-compile/src/runtime_abi/native_values.rs', 'crates/suss-c
           'crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs',
           'crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs',
           'docs/runtime/host-macro-boundary.md']
+paths += ['crates/suss-cli/tests/clojure_eval.rs', 'crates/suss-compile/tests/support/pinned_eval_body.rs']
 record={'upstream':{'commit':manifest['upstream-commit'],'entry':entry},'primary':command,'source_files':{path:sha((ROOT/path).read_bytes()) for path in paths},'license':'runtime/core-import/epl-v10.html','adaptation':patch['rationale'],'qualification':'Source/provenance verification only. Native results retain their own frozen-source receipts; this does not establish all eval or numeric issue acceptance.'}
 path=BASE/'live-vars-source-provenance.json'
 if '--record' in sys.argv:path.write_text(json.dumps(record,indent=2)+'\n')
