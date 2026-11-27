@@ -1,0 +1,8 @@
+Runtime before=[false nil :unbound]
+Runtime rejection=Unresolved Runtime name no-such-source-initializer at bytes 114..140
+Runtime after=Ok("[true \"rejected\" :unbound]")
+CONFIRMED_FRESH_VAR_METADATA_LEAK Runtime
+Macro before=[false nil :unbound]
+Macro rejection=Unresolved Macro name no-such-source-initializer at bytes 114..140
+Macro after=Ok("[true \"rejected\" :unbound]")
+CONFIRMED_FRESH_VAR_METADATA_LEAK Macro

@@ -129,6 +129,14 @@ before propagating the execution result. Publication can precede a later fuel
 trap. The reserved native journal reads also run with exhausted guest fuel and
 execute no guest code; the original execution failure keeps its category.
 
+A fresh converted macro declaration completes preparation before admitting its
+canonical unbound Var for a missing metadata checkpoint. This occurs before
+declaration execution: metadata can retain the Var in a completed effect even
+when later source staging fails. Rejection restores initial metadata without
+discarding the retained identity or that effect; a later successful link reuses
+the Var and publishes normally. Invalid names/signatures must still fail before
+admission, and existing root-write ownership ordering remains unchanged.
+
 Compiler publication derives macro status from raw declaration metadata. A
 statically absent literal `:macro` key yields false without per-definition core
 lookup calls; dynamic keys and `:macro` values retain the original core lookup
@@ -166,6 +174,7 @@ expand source access to built-in internals or add a public reset-meta! API.
 | Nested cancellation | suspended_parent_interrupt_stops_a_foreign_guest_and_retires_both_budgets; suspended_parent_interrupt_is_also_observed_by_foreign_host_work |
 | Genuine Vars/metadata/source catalogs | portable/hir/vars.rs; CLI native_host_boundary target; runtime_evaluation capability target |
 | Metadata write ownership and identity | staged_source_metadata_ownership_preserves_identical_and_superseded_user_writes; metadata_normalization_and_language_writes_preserve_the_primary_map_identity; native_metadata_hook_changes_only_the_actual_canonical_var |
+| Fresh escaped Var rejection | review_regression_fresh_staged_var_metadata_restores_escaped_identity; later successful publication reuses the retained Var |
 | Compiler-owned data under replacement | native_host_boundary metadata controls; portable_aot_options::option_schema_survives_core_function_and_constructor_redefinition |
 | Original transport budgets | clojure_test_suite pinned_case_body_matches_all_primary_assertions and pinned_map_declaration_executes_without_transport_loss |
 
