@@ -347,6 +347,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         body.extend([ArrayLen, I32GeU, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
+        if writing {
+            body.extend([LocalGet(1), I32Const(2), I32Eq, If(BlockType::Empty),
+                LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["native-local-field-set"]),
+                If(BlockType::Empty), Return, End, End]);
+        }
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {

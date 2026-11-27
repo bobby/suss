@@ -1272,6 +1272,13 @@ impl Environment {
         let global = Self::var_identity(target);
         matches!(self.bindings.get(&global), Some(Binding::InternalCell(_))).then_some(global)
     }
+    /// Read-only candidates for native Var authentication. The caller must
+    /// authenticate the actual hidden-cell root and logical cell after lookup;
+    /// a namespace/name by itself carries no authority. Do not consult aliases.
+    pub(crate) fn registered_var_cells(&self, phase: Phase, namespace: &str, name: &str) -> Option<(Global, Global)> {
+        let target = Global { phase, namespace: canonical(namespace).into(), name: name.into() };
+        self.existing_var_cell(&target).map(|hidden| (target, hidden))
+    }
     pub(crate) fn native_macro_declarations(&self, owner: u64) -> impl Iterator<Item = Global> + '_ {
         self.macro_owners.iter().filter(move |(_, current)| current.store == owner).map(|(global, _)| global.clone())
     }

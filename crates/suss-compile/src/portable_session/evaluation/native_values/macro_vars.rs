@@ -14,7 +14,10 @@ impl SessionHost<'_> {
         if self.catalog_cell_flags(cell)? & runtime_abi::CELL_BOUND == 0 { return Ok(None); }
         let variable = self.binding_root_value(&hidden)?.object()?.clone();
         let before = self.var_metadata_root(&variable)?;
-        Ok(Some(VarMetadataCheckpoint { variable, before, written: Vec::new() }))
+        let cell = registry_lock(&self.compiler).cells.get(target).copied()
+            .ok_or_else(|| wasmtime::Error::msg("Missing canonical Var binding cell"))?;
+        let before_staged = self.catalog_cell_flags(cell)? & runtime_abi::CELL_STAGED_METADATA != 0;
+        Ok(Some(VarMetadataCheckpoint { variable, cell, before, before_staged, written: Vec::new() }))
     }
 
     fn var_metadata_root(&mut self, variable: &OwnedRooted<AnyRef>)
@@ -31,12 +34,44 @@ impl SessionHost<'_> {
     // Wasm. These native-only metadata reads also work during fuel cleanup.
     pub(crate) fn record_var_metadata_write(&mut self, checkpoint: &mut VarMetadataCheckpoint)
         -> Result<(), SessionError> {
-        checkpoint.written.push(self.var_metadata_root(&checkpoint.variable)?);
+        if self.metadata_checkpoint_staged(checkpoint)? {
+            checkpoint.written.push(self.var_metadata_root(&checkpoint.variable)?);
+        }
+        Ok(())
+    }
+
+    fn metadata_checkpoint_staged(&mut self, checkpoint: &VarMetadataCheckpoint) -> Result<bool, SessionError> {
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = checkpoint.cell.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        Ok(cell.field(&mut roots, 1)?.unwrap_i32() & runtime_abi::CELL_STAGED_METADATA != 0)
+    }
+
+    pub(crate) fn advance_var_metadata_checkpoint(&mut self, checkpoint: &mut VarMetadataCheckpoint,
+        variable: &SessionValue) -> Result<(), SessionError> {
+        if self.identical_rooted_value(&checkpoint.variable, variable)? && !self.metadata_checkpoint_staged(checkpoint)? {
+            // A completed language write becomes the baseline before the next
+            // compiler publication, even when it reused the same map object.
+            checkpoint.before = self.var_metadata_root(&checkpoint.variable)?;
+            checkpoint.before_staged = false;
+            checkpoint.written.clear();
+        }
+        Ok(())
+    }
+
+    pub(crate) fn mark_metadata_staged(&mut self, identity: &CellIdentity, staged: bool) -> Result<(), SessionError> {
+        let cell = registry_lock(&self.compiler).cells.get(identity).copied();
+        let Some(cell) = cell else { return Ok(()); };
+        let mut roots = RootScope::new(&mut self.store);
+        let cell = cell.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+        let flags = cell.field(&mut roots, 1)?.unwrap_i32();
+        let flags = if staged { flags | runtime_abi::CELL_STAGED_METADATA } else { flags & !runtime_abi::CELL_STAGED_METADATA };
+        cell.set_field(&mut roots, 1, Val::I32(flags))?;
         Ok(())
     }
 
     pub(crate) fn restore_var_metadata(&mut self, checkpoint: VarMetadataCheckpoint)
         -> Result<(), SessionError> {
+        if !self.metadata_checkpoint_staged(&checkpoint)? { return Ok(()); }
         let mut roots = RootScope::new(&mut self.store);
         let variable = checkpoint.variable.to_rooted(&mut roots).as_struct(&roots)?.unwrap();
         let fields = variable.field(&mut roots, 1)?.unwrap_anyref().unwrap().as_array(&roots)?.unwrap();
@@ -55,6 +90,9 @@ impl SessionHost<'_> {
             if matches {
                 let before = Val::AnyRef(checkpoint.before.as_ref().map(|value| value.to_rooted(&mut roots)));
                 fields.set(&mut roots, 2, before)?;
+                let cell = checkpoint.cell.get(&mut roots).unwrap_anyref().unwrap().as_struct(&roots)?.unwrap();
+                let flags = cell.field(&mut roots, 1)?.unwrap_i32() & !runtime_abi::CELL_STAGED_METADATA;
+                cell.set_field(&mut roots, 1, Val::I32(flags | if checkpoint.before_staged { runtime_abi::CELL_STAGED_METADATA } else { 0 }))?;
                 break;
             }
         }

@@ -400,6 +400,18 @@ impl MacroHost<'static> {
     }
 }
 impl MacroHost<'_> {
+    pub(crate) fn preserve_runtime_metadata_before_staging(&mut self, variable: &SessionValue) -> Result<(), SessionError> {
+        let count = catalog(&self.catalog).declaration_transactions.iter()
+            .map(|transaction| transaction.metadata.len() as u64).sum::<u64>();
+        self.session.charge_host_work(count.saturating_mul(8).saturating_add(1))?;
+        // Native root/flag reads only; no guest call while the catalog is held.
+        for transaction in &mut catalog(&self.catalog).declaration_transactions {
+            for checkpoint in transaction.metadata.values_mut() {
+                self.session.advance_var_metadata_checkpoint(checkpoint, variable)?;
+            }
+        }
+        Ok(())
+    }
     pub(crate) fn define_inline_macro(
         &mut self, form: &Form, environment: &crate::portable::resolve::Environment,
         phase: crate::portable::resolve::Phase,
@@ -503,7 +515,7 @@ impl MacroHost<'_> {
                 std::slice::from_mut(&mut declaration), environment, phase,
             ).map_err(SessionError::Compile)?;
             let span = declaration.span.clone();
-            let pending = self.prepare_macro_definition(&declaration, span, Some(&module.origin))?;
+            let pending = self.prepare_macro_definition(&declaration, span, Some(&module.origin), true)?;
             self.commit_staged_macro_definition(pending)?;
             if let Some(global) = metadata_global {
                 // Native metadata reads only; no guest call under this guard.
@@ -688,7 +700,7 @@ impl MacroHost<'_> {
                         head.namespace = Some("suss.core".into());
                         head.name = "defmacro".into();
                         let span = form.span.clone();
-                        let pending = self.prepare_macro_definition(&form, span, Some(&origin))?;
+                        let pending = self.prepare_macro_definition(&form, span, Some(&origin), false)?;
                         let target = destination.map(|(owner, phase)| {
                             crate::portable::resolve::Environment::default()
                                 .declare_cell(phase, pending.binding.namespace(), pending.binding.name())
@@ -831,7 +843,7 @@ impl MacroHost<'_> {
         origin: Option<&crate::portable::SourceOrigin>,
     ) -> Result<SessionValue, SessionError> {
         let _budget = self.session.operation_budget_scope()?;
-        let pending = self.prepare_macro_definition(&form, span, origin)?;
+        let pending = self.prepare_macro_definition(&form, span, origin, false)?;
         self.commit_macro_definition(pending).map(|(function, _variable)| function)
     }
 
@@ -1025,6 +1037,7 @@ impl ExpansionHost for MacroHost<'_> {
                         .any(|transaction| transaction.globals.contains(global));
                     if !outer && self.session.source_root_staged(global)?.is_some() {
                         self.session.mark_source_root(global, false)?;
+                        self.session.mark_metadata_staged(global, false)?;
                     }
                 }
                 Ok(())

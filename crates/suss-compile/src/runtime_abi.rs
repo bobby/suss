@@ -222,6 +222,9 @@ pub(crate) const CELL_DECLARED: i32 = 32;
 /// Language root writes clear it, even when they write the identical function.
 /// It is neither Var metadata nor authority to access another cell/Store.
 pub(crate) const CELL_STAGED_ROOT: i32 = 64;
+/// Independently owned declaration metadata. Every actual language metadata
+/// write clears this bit, including a write of the identical map object.
+pub(crate) const CELL_STAGED_METADATA: i32 = 128;
 pub(crate) const DESCRIPTOR: u32 = 6;
 /// A source object: `{descriptor, fields, prototype cell, uid}`.
 pub(crate) const OBJECT: u32 = 7;
@@ -2051,6 +2054,16 @@ fn build_module() -> Vec<u8> {
     transient_vectors::functions(&mut b);
     transient_maps::functions(&mut b);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
+    // Compiler-authored final metadata publication. Metadata normalization and
+    // all user expressions have already returned before this primitive runs.
+    b.function("var-metadata-define", &[VALUE, VALUE, VALUE, ValType::I32], &[VALUE], &[
+        LocalGet(0), LocalGet(3), LocalGet(1), LocalGet(2),
+        Call(b.names["native-var-metadata-define"]),
+        If(BlockType::Empty), LocalGet(0), Return, End,
+        LocalGet(0), I32Const(2), LocalGet(1), Call(b.names["object-field-set"]),
+        LocalGet(0), I32Const(0), Call(b.names["object-field-get"]),
+        LocalGet(2), Call(b.names["binding-getter-macro-set!"]), Drop, LocalGet(0),
+    ]);
     numeric_classes::instance_function(&mut b);
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
     // callee is bound through IFn's `-invoke` key for its signature arity,

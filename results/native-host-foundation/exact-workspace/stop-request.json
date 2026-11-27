@@ -1,0 +1,6 @@
+{
+  "reason": "Final-head CI proves the same frozen baseline will fail at five stale namespace entries. Stop to capture and strictly review those measured changes before continuing full validation; no timeout or pass claim.",
+  "pid": 1290570,
+  "command": "/home/bobby/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --workspace --locked -- --test-threads=2 ",
+  "time": 1795716985.6850154
+}

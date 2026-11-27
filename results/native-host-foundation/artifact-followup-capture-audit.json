@@ -1,0 +1,16 @@
+{
+  "phase": "artifact-followup-broader-gates",
+  "capture_sha256": "7492f2b2c01e70cc1bf55a9bb0d3ac80aee98c2a46a1be1100227103d077259b",
+  "counts": {
+    "pass": 5325,
+    "guest-judged": 101,
+    "fail": 105,
+    "not-executed": 1408,
+    "skipped": 0,
+    "namespaces-failed": 64
+  },
+  "raw_rows": 5530,
+  "ordered_ids_and_decisions_equal_to_prior_scoped_run": true,
+  "failures_equal_to_reviewed_baseline": true,
+  "public_eval_absent": true
+}

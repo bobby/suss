@@ -97,6 +97,7 @@ share a cell, while unrelated phase namespaces do not share by spelling.
 | alter-var-root | Apply to the physical root and write only after successful return. Preserve macro status and already executed callback effects. |
 | Stage source macro | Record compiler-owned declarations separately from executed language writes. Publish the actual isolated transformer after the source completion/link boundary. |
 | Reject staged input | Undo only still-current compiler-owned staging writes. Preserve completed imports, identical user root writes and later metadata effects. |
+| Language metadata write | Clear metadata staging ownership even when the same map object is written. Preserve the actual map identity. Root and metadata write ownership are independent. |
 | Import/reload completes | Advance active declaration journals so rejecting later caller source cannot restore a superseded root. Retained Vars see replacement roots; retained old functions remain callable. |
 
 A genuine Unbound object belongs to its Var, retains identity across GC and root
@@ -112,6 +113,39 @@ constructors even after user replacements. User calls inside metadata still see
 live replacement bindings. Preserve raw declaration ASTs and primary projections;
 correct fixture setup without changing expected observations.
 
+The converted source declaration classifies only its final metadata publication
+as a staging write. Normalization and user metadata expressions finish first;
+their completed writes become the journal baseline before that publication.
+Ordinary helper writes remain language writes, including during a later staged
+declaration. Rollback consults both the actual metadata root and its independent
+ownership marker; root equality alone cannot identify the last writer.
+
+Compiler publication derives macro status from raw declaration metadata. A
+statically absent literal `:macro` key yields false without per-definition core
+lookup calls; dynamic keys and `:macro` values retain the original core lookup
+path. All metadata expressions and normalization still execute normally.
+
+Normalization and publication reuse one canonical Var object loaded after
+interning. Its getter still observes live root writes; this avoids a repeated
+hidden-cell lookup while preserving actual identity across helper execution.
+
+The proven macro flag is an immediate operand of the private publication primitive;
+the runtime storage ABI is unchanged. Ordinary, non-resumable eval emission drops
+only an unread publication return after executing the write. References in all
+instruction operands, captures and terminators retain their result locals;
+resumable frame layouts are unchanged.
+
+The native storage hook accepts only the original Var descriptor and the actual
+Var rooted in the compiler's registered hidden cell, with its actual logical
+binding cell. Symbol text selects candidates; exact rooted references authenticate
+them. A lookalike class or Var-class clone carrying the same getter cannot change
+the canonical Var's journal. A Var may hold another Var's genuine Unbound root;
+that mutable root's back-reference cannot authenticate canonical Var identity.
+The hook performs the physical metadata write and ownership update
+together after fallible work, using the actual Caller. Pure components retain
+their ordinary storage path without installing a host callback. This does not
+expand source access to built-in internals or add a public reset-meta! API.
+
 ## Implementation and executing controls
 
 | Responsibility | Entry points and controls |
@@ -122,6 +156,7 @@ correct fixture setup without changing expected observations.
 | Live capabilities and scoped graphs | evaluation/native_values.rs and its submodules; native_transport_uid_collisions_preserve_distinct_functions_and_repeated_aliases; native_function_capability_rejects_a_retired_source_before_touching_its_gc_root |
 | Nested cancellation | suspended_parent_interrupt_stops_a_foreign_guest_and_retires_both_budgets; suspended_parent_interrupt_is_also_observed_by_foreign_host_work |
 | Genuine Vars/metadata/source catalogs | portable/hir/vars.rs; CLI native_host_boundary target; runtime_evaluation capability target |
+| Metadata write ownership and identity | staged_source_metadata_ownership_preserves_identical_and_superseded_user_writes; metadata_normalization_and_language_writes_preserve_the_primary_map_identity; native_metadata_hook_changes_only_the_actual_canonical_var |
 | Compiler-owned data under replacement | native_host_boundary metadata controls; portable_aot_options::option_schema_survives_core_function_and_constructor_redefinition |
 | Original transport budgets | clojure_test_suite pinned_case_body_matches_all_primary_assertions and pinned_map_declaration_executes_without_transport_loss |
 
@@ -143,3 +178,26 @@ execute every original row, including all40 identifier cases in both phases,
 with unchanged expectations. Only the public eval call head routes directly to
 the installed core capability; raw primary fixtures stay unchanged. The two
 original wrapper controls remain on #516 alongside their original source.
+
+## Independent core acceptance coverage
+
+Selected source programs route direct compilation calls through the installed
+capability; the raw primary fixtures, counts, expected observations and original
+public-wrapper controls are retained. These tests do not install a public eval
+binding. The `_through_core_capability` and `_core_authority_gate` counterparts
+cover the following contracts independently of that consumer.
+
+| Contract | Controls |
+| --- | --- |
+| Actual functions, Vars, Namespaces and immutable sharing | Isolated source value twenty-case corpus, nested immutable aliases, nested function metadata and retained metadata identity |
+| Real source state and recovery | Typed callback cancellation, lazy realization/cache, genuine Unbound values and alter-var-root failure effects |
+| Definition/publication transitions | Analysis interning, generated declaration metadata, staged redefinition, completed imports superseding rejection, identical root writes and later metadata effects |
+| Import and reload | Actual source macro roots/namespaces, old retained functions, once-loading, completed prefixes and reload recovery |
+| Authority and phase isolation | Source named core cannot acquire native flag authority; compiler helpers retain their original roots; source declarations retain the isolated Store; module context changes without changing namespace roots |
+| Context, fuel and errors | Source fuel/cancellation after native entry, separate source/runtime allowances and exact exception data/causes/plain/nil messages |
+
+Native library controls additionally cover collisions, forged descriptors/tokens,
+wrong owners, source retirement, temporary root lifetimes, non-immediate ancestor
+reentry, panic cleanup and cumulative context costs. The raw suite comparison
+retains all unrelated failures and guest judgments. Public eval's own arity,
+argument behavior and complete eval body remain on #516.
