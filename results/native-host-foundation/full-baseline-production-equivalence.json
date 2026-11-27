@@ -1,0 +1,13 @@
+{
+  "tested_implementation": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
+  "actual_full_exit": 0,
+  "rust_test_executions": 2588,
+  "source_and_fixture_inputs": 2643,
+  "all_inputs_equal_to_full_execution_snapshot": true,
+  "all_current_inputs_equal_to_full_execution_snapshot": true,
+  "source_input_map_sha256": "127f1d2813374b72cb7b3690b2e197c554e4592ce40f6c0ea44a443eb190628b",
+  "source_input_map": "results/native-host-foundation/current-acceptance-validation.json#latest_production_input_hashes",
+  "validation_index_sha256": "c45ec1f57d2630c0ac3348b50a0c329d95619e78f9481b84ca5c62af10266b21",
+  "receipt": "results/native-host-foundation/exact-workspace-artifact-publication/commands.json",
+  "qualification": "The follow-up publishes the original actual full execution receipt/capture/audit and technical handoff. Tested production source and fixtures remain byte-exact; the full command ran on4b, not on a later evidence-only commit. Independent review/fixes and passing final-head CI remain required."
+}

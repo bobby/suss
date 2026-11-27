@@ -34254,3 +34254,12 @@ The implementation, tests, fixtures, manifests and archived native inputs are
 unchanged from447c1957, so the frozen61397661 native results retain the
 source-equivalence qualification above. Final-head remote checks remain
 required after this documentation-only correction.
+
+
+## Exact frozen-source host/Var workspace execution (2026-11-27)
+
+On implementation `4b3a95c531c6809d1e7f391b80504bc89200e49b`, `cargo test --workspace --locked -- --test-threads=2` returned0 after12892.661821860354 seconds:2588 test executions passed across377 successful result groups;15 pre-existing ignored tests remain explicit. All8784 captured inputs, HEAD, recorder and both Binaryen tools remained unchanged through the actual terminal. `results/native-host-foundation/exact-workspace-artifact-publication/commands.json` retains the complete receipt; its runner and deletion record are archived beside the raw log and capture. The three earlier interrupted full executions retain their actual negative terminals.
+
+The fresh native capture retains5530 ordered rows and identical per-row decisions and reviewed failures. Its comparison reports5325 host passes,101 guest judgments,105 known failures,64 failed namespaces,1408 unexecuted and0 skips; this is baseline conservation, not complete language success. `artifact-workspace-capture-audit.json` links the raw capture hash and comparison. The foundation capture has no public eval binding. The original397-case source corpus, host48, namespace10/strict artifact bounds, compiler-library252, catalog5, some-fn372 controls/47 uncached components, AOT constructor regression, WIT numeric14 and ABI62 all execute successfully within the full run.
+
+Java/Node-free bootstrap reproduction, four bootstrap artifact tests, source/provenance checks, original projection controls and Python364 retain their separate current-source terminal receipts in the acceptance index. The implementation-choice measurement remains historical performance evidence, separate from current execution. This follow-up changes evidence and this technical handoff; production source, fixtures, comparator, fuel, size bounds, skip rules and guest judgments are unchanged.

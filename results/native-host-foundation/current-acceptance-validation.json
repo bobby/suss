@@ -1,5 +1,5 @@
 {
-  "qualification": "Current metadata-publication artifact source passes the scoped namespace/host/library/AOT/runtime/Var/Symbol/suite/bootstrap/source/projection/Python checks recorded here. Actual terminal receipts and overlays qualify each command. Exact full workspace, independent review/fixes and final-head CI remain separate gates; earlier failures and interrupted full runs remain explicit.",
+  "qualification": "Published implementation4b3a95c5 passes all scoped checks and the actual exact two-thread full workspace baseline, with archived source/runner/Binaryen conservation. The fresh full-run capture preserves original ordered IDs/decisions and reviewed failures. Historical negatives/interrupted runs retain exact qualifications. Independent review/fixes and passing final-head CI still gate promotion.",
   "commands": [
     {
       "phase": "artifact-frame-discarded-publication-result",
@@ -238,6 +238,26 @@
       "exit_code": 0,
       "seconds": 17.67419056966901,
       "python_tests": 364
+    },
+    {
+      "name": "exact-two-thread-workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--",
+        "--test-threads=2"
+      ],
+      "complete": true,
+      "env_overrides": {},
+      "pid": 2024420,
+      "exit_code": 0,
+      "seconds": 12892.661821860354,
+      "phase": "exact-workspace-artifact-publication",
+      "rust_test_executions": 2588,
+      "successful_test_groups": 377,
+      "existing_ignored_tests": 15
     }
   ],
   "source_inputs_conserved_per_batch": true,
@@ -3352,5 +3372,38 @@
     "scripts/verify-core-import.sh": "f0a1ec8d43f36b1c044a44b8363f6de1680e8938213a8c827dc9c40565a20e32",
     "scripts/verify_bootstrap_identity.py": "db067a553f4e9b36e4278154e0d122c3cdf89872b09469cd499c6786f4ff86eb",
     "scripts/wasi_lock.py": "4a08b72c039d817474bbb69edf364ea010aca24da71f8295f1d2d69d4aae1e26"
+  },
+  "exact_full_workspace": {
+    "source_head": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
+    "phase": "exact-workspace-artifact-publication",
+    "exit_code": 0,
+    "seconds": 12892.661821860354,
+    "rust_test_executions": 2588,
+    "successful_test_groups": 377,
+    "existing_ignored_tests": 15,
+    "frozen_input_count": 8784,
+    "inputs_unchanged": true,
+    "binaryen_unchanged": true,
+    "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+    "runner_archive": "results/native-host-foundation/exact-workspace-artifact-publication/runner.py.gz",
+    "deleted_inputs": [],
+    "capture_audit": "results/native-host-foundation/artifact-workspace-capture-audit.json",
+    "qualification": "Actual complete successful baseline on clean4b. Later evidence/handoff edits do not change the tested implementation; preserve this original source identity."
+  },
+  "full_workspace_capture": {
+    "phase": "exact-workspace-artifact-publication",
+    "capture_sha256": "ff3bcfecd1582ab1a86fcd299086db065f78fafd0055f9105263f7e4b6e82893",
+    "counts": {
+      "pass": 5325,
+      "guest-judged": 101,
+      "fail": 105,
+      "not-executed": 1408,
+      "skipped": 0,
+      "namespaces-failed": 64
+    },
+    "raw_rows": 5530,
+    "ordered_ids_and_decisions_equal_to_prior_scoped_run": true,
+    "failures_equal_to_reviewed_baseline": true,
+    "public_eval_absent": true
   }
 }
