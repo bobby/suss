@@ -1,0 +1,2 @@
+(defmacro staged-reload "second" [] 23)
+[(identical? held-staged-var #'staged-reload) ((deref held-staged-var) nil nil) (:doc (meta held-staged-var)) (eval '(staged-reload))]

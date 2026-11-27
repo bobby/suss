@@ -1,0 +1,1 @@
+(eval (list 'user/source-lazy-probe (fn [xs read-state] [(read-state) (first xs) (read-state) (first xs) (read-state)])))

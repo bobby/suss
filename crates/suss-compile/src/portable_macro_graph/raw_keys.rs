@@ -409,6 +409,7 @@ impl Interner {
                             size(&mut key, plan.nodes[*child].key.0, charge)?;
                         }
                         let tag = match &form.kind {
+                            Kind::NativeConstant { .. } => 19,
                             Kind::Nil => 0,
                             Kind::Bool(_) => 1,
                             Kind::Number(_) => 2,
@@ -431,6 +432,10 @@ impl Interner {
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
+                            Kind::NativeConstant { owner, index } => {
+                                append(&mut key, &owner.to_le_bytes(), charge)?;
+                                append(&mut key, &index.to_le_bytes(), charge)?;
+                            }
                             Kind::Bool(v) => append(&mut key, &[u8::from(*v)], charge)?,
                             Kind::Number(v) => {
                                 append(&mut key, &v.to_bits().to_le_bytes(), charge)?

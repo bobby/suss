@@ -1,0 +1,4 @@
+(defmacro staged-reload "rejected" [] 99)
+(defmacro effect-before-rejection [] (alter-meta! #'staged-reload assoc :doc "effect") nil)
+(effect-before-rejection)
+(no-such-source-initializer)

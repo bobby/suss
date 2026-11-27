@@ -1,0 +1,2 @@
+(defmacro forwarded-ns-ignore [] 42)
+(defmacro forwarded-ns-value [] (list 'quote *ns*))

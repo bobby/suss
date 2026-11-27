@@ -1,0 +1,1 @@
+(def live-var 4) (def live-fn (fn [x] (+ x 1))) (def ^:dynamic *live-var* 3) (def ^:const live-const 1)

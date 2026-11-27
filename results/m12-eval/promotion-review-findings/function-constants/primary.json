@@ -1,0 +1,43 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(assert (= \"1.12.6\" (clojure-version))) [(let [f (fn [n] n)] (identical? f (eval f))) (let [f (fn [n] n)] (identical? f (eval (list 'identity f)))) (let [f (fn [n] n)] (identical? f (eval (list 'quote f)))) (let [x 1 f (fn [n] (+ n x))] (try (let [g (eval (list 'identity f))] [(g 41) (identical? f g)]) (catch Throwable e :error))) (let [a (atom 0) f (fn [] (swap! a inc))] (try (let [g (eval (list 'identity f))] [(f) (g) (f)]) (catch Throwable e :error))) (let [f (with-meta (fn [n] n) {:m 1})] (try (let [g (eval (list 'identity f))] [(g 42) (meta g) (identical? f g)]) (catch Throwable e :error)))]"
+  ],
+  "exit_code": 0,
+  "cases": [
+    [
+      "top-function",
+      "(let [f (fn [n] n)] (identical? f (eval f)))"
+    ],
+    [
+      "nested-function",
+      "(let [f (fn [n] n)] (identical? f (eval (list 'identity f))))"
+    ],
+    [
+      "quoted-function",
+      "(let [f (fn [n] n)] (identical? f (eval (list 'quote f))))"
+    ],
+    [
+      "captured-long",
+      "(let [x 1 f (fn [n] (+ n x))] (try (let [g (eval (list 'identity f))] [(g 41) (identical? f g)]) (catch Throwable e :error)))"
+    ],
+    [
+      "captured-atom",
+      "(let [a (atom 0) f (fn [] (swap! a inc))] (try (let [g (eval (list 'identity f))] [(f) (g) (f)]) (catch Throwable e :error)))"
+    ],
+    [
+      "meta-function",
+      "(let [f (with-meta (fn [n] n) {:m 1})] (try (let [g (eval (list 'identity f))] [(g 42) (meta g) (identical? f g)]) (catch Throwable e :error)))"
+    ]
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  }
+}

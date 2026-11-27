@@ -117,6 +117,11 @@ fn constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc(
     let source =
         format!("(ns suss-oracle.constructor-source-ast-runner)\n; header padding\n{body}");
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Keep the pinned raw tag symbols and every original projection.
+        // Explicit data bindings do not grant JavaScript interop authority.
+        session.enter_namespace("js").unwrap();
+        session.eval("(def Foreign 'js/Foreign) (def Number 'js/Number)").unwrap();
+        session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         // Calibrated compilation allowance for the complete source corpus.
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);

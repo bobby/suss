@@ -1,0 +1,8 @@
+[false true 42]
+false
+[:prefix]
+[]
+[:error 0]
+["precision=3 roundingMode=DOWN" "" "precision=9 roundingMode=CEILING" ""]
+[:error ""]
+[true false true]

@@ -1,0 +1,3303 @@
+warning: variable does not need to be mutable
+   --> crates/suss-reader/src/forms.rs:485:5
+    |
+485 |     mut form: Form,
+    |     ----^^^^
+    |     |
+    |     help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> crates/suss-reader/src/forms.rs:555:5
+    |
+555 |     mut form: Form,
+    |     ----^^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: `suss-reader` (lib) generated 2 warnings (run `cargo fix --lib -p suss-reader` to apply 2 suggestions)
+warning: `suss-reader` (lib) generated 2 warnings (2 duplicates)
+warning: unnecessary parentheses around pattern
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:2171:25
+     |
+2171 | ...   let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation els...
+     |           ^                                                                                                ^
+     |
+     = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+     |
+2171 -                     let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation else { continue };
+2171 +                     let Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments } = &inst.operation else { continue };
+     |
+
+warning: unused imports: `declaration_tag_metered` and `local_tag_metered`
+  --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:32:30
+   |
+32 | pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `prepare_fragment` and `prepare_selected_fragment`
+ --> crates/suss-compile-generator/../suss-compile/src/portable/modules.rs:3:50
+  |
+3 |     Diagnostic, ExpansionHost, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+  |                                                  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `publication::Publication`
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve.rs:15:16
+   |
+15 | pub(crate) use publication::Publication;
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `read_forms_with_source_metadata`, `read_forms`, and `resolve_conditionals`
+ --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:6:17
+  |
+6 |     Form, Kind, read_forms, read_forms_with_source_metadata, resolve_conditionals,
+  |                 ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Instruction::*`
+ --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/comparisons.rs:7:9
+  |
+7 |     use Instruction::*;
+  |         ^^^^^^^^^^^^^^
+
+warning: unused import: `Instruction::*`
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_object_methods.rs:17:9
+   |
+17 |     use Instruction::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `suss_reader::ParserState`
+   --> crates/suss-compile-generator/../suss-compile/src/lib.rs:130:5
+    |
+130 | use suss_reader::ParserState;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `wit_parser::Resolve`
+   --> crates/suss-compile-generator/../suss-compile/src/lib.rs:131:5
+    |
+131 | use wit_parser::Resolve;
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unreachable pattern
+  --> crates/suss-compile-generator/../suss-compile/src/portable/emit/captures.rs:95:13
+   |
+95 |             _ => {}
+   |             ^ no value can reach this
+   |
+note: multiple earlier patterns match some of the same values
+  --> crates/suss-compile-generator/../suss-compile/src/portable/emit/captures.rs:95:13
+   |
+87 |             Terminator::Return(value) | Terminator::Throw(value) => pending.push(*value),
+   |             ---------------------------------------------------- matches some of the same values
+88 |             Terminator::Branch { condition, .. } => pending.push(*condition),
+   |             ------------------------------------ matches some of the same values
+89 |             Terminator::Jump { target, arguments } => {
+   |             -------------------------------------- matches some of the same values
+...
+95 |             _ => {}
+   |             ^ collectively making this unreachable
+   = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable pattern
+   --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:937:155
+    |
+899 | ...   "number-hash"
+    |       ------------- matches all the relevant values
+...
+937 | ...   | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-int-value" | "case-number-hash" | "number-hash" | ...
+    |                                                                                                                                                     ^^^^^^^^^^^^^ no value can reach this
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile-generator/../suss-compile/src/portable/hir/nominal.rs:914:13
+    |
+914 |         let mut synthetic = |stem: &str| -> String {
+    |             ----^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `form`
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir/nominal.rs:1619:9
+     |
+1619 |         form: &Form,
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_form`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable pattern
+   --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:816:15
+    |
+814 |             | Self::IsRatio
+    |               ------------- matches all the relevant values
+815 |             | Self::IsBigInt
+816 |             | Self::IsRatio
+    |               ^^^^^^^^^^^^^ no value can reach this
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/error_constructors.rs:457:9
+    |
+457 |     let mut code = vec![
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: unused variable: `fields`
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_objects.rs:243:9
+    |
+243 |     let fields = b.function_with_locals(
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_fields`
+
+warning: unused variable: `step`
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_objects.rs:526:9
+    |
+526 |     let step = b.function(
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_step`
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_protocols.rs:190:9
+    |
+190 |     let mut body = vec![LocalGet(1), I32Const(8), I32GeS, If(BlockType::Empty),
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: unused variable: `descriptor`
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_protocols.rs:64:5
+   |
+64 |     descriptor: u32,
+   |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_descriptor`
+
+warning: unused variable: `unsupported`
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/numeric.rs:383:9
+    |
+383 |     let unsupported = unsupported_object_error();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_unsupported`
+
+warning: unused variable: `base`
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/streams.rs:512:30
+    |
+512 | fn withdraw(b: &mut Builder, base: u32) -> u32 {
+    |                              ^^^^ help: if this is intentional, prefix it with an underscore: `_base`
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/numeric_classes.rs:150:9
+    |
+150 |     let mut body = vec![
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> crates/suss-compile-generator/../suss-compile/src/runtime_abi.rs:2296:9
+     |
+2296 |     let mut body = vec![
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: field `owner` is never read
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:213:5
+    |
+211 | pub struct BuildDir {
+    |            -------- field in this struct
+212 |     root: PathBuf,
+213 |     owner: OnceLock<Option<u32>>,
+    |     ^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: methods `read_trusted`, `trusted`, and `owner` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:281:19
+    |
+216 | impl BuildDir {
+    | ------------- methods in this implementation
+...
+281 |     pub(crate) fn read_trusted(&self, layer: Layer, key: &[u8; 32]) -> Option<Vec<u8>> {
+    |                   ^^^^^^^^^^^^
+...
+327 |     fn trusted(&self, path: &Path) -> Result<(), String> {
+    |        ^^^^^^^
+...
+372 |     fn owner(&self) -> Option<u32> {
+    |        ^^^^^
+
+warning: constant `LIFT_THRESHOLD` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:919:7
+    |
+919 | const LIFT_THRESHOLD: usize = 64 << 10;
+    |       ^^^^^^^^^^^^^^
+
+warning: function `lift_modules` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:926:4
+    |
+926 | fn lift_modules(bytes: &[u8]) -> Option<(Vec<u8>, Vec<(String, std::ops::Range<usize>)>)> {
+    |    ^^^^^^^^^^^^
+
+warning: function `leb_u32` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:971:4
+    |
+971 | fn leb_u32(bytes: &[u8]) -> Option<(u32, usize)> {
+    |    ^^^^^^^
+
+warning: function `module_type` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/build_cache.rs:984:4
+    |
+984 | fn module_type(module: &[u8]) -> Option<wasm_encoder::ModuleType> {
+    |    ^^^^^^^^^^^
+
+warning: function `internal_setup` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/analysis_record.rs:30:15
+   |
+30 | pub(crate) fn internal_setup<T>(f: impl FnOnce() -> T) -> T {
+   |               ^^^^^^^^^^^^^^
+
+warning: function `source_tags` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/hir/source_tags.rs:768:15
+    |
+768 | pub(super) fn source_tags(
+    |               ^^^^^^^^^^^
+
+warning: function `metadata_wrapper_tags` is never used
+    --> crates/suss-compile-generator/../suss-compile/src/portable/hir/source_tags.rs:1174:15
+     |
+1174 | pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
+     |               ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_privileged_input` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/modules.rs:685:15
+    |
+685 | pub(crate) fn prepare_privileged_input<P: AsRef<Path>>(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated functions `native_constant` and `native_site_import` are never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve.rs:32:19
+   |
+31 | impl Global {
+   | ----------- associated functions in this implementation
+32 |     pub(crate) fn native_constant(phase: Phase, owner: u64, index: u64) -> Self {
+   |                   ^^^^^^^^^^^^^^^
+...
+45 |     pub(crate) fn native_site_import(phase: Phase, name: &str) -> Option<(Self, Self)> {
+   |                   ^^^^^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+    --> crates/suss-compile-generator/../suss-compile/src/portable/resolve.rs:1146:19
+     |
+ 528 | impl Environment {
+     | ---------------- methods in this implementation
+...
+1146 |     pub(crate) fn native_constant(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+     |                   ^^^^^^^^^^^^^^^
+...
+1271 |     pub(crate) fn existing_var_cell(&self, target: &Global) -> Option<Global> {
+     |                   ^^^^^^^^^^^^^^^^^
+...
+1278 |     pub(crate) fn registered_var_cells(&self, phase: Phase, namespace: &str, name: &str) -> Option<(Global, Global)> {
+     |                   ^^^^^^^^^^^^^^^^^^^^
+...
+1282 |     pub(crate) fn native_macro_declarations(&self, owner: u64) -> impl Iterator<Item = Global> + '_ {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1285 |     pub(crate) fn native_macro_global(&self, phase: Phase, namespace: &str, name: &str, owner: u64) -> Option<Global> {
+     |                   ^^^^^^^^^^^^^^^^^^^
+...
+1289 |     pub(crate) fn macro_binding_owner(&self, phase: Phase, namespace: &str, name: &str) -> Option<u64> {
+     |                   ^^^^^^^^^^^^^^^^^^^
+...
+1316 |     pub(crate) fn set_export_param_hints(&mut self, hints: BTreeMap<(String, String), Vec<Option<bool>>>) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^
+...
+1415 |     pub(crate) fn replace_evaluation_aliases(&mut self, phase: Phase, aliases: BTreeMap<String, String>) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1515 |     pub(crate) fn record_native_macro_source(&mut self, phase: Phase, namespace: &str, name: &str,
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1533 |     pub(crate) fn replace_native_macro_status(&mut self, statuses: BTreeMap<Global, bool>) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1566 |     pub(crate) fn macro_export_names(&self, phase: Phase, namespace: &str) -> Vec<String> {
+     |                   ^^^^^^^^^^^^^^^^^^
+...
+1570 |     pub(crate) fn source_macro_overridden(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `map_changes` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/native_effects.rs:5:4
+  |
+5 | fn map_changes<K: Ord + Clone, V: Clone + PartialEq>(
+  |    ^^^^^^^^^^^
+
+warning: function `set_changes` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/native_effects.rs:19:4
+   |
+19 | fn set_changes<K: Ord + Clone>(
+   |    ^^^^^^^^^^^
+
+warning: method `apply_native_effects` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/native_effects.rs:30:19
+   |
+27 | impl Environment {
+   | ---------------- method in this implementation
+...
+30 |     pub(crate) fn apply_native_effects(
+   |                   ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `Capture` is never constructed
+ --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:8:19
+  |
+8 | pub(crate) struct Capture(Log);
+  |                   ^^^^^^^
+
+warning: method `finish` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:10:19
+   |
+ 9 | impl Capture {
+   | ------------ method in this implementation
+10 |     pub(crate) fn finish(self) -> Publication {
+   |                   ^^^^^^
+
+warning: struct `Publication` is never constructed
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:22:19
+   |
+22 | pub(crate) struct Publication { changes: Vec<Change> }
+   |                   ^^^^^^^^^^^
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:25:11
+   |
+25 |     Alias(String, String, bool),
+   |     ----- ^^^^^^  ^^^^^^  ^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `ScopeChange` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+25 -     Alias(String, String, bool),
+25 +     Alias((), (), ()),
+   |
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:27:11
+   |
+27 |     Refer(String, Global, bool),
+   |     ----- ^^^^^^  ^^^^^^  ^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `ScopeChange` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+27 -     Refer(String, Global, bool),
+27 +     Refer((), (), ()),
+   |
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:28:16
+   |
+28 |     MacroRefer(String, (String, String), bool),
+   |     ---------- ^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `ScopeChange` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+28 -     MacroRefer(String, (String, String), bool),
+28 +     MacroRefer((), (), ()),
+   |
+
+warning: field `0` is never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:29:13
+   |
+29 |     Exclude(String),
+   |     ------- ^^^^^^
+   |     |
+   |     field in this variant
+   |
+   = note: `ScopeChange` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the field to be of unit type to suppress this warning while preserving the field numbering, or remove the field
+   |
+29 -     Exclude(String),
+29 +     Exclude(()),
+   |
+
+warning: variant `Aliases` is never constructed
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:26:5
+   |
+24 | pub(super) enum ScopeChange {
+   |                 ----------- variant in this enum
+25 |     Alias(String, String, bool),
+26 |     Aliases(BTreeMap<String, String>),
+   |     ^^^^^^^
+   |
+   = note: `ScopeChange` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:33:10
+   |
+33 |     Bind(Global, Option<Binding>),
+   |     ---- ^^^^^^  ^^^^^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+33 -     Bind(Global, Option<Binding>),
+33 +     Bind((), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:34:16
+   |
+34 |     Definition(Global, Arc<DefinitionInfo>),
+   |     ---------- ^^^^^^  ^^^^^^^^^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+34 -     Definition(Global, Arc<DefinitionInfo>),
+34 +     Definition((), ()),
+   |
+
+warning: field `0` is never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:35:17
+   |
+35 |     Materialize(Global),
+   |     ----------- ^^^^^^
+   |     |
+   |     field in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the field to be of unit type to suppress this warning while preserving the field numbering, or remove the field
+   |
+35 -     Materialize(Global),
+35 +     Materialize(()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:36:15
+   |
+36 |     Namespace(Phase, String),
+   |     --------- ^^^^^  ^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+36 -     Namespace(Phase, String),
+36 +     Namespace((), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:37:11
+   |
+37 |     Enter(Phase, String),
+   |     ----- ^^^^^  ^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+37 -     Enter(Phase, String),
+37 +     Enter((), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:38:11
+   |
+38 |     Reset(Phase, String),
+   |     ----- ^^^^^  ^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+38 -     Reset(Phase, String),
+38 +     Reset((), ()),
+   |
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:39:11
+   |
+39 |     Scope(Phase, String, ScopeChange),
+   |     ----- ^^^^^  ^^^^^^  ^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+39 -     Scope(Phase, String, ScopeChange),
+39 +     Scope((), (), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:40:22
+   |
+40 |     MacroDeclaration(Global, Option<Arc<DefinitionInfo>>),
+   |     ---------------- ^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+40 -     MacroDeclaration(Global, Option<Arc<DefinitionInfo>>),
+40 +     MacroDeclaration((), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:41:16
+   |
+41 |     MacroOwner(Global, Option<MacroOwner>),
+   |     ---------- ^^^^^^  ^^^^^^^^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+41 -     MacroOwner(Global, Option<MacroOwner>),
+41 +     MacroOwner((), ()),
+   |
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:42:18
+   |
+42 |     MacroExports(Phase, String, Vec<String>),
+   |     ------------ ^^^^^  ^^^^^^  ^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+42 -     MacroExports(Phase, String, Vec<String>),
+42 +     MacroExports((), (), ()),
+   |
+
+warning: fields `0`, `1`, and `2` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:43:14
+   |
+43 |     Protocol(Global, Vec<ProtocolMethod>, bool),
+   |     -------- ^^^^^^  ^^^^^^^^^^^^^^^^^^^  ^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+43 -     Protocol(Global, Vec<ProtocolMethod>, bool),
+43 +     Protocol((), (), ()),
+   |
+
+warning: fields `0` and `1` are never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:44:16
+   |
+44 |     DirectLink(Global, Option<(usize, usize)>),
+   |     ---------- ^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^
+   |     |
+   |     fields in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the fields to be of unit type to suppress this warning while preserving the field numbering, or remove the fields
+   |
+44 -     DirectLink(Global, Option<(usize, usize)>),
+44 +     DirectLink((), ()),
+   |
+
+warning: field `0` is never read
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:46:13
+   |
+46 |     Keyword(Global),
+   |     ------- ^^^^^^
+   |     |
+   |     field in this variant
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+help: consider changing the field to be of unit type to suppress this warning while preserving the field numbering, or remove the field
+   |
+46 -     Keyword(Global),
+46 +     Keyword(()),
+   |
+
+warning: variant `ExportHints` is never constructed
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:45:5
+   |
+32 | pub(super) enum Change {
+   |                 ------ variant in this enum
+...
+45 |     ExportHints(BTreeMap<(String, String), Vec<Option<bool>>>),
+   |     ^^^^^^^^^^^
+   |
+   = note: `Change` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: method `macro_namespace` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:49:8
+   |
+48 | impl Change {
+   | ----------- method in this implementation
+49 |     fn macro_namespace(&self) -> Option<(Phase, String)> {
+   |        ^^^^^^^^^^^^^^^
+
+warning: methods `macro_namespaces`, `charge`, `apply_runtime`, `apply_catalog`, and `apply` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:58:19
+    |
+ 57 | impl Publication {
+    | ---------------- methods in this implementation
+ 58 |     pub(crate) fn macro_namespaces(&self, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<BTreeSet<(Phase, String)>...
+    |                   ^^^^^^^^^^^^^^^^
+...
+ 69 |     pub(crate) fn charge(&self, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic> {
+    |                   ^^^^^^
+...
+ 94 |     pub(crate) fn apply_runtime(&self, environment: &mut Environment, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Resu...
+    |                   ^^^^^^^^^^^^^
+...
+ 97 |     pub(crate) fn apply_catalog(&self, environment: &mut Environment, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Resu...
+    |                   ^^^^^^^^^^^^^
+...
+100 |     fn apply(&self, environment: &mut Environment, catalog: bool, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(...
+    |        ^^^^^
+
+warning: methods `begin_publication`, `clear_publication`, `macro_catalog_publication`, and `reserve_prepared_identities` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/resolve/publication.rs:167:19
+    |
+166 | impl Environment {
+    | ---------------- methods in this implementation
+167 |     pub(crate) fn begin_publication(&mut self) -> Capture {
+    |                   ^^^^^^^^^^^^^^^^^
+...
+173 |     pub(crate) fn clear_publication(&mut self) { self.publication = None; }
+    |                   ^^^^^^^^^^^^^^^^^
+...
+182 |     pub(crate) fn macro_catalog_publication(&self, namespaces: &BTreeSet<(Phase, String)>, meter: &mut dyn FnMut(u64) -> Result<(),...
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+201 |     pub(crate) fn reserve_prepared_identities(&mut self, prepared: &Self) {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `input_header` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/source.rs:354:15
+    |
+354 | pub(crate) fn input_header(
+    |               ^^^^^^^^^^^^
+
+warning: function `dependencies` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/source.rs:399:15
+    |
+399 | pub(crate) fn dependencies(
+    |               ^^^^^^^^^^^^
+
+warning: function `equal_text_metered` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/origin.rs:32:4
+   |
+32 | fn equal_text_metered(
+   |    ^^^^^^^^^^^^^^^^^^
+
+warning: associated items `native_evaluation`, `with_native_direct_constants`, `for_macro_definition`, `same_input`, `symbol_position_metered`, and `position_metered` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin.rs:90:19
+    |
+ 52 | impl SourceOrigin {
+    | ----------------- associated items in this implementation
+...
+ 90 |     pub(crate) fn native_evaluation(owner: u64) -> Self {
+    |                   ^^^^^^^^^^^^^^^^^
+...
+ 94 |     pub(crate) fn with_native_direct_constants(&self, direct: bool) -> Self {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 99 |     pub(crate) fn for_macro_definition(&self, native_owner: u64, staged: bool) -> Self {
+    |                   ^^^^^^^^^^^^^^^^^^^^
+...
+118 |     pub(crate) fn same_input(&self, other: &Self) -> bool {
+    |                   ^^^^^^^^^^
+...
+152 |     pub(crate) fn symbol_position_metered(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^
+...
+246 |     fn position_metered(
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `same` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:275:4
+    |
+275 | fn same(a: &Form, b: &Form, metadata: bool) -> bool {
+    |    ^^^^
+
+warning: constant `TRAVERSAL_BOUND` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:322:7
+    |
+322 | const TRAVERSAL_BOUND: usize = 1_048_576;
+    |       ^^^^^^^^^^^^^^^
+
+warning: associated items `new` and `find` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:338:8
+    |
+337 | impl IndexedForms {
+    | ----------------- associated items in this implementation
+338 |     fn new(forms: Vec<Form>) -> Self {
+    |        ^^^
+...
+343 |     fn find(
+    |        ^^^^
+
+warning: fields `truncated` and `limit` are never read
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:388:5
+    |
+385 | struct FormIndex {
+    |        --------- fields in this struct
+...
+388 |     truncated: bool,
+    |     ^^^^^^^^^
+389 |     limit: usize,
+    |     ^^^^^
+    |
+    = note: `FormIndex` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: associated items `new`, `form`, and `find` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:393:8
+    |
+392 | impl FormIndex {
+    | -------------- associated items in this implementation
+393 |     fn new(forms: &[Form], limit: usize) -> Self {
+    |        ^^^
+...
+474 |     fn form<'a>(&self, forms: &'a [Form], mut rank: usize) -> &'a Form {
+    |        ^^^^
+...
+538 |     fn find<'a>(
+    |        ^^^^
+
+warning: methods `macro_form_root_metadata_metered` and `reader_tree` are never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/origin/form_metadata.rs:677:19
+    |
+642 | impl SourceOrigin {
+    | ----------------- methods in this implementation
+...
+677 |     pub(crate) fn macro_form_root_metadata_metered(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+738 |     pub(crate) fn reader_tree(&self, form: &Form) -> Result<Form, Diagnostic> {
+    |                   ^^^^^^^^^^^
+
+warning: method `reserve` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable/syntax_quote.rs:37:19
+   |
+36 | impl ReaderState {
+   | ---------------- method in this implementation
+37 |     pub(crate) fn reserve(&mut self, prepared: &Self) {
+   |                   ^^^^^^^
+
+warning: function `has_template` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/syntax_quote.rs:482:15
+    |
+482 | pub(crate) fn has_template(form: &Form) -> Result<bool, Diagnostic> {
+    |               ^^^^^^^^^^^^
+
+warning: function `lower_generated` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable/syntax_quote.rs:511:15
+    |
+511 | pub(crate) fn lower_generated(form: &Form) -> Result<Form, Diagnostic> {
+    |               ^^^^^^^^^^^^^^^
+
+warning: constant `CELL_STAGED_METADATA` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi.rs:227:18
+    |
+227 | pub(crate) const CELL_STAGED_METADATA: i32 = 128;
+    |                  ^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `DATA` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_values.rs:7:18
+  |
+7 | pub(crate) const DATA: i32 = 2;
+  |                  ^^^^
+
+warning: constant `NAMESPACE` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_values.rs:9:18
+  |
+9 | pub(crate) const NAMESPACE: i32 = 4;
+  |                  ^^^^^^^^^
+
+warning: constant `CONS` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_values.rs:12:18
+   |
+12 | pub(crate) const CONS: i32 = 7;
+   |                  ^^^^
+
+warning: constant `LAZY_SEQ` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/native_values.rs:13:18
+   |
+13 | pub(crate) const LAZY_SEQ: i32 = 8;
+   |                  ^^^^^^^^
+
+warning: function `invalid_length` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/range_errors.rs:35:15
+   |
+35 | pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
+   |               ^^^^^^^^^^^^^^
+
+warning: constant `DOSEQ` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:16:18
+   |
+16 | pub(crate) const DOSEQ: &str = r#"
+   |                  ^^^^^
+
+warning: constant `THREAD_LAST` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:62:18
+   |
+62 | pub(crate) const THREAD_LAST: &str = r#"
+   |                  ^^^^^^^^^^^
+
+warning: constant `DEFMULTI` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:86:18
+   |
+86 | pub(crate) const DEFMULTI: &str = r##"
+   |                  ^^^^^^^^
+
+warning: constant `DEFMETHOD` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:151:18
+    |
+151 | pub(crate) const DEFMETHOD: &str = r#"
+    |                  ^^^^^^^^^
+
+warning: constant `ASSERT` is never used
+   --> crates/suss-compile-generator/../suss-compile/src/portable_core_macros.rs:160:18
+    |
+160 | pub(crate) const ASSERT: &str = r#"
+    |                  ^^^^^^
+
+warning: constant `SOURCE` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable_when_let.rs:12:18
+   |
+12 | pub(crate) const SOURCE: &str = r#"
+   |                  ^^^^^^
+
+warning: constant `SOURCE` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/portable_record_emitter.rs:6:18
+  |
+6 | pub(crate) const SOURCE: &str = r####"
+  |                  ^^^^^^
+
+warning: constant `SOURCE` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/portable_record_protocol_facts.rs:6:18
+  |
+6 | pub(crate) const SOURCE: &str = r####"
+  |                  ^^^^^^
+
+warning: constant `SOURCE` is never used
+ --> crates/suss-compile-generator/../suss-compile/src/portable_record_public.rs:6:18
+  |
+6 | pub(crate) const SOURCE: &str = r####"
+  |                  ^^^^^^
+
+warning: constant `MACRO_SOURCE` is never used
+  --> crates/suss-compile-generator/../suss-compile/src/portable_record_public.rs:30:18
+   |
+30 | pub(crate) const MACRO_SOURCE: &str = r####"(defmacro ^{:suss/compiler-catalog :record-bindings} defrecord [rsym fields & impls]
+   |                  ^^^^^^^^^^^^
+
+warning: `suss-compile-generator` (lib) generated 92 warnings (run `cargo fix --lib -p suss-compile-generator` to apply 20 suggestions)
+warning: unnecessary parentheses around pattern
+    --> crates/suss-compile/src/portable/emit.rs:2171:25
+     |
+2171 | ...   let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation els...
+     |           ^                                                                                                ^
+     |
+     = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+     |
+2171 -                     let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation else { continue };
+2171 +                     let Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments } = &inst.operation else { continue };
+     |
+
+warning: unused imports: `declaration_tag_metered` and `local_tag_metered`
+  --> crates/suss-compile/src/portable/hir.rs:32:30
+   |
+32 | pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `prepare_fragment` and `prepare_selected_fragment`
+ --> crates/suss-compile/src/portable/modules.rs:3:50
+  |
+3 |     Diagnostic, ExpansionHost, PreparedFragment, prepare_fragment, prepare_selected_fragment,
+  |                                                  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `read_forms_with_source_metadata`, `read_forms`, and `resolve_conditionals`
+ --> crates/suss-compile/src/portable/origin/form_metadata.rs:6:17
+  |
+6 |     Form, Kind, read_forms, read_forms_with_source_metadata, resolve_conditionals,
+  |                 ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Instruction::*`
+ --> crates/suss-compile/src/runtime_abi/comparisons.rs:7:9
+  |
+7 |     use Instruction::*;
+  |         ^^^^^^^^^^^^^^
+
+warning: unused import: `Instruction::*`
+  --> crates/suss-compile/src/runtime_abi/native_object_methods.rs:17:9
+   |
+17 |     use Instruction::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `read_forms`
+ --> crates/suss-compile/src/portable_macros.rs:9:38
+  |
+9 | use suss_reader::forms::{Form, Kind, read_forms};
+  |                                      ^^^^^^^^^^
+
+warning: unused import: `suss_reader::ParserState`
+   --> crates/suss-compile/src/lib.rs:130:5
+    |
+130 | use suss_reader::ParserState;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `std::sync::atomic::Atomic::<u64>::fetch_update`: renamed to `try_update` for consistency
+    --> crates/suss-compile/src/portable_macro_data.rs:1504:42
+     |
+1504 |         let index = NEXT_NATIVE_CONSTANT.fetch_update(
+     |                                          ^^^^^^^^^^^^
+     |
+     = note: `#[warn(deprecated)]` on by default
+help: replace the use of the deprecated method
+     |
+1504 -         let index = NEXT_NATIVE_CONSTANT.fetch_update(
+1504 +         let index = NEXT_NATIVE_CONSTANT.try_update(
+     |
+
+warning: use of deprecated method `std::sync::atomic::Atomic::<usize>::fetch_update`: renamed to `try_update` for consistency
+   --> crates/suss-compile/src/portable_session.rs:280:10
+    |
+280 |         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+    |          ^^^^^^^^^^^^
+    |
+help: replace the use of the deprecated method
+    |
+280 -         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+280 +         .try_update(Ordering::SeqCst, Ordering::SeqCst, |value| value.checked_sub(1))
+    |
+
+warning: use of deprecated method `std::sync::atomic::Atomic::<u64>::fetch_update`: renamed to `try_update` for consistency
+   --> crates/suss-compile/src/portable_session.rs:777:14
+    |
+777 |             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+    |              ^^^^^^^^^^^^
+    |
+help: replace the use of the deprecated method
+    |
+777 -             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+777 +             .try_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
+    |
+
+warning: unreachable pattern
+  --> crates/suss-compile/src/portable/emit/captures.rs:95:13
+   |
+95 |             _ => {}
+   |             ^ no value can reach this
+   |
+note: multiple earlier patterns match some of the same values
+  --> crates/suss-compile/src/portable/emit/captures.rs:95:13
+   |
+87 |             Terminator::Return(value) | Terminator::Throw(value) => pending.push(*value),
+   |             ---------------------------------------------------- matches some of the same values
+88 |             Terminator::Branch { condition, .. } => pending.push(*condition),
+   |             ------------------------------------ matches some of the same values
+89 |             Terminator::Jump { target, arguments } => {
+   |             -------------------------------------- matches some of the same values
+...
+95 |             _ => {}
+   |             ^ collectively making this unreachable
+   = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable pattern
+   --> crates/suss-compile/src/portable/emit.rs:937:155
+    |
+899 | ...   "number-hash"
+    |       ------------- matches all the relevant values
+...
+937 | ...   | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-int-value" | "case-number-hash" | "number-hash" | ...
+    |                                                                                                                                                     ^^^^^^^^^^^^^ no value can reach this
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/portable/hir/nominal.rs:914:13
+    |
+914 |         let mut synthetic = |stem: &str| -> String {
+    |             ----^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `form`
+    --> crates/suss-compile/src/portable/hir/nominal.rs:1619:9
+     |
+1619 |         form: &Form,
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_form`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable pattern
+   --> crates/suss-compile/src/portable/hir.rs:816:15
+    |
+814 |             | Self::IsRatio
+    |               ------------- matches all the relevant values
+815 |             | Self::IsBigInt
+816 |             | Self::IsRatio
+    |               ^^^^^^^^^^^^^ no value can reach this
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/runtime_abi/error_constructors.rs:457:9
+    |
+457 |     let mut code = vec![
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: unused variable: `fields`
+   --> crates/suss-compile/src/runtime_abi/native_objects.rs:243:9
+    |
+243 |     let fields = b.function_with_locals(
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_fields`
+
+warning: unused variable: `step`
+   --> crates/suss-compile/src/runtime_abi/native_objects.rs:526:9
+    |
+526 |     let step = b.function(
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_step`
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/runtime_abi/native_protocols.rs:190:9
+    |
+190 |     let mut body = vec![LocalGet(1), I32Const(8), I32GeS, If(BlockType::Empty),
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: unused variable: `descriptor`
+  --> crates/suss-compile/src/runtime_abi/native_protocols.rs:64:5
+   |
+64 |     descriptor: u32,
+   |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_descriptor`
+
+warning: unused variable: `unsupported`
+   --> crates/suss-compile/src/runtime_abi/numeric.rs:383:9
+    |
+383 |     let unsupported = unsupported_object_error();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_unsupported`
+
+warning: unused variable: `base`
+   --> crates/suss-compile/src/runtime_abi/streams.rs:512:30
+    |
+512 | fn withdraw(b: &mut Builder, base: u32) -> u32 {
+    |                              ^^^^ help: if this is intentional, prefix it with an underscore: `_base`
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/runtime_abi/numeric_classes.rs:150:9
+    |
+150 |     let mut body = vec![
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+    --> crates/suss-compile/src/runtime_abi.rs:2296:9
+     |
+2296 |     let mut body = vec![
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+warning: unused variable: `depth`
+    --> crates/suss-compile/src/portable_macro_graph.rs:3071:39
+     |
+3071 |     fn lowering(&mut self, hir: &Hir, depth: usize) -> Result<Value> {
+     |                                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_depth`
+
+warning: function `source_tags` is never used
+   --> crates/suss-compile/src/portable/hir/source_tags.rs:768:15
+    |
+768 | pub(super) fn source_tags(
+    |               ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `metadata_wrapper_tags` is never used
+    --> crates/suss-compile/src/portable/hir/source_tags.rs:1174:15
+     |
+1174 | pub(super) fn metadata_wrapper_tags(form: &Form) -> Result<SourceTags, Diagnostic> {
+     |               ^^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `native_constant` and `record_native_macro_source` are never used
+    --> crates/suss-compile/src/portable/resolve.rs:1146:19
+     |
+ 528 | impl Environment {
+     | ---------------- methods in this implementation
+...
+1146 |     pub(crate) fn native_constant(&mut self, phase: Phase, owner: u64, index: u64) -> Global {
+     |                   ^^^^^^^^^^^^^^^
+...
+1515 |     pub(crate) fn record_native_macro_source(&mut self, phase: Phase, namespace: &str, name: &str,
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `input_header` is never used
+   --> crates/suss-compile/src/portable/source.rs:354:15
+    |
+354 | pub(crate) fn input_header(
+    |               ^^^^^^^^^^^^
+
+warning: function `dependencies` is never used
+   --> crates/suss-compile/src/portable/source.rs:399:15
+    |
+399 | pub(crate) fn dependencies(
+    |               ^^^^^^^^^^^^
+
+warning: function `same` is never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:275:4
+    |
+275 | fn same(a: &Form, b: &Form, metadata: bool) -> bool {
+    |    ^^^^
+
+warning: constant `TRAVERSAL_BOUND` is never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:322:7
+    |
+322 | const TRAVERSAL_BOUND: usize = 1_048_576;
+    |       ^^^^^^^^^^^^^^^
+
+warning: associated items `new` and `find` are never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:338:8
+    |
+337 | impl IndexedForms {
+    | ----------------- associated items in this implementation
+338 |     fn new(forms: Vec<Form>) -> Self {
+    |        ^^^
+...
+343 |     fn find(
+    |        ^^^^
+
+warning: fields `truncated` and `limit` are never read
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:388:5
+    |
+385 | struct FormIndex {
+    |        --------- fields in this struct
+...
+388 |     truncated: bool,
+    |     ^^^^^^^^^
+389 |     limit: usize,
+    |     ^^^^^
+    |
+    = note: `FormIndex` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: associated items `new`, `form`, and `find` are never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:393:8
+    |
+392 | impl FormIndex {
+    | -------------- associated items in this implementation
+393 |     fn new(forms: &[Form], limit: usize) -> Self {
+    |        ^^^
+...
+474 |     fn form<'a>(&self, forms: &'a [Form], mut rank: usize) -> &'a Form {
+    |        ^^^^
+...
+538 |     fn find<'a>(
+    |        ^^^^
+
+warning: method `reader_tree` is never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:738:19
+    |
+642 | impl SourceOrigin {
+    | ----------------- method in this implementation
+...
+738 |     pub(crate) fn reader_tree(&self, form: &Form) -> Result<Form, Diagnostic> {
+    |                   ^^^^^^^^^^^
+
+warning: function `has_template` is never used
+   --> crates/suss-compile/src/portable/syntax_quote.rs:482:15
+    |
+482 | pub(crate) fn has_template(form: &Form) -> Result<bool, Diagnostic> {
+    |               ^^^^^^^^^^^^
+
+warning: function `lower_generated` is never used
+   --> crates/suss-compile/src/portable/syntax_quote.rs:511:15
+    |
+511 | pub(crate) fn lower_generated(form: &Form) -> Result<Form, Diagnostic> {
+    |               ^^^^^^^^^^^^^^^
+
+warning: function `invalid_length` is never used
+  --> crates/suss-compile/src/runtime_abi/range_errors.rs:35:15
+   |
+35 | pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
+   |               ^^^^^^^^^^^^^^
+
+warning: function `compile_inputs_typed` is never used
+   --> crates/suss-compile/src/portable_aot.rs:264:15
+    |
+264 | pub(crate) fn compile_inputs_typed(
+    |               ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_inputs` is never used
+   --> crates/suss-compile/src/portable_aot.rs:496:4
+    |
+496 | fn prepare_inputs(
+    |    ^^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+  --> crates/suss-compile/src/portable_expression.rs:59:15
+   |
+59 | pub(crate) fn prepare(
+   |               ^^^^^^^
+
+warning: field `undefined` is never read
+    --> crates/suss-compile/src/portable_macro_data.rs:1532:5
+     |
+1522 | struct Budget {
+     |        ------ field in this struct
+...
+1532 |     undefined: Option<Val>,
+     |     ^^^^^^^^^
+
+warning: struct `BorrowedFormReader` is never constructed
+ --> crates/suss-compile/src/portable_macro_data/borrowed_reader.rs:7:19
+  |
+7 | pub(crate) struct BorrowedFormReader {
+  |                   ^^^^^^^^^^^^^^^^^^
+
+warning: method `borrowed_reader` is never used
+  --> crates/suss-compile/src/portable_macro_data/borrowed_reader.rs:16:19
+   |
+15 | impl FormBridge {
+   | --------------- method in this implementation
+16 |     pub(crate) fn borrowed_reader(
+   |                   ^^^^^^^^^^^^^^^
+
+warning: method `read` is never used
+  --> crates/suss-compile/src/portable_macro_data/borrowed_reader.rs:48:19
+   |
+44 | impl BorrowedFormReader {
+   | ----------------------- method in this implementation
+...
+48 |     pub(crate) fn read(
+   |                   ^^^^
+
+warning: struct `MacroReentryProfile` is never constructed
+  --> crates/suss-compile/src/portable_macros/reentry.rs:13:19
+   |
+13 | pub(crate) struct MacroReentryProfile {
+   |                   ^^^^^^^^^^^^^^^^^^^
+
+warning: method `reentry_profile` is never used
+  --> crates/suss-compile/src/portable_macros/reentry.rs:28:19
+   |
+17 | impl MacroHost<'_> {
+   | ------------------ method in this implementation
+...
+28 |     pub(crate) fn reentry_profile(&self) -> MacroReentryProfile {
+   |                   ^^^^^^^^^^^^^^^
+
+warning: method `bind` is never used
+  --> crates/suss-compile/src/portable_macros/reentry.rs:71:19
+   |
+70 | impl MacroReentryProfile {
+   | ------------------------ method in this implementation
+71 |     pub(crate) fn bind<'a>(&self, caller: wasmtime::StoreContextMut<'a, ()>) -> MacroHost<'a> {
+   |                   ^^^^
+
+warning: method `prepare_evaluation` is never used
+   --> crates/suss-compile/src/portable_macros/facade.rs:191:19
+    |
+ 37 | impl MacroService {
+    | ----------------- method in this implementation
+...
+191 |     pub(crate) fn prepare_evaluation(
+    |                   ^^^^^^^^^^^^^^^^^^
+
+warning: methods `with_math_context` and `limit_fuel` are never used
+   --> crates/suss-compile/src/portable_macros/facade.rs:281:19
+    |
+280 | impl MacroLease {
+    | --------------- methods in this implementation
+281 |     pub(super) fn with_math_context<T>(&mut self, context: crate::portable_session::EvaluationMathContext,
+    |                   ^^^^^^^^^^^^^^^^^
+...
+291 |     pub(super) fn limit_fuel(&mut self, fuel: u64) -> u64 {
+    |                   ^^^^^^^^^^
+
+warning: methods `binding_checkpoint` and `restore_bindings` are never used
+   --> crates/suss-compile/src/portable_macros/facade.rs:390:19
+    |
+328 | impl CompiledMacros {
+    | ------------------- methods in this implementation
+...
+390 |     pub(crate) fn binding_checkpoint(&mut self) -> Result<MacroCheckpoint, SessionError> {
+    |                   ^^^^^^^^^^^^^^^^^^
+...
+393 |     pub(crate) fn restore_bindings(
+    |                   ^^^^^^^^^^^^^^^^
+
+warning: field `template` is never read
+ --> crates/suss-compile/src/portable_macros/definitions.rs:6:9
+  |
+4 | pub(super) struct PendingMacroDefinition {
+  |                   ---------------------- field in this struct
+5 |     pub prepared: crate::portable::modules::PreparedInput,
+6 |     pub template: Form,
+  |         ^^^^^^^^
+
+warning: methods `declare_evaluation` and `invoke_root` are never used
+   --> crates/suss-compile/src/portable_macros/native_invocation.rs:82:19
+    |
+ 77 | impl MacroService {
+    | ----------------- methods in this implementation
+...
+ 82 |     pub(crate) fn declare_evaluation<T>(
+    |                   ^^^^^^^^^^^^^^^^^^
+...
+155 |     pub(crate) fn invoke_root(
+    |                   ^^^^^^^^^^^
+
+warning: method `select_invocation_namespace` is never used
+   --> crates/suss-compile/src/portable_macros/native_invocation.rs:181:8
+    |
+180 | impl MacroHost<'_> {
+    | ------------------ method in this implementation
+181 |     fn select_invocation_namespace(&mut self, namespace: &str) -> Result<(), SessionError> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `val` is never used
+   --> crates/suss-compile/src/portable_session.rs:211:19
+    |
+196 | impl CompilerRoot {
+    | ----------------- method in this implementation
+...
+211 |     pub(crate) fn val(&self, store: &mut StoreContextMut<'_, ()>) -> Val { Val::AnyRef(self.rooted(store)) }
+    |                   ^^^
+
+warning: method `has_pending_exception` is never used
+  --> crates/suss-compile/src/portable_session/store_access.rs:45:19
+   |
+26 | impl StoreAccess<'_> {
+   | -------------------- method in this implementation
+...
+45 |     pub(super) fn has_pending_exception(&self) -> bool {
+   |                   ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `DefinitionCompiler` is never constructed
+ --> crates/suss-compile/src/portable_session/evaluation/macro_function.rs:8:8
+  |
+8 | struct DefinitionCompiler<'a, 'store>(&'a mut SessionHost<'store>);
+  |        ^^^^^^^^^^^^^^^^^^
+
+warning: methods `prepare_native_macro_declaration`, `macro_function_proxy`, `invoke_macro_function`, and `retain_evaluation_constant` are never used
+   --> crates/suss-compile/src/portable_session/evaluation/macro_function.rs:33:19
+    |
+ 32 | impl SessionHost<'_> {
+    | -------------------- methods in this implementation
+ 33 |     pub(super) fn prepare_native_macro_declaration(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+113 |     fn macro_function_proxy(
+    |        ^^^^^^^^^^^^^^^^^^^^
+...
+173 |     fn invoke_macro_function(
+    |        ^^^^^^^^^^^^^^^^^^^^^
+...
+223 |     fn retain_evaluation_constant(&mut self, value: &SessionValue) -> Result<Kind, SessionError> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `diagnostic` is never used
+  --> crates/suss-compile/src/portable_session/evaluation/macro_binding.rs:11:4
+   |
+11 | fn diagnostic(span: Range<usize>, error: impl std::fmt::Display) -> Diagnostic {
+   |    ^^^^^^^^^^
+
+warning: methods `native_macro_binding_differs` and `has_native_macro_binding_override` are never used
+  --> crates/suss-compile/src/portable_session/evaluation/macro_binding.rs:15:8
+   |
+14 | impl SessionHost<'_> {
+   | -------------------- methods in this implementation
+15 |     fn native_macro_binding_differs(&mut self, global: &CellIdentity) -> Result<bool, SessionError> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+20 |     pub(super) fn has_native_macro_binding_override(&mut self, snapshot: &CompilationSnapshot) -> Result<bool, SessionError> {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CallerExpansion` is never constructed
+  --> crates/suss-compile/src/portable_session/evaluation/macro_binding.rs:31:8
+   |
+31 | struct CallerExpansion<'a, 'store> {
+   |        ^^^^^^^^^^^^^^^
+
+warning: methods `step` and `invoke` are never used
+  --> crates/suss-compile/src/portable_session/evaluation/macro_binding.rs:40:8
+   |
+39 | impl CallerExpansion<'_, '_> {
+   | ---------------------------- methods in this implementation
+40 |     fn step<T>(&mut self, span: Range<usize>, context: bool,
+   |        ^^^^
+...
+54 |     fn invoke(&mut self, global: &CellIdentity, form: &Form, context: ExpansionContext<'_>) -> Result<Form, SessionError> {
+   |        ^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/suss-compile/src/portable_session/evaluation/macro_binding.rs:152:15
+    |
+152 | pub(super) fn prepare(caller: &mut SessionHost<'_>, service: &MacroService, bridge: &Arc<FormBridge>,
+    |               ^^^^^^^
+
+warning: `suss-compile` (lib) generated 65 warnings (run `cargo fix --lib -p suss-compile` to apply 23 suggestions)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_wit_numbers.rs:541:16
+    |
+541 |         choose.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: `suss-compile` (test "portable_aot_wit_numbers") generated 1 warning
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-compile/tests/public_compiled_pipeline.rs:94:19
+   |
+94 |         calculate.post_return(&mut store).unwrap();
+   |                   ^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/public_compiled_pipeline.rs:196:15
+    |
+196 |         count.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/public_compiled_pipeline.rs:265:16
+    |
+265 |         rotate.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/public_compiled_pipeline.rs:310:19
+    |
+310 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/public_compiled_pipeline.rs:337:10
+    |
+337 |     echo.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/public_compiled_pipeline.rs:417:19
+    |
+417 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: `suss-compile` (test "public_compiled_pipeline") generated 6 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:163:12
+    |
+163 |     before.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:165:14
+    |
+165 |     optional.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:168:11
+    |
+168 |     after.post_return(&mut store).unwrap();
+    |           ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:187:16
+    |
+187 |         choose.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:204:22
+    |
+204 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:230:22
+    |
+230 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:255:26
+    |
+255 |                 function.post_return(&mut store).unwrap();
+    |                          ^^^^^^^^^^^
+...
+260 |     roundtrip!("s8", i8, [None, Some(i8::MIN), Some(-1), Some(i8::MAX)]);
+    |     -------------------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:255:26
+    |
+255 |                 function.post_return(&mut store).unwrap();
+    |                          ^^^^^^^^^^^
+...
+261 |     roundtrip!("s16", i16, [None, Some(i16::MIN), Some(-1), Some(i16::MAX)]);
+    |     ------------------------------------------------------------------------ in this macro invocation
+    |
+    = note: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:255:26
+    |
+255 |                 function.post_return(&mut store).unwrap();
+    |                          ^^^^^^^^^^^
+...
+262 |     roundtrip!("u16", u16, [None, Some(0), Some(u16::MAX)]);
+    |     ------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:255:26
+    |
+255 |                 function.post_return(&mut store).unwrap();
+    |                          ^^^^^^^^^^^
+...
+263 |     roundtrip!("u32", u32, [None, Some(0), Some(u32::MAX)]);
+    |     ------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:278:18
+    |
+278 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:321:18
+    |
+321 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:365:18
+    |
+365 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:367:18
+    |
+367 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:370:18
+    |
+370 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:419:18
+    |
+419 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:482:18
+    |
+482 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_options.rs:499:18
+    |
+499 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_aot_options") generated 18 warnings
+warning: unused imports: `Module`, `Store`, and `Val`
+  --> crates/suss-compile/tests/conformance.rs:16:32
+   |
+16 | use wasmtime::{Config, Engine, Module, Store, Val};
+   |                                ^^^^^^  ^^^^^  ^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-compile` (test "conformance") generated 1 warning (run `cargo fix --test "conformance" -p suss-compile` to apply 1 suggestion)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_async.rs:124:14
+    |
+124 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_async.rs:154:14
+    |
+154 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_async.rs:325:14
+    |
+325 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_aot_async") generated 3 warnings
+warning: unused import: `AsContextMut`
+  --> crates/suss-compile/tests/runtime_async_scheduler.rs:15:5
+   |
+15 |     AsContextMut, Engine, Global, GlobalType, Instance, Linker, Module, Mutability, RefType,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-compile` (test "runtime_async_scheduler") generated 1 warning (run `cargo fix --test "runtime_async_scheduler" -p suss-compile` to apply 1 suggestion)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-compile/tests/portable_call_site_size.rs:43:17
+   |
+43 |             run.post_return(&mut store).unwrap();
+   |                 ^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: `suss-compile` (test "portable_call_site_size") generated 1 warning
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:157:20
+    |
+157 |             choose.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:164:14
+    |
+164 |         size.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:190:22
+    |
+190 |             remember.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:196:24
+    |
+196 |                 recall.post_return(&mut store).unwrap();
+    |                        ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:291:18
+    |
+291 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:329:16
+    |
+329 |         caught.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:332:15
+    |
+332 |         count.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:374:14
+    |
+374 |         sync.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:410:16
+    |
+410 |         recall.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:431:14
+    |
+431 |         echo.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_strings.rs:437:18
+    |
+437 |         describe.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_aot_strings") generated 11 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:155:18
+    |
+155 |             echo.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:159:15
+    |
+159 |         count.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:166:14
+    |
+166 |     unsigned.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:177:14
+    |
+177 |     booleans.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:192:12
+    |
+192 |     floats.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:200:22
+    |
+200 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+203 |     integer_list!("u8s", u8, [0, 128, u8::MAX]);
+    |     ------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `integer_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:200:22
+    |
+200 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+204 |     integer_list!("s8s", i8, [i8::MIN, -1, 0, i8::MAX]);
+    |     --------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `integer_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:200:22
+    |
+200 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+205 |     integer_list!("u16s", u16, [0, 32768, u16::MAX]);
+    |     ------------------------------------------------ in this macro invocation
+    |
+    = note: this warning originates in the macro `integer_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:200:22
+    |
+200 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+206 |     integer_list!("s16s", i16, [i16::MIN, -1, 0, i16::MAX]);
+    |     ------------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `integer_list` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:216:14
+    |
+216 |     floats32.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:241:18
+    |
+241 |         remember.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:244:19
+    |
+244 |         is_vector.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:251:20
+    |
+251 |                 at.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:257:20
+    |
+257 |             recall.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:273:12
+    |
+273 |     values.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:278:12
+    |
+278 |     nested.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:289:14
+    |
+289 |         view.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:310:15
+    |
+310 |         longs.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:320:13
+    |
+320 |     doubles.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:330:14
+    |
+330 |         view.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:340:10
+    |
+340 |     wide.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:347:12
+    |
+347 |     narrow.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:370:14
+    |
+370 |         echo.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:375:20
+    |
+375 |             recall.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:506:11
+    |
+506 |     first.post_return(&mut store).unwrap();
+    |           ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:512:10
+    |
+512 |     echo.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:543:10
+    |
+543 |     echo.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot_lists.rs:584:14
+    |
+584 |         last.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_aot_lists") generated 28 warnings
+warning: function `generated_component` is never used
+  --> crates/suss-compile/tests/generated_async_import_io_cancel.rs:43:4
+   |
+43 | fn generated_component(source: &str) -> Vec<u8> {
+   |    ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-compile` (test "generated_async_import_io_cancel") generated 1 warning
+warning: function `double_of` is never used
+  --> crates/suss-compile/tests/runtime_abi.rs:21:4
+   |
+21 | fn double_of(store: &mut Store<()>, value: &Val) -> f64 {
+   |    ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-compile` (test "runtime_abi") generated 1 warning
+warning: unused imports: `StructRefPre` and `StructRef`
+  --> crates/suss-compile/src/portable_macros/lazy_result_interrupt_tests.rs:13:46
+   |
+13 | use wasmtime::{ArrayRef, AsContextMut, Func, StructRef, StructRefPre, Val};
+   |                                              ^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+    --> crates/suss-compile/src/portable_macros.rs:2069:17
+     |
+2069 |             let mut bridge = FormBridge::new(&mut target).unwrap();
+     |                 ----^^^^^^
+     |                 |
+     |                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> crates/suss-compile/src/portable_session/random_tests.rs:52:13
+   |
+52 |         let mut bridge = FormBridge::new(&mut session).unwrap();
+   |             ----^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> crates/suss-compile/src/portable_session/random_tests.rs:131:13
+    |
+131 |         let mut bridge = FormBridge::new(&mut session).unwrap();
+    |             ----^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: method `find` is never used
+   --> crates/suss-compile/src/portable/origin/form_metadata.rs:343:8
+    |
+337 | impl IndexedForms {
+    | ----------------- method in this implementation
+...
+343 |     fn find(
+    |        ^^^^
+
+warning: `suss-compile` (lib test) generated 49 warnings (44 duplicates) (run `cargo fix --lib -p suss-compile --tests` to apply 4 suggestions)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:745:9
+    |
+745 |     add.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:750:12
+    |
+750 |     double.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:763:12
+    |
+763 |     unwrap.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:765:12
+    |
+765 |     unwrap.post_return(&mut store).unwrap();
+    |            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:770:10
+    |
+770 |     list.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:781:13
+    |
+781 |     closure.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:784:11
+    |
+784 |     first.post_return(&mut store).unwrap();
+    |           ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:800:22
+    |
+800 |             function.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:815:9
+    |
+815 |     big.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/component.rs:819:19
+    |
+819 |         increment.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: `suss-compile` (test "component") generated 10 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:141:9
+    |
+141 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:167:9
+    |
+167 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:231:9
+    |
+231 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:260:9
+    |
+260 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:307:13
+    |
+307 |         run.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:323:13
+    |
+323 |         run.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:341:13
+    |
+341 |         run.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:360:13
+    |
+360 |         run.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:374:13
+    |
+374 |         run.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_unboxed_locals") generated 9 warnings
+warning: use of deprecated method `wasmtime::component::Func::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/toolchain_profile.rs:197:14
+    |
+197 |         echo.post_return(&mut store).expect("finish canonical call");
+    |              ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/toolchain_profile.rs:281:9
+    |
+281 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/toolchain_profile.rs:356:15
+    |
+356 |     increment.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: `suss-compile` (test "toolchain_profile") generated 3 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-compile/tests/portable_aot.rs:76:18
+   |
+76 |         function.post_return(&mut store).unwrap();
+   |                  ^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:127:14
+    |
+127 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:135:13
+    |
+135 |         old.post_return(&mut store).unwrap();
+    |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:144:17
+    |
+144 |         current.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:149:14
+    |
+149 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:154:14
+    |
+154 |         bump.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:159:14
+    |
+159 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:174:18
+    |
+174 |             echo.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:190:20
+    |
+190 |             echo32.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:199:15
+    |
+199 |         round.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:205:20
+    |
+205 |             invert.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:424:16
+    |
+424 |         choose.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:432:14
+    |
+432 |         echo.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+614 |     check!("u8", u8, [0, 1, 127, 128, u8::MAX]);
+    |     ------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+614 |     check!("u8", u8, [0, 1, 127, 128, u8::MAX]);
+    |     ------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+614 |     check!("u8", u8, [0, 1, 127, 128, u8::MAX]);
+    |     ------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+615 |     check!("s8", i8, [i8::MIN, -1, 0, 1, i8::MAX]);
+    |     ---------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+615 |     check!("s8", i8, [i8::MIN, -1, 0, 1, i8::MAX]);
+    |     ---------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+615 |     check!("s8", i8, [i8::MIN, -1, 0, 1, i8::MAX]);
+    |     ---------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+616 |     check!("u16", u16, [0, 1, 32767, 32768, u16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+616 |     check!("u16", u16, [0, 1, 32767, 32768, u16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+616 |     check!("u16", u16, [0, 1, 32767, 32768, u16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+617 |     check!("s16", i16, [i16::MIN, -1, 0, 1, i16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+617 |     check!("s16", i16, [i16::MIN, -1, 0, 1, i16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+617 |     check!("s16", i16, [i16::MIN, -1, 0, 1, i16::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+618 |     check!("u32", u32, [0, 1, 2147483647, 2147483648, u32::MAX]);
+    |     ------------------------------------------------------------ in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+618 |     check!("u32", u32, [0, 1, 2147483647, 2147483648, u32::MAX]);
+    |     ------------------------------------------------------------ in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+618 |     check!("u32", u32, [0, 1, 2147483647, 2147483648, u32::MAX]);
+    |     ------------------------------------------------------------ in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:549:22
+    |
+549 |                 echo.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+...
+619 |     check!("s32", i32, [i32::MIN, -1, 0, 1, i32::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:551:25
+    |
+551 |                 checked.post_return(&mut store).unwrap();
+    |                         ^^^^^^^^^^^
+...
+619 |     check!("s32", i32, [i32::MIN, -1, 0, 1, i32::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:555:21
+    |
+555 |             checked.post_return(&mut store).unwrap();
+    |                     ^^^^^^^^^^^
+...
+619 |     check!("s32", i32, [i32::MIN, -1, 0, 1, i32::MAX]);
+    |     -------------------------------------------------- in this macro invocation
+    |
+    = note: this warning originates in the macro `check` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:627:10
+    |
+627 |     seen.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:693:15
+    |
+693 |         mixed.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:700:10
+    |
+700 |     seen.post_return(&mut store).unwrap();
+    |          ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:787:14
+    |
+787 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:792:19
+    |
+792 |         math_calc.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:795:20
+    |
+795 |         alias_calc.post_return(&mut store).unwrap();
+    |                    ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:797:22
+    |
+797 |         renamed_calc.post_return(&mut store).unwrap();
+    |                      ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:802:14
+    |
+802 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:912:15
+    |
+912 |         count.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:914:14
+    |
+914 |         flip.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:916:17
+    |
+916 |         replace.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:919:14
+    |
+919 |         flip.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:921:14
+    |
+921 |         seen.post_return(&mut store).unwrap();
+    |              ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-compile/tests/portable_aot.rs:923:15
+    |
+923 |         count.post_return(&mut store).unwrap();
+    |               ^^^^^^^^^^^
+
+warning: `suss-compile` (test "portable_aot") generated 45 warnings
+warning: `suss-reader` (lib test) generated 2 warnings (2 duplicates)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-cli)
+warning: unused import: `Val`
+ --> crates/suss-cli/tests/portable_realized.rs:8:28
+  |
+8 |     Config, Engine, Store, Val,
+  |                            ^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-cli` (test "portable_realized") generated 1 warning (run `cargo fix --test "portable_realized" -p suss-cli` to apply 1 suggestion)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/clojure_random.rs:210:16
+    |
+210 |         result.post_return(&mut store).unwrap();
+    |                ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/clojure_random.rs:224:28
+    |
+224 |                 rand_value.post_return(&mut store).unwrap();
+    |                            ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/clojure_random.rs:229:32
+    |
+229 |                 rand_int_value.post_return(&mut store).unwrap();
+    |                                ^^^^^^^^^^^
+
+warning: `suss-cli` (test "clojure_random") generated 3 warnings
+warning: unexpected `cfg` condition value: `component`
+   --> crates/suss-cli/src/main.rs:752:25
+    |
+752 | #[cfg(all(unix, not(all(feature = "component", target_family = "wasm"))))]
+    |                         ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `default`
+    = help: consider adding `component` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unused import: `Path`
+   --> crates/suss-cli/src/main.rs:213:25
+    |
+213 |         use std::path::{Path, PathBuf};
+    |                         ^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `Component`
+   --> crates/suss-cli/src/main.rs:480:31
+    |
+480 |     use wasmtime::component::{Component, Linker, ResourceTable, Val};
+    |                               ^^^^^^^^^
+
+warning: `suss-cli` (bin "suss") generated 3 warnings (run `cargo fix --bin "suss" -p suss-cli` to apply 2 suggestions)
+warning: unused import: `AsContextMut`
+ --> crates/suss-cli/tests/compiled_namespace_acceptance.rs:9:16
+  |
+9 | use wasmtime::{AsContextMut, Config, Engine, Store};
+  |                ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-cli` (test "compiled_namespace_acceptance") generated 1 warning (run `cargo fix --test "compiled_namespace_acceptance" -p suss-cli` to apply 1 suggestion)
+warning: unused import: `wasmtime::Val`
+ --> crates/suss-cli/tests/portable_seqable.rs:5:5
+  |
+5 | use wasmtime::Val;
+  |     ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-cli` (test "portable_seqable") generated 1 warning (run `cargo fix --test "portable_seqable" -p suss-cli` to apply 1 suggestion)
+warning: type alias `Correction` is never used
+ --> crates/suss-cli/tests/support/clojure_corrections.rs:8:10
+  |
+8 | pub type Correction = (&'static str, &'static str, &'static str);
+  |          ^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `corrected` is never used
+  --> crates/suss-cli/tests/support/clojure_corrections.rs:12:8
+   |
+12 | pub fn corrected(case: &Value, corrections: &[Correction], used: &mut usize) -> Value {
+   |        ^^^^^^^^^
+
+warning: `suss-cli` (test "portable_string_hash") generated 2 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/aot_source_preparation.rs:83:13
+   |
+83 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/aot_source_preparation.rs:88:15
+   |
+88 |     calculate.post_return(&mut store).unwrap();
+   |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/aot_source_preparation.rs:90:13
+   |
+90 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/aot_source_preparation.rs:93:15
+   |
+93 |     calculate.post_return(&mut store).unwrap();
+   |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/aot_source_preparation.rs:95:13
+   |
+95 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:153:9
+    |
+153 |     run.post_return(&mut store).unwrap();
+    |         ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:267:18
+    |
+267 |         function.post_return(&mut store).unwrap();
+    |                  ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:324:17
+    |
+324 |         effects.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:326:19
+    |
+326 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:331:17
+    |
+331 |         effects.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:334:19
+    |
+334 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/aot_source_preparation.rs:339:17
+    |
+339 |         effects.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: `suss-cli` (test "aot_source_preparation") generated 12 warnings
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/compiled_aot.rs:65:13
+   |
+65 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/compiled_aot.rs:73:15
+   |
+73 |     calculate.post_return(&mut store).unwrap();
+   |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/compiled_aot.rs:78:13
+   |
+78 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/compiled_aot.rs:84:15
+   |
+84 |     calculate.post_return(&mut store).unwrap();
+   |               ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+  --> crates/suss-cli/tests/compiled_aot.rs:89:13
+   |
+89 |     effects.post_return(&mut store).unwrap();
+   |             ^^^^^^^^^^^
+
+warning: `suss-cli` (test "compiled_aot") generated 5 warnings
+warning: `suss-cli` (bin "suss" test) generated 3 warnings (3 duplicates)
+warning: unused import: `Kind`
+  --> crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs:15:35
+   |
+15 | use suss_reader::{Symbol, forms::{Kind, read_forms}};
+   |                                   ^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `suss-cli` (test "compiled_macro_cumulative_fuel") generated 1 warning (run `cargo fix --test "compiled_macro_cumulative_fuel" -p suss-cli` to apply 1 suggestion)
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/compiled_aot_command.rs:104:17
+    |
+104 |         effects.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/compiled_aot_command.rs:106:19
+    |
+106 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/compiled_aot_command.rs:109:19
+    |
+109 |         calculate.post_return(&mut store).unwrap();
+    |                   ^^^^^^^^^^^
+
+warning: use of deprecated method `wasmtime::component::TypedFunc::<Params, Return>::post_return`: no longer needs to be called; this function has no effect
+   --> crates/suss-cli/tests/compiled_aot_command.rs:111:17
+    |
+111 |         effects.post_return(&mut store).unwrap();
+    |                 ^^^^^^^^^^^
+
+warning: `suss-cli` (test "compiled_aot_command") generated 4 warnings
+    Finished `test` profile [optimized] target(s) in 6m 45s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/suss_cli-c2a6bb1569392969)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/suss-ed66fdd5a364d8f6)
+
+running 36 tests
+test args::tests::aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries ... ok
+test args::tests::aot_compile_fuel_defaults_and_all_modes_are_explicit ... ok
+test args::tests::repl_budget_values_preserve_unsigned_boundaries ... ok
+test args::tests::repl_budget_values_reject_missing_invalid_negative_and_overflow ... ok
+test args::tests::repl_compile_fuel_is_independent_of_flag_order ... ok
+test args::tests::repl_fuel_defaults_and_legacy_aliases_are_unchanged ... ok
+test args::tests::repl_repeated_budget_flags_only_replace_their_own_option ... ok
+test native_repl_host::tests::cancellation_mutation_interrupt_clears_stale_observation_and_stops_input ... ok
+test native_repl_host::tests::failed_first_native_inspection_retains_the_entire_drained_batch_for_retry ... ok
+test native_repl_host::tests::failed_task_report_is_queued_once_without_writing_over_input ... ok
+test native_repl_host::tests::interrupted_endpoint_getter_retains_entire_batch_before_cancellation ... ok
+test native_repl_host::tests::interrupted_reset_second_preflight_preserves_reset_intent ... ok
+test native_repl_host::tests::interrupted_retirement_getter_holds_cleanup_until_real_input ... ok
+test native_repl_host::tests::interrupted_submission_tracking_retains_result_without_replaying_effect ... ok
+test native_repl_host::tests::cancellation_preflight_interrupt_preserves_intent_and_buffered_source ... ok
+test native_repl_host::tests::interrupted_zero_counts_keep_real_nil_root_and_report_input_once ... ok
+test native_repl_host::tests::invalid_callable_path_is_rejected_without_executing_source_effects ... ok
+test native_repl_host::tests::no_dispatch_idle_path_still_reports_completed_source_failures ... ok
+test native_repl_host::tests::noninterrupt_postsubmission_tracking_failure_terminates_before_next_source ... ok
+test native_repl_host::tests::ordinary_submission_compile_and_language_errors_keep_prompt_usable ... ok
+test native_repl_host::tests::ownerless_mutation_interrupt_never_reuses_idle_or_recovery_proof ... ok
+test native_repl_host::tests::partial_interrupted_tracking_preserves_existing_and_new_roots ... ok
+test native_repl_host::tests::pending_fifo_idle_proof_skips_dispatch_and_defers_signal_until_cleanup ... ok
+test native_repl_host::tests::pending_stream_and_fifo_idle_proof_preserves_cancellation_cleanup ... ok
+test native_repl_host::tests::recovered_fuel_trap_reports_original_once_and_keeps_source_prompt_usable ... ok
+test repl_fuel_tests::repl_limits_default_to_unbounded_with_legacy_and_independent_compile_options ... ok
+test session_event_loop::tests::count_observation_noninterrupt_failure_remains_fatal ... ok
+test session_event_loop::tests::deferred_observation_does_not_swallow_cancellation_mutation_failure ... ok
+test session_event_loop::tests::multiline_interrupt_cleanup_reset_and_eof_share_one_owner ... ok
+test session_event_loop::tests::observation_interrupt_waits_for_input_and_cleanup_before_buffered_source ... ok
+test session_event_loop::tests::recovered_async_error_reports_original_and_keeps_prompt_usable ... ok
+test session_event_loop::tests::retirement_observation_interrupt_preserves_reset_intent ... ok
+test session_event_loop::tests::unrecovered_async_error_quarantines_before_next_input ... ok
+test terminal_input::tests::partial_utf8_pipe_lines_eof_and_fd_flags_are_preserved ... ok
+test terminal_input::tests::unicode_cursor_history_and_interrupt_preserve_edit_boundaries ... ok
+test repl_fuel_tests::repl_reset_preserves_distinct_finite_operation_budgets ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.09s
+
+     Running unittests src/bin/suss-bootstrap.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/suss_bootstrap-06613f1c0f37bb12)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/analyzer_edn-32509f78a5dcda2f)
+
+running 18 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test cli_prints_documents_that_suss_reads ... ok
+test emitted_macro_biginteger_source_executes_as_an_aot_component ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test local_macro_import_setup_keeps_one_node_per_source_declaration ... ok
+test letfn_emitted_forms_preserve_mutual_scope_arities_captures_and_parameter_hints ... ok
+test macro_source_emission_keeps_attributes_without_redundant_runtime_flags ... ok
+test macro_biginteger_constants_keep_their_category_in_emitted_source ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test source_macro_declaration_placeholders_preserve_explicit_and_expanded_nil_forms ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+test uuid_ast_values_survive_edn_emission_and_executed_source_round_trips ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 66.01s
+
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/aot_source_preparation-9f3f1cc4564fd6fa)
+
+running 6 tests
+test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings ... ok
+test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery has been running for over 60 seconds
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 129.74s
+
+     Running tests/apply_fixed_arity.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/apply_fixed_arity-a19ecf4f7b921021)
+
+running 12 tests
+test apply_callback_registration_is_private_and_publishes_atomically ... ok
+test apply_checks_non_null_callees_before_normalizing_the_tail ... ok
+test apply_over_seqs_answers_as_before ... ok
+test apply_sequence_callbacks_follow_clojure_1_12_6 ... ok
+test fixed_apply_reaches_an_error_in_the_unbounded_remainder ... ok
+test callable_apply_preserves_meta_var_and_multifn_traversal_after_gc ... ok
+test list_wrapper_retains_original_and_helper_captures_across_cache_changes ... ok
+test native_apply_families_keep_their_own_lazy_error_boundaries ... ok
+test numeric_apply_respects_chunk_end_boundaries ... ok
+test primitive_var_calls_and_variadic_rests_coexist_after_redefinition ... ok
+test numeric_apply_stops_realizing_at_the_conversion_error ... ok
+test wide_apply_reports_jvm_twenty_one_argument_errors_after_dispatch ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.99s
+
+     Running tests/build_cache.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/build_cache-1835afb0b7bbc086)
+
+running 7 tests
+test a_failed_build_keeps_its_completed_units_for_the_next_build has been running for over 60 seconds
+test a_new_program_reuses_the_lifted_runtime_and_core_image has been running for over 60 seconds
+test a_failed_build_keeps_its_completed_units_for_the_next_build ... ok
+test a_new_program_reuses_the_lifted_runtime_and_core_image ... ok
+test build_directory_precedence_and_clean ... ok
+test concurrent_writers_publish_usable_entries ... ok
+test corrupt_and_untrusted_entries_are_misses_that_rebuild has been running for over 60 seconds
+test warm_builds_reuse_identical_outputs_until_an_input_changes has been running for over 60 seconds
+test corrupt_and_untrusted_entries_are_misses_that_rebuild ... ok
+test warm_builds_reuse_identical_outputs_until_an_input_changes ... ok
+test warm_processes_reuse_native_code_instead_of_compiling has been running for over 60 seconds
+test warm_processes_reuse_native_code_instead_of_compiling ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 245.36s
+
+     Running tests/builtin_construction_sealed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/builtin_construction_sealed-ee946fd7e8b652de)
+
+running 5 tests
+test caller_owned_arrays_follow_clojure ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test public_constructions_keep_working ... ok
+test builtin_internals_cannot_be_forged_by_construction ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.81s
+
+     Running tests/builtin_internals_sealed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/builtin_internals_sealed-0107f91d92da110f)
+
+running 8 tests
+test core_internal_calls_are_direct_linked_against_user_redefinition ... ok
+test core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test unbound_var_field_is_public_final_and_retains_the_actual_var ... ok
+test builtin_classes_resist_aliased_extension_and_node_singletons_stay_private ... ok
+test user_type_fields_keep_ordinary_access ... ok
+test user_code_cannot_reach_builtin_internals_in_either_phase ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.98s
+
+     Running tests/builtin_protocol_aliasing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/builtin_protocol_aliasing-a1a8ec85b44f6245)
+
+running 6 tests
+test aliased_core_protocol_vars_do_not_receive_native_markers ... ok
+test native_extensions_follow_protocol_redefinition ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test user_redefinition_of_a_core_protocol_does_not_replace_core_tables ... ok
+test aliased_core_method_vars_do_not_receive_native_extensions ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.08s
+
+     Running tests/builtin_protocols_closed.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/builtin_protocols_closed-3f6fa8bc8602259a)
+
+running 4 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test core_protocols_of_builtin_types_are_closed_in_both_phases ... ok
+test user_protocols_and_user_types_stay_open ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.36s
+
+     Running tests/captured_fn_calls.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/captured_fn_calls-31f3820d461c35d0)
+
+running 2 tests
+test captured_fns_answer_in_the_repl ... ok
+test captured_fns_answer_in_a_direct_linked_build ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.15s
+
+     Running tests/clojure_assert.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_assert-48bc858d8c692b7c)
+
+running 4 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test shipped_assert_records_primary_values_and_message_effects_in_both_phases ... ok
+test actual_aot_returns_assert_values_and_message_effects_for_host_comparison has been running for over 60 seconds
+test actual_aot_returns_assert_values_and_message_effects_for_host_comparison ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 105.18s
+
+     Running tests/clojure_bigint_integers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_bigint_integers-793abe8cc97e217c)
+
+running 3 tests
+test aot_executes_integer_dispatch_promotion_and_runtime_reading ... ok
+test renamed_promoting_core_vars_keep_their_inline_operations ... ok
+test integer_dispatch_promotion_and_reader_match_jvm_in_both_phases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.73s
+
+     Running tests/clojure_biginteger_carrier.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_biginteger_carrier-f834a5659447b5d8)
+
+running 2 tests
+test aot_executes_typed_biginteger_carrier_without_host_reader ... ok
+test bigint_carrier_preserves_category_in_source_runtime_macro_and_edn ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.48s
+
+     Running tests/clojure_bigints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_bigints-165104c8a890e655)
+
+running 4 tests
+test aot_executes_the_bigint_matrix ... ok
+test bigint_literals_and_signed_arithmetic_execute_in_both_phases ... ok
+test macro_arguments_and_results_are_real_bigints ... ok
+test retained_magnitudes_survive_collections_without_mutation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.18s
+
+     Running tests/clojure_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_calling_convention-731a952b739a162d)
+
+running 3 tests
+test entries_adapters_and_spread_take_every_argument_count ... ok
+test arity_errors_are_clojures_for_every_entry ... ok
+test values_that_arent_closures_are_called_out_of_line ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.65s
+
+     Running tests/clojure_case_dispatch.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_case_dispatch-e9a3158e058de90a)
+
+running 13 tests
+test aot_case_default_formatter_matches_primary_str_calls ... ok
+test aot_case_collision_callbacks_match_primary_controls ... ok
+test aot_executes_composite_case_hash_controls ... ok
+test aot_executes_case_dispatch_controls ... ok
+test case_collision_callbacks_match_primary_controls ... ok
+test aot_executes_numeric_case_hash_controls ... ok
+test case_default_formatter_matches_primary_str_calls ... ok
+test case_duplicate_diagnostics_match_primary_and_nan_constants_remain_distinct ... ok
+test compiler_owned_case_does_not_grant_private_core_access_to_user_macros_or_results ... ok
+test case_dispatch_follows_primary_controls ... ok
+test macro_diagnostics_keep_native_messages_after_public_accessor_rebinding_and_recover ... ok
+test composite_case_hash_follows_primary_hash_code ... ok
+test numeric_case_hash_follows_primary_hash_code ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.62s
+
+     Running tests/clojure_char.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_char-44bb35739bcdff15)
+
+running 8 tests
+test actual_aot_keeps_character_argument_effect_order has been running for over 60 seconds
+test actual_aot_reports_character_storage_and_primary_errors has been running for over 60 seconds
+test actual_aot_keeps_character_argument_effect_order ... ok
+test character_arguments_keep_primary_effect_order_and_arity_failures ... ok
+test character_source_overloads_match_primary_in_both_phases ... ok
+test character_units_remain_retained_after_gc_without_public_operations ... ok
+test exact_number_carriers_and_context_keep_character_coercion_in_all_routes has been running for over 60 seconds
+test exact_number_carriers_and_context_keep_character_coercion_in_all_routes ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test actual_aot_reports_character_storage_and_primary_errors ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 485.42s
+
+     Running tests/clojure_chunk_effects.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_chunk_effects-de0c4c127e819a3c)
+
+running 15 tests
+test bounded_chunk_index_add_keeps_checked_conversions_and_source_fallback ... ok
+test chunk_buffer_matches_jvm_returns_and_failed_store_order ... ok
+test chunk_long_arithmetic_keeps_checked_overflow_and_wide_results ... ok
+test chunk_adapters_are_private_and_registration_is_atomic ... ok
+test chunk_sum_keeps_custom_reducers_redefinitions_and_reduced_demand ... ok
+test chunk_storage_views_decline_unsupported_windows_and_keep_aliases_after_gc ... ok
+test chunk_sum_preserves_wide_values_mixed_numbers_and_prefix_overflow ... ok
+test chunk_views_read_future_elements_after_callbacks_and_keep_reduced_demand ... ok
+test chunked_filter_keeps_the_value_read_before_its_predicate ... ok
+test custom_chunks_keep_their_indexed_protocol_effects ... ok
+test invalid_chunk_windows_keep_callbacks_before_the_first_bad_read ... ok
+test native_chunk_admission_keeps_nil_end_bounds_and_decline_effects ... ok
+test native_chunk_roots_and_shallow_elements_survive_gc ... ok
+test private_chunk_sum_declines_without_calls_or_mutation_and_keeps_operand_order ... ok
+test ordinary_source_core_keeps_generic_chunks_without_native_layout_access ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.49s
+
+     Running tests/clojure_constant_definitions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_constant_definitions-541fb35532db61bf)
+
+running 2 tests
+test literal_constants_freeze_readers_in_runtime_and_macro ... ok
+test aot_executes_literal_constants ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.10s
+
+     Running tests/clojure_core_predicates.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_core_predicates-9b6cc8d416ca7d16)
+
+running 2 tests
+test aot_executes_core_predicate_controls ... ok
+test core_predicates_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.64s
+
+     Running tests/clojure_decimal_arithmetic.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_decimal_arithmetic-b4c36347e1fc08af)
+
+running 11 tests
+test decimal_additional_precision_and_dynamic_context_match_clojure ... ok
+test aot_executes_decimal_arithmetic_and_subtraction_dispatch ... ok
+test decimal_arithmetic_and_precision_match_clojure_in_both_phases ... ok
+test decimal_bigdec_conversions_match_clojure ... ok
+test decimal_equality_hash_order_case_and_signs_match_clojure ... ok
+test decimal_subtraction_preserves_source_and_boxed_overloads ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test decimal_fields_are_independently_decoded_after_gc ... ok
+test subtraction_source_facts_survive_captures_loops_methods_and_macro_transport ... ok
+test subtraction_boundaries_preserve_checked_promoting_and_unchecked_dispatch ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.83s
+
+     Running tests/clojure_decimal_constructors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_decimal_constructors-c66246f86b0f91ab)
+
+running 2 tests
+test aot_executes_math_context_constructor_overloads ... ok
+test math_context_constructor_overloads_follow_primary_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.19s
+
+     Running tests/clojure_decimal_conversions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_decimal_conversions-8b3c1190b215b952)
+
+running 7 tests
+test aot_executes_exact_decimal_conversion_paths ... ok
+test direct_float_rounding_matches_primary_bits_and_preserves_decimal_storage_after_gc ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test pure_decimal_coercions_and_comparisons_ignore_unused_math_context ... ok
+test decimal_conversions_match_checked_and_unchecked_clojure_paths ... ok
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions has been running for over 60 seconds
+test reloaded_core_context_getter_reads_live_bindings_for_retained_functions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 96.45s
+
+     Running tests/clojure_decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_decimal_values-e07847a6dc201f2b)
+
+running 2 tests
+test aot_executes_decimal_values_readers_and_classes ... ok
+test decimal_values_and_classes_execute_in_runtime_and_macro ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.73s
+
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_division_overloads-5fc6de9af2976024)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... ok
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.55s
+
+     Running tests/clojure_equality_bitwise.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_equality_bitwise-5194338c1c9d2228)
+
+running 7 tests
+test bit_operations_are_64_bit_and_take_longs ... ok
+test equality_keeps_longs_and_doubles_apart ... ok
+test imul_and_int32_coercion_are_not_public ... ok
+test integer_predicate_keeps_boolean_escapes_branches_and_single_evaluation ... ok
+test numbers_hash_as_clojure_hasheq ... ok
+test parity_keeps_wide_longs_rejects_nonintegers_and_evaluates_once ... ok
+test casts_check_the_range_and_return_longs_and_doubles ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.78s
+
+     Running tests/clojure_exact_inline.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_exact_inline-2d37288f2fcfc59d)
+
+running 2 tests
+test exact_operands_match_jvm_on_raw_and_boxed_paths ... ok
+test aot_executes_raw_and_boxed_exact_operand_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.95s
+
+     Running tests/clojure_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_letfn-bb24c86dfabb86fe)
+
+running 3 tests
+test recursive_groups_and_nested_captures_survive_gc_in_both_phases ... ok
+test runtime_and_macro_preserve_letfn ... ok
+test aot_preserves_letfn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.67s
+
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_local_numeric_hints-f5dd55af2e2d39d6)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.42s
+
+     Running tests/clojure_longs_doubles.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_longs_doubles-e5dfe7191b5cc8f7)
+
+running 14 tests
+test contagion_and_predicates_distinguish_longs_from_doubles ... ok
+test case_matches_numbers_only_within_their_kind ... ok
+test double_contagion_reaches_every_arithmetic_function ... ok
+test counts_narrow_as_clojure_casts_to_long ... ok
+test doubles_print_as_java_does ... ok
+test double_quot_and_rem_truncate_through_a_long ... ok
+test integral_counts_are_longs ... ok
+test integer_division_follows_clojure ... ok
+test long_arithmetic_is_exact_and_checked ... ok
+test long_min_value_quotients_and_ratio_terms_are_exact ... ok
+test ranges_reach_the_ends_of_the_long_range ... ok
+test reading_keeps_longs_exact_and_distinct_from_doubles ... ok
+test rest_arguments_count_from_long_zero ... ok
+test macro_data_preserves_longs_and_doubles ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.04s
+
+     Running tests/clojure_min_key.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_min_key-0b728949a2f78b7b)
+
+running 4 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test shipped_min_key_records_primary_values_and_key_effects_in_both_phases ... ok
+test actual_aot_returns_min_key_values_and_key_effects_for_host_comparison has been running for over 60 seconds
+test actual_aot_returns_min_key_values_and_key_effects_for_host_comparison ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 140.28s
+
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_nonescaping_closures-c025a00f21738675)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_closures ... ok
+test aot_preserves_nonescaping_closures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.45s
+
+     Running tests/clojure_nonescaping_map_entries.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_nonescaping_map_entries-caae8230f7b2865b)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_map_entries ... ok
+test aot_preserves_nonescaping_map_entries ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.47s
+
+     Running tests/clojure_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_nonescaping_vectors-50f0fb46d123c26a)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_vectors ... ok
+test aot_preserves_nonescaping_vectors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.55s
+
+     Running tests/clojure_numeric_box_reuse.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_numeric_box_reuse-be94822df58a3f58)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_box_reuse ... ok
+test aot_preserves_numeric_box_reuse ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.00s
+
+     Running tests/clojure_numeric_captures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_numeric_captures-57cd2d23f63e2095)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_captures ... ok
+test aot_preserves_numeric_captures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.92s
+
+     Running tests/clojure_numeric_classes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_numeric_classes-f985abd1fe86a288)
+
+running 5 tests
+test count_guarded_suite_forms_have_independent_exact_numeric_controls ... ok
+test aot_executes_numeric_classes ... ok
+test numeric_class_extensions_update_sites_after_gc ... ok
+test numeric_class_protocols_follow_receiver_classes ... ok
+test numeric_classes_match_in_runtime_and_macro ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.33s
+
+     Running tests/clojure_numeric_extrema.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_numeric_extrema-e8eab6d3397ce8b9)
+
+running 4 tests
+test aot_preserves_numeric_extrema_semantics ... ok
+test aot_rejects_invalid_extrema_return_types ... ok
+test extrema_source_return_types_and_initializers_are_checked ... ok
+test runtime_and_macro_preserve_numeric_extrema_semantics ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.90s
+
+     Running tests/clojure_packed_arrays.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_packed_arrays-38b9eb4e27091cac)
+
+running 4 tests
+test constructors_store_elements_with_the_unchecked_casts ... ok
+test aget_returns_longs_and_doubles_and_aset_checks_the_element_type ... ok
+test packed_arrays_print_and_convert_as_java_arrays ... ok
+test core_reads_packed_arrays_as_arrays ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.72s
+
+     Running tests/clojure_primitive_method_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_primitive_method_types-54b3c4eb370bff4d)
+
+running 4 tests
+test aot_preserves_primitive_method_types ... ok
+test primitive_method_diagnostics_use_lexical_source_types ... ok
+test runtime_and_macro_preserve_primitive_method_types ... ok
+test aot_rejects_invalid_primitive_method_types ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.08s
+
+     Running tests/clojure_random.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_random-1ae6669aa449024f)
+
+running 5 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test public_aot_numeric_transformations_use_each_controlled_provider_word ... ok
+test public_random_effects_and_normal_provider_in_both_phases ... ok
+test actual_cli_aot_executes_public_random_calls_with_the_standard_provider has been running for over 60 seconds
+test actual_cli_aot_executes_public_random_calls_with_the_standard_provider ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 138.01s
+
+     Running tests/clojure_ratios.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_ratios-3d59463825e0b8ea)
+
+running 4 tests
+test macro_arguments_and_results_retain_exact_ratio_values ... ok
+test aot_executes_exact_ratios ... ok
+test retained_ratio_children_survive_gc_without_mutation ... ok
+test ratios_match_jvm_in_both_phases ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.94s
+
+     Running tests/clojure_raw_bits_and_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_raw_bits_and_casts-17cdbd7a3bf5cab1)
+
+running 2 tests
+test runtime_and_macro_preserve_raw_bits_and_casts ... ok
+test aot_preserves_raw_bits_and_casts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.89s
+
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_raw_numeric_core-1d1433cbb4c03a11)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... ok
+test aot_preserves_known_numeric_core_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.10s
+
+     Running tests/clojure_some_fn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/clojure_some_fn-57fe69a84b4a80b5)
+
+running 5 tests
+test constructed_some_fn_retains_captures_after_gc_and_public_redefinition ... ok
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test shipped_some_fn_records_primary_values_and_predicate_effects_in_both_phases ... ok
+test actual_aot_returns_some_fn_values_and_predicate_effects_for_host_comparison has been running for over 60 seconds

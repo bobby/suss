@@ -38,7 +38,7 @@ macro_rules! field_extend {
     }};
 }
 
-impl AnalysisGraph<'_> {
+impl AnalysisGraph<'_, '_> {
     // Retain every old map/recipe charge. Only the ADDED bytes of the key
     // representation are paid here, plus actual new builder controls. T can be
     // Value or the existing borrowed-HIR grouping payload; no payload copies.
@@ -89,10 +89,10 @@ impl AnalysisGraph<'_> {
 #[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
-    fn build(graph: &mut AnalysisGraph<'_>, input: &Form) -> Result<Value> {
+    fn build(graph: &mut AnalysisGraph<'_, '_>, input: &Form) -> Result<Value> {
         build_traced(graph, input, &mut Vec::new())
     }
-    fn build_traced(graph: &mut AnalysisGraph<'_>, input: &Form, costs: &mut Vec<u64>) -> Result<Value> {
+    fn build_traced(graph: &mut AnalysisGraph<'_, '_>, input: &Form, costs: &mut Vec<u64>) -> Result<Value> {
         let start = graph.session.operation_fuel_remaining()?;
         let mut fields = field_entries!(graph; [
             ("op", graph.form(input, 0)?),

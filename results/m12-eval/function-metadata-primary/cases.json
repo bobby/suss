@@ -1,0 +1,17 @@
+[
+  {
+    "name": "top-metadata-function-keeps-identity",
+    "expression": "(let [f (with-meta (fn [n] n) {:marker 1})] [(fn? f) (identical? f (eval f)) ((eval f) 42) (meta (eval f))])",
+    "observed_edn": "[true true 42 {:marker 1}]"
+  },
+  {
+    "name": "nested-metadata-function-after-top-do-prefix",
+    "expression": "(do (def review-meta-effects (atom [])) (let [f (with-meta (fn [n] n) {:marker 1})] (try (eval (list 'do '(swap! review-meta-effects conj :prefix) (list 'identity f))) (catch Throwable e nil))) @review-meta-effects)",
+    "observed_edn": "[:prefix]"
+  },
+  {
+    "name": "top-captured-function-keeps-identity",
+    "expression": "(let [x 1 f (fn [] x)] [(identical? f (eval f)) ((eval f))])",
+    "observed_edn": "[true 1]"
+  }
+]

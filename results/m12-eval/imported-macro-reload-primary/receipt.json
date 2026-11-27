@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/imported-macro-reload-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7691901926882565,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "expression.clj": "98b8f1eca75161b3bbca93e7fbe4ac331481cc87203b914b2e2abe09c8d4bd27",
+    "expression.sus": "39d7c515aebfe9df18161a9fbda6728ef84855f99667a95ed80b829edaf75028",
+    "first.sus": "beea9c944c2afd3a0102816ddf31a43d547ff004f017d153a0b96048dd4657c7",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "primary.stdout": "f4840ad86fe73a287d98b107fa95706b0215171b177298569ebee80c10a91484",
+    "second.sus": "606cd9330f8d785d6a0193508bfc207e0aa388529271ee78b0939c9e27335be0",
+    "setup.sus": "ec94fa4a87866d434d59f37a425bb900c0899b35cc6686d221adda237e0860ab"
+  },
+  "scope": "Actual Var identity, source macro root/doc replacement and retained old function across an explicit completed source reload; native :require-macros spelling is a platform adapter."
+}

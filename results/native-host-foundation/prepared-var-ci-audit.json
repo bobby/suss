@@ -1,0 +1,102 @@
+{
+  "head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "run": 45956702088,
+  "url": "https://github.com/bobby/suss/actions/runs/45956702088",
+  "status": "completed",
+  "conclusion": "success",
+  "all_ten_jobs_actual_success": true,
+  "completed_successful_shards": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "completed_job_evidence": [
+    {
+      "job": "foundation",
+      "id": "140364730185",
+      "conclusion": "success",
+      "log_sha256": "9b8b874143de2f0c5474e6ffd155c90f400d937333cfa93e8aec761be3814c59",
+      "passed_groups": 18,
+      "passed_test_executions": 344
+    },
+    {
+      "job": "integration (1)",
+      "id": "140364730432",
+      "conclusion": "success",
+      "log_sha256": "9f76f0ad10620792a4520acabcb8b18b1594e34b78c0bc67ef25322e7bf179b4",
+      "passed_groups": 46,
+      "passed_test_executions": 205
+    },
+    {
+      "job": "integration (0)",
+      "id": "140364730504",
+      "conclusion": "success",
+      "log_sha256": "007e5ca55f5cf3576fb7069ae322ce66e0f56e3b640851708ee9edfd41dad35e",
+      "passed_groups": 47,
+      "passed_test_executions": 588
+    },
+    {
+      "job": "integration (7)",
+      "id": "140364730522",
+      "conclusion": "success",
+      "log_sha256": "b2077d970e85e556a2aed98afa2338279058e555302608b18de77d816d348e76",
+      "passed_groups": 45,
+      "passed_test_executions": 285
+    },
+    {
+      "job": "integration (2)",
+      "id": "140364730543",
+      "conclusion": "success",
+      "log_sha256": "84764540bf5bf5686a138636dec12a2f592d3a801ce39f58fa588b4661872c42",
+      "passed_groups": 47,
+      "passed_test_executions": 190
+    },
+    {
+      "job": "integration (3)",
+      "id": "140364730548",
+      "conclusion": "success",
+      "log_sha256": "a0ac926c67e3d9149b73829158e80796d0310711d6123eb82475c4c76e674232",
+      "passed_groups": 45,
+      "passed_test_executions": 329
+    },
+    {
+      "job": "integration (4)",
+      "id": "140364730553",
+      "conclusion": "success",
+      "log_sha256": "5807324539a957426d801d97dde2e210dcc33a3f7c0bcba2f8fc42d2e91afa04",
+      "passed_groups": 46,
+      "passed_test_executions": 261
+    },
+    {
+      "job": "integration (6)",
+      "id": "140364730562",
+      "conclusion": "success",
+      "log_sha256": "52cba0649cf8e697ebf78942cd59dd659743b8737f479d69b0b26ee02e0aae14",
+      "passed_groups": 45,
+      "passed_test_executions": 213
+    },
+    {
+      "job": "integration (5)",
+      "id": "140364730584",
+      "conclusion": "success",
+      "log_sha256": "1bb78f430c6afd79757c3daa97959a9752266abaeb80f00b5e3a0df8cc620bd1",
+      "passed_groups": 46,
+      "passed_test_executions": 188
+    },
+    {
+      "job": "test",
+      "id": "140389678434",
+      "conclusion": "success",
+      "log_sha256": "5769ac1a0ae6d5b1c096b9d058804b203d7a0783c843acf7e85bfed58ba029b0",
+      "passed_groups": 0,
+      "passed_test_executions": 0
+    }
+  ],
+  "passed_test_executions_in_completed_jobs": 2603,
+  "qualification": "Archived job logs and metadata are hash/head verified. Exact local workspace and independent follow-up review remain separate gates."
+}

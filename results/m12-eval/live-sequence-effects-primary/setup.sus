@@ -1,0 +1,5 @@
+(defmacro source-lazy-probe [f]
+ (let [state (atom 0)
+       xs (lazy-seq (swap! state inc) (list 42))
+       read-state (fn [] @state)]
+  (f xs read-state)))

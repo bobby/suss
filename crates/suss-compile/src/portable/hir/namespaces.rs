@@ -149,7 +149,7 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Global(cell.clone())),
         };
         let defining = before.resolve(self.phase, &publish, span.clone()).is_err();
-        let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
+        let name = quoted(&span, symbol(&span, Symbol::new(&namespace)));
         let nil = || synthetic(&span, Kind::Nil);
         let list = |names_list: Vec<String>| if names_list.is_empty() { nil() } else { names(&span, names_list) };
         // The scope travels as an array in core's slot order, with nil for an
@@ -192,7 +192,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Definition { constant: None,
+            kind: std::sync::Arc::new(Expression::Definition { compiler_root: false, result: None, constant: None,
                 global: cell.clone(),
                 name_metadata: Vec::new(),
                 name_span: span.clone(),
@@ -286,6 +286,17 @@ impl Analyzer<'_> {
         }
         let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
         let global = self.assignment_target(&target)?;
+        if self.environment.native_evaluation_namespace {
+            // Eval runs in the existing caller frame. A namespace directive
+            // selects its new namespace after publication; ordinary forms keep
+            // the actual dynamic binding that selected their analysis context.
+            if namespace != before.current_namespace(self.phase) {
+                effects.push(Hir { source: None, span: span.clone(), metadata: vec![], ty: Type::Value,
+                    kind: std::sync::Arc::new(Expression::Assign { global, value: Box::new(read(&span)), linked: None }) });
+            }
+            effects.push(body);
+            return Ok(Hir { source: None, span, metadata: vec![], ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(effects)) });
+        }
         if self.environment.ordered_namespace_initialization {
             // The AOT loader owns one binding for the complete ordered load.
             // Every fragment selects its namespace after publishing its scope.
@@ -303,7 +314,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::DynamicScope { bindings: vec![(global, read(&span))], body: Box::new(body) }),
+            kind: std::sync::Arc::new(Expression::DynamicScope { roots: false, bindings: vec![(global, read(&span))], body: Box::new(body) }),
         });
         Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(effects)) })
     }

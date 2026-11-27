@@ -1,0 +1,50 @@
+{
+  "head": "d05aa8ef6ce7c5043b3dd8abc7762db16a929e71",
+  "inputs": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/new-var-metadata-probe/probe.rs": "a8f30aef4eddcf655fe96af5ae991a6ce04753677d5287d1569604f7911cbf7c",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/new-var-metadata-probe/run.py": "b9caa6be199d8510970e874c02e3a6023adff4c678aef39cc805a2463aece015",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib": "3c1c292a8db93f13ff5f312f517788ffb264652bd2250c3173a1405030bb1eaa",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss": "4fb052c3dfb1a3c14a6c8398215e56d0fcc254b0531d9e7b99cd026b49d7518b",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_macros.rs": "bbb791e0599744f39c350420b32532b5afbbeacfa0570024dc6653080f3917e3",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs": "26e91e94e7b5718041070a879e212f7c8eaa03e9e5b86d7fed3fa67e58b68ca0"
+  },
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/new-var-metadata-probe/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/new-var-metadata-probe/probe"
+      ],
+      "complete": true,
+      "pid": 2720340,
+      "exit_code": 0,
+      "seconds": 1.249059833586216
+    },
+    {
+      "name": "execute",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/new-var-metadata-probe/probe",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation"
+      ],
+      "complete": true,
+      "pid": 2720417,
+      "exit_code": 42,
+      "seconds": 47.82412968110293
+    }
+  ],
+  "complete": true,
+  "qualification": "Read-only source probe against the existing compiled library. Exit42 signals a detected leak, not conformance success. No Cargo or repository source edits.",
+  "exit_code": 42,
+  "inputs_unchanged": true,
+  "head_unchanged": true
+}

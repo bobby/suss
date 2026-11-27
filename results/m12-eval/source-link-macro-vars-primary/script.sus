@@ -1,0 +1,4 @@
+(defmacro staged-var [] 42)
+(def staged-var-root #'staged-var)
+[(var? staged-var-root) (.isMacro staged-var-root) (fn? @staged-var-root)
+ ((deref staged-var-root) nil nil) (identical? staged-var-root #'staged-var)]

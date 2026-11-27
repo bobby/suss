@@ -1,0 +1,14 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/portable-dynamic-correction-primary-before/original-0.clj"
+  ],
+  "exit_code": 1,
+  "source_sha256": "2a3940203b86884af16914e4b82c2eebfec1d450d5ea65adfd0e4bc8608a4c44",
+  "stderr_sha256": "f64c5dbc24b2a9003aa4aaa132cf8b40a87492944320e03c37ff4c3b7d9cd441",
+  "qualification": "Actual pinned Clojure rejects the original root-set spelling. This is not a passing primary value and is not hidden by the accepted-source controls."
+}

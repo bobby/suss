@@ -1,0 +1,1 @@
+(prn (load-string "(defmacro staged-var [] 42)\n(def staged-var-root #'staged-var)\n[(var? staged-var-root) (.isMacro staged-var-root) (fn? @staged-var-root)\n ((deref staged-var-root) nil nil) (identical? staged-var-root #'staged-var)]\n"))

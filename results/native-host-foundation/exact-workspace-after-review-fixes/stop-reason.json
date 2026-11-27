@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-11-27T06:12:26.293395+00:00",
+  "head": "d05aa8ef6ce7c5043b3dd8abc7762db16a929e71",
+  "phase": "exact-workspace-after-review-fixes",
+  "reason": "Confirmed rejected metadata leak on a fresh escaped Var in Runtime and Macro, read-only probe actualexit42 on unchanged source/library. Deliberately stop obsolete candidate validation before implementing required correction; not a timeout or spontaneous test assertion failure.",
+  "controller_retained": 2523108,
+  "signalled_pids": [
+    2523179,
+    2736863
+  ],
+  "probe": "core-boundary-foundation/new-var-metadata-probe/commands.json",
+  "signals": [
+    {
+      "pid": 2523179,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 2736863,
+      "signal": "SIGTERM",
+      "sent": true
+    }
+  ]
+}

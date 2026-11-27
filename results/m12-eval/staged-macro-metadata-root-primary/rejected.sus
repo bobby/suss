@@ -1,0 +1,1 @@
+(ns tools) (defmacro ^{:doc (do (alter-var-root #'answer (fn [_] (fn [& xs] 42))) "computed")} answer [] 99) missing-after-root-effect

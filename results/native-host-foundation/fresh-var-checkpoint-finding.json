@@ -1,0 +1,135 @@
+{
+  "issue": 520,
+  "criteria": [
+    1,
+    2,
+    3,
+    5,
+    7
+  ],
+  "severity": "P2",
+  "origin": "Author read-only audit after initial independent-review fixes; not an additional independent reviewer finding.",
+  "source_head": "d05aa8ef6ce7c5043b3dd8abc7762db16a929e71",
+  "reproduction": {
+    "phase": "fresh-var-metadata-probe",
+    "actual_exit": 42,
+    "both_phases": true,
+    "before": "[false nil :unbound]",
+    "after_rejection": "[true \"rejected\" :unbound]",
+    "inputs_and_head_conserved": true,
+    "qualification": "Exit42 signals detected leakage, not conformance success."
+  },
+  "cause": "The metadata checkpoint was taken before a fresh canonical Var existed, so its escaped metadata had no rollback entry.",
+  "fix": "After macro declaration preparation succeeds and before compiled execution, admit the canonical unbound Var only for missing staged metadata checkpoint entries and capture initial metadata. Keep original root ownership and validation ordering; ordinary native-admission callback unchanged.",
+  "regression": "review_regression_fresh_staged_var_metadata_restores_escaped_identity",
+  "before": {
+    "phase": "fresh-var-checkpoint-before",
+    "actual_cargo_exit": 101,
+    "passed": 2,
+    "failed": 1,
+    "both_phases_mismatched": true,
+    "later_success_and_identity_controls_passed": true
+  },
+  "first_after": {
+    "phase": "fresh-var-checkpoint-after",
+    "actual_cargo_exit": 0,
+    "passed": 3,
+    "qualification": "Initial admission fix passed all3 review regressions. Subsequent root-ownership sampling refinement requires its own broader current-source checks."
+  },
+  "stopped_full": {
+    "phase": "exact-workspace-after-review-fixes",
+    "actual_cargo_exit": -15,
+    "outer_exec_exit": 241,
+    "seconds": 6655.318455873989,
+    "completed_rust_test_executions": 1114,
+    "completed_groups": 243,
+    "reason": "Deliberately stopped after the independently executable fresh-Var leak was confirmed, not a timeout or spontaneous test failure.",
+    "inputs_and_tools_conserved": true,
+    "archive_preserved": true
+  },
+  "validation_pending": [
+    "CI on final published technical evidence/review head"
+  ],
+  "historical_ci": "d05 CI45940948916 all10jobs success/2602executions predates this newly found defect and repair; not validation of changed source.",
+  "candidate_history": [
+    {
+      "phase": "fresh-var-checkpoint-core-gates",
+      "actual_exit": 0,
+      "commands": 12,
+      "rust_test_executions": 240,
+      "python_tests": 364,
+      "qualification": "Early-admission candidate. Broader gates passed but subsequent stronger invalid-name guard exposed unintended bare Var admission; not final validation."
+    },
+    {
+      "phase": "fresh-var-admission-frontier-before",
+      "actual_exit": 101,
+      "qualification": "Initial new guard expected ordinary-def wording instead of the actual macro-name diagnostic; harness mismatch retained, not semantic boundary evidence."
+    },
+    {
+      "phase": "fresh-var-admission-frontier-before-corrected-diagnostic",
+      "actual_exit": 101,
+      "passed": 2,
+      "failed": 1,
+      "qualification": "Both phases expose a bare Var after rejected qualified macro name on eager-admission candidate; metadata and later-link/identity controls pass."
+    },
+    {
+      "phase": "fresh-var-admission-hook-after",
+      "actual_exit": 101,
+      "passed": 2,
+      "failed": 1,
+      "qualification": "Ordinary native-admission callback is not used for source macro origin (native_owner=None); fresh metadata still leaked, while invalid-name guard passed."
+    }
+  ],
+  "current_targeted_after": {
+    "phase": "fresh-var-prepared-checkpoint-after",
+    "actual_exit": 0,
+    "passed": 3,
+    "seconds": 182.11936984909698,
+    "inputs_head_runner_tools_conserved": true,
+    "archived": true,
+    "qualification": "Final prepared/execution boundary. Includes fresh metadata rollback, retained effect/identity and normal linking, invalid-name no-admission guard, plus two prior review regressions."
+  },
+  "final_broader_validation": {
+    "phase": "fresh-var-prepared-core-gates",
+    "all12_commands_actual0": true,
+    "rust_test_executions": 240,
+    "python_tests": 364,
+    "inputs_head_runner_tools_conserved": true,
+    "archived": true,
+    "qualification": "Actual scoped source success, conserved in a97; fresh a97 exact full and CI also pass. Follow-up independent review and later-head CI remain separate."
+  },
+  "exact_full_validation": {
+    "source_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+    "phase": "exact-workspace-prepared-var-checkpoint",
+    "exit_code": 0,
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--locked",
+      "--",
+      "--test-threads=2"
+    ],
+    "seconds": 12787.013811258134,
+    "rust_test_executions": 2591,
+    "successful_test_groups": 377,
+    "existing_ignored_tests": 15,
+    "frozen_input_count": 8964,
+    "inputs_head_runner_binaryen_conserved": true,
+    "runner_sha256": "4fcb36fb40b86fd97efbe02a2d1c7351a48f701423e9bed2170ef6f1e1179032",
+    "runner_archive": "exact-workspace-prepared-var-checkpoint/runner.py.gz",
+    "deleted_inputs": [],
+    "full_audit": "prepared-var-exact-workspace-audit.json",
+    "capture_audit": "prepared-var-workspace-capture-audit.json",
+    "qualification": "Actual successful exact command on clean a97. Later technical evidence edits do not change the tested implementation; independent follow-up review and later-head CI retain separate evidence."
+  },
+  "ci_for_tested_implementation": {
+    "head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+    "run": 45956702088,
+    "url": "https://github.com/bobby/suss/actions/runs/45956702088",
+    "all10_jobs_actual_success": true,
+    "test_executions": 2603,
+    "audit": "prepared-var-ci-audit.json"
+  },
+  "independent_review_followup": "independent-review-followup.json; no actionable findings"
+}

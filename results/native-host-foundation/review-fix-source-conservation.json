@@ -1,0 +1,18 @@
+{
+  "source_base": "4cc4e29059239e8b59bf49ce9c56222900c1904a",
+  "qualification": "Repaired production/fixtures/doc contract exactly match the complete broader frozen-source snapshot. Technical index/handoff changes after terminal do not alter those inputs. Fresh full workspace, follow-up review and final-head CI remain required.",
+  "source_input_count": 2643,
+  "source_input_map_sha256": "f9a3bd0eb71b4d087fa3e172d56432c2064005c10582e8b3cf861a67e48e2fe3",
+  "changed_from_reviewed_full_inputs": [
+    "crates/suss-cli/tests/native_host_boundary.rs",
+    "crates/suss-compile/src/portable/hir.rs",
+    "crates/suss-compile/src/portable_macros.rs"
+  ],
+  "broader_phase": "review-fixes-core-gates",
+  "all12_commands_exit0": true,
+  "rust_test_executions": 239,
+  "python_tests": 364,
+  "contract_sha256": "849667ec77df18ad4cde8b143d8d137da7df40e002e9d2320df307b695de6395",
+  "pinned_guard_rust_test_executions": 9,
+  "pinned_guard_qualification": "The recorded stage label refers to the six compiler controls; the workspace command also executes three matching CLI controls. All nine actual executions pass; raw command/receipt remains unchanged."
+}

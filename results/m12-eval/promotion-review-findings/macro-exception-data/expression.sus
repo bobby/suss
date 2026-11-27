@@ -1,0 +1,1 @@
+[(try (eval '(throw (ex-info "boom" {:value 1N}))) (catch Throwable e [(ex-message e) (ex-data e)])) (let [v (eval '(defmacro throws-data [] (throw (ex-info "boom" {:value 1N}))))] (try (v nil nil) (catch Throwable e [(ex-message e) (ex-data e)])))]

@@ -1,0 +1,16 @@
+{
+  "phase": "exact-workspace-artifact-publication",
+  "capture_sha256": "ff3bcfecd1582ab1a86fcd299086db065f78fafd0055f9105263f7e4b6e82893",
+  "counts": {
+    "pass": 5325,
+    "guest-judged": 101,
+    "fail": 105,
+    "not-executed": 1408,
+    "skipped": 0,
+    "namespaces-failed": 64
+  },
+  "raw_rows": 5530,
+  "ordered_ids_and_decisions_equal_to_prior_scoped_run": true,
+  "failures_equal_to_reviewed_baseline": true,
+  "public_eval_absent": true
+}

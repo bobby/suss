@@ -1,0 +1,13 @@
+{
+  "function-constants/expression.sus": "9d3cb5bd47bd67f82cf70c47f00a437cb01db1b9727842ce38c157e62ec03468",
+  "function-constants/primary.stdout": "c492b9ae32222bd56551b463ebde239a59b662b99c378f41c0ba39f765ccee63",
+  "function-constants/primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "function-constants/primary.json": "1b3c2ee86491854fe65c4a61f6be75c2e81f688cf9a678ecad8155110dcf00a3",
+  "function-constants/native.stdout": "4f7ed6bd6f2a25ed7da441c193917c8e673868c2fe540feefa7db0daee9146b4",
+  "function-constants/native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "function-constants/native.json": "d2f1aabe7112ad01f5f0fb442ac35c7e77d8542e1a15eb3a7681c48e11e7c138",
+  "function-constants/primary-failure-stage.clj": "bbbc5fa4b1004741f4ffc8ce7eb6014abc2fe5d46cb31bbe195424618e4ab2ab",
+  "function-constants/primary-failure-stage.stdout": "defa34d0fef0f07204402954d729b2ea0d353c0f68f16796c76b74ff3b310c92",
+  "function-constants/primary-failure-stage.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "function-constants/primary-failure-stage.json": "e4d8bf4ab24d3f21b615dceeea34cd8fa782b294bdbc583031105f80c2b6fd51"
+}

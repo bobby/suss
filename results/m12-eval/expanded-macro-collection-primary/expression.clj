@@ -1,0 +1,2 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (do (declare collection-macro) (eval '(defmacro ^:dynamic collection-macro [] 1)) (let [f (fn [x] x)] [(binding [collection-macro (fn [& xs] f)] (identical? f (eval '(collection-macro)))) (binding [collection-macro (fn [& xs] {:f f})] (identical? f (:f (eval '(collection-macro))))) (binding [collection-macro (fn [& xs] [f])] (identical? f (first (eval '(collection-macro))))) (binding [collection-macro (fn [& xs] #{f})] (identical? f (first (eval '(collection-macro)))))])))

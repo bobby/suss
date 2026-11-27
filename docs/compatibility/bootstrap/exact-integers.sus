@@ -352,6 +352,29 @@
         (if (nil? found)
           (throw (ex-info (str "No namespace: " x " found") {}))
           found)))))
+;; BEGIN Clojure alias
+;; Copyright (c) Rich Hickey. All rights reserved.
+;; Eclipse Public License 1.0; see runtime/core-import/epl-v10.html.
+;; Pinned clojure.core/alias, with Namespace.addAlias adapted to the actual
+;; Namespace state array. Retain the public signature, documentation and metadata.
+(def ^:private add-namespace-alias!
+  (fn [ns alias target]
+    (if (symbol? alias) nil
+      (throw (suss.bootstrap/error "Alias must be a symbol")))
+    (let [state (.-state ns) aliases (aget state ns-aliases-slot)
+          name (.-name target) previous (get aliases alias)]
+      (if (if (nil? previous) false (not= previous name))
+        (throw (suss.bootstrap/error
+                 (str "Alias " alias " already exists in namespace " (.-name ns)
+                      ", aliasing " previous)))
+        (do (aset state ns-aliases-slot (assoc aliases alias name)) nil)))))
+(def ^{:doc "Add an alias in the current namespace to another
+  namespace. Arguments are two symbols: the alias to be used, and
+  the symbolic name of the target namespace. Use :as in the ns macro in preference
+  to calling this directly." :added "1.0" :static true} alias
+  (fn [alias namespace-sym]
+    (add-namespace-alias! *ns* alias (the-ns namespace-sym))))
+;; END Clojure alias
 (def ns-name
   (fn [ns] (.-name (the-ns ns))))
 (def all-ns
@@ -363,8 +386,8 @@
     (reduce-kv (fn [m alias target]
                  (if (= (.-str alias) (.-str target)) m (assoc m alias (intern-namespace target))))
                {} (namespace-slot (the-ns ns) ns-aliases-slot))))
-;; Clojure maps each referred symbol to its Var. Suss has no runtime Vars, so
-;; the value is the fully qualified symbol the name refers to. Refers are kept
+;; Clojure maps each referred symbol to its Var. The Suss ns-refers contract
+;; retains the fully qualified target symbol as its value. Refers are kept
 ;; by name string, which is cheaper to look up than a symbol.
 (def ns-refers
   (fn [ns]
@@ -2517,3 +2540,116 @@
   (let [int int]
     (fn [n] (int (rand n)))))
 ;; END Clojure rand-int
+
+
+;; BEGIN Clojure ns-interns
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html.
+;; Clojure1.12.6 namespace-map filtering is supplied by the native compiled
+;; host's actual binding cells. Pure components require that explicit capability.
+(def ^{:doc "Returns a map of the intern mappings for the namespace."
+       :added "1.0" :static true} ns-interns
+  (fn [ns] (suss.bootstrap/namespace-interns (the-ns ns))))
+;; END Clojure ns-interns
+
+
+;; BEGIN Clojure Var.Unbound
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html and var-unbound-provenance.json.
+(deftype VarUnbound [v]
+  Object
+  (toString [_] (str_ "Unbound: " v))
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IFn
+  (-invoke [_]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v))))
+  (-invoke [_ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 rest]
+    (throw (suss.bootstrap/error (str_ "Attempting to call unbound fn: " v)))))
+;; END Clojure Var.Unbound
+
+;; Original native Var construction adapters. Compiler-owned hidden cells
+;; intern the result; the getter is compiled directly against its live cell.
+(def ^:private make-binding-var
+  (fn [getter namespace name metadata]
+    (suss.bootstrap/binding-getter-macro-set! getter (boolean (:macro metadata)))
+    ;; Binding keys and namespace objects keep the platform's canonical core
+    ;; identity. Public Var symbols use Clojure's core spelling for source data.
+    (let [v (Var. getter (symbol (if (= namespace "suss.core") "clojure.core" namespace) name)
+      ;; Keep Var interning independent of the mutable IndexedSeq constructor
+      ;; used by variadic argument packing. Both metadata updates are fixed arity.
+      (let [name (symbol name)
+            namespace (the-ns (symbol namespace))]
+        (assoc (assoc metadata :name name) :ns namespace)))]
+      (suss.bootstrap/binding-getter-unbound-init! getter (VarUnbound. v))
+      v)))
+(def ^:private binding-var-metadata
+  (fn [v metadata]
+    ;; A converted declaration has temporarily replaced its root, before
+    ;; publishing new macro metadata. Do not run IMeta's lazy flag cleanup
+    ;; merely to retrieve these canonical compiler-owned keys.
+    (let [current (.-_meta v)
+          name (:name current)
+          namespace (:ns current)]
+      (assoc (assoc metadata :name name) :ns namespace))))
+(def ^:private update-binding-var-meta!
+  (fn [v metadata]
+    (set! (.-_meta v)
+      (let [name (:name (meta v))
+            namespace (:ns (meta v))]
+        (assoc (assoc metadata :name name) :ns namespace)))
+    (suss.bootstrap/binding-getter-macro-set! (.-val v) (boolean (:macro metadata)))
+    v))
+
+;; BEGIN Clojure alter-var-root
+;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.
+;; See runtime/core-import/epl-v10.html and alter-var-root-provenance.json.
+(def ^{:doc "Atomically alters the root binding of var v by applying f to its current value and args."
+       :added "1.0" :static true} alter-var-root
+  (fn [v f & args]
+    (let [getter (.-val v)
+          root (apply f (suss.bootstrap/binding-getter-root-get getter) args)]
+      (suss.bootstrap/binding-getter-root-set! getter root (instance? VarUnbound root)))))
+;; END Clojure alter-var-root

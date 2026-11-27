@@ -1,0 +1,17 @@
+[
+  {
+    "name": "nested-function-initializes-after-lexical-prefix",
+    "expression": "(do (def review-inner-effects (atom [])) (let [x 1 f (fn [] x)] (try (eval (list 'let [] (list 'do '(swap! review-inner-effects conj :prefix) (list 'fn [] (list 'quote f))))) (catch Throwable e nil))) @review-inner-effects)",
+    "observed_edn": "[:prefix]"
+  },
+  {
+    "name": "unconstructed-function-does-not-initialize-pool",
+    "expression": "(let [x 1 f (fn [] x)] (try (eval (list 'if false (list 'fn [] (list 'quote f)) :safe)) (catch Throwable e :error)))",
+    "observed_edn": ":safe"
+  },
+  {
+    "name": "multi-arity-function-shares-one-pool",
+    "expression": "(let [f (fn [n] n) g (eval (list 'fn (list [] (list 'quote f)) (list ['x] (list 'quote f))))] [(identical? f (g)) (identical? (g) (g 1))])",
+    "observed_edn": "[false true]"
+  }
+]

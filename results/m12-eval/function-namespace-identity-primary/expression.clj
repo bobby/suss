@@ -1,0 +1,5 @@
+(defmacro source-ns-same [expected] (identical? *ns* expected))
+(defmacro source-ns-value [] *ns*)
+(prn [(let [f (deref #'source-ns-same)] (f nil nil *ns*))
+ (let [f (deref #'source-ns-value)] (identical? *ns* (f nil nil)))]
+)

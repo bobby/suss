@@ -29,8 +29,8 @@ pub enum AsyncDispatch {
 
 const NATIVE_SCOPE: i32 = 0;
 
-fn export(
-    scope: &mut RootScope<&mut Store<()>>,
+fn export<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     name: &str,
 ) -> Result<Func, SessionError> {
@@ -39,8 +39,8 @@ fn export(
     })
 }
 
-fn nominal_status(
-    scope: &mut RootScope<&mut Store<()>>,
+fn nominal_status<C: AsContextMut<Data = ()>>(
+    scope: &mut RootScope<C>,
     runtime: Instance,
     value: Val,
 ) -> Result<Option<FutureStatus>, SessionError> {
@@ -68,7 +68,7 @@ fn count(value: Val) -> Result<usize, SessionError> {
         .map_err(|_| wasmtime::Error::msg("Negative runtime async count").into())
 }
 
-impl Session {
+impl SessionHost<'_> {
     /// Display-only nominal leaf probes, called inside the decoder's existing
     /// rooted inspection scope. No payload roots or source callbacks are made.
     pub(crate) fn display_runtime_exports(&mut self) -> Result<(Func, Func, Func), SessionError> {
@@ -279,14 +279,14 @@ impl Session {
     fn frontend_scope<R>(
         &mut self,
         f: impl FnOnce(
-            &mut RootScope<&mut Store<()>>,
+            &mut RootScope<StoreContextMut<'_, ()>>,
             Instance,
             u64,
             &Arc<AtomicUsize>,
         ) -> Result<R, SessionError>,
     ) -> Result<R, SessionError> {
         self.budget()?;
-        let mut scope = RootScope::new(&mut self.store);
+        let mut scope = RootScope::new(self.store.as_context_mut());
         let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
         let outcome = f(&mut scope, self.runtime, self.identity, &self.handles);
         let outcome = match outcome {

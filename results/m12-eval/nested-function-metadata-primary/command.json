@@ -1,0 +1,27 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/nested-function-metadata-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7413006289862096,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "inputs": {
+    "setup.clj": "21ac2b6fa4efde2d05ec6fa4d5327c935ecaa9dea4d5f253ea22ab6ebfa84b59",
+    "setup.sus": "21ac2b6fa4efde2d05ec6fa4d5327c935ecaa9dea4d5f253ea22ab6ebfa84b59",
+    "expression.clj": "964221f73a5580a849d0946ca59e06f03794722ce05a1ae677044177c11a1f6d",
+    "expression.sus": "357442e72388fd28942db3349c6ec264caad8f7c2b6baeee7f08522d7c7ebc8b",
+    "query.sus": "457397059b506b471153a81f1523b2f422934423654da55cf6d80220ea3010d5",
+    "primary.stdout": "e4bf1f175a69e938f7c25b07044eb94df0dd43176e3c4a518ee51b80e4126735",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "qualification": "Fresh Clojure 1.12.6 primary; native counterpart not executed yet."
+}

@@ -1,0 +1,7 @@
+[
+(do (eval '(def bridge-caller-value 41)) (eval '(defmacro bridge-caller-global [] (inc bridge-caller-value))) (eval '(bridge-caller-global)))
+(do (eval '(def bridge-caller-state (atom 0))) (eval '(defmacro bridge-caller-increment [] (list 'quote (swap! bridge-caller-state inc)))) [(eval '(bridge-caller-increment)) (deref (eval 'bridge-caller-state))])
+(do (eval '(defmacro bridge-caller-def [] (eval '(def bridge-made 42)) (list 'quote :done))) (eval '(bridge-caller-def)) (eval 'bridge-made))
+(do (declare changing-macro) (eval '(defmacro ^:dynamic changing-macro [] 1)) (let [f (fn [& xs] (if (empty? xs) 43 (do (eval '(def ^:dynamic changing-macro (fn [] 45))) 42)))] (binding [changing-macro f] (eval '[(changing-macro) (changing-macro)]))))
+(do (eval '(defmacro own-changing-macro [] (eval '(def own-changing-macro (fn [] 43))) 42)) (eval '[(own-changing-macro) (own-changing-macro)]))
+]

@@ -1,0 +1,152 @@
+EVALUATION_RESULT_TYPE_PROBE Ok("[\"x\" false \"+ requires number operands\" \"* requires number operands\"]")
+phase=Runtime fuel=8750 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8751 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8752 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8753 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8754 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8755 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8756 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8757 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8758 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8759 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8760 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Runtime fuel=8761 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8761 trials=12
+phase=Runtime fuel=8762 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8762 trials=13
+phase=Runtime fuel=8763 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8763 trials=14
+phase=Runtime fuel=8764 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8764 trials=15
+phase=Runtime fuel=8765 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8765 trials=16
+phase=Runtime fuel=8766 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8766 trials=17
+phase=Runtime fuel=8767 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8767 trials=18
+phase=Runtime fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8768 trials=19
+phase=Runtime fuel=8769 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8769 trials=20
+phase=Runtime fuel=8770 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8770 trials=21
+phase=Runtime fuel=8771 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8771 trials=22
+phase=Runtime fuel=8772 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8772 trials=23
+phase=Runtime fuel=8773 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8773 trials=24
+phase=Runtime fuel=8774 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8774 trials=25
+phase=Runtime fuel=8775 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8775 trials=26
+phase=Runtime fuel=8776 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8776 trials=27
+phase=Runtime fuel=8777 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8777 trials=28
+phase=Runtime fuel=8778 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8778 trials=29
+phase=Runtime fuel=8779 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8779 trials=30
+phase=Runtime fuel=8780 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8780 trials=31
+phase=Runtime fuel=8781 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8781 trials=32
+phase=Runtime fuel=8782 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8782 trials=33
+phase=Runtime fuel=8783 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8783 trials=34
+phase=Runtime fuel=8784 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8784 trials=35
+phase=Runtime fuel=8785 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8785 trials=36
+phase=Runtime fuel=8786 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8786 trials=37
+phase=Runtime fuel=8787 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8787 trials=38
+phase=Runtime fuel=8788 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8788 trials=39
+phase=Runtime fuel=8789 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8789 trials=40
+phase=Runtime fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8768 trials=41
+phase=Runtime fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8768 trials=42
+phase=Runtime fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Runtime fuel=8768 trials=43
+phase=Macro fuel=8750 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8751 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8752 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8753 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8754 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8755 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8756 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8757 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8758 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8759 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8760 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"before\" 23]")
+phase=Macro fuel=8761 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8761 trials=55
+phase=Macro fuel=8762 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8762 trials=56
+phase=Macro fuel=8763 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8763 trials=57
+phase=Macro fuel=8764 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8764 trials=58
+phase=Macro fuel=8765 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8765 trials=59
+phase=Macro fuel=8766 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8766 trials=60
+phase=Macro fuel=8767 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8767 trials=61
+phase=Macro fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8768 trials=62
+phase=Macro fuel=8769 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8769 trials=63
+phase=Macro fuel=8770 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8770 trials=64
+phase=Macro fuel=8771 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8771 trials=65
+phase=Macro fuel=8772 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8772 trials=66
+phase=Macro fuel=8773 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8773 trials=67
+phase=Macro fuel=8774 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8774 trials=68
+phase=Macro fuel=8775 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8775 trials=69
+phase=Macro fuel=8776 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8776 trials=70
+phase=Macro fuel=8777 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8777 trials=71
+phase=Macro fuel=8778 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8778 trials=72
+phase=Macro fuel=8779 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8779 trials=73
+phase=Macro fuel=8780 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8780 trials=74
+phase=Macro fuel=8781 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8781 trials=75
+phase=Macro fuel=8782 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8782 trials=76
+phase=Macro fuel=8783 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8783 trials=77
+phase=Macro fuel=8784 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8784 trials=78
+phase=Macro fuel=8785 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8785 trials=79
+phase=Macro fuel=8786 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8786 trials=80
+phase=Macro fuel=8787 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8787 trials=81
+phase=Macro fuel=8788 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8788 trials=82
+phase=Macro fuel=8789 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8789 trials=83
+phase=Macro fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8768 trials=84
+phase=Macro fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8768 trials=85
+phase=Macro fuel=8768 before="[\"before\" 23]" result="ERR Compilation fuel exhausted (limit 400000000 per input); raise it with --compile-fuel, or omit it for no limit" after=Ok("[\"after\" 23]")
+CONFIRMED_METADATA_LEAK phase=Macro fuel=8768 trials=86
+REFINEMENT_COMPLETE

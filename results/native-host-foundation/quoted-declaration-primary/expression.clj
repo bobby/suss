@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(def count (fn [x] 99))
+(def ^{:quoted '([unbound-marker] {:key #{unbound-marker}}) :arglists '([x]) :computed (let [f count] (f 123))} quoted-metadata-target 42)
+(prn [(:quoted (meta #'quoted-metadata-target)) (:arglists (meta #'quoted-metadata-target)) (:computed (meta #'quoted-metadata-target))])
+(prn (mapv (fn [q] (let [outcome (try (eval (list 'def (with-meta 'quoted-metadata-target {:probe q}) 7)) :accepted (catch Throwable e :rejected))] [outcome @#'quoted-metadata-target])) ['(quote) '(quote 1 2)]))

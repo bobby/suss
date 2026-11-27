@@ -1,0 +1,77 @@
+[
+  {
+    "name": "insert-and-return-nil",
+    "expression": "(binding [*ns* (create-ns 'alias-user)] (create-ns 'alias-target) [(alias 'a 'alias-target) (ns-name (get (ns-aliases *ns*) 'a))])",
+    "expected": "[nil alias-target]"
+  },
+  {
+    "name": "same-alias-idempotent",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(alias 'a 'alias-target) (count (ns-aliases *ns*))])",
+    "expected": "[nil 1]"
+  },
+  {
+    "name": "alias-conflict-is-atomic",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] (create-ns 'alias-other) [(try (alias 'a 'alias-other) :bad (catch Throwable e (.getMessage e))) (ns-name (get (ns-aliases *ns*) 'a))])",
+    "expected": "[\"Alias a already exists in namespace alias-user, aliasing alias-target\" alias-target]"
+  },
+  {
+    "name": "unknown-target",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(try (alias 'missing 'alias-does-not-exist) :bad (catch Throwable e (.getMessage e))) (contains? (ns-aliases *ns*) 'missing)])",
+    "expected": "[\"No namespace: alias-does-not-exist found\" false]"
+  },
+  {
+    "name": "non-symbol-alias",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] (try (alias :keyword 'alias-target) false (catch Throwable _ true)))",
+    "expected": "true"
+  },
+  {
+    "name": "nil-alias",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] (try (alias nil 'alias-target) false (catch Throwable _ true)))",
+    "expected": "true"
+  },
+  {
+    "name": "non-symbol-target",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] (try (alias 'bad :alias-target) false (catch Throwable _ true)))",
+    "expected": "true"
+  },
+  {
+    "name": "namespace-object-target",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(alias 'object-target (the-ns 'alias-target)) (identical? (the-ns 'alias-target) (get (ns-aliases *ns*) 'object-target))])",
+    "expected": "[nil true]"
+  },
+  {
+    "name": "qualified-symbol-alias",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(alias 'qualified/a 'alias-target) (identical? (the-ns 'alias-target) (get (ns-aliases *ns*) 'qualified/a))])",
+    "expected": "[nil true]"
+  },
+  {
+    "name": "empty-symbol-alias",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(alias (symbol \"\") 'alias-target) (identical? (the-ns 'alias-target) (get (ns-aliases *ns*) (symbol \"\")))])",
+    "expected": "[nil true]"
+  },
+  {
+    "name": "argument-effects-before-error",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] (let [trace (atom [])] [(try (alias (do (swap! trace conj :alias) 'a) (do (swap! trace conj :target) 'alias-other)) false (catch Throwable _ true)) @trace]))",
+    "expected": "[true [:alias :target]]"
+  },
+  {
+    "name": "wrong-arity-zero",
+    "expression": "(try (alias) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "wrong-arity-one",
+    "expression": "(try (alias 'a) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "wrong-arity-three",
+    "expression": "(try (alias 'a 'alias-target :extra) false (catch Throwable _ true))",
+    "expected": "true"
+  },
+  {
+    "name": "core-identity-alias",
+    "expression": "(binding [*ns* (the-ns 'alias-user)] [(alias 'c 'clojure.core) (identical? (the-ns 'clojure.core) (get (ns-aliases *ns*) 'c))])",
+    "expected": "[nil true]"
+  }
+]

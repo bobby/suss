@@ -1,0 +1,22 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/portable-dynamic-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7078638076782227,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "24eb7b857c439f25a5a7a60ffe8e2fc1eed38da78e8b2d0c53e4addfb95a4e81",
+  "stdout_sha256": "7e55be1a331dc295da944942248f70b9d0a1cf126088d663dcbc513bfbf05951",
+  "controls": 2,
+  "immutable_corpus_sha256": "65c4bea5bc76ceea7fe2c8c8bcf307336e2478782deef65e6af3a02032834601",
+  "qualification": "Actual pinned Clojure controls for two explicit supplementary reference adjustments. Raw ClojureScript corpus397 and existing142 correction paths remain unchanged. Original root-set source is an existing native bootstrap extension, independently recorded as Clojure1/native0; legal bound-primary/source qualifies its effect result. Definition case uses original source verbatim."
+}

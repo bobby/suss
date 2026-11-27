@@ -1,0 +1,5 @@
+(prn [(do (declare catalog-unbound) (let [v (get (ns-interns *ns*) 'catalog-unbound)] [(var? v) (identical? #'catalog-unbound v) (try @v false (catch Throwable _ true))]))
+(do (try (eval '(def catalog-first-throw (throw (ex-info "first" {})))) (catch Throwable _ nil)) (let [v (get (ns-interns *ns*) 'catalog-first-throw)] [(var? v) (try @v false (catch Throwable _ true))]))
+(do (if false (def catalog-untaken 99) nil) (contains? (ns-interns *ns*) 'catalog-untaken))
+(do (def catalog-holder (fn [] (def catalog-pending 88))) (let [v (get (ns-interns *ns*) 'catalog-pending)] [(var? v) (try @v false (catch Throwable _ true))]))
+(do (try (eval '(fn [] (def catalog-analyzed 77) catalog-missing-symbol)) (catch Throwable _ nil)) (let [v (get (ns-interns *ns*) 'catalog-analyzed)] [(var? v) (try @v false (catch Throwable _ true))]))])

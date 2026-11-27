@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/imported-macro-reload-prefix-primary/classpath:/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/imported-macro-reload-prefix-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8199529843404889,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "files": {
+    "classpath/tools.clj": "c27de7b05f63432cd3f3cbe5c37f9341646bf99a6cfd5833b3c4a0285e210570",
+    "expression.clj": "d9656920e60eb2d8b9114e348abff0413c55ebcde921898cfe0df0fea65d0ff1",
+    "expression.sus": "39d7c515aebfe9df18161a9fbda6728ef84855f99667a95ed80b829edaf75028",
+    "first.sus": "beea9c944c2afd3a0102816ddf31a43d547ff004f017d153a0b96048dd4657c7",
+    "primary.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "primary.stdout": "4858a58daa91a3cc27215e3924e4c5cc60a6f316ba0fda0784d3d5de94bb0884",
+    "rejected.sus": "27ca30485ec79574b446c198077fc01f108be0542ed611a1f1f44f5619c3e122",
+    "repaired.sus": "c27de7b05f63432cd3f3cbe5c37f9341646bf99a6cfd5833b3c4a0285e210570",
+    "second.sus": "606cd9330f8d785d6a0193508bfc207e0aa388529271ee78b0939c9e27335be0",
+    "setup.sus": "ec94fa4a87866d434d59f37a425bb900c0899b35cc6686d221adda237e0860ab"
+  },
+  "scope": "Actual Clojure require/once/reload, completed source macro prefix before a later compile error, recovery, retained canonical Var and retained old function. Native require-macros metadata spelling is the explicit platform adapter. Classpath tools.clj was initialized from first.sus before execution and retained as repaired.sus afterward."
+}

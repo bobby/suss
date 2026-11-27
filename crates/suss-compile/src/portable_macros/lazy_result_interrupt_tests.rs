@@ -45,7 +45,7 @@ impl Drop for InterruptThread {
     }
 }
 
-fn decoded_number(macros: &mut CompiledMacros, caller: &mut Session, source: &str) -> f64 {
+fn decoded_number(macros: &mut MacroHost<'static>, caller: &mut Session, source: &str) -> f64 {
     let value = caller.eval_with_macros(source, macros).unwrap();
     let bridge = FormBridge::new(caller).unwrap();
     let form = bridge.read(caller, &value, 0..source.len()).unwrap();
@@ -59,7 +59,7 @@ fn decoded_number(macros: &mut CompiledMacros, caller: &mut Session, source: &st
 fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let caller_fuel = caller.options().fuel_per_operation;
-        let mut macros = CompiledMacros::new().unwrap();
+        let mut macros = MacroHost::new().unwrap();
         macros
             .session
             .eval(concat!(

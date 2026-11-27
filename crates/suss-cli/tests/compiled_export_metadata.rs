@@ -232,13 +232,15 @@ fn duplicate_freestanding_markers_require_an_explicit_authoritative_mapping() {
 fn partial_explicit_mapping_overrides_unsupported_metadata() {
     let root = tempfile::tempdir().unwrap();
     std::fs::write(root.path().join("api.wit"), "package test:precedence; world api-world { export chosen: func() -> u32; export inferred: func() -> u32; }").unwrap();
+    // Metadata expressions execute: provide the original symbolic marker as data.
+    std::fs::write(root.path().join("other.sus"), "(ns other) (def custom 'other/custom)").unwrap();
     for (marker, mapping) in [("other/custom", "chosen=app/chosen"), ("17", "chosen=chosen"), ("\"\"", "chosen=app/chosen")] {
-        std::fs::write(root.path().join("app.sus"), format!("(ns app) (def ^{{:export {marker}}} chosen (fn [] 31)) (def ^:export inferred (fn [] 42))")).unwrap();
+        std::fs::write(root.path().join("app.sus"), format!("(ns app (:require [other])) (def ^{{:export {marker}}} chosen (fn [] 31)) (def ^:export inferred (fn [] 42))")).unwrap();
         std::fs::write(root.path().join("app.wasm"), b"prior artifact").unwrap();
-        let unmapped = compile(root.path(), &[]);
+        let unmapped = compile(root.path(), &["--src", "."]);
         assert!(!unmapped.status.success(), "marker {marker}");
         assert_eq!(std::fs::read(root.path().join("app.wasm")).unwrap(), b"prior artifact");
-        let output = compile(root.path(), &["--export", mapping]);
+        let output = compile(root.path(), &["--src", ".", "--export", mapping]);
         assert!(
             output.status.success(),
             "marker {marker}: {}",

@@ -229,7 +229,10 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(DEFINITION).unwrap();
-        session.eval_with_macros("(def fixed (fn [x] x)) (def multiple (fn self ([x] x) ([x y & more] y))) (def alias fixed) (def duplicate (fn ([x] 1) ([y] 2))) (declare declared) (def declared (fn [x] x)) (def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x)) (def ^{:top-fn {}} empty-top-fn (fn [x] x)) (def ^{:top-fn {:variadic? false :max-fixed-arity 1 :method-params [[override]] :arglists [[override]] :arglists-meta [nil]}} overridden (fn [x] x)) (def ^{:declared true :arglists '([given])} declared-meta (fn [x] x)) (def ^{:top-fn nil} nil-top-fn (fn [x] x)) (def ^{:top-fn [:fn-var false]} entry-top-fn (fn [x] x)) (def ^{:top-fn ()} empty-seq-top-fn (fn [x] x))", &mut macros).unwrap();
+        // Declaration projections inspect the unchanged raw metadata syntax.
+        // Metadata also executes: bind its symbolic data explicitly, as pinned
+        // Clojure requires, while retaining every primary projection expectation.
+        session.eval_with_macros("(def x 'x) (def override 'override) (def fixed (fn [x] x)) (def multiple (fn self ([x] x) ([x y & more] y))) (def alias fixed) (def duplicate (fn ([x] 1) ([y] 2))) (declare declared) (def declared (fn [x] x)) (def ^{:arglists {:arity [x]}} mapped-arglists (fn [x] x)) (def ^{:top-fn {}} empty-top-fn (fn [x] x)) (def ^{:top-fn {:variadic? false :max-fixed-arity 1 :method-params [[override]] :arglists [[override]] :arglists-meta [nil]}} overridden (fn [x] x)) (def ^{:declared true :arglists '([given])} declared-meta (fn [x] x)) (def ^{:top-fn nil} nil-top-fn (fn [x] x)) (def ^{:top-fn [:fn-var false]} entry-top-fn (fn [x] x)) (def ^{:top-fn ()} empty-seq-top-fn (fn [x] x))", &mut macros).unwrap();
         for (label, name) in [
             ("after-fixed", "fixed"),
             ("after-multiple", "multiple"),
@@ -279,9 +282,12 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
             (list 'quote [(get old :fn-var) (contains? pending :fn-var)])))"#,
             )
             .unwrap();
-        let value = session
+        // def now returns its real Var, as Clojure does. Inspect the staged
+        // initializer through the live root; keep all declaration assertions.
+        session
             .eval_with_macros("(def fixed (staged-function-facts))", &mut macros)
             .unwrap();
+        let value = session.eval("fixed").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let Kind::Vector(items) = bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2 else {

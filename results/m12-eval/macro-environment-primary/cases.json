@@ -1,0 +1,17 @@
+[
+  {
+    "name": "top-level-empty-env",
+    "expression": "(do (eval '(defmacro env-top [] (list 'quote [(nil? &env) (first &form)]))) (eval '(env-top)))",
+    "expected": "[true env-top]"
+  },
+  {
+    "name": "lexical-env",
+    "expression": "(do (eval '(defmacro env-local [] (list 'quote [(nil? &env) (contains? &env 'x) (count &env)]))) (eval '(let [x 7] (env-local))))",
+    "expected": "[false true 1]"
+  },
+  {
+    "name": "shadowed-lexical-env",
+    "expression": "(eval '(let [x 1] (let [x 2 y 3] (env-local))))",
+    "expected": "[false true 2]"
+  }
+]

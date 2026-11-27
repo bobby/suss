@@ -1,0 +1,74 @@
+[
+  {
+    "path": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+    "name": "script_publication_keeps_definitions_before_a_runtime_exception",
+    "sha256": "04c9e608e6c654b2de34518fd395aab0d5bd2b23fa504193e636ed9e56cf6b95",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+    "name": "script_publication_retains_a_later_native_macro_reassertion",
+    "sha256": "7fb2b50507c16bc8b7c1846b5b670abdad9ec9d2f3f84c1f0ae13279d554e206",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+    "name": "scripts_preserve_executed_native_definitions_and_future_source_precedence",
+    "sha256": "f7a46c4201c16de35e76c9aa0600b127e3d68dd2c021983589a0f0c328db5d1d",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+    "name": "native_eval_catalog_keeps_script_declarations_in_the_isolated_source_store",
+    "sha256": "262124e68a940fcce112877d902325c4f5bbc13b9b4857618a249655dc20db1a",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+    "name": "native_eval_catalog_reaches_script_preparation_in_both_phases",
+    "sha256": "6cbd530c6baef3bcfc1ff29743a3d4dd639ec87e0f574b64e395ad1dbfc769ca",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_repl_macros.rs",
+    "name": "native_eval_catalog_reaches_the_repl_command",
+    "sha256": "40e6f392c08e357be69d01d613631d980ba29ee5379cc855bbd1e1fdd91d7acb",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-cli/tests/compiled_repl_macros.rs",
+    "name": "native_eval_catalog_reaches_repl_inputs_in_both_phases",
+    "sha256": "e10164c7146d1b98cb038a21968ad0200eebd26e21a01d7dd6372e4cd11e5e27",
+    "foundation_counterpart": null
+  },
+  {
+    "path": "crates/suss-compile/src/portable_macros/facade.rs",
+    "name": "source_link_releases_macro_operation_before_runtime_waits_for_compilation",
+    "sha256": "1ce44059172a5d7f2e4aed2188bd89f3b3511d4f77a84162ef62e76dbd7d4a29",
+    "foundation_counterpart": "source_link_releases_macro_operation_before_runtime_waits_for_compilation_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/src/portable_macros/native_invocation.rs",
+    "name": "isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance",
+    "sha256": "53486f83093b3dbc3b41ef74dae2209340896e764c5a33e9476b6306f596a4f7",
+    "foundation_counterpart": "isolated_source_macro_context_snapshot_work_is_debited_before_child_allowance_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/src/portable_session/evaluation/native_values.rs",
+    "name": "native_function_capability_live_var_namespace_and_state_keep_real_owners",
+    "sha256": "a90ba18a2317ecd0cde0b100c608fbaafdcb946b7fdaab8c1660f48ed2e19b32",
+    "foundation_counterpart": "native_function_capability_live_var_namespace_and_state_keep_real_owners_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "name": "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities",
+    "sha256": "e1638f5ed8a42568ed6d5c6db4572e63458a2adacd52c85fc84984cbead5de55",
+    "foundation_counterpart": "retained_var_keeps_thunk_lookup_metadata_equality_hash_and_invocation_arities_without_public_eval_binding"
+  },
+  {
+    "path": "crates/suss-compile/tests/portable_symbol_conversion.rs",
+    "name": "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases",
+    "sha256": "7334af0220acbcecdba9d568e86bae9c32a14699385d6d4f52ee11d883e4ef8d",
+    "foundation_counterpart": "retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases_without_public_eval_binding"
+  }
+]

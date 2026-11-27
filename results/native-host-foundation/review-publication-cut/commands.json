@@ -1,0 +1,57 @@
+{
+  "review_head": "4cc4e29059239e8b59bf49ce9c56222900c1904a",
+  "implementation_head": "4b3a95c531c6809d1e7f391b80504bc89200e49b",
+  "qualification": "Independent exploratory publication-cut probe linked against existing implementation library; no Cargo or source/test edits.",
+  "input_sha256": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-publication-cut/probe.rs": "74e4e32209e368745c203aa55dfb93e82801747b372da5249c78b0cf72253f6d",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib": "118b08402581442e396a5eca7f0ebb032d1bbc615cd441b0e7897f0ba2f3d3a3",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss": "759d6b04b9db066a4857214344d80a55f957cdcc86c8bd9f88e0bf97810bc3ca",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_macros.rs": "b31de94a6c6c12251beb43ec7cbd4b3aa186aeeb934303cb74c3f0bee3f2c19f",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs": "86864f9eacdca321fb40e4a2fcbfbc4bdefc869e98073a4bdfd5c1a49d1fe783",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs": "26e91e94e7b5718041070a879e212f7c8eaa03e9e5b86d7fed3fa67e58b68ca0"
+  },
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-publication-cut/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-publication-cut/probe"
+      ],
+      "complete": true,
+      "pid": 2450541,
+      "exit_code": 0,
+      "seconds": 0.4970432878471911
+    },
+    {
+      "name": "execute",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-publication-cut/probe",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation"
+      ],
+      "complete": true,
+      "pid": 2450618,
+      "exit_code": 0,
+      "seconds": 27.122009688988328
+    }
+  ],
+  "complete": true,
+  "input_unchanged": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-publication-cut/probe.rs": true,
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib": true,
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_macros.rs": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs": true
+  },
+  "head_unchanged": true
+}

@@ -92,6 +92,25 @@ fn copy_array(body: &mut Vec<Instruction<'static>>, source: u32, target: u32) {
 
 pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     use Instruction::*;
+    // Compiler.eval uses a compiled constant context for user IType instances.
+    // Core's ordinary reference objects (Atom, Delay, Namespace, errors, ...)
+    // remain direct literals when they are neither symbols nor collections.
+    // The host combines this ABI test with the original compiled core predicates;
+    // it never infers a nominal family from a type spelling or field count.
+    let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(OBJECT)),
+        If(BlockType::Result(ValType::I32))];
+    get(&mut body, 0, OBJECT, 0);
+    body.extend([RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+        I64Const(CORE_PRIVATE_BIT), I64And, I64Eqz, I32Eqz]);
+    // Runtime-owned descriptors, including ExceptionInfo, predate the first
+    // counter-assigned identity and do not carry the source-core privacy flag.
+    get(&mut body, 0, OBJECT, 0);
+    body.extend([RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+        I64Const(FIRST_COUNTED_IDENTITY), I64LtU, I32Or,
+        Else, I32Const(1), End]);
+    b.function("evaluation-direct-literal-test", &[VALUE], &[ValType::I32], &body);
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
     body.extend([
@@ -310,11 +329,29 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let mut body = vec![];
         guard(&mut body, 0, OBJECT);
         get(&mut body, 0, OBJECT, 1);
+        body.extend([ArrayLen, I32Eqz, If(BlockType::Empty), LocalGet(0),
+            Call(b.names["native-value-kind"]), I32Const(native_values::VAR), I32Sub,
+            I32Const(1), I32LeU,
+            LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::VAR_UNBOUND), I32Sub, I32Const(2), I32LeU,
+            I32Or, If(BlockType::Empty)]);
+        body.extend(native_values::operation(b, 0,
+            if writing { native_values::FIELD_SET } else { native_values::FIELD_GET },
+            vec![LocalGet(1)],
+            if writing { vec![LocalGet(2)] } else { vec![sentinel_value(NIL)] },
+            vec![sentinel_value(NIL)]));
+        if writing { body.push(Drop); }
+        body.extend([Return, End, End]);
+        get(&mut body, 0, OBJECT, 1);
         body.extend([LocalSet(if writing { 3 } else { 2 }), LocalGet(1)]);
         array(&mut body, if writing { 3 } else { 2 });
         body.extend([ArrayLen, I32GeU, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
+        if writing {
+            body.extend([LocalGet(1), I32Const(2), I32Eq, If(BlockType::Empty),
+                LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["native-local-field-set"]),
+                If(BlockType::Empty), Return, End, End]);
+        }
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {

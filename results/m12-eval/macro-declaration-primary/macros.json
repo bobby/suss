@@ -1,0 +1,6 @@
+[
+  "(defmacro declaration-init [] (eval '(def declaration-probe-count (atom 0))) nil)",
+  "(defmacro declaration-stamp [x] (swap! declaration-probe-count inc) x)",
+  "(defmacro declaration-count [] @declaration-probe-count)",
+  "(defmacro declaration-reset [] (reset! declaration-probe-count 0) nil)"
+]

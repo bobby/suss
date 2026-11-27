@@ -1,0 +1,1 @@
+[(with-precision 3 (eval '(/ 1M 3M))) (do (eval '(defmacro third-decimal [] (/ 1M 3M))) (with-precision 3 (try (eval '(third-decimal)) (catch Throwable e :error)))) (let [v (eval '(defmacro raw-third-decimal [] (/ 1M 3M)))] (with-precision 3 (try (v nil nil) (catch Throwable e :error))))]

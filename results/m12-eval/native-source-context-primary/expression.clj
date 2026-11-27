@@ -1,0 +1,11 @@
+(ns user)
+(defmacro native-source-context [] (list 'quote (ns-name *ns*)))
+(ns mixed)
+(defmacro shared [] 1)
+(ns user)
+(defmacro native-reassert-shared [] (eval '(defmacro shared [] 42)) :done)
+
+(ns caller) (def answer (user/native-source-context))
+(ns mixed) (defmacro shared [] 17) (def first (user/native-reassert-shared)) (def answer (shared))
+(ns user)
+(prn [caller/answer mixed/answer (ns-name *ns*)])

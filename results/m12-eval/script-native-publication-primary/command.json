@@ -1,0 +1,39 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/script-native-publication-primary/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6750721437856555,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    {
+      "name": "native-definition-after-later-prepared-input",
+      "source": "(eval '(def script-native-carried 42)) (eval 'script-native-carried)"
+    },
+    {
+      "name": "future-explicit-source-definition",
+      "source": "(def ^:dynamic script-future (fn [] 0)) (eval '(def ^:dynamic script-future (fn [] 41))) (def ^:dynamic script-future (fn [] 42)) (eval '(script-future))"
+    },
+    {
+      "name": "native-and-future-const-identities",
+      "source": "(eval '(def ^:const script-native-constant 99)) (def ^:const script-source-constant 42) [(eval 'script-native-constant) script-source-constant]"
+    }
+  ],
+  "source_sha256": "ad47d6fd8603bebdb065e40363674d11743555634d4513615c96a3e2f82ebf51",
+  "native_source_sha256": {
+    "native-definition-after-later-prepared-input": "378751f03b65648b99d3255cf1e44d07ea86dfd1704c06a9d475929b8b9c83f9",
+    "future-explicit-source-definition": "44365d975aa3eb63b21b662911814aa966d4a092b257a3015dc7357f2f0133d7",
+    "native-and-future-const-identities": "8490a02f8f62773e8e04ca11ea332499a7a0c33de718e0539663fecae88d6198"
+  },
+  "stdout_sha256": "774a0de50ec952d830f0d15ebf2bb36c55a8ca03c9b980897ad9a5749965f34c",
+  "qualification": "Pinned persistent native-eval definitions across later source inputs, future explicit declaration precedence, private constant identity control. No native result or acceptance claim."
+}

@@ -1,0 +1,23 @@
+{
+  "source_url": "https://raw.githubusercontent.com/clojure/clojure/clojure-1.12.6/src/jvm/clojure/lang/Compiler.java",
+  "source_sha256": "c7a48ef63aef5a26ab0729ac7424d3254217157bde14d708194e006fb1fb5475",
+  "jar": "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "class_entry": "clojure/lang/Compiler.class",
+  "class_sha256": "62f141f53bec6a55b06bb6abf1ecd99be25fe52702c32622deeec5da5b0374cf",
+  "command": [
+    "javap",
+    "-classpath",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+    "-c",
+    "-p",
+    "clojure.lang.Compiler"
+  ],
+  "exit_code": 0,
+  "seconds": 1.5146265029907227,
+  "stdout_sha256": "85a0a745b510051b6e251b093cf718d1851f843d5c85968f6756b1b48fb9d69a",
+  "excerpt_sha256": "ccff8149ada045abed7660381a1eb9ac0eb94f571465fe4a72280582c0bfe2e5",
+  "source_byte_start": 238612,
+  "source_byte_end": 240381,
+  "qualification": "Pinned compiler source and executable bytecode research only. The existing primary controls and original eval body remain unchanged. This establishes no native public eval or Var acceptance pass."
+}

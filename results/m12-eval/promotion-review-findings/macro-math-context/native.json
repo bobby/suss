@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "[(with-precision 3 (eval '(/ 1M 3M))) (do (eval '(defmacro third-decimal [] (/ 1M 3M))) (with-precision 3 (try (eval '(third-decimal)) (catch :default e :error)))) (let [v (eval '(defmacro raw-third-decimal [] (/ 1M 3M)))] (with-precision 3 (try (v nil nil) (catch :default e :error))))]"
+  ],
+  "exit_code": 0,
+  "seconds": 37.31097483634949,
+  "head": "a881b16507460924821ff14426fa3d6a0aa0d7a4"
+}

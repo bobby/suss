@@ -1,0 +1,3 @@
+[42 :before [:initializer]]
+[43 :after [:initializer :metadata]]
+[44 :after [:initializer [:metadata 44]]]

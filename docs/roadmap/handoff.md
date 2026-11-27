@@ -1,3 +1,190 @@
+## Independent follow-up review controls (2026-11-27)
+
+Independent xhigh review of `d4674f2a8da5688921ef3d8546fa8863dccc0db7` against
+main `5ce2826cd6b032ebaf7c589d80df396e4521b399` returned no actionable findings.
+The review checked all fourteen original core acceptance criteria and the raw
+baseline results for all 57 mapped controls plus three repair regressions.
+
+Standalone probes returned compile 0 / execute 0 in both phases. They checked
+unary nonnumeric evaluation results, fresh escaped Vars at fourteen post-effect
+fuel cuts including 0/8761/8768/20000, later source rejection, and completed
+nested native definitions with metadata and roots 37/38 surviving an enclosing
+rejected declaration. Source, implementation library, CLI and review HEAD hashes
+were conserved; the root agent reverified those hashes before reusing artifacts.
+Raw probe source, runner, receipt and output are in
+`results/native-host-foundation/review-followup-d4674f2a`; the structured review
+record is `independent-review-followup.json`. The probe binary stays external.
+
+Runtime, tests, fixtures, tools, configuration and manifests remain byte-identical
+to the successful a97 implementation. Review records and handoff are technical
+evidence changes; any later published head retains its own CI requirement.
+Compatibility coverage limits and separate public-eval/numeric scope remain
+explicit in the baseline and audit records below.
+
+## Exact workspace and capture validation (2026-11-27)
+
+On clean `a97bfaac7fe72bb2366297a263108fb347fb74aa`, the exact command
+`cargo test --workspace --locked -- --test-threads=2` returned 0 after
+12,787.013811258134 seconds. The terminal audit counts 2,591 passing test
+executions in 377 successful groups, with the same 15 existing ignores as the
+earlier baseline. The only additional executions are the three repair
+regressions. All 8,964 captured inputs, HEAD, runner and both Binaryen tools
+stayed unchanged through terminal. The runner and deletion record were archived
+before technical edits under
+`results/native-host-foundation/exact-workspace-prepared-var-checkpoint`.
+
+`prepared-var-workspace-capture-audit.json` checks all 5,530 original ordered IDs
+and decisions against the earlier complete capture and the pinned primary.
+Counts remain 5,325 host matches, 101 guest judgments, 105 failures, 64 blocked
+namespaces, 1,408 unexecuted and zero skips; the reviewed failure ledger is exact.
+These counts retain their comparator meanings, rather than forming a disjoint
+partition or a full-language success claim. Public eval remains absent here.
+The raw capture SHA256 is
+`bbb01270f45af03a5b93af3bd620de9c2011a4839281dea98a09d074332c24ad`.
+
+CI 45956702088 on the same a97 implementation completed successfully: all 10
+jobs, all 8 integration shards and 2,603 test executions, including all three
+repair regressions. `prepared-var-ci-audit.json` records terminal job log hashes
+and metadata/head verification; raw CI logs are also retained in the external
+orchestration archive and on GitHub. Independent follow-up review and CI on any
+later published head retain their own evidence. Earlier entries below keep
+their original source and validation context; no fixture, fuel, count, guest,
+skip, artifact or ABI rule was weakened.
+
+## Prepared declaration metadata checkpoint (2026-11-27)
+
+The final fresh-Var correction captures a missing journal entry after
+`prepare_macro_definition` succeeds and before compiled declaration execution.
+Only then does it admit the canonical unbound Var and retain its initial
+metadata. Original validation and root-write ownership ordering remain unchanged;
+the ordinary native-admission callback is unchanged. Converted source origins
+have no native owner, so their Var admission otherwise occurs in guest execution.
+Hidden Var identity is deterministic over the actual phase-qualified binding.
+
+`fresh-var-prepared-checkpoint-after` returns Cargo0 for all3 review regressions,
+with inputs, HEAD, runner and Binaryen conserved and archived. The extended
+fresh-cell control checks rejected metadata, retained Atom effect and Var identity,
+subsequent accepted metadata/root17, and absence of a bare Var when a qualified
+macro name is rejected with the original diagnostic. The earlier eager-admission
+candidate passed12 broader commands (240 Rust executions/364 Python tests) but
+failed that stronger rejection guard in both phases; those passes are not final
+implementation validation. An initial diagnostic wording mismatch is retained
+separately from the corrected semantic negative. The ordinary native-admission
+hook candidate still leaked fresh metadata and returned101, so it was removed.
+
+`fresh-var-prepared-core-gates` records all12 commands returning0 on the final
+source:240 Rust executions and364 Python tests. All51 host-boundary tests,
+140 portable library controls, namespace10, AOT1, runtime2, Var/Symbol6,
+pinned guards9, bootstrap4 and metadata/source projections17 pass; source,
+HEAD, runner and Binaryen remain conserved through terminal and archived.
+Read-only conservation verifies all114 original bodies and26 independent
+core counterparts without changing fixture/budget/comparator rules.
+
+The final source still requires an exact workspace terminal and capture
+audit, follow-up independent review and final-head CI. The original
+fresh-cell leak and deliberately stopped d05 full run remain qualified below.
+No original source fixture, body, count, skip, guest judgment, fuel allowance,
+artifact bound or ABI layout was weakened.
+
+## Fresh staged Var metadata retention (2026-11-27)
+
+The read-only `fresh-var-metadata-probe` reproduces a missing fresh-cell journal
+entry in both caller phases. Declaration metadata stores its newly interned Var
+in an existing Atom, then a later source error rejects staging. The root becomes
+Unbound but the escaped Var retains doc "rejected". The probe returns42 to signal
+this defect, with source/head/library hashes conserved; this is not conformance
+success. The exact workspace run on d05 was deliberately stopped for this known
+semantic defect: actual Cargo-15 after6655.318455873989s, outer exit241, with1114
+completed passing test executions/243groups. Inputs, runner and both Binaryen
+tools were conserved and archived before edits. The run is not a full pass.
+
+`fresh-var-checkpoint-before` returns Cargo101: the two earlier review regressions
+pass and the new fresh-Var regression fails in Runtime and Macro. Its normal-link
+and retained-identity controls also execute successfully. Admitting the canonical
+unbound Var before the metadata snapshot makes all3 regressions pass in
+`fresh-var-checkpoint-after`. Root ownership is additionally sampled before
+admission, preserving the separation between compiler admission and completed
+language writes. This ordering refinement requires the subsequent broader-source
+receipts; the initial3-test pass is not full validation of the final source.
+
+The new control preserves the completed Atom effect, restores the Var's original
+metadata/root on rejection, and requires a later successful link to reuse the
+same Var with accepted metadata and root17. All original fixtures, source bodies,
+fuel limits, artifact bounds and comparator/guest/skip rules remain unchanged.
+The green d05 CI (10jobs/2602executions) predates this fresh-cell repair. Fresh
+broader checks, exact full execution, follow-up independent review and final-head
+CI require their own source-qualified evidence.
+
+### Broader metadata publication checks
+
+`artifact-followup-broader-gates/commands.json` records actual0 for the original AOT constructor-redefinition regression, runtime capability2, Var/Symbol6, all19 original suite guards, Java/Node-free bootstrap reproduction with4 artifact tests, source/provenance checks,17 metadata/source/record projections and Python364. Code inputs match the earlier namespace10/host48/library140 positive batch; each run conserved its source/HEAD/runner/Binaryen and has a terminal archive.
+
+The fresh5530-row capture preserves all ordered IDs and decisions, with5325 host matches,101 guest judgments,105 failures,64 blocked namespaces,1408 unexecuted and zero skips. This is equality with the reviewed compatibility baseline; public eval is absent. All114 original affected test bodies are byte-identical on exactly one layer. The current acceptance index retains code hashes and per-command source qualifications. Exact full workspace, independent review and final-head CI require separate evidence.
+
+### Metadata publication artifact measurements
+
+`artifact-frame-discarded-publication-result/commands.json` records actual0 for all10 namespace/artifact tests,48 native host boundary tests and140 ownership/transport library tests, with source/HEAD/runner/Binaryen unchanged through terminal and archived. The original size guard now measures3833 bytes per ordinary definition (bound3900),13920 split versus13894 grouped code growth,1 extra byte per split form (bound128), and0 scoped per-form overhead (bound plain+32). All original fixtures, assertions, counts and fuel remain unchanged.
+
+The focused lowering proves only literal :macro absence, loads the actual canonical Var once, emits the proven flag directly and discards only unread publication returns in ordinary non-resumable eval code. Publication effects still execute; all instruction/capture/terminator uses preserve their result stores. Runtime storage ABI and resumable layouts are unchanged. Generic local compaction was removed. The earlier negative experiments and deliberate workspace stop remain qualified below; these scoped results do not establish exact workspace, independent review or final-head CI success. Broader source checks require their own receipts.
+
+### Eval locals and grouped declaration code growth
+
+The first metadata lookup optimization reduces ordinary definition growth from4957 to3866 bytes, below the unchanged3900 bound, but the original grouped-growth assertion still returns101. Diagnostic output records14580 split code bytes versus14657 grouped, a77-byte excess. Removing a single-use HIR binding produces identical sizes and was reverted to preserve the original evaluation order. Artifact-frame-after, artifact-frame-growth-diagnostics and artifact-frame-fused-normalizer retain these actual negative outcomes and source overlays.
+
+The component capture reproduces the same measurements with all original assertions intact. Generated grouped eval code has703 locals,194 never read, versus59 locals/33 unread in each split eval; local indices beyond127 require longer encodings. A compaction experiment passes its executable parameter/tee/branch/import-effect regression but still fails the grouped guard:13820 split versus14281 grouped growth. That generic emission change and its test were removed from the proposed implementation; its exact source and negative results remain in artifact-frame-compact-local-offsets. The focused follow-up instead loads the actual canonical Var once and reuses that object for normalization and publication, eliminating a redundant hidden-cell lookup without capturing its logical root value. The temporary component capture hook has been removed; the existing guard retains all assertions and bounds, with earlier measurement output added. Current-source execution still requires its own receipts.
+
+### Namespace artifact-size regression and metadata lowering
+
+CI job140173727681 on1d36330c fails the original runtime_namespaces::aot_namespace_frame_size_is_bounded_per_form guard. The unchanged local guard in artifact-frame-before also returns101 with the same component sizes:4957 bytes per ordinary definition, above the existing3900 bound, and grouped code growth larger than split code growth. No threshold, fixture, grouping, cache or fuel setting was changed.
+
+The exact workspace run in exact-workspace-registered-var-metadata was deliberately stopped for this reproduced regression: actual Cargo-15 after3320.44s, with source/HEAD/runner/Binaryen conserved and its terminal archive retained. It is not a full workspace pass. The code-size follow-up folds only provably absent literal :macro keys to false, avoiding two original core calls per ordinary definition. Metadata expressions and normalization still execute, and dynamic keys or a literal :macro retain the original lookup path. Its final-source validation needs separate receipts; earlier scoped and CI passes below retain their original source qualifications.
+
+### Registered Var metadata validation checkpoint
+
+The latest registered-root source returns0 for all nine commands in `results/native-host-foundation/metadata-write-core-gates-registered-vars/commands.json`:48 native host boundary tests,140 ownership/transport library tests, the original AOT metadata regression, two runtime-capability tests, six Var/Symbol controls,19 original suite guards, Java/Node-free bootstrap reproduction with four artifact-execution tests, and source/provenance verification. The raw capture retains all5530 ordered IDs and their decisions:5325 host passes,101 guest judgments,105 failures,64 blocked namespaces,1408 unexecuted and zero skips. This is equality with the reviewed compatibility baseline, not full language success.
+
+`metadata-write-source-projections/commands.json` records the original export metadata, constructor source, source-hint, binding-record and field-record targets plus Python script tests. The exact command counts are retained in `current-acceptance-validation.json`. Source/HEAD/runner/Binaryen stayed unchanged through each actual terminal; overlays and runners are archived. All114 original affected test bodies remain byte-identical on exactly one layer. The26 foundation capability counterparts are unchanged from4ed74017; three new integration regressions extend coverage. Full workspace validation, independent review/fixes and final-head CI still require their own final-source evidence. Earlier deliberate stops and negative results below remain qualified.
+
+### Metadata write ownership and canonical Var storage
+
+The corrected staged-source regression returns101 on4ed74017 plus only the new test: six observations discard identical-map helper writes across Runtime/Macro. No-write, changed-map and private-field rejection controls pass. The earlier positive direct-field fixture was invalid because built-in internals remain private; retain that negative receipt with this limitation. The corrected source/runner archive is metadata-write-ownership-before-corrected-admission.
+
+The implementation classifies only the converted declaration's final metadata publication as a staging write, after user expressions and normalization. Real language writes clear an independent metadata ownership marker, including identical-map writes. The optional native hook authenticates the original descriptor, registered hidden Var root and actual logical binding cell, then performs the actual write with its marker. Symbol text selects candidates only. Root rollback preserves metadata ownership independently. Metadata-write-ownership-checked-roots records targeted actual0 before the later authentication refinement; receipts retain exact source qualifications. The pinned identical-metadata-primary control returns `[true true true :root]`; source staging itself follows the documented native journal contract.
+
+The pure-normalizer batch returns0 for all nine commands:48 host boundary tests,140 ownership/transport library tests, the original AOT regression, two runtime-capability tests, six Var/Symbol controls, all19 original suite guards and Java/Node-free bootstrap reproduction with four artifact tests, plus source/provenance checks. Case200M/map300M and the complete raw baseline counts remain unchanged. The first broader batch's three failures and the diagnostic runs remain archived. Compiler normalization now reads stored metadata directly, avoiding IMeta's temporary macro-flag cleanup; the existing user helper is unchanged.
+
+The Unbound-replacement primary returns `[true false]`: assigning another Var's genuine Unbound root preserves that object and leaves the target unbound. Thus the root's mutable back-reference cannot authenticate canonical Var identity. Metadata-canonical-registry-before returns101 in both phases; metadata-canonical-registry-after returns0 after exact hidden-root/binding-cell authentication. Broader current-source checks still require separate receipts.
+
+The exact workspace run in exact-workspace-after-baseline-review was deliberately stopped to address this gap: actual Cargo-15 after2526.73s, with source/HEAD/runner/tools conserved. It is not a workspace pass. Broader guards and bootstrap on the changed source require their own receipts; earlier receipts below retain their original source qualifications.
+
+### Core suite baseline and independent boundary acceptance controls
+
+The complete original clojure_test_suite target passes19 guards, including case200M/map300M. The ownership/reentry/transport library filter passes139 tests. Java/Node-free bootstrap reproduction returns0 and its artifact-execution target passes4 tests. Twenty-six independent core counterparts cover live values, publication, authority, phase/context, cancellation/fuel and exact exception payloads; all pass. Production inputs are unchanged across the positive batches.
+
+The raw native101 before ledger correction contains5,530 ordered observations. Review preserves every non-eval decision from the previous full consumer capture, requires all61 Symbol and34 Var assertions (including eight existing guest judgments), and permits only two removed namespace failures plus three advanced diagnostics. The native0 rerun preserves every before decision with counts pass5325, guest101, fail105, blocked namespaces64, unexecuted1408 and skipped0. Public eval is intentionally absent from this foundation; its34 assertions remain the consumer's responsibility.
+
+Use results/native-host-foundation/baseline-before-review/review-baseline.py for the recorded audit; current-acceptance-validation.json links exact positive commands and source qualifications. The original native101, initial adapter failure and the deliberately stopped43-minute workspace run remain archived. The adapter correction routes JSON-provided program text through the capability; expected observations remain unchanged. Exact workspace success, independent review and final-head CI are separate required gates.
+
+### Independent Var and Symbol conformance controls
+
+Two integration controls used public eval indirectly, including through the retained Var primary fixture. Their core counterparts now call the installed capability directly, preserving every assertion and all40 identifier rows in both phases. The original wrapper controls remain unchanged on #516. The complete portable_symbol_conversion target passes6 tests with frozen inputs; production inputs are unchanged from the earlier positive core batches. The combined focused record is34 Rust test executions, distinct from #516's separate34 eval assertions. Full baseline, bootstrap, review and final-head CI remain separate gates.
+
+### Quoted Var metadata and independent core validation
+
+The core foundation specifies host/Macro ownership and Var publication in docs/runtime/host-macro-boundary.md. Quoted declaration data now uses original core constructors while expressions retain live user resolution. The original AOT option-schema constructor-redefinition test changes from actual101 to actual0. Primary controls distinguish initializer failure from metadata failure after the new root is bound; Runtime and Macro match all three transitions.
+
+Seven frozen command groups across three positive batches pass28 Rust executions: the original AOT regression, native_host_boundary/runtime_evaluation, three direct-capability owner/service/budget controls, bounded scalar export, the new definition transition regression, original export precedence and all nine constructor AST projections in both caller phases. Production inputs are identical across those batches. Python364 passes with its exact source qualification; core/Var provenance and core import checks pass. See results/native-host-foundation/focused-validation.json, per-command receipts/logs and archived source overlays/runners. The initial missing export dependency-root101 and deliberately interrupted extraction batch remain explicit.
+
+Ten additional original public-eval-dependent tests stay on #516; three also have independently validated core capability variants. Full ownership/source/ABI coverage, bootstrap, exact two-thread workspace validation, issue acceptance, independent review and final-head CI are separate required gates. No publication, promotion or completion is implied by these scoped results.
+
+### Native host/Macro and Var foundation extraction
+
+The core boundary is specified in [host-macro-boundary.md](../runtime/host-macro-boundary.md), with ownership, transport, retirement, dynamic context and Var publication transition/test maps. The foundation excludes the public language eval wrapper and its original body guard; those remain in #516. Numeric implementation remains in #518. Fourteen original tests move unchanged to CLI native_host_boundary; public-eval controls and historical execution archives remain on #516. Test-body hashes and the extraction map distinguish code movement from new validation.
+
+Use the native_host_boundary, runtime_evaluation, portable_aot_options and original pinned case/map targets, then ownership library, source/macro/ABI controls, bootstrap reproduction and the exact two-thread workspace baseline. Existing historical successes do not establish validation of the extracted tree. Current failures, commands and results belong in the linked issues and scoped receipts; extraction alone does not satisfy acceptance or promotion.
+
+Earlier handoff follows.
+
 ## Object-overload random controls and complete assert execution (2026-11-23)
 
 The e89e8ad2 core-only gate returns0 in654.236s (including a library rebuild),
@@ -34184,3 +34371,61 @@ The implementation, tests, fixtures, manifests and archived native inputs are
 unchanged from447c1957, so the frozen61397661 native results retain the
 source-equivalence qualification above. Final-head remote checks remain
 required after this documentation-only correction.
+
+
+## Exact frozen-source host/Var workspace execution (2026-11-27)
+
+On implementation `4b3a95c531c6809d1e7f391b80504bc89200e49b`,
+`cargo test --workspace --locked -- --test-threads=2` returned 0 after
+12,892.661821860354 seconds: 2,588 test executions passed across 377 successful
+result groups; 15 existing ignored tests remain explicit. All 8,784 captured
+inputs, HEAD, recorder and both Binaryen tools remained unchanged through the
+actual terminal. The complete receipt, raw log, capture and archived runner are
+under `results/native-host-foundation/exact-workspace-artifact-publication/`.
+The three earlier interrupted full executions retain their actual negative
+terminals.
+
+The fresh capture retains 5,530 ordered IDs and identical per-row decisions and
+reviewed failures. Its comparison reports 5,325 host passes, 101 guest judgments,
+105 known failures, 64 failed namespaces, 1,408 unexecuted and 0 skips. This is
+baseline conservation, not complete language success; the capture has no public
+eval binding. `artifact-workspace-capture-audit.json` retains the capture hash and
+comparison. Host 48, namespace 10 with strict artifact bounds, compiler library
+252, catalog 5, some-fn's 372 controls/47 uncached components, the original AOT
+constructor regression, 397 pinned pipeline cases, WIT numeric 14 and ABI 62 all
+execute successfully within that full run. Bootstrap/source/provenance/Python
+receipts retain their separate source qualifications.
+
+## Interrupted metadata publication and evaluation result typing controls (2026-11-27)
+
+Independent review of `4cc4e290` reproduced rejected metadata surviving a fuel
+cut after publication: both caller phases restored root 23 but retained doc
+"after" instead of "before". Cuts 8,761 through 8,789 exposed the leak; 8,768
+repeated three times per phase. The broad standalone probe returned 42 to signal
+detection. Its refined run completed observations including leaks; that exit 0
+is not a conformance pass. Original source/head/library hashes and the earlier
+terminal-adjacent negative probe are preserved under
+`results/native-host-foundation/review-publication-cut/`. The same probe showed
+unary arithmetic accepting strings and booleans returned by the internal
+evaluation capability while equivalent identity controls threw.
+
+Declaration execution now records actual staged metadata on either return
+outcome before propagating the original result. Reserved native journal reads
+require no guest execution or fuel. `EvaluateForm` returns the compiler's general
+value type so arithmetic checks the actual operand. New black-box Runtime/Macro
+regressions retain old-root/old-metadata expectations at five fuel cuts and
+normal publication without the cut, plus invalid arithmetic operands and numeric
+identity/scale controls. They return actual Cargo 101 before the fixes and 0
+afterward. An initial expected-vector construction compile error is retained
+separately and is not execution evidence.
+
+All 12 commands in `results/native-host-foundation/review-fixes-core-gates/commands.json`
+return 0 with inputs, runner and Binaryen conserved: 50 host tests, 140 library
+controls, 10 namespace tests, the original AOT constructor regression, two runtime
+capability tests, six Var/Symbol tests, nine pinned source/budget test executions
+across workspace targets, Java/Node-free bootstrap with four artifact tests,
+17 metadata/source projections, provenance/import checks and 364 Python tests.
+There are 239 Rust test executions in this scoped batch. Source fixtures,
+case200M/map300M, artifact bounds 3900/128/+32 and guest/skip/comparator rules are
+unchanged. The earlier full success is tied to implementation `4b3a95c5`, before
+these repairs; it is not a repaired-source full-run result.

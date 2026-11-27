@@ -1,0 +1,23 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/isolated-source-call-primary-prepared/expression.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 1.450624704360962,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "controls": 20,
+  "source_sha256": "4bd2e2af59a2c66281358b5a8940c23ba38c25c89bb58cc044907c82c04cf210",
+  "native_source_sha256": "ad0edfca12a6a666032cb7e4e5144a371a17cb5d2d7ff25b05457e6f10331398",
+  "native_setup_sha256": "9575587bf9bd3e03a6d68cc694a6b5881f6462bee613f0f0d58e8030ee7b15df",
+  "stdout_sha256": "a7c718f2692e8e5c82b564bdcb5e622a5dfbeef03bea318c2102027fdbcee482",
+  "qualification": "Fresh primary only. Native setup must execute via CompiledMacros.define in isolated SOURCE host, not public eval in caller Store. No native bridge or acceptance pass claimed."
+}

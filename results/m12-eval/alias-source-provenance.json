@@ -1,0 +1,8 @@
+{
+  "upstream": "Clojure1.12.6",
+  "upstream_alias_sha256": "b8ad08841efd7372a09c403f1b958cb87262211a97164ca9637ee5a419588748",
+  "adapted_sha256": "d27b810dc628c7fbdd272b228664d57e4144a3496eecff76a9ab49a71778d92c",
+  "license": "runtime/core-import/epl-v10.html",
+  "adaptation": "Retain complete public alias signature, docstring, added/static metadata and evaluation of the-ns before Namespace.addAlias. Implement addAlias against the actual Namespace state array with Symbol admission, idempotence and atomic conflicting-target errors. Native fixtures establish the primary namespaces through ns forms and use the-ns for their already-existing identities; create-ns remains a separate public API gap. Native Error/catch syntax and canonical core spelling are explicit platform adaptations.",
+  "qualification": "Source adaptation and pinned primary verification only; native pass claims require separate frozen-input receipts."
+}

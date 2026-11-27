@@ -303,11 +303,9 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         LocalGet(1),
         RefTestNonNull(HeapType::Concrete(ARGS)),
         If(BlockType::Empty),
-        LocalGet(1),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        I32Const(1),
-        I32Ne,
+        LocalGet(0),
+        Call(b.names["native-prototype-carrier-valid"]),
+        I32Eqz,
         If(BlockType::Empty),
     ];
     nominal::error(&mut code);
@@ -468,11 +466,9 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 5] {
         LocalGet(2),
         RefTestNonNull(HeapType::Concrete(ARGS)),
         If(BlockType::Empty),
-        LocalGet(2),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        I32Const(1),
-        I32Ne,
+        LocalGet(0),
+        Call(b.names["native-prototype-carrier-valid"]),
+        I32Eqz,
         If(BlockType::Empty),
     ]);
     nominal::error(&mut inherited_code);

@@ -25,6 +25,7 @@ fn keyword(name: &str) -> Value {
 pub fn form_to_value(form: &Form) -> Result<Value, Error> {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let value = match &form.kind {
+            Kind::NativeConstant { .. } => return Err(Error::new("Native constants cannot be serialized as syntax")),
             Kind::Nil => Value::Nil,
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),

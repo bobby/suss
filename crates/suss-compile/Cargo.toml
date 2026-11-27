@@ -27,6 +27,7 @@ suss-compile-generator = { path = "../suss-compile-generator" }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 wasmtime = { workspace = true }
 getrandom = "=0.3.4"
+scoped-tls-hkt = "=0.1.5"
 
 [dev-dependencies]
 wasmtime = { workspace = true }

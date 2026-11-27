@@ -26,6 +26,14 @@ fn repl(source: &str) -> (String, String) {
     )
 }
 
+fn display_uid(line: &str, prefix: &str) -> u64 {
+    let tail = line.strip_prefix(prefix).expect("expected object class and UID prefix");
+    let (hex, _) = tail.split_once(' ').expect("object display payload");
+    let uid = u64::from_str_radix(hex, 16).expect("hexadecimal object identity");
+    assert!((1..=9_007_199_254_740_991).contains(&uid));
+    uid
+}
+
 #[test]
 fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
     let (out, err) = repl(concat!(
@@ -46,6 +54,14 @@ fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
         "\"\\b\"\n",
     ));
     assert_eq!(err, "");
+    let lines = out.lines().collect::<Vec<_>>();
+    assert_eq!(lines.len(), 15);
+    // Identity allocation order includes compiler-owned objects and is not a
+    // Clojure printing contract. Preserve every other byte and verify that the
+    // array's two identity spellings agree, with distinct actual object IDs.
+    let array_uid = display_uid(lines[10], "#object[\"[Ljava.lang.Object;\" 0x");
+    let atom_uid = display_uid(lines[12], "#object[suss.core.Atom 0x");
+    assert_ne!(array_uid, atom_uid);
     assert_eq!(
         out,
         concat!(
@@ -59,13 +75,31 @@ fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
             "user.T\n",
             "user.T\n",
             "#queue [1]\n",
-            "#object[\"[Ljava.lang.Object;\" 0x1 \"[Ljava.lang.Object;@1\"]\n",
+            "#object[\"[Ljava.lang.Object;\" 0x<array-id> \"[Ljava.lang.Object;@<array-id>\"]\n",
             "Pr\n",
-            "#object[suss.core.Atom 0x2 {:status :ready, :val 1}]\n",
+            "#object[suss.core.Atom 0x<atom-id> {:status :ready, :val 1}]\n",
             "\"a\\nb\"\n",
             "\"\\b\"\n",
-        )
+        ).replace("<array-id>", &format!("{array_uid:x}"))
+         .replace("<atom-id>", &format!("{atom_uid:x}"))
     );
+}
+
+#[test]
+fn object_display_identity_is_stable_for_repeated_array_and_atom_values() {
+    let (out, err) = repl("(def a (array 1 2))\na\na\n(def b (atom 1))\nb\nb\n");
+    assert_eq!(err, "");
+    let lines = out.lines().collect::<Vec<_>>();
+    assert_eq!(lines.len(), 6);
+    assert_eq!(lines[0], "#'user/a");
+    assert_eq!(lines[3], "#'user/b");
+    assert_eq!(lines[1], lines[2]);
+    assert_eq!(lines[4], lines[5]);
+    let a = display_uid(lines[1], "#object[\"[Ljava.lang.Object;\" 0x");
+    let b = display_uid(lines[4], "#object[suss.core.Atom 0x");
+    assert_ne!(a, b);
+    assert_eq!(lines[1], format!("#object[\"[Ljava.lang.Object;\" 0x{a:x} \"[Ljava.lang.Object;@{a:x}\"]"));
+    assert_eq!(lines[4], format!("#object[suss.core.Atom 0x{b:x} {{:status :ready, :val 1}}]"));
 }
 
 #[test]
@@ -117,7 +151,7 @@ fn unbound_names_and_errors_are_language_errors() {
         "(throw 31)\n",
         "(+ 1 2)\n",
     ));
-    assert_eq!(out, "#<undefined>\n#'user/d\n[nil]\n3\n");
+    assert_eq!(out, "#<undefined>\n#'user/d\n[#object[suss.core.VarUnbound 0x1 \"Unbound: #'user/d\"]]\n3\n");
     assert_eq!(
         err,
         concat!(

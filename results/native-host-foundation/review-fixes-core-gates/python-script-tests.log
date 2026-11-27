@@ -1,0 +1,20 @@
+............................................................................................................................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 364 tests in 18.441s
+
+OK
+PASS 112 closed Error cases/driver; native pending
+PASS 112 exact pinned Error constructor/ancestry/effect observations
+38 pinned portable source observations match exactly
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 33 pinned record helper observations
+PASS 14 pinned record iterator/not-empty observations
+PASS 7 pinned reify prerequisite observations
+PASS 132 closed sorted tree cases/driver; not executed
+PASS 132 independent pinned sorted tree observations
+PASS 132 independent pinned sorted tree observations
+66 raw pin matches
+45 pinned portable source observations match exactly
+PASS 52 closed raw tree cases/driver; not executed
+PASS 52 independent pinned raw tree observations
+PASS 52 independent pinned raw tree observations

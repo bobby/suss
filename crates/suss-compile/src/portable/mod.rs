@@ -70,6 +70,26 @@ pub enum MacroReload {
 }
 pub const DEFAULT_OPERATION_FUEL: u64 = 10_000_000;
 pub trait ExpansionHost {
+    /// Native Compiler.eval interns a real Var when analyzing a def, before
+    /// its initializer is compiled or executed. Portable source hosts have no
+    /// caller Store to mutate and retain their ordinary publication boundary.
+    #[doc(hidden)]
+    fn intern_native_var(&mut self, _owner: u64, _global: &resolve::Global,
+        _declaration: &suss_reader::forms::Form, _doc: Option<&[u16]>) -> Result<(), Diagnostic> { Ok(()) }
+    /// Materialize an actual committed source-transformer Var in a native
+    /// caller. Portable hosts supply no native binding authority.
+    #[doc(hidden)]
+    fn intern_source_macro_var(&mut self, _owner: u64, _global: &resolve::Global,
+        _span: Range<usize>) -> Result<Option<u64>, Diagnostic> { Ok(None) }
+    /// Incorporate declarations actually executed by a native transformer.
+    /// Ordinary isolated source hosts leave the enclosing phase unchanged.
+    #[doc(hidden)]
+    fn refresh_native_environment(&mut self, _environment: &mut resolve::Environment, _span: Range<usize>) -> Result<(), Diagnostic> { Ok(()) }
+    /// Native composition may retain the same persistent host after preparation.
+    /// Portable analysis never inspects or serializes this application context.
+    #[doc(hidden)]
+    fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> { None }
+
     /// Cumulative native work allowance for one preparation request. Compiled
     /// hosts return their configured Session allowance and debit guest/host work
     /// from that Session as well. The compiler enforces this fallback even when
@@ -121,6 +141,10 @@ pub trait ExpansionHost {
     ) -> Result<(), Diagnostic> { Ok(()) }
     fn end_source_module(&mut self) -> Result<(), Diagnostic> { Ok(()) }
     fn declared_macro_exports(&self, _namespace: &str) -> Option<Vec<String>> { None }
+    /// The native Store holding the actual transformer root, if known. This
+    /// is compiler authority, never a serialized GC reference or source token.
+    #[doc(hidden)]
+    fn macro_binding_owner(&self, _namespace: &str, _name: &str) -> Option<u64> { None }
     fn load_macro_namespace(
         &mut self,
         _namespace: &str,
@@ -347,7 +371,10 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     let dependencies = request.artifact_dependencies();
     let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
-    Ok(PreparedFragment { wasm, environment: analyzed.environment,
+    let mut environment = analyzed.environment;
+    environment.native_evaluation_namespace = false;
+    environment.clear_native_macro_status();
+    Ok(PreparedFragment { wasm, environment,
         cells: analyzed.cells, namespace_directive: analyzed.namespace_directive,
         definition: hir::result_definition(&analyzed.hir) })
 }
@@ -370,6 +397,21 @@ impl<'a> ExpansionRequest<'a> {
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
+    fn intern_native_var(&mut self, owner: u64, global: &resolve::Global,
+        declaration: &suss_reader::forms::Form, doc: Option<&[u16]>) -> Result<(), Diagnostic> {
+        self.host.intern_native_var(owner, global, declaration, doc)
+    }
+    fn intern_source_macro_var(&mut self, owner: u64, global: &resolve::Global,
+        span: Range<usize>) -> Result<Option<u64>, Diagnostic> {
+        self.host.intern_source_macro_var(owner, global, span)
+    }
+    fn refresh_native_environment(&mut self, environment: &mut resolve::Environment, span: Range<usize>) -> Result<(), Diagnostic> {
+        self.host.refresh_native_environment(environment, span)
+    }
+    fn persistent_macro_context(&self) -> Option<&(dyn std::any::Any + Send + Sync)> {
+        self.host.persistent_macro_context()
+    }
+
     fn expansion_work_fuel(&self) -> u64 { self.remaining }
     fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
         self.host.charge_expansion_work(work, span.clone())?;
@@ -397,6 +439,7 @@ impl ExpansionHost for ExpansionRequest<'_> {
     }
     fn end_source_module(&mut self) -> Result<(), Diagnostic> { self.host.end_source_module() }
     fn declared_macro_exports(&self, namespace: &str) -> Option<Vec<String>> { self.host.declared_macro_exports(namespace) }
+    fn macro_binding_owner(&self, namespace: &str, name: &str) -> Option<u64> { self.host.macro_binding_owner(namespace, name) }
     fn load_macro_namespace(&mut self, namespace: &str, span: Range<usize>) -> Result<Vec<String>, Diagnostic> {
         self.host.load_macro_namespace(namespace, span)
     }

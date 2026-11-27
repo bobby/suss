@@ -1,0 +1,22 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/alias-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7714345455169678,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "controls": 15,
+  "source_sha256": "a7e80a72d44b92dd26ae77e3bb8fcb0487a6f61b7a63a0c38b405b1242fe2be4",
+  "stdout_sha256": "a3c73bf9e7f21b7b26eb54ab73a575de675e18960f5131deb63e06a20d93921e",
+  "upstream_alias_sha256": "b8ad08841efd7372a09c403f1b958cb87262211a97164ca9637ee5a419588748",
+  "qualification": "Research for the public alias dependency of native eval. No source adaptation or native pass is established."
+}

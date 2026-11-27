@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss",
+    "--no-cache",
+    "-e",
+    "[(try (eval '(throw (ex-info \"boom\" {:value 1N}))) (catch :default e [(ex-message e) (ex-data e)])) (let [v (eval '(defmacro throws-data [] (throw (ex-info \"boom\" {:value 1N}))))] (try (v nil nil) (catch :default e [(ex-message e) (ex-data e)])))]"
+  ],
+  "exit_code": 0,
+  "seconds": 25.456170558929443,
+  "head": "a881b16507460924821ff14426fa3d6a0aa0d7a4",
+  "binary_sha256": "1e281b56b1376bd22229bf6945c451cc3b6545517ee55aa51389f3e41daa0b45"
+}

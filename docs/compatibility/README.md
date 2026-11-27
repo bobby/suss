@@ -1,3 +1,7 @@
+### Native host/Macro and live Var contract
+
+See [the core boundary contract](../runtime/host-macro-boundary.md) for actual Store ownership, authenticated live-value transport, dynamic/error restoration and the Var definition/publication transition table. Runtime and isolated Macro namespaces retain their existing separation. Public eval and numeric completion are separate consumers. Source/license provenance and raw primary observations are retained; successful execution must be established on each final source tree.
+
 The complete Clojure assert form has a compiled source adaptation in
 [assert provenance](bootstrap/clojure-assert.json). Its original arities,
 compile-time flag checks, branches and message expressions are retained;

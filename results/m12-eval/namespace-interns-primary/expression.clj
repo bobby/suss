@@ -1,0 +1,2 @@
+(prn [(do (def catalog-live 11) (let [n (:ns (meta #'catalog-live)) m (ns-interns n)] [(var? (get m 'catalog-live)) (identical? #'catalog-live (get m 'catalog-live)) (= 11 @(get m 'catalog-live)) (identical? n (:ns (meta (get m 'catalog-live))))]))
+(let [n (:ns (meta #'identity)) m (ns-interns n)] [(var? (get m 'identity)) (identical? #'identity (get m 'identity)) (identical? n (:ns (meta (get m 'identity)))) (identical? #'when-let (get m 'when-let)) (.isMacro (get m 'when-let))])])

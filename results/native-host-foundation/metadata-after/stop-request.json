@@ -1,0 +1,6 @@
+{
+  "reason": "Deliberate extraction checkpoint: additional public-eval-dependent frontend/unit tests need separation before continuing independent foundation validation; not a timeout or pass.",
+  "pid": 1230105,
+  "command": "/home/bobby/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --workspace --locked --test native_host_boundary --test portable_aot_options --test runtime_evaluation -- --nocapture --test-threads=2 ",
+  "time": 1795712927.2107997
+}

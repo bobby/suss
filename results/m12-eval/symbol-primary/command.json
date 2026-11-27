@@ -1,0 +1,23 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/symbol-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6312606334686279,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "controls": 27,
+  "source_sha256": "fb00d66a374100cfa4927c2d615334fa93e9ed5bcdb565348bf53936f769213e",
+  "stdout_sha256": "b3ba393f4be3056a471c12febe6ff4c4f6a4136b9983a5dd070ab16928bc386b",
+  "upstream_symbol_sha256": "83212ed535b9ec8ff589a89fc7c83ce2f736efd717153983ecee19af5ff9f1b3",
+  "entry_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "qualification": "Pinned Clojure symbol/Var controls only. Native implementation and complete-body results require separate frozen receipts."
+}

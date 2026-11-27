@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-case-budget-source/results/m12-eval/macro-environment-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.5983161926269531,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "controls": 3,
+  "source_sha256": "6c8010c7511b179aabb35d70c4aa75cd2075c77b95b9bdfe5281540fced71a0b",
+  "stdout_sha256": "28812fb0067c06b48fa88232b5e4ca9975aef6803c70858c6553436e07a64d8c",
+  "qualification": "Pinned primary only; native environment controls have separate receipts."
+}

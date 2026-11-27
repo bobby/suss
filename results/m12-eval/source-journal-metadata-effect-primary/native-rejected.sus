@@ -1,0 +1,4 @@
+(defmacro staged-reload "rejected" [] 99)
+(defmacro effect-before-rejection [] (suss.core/update-binding-var-meta! #'staged-reload (assoc (meta #'staged-reload) :doc "effect")) nil)
+(effect-before-rejection)
+(no-such-source-initializer)

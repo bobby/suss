@@ -173,6 +173,18 @@ fn index(b: &Builder, kind: usize, data: u32, index: u32, value: u32, length: u3
     code
 }
 
+fn native_operation(b: &Builder, operation: i32, first: Option<u32>, second: Option<u32>) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut body = native_values::kind(b, 0, native_values::OBJECT_ARRAY);
+    body.push(If(BlockType::Empty));
+    body.extend(native_values::operation(b, 0, operation, vec![I32Const(0)],
+        vec![first.map_or_else(|| sentinel_value(NIL), LocalGet)],
+        vec![second.map_or_else(|| sentinel_value(NIL), LocalGet)]));
+    if operation == native_values::ARRAY_ELEMENTS { body.push(RefCastNonNull(HeapType::Concrete(ARGS))); }
+    body.extend([Return, End]);
+    body
+}
+
 pub(super) fn functions(b: &mut Builder) {
     use Instruction::*;
     b.function(
@@ -198,6 +210,8 @@ pub(super) fn functions(b: &mut Builder) {
         RefCastNonNull(HeapType::Concrete(PACKED)),
         StructGet { struct_type_index: PACKED, field_index: 0 },
         RefTestNonNull(HeapType::Concrete(ARGS)),
+        If(BlockType::Result(ValType::I32)), I32Const(1), Else,
+        LocalGet(0), Call(b.names["native-value-kind"]), I32Const(native_values::OBJECT_ARRAY), I32Eq, End,
         End,
     ];
     body.extend(boolean());
@@ -435,7 +449,9 @@ pub(super) fn functions(b: &mut Builder) {
         &[VALUE],
         &[ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })],
         &[(2, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })), (1, VALUE)],
-        &[
+        &{
+            let mut body = native_operation(b, native_values::ARRAY_ELEMENTS, None, None);
+            body.extend([
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(PACKED)),
             I32Eqz,
@@ -466,10 +482,13 @@ pub(super) fn functions(b: &mut Builder) {
             ArrayLen,
             ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
             LocalGet(2),
-        ],
+            ]);
+            body
+        },
     );
 
-    let mut body = data(1).to_vec();
+    let mut body = native_operation(b, native_values::ARRAY_LENGTH, None, None);
+    body.extend(data(1));
     each_kind(&mut body, 1, |kind| {
         let mut code = cast_storage(kind, 1).to_vec();
         code.extend([ArrayLen, Call(b.names["long-box-u32"]), Return]);
@@ -477,7 +496,8 @@ pub(super) fn functions(b: &mut Builder) {
     });
     b.function_with_locals("packed-array-length", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
     // Locals: 2 storage, 3 index, 4 index value, 5 length.
-    let mut body = data(2).to_vec();
+    let mut body = native_operation(b, native_values::ARRAY_GET, Some(1), None);
+    body.extend(data(2));
     each_kind(&mut body, 2, |kind| {
         let mut code = index(b, kind, 2, 3, 4, 5);
         code.extend(cast_storage(kind, 2));
@@ -496,7 +516,8 @@ pub(super) fn functions(b: &mut Builder) {
     // aset converts with the checked cast, and core's constructors with the
     // unchecked one; both return the stored value. Locals as above.
     for (name, checked) in [("packed-array-set", true), ("packed-array-store", false)] {
-        let mut body = data(3).to_vec();
+        let mut body = native_operation(b, native_values::ARRAY_SET, Some(1), Some(2));
+        body.extend(data(3));
         each_kind(&mut body, 3, |kind| {
             let (_, checked_cast, unchecked_cast, _) = KINDS[kind];
             let cast = if checked { checked_cast } else { unchecked_cast };
@@ -596,7 +617,8 @@ pub(super) fn functions(b: &mut Builder) {
     set_locals.extend((0..KINDS.len()).map(|kind| (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(storage(kind)) }))));
     b.function_with_locals("packed-array-set-3", &[VALUE, VALUE, VALUE], &[VALUE], &set_locals, &body);
     // Locals: 1 source storage, 2 length, 3 copy.
-    let mut body = data(1).to_vec();
+    let mut body = native_operation(b, native_values::ARRAY_CLONE, None, None);
+    body.extend(data(1));
     each_kind(&mut body, 1, |kind| {
         let ty = storage(kind);
         let mut code = cast_storage(kind, 1).to_vec();
@@ -632,7 +654,16 @@ pub(super) fn functions(b: &mut Builder) {
     // which pass in-bounds ranges; `array.copy` traps otherwise. Locals: 5
     // source storage, 6 destination storage.
     let unbox = |local| [LocalGet(local), Call(b.names["long-unbox"]), I32WrapI64];
-    let mut body = data(5).to_vec();
+    let mut body = native_values::kind(b, 0, native_values::OBJECT_ARRAY);
+    body.extend(native_values::kind(b, 2, native_values::OBJECT_ARRAY));
+    body.extend([I32Or, If(BlockType::Empty)]);
+    body.extend(native_values::kind(b, 0, native_values::OBJECT_ARRAY));
+    body.extend([If(BlockType::Result(VALUE)), LocalGet(0), Else, LocalGet(2), End,
+        I32Const(native_values::ARRAY_COPY), I32Const(0)]);
+    for local in 0..5 { body.push(LocalGet(local)); }
+    body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: 5 }, sentinel_value(NIL),
+        Call(b.names["native-value-operation"]), Return, End]);
+    body.extend(data(5));
     body.extend([
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(PACKED)),

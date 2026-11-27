@@ -1,0 +1,57 @@
+{
+  "review_head": "d4674f2a8da5688921ef3d8546fa8863dccc0db7",
+  "implementation_head": "a97bfaac7fe72bb2366297a263108fb347fb74aa",
+  "qualification": "Independent exploratory publication-cut probe linked against existing implementation library; no Cargo or source/test edits.",
+  "input_sha256": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-followup-d4674f2a/probe.rs": "4b33ee0e53c378eb52a3f45409e51cda4f5af8c93ebcaae81f924d3f81ca3b5d",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib": "53c54962977370e3c329b4b92ac13890447d9c85d3888b305ef1a0ff18c42068",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss": "73d40f34c19847b3338ba1b9312987b62e69e2eec31a3c933b225858d9e5940c",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_macros.rs": "475e8e692ce972e903aa9dea75afde8e3ef1545d77412c6adf213dcc28a2c254",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs": "86864f9eacdca321fb40e4a2fcbfbc4bdefc869e98073a4bdfd5c1a49d1fe783",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs": "26e91e94e7b5718041070a879e212f7c8eaa03e9e5b86d7fed3fa67e58b68ca0"
+  },
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-followup-d4674f2a/probe.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps",
+        "-o",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-followup-d4674f2a/probe"
+      ],
+      "complete": true,
+      "pid": 3267162,
+      "exit_code": 0,
+      "seconds": 0.48978709196671844
+    },
+    {
+      "name": "execute",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-followup-d4674f2a/probe",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation"
+      ],
+      "complete": true,
+      "pid": 3267182,
+      "exit_code": 0,
+      "seconds": 5.508062053006142
+    }
+  ],
+  "complete": true,
+  "input_unchanged": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/review-followup-d4674f2a/probe.rs": true,
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/deps/libsuss_compile-d24d0e8fe0a40796.rlib": true,
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-some-fn-target/debug/suss": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_macros.rs": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/operations.rs": true,
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/native-host-var-foundation/crates/suss-compile/src/portable_session/evaluation/native_values/macro_vars.rs": true
+  },
+  "head_unchanged": true
+}
