@@ -48,8 +48,7 @@
     "archive_preserved": true
   },
   "validation_pending": [
-    "follow-up independent xhigh review",
-    "CI on any later published head"
+    "CI on final published technical evidence/review head"
   ],
   "historical_ci": "d05 CI45940948916 all10jobs success/2602executions predates this newly found defect and repair; not validation of changed source.",
   "candidate_history": [
@@ -131,5 +130,6 @@
     "all10_jobs_actual_success": true,
     "test_executions": 2603,
     "audit": "prepared-var-ci-audit.json"
-  }
+  },
+  "independent_review_followup": "independent-review-followup.json; no actionable findings"
 }

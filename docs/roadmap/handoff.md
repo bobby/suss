@@ -1,3 +1,26 @@
+## Independent follow-up review controls (2026-11-27)
+
+Independent xhigh review of `d4674f2a8da5688921ef3d8546fa8863dccc0db7` against
+main `5ce2826cd6b032ebaf7c589d80df396e4521b399` returned no actionable findings.
+The review checked all fourteen original core acceptance criteria and the raw
+baseline results for all 57 mapped controls plus three repair regressions.
+
+Standalone probes returned compile 0 / execute 0 in both phases. They checked
+unary nonnumeric evaluation results, fresh escaped Vars at fourteen post-effect
+fuel cuts including 0/8761/8768/20000, later source rejection, and completed
+nested native definitions with metadata and roots 37/38 surviving an enclosing
+rejected declaration. Source, implementation library, CLI and review HEAD hashes
+were conserved; the root agent reverified those hashes before reusing artifacts.
+Raw probe source, runner, receipt and output are in
+`results/native-host-foundation/review-followup-d4674f2a`; the structured review
+record is `independent-review-followup.json`. The probe binary stays external.
+
+Runtime, tests, fixtures, tools, configuration and manifests remain byte-identical
+to the successful a97 implementation. Review records and handoff are technical
+evidence changes; any later published head retains its own CI requirement.
+Compatibility coverage limits and separate public-eval/numeric scope remain
+explicit in the baseline and audit records below.
+
 ## Exact workspace and capture validation (2026-11-27)
 
 On clean `a97bfaac7fe72bb2366297a263108fb347fb74aa`, the exact command
