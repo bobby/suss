@@ -529,7 +529,9 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
                 operands.extend(values);
-                operands.push(region!(body));
+                // with-redefs introduces a source function; thread binding
+                // remains a control region of the enclosing source function.
+                operands.push(if *roots { operand!(body) } else { region!(body) });
                 self.emit(
                     Operation::DynamicScope { roots: *roots, globals, operands },
                     Type::Value,

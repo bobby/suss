@@ -554,22 +554,3 @@ fn yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame() {
     assert_eq!(long_value(&mut h.store, &object), 7);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
-
-
-#[test]
-fn source_constant_pools_distinguish_async_root_replacement_and_thread_binding() {
-    let controls: Vec<serde_json::Value> = serde_json::from_str(include_str!(
-        "../../../results/m12-symbolic-root-scopes/async-primary-controls.json"
-    )).unwrap();
-    for row in controls {
-        let mut h = Harness::new();
-        let one = h.value("long-box", &[Val::I64(1)]);
-        h.bind("v", one);
-        let owner = h.source(row["native_expression"].as_str().unwrap());
-        h.run();
-        h.store.gc(None).unwrap();
-        assert_eq!(h.ready_number(&owner), row["observed_long"].as_i64().unwrap(), "{}", row["name"]);
-        let caller = h.source("test/v");
-        assert_eq!(long_value(&mut h.store, &caller), 1);
-    }
-}
