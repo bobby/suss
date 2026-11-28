@@ -1,9 +1,10 @@
 # Checked Java-pattern source
 
 `pattern.rs` is original Rust syntax-admission code. It preserves UTF-16 source
-and the Java flags of a successfully checked pattern. Its data is prepared for
-the compiler reader; this module is not a matching engine and is not yet wired
-to source forms or compiled Pattern objects.
+and the Java flags of a successfully checked pattern. The compiler reader uses
+this data for source Pattern literals and their compiled Runtime and Macro
+Pattern objects. This module performs syntax admission; matching APIs and
+runtime regex reading remain separate.
 
 Behavior comes from pinned Clojure 1.12.6 development observations in
 `results/m12-pattern-values`, with the Java 21
