@@ -36945,3 +36945,15 @@ The replacement command and actual result are retained in
 
 These commands do not establish complete data-type, arbitrary-import,
 resource/lifetime, cleanup/stress, workspace or milestone acceptance.
+
+### 2026-11-27: terminal nine-target adapter rerun
+
+On frozen head f6ad5e7b, the complete nine-target command under
+`results/m5-wit-adapters/named-alias-and-repaired-adapters/` returned0 in
+2,459.339s:77 tests passed across nine targets, zero failed or ignored. All
+13,722 recorded inputs and HEAD remained unchanged through termination.
+This executes the repaired twelve-test string target alongside original AOT,
+async, list, option, exact numeric, character, indirect-argument and named-type
+controls. The raw log, frozen-input receipt and independent result-count audit
+are retained. This command predates the recursive composite codec and does not
+certify that implementation or full-workspace/milestone acceptance.

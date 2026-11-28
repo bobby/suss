@@ -1,0 +1,55 @@
+{
+  "groups": [
+    {
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "totals": {
+    "passed": 77,
+    "failed": 0,
+    "ignored": 0
+  },
+  "qualification": "Actual nine-target command on f6ad5e7b; no recursive-codec acceptance follows from the earlier source."
+}
