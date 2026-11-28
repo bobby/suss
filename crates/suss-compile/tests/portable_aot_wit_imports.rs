@@ -231,3 +231,176 @@ fn unsupported_or_missing_import_authority_fails_before_effectful_macros() {
         assert!(!error.contains("macro-ran"), "{error}");
     }
 }
+
+#[test]
+fn sync_import_arguments_validate_before_allocation_and_keep_source_effect_order() {
+    let component = compile(
+        "(ns app) (def effects (atom []))
+         (def big (loop [n 16 text \"x\"] (if (zero? n) text (recur (dec n) (str text text)))))
+         (defn ^:export run []
+           (try (host/accept [(do (swap! effects conj 1) big) (do (swap! effects conj 2) 256)])
+                (catch :default error @effects)))",
+        "import accept: func(value: tuple<string, u8>) -> u32;
+         export run: func() -> list<u8>;",
+        "accept",
+    );
+    let mut linker = Linker::new(engine());
+    linker
+        .root()
+        .func_wrap(
+            "accept",
+            |mut context: StoreContextMut<'_, State>, (_row,): ((String, u8),)| {
+                context.data_mut().calls += 1;
+                Ok((42_u32,))
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let run = instance
+        .get_typed_func::<(), (Vec<u8>,)>(&mut store, "run")
+        .unwrap();
+    for i in 1..=20 {
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0, [1_u8, 2].repeat(i));
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().calls, 0);
+    assert_eq!(store.data().canonical_peak, 65536);
+}
+
+#[test]
+fn sync_import_indirect_parameter_records_and_result_buffers_follow_guest_import_abi() {
+    use wasmtime::component::Val;
+    let parameters = (0..19)
+        .map(|i| format!("p{i}: s64"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let component = compile(
+        "(ns app) (defn ^:export run [xs] (apply host/rotate xs))",
+        &format!(
+            "import rotate: func({parameters}) -> list<s64>; export run: func(xs: list<s64>) -> list<s64>;"
+        ),
+        "rotate",
+    );
+    let mut linker = Linker::new(engine());
+    linker
+        .root()
+        .func_new(
+            "rotate",
+            |mut context: StoreContextMut<'_, State>, _ty, parameters, results| {
+                context.data_mut().calls += 1;
+                assert_eq!(parameters.len(), 19);
+                let mut values = parameters.to_vec();
+                values.rotate_left(1);
+                results[0] = Val::List(values);
+                Ok(())
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let run = instance
+        .get_typed_func::<(Vec<i64>,), (Vec<i64>,)>(&mut store, "run")
+        .unwrap();
+    let input = (0..19).map(|i| 9007199254740993 + i).collect::<Vec<i64>>();
+    let mut expected = input.clone();
+    expected.rotate_left(1);
+    for _ in 0..1000 {
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(run.call(&mut store, (input.clone(),)).unwrap().0, expected);
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().calls, 1000);
+    assert_eq!(store.data().canonical_peak, 65536);
+}
+
+#[test]
+fn sync_import_runtime_mappings_do_not_grant_macro_phase_authority() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("app.sus");
+    let wit = directory.path().join("api.wit");
+    std::fs::write(
+        &path,
+        "(ns app) (defmacro call-host [] (host/increment 0)) (defn run [] (call-host))",
+    )
+    .unwrap();
+    std::fs::write(&wit, "package test:phase-authority; world api { import increment: func(value: s64) -> s64; export run: func() -> s64; }").unwrap();
+    let options = AotOptions {
+        exports: vec![("run".into(), Symbol::namespaced("app", "run"))],
+        imports: vec![("increment".into(), Symbol::namespaced("host", "increment"))],
+        ..Default::default()
+    };
+    let error =
+        compile_file_with_options(&path, &wit, None, &[directory.path().to_owned()], &options)
+            .unwrap_err();
+    assert!(
+        error.contains("host")
+            && (error.contains("Macro") || error.contains("macro") || error.contains("namespace")),
+        "{error}"
+    );
+}
+
+#[test]
+fn sync_import_nominal_records_flags_variants_and_maps_keep_public_type_identities() {
+    use wasmtime::component::Val;
+    let component = compile(
+        "(ns app) (defn ^:export run [x]
+           (let [y (host/touch x)] (update (assoc y :state :active) :permissions conj :write)))",
+        "enum state { idle, active } flags permissions { read, write }
+         variant event { idle, payload(tuple<u64, char>) }
+         record row { state: state, permissions: permissions, event: event, values: map<string, list<u8>> }
+         import touch: func(value: row) -> row; export run: func(value: row) -> row;", "touch");
+    let mut linker = Linker::new(engine());
+    linker
+        .root()
+        .func_new(
+            "touch",
+            |mut context: StoreContextMut<'_, State>, _ty, params, results| {
+                context.data_mut().calls += 1;
+                assert_eq!(params.len(), 1);
+                results[0] = params[0].clone();
+                Ok(())
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let run = instance.get_func(&mut store, "run").unwrap();
+    let input = Val::Record(vec![
+        ("state".into(), Val::Enum("idle".into())),
+        ("permissions".into(), Val::Flags(vec!["read".into()])),
+        (
+            "event".into(),
+            Val::Variant(
+                "payload".into(),
+                Some(Box::new(Val::Tuple(vec![
+                    Val::U64(u64::MAX),
+                    Val::Char('🦀'),
+                ]))),
+            ),
+        ),
+        (
+            "values".into(),
+            Val::Map(vec![(
+                Val::String("λ\0🦀".into()),
+                Val::List(vec![Val::U8(255), Val::U8(0)]),
+            )]),
+        ),
+    ]);
+    let mut expected = input.clone();
+    let Val::Record(fields) = &mut expected else {
+        unreachable!()
+    };
+    fields[0].1 = Val::Enum("active".into());
+    fields[1].1 = Val::Flags(vec!["read".into(), "write".into()]);
+    let mut output = [Val::Bool(false)];
+    for _ in 0..20 {
+        store.set_fuel(100_000_000).unwrap();
+        run.call(&mut store, &[input.clone()], &mut output).unwrap();
+        assert_eq!(output[0], expected);
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().calls, 20);
+    assert_eq!(store.data().canonical_peak, 65536);
+}
