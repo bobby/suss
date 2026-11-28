@@ -1,0 +1,105 @@
+{
+  "qualification": "Earlier standalone prototype at immutable published App compiler2a779949, with explicitly identified prebuilt tools.48actual calls pass76.819s. This simple guest has no call counter; the repository Cargo fixture adds and separately tests that control. Not a Cargo/workspace baseline.",
+  "files": {
+    "Cargo.toml": {
+      "sha256": "1e3e010f1e4c131e21dddbbf8bc6a650720e021e65dbc076fb97d712726774ee",
+      "bytes": 237,
+      "archive": "Cargo.toml"
+    },
+    "Cargo.lock": {
+      "sha256": "954c92d61c578057ce5a5df5b7c2036e3e9c3da161a79a491985b4621fa7aae8",
+      "bytes": 8070,
+      "archive": "Cargo.lock"
+    },
+    "api.wit": {
+      "sha256": "6ef22f19968f8cd63f2baa7b3b51c649ca281afb5d4e8a00e19a4b9610560b8b",
+      "bytes": 802,
+      "archive": "api.wit"
+    },
+    "src/lib.rs": {
+      "sha256": "59ac86eca7a420a5af5539d7fb3e855f620b1734ddd068b3b5437987919ab828",
+      "bytes": 320,
+      "archive": "src-lib.rs"
+    },
+    "app.sus": {
+      "sha256": "a9c2ddda329a7b25166ebae3d717dba30aa8c703ecec864770c055caf6282f57",
+      "bytes": 63,
+      "archive": "app.sus"
+    },
+    "componentize.rs": {
+      "sha256": "9350c1c9214cdf47c146df725e4802a97f82cd9133b8b689019759514529994e",
+      "bytes": 471,
+      "archive": "componentize.rs"
+    },
+    "execute.rs": {
+      "sha256": "907f87de047e627e4649d83d3417612ed606653c423deb9a6d84bfcedd50085d",
+      "bytes": 8930,
+      "archive": "execute.rs"
+    },
+    "executed-source.rs": {
+      "sha256": "907f87de047e627e4649d83d3417612ed606653c423deb9a6d84bfcedd50085d",
+      "bytes": 8930,
+      "archive": "executed-source.rs"
+    },
+    "execute-probe.py": {
+      "sha256": "c285e7259d4c428e7a9bab59c70d665ff6fee12618ac8dca3b609368703ea901",
+      "bytes": 1270,
+      "archive": "execute-probe.py"
+    },
+    "execute.json": {
+      "sha256": "36aa88f21f8bfb51638b5853ba6d74f27471e4137e279d3d5fb6a981233b3d92",
+      "bytes": 2787,
+      "archive": "execute.json"
+    },
+    "execute.log": {
+      "sha256": "117f70682b02d0d61f638e8ed8ebae8f53e4aa835c881e816b723c5d671c1ee8",
+      "bytes": 225,
+      "archive": "execute.log"
+    },
+    "compile-suss.py": {
+      "sha256": "4b7ed08ee9c96b0611cbfedf329a22c0f0f916055cf5547eb38dffb67fc038cd",
+      "bytes": 1203,
+      "archive": "compile-suss.py"
+    },
+    "compile-suss.json": {
+      "sha256": "7687aef023fcf9fbe2ef42861807c43c8421fe75efd4c95dcb0cb14fb63c4652",
+      "bytes": 1915,
+      "archive": "compile-suss.json"
+    },
+    "compile-suss.log": {
+      "sha256": "b4b96760f27da8786cd9f40ff6031fb222979102530567945c0e9fdd705c461e",
+      "bytes": 276,
+      "archive": "compile-suss.log"
+    },
+    "lock-qualification.json": {
+      "sha256": "20fda35fea00301f36281ab340e45f34ea3c79669e4aee21c6667943013d80d4",
+      "bytes": 528,
+      "archive": "lock-qualification.json"
+    },
+    "initial-build-transcript.log": {
+      "sha256": "a5f786b17a7e2702fb746a07773a1e6ec8c6ea22f665174b3921077926956f31",
+      "bytes": 1517,
+      "archive": "initial-build-transcript.log"
+    },
+    "original-core.wasm": {
+      "sha256": "9b9168c8f94772aed5db7dc8e1f41c53d928afad4cfc7801056dce8976e6a5a1",
+      "bytes": 140543,
+      "archive": "original-core.wasm.gz"
+    },
+    "provider.wasm": {
+      "sha256": "14eaf35bc1dcc10a8d62221185e9583ebca887201f61e911ded16ef6e75530ad",
+      "bytes": 141847,
+      "archive": "provider.wasm.gz"
+    },
+    "consumer.wasm": {
+      "sha256": "d3227d7d2a05821a6514a9b524541096651a9a812200302f90e245e009087540",
+      "bytes": 3992311,
+      "archive": "consumer.wasm.gz"
+    },
+    "composed.wasm": {
+      "sha256": "cd36a47bcc4d3ec5f90b871d2a0a3049aef93935a982a0e2a32c95a335b05b30",
+      "bytes": 4134288,
+      "archive": "composed.wasm.gz"
+    }
+  }
+}

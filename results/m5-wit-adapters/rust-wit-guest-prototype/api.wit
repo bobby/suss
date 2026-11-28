@@ -1,0 +1,19 @@
+package fixture:rust-interop@0.1.0;
+interface provider {
+ record scalars {
+  truth:bool, tiny-s:s8, tiny-u:u8, short-s:s16, short-u:u16,
+  int-s:s32, int-u:u32, long-s:s64, long-u:u64,
+  small:f32, wide:f64, scalar:char, text:string,
+ }
+ flags permissions { read, write, execute }
+ enum category { first, middle, last }
+ variant selection { empty, data(tuple<string,list<u8>>) }
+ record packet {
+  numbers:scalars, rights:permissions, category:category, selected:selection,
+  nested:list<option<result<tuple<u64,string>,string>>>,
+  lookup:map<string,list<option<u64>>>, fixed:list<u16,3>, maybe:option<option<bool>>,
+ }
+ echo:func(value:packet)->packet;
+}
+world rust-provider { export provider; }
+world suss-consumer { import provider; use provider.{packet}; export echo:func(value:packet)->packet; }

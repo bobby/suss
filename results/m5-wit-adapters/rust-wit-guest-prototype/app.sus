@@ -1,0 +1,2 @@
+(ns fixture.app)
+(defn echo [value] (fixture.host/echo value))

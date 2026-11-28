@@ -1,0 +1,1 @@
+PASS 48 actual direct-Rust and Rust-host -> Suss -> generated-Rust-guest calls; scalar extrema, float bits, UTF-16/Unicode, records, flags, enum, variants, nested options/results/lists, maps and fixed lists; no outer imports

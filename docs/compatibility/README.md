@@ -2286,3 +2286,15 @@ cabi_realloc and release. The direct10,000-live-varied-block regression and
 ownership/GC controls are recorded in the canonical-private-index-ownership-gc
 capture; this isolated module result does not establish generic cancellation
 cleanup or the large application measurements.
+
+An independent pinned generated Rust guest has an executing scalar/composite
+data corpus. Normal Cargo testing composes the actual Rust guest and compiled
+Suss component and passes48direct/through-Suss calls over24nested packets,
+with exact integer extrema, float-bit checks, Unicode/NUL, maps and fixed lists.
+A Rust-side counter proves malformed source flags reject before guest effects;
+retained packets survive GC and the composed pure fixture has no outer imports.
+`rust-wit-guest-normal-cargo/` retains actual command/source identity; earlier
+standalone evidence remains separately qualified under `rust-wit-guest-prototype/`.
+The checked fixture manifest conserves source/artifact identity and upstream
+licenses. Fresh rebuild execution and broader resource/asynchronous/host-memory
+corpora retain their separate acceptance commands and evidence.
