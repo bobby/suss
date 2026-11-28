@@ -13,6 +13,7 @@ pub(super) struct Import {
     pub name: String,
     pub source: Symbol,
     pub wit: wit_parser::Function,
+    pub interface: Option<wit_parser::InterfaceId>,
 }
 
 /// Resolve authority before preparing source or running any source macro.
@@ -38,51 +39,99 @@ pub(super) fn selected(
             return Err(error("WIT import source vars must be outside core"));
         }
     }
-    for (key, item) in &resolve.worlds[world].imports {
-        match item {
-            WorldItem::Type { .. } => continue,
-            WorldItem::Interface { id, .. }
-                if super::random::Capability::supported(resolve, *id) && mappings.is_empty() =>
-            {
-                continue;
-            }
-            WorldItem::Interface { .. } => {
+    if super::random::Capability::selected(resolve, world)?.is_some() && !mappings.is_empty() {
+        return Err(error(
+            "Mixed automatic randomness and explicit host import mappings remain unimplemented",
+        ));
+    }
+    let mut add =
+        |name: String, function: &wit_parser::Function, interface| -> Result<(), Diagnostic> {
+            let source = mappings
+                .iter()
+                .find(|(path, _)| path == &name)
+                .map(|(_, source)| source.clone())
+                .ok_or_else(|| {
+                    error(format!(
+                        "WIT import {name} needs an explicit source var mapping"
+                    ))
+                })?;
+            if function.kind != FunctionKind::Freestanding || function.external_id.is_some() {
                 return Err(error(
-                    "Synchronous WIT interface import adapters remain unimplemented",
+                    "Synchronous WIT imports require freestanding functions without external-id",
                 ));
             }
-            WorldItem::Function(function) => {
-                let name = resolve.name_world_key(key);
-                let source = mappings
-                    .iter()
-                    .find(|(path, _)| path == &name)
-                    .map(|(_, source)| source.clone())
-                    .ok_or_else(|| {
-                        error(format!(
-                            "WIT import {name} needs an explicit source var mapping"
-                        ))
-                    })?;
-                if function.kind != FunctionKind::Freestanding || function.external_id.is_some() {
+            let mut registry = composite::Registry::new(resolve);
+            for ty in function.params.iter().map(|p| p.ty).chain(function.result) {
+                registry.add(ty)?;
+            }
+            if resolve
+                .wasm_signature(AbiVariant::GuestImport, function)
+                .indirect_params
+            {
+                parameters::Layout::new(resolve, function)?;
+            }
+            imports.push(Import {
+                name,
+                source,
+                wit: function.clone(),
+                interface,
+            });
+            Ok(())
+        };
+    let providers = providers(resolve, world);
+    for provider in &providers {
+        let interface = &resolve.interfaces[provider.id];
+        let mut registry = composite::Registry::new(resolve);
+        for id in interface.types.values() {
+            // A resource declaration has no canonical value layout. Diagnose
+            // its lifetime adapter before asking SizeAlign for memory32 size.
+            if matches!(resolve.types[*id].kind, wit_parser::TypeDefKind::Resource) {
+                return Err(error(
+                    "Imported WIT resource lifetime adapters remain unimplemented",
+                ));
+            }
+            registry.add(wit_parser::Type::Id(*id))?;
+        }
+        let mut live = wit_parser::LiveTypes::default();
+        live.add_interface(resolve, provider.id);
+        for id in live.iter() {
+            if let wit_parser::TypeOwner::Interface(owner) = resolve.types[id].owner {
+                if owner != provider.id
+                    && matches!(
+                        resolve.types[id].kind,
+                        wit_parser::TypeDefKind::Record(_)
+                            | wit_parser::TypeDefKind::Enum(_)
+                            | wit_parser::TypeDefKind::Flags(_)
+                            | wit_parser::TypeDefKind::Variant(_)
+                    )
+                    && !providers.iter().any(|p| p.id == owner)
+                {
                     return Err(error(
-                        "Synchronous WIT imports require freestanding functions without external-id",
+                        "Imported WIT nominal dependencies need their declared interface provider",
                     ));
                 }
-                let mut registry = composite::Registry::new(resolve);
-                for ty in function.params.iter().map(|p| p.ty).chain(function.result) {
-                    registry.add(ty)?;
-                }
-                if resolve
-                    .wasm_signature(AbiVariant::GuestImport, function)
-                    .indirect_params
-                {
-                    parameters::Layout::new(resolve, function)?;
-                }
-                imports.push(Import {
-                    name,
-                    source,
-                    wit: function.clone(),
-                });
             }
+        }
+    }
+    for (key, item) in &resolve.worlds[world].imports {
+        match item {
+            WorldItem::Type { .. } => {}
+            WorldItem::Interface { id, .. }
+                if super::random::Capability::supported(resolve, *id) => {}
+            WorldItem::Interface {
+                id, external_id, ..
+            } => {
+                if external_id.is_some() {
+                    return Err(error(
+                        "Imported WIT interface external-id adapters remain unimplemented",
+                    ));
+                }
+                let name = resolve.name_world_key(key);
+                for (field, function) in &resolve.interfaces[*id].functions {
+                    add(format!("{name}#{field}"), function, Some(*id))?;
+                }
+            }
+            WorldItem::Function(function) => add(resolve.name_world_key(key), function, None)?,
         }
     }
     if imports.len() != mappings.len() {
@@ -91,6 +140,117 @@ pub(super) fn selected(
         ));
     }
     Ok(imports)
+}
+
+pub(super) struct Provider {
+    pub name: String,
+    pub id: wit_parser::InterfaceId,
+    pub implements: Option<String>,
+}
+fn providers(resolve: &Resolve, world: WorldId) -> Vec<Provider> {
+    resolve.worlds[world]
+        .imports
+        .iter()
+        .filter_map(|(key, item)| {
+            let WorldItem::Interface { id, .. } = item else {
+                return None;
+            };
+            if super::random::Capability::supported(resolve, *id) {
+                return None;
+            }
+            Some(Provider {
+                name: resolve.name_world_key(key),
+                id: *id,
+                implements: resolve.implements_value(key, item),
+            })
+        })
+        .collect()
+}
+
+/// Imported instance function types use the instance's exported identities,
+/// while dependencies alias actual earlier imported provider types.
+pub(super) fn encode_interfaces(
+    resolve: &Resolve,
+    world: WorldId,
+    imports: &[Import],
+    component: &mut Component,
+    types: &mut crate::portable::command::shape::Types<'_>,
+) -> Result<(u32, Vec<Option<u32>>, u32), Diagnostic> {
+    use crate::portable::command::shape::Types;
+    let mut functions = vec![None; imports.len()];
+    let mut next_function = 0;
+    let providers = providers(resolve, world);
+    for (ordinal, provider) in providers.iter().enumerate() {
+        let interface = &resolve.interfaces[provider.id];
+        let mut instance_types = Types::<InstanceType>::new_instance(resolve);
+        let mut live = wit_parser::LiveTypes::default();
+        live.add_interface(resolve, provider.id);
+        for id in live.iter() {
+            if let wit_parser::TypeOwner::Interface(owner) = resolve.types[id].owner {
+                if owner != provider.id {
+                    if let Some(index) = types.existing(id) {
+                        instance_types.outer_alias(id, index);
+                    } else if matches!(
+                        resolve.types[id].kind,
+                        wit_parser::TypeDefKind::Record(_)
+                            | wit_parser::TypeDefKind::Enum(_)
+                            | wit_parser::TypeDefKind::Flags(_)
+                            | wit_parser::TypeDefKind::Variant(_)
+                    ) {
+                        return Err(error(
+                            "Imported WIT interface dependency must precede its user",
+                        ));
+                    }
+                }
+            }
+            for (name, named) in &interface.types {
+                if *named == id {
+                    instance_types.export_named(name, id)?;
+                }
+            }
+        }
+        for (name, function) in &interface.functions {
+            let index = instance_types.function(function)?;
+            instance_types
+                .section
+                .export(name.as_str(), ComponentTypeRef::Func(index));
+        }
+        let index = types.len();
+        types.section.instance(&instance_types.section);
+        types.flush(component);
+        let mut section = ComponentImportSection::new();
+        section.import(
+            ComponentExternName {
+                name: std::borrow::Cow::Borrowed(&provider.name),
+                implements: provider.implements.clone().map(std::borrow::Cow::Owned),
+                version_suffix: None,
+                external_id: None,
+            },
+            ComponentTypeRef::Instance(index),
+        );
+        component.section(&section);
+        for (name, id) in &interface.types {
+            types.alias_instance_value(component, ordinal as u32, name, *id);
+        }
+        let mut aliases = ComponentAliasSection::new();
+        for (i, import) in imports.iter().enumerate() {
+            if import.interface == Some(provider.id)
+                && import.name == format!("{}#{}", provider.name, import.wit.name)
+            {
+                aliases.alias(Alias::InstanceExport {
+                    instance: ordinal as u32,
+                    kind: ComponentExportKind::Func,
+                    name: &import.wit.name,
+                });
+                functions[i] = Some(next_function);
+                next_function += 1;
+            }
+        }
+        if !aliases.is_empty() {
+            component.section(&aliases);
+        }
+    }
+    Ok((providers.len() as u32, functions, next_function))
 }
 
 pub(super) fn core(ty: WasmType) -> ValType {

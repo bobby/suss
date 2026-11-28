@@ -2167,3 +2167,11 @@ bootstrap/core/reader/unit paths,zero failures/filters and two explicit doc
 ignores. The archived independent follow-up confirms both original P2 repairs
 with no new finding. The required fresh full baseline and final-head CI retain
 separate source qualifications.
+
+[Explicit WIT host functions](../runtime/wit-imports.md) map world and interface
+functions to qualified Runtime vars through file, namespace and project modes.
+Actual component controls execute versioned aliases, shared data types, native
+collection operations, imported/exported instances and canonical async exports
+calling synchronous providers. The data-codec baseline and earlier frontend
+commands retain their own source qualifications. Resource lifetimes, general
+async imports and full M5 interoperability retain separate acceptance gates.

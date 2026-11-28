@@ -399,7 +399,7 @@ pub(crate) fn validate_import_boundary(
     let mut values = resolve.clone();
     values.worlds[world]
         .imports
-        .retain(|_, item| !matches!(item, WorldItem::Function(_)));
+        .retain(|_, item| matches!(item, WorldItem::Type { .. }));
     validate_boundary(&values, world)
 }
 
@@ -920,7 +920,16 @@ pub fn component_with_imports(
     let host_count = host_imports.len() as u32;
     let component_function_base = random_count + host_count;
     let mut resolved_types = super::command::shape::Types::new(resolve);
-    let schema_imports = schemas::encode(resolve, world, &mut component, &mut resolved_types)?;
+    let (interface_imports, mut host_functions, mut next_host_function) =
+        if host_imports.is_empty() {
+            (schemas::encode(resolve, world, &mut component, &mut resolved_types)?, Vec::new(), 0)
+        } else {
+            imports::encode_interfaces(
+                resolve, world, &host_imports, &mut component, &mut resolved_types,
+            )?
+        };
+    let schema_imports = interface_imports;
+    let imported_instance_count = random_count + interface_imports;
     let random_type = randomness
         .as_ref()
         .map(|capability| capability.encode(resolve, &mut resolved_types))
@@ -955,6 +964,9 @@ pub fn component_with_imports(
         .map(|key| resolve.name_world_key(key))
         .collect::<std::collections::BTreeSet<_>>();
     for id in live.iter() {
+        if !root_names.contains_key(&id) && resolved_types.existing(id).is_some() {
+            continue;
+        }
         use wit_parser::TypeDefKind;
         if !root_names.contains_key(&id)
             && !matches!(
@@ -1005,6 +1017,7 @@ pub fn component_with_imports(
     }
     let host_types = host_imports
         .iter()
+        .filter(|import| import.interface.is_none())
         .map(|import| resolved_types.function(&import.wit))
         .collect::<Result<Vec<_>, Diagnostic>>()?;
     resolved_types.flush(&mut component);
@@ -1025,11 +1038,19 @@ pub fn component_with_imports(
     }
     if !host_imports.is_empty() {
         let mut imports = ComponentImportSection::new();
-        for (import, ty) in host_imports.iter().zip(host_types) {
+        for ((ordinal, import), ty) in host_imports
+            .iter()
+            .enumerate()
+            .filter(|(_, import)| import.interface.is_none())
+            .zip(host_types)
+        {
             imports.import(&import.name, ComponentTypeRef::Func(ty));
+            host_functions[ordinal] = Some(next_host_function);
+            next_host_function += 1;
         }
         component.section(&imports);
     }
+    debug_assert_eq!(next_host_function, host_count);
     let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
         .chain(std::iter::once((
             "suss.bindings.runtime".to_owned(),
@@ -1233,9 +1254,9 @@ pub fn component_with_imports(
         });
         component.section(&aliases);
         let mut lowered = CanonicalFunctionSection::new();
-        for index in 0..host_count {
+        for function in &host_functions {
             lowered.lower(
-                random_count + index,
+                function.expect("resolved host function index"),
                 [
                     CanonicalOption::Memory(0),
                     CanonicalOption::Realloc(random_count),
@@ -1387,7 +1408,7 @@ pub fn component_with_imports(
                 types,
                 functions,
             } => {
-                let index = schema_imports + random_count + exported_instances.len();
+                let index = imported_instance_count + exported_instances.len();
                 exported_instances.export_items(
                     types
                         .iter()

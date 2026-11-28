@@ -37214,3 +37214,37 @@ input; no source change is hidden. Both command receipts are in
 `synchronous-imports-project-mappings/` and `synchronous-imports-cli-authority/`.
 These frontend controls follow the seven earlier import regressions and do not
 certify imported interfaces, resources, optimization or generalized async imports.
+
+
+### 2026-11-27: synchronous imported WIT interfaces
+
+The explicit Runtime mapping route also encodes synchronous interface instances
+from the resolved graph. Public paths use `provider#function`; package versions,
+`implements` metadata and exported type identities are preserved. Shared nominal
+dependencies alias the actual earlier provider types in upstream's topological
+world order. Component function/instance indices account for imported aliases
+and exported interfaces separately. Bare resource declarations diagnose their
+missing lifetime adapter before requesting a canonical value layout.
+
+`cargo test -p suss-compile --locked --test portable_aot_wit_interface_imports -- --test-threads=2`
+returned0: six tests passed, zero failed/ignored, 438.380s including
+build. All13,855 captured inputs and HEAD remained unchanged.
+The actual components execute versioned aliases and an automatically introduced
+original provider, two aliases plus a world function with ordered calls, shared
+nominal record types, imported and exported interface instances, native
+`assoc`/`update`/`conj`, exact signed/unsigned extrema, Unicode/NUL and forced GC.
+A non-suspending canonical async export calls a synchronous interface and returns
+nested lists. Missing mappings, unused unsupported selected types, async imports
+and resource declarations reject before effectful source macros.
+
+Receipts retain the initial pinned-API build failures, an interrupted command
+after reverting accidental workspace-wide formatting, and the first executing
+six-test command (four passed/two failed). The latter exposed the raw resource
+layout diagnostic and a fixture that omitted the original provider introduced
+by `use data.{row}`. The corrected run is in `synchronous-interface-imports-resolved-providers/`;
+failures remain in their separate directories. These controls do not certify
+resource ownership, suspending async imports, optimization, mixed automatic
+randomness, general cancellation cleanup or the UserManager application. Next
+run the affected import/pure-interface/command regressions, then continue the
+resource and asynchronous interoperability work. The separate full data-codec
+baseline on8788d7a7 does not certify this import source.
