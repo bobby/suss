@@ -2266,3 +2266,13 @@ selected storage capability, retains exact/Unicode data across GC and persistenc
 reopening, and closes both owners. Source provenance, original failures and raw
 JVM observations remain in the example/results directories. Larger lifetime,
 measurement, broad validation and review/CI requirements stay separate.
+
+[UserManager lifetime/allocation controls](../../results/m5-wit-adapters/usermanager-canonical-live-allocation-observer-locked/summary.json)
+pass four tests with zero failures/ignores/filters. Unmodified and explicitly
+observed artifacts each run10,000 mixed operations; two sessions remain isolated,
+retained values survive GC, and expired/moved/closed aliases fail. The observer
+preserves the original component as an exact prefix and reads the checked owned
+allocator without adding a user WIT API. Live canonical blocks/bytes return to
+zero after each checked call and final cleanup; canonical memory remains one
+page, while separate managed/numeric memories are recorded explicitly. Observer
+layout restrictions and remaining validation/measurement limits are in handoff.

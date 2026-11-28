@@ -29,6 +29,7 @@ nix = { version = "0.28", default-features = false, features = ["signal"] }
 suss-usermanager-host = { path = "../../examples/usermanager/host" }
 tempfile = { workspace = true }
 wasmparser = { workspace = true }
+wasm-encoder = { workspace = true }
 
 [features]
 default = []

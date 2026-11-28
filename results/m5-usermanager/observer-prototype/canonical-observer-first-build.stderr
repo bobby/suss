@@ -1,0 +1,26 @@
+error[E0277]: the type `[u8]` cannot be indexed by `std::ops::Range<u64>`
+  --> target/probe/canonical_stats_draft.rs:29:58
+   |
+29 |                 for p in Parser::new(0).parse_all(&bytes[unchecked_range]) {
+   |                                                          ^^^^^^^^^^^^^^^ slice indices are of type `usize` or ranges of `usize`
+   |
+   = help: the trait `SliceIndex<[u8]>` is not implemented for `std::ops::Range<u64>`
+help: `std::ops::Range<usize>` implements trait `SliceIndex<T>`
+  --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/bstr/traits.rs:230:8
+   |
+   = note: `SliceIndex<ByteStr>`
+  ::: /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/bstr/traits.rs:263:0
+   |
+   = note: in this macro invocation
+  --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs:331:0
+   |
+   = note: `SliceIndex<[T]>`
+  --> /rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/str/traits.rs:187:0
+   |
+   = note: `SliceIndex<str>`
+   = note: required for `[u8]` to implement `Index<std::ops::Range<u64>>`
+   = note: this error originates in the macro `impl_slice_index` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0277`.

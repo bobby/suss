@@ -37893,3 +37893,38 @@ observations, standalone CLI/artifact capture, full application measurements,
 new-core vendored-suite reconciliation, broader checks, full baseline,
 independent review and final-head CI remain separate requirements. No application
 or M5 issue is closed from this focused result.
+
+### 2026-11-28: UserManager isolation, lifetime and canonical allocation observations
+
+After rebasing the draft onto31ea, the three application controls return0:
+161.66s execution/559.609s capture,14,184 inputs and HEAD fixed
+(`usermanager-lifetime-and-isolation/`). The original29-scenario persistence
+comparison still passes. A10,000-operation mixed success/parse/storage-error run
+keeps two independent session counters/rows isolated, survives periodic GC,
+retains data and closes both owners. An explicitly instrumented application
+fixture adds only test exports to the shared business source and checks actual
+borrow expiry, moved/closed Source aliases and unchanged Rust resource identity.
+
+A read-only observer now measures the existing owned allocator directly. The
+original component bytes remain an exact prefix; appended test-only core code
+reads the checked allocator's memory and exposes a scalar snapshot. It validates
+module shape, header chains, live flags, lengths and bounds, then reports live
+blocks/bytes. The helper deliberately supports this allocator and canonical
+alignments at most16 (current WIT alignments at most8). This is implementation-
+qualified observation, not a new user WIT API or general producer ABI promise.
+
+The first locked invocation fails because the new test-only wasm-encoder edge
+is absent from Cargo.lock (0.283s); it remains preserved. Resolving adds only that
+edge. The final command returns0 with four passed, zero failed/ignored/filtered,
+198.76s execution/581.554s capture,14,191 inputs and HEAD fixed:
+`cargo test -p suss-cli --locked --test usermanager_application -- --test-threads=2 --nocapture`.
+Raw evidence is `usermanager-canonical-live-allocation-observer-locked/`.
+The original unmodified10,000-operation run and separately observed10,000-
+operation run both execute. The observer baseline is exactly zero and equals
+zero after each mixed primary call and after close/GC. Raw memory-growth events
+are only initial allocations:8MiB managed,17-page numeric helper and one-page
+canonical transfer memory. A stress cap rejects growth of the small canonical
+memory; these are bounded transfer/heap observations, not peak RSS claims.
+Both sessions close with zero live host resources. Final artifacts/CLI,
+measurements, new-helper suite reconciliation and broader/full/review/CI gates
+remain separate.

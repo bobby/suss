@@ -36,6 +36,35 @@ pub struct State {
     pub writes: u64,
     pub trace: Vec<String>,
     pub fail_next: Option<String>,
+    pub memory_events: Vec<(usize, usize)>,
+    pub small_memory_limit: Option<usize>,
+}
+impl wasmtime::ResourceLimiter for State {
+    fn memory_growing(
+        &mut self,
+        current: usize,
+        desired: usize,
+        _maximum: Option<usize>,
+    ) -> wasmtime::Result<bool> {
+        self.memory_events.push((current, desired));
+        // The fixture's canonical memory starts at one page. Numeric-helper
+        // and managed memories start at17pages/8MiB. A stress-only cap prevents
+        // any small memory from crossing one page; retain every raw event.
+        if current > 0 && current < 17 * 65536 {
+            if let Some(limit) = self.small_memory_limit {
+                return Ok(desired <= limit);
+            }
+        }
+        Ok(desired <= 64 * 1024 * 1024)
+    }
+    fn table_growing(
+        &mut self,
+        _current: usize,
+        _desired: usize,
+        _maximum: Option<usize>,
+    ) -> wasmtime::Result<bool> {
+        Ok(true)
+    }
 }
 fn failure(message: impl ToString) -> Failure {
     Failure {
@@ -270,6 +299,7 @@ impl suss::usermanager::storage::Host for State {
 pub struct Application {
     pub store: Store<State>,
     pub bindings: Usermanager,
+    pub instance: wasmtime::component::Instance,
 }
 impl Application {
     pub fn load(bytes: &[u8]) -> wasmtime::Result<Self> {
@@ -299,8 +329,14 @@ impl Application {
         Usermanager::add_to_linker::<_, HasSelf<_>>(&mut linker, |state| state)?;
         let mut store = Store::new(&engine, State::default());
         store.set_fuel(100_000_000)?;
-        let bindings = Usermanager::instantiate(&mut store, &component, &linker)?;
-        Ok(Self { store, bindings })
+        store.limiter(|state| state);
+        let instance = linker.instantiate(&mut store, &component)?;
+        let bindings = Usermanager::new(&mut store, &instance)?;
+        Ok(Self {
+            store,
+            bindings,
+            instance,
+        })
     }
     pub fn open(&mut self, path: &str) -> wasmtime::Result<Result<Resource<Session>, Failure>> {
         self.store.set_fuel(100_000_000)?;
