@@ -9,6 +9,7 @@ use wit_parser::{Function, FunctionKind, Resolve, Type, TypeDefKind, TypeId};
 /// this encoder does not replace them with guessed function signatures.
 pub(crate) struct Types<'a> {
     resolve: &'a Resolve,
+    base: u32,
     pub section: ComponentTypeSection,
     defined: BTreeMap<TypeId, u32>,
     active: BTreeSet<TypeId>,
@@ -17,10 +18,51 @@ impl<'a> Types<'a> {
     pub fn new(resolve: &'a Resolve) -> Self {
         Self {
             resolve,
+            base: 0,
             section: ComponentTypeSection::new(),
             defined: BTreeMap::new(),
             active: BTreeSet::new(),
         }
+    }
+
+    pub fn len(&self) -> u32 {
+        self.base + self.section.len()
+    }
+
+    pub fn flush(&mut self, component: &mut wasm_encoder::Component) {
+        if !self.section.is_empty() {
+            self.base += self.section.len();
+            component.section(&self.section);
+            self.section = ComponentTypeSection::new();
+        }
+    }
+
+    /// Export creates a new public identity. Later parent definitions and
+    /// function signatures must refer to that identity, including aliases.
+    pub fn export_value(
+        &mut self,
+        component: &mut wasm_encoder::Component,
+        name: &str,
+        id: TypeId,
+    ) -> Result<(), Diagnostic> {
+        let referenced = self.named(id)?;
+        self.flush(component);
+        let created = self.base;
+        self.base += 1;
+        let mut exports = wasm_encoder::ComponentExportSection::new();
+        exports.export(
+            name,
+            wasm_encoder::ComponentExportKind::Type,
+            referenced,
+            None,
+        );
+        component.section(&exports);
+        for index in self.defined.values_mut() {
+            if *index == referenced {
+                *index = created;
+            }
+        }
+        Ok(())
     }
 
     pub fn function(&mut self, function: &Function) -> Result<u32, Diagnostic> {
@@ -38,7 +80,7 @@ impl<'a> Types<'a> {
             .map(|p| Ok((p.name.as_str(), self.value(p.ty)?)))
             .collect::<Result<Vec<_>, Diagnostic>>()?;
         let result = function.result.map(|ty| self.value(ty)).transpose()?;
-        let index = self.section.len();
+        let index = self.len();
         self.section
             .function()
             .async_(function.kind == FunctionKind::AsyncFreestanding)
@@ -74,7 +116,7 @@ impl<'a> Types<'a> {
         match self.value(Type::Id(id))? {
             ComponentValType::Type(index) => Ok(index),
             ComponentValType::Primitive(primitive) => {
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().primitive(primitive);
                 self.defined.insert(id, index);
                 Ok(index)
@@ -101,22 +143,37 @@ impl<'a> Types<'a> {
                 }
                 return Ok(value);
             }
+            TypeDefKind::Map(key, value) => {
+                let key = self.value(key)?;
+                let value = self.value(value)?;
+                let index = self.len();
+                self.section.defined_type().map(key, value);
+                index
+            }
+            TypeDefKind::FixedLengthList(element, length) => {
+                let element = self.value(element)?;
+                let index = self.len();
+                self.section
+                    .defined_type()
+                    .fixed_length_list(element, length);
+                index
+            }
             TypeDefKind::List(ty) => {
                 let ty = self.value(ty)?;
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().list(ty);
                 index
             }
             TypeDefKind::Option(ty) => {
                 let ty = self.value(ty)?;
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().option(ty);
                 index
             }
             TypeDefKind::Result(result) => {
                 let ok = result.ok.map(|ty| self.value(ty)).transpose()?;
                 let err = result.err.map(|ty| self.value(ty)).transpose()?;
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().result(ok, err);
                 index
             }
@@ -126,8 +183,37 @@ impl<'a> Types<'a> {
                     .iter()
                     .map(|ty| self.value(*ty))
                     .collect::<Result<Vec<_>, _>>()?;
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().tuple(values);
+                index
+            }
+            TypeDefKind::Enum(enumeration) => {
+                let index = self.len();
+                self.section
+                    .defined_type()
+                    .enum_type(enumeration.cases.iter().map(|case| case.name.as_str()));
+                index
+            }
+            TypeDefKind::Flags(flags) => {
+                let index = self.len();
+                self.section
+                    .defined_type()
+                    .flags(flags.flags.iter().map(|flag| flag.name.as_str()));
+                index
+            }
+            TypeDefKind::Variant(variant) => {
+                let cases = variant
+                    .cases
+                    .iter()
+                    .map(|case| {
+                        Ok((
+                            case.name.as_str(),
+                            case.ty.map(|ty| self.value(ty)).transpose()?,
+                        ))
+                    })
+                    .collect::<Result<Vec<_>, Diagnostic>>()?;
+                let index = self.len();
+                self.section.defined_type().variant(cases);
                 index
             }
             TypeDefKind::Record(record) => {
@@ -136,7 +222,7 @@ impl<'a> Types<'a> {
                     .iter()
                     .map(|field| Ok((field.name.as_str(), self.value(field.ty)?)))
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
-                let index = self.section.len();
+                let index = self.len();
                 self.section.defined_type().record(fields);
                 index
             }

@@ -1,0 +1,10 @@
+{
+  "qualification": "Independent pinned-toolchain mechanical probe, not a Suss implementation test or independent agent review. Old referenced identities reject; staged identities validate and an actual flags/record canonical call returns the input. Original development shell first used incompatible default rustc; successful build explicitly used rustc +stable.",
+  "source_sha256": "6eb13b1384c4675ac53a92fa2fd7c5dcd0b00d9fdd06382e5d866f23437c87f1",
+  "rustc": "1.99.1 (58cf8f9c3 2026-10-13)",
+  "successful_build_toolchain": "rustc +stable",
+  "execution_command": [
+    "./target/probe/wit-root-type-identity"
+  ],
+  "execution_exit_code": 0
+}

@@ -19,6 +19,7 @@ pub(super) enum Shape {
         cases: Vec<(String, Option<usize>)>,
     },
     List {
+        map: bool,
         element: usize,
         stride: u32,
     },
@@ -26,6 +27,8 @@ pub(super) enum Shape {
 
 #[derive(Clone)]
 pub(super) struct Node {
+    /// Enum keywords and flag sets use scalar canonical storage.
+    pub symbols: Option<(bool, Vec<String>)>,
     pub shape: Shape,
     pub flat: Vec<ValType>,
     pub size: u32,
@@ -110,6 +113,7 @@ impl<'a> Registry<'a> {
                 .unwrap_or_else(|| self.resolve.types[id].kind.as_str().to_owned()),
             _ => format!("{ty:?}").to_lowercase(),
         };
+        let mut symbols = None;
         let shape = if ty == Type::String {
             Shape::String
         } else if let Ok(scalar) = super::scalar(self.resolve, ty) {
@@ -154,6 +158,65 @@ impl<'a> Registry<'a> {
                         record: true,
                     }
                 }
+                TypeDefKind::Enum(enumeration) => {
+                    if enumeration.cases.is_empty() {
+                        return Err(error("WIT enum requires at least one case"));
+                    }
+                    let scalar = tag_scalar(enumeration.tag());
+                    symbols = Some((
+                        false,
+                        enumeration
+                            .cases
+                            .into_iter()
+                            .map(|case| case.name)
+                            .collect(),
+                    ));
+                    Shape::Scalar(scalar)
+                }
+                TypeDefKind::Flags(flags) => {
+                    let len = flags.flags.len();
+                    if !(1..=32).contains(&len) {
+                        return Err(error(
+                            "Pinned canonical ABI requires between one and 32 flags",
+                        ));
+                    }
+                    symbols = Some((
+                        true,
+                        flags.flags.into_iter().map(|flag| flag.name).collect(),
+                    ));
+                    Shape::Scalar(if len <= 8 {
+                        Scalar::U8
+                    } else if len <= 16 {
+                        Scalar::U16
+                    } else {
+                        Scalar::U32
+                    })
+                }
+                TypeDefKind::Variant(variant) => {
+                    if variant.cases.is_empty() {
+                        return Err(error("WIT variant requires at least one case"));
+                    }
+                    let tag = variant.tag();
+                    let payload = self
+                        .sizes
+                        .payload_offset(tag, variant.cases.iter().map(|case| case.ty.as_ref()))
+                        .size_wasm32() as u32;
+                    let cases = variant
+                        .cases
+                        .into_iter()
+                        .map(|case| {
+                            Ok((
+                                case.name,
+                                case.ty.map(|ty| self.add_at(ty, depth + 1)).transpose()?,
+                            ))
+                        })
+                        .collect::<Result<_, Diagnostic>>()?;
+                    Shape::Variant {
+                        tag,
+                        payload,
+                        cases,
+                    }
+                }
                 TypeDefKind::Option(payload) => {
                     let offset = self
                         .sizes
@@ -184,10 +247,57 @@ impl<'a> Registry<'a> {
                         cases: vec![("ok".into(), ok), ("err".into(), err)],
                     }
                 }
+                TypeDefKind::FixedLengthList(element, length) => {
+                    if length == 0 {
+                        return Err(error("WIT fixed-length list requires at least one element"));
+                    }
+                    let child = self.add_at(element, depth + 1)?;
+                    let stride = self.nodes[child].size;
+                    Shape::Product {
+                        record: false,
+                        fields: (0..length).map(|i| (None, i * stride, child)).collect(),
+                    }
+                }
+                TypeDefKind::Map(key, value) => {
+                    let key_id = self.add_at(key, depth + 1)?;
+                    let value_id = self.add_at(value, depth + 1)?;
+                    let types = [key, value];
+                    let offsets = self.sizes.field_offsets(types.iter());
+                    let layout = self.sizes.record(types.iter());
+                    let stride = u32::try_from(layout.size.size_wasm32())
+                        .map_err(|_| error("WIT map stride exceeds memory32"))?;
+                    let element = self.nodes.len();
+                    self.nodes.push(Node {
+                        symbols: None,
+                        shape: Shape::Product {
+                            record: false,
+                            fields: vec![
+                                (None, 0, key_id),
+                                (None, offsets[1].0.size_wasm32() as u32, value_id),
+                            ],
+                        },
+                        flat: self.nodes[key_id]
+                            .flat
+                            .iter()
+                            .chain(&self.nodes[value_id].flat)
+                            .copied()
+                            .collect(),
+                        size: stride,
+                        align: layout.align.align_wasm32() as u32,
+                        name: format!("map-entry-{element}"),
+                        dynamic: self.nodes[key_id].dynamic || self.nodes[value_id].dynamic,
+                    });
+                    Shape::List {
+                        map: true,
+                        element,
+                        stride,
+                    }
+                }
                 TypeDefKind::List(element) => {
                     let stride = u32::try_from(self.sizes.size(&element).size_wasm32())
                         .map_err(|_| error("WIT list stride exceeds memory32"))?;
                     Shape::List {
+                        map: false,
                         element: self.add_at(element, depth + 1)?,
                         stride,
                     }
@@ -214,6 +324,7 @@ impl<'a> Registry<'a> {
         };
         let index = self.nodes.len();
         self.nodes.push(Node {
+            symbols,
             shape,
             flat: flat(self.resolve, ty),
             size,
@@ -227,9 +338,28 @@ impl<'a> Registry<'a> {
 
     /// Project the complete source value into private owned arrays before any
     /// canonical allocation. The Wasm validator then checks every leaf first.
+    fn packed(&self, element: usize) -> Option<(Scalar, u32)> {
+        let node = &self.nodes[element];
+        if node.symbols.is_some() {
+            return None;
+        }
+        let Shape::Scalar(scalar) = node.shape else {
+            return None;
+        };
+        let kind = match scalar {
+            Scalar::S8 | Scalar::U8 => 0,
+            Scalar::S16 => 1,
+            Scalar::S32 => 2,
+            Scalar::F32 => 3,
+            Scalar::S64 => 4,
+            Scalar::F64 => 5,
+            _ => return None,
+        };
+        Some((scalar, kind))
+    }
     pub fn source(&self) -> String {
         let mut source = format!(
-            "(let [vs {} same suss.core/identical? eq suss.core/=\n arr suss.core/array get suss.core/aget put suss.core/aset\n alloc (fn [n] (suss.bootstrap/packed-array 6 n))\n keyword-class suss.core/Keyword map? suss.core/map? count suss.core/count has suss.core/contains? lookup suss.core/get assoc suss.core/assoc empty-map {{}}\n",
+            "(let [vs {} same suss.core/identical? eq suss.core/=\n arr suss.core/array get suss.core/aget put suss.core/aset\n alloc (fn [n] (suss.bootstrap/packed-array 6 n))\n keyword-class suss.core/Keyword map? suss.core/map? count suss.core/count has suss.core/contains? lookup suss.core/get assoc suss.core/assoc empty-map {{}} set? suss.core/set? conj suss.core/conj band suss.core/bit-and bor suss.core/bit-or alen suss.core/alength nth suss.core/nth seq suss.core/seq first suss.core/first next suss.core/next key suss.core/key val suss.core/val\n",
             super::list_schema::SOURCE
         );
         for (id, node) in self.nodes.iter().enumerate() {
@@ -242,103 +372,172 @@ impl<'a> Registry<'a> {
                     "value"
                 }
             );
-            let (lift, project) = match &node.shape {
-                Shape::Scalar(_) | Shape::String => ("(fn [v] v)".into(), "(fn [v] v)".into()),
-                Shape::Product {
-                    fields,
-                    record: true,
-                } => {
-                    source.push_str(&format!(
-                        "keys{id} (arr {})\n",
-                        fields
-                            .iter()
-                            .map(|(name, _, _)| format!(":{}", name.as_ref().unwrap()))
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    ));
-                    let mut lift = "empty-map".to_owned();
-                    for (i, _) in fields.iter().enumerate() {
-                        lift = format!("(assoc {lift} (get keys{id} {i}) (get v {i}))");
+            let (lift, project) = if let Some((flags, names)) = &node.symbols {
+                source.push_str(&format!(
+                    "symbols{id} (arr {})\n",
+                    names
+                        .iter()
+                        .map(|name| format!(":{name}"))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                ));
+                if *flags {
+                    let mut lift = "s0 #{} ".to_owned();
+                    let mut bindings = String::new();
+                    let mut counts = vec!["0".to_owned()];
+                    let mut bits = vec!["0".to_owned()];
+                    for i in 0..names.len() {
+                        let mask = 1_u64 << i;
+                        lift.push_str(&format!("s{} (if (eq (band v {mask}) 0) s{i} (conj s{i} (get symbols{id} {i}))) ", i + 1));
+                        bindings.push_str(&format!("b{i} (has v (get symbols{id} {i})) "));
+                        counts.push(format!("(if b{i} 1 0)"));
+                        bits.push(format!("(if b{i} {mask} 0)"));
                     }
-                    let checks = fields
-                        .iter()
-                        .enumerate()
-                        .rev()
-                        .fold("true".to_owned(), |rest, (i, _)| {
-                            format!("(if (has v (get keys{id} {i})) {rest} false)")
-                        });
-                    let values = fields
-                        .iter()
-                        .enumerate()
-                        .map(|(i, (_, _, child))| {
-                            format!("(p{child} (lookup v (get keys{id} {i})))")
-                        })
-                        .collect::<Vec<_>>()
-                        .join(" ");
                     (
-                        format!("(fn [v] {lift})"),
+                        format!("(fn [v] (let [{lift}] s{}))", names.len()),
                         format!(
-                            "(fn [v] (if (map? v) (if (same (count v) {}) (if {checks} (arr {values}) {failure}) {failure}) {failure}))",
-                            fields.len()
+                            "(fn [v] (if (set? v) (let [{bindings}] (if (eq (count v) (suss.core/+ {})) (bor {}) {failure})) {failure}))",
+                            counts.join(" "),
+                            bits.join(" ")
                         ),
                     )
-                }
-                Shape::Product {
-                    fields,
-                    record: false,
-                } => {
-                    let values = fields
-                        .iter()
-                        .enumerate()
-                        .map(|(i, (_, _, child))| format!("(p{child} (vs 2 parts {i}))"))
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    (
-                        "(fn [v] (vs 0 v 0))".into(),
-                        format!(
-                            "(fn [v] (let [parts (vs 1 v 0)] (if (same (vs 3 parts 0) {}) (arr {values}) {failure})))",
-                            fields.len()
-                        ),
-                    )
-                }
-                Shape::List { element, .. } => (
-                    "(fn [v] (vs 0 v 0))".into(),
-                    format!(
-                        "(fn [v] (let [parts (vs 1 v 0) n (vs 3 parts 0) out (alloc n)] (loop [i 0] (if (suss.core/< i n) (do (put out i (p{element} (vs 2 parts i))) (recur (suss.core/+ i 1))) out))))"
-                    ),
-                ),
-                Shape::Variant { cases, .. } => {
-                    source.push_str(&format!(
-                        "tags{id} (arr {})\n",
-                        cases
-                            .iter()
-                            .map(|(name, _)| format!(":{name}"))
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    ));
+                } else {
                     let mut lift = failure.clone();
                     let mut project = failure.clone();
-                    for (i, (_, child)) in cases.iter().enumerate().rev() {
-                        let lifted = if child.is_some() {
-                            format!("(arr (get tags{id} {i}) (get v 1))")
-                        } else {
-                            format!("(arr (get tags{id} {i}))")
-                        };
-                        lift = format!("(if (same (get v 0) {i}) (vs 0 {lifted} 0) {lift})");
-                        let projected = child
-                            .map(|child| format!("(p{child} (vs 2 parts 1))"))
-                            .unwrap_or_else(|| "nil".into());
-                        project = format!(
-                            "(if (eq tag (get tags{id} {i})) (if (same n {}) (arr {i} {projected}) {failure}) {project})",
-                            if child.is_some() { 2 } else { 1 }
-                        );
+                    for i in (0..names.len()).rev() {
+                        lift = format!("(if (eq v {i}) (get symbols{id} {i}) {lift})");
+                        project = format!("(if (eq v (get symbols{id} {i})) {i} {project})");
                     }
                     (
                         format!("(fn [v] {lift})"),
                         format!(
-                            "(fn [v] (let [parts (vs 1 v 0) n (vs 3 parts 0)] (if (suss.core/> n 0) (let [tag (vs 2 parts 0)] (if (suss.core/instance? keyword-class tag) {project} {failure})) {failure})))"
+                            "(fn [v] (if (suss.core/instance? keyword-class v) {project} {failure}))"
                         ),
                     )
+                }
+            } else {
+                match &node.shape {
+                    Shape::Scalar(_) | Shape::String => ("(fn [v] v)".into(), "(fn [v] v)".into()),
+                    Shape::Product {
+                        fields,
+                        record: true,
+                    } => {
+                        source.push_str(&format!(
+                            "keys{id} (arr {})\n",
+                            fields
+                                .iter()
+                                .map(|(name, _, _)| format!(":{}", name.as_ref().unwrap()))
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        ));
+                        let mut lift = "empty-map".to_owned();
+                        for (i, _) in fields.iter().enumerate() {
+                            lift = format!("(assoc {lift} (get keys{id} {i}) (get v {i}))");
+                        }
+                        let checks = fields
+                            .iter()
+                            .enumerate()
+                            .rev()
+                            .fold("true".to_owned(), |rest, (i, _)| {
+                                format!("(if (has v (get keys{id} {i})) {rest} false)")
+                            });
+                        let values = fields
+                            .iter()
+                            .enumerate()
+                            .map(|(i, (_, _, child))| {
+                                format!("(p{child} (lookup v (get keys{id} {i})))")
+                            })
+                            .collect::<Vec<_>>()
+                            .join(" ");
+                        (
+                            format!("(fn [v] {lift})"),
+                            format!(
+                                "(fn [v] (if (map? v) (if (same (count v) {}) (if {checks} (arr {values}) {failure}) {failure}) {failure}))",
+                                fields.len()
+                            ),
+                        )
+                    }
+                    Shape::Product {
+                        fields,
+                        record: false,
+                    } => {
+                        let values = fields
+                            .iter()
+                            .enumerate()
+                            .map(|(i, (_, _, child))| format!("(p{child} (vs 2 parts {i}))"))
+                            .collect::<Vec<_>>()
+                            .join(" ");
+                        (
+                            "(fn [v] (vs 0 v 0))".into(),
+                            format!(
+                                "(fn [v] (let [parts (vs 1 v 0)] (if (same (vs 3 parts 0) {}) (arr {values}) {failure})))",
+                                fields.len()
+                            ),
+                        )
+                    }
+                    Shape::List {
+                        map: true, element, ..
+                    } => {
+                        let Shape::Product { fields, .. } = &self.nodes[*element].shape else {
+                            unreachable!()
+                        };
+                        let key = fields[0].2;
+                        let value = fields[1].2;
+                        let write = format!(
+                            "(put out i (arr (p{key} (key entry)) (p{value} (val entry))))"
+                        );
+                        let step = format!(
+                            "(let [entry (first entries)] {write} (recur (next entries) (suss.core/+ i 1)))"
+                        );
+                        ("(fn [v] (loop [i 0 out empty-map] (if (suss.core/< i (alen v)) (let [entry (get v i)] (recur (suss.core/+ i 1) (assoc out (nth entry 0) (nth entry 1)))) out)))".into(),
+                        format!("(fn [v] (if (map? v) (let [out (alloc (count v))] (loop [entries (seq v) i 0] (if entries {step} out))) {failure}))"))
+                    }
+                    Shape::List { element, .. } => {
+                        let values = format!(
+                            "(let [parts (vs 1 v 0) n (vs 3 parts 0) out (alloc n)] (loop [i 0] (if (suss.core/< i n) (do (put out i (p{element} (vs 2 parts i))) (recur (suss.core/+ i 1))) out)))"
+                        );
+                        let project = if let Some((_, kind)) = self.packed(*element) {
+                            format!(
+                                "(fn [v] (let [v (vs 4 v {kind})] (if (suss.bootstrap/packed-array? v) (if (suss.bootstrap/object-array? v) {failure} v) {values})))"
+                            )
+                        } else {
+                            format!("(fn [v] {values})")
+                        };
+                        ("(fn [v] (vs 0 v 0))".into(), project)
+                    }
+                    Shape::Variant { cases, .. } => {
+                        source.push_str(&format!(
+                            "tags{id} (arr {})\n",
+                            cases
+                                .iter()
+                                .map(|(name, _)| format!(":{name}"))
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        ));
+                        let mut lift = failure.clone();
+                        let mut project = failure.clone();
+                        for (i, (_, child)) in cases.iter().enumerate().rev() {
+                            let lifted = if child.is_some() {
+                                format!("(arr (get tags{id} {i}) (get v 1))")
+                            } else {
+                                format!("(arr (get tags{id} {i}))")
+                            };
+                            lift = format!("(if (same (get v 0) {i}) (vs 0 {lifted} 0) {lift})");
+                            let projected = child
+                                .map(|child| format!("(p{child} (vs 2 parts 1))"))
+                                .unwrap_or_else(|| "nil".into());
+                            project = format!(
+                                "(if (eq tag (get tags{id} {i})) (if (same n {}) (arr {i} {projected}) {failure}) {project})",
+                                if child.is_some() { 2 } else { 1 }
+                            );
+                        }
+                        (
+                            format!("(fn [v] {lift})"),
+                            format!(
+                                "(fn [v] (let [parts (vs 1 v 0) n (vs 3 parts 0)] (if (suss.core/> n 0) (let [tag (vs 2 parts 0)] (if (suss.core/instance? keyword-class tag) {project} {failure})) {failure})))"
+                            ),
+                        )
+                    }
                 }
             };
             source.push_str(&format!("l{id} {lift}\np{id} {project}\n"));
@@ -712,6 +911,10 @@ impl Registry<'_> {
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), load(*scalar)]);
                 super::lift_scalar(body, scalar, sentinels, locals.wide);
+                if node.symbols.is_some() {
+                    body.instruction(&LocalSet(locals.value));
+                    schema_call(body, root, id, false, locals.value);
+                }
                 return;
             }
             Shape::String => {
@@ -792,7 +995,9 @@ impl Registry<'_> {
                 fail(body, locals, &node.name);
                 return;
             }
-            Shape::List { element, stride } => {
+            Shape::List {
+                element, stride, ..
+            } => {
                 load_list(body, 0, locals);
                 allocate_array(body, locals.length, locals);
                 begin_loop(body, locals);
@@ -870,6 +1075,39 @@ impl Registry<'_> {
                 fail(body, locals, &node.name);
             }
             Shape::List { element, .. } => {
+                if let Some((_, kind)) = self.packed(*element) {
+                    emit(
+                        body,
+                        &[
+                            LocalGet(0),
+                            RefCastNonNull(HeapType::Concrete(crate::runtime_abi::PACKED)),
+                            StructGet {
+                                struct_type_index: crate::runtime_abi::PACKED,
+                                field_index: 0,
+                            },
+                            RefTestNonNull(HeapType::Concrete(crate::runtime_abi::ARGS)),
+                            I32Eqz,
+                            If(BlockType::Empty),
+                            LocalGet(0),
+                            RefCastNonNull(HeapType::Concrete(crate::runtime_abi::PACKED)),
+                            StructGet {
+                                struct_type_index: crate::runtime_abi::PACKED,
+                                field_index: 0,
+                            },
+                            RefTestNonNull(HeapType::Concrete(
+                                crate::runtime_abi::PACKED_STORAGE + kind,
+                            )),
+                            I32Eqz,
+                            If(BlockType::Empty),
+                        ],
+                    );
+                    super::boundary_error_message(
+                        body,
+                        locals.value,
+                        "WIT composite list returned a primitive array of another element type",
+                    );
+                    emit(body, &[End, Return, End]);
+                }
                 array_length(body, 0, locals);
                 begin_loop(body, locals);
                 dynamic_get(body, 0, locals.index, locals.wide);
@@ -975,7 +1213,9 @@ impl Registry<'_> {
                 }
                 fail(body, locals, &node.name);
             }
-            Shape::List { element, stride } => {
+            Shape::List {
+                element, stride, ..
+            } => {
                 array_length(body, 0, locals);
                 emit(
                     body,
@@ -1005,6 +1245,47 @@ impl Registry<'_> {
                         I32Store(memory(4, 2)),
                     ],
                 );
+                if let Some((scalar, kind)) = self.packed(*element) {
+                    emit(
+                        body,
+                        &[
+                            LocalGet(0),
+                            RefCastNonNull(HeapType::Concrete(crate::runtime_abi::PACKED)),
+                            StructGet {
+                                struct_type_index: crate::runtime_abi::PACKED,
+                                field_index: 0,
+                            },
+                            RefTestNonNull(HeapType::Concrete(
+                                crate::runtime_abi::PACKED_STORAGE + kind,
+                            )),
+                            If(BlockType::Empty),
+                        ],
+                    );
+                    let storage = crate::runtime_abi::PACKED_STORAGE + kind;
+                    begin_loop(body, locals);
+                    element_address(body, locals, *stride);
+                    emit(
+                        body,
+                        &[
+                            LocalGet(0),
+                            RefCastNonNull(HeapType::Concrete(crate::runtime_abi::PACKED)),
+                            StructGet {
+                                struct_type_index: crate::runtime_abi::PACKED,
+                                field_index: 0,
+                            },
+                            RefCastNonNull(HeapType::Concrete(storage)),
+                            LocalGet(locals.index),
+                            if kind < 2 {
+                                ArrayGetU(storage)
+                            } else {
+                                ArrayGet(storage)
+                            },
+                            store(scalar),
+                        ],
+                    );
+                    end_loop(body, locals);
+                    emit(body, &[Return, End]);
+                }
                 begin_loop(body, locals);
                 dynamic_get(body, 0, locals.index, locals.wide);
                 element_address(body, locals, *stride);
@@ -1071,7 +1352,9 @@ impl Registry<'_> {
                 }
                 fail(body, locals, &self.nodes[id].name);
             }
-            Shape::List { element, stride } => {
+            Shape::List {
+                element, stride, ..
+            } => {
                 load_list(body, 0, locals);
                 if self.nodes[*element].dynamic {
                     begin_loop(body, locals);
@@ -1098,7 +1381,28 @@ impl Registry<'_> {
         let node = &self.nodes[id];
         let pointer = node.flat.len() as u32;
         match &node.shape {
-            Shape::Scalar(scalar) => emit(body, &[LocalGet(pointer), LocalGet(0), store(*scalar)]),
+            Shape::Scalar(scalar) => {
+                if let Some((flags, names)) = &node.symbols {
+                    if !flags || names.len() < 32 {
+                        emit(
+                            body,
+                            &[
+                                LocalGet(0),
+                                I32Const(if *flags {
+                                    (1_u32 << names.len()) as i32
+                                } else {
+                                    names.len() as i32
+                                }),
+                                I32GeU,
+                                If(BlockType::Empty),
+                            ],
+                        );
+                        fail(body, locals, &node.name);
+                        body.instruction(&End);
+                    }
+                }
+                emit(body, &[LocalGet(pointer), LocalGet(0), store(*scalar)]);
+            }
             Shape::String | Shape::List { .. } => emit(
                 body,
                 &[

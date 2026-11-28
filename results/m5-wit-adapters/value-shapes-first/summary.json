@@ -1,0 +1,29 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_aot_wit_value_shapes",
+    "--",
+    "--test-threads=2"
+  ],
+  "head": "cb0f183d66b6f8a275f019cf171634f159f85f20",
+  "runner_sha256": "92bf1df90d3b79a14f167c8bda65a4578504e61bebebd492b0f70f8b4131f0c9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p1042497-i105875158.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-composites/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 101,
+  "seconds": 6.167215371970087,
+  "log_sha256": "e3bc78fe25eea59cb461b14f801563b9dc9923c4f87e77db3865866c65f96458",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "receipt_sha256": "d5df2125611b27313e4555893e250cb817edd92713313a7d671ef766de681fdb",
+  "inputs_count": 13745
+}

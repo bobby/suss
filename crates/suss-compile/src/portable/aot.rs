@@ -851,6 +851,55 @@ pub fn component_with(
         .as_ref()
         .map(|capability| capability.encode(resolve, &mut resolved_types))
         .transpose()?;
+    // Publish nominal root values before defining their parents/functions:
+    // component type exports introduce new identities, not just names.
+    let mut live = wit_parser::LiveTypes::default();
+    let mut root_names = std::collections::BTreeMap::new();
+    for (key, item) in &selected.imports {
+        if let WorldItem::Type { id, .. } = item {
+            root_names.insert(*id, resolve.name_world_key(key));
+            live.add_type_id(resolve, *id);
+        }
+    }
+    for item in selected.exports.values() {
+        if let WorldItem::Function(function) = item {
+            live.add_func(resolve, function);
+        }
+    }
+    let reserved = root_names
+        .values()
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut public_names = selected
+        .exports
+        .keys()
+        .map(|key| resolve.name_world_key(key))
+        .collect::<std::collections::BTreeSet<_>>();
+    for id in live.iter() {
+        use wit_parser::TypeDefKind;
+        if !root_names.contains_key(&id)
+            && !matches!(
+                resolve.types[id].kind,
+                TypeDefKind::Record(_)
+                    | TypeDefKind::Variant(_)
+                    | TypeDefKind::Enum(_)
+                    | TypeDefKind::Flags(_)
+            )
+        {
+            continue;
+        }
+        let preferred = root_names.get(&id);
+        let mut name = preferred
+            .cloned()
+            .or_else(|| resolve.types[id].name.clone())
+            .unwrap_or_else(|| format!("value-{}", id.index()));
+        while public_names.contains(&name) || (reserved.contains(&name) && preferred != Some(&name))
+        {
+            name.push_str("-value");
+        }
+        public_names.insert(name.clone());
+        resolved_types.export_value(&mut component, &name, id)?;
+    }
     let mut public_types = std::collections::BTreeMap::new();
     for export in &public_exports {
         if let PublicExport::Interface { types, .. } = export {
@@ -871,7 +920,7 @@ pub fn component_with(
         );
         function_types.push(resolved_types.function(&export.wit)?);
     }
-    component.section(&resolved_types.section);
+    resolved_types.flush(&mut component);
     if let (Some(capability), Some(ty)) = (&randomness, random_type) {
         let mut imports = ComponentImportSection::new();
         imports.import(&capability.name, ComponentTypeRef::Instance(ty));
