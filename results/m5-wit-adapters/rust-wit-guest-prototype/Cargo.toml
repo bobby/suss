@@ -1,0 +1,13 @@
+[workspace]
+[package]
+name = "suss-wit-rust-guest-fixture"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+[lib]
+crate-type = ["cdylib"]
+[dependencies]
+wit-bindgen = "=0.61.1"
+[profile.dev]
+debug = 0
+incremental = false

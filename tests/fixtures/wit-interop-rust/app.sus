@@ -1,0 +1,8 @@
+(ns fixture.app)
+(def saved (atom nil))
+(defn echo [value] (reset! saved value) (fixture.host/echo value))
+(defn seen [] (fixture.host/calls))
+(defn rejected []
+  (try (fixture.host/echo (assoc @saved :rights #{:unknown}))
+       false
+       (catch :default error true)))

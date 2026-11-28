@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-final-bin/suss",
+    "--no-cache",
+    "compile",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/app.sus",
+    "-w",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/api.wit",
+    "--wit-world",
+    "suss-consumer",
+    "--export",
+    "echo=fixture.app/echo",
+    "--import",
+    "fixture:rust-interop/provider@0.1.0#echo=fixture.host/echo",
+    "-o",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/consumer.wasm"
+  ],
+  "inputs": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-final-bin/suss": "4cb2dbcf27556f3f756518a683c315b80b1be8cddab6206ac8ec3515626ebb34",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/api.wit": "6ef22f19968f8cd63f2baa7b3b51c649ca281afb5d4e8a00e19a4b9610560b8b",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/app.sus": "a9c2ddda329a7b25166ebae3d717dba30aa8c703ecec864770c055caf6282f57",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-guest/Cargo.lock": "954c92d61c578057ce5a5df5b7c2036e3e9c3da161a79a491985b4621fa7aae8"
+  },
+  "qualification": "Prototype uses immutable application compiler snapshot 2a779949; no source workspace was edited.",
+  "exit_code": 0,
+  "seconds": 100.04029350169003,
+  "changed_inputs": [],
+  "component_sha256": "d3227d7d2a05821a6514a9b524541096651a9a812200302f90e245e009087540"
+}

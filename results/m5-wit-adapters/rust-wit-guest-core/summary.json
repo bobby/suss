@@ -1,0 +1,33 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--manifest-path",
+    "tests/fixtures/wit-interop-rust/Cargo.toml",
+    "--target",
+    "wasm32-unknown-unknown",
+    "--target-dir",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/rust-wit-fixture-cargo"
+  ],
+  "head": "2a779949f84e5d856a0860671e2de65263259e21",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p2355754-i107200822.scope\n",
+  "environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 1.804971689824015,
+  "log_sha256": "a2cb100e674a5db169944b347681fa418e36874aa62eed8d87c59eaf77b18987",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "13270279455904646b519f88c1a447c5d88cbf4d6b3f147e5f415bf9e2b00438",
+  "inputs_count": 14325
+}
