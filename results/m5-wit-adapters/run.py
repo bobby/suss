@@ -33,7 +33,18 @@ def main():
         if (ROOT / name).is_file() and output not in (ROOT / name).parents
     }
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    prerequisite_tools = {}
+    if os.environ.get("SUSS_WASM_OPT"):
+        binaryen = Path(os.environ["SUSS_WASM_OPT"])
+        for path in (binaryen, binaryen.with_name("wasm-merge")):
+            prerequisite_tools[str(path)] = digest(path)
+    submodule = ROOT / "clojurescript"
+    pinned_cljs = subprocess.check_output(["git", "-C", str(submodule), "rev-parse", "HEAD"], text=True).strip() if (submodule / ".git").exists() else None
     record = {
+        "prerequisite_tools": prerequisite_tools,
+        "pinned_clojurescript": pinned_cljs,
+        "cargo_version": subprocess.check_output(["cargo", "--version"], text=True).strip(),
+        "rustc_version": subprocess.check_output(["rustc", "--version"], text=True).strip(),
         "command": command,
         "head": head,
         "inputs": inputs,
@@ -41,7 +52,7 @@ def main():
         "cgroup": Path("/proc/self/cgroup").read_text(),
         "environment": {key: os.environ[key] for key in [
             "CARGO_TARGET_DIR", "CARGO_BUILD_JOBS", "RUSTUP_TOOLCHAIN",
-            "SUSS_BUILD_DIR", "SUSS_WASM_OPT", "BINARYEN_CORES",
+            "SUSS_BUILD_DIR", "SUSS_WASM_OPT", "BINARYEN_CORES", "TMPDIR",
         ] if key in os.environ},
         "complete": False,
     }
@@ -60,6 +71,8 @@ def main():
         head_unchanged=subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip() == head,
+        prerequisites_unchanged=all(Path(name).is_file() and digest(Path(name)) == sha
+                                    for name, sha in prerequisite_tools.items()),
         complete=True,
     )
     (output / "command.log.gz").write_bytes(gzip.compress(raw_log.read_bytes(), mtime=0))

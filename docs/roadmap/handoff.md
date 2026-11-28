@@ -37000,3 +37000,10 @@ captured classes and schema functions. The10,000-call test retains nested exact
 u64/Unicode/optional-false data across GC while restricting transfer memory to
 one64KiB page. General imports, resource/error/cancellation accounting and full
 workspace/CI acceptance remain separate requirements.
+
+All15 original foundation commands also returned0 on this data-codec source
+(364 Python unit tests included), with the exact CLJS pin restored in the
+isolated worktree. `results/m5-wit-adapters/data-codec-foundation/` retains each
+command and raw outcome; all13,769 recorded inputs and HEAD remained unchanged.
+The command recorder now retains Cargo/rustc versions, the CLJS pin and configured
+Binaryen tool digests, checking external tools again at termination.
