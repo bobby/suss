@@ -9,6 +9,10 @@ use wit_parser::{Int, Resolve, SizeAlign, Type, TypeDefKind};
 pub(super) enum Shape {
     Scalar(Scalar),
     String,
+    Resource {
+        id: wit_parser::TypeId,
+        owned: bool,
+    },
     Product {
         fields: Vec<(Option<String>, u32, usize)>,
         record: bool,
@@ -41,6 +45,7 @@ pub(super) struct Registry<'a> {
     pub resolve: &'a Resolve,
     sizes: SizeAlign,
     ids: HashMap<Type, usize>,
+    resource_values: bool,
     pub nodes: Vec<Node>,
 }
 
@@ -86,8 +91,13 @@ impl<'a> Registry<'a> {
             resolve,
             sizes,
             ids: HashMap::new(),
+            resource_values: false,
             nodes: vec![],
         }
+    }
+    pub fn permit_resources(mut self) -> Self {
+        self.resource_values = true;
+        self
     }
     pub fn index(&self, ty: Type) -> usize {
         self.ids[&normalized(self.resolve, ty)]
@@ -120,6 +130,10 @@ impl<'a> Registry<'a> {
             Shape::Scalar(scalar)
         } else if let Type::Id(id) = ty {
             match self.resolve.types[id].kind.clone() {
+                TypeDefKind::Handle(handle) if self.resource_values => match handle {
+                    wit_parser::Handle::Own(id) => Shape::Resource { id, owned: true },
+                    wit_parser::Handle::Borrow(id) => Shape::Resource { id, owned: false },
+                },
                 TypeDefKind::Tuple(tuple) => {
                     if tuple.types.is_empty() {
                         return Err(error("WIT tuple requires at least one element"));
@@ -313,7 +327,7 @@ impl<'a> Registry<'a> {
             return Err(error(format!("Unsupported WIT value {ty:?}")));
         };
         let dynamic = match &shape {
-            Shape::Scalar(_) => false,
+            Shape::Scalar(_) | Shape::Resource { .. } => false,
             Shape::String | Shape::List { .. } => true,
             Shape::Product { fields, .. } => fields
                 .iter()
@@ -417,7 +431,9 @@ impl<'a> Registry<'a> {
                 }
             } else {
                 match &node.shape {
-                    Shape::Scalar(_) | Shape::String => ("(fn [v] v)".into(), "(fn [v] v)".into()),
+                    Shape::Scalar(_) | Shape::String | Shape::Resource { .. } => {
+                        ("(fn [v] v)".into(), "(fn [v] v)".into())
+                    }
                     Shape::Product {
                         fields,
                         record: true,
@@ -832,6 +848,7 @@ impl Registry<'_> {
         base: u32,
         root: u32,
         sentinels: u32,
+        resource: Option<&super::resources::Codec<'_>>,
     ) {
         let mut signatures = vec![];
         let mut blocks = vec![];
@@ -882,9 +899,9 @@ impl Registry<'_> {
                 }
                 let mut body = Function::new(declarations);
                 match operation {
-                    COPY => self.copy(&mut body, id, base, root, sentinels, &locals),
-                    VALIDATE => self.validate(&mut body, id, base, sentinels, &locals),
-                    WRITE => self.write(&mut body, id, base, sentinels, &locals),
+                    COPY => self.copy(&mut body, id, base, root, sentinels, &locals, resource),
+                    VALIDATE => self.validate(&mut body, id, base, sentinels, &locals, resource),
+                    WRITE => self.write(&mut body, id, base, sentinels, &locals, resource),
                     FREE => self.free(&mut body, id, base, &locals),
                     STORE_FLAT => self.store_flat(&mut body, id, base, &locals),
                     LOAD_FLAT => self.load_flat(&mut body, id, base, blocks[id], &locals),
@@ -904,10 +921,20 @@ impl Registry<'_> {
         root: u32,
         sentinels: u32,
         locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
     ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.copy(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+                return;
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), load(*scalar)]);
                 super::lift_scalar(body, scalar, sentinels, locals.wide);
@@ -1021,10 +1048,26 @@ impl Registry<'_> {
         schema_call(body, root, id, false, locals.tree);
     }
 
-    fn validate(&self, body: &mut Function, id: usize, base: u32, sentinels: u32, locals: &Locals) {
+    fn validate(
+        &self,
+        body: &mut Function,
+        id: usize,
+        base: u32,
+        sentinels: u32,
+        locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
+    ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.validate(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), LocalSet(locals.value)]);
                 super::lower_scalar(
@@ -1132,10 +1175,26 @@ impl Registry<'_> {
         );
     }
 
-    fn write(&self, body: &mut Function, id: usize, base: u32, sentinels: u32, locals: &Locals) {
+    fn write(
+        &self,
+        body: &mut Function,
+        id: usize,
+        base: u32,
+        sentinels: u32,
+        locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
+    ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.write(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), LocalSet(locals.value), LocalGet(1)]);
                 super::lower_scalar(
@@ -1298,7 +1357,7 @@ impl Registry<'_> {
     fn free(&self, body: &mut Function, id: usize, base: u32, locals: &Locals) {
         use Instruction::*;
         match &self.nodes[id].shape {
-            Shape::Scalar(_) => {}
+            Shape::Scalar(_) | Shape::Resource { .. } => {}
             Shape::String => emit(
                 body,
                 &[
@@ -1381,6 +1440,10 @@ impl Registry<'_> {
         let node = &self.nodes[id];
         let pointer = node.flat.len() as u32;
         match &node.shape {
+            Shape::Resource { .. } => emit(
+                body,
+                &[LocalGet(pointer), LocalGet(0), I32Store(memory(0, 2))],
+            ),
             Shape::Scalar(scalar) => {
                 if let Some((flags, names)) = &node.symbols {
                     if !flags || names.len() < 32 {
@@ -1463,6 +1526,7 @@ impl Registry<'_> {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { .. } => emit(body, &[LocalGet(0), I32Load(memory(0, 2))]),
             Shape::Scalar(scalar) => emit(body, &[LocalGet(0), load(*scalar)]),
             Shape::String | Shape::List { .. } => emit(
                 body,

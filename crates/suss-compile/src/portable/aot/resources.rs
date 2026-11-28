@@ -353,3 +353,165 @@ impl Carrier {
 
 #[cfg(all(test, not(target_family = "wasm")))]
 mod tests;
+
+mod plan;
+pub(super) use plan::Plan;
+
+/// Data codecs borrow owned handles without changing their ownership. Own
+/// handoff remains gated until move commits are implemented for complete calls.
+pub(super) struct Codec<'a> {
+    pub plan: &'a Plan,
+    pub resolve: &'a wit_parser::Resolve,
+    pub drop_calls: &'a [u32],
+    pub make_function: u32,
+    pub check_function: u32,
+    pub state_type: u32,
+}
+impl Codec<'_> {
+    fn ordinal(&self, id: wit_parser::TypeId) -> u32 {
+        self.plan
+            .ordinal(self.resolve, id)
+            .expect("validated resource domain")
+    }
+    pub fn copy(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool) {
+        use Instruction::*;
+        if !owned {
+            body.instruction(&Unreachable);
+            return;
+        }
+        let ordinal = self.ordinal(id);
+        emit(
+            body,
+            &[
+                LocalGet(0),
+                I32Load(MemArg {
+                    offset: 0,
+                    align: 2,
+                    memory_index: 0,
+                }),
+                I32Const(ordinal as i32),
+                RefFunc(self.drop_calls[ordinal as usize]),
+                Call(self.make_function),
+            ],
+        );
+    }
+    pub fn validate(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool) {
+        use Instruction::*;
+        emit(
+            body,
+            &[
+                LocalGet(0),
+                I32Const(self.ordinal(id) as i32),
+                I32Const(i32::from(owned)),
+                Call(self.check_function),
+                Drop,
+            ],
+        );
+    }
+    pub fn write(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool) {
+        use Instruction::*;
+        if owned {
+            body.instruction(&Unreachable);
+            return;
+        }
+        emit(
+            body,
+            &[
+                LocalGet(1),
+                LocalGet(0),
+                I32Const(self.ordinal(id) as i32),
+                I32Const(0),
+                Call(self.check_function),
+                StructGet {
+                    struct_type_index: self.state_type,
+                    field_index: HANDLE,
+                },
+                I32Store(MemArg {
+                    offset: 0,
+                    align: 2,
+                    memory_index: 0,
+                }),
+            ],
+        );
+    }
+}
+
+pub(super) fn drop_name(index: usize) -> String {
+    format!("{}suss.resource.drop.{index}", char::from(0_u8))
+}
+pub(super) struct Wiring {
+    pub descriptor_new: u32,
+    pub object_new: u32,
+    pub drop_calls: Vec<u32>,
+}
+pub(super) fn wire(
+    types: &mut TypeSection,
+    imports: &mut ImportSection,
+    first: u32,
+    plan: &Plan,
+) -> Wiring {
+    for (name, params) in [
+        ("descriptor-new-core", vec![VALUE; 3]),
+        ("object-new", vec![VALUE; 2]),
+    ] {
+        let ty = next_type(types);
+        types.ty().function(params, [VALUE]);
+        imports.import("suss.runtime", name, EntityType::Function(ty));
+    }
+    let mut drop_calls = Vec::new();
+    for index in 0..plan.resources.len() {
+        let ty = next_type(types);
+        types.ty().function([ValType::I32], []);
+        imports.import("suss.host", &drop_name(index), EntityType::Function(ty));
+        drop_calls.push(first + 2 + index as u32);
+    }
+    Wiring {
+        descriptor_new: first,
+        object_new: first + 1,
+        drop_calls,
+    }
+}
+pub(super) fn initialize_descriptor(
+    body: &mut Function,
+    helpers: Helpers,
+    descriptor_new: u32,
+    descriptor: u32,
+) {
+    use Instruction::*;
+    string(body, helpers, "resource-state", 0);
+    body.instruction(&ArrayNewFixed {
+        array_type_index: runtime_abi::ARGS,
+        array_size: 1,
+    });
+    string(body, helpers, "suss.resource.Handle", 0);
+    emit(
+        body,
+        &[
+            I32Const(0),
+            RefI31,
+            Call(descriptor_new),
+            GlobalSet(descriptor),
+        ],
+    );
+}
+pub(super) fn install_close(
+    body: &mut Function,
+    cell: u32,
+    invoker: u32,
+    wiring: &super::imports::Wiring,
+) {
+    use Instruction::*;
+    emit(
+        body,
+        &[
+            GlobalGet(cell),
+            runtime_abi::sentinel_value(runtime_abi::NIL),
+            RefFunc(invoker),
+            I32Const(1),
+            I32Const(1),
+            Call(wiring.closure_new),
+            Call(wiring.binding_set),
+            Drop,
+        ],
+    );
+}

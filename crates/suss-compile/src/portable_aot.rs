@@ -313,14 +313,15 @@ pub(crate) fn compile_inputs_with_options(
         }
         portable::aot::validate_import_boundary(&resolve, world, &options.imports)
             .map_err(|error| CompileError::Unsupported(error.to_string()))?;
-        for (_, source) in &options.imports {
+        let mut imported = options.imports.iter().map(|(_, source)| source.clone()).collect::<Vec<_>>();
+        imported.extend(portable::aot::resource_api_symbols(&resolve, world).map_err(|error| CompileError::Unsupported(error.to_string()))?);
+        for source in &imported {
             let namespace = source.namespace.as_deref().expect("validated import namespace");
             if portable::resolve::locate_source_if_present(namespace, source_paths, 0..0)
                 .map_err(|error| CompileError::Semantic(error.to_string()))?.is_some() {
                 return Err(CompileError::Semantic(format!("Host namespace {namespace} is owned by a source module; import mapping would hide its initialization")));
             }
         }
-        let imported = options.imports.iter().map(|(_, source)| source.clone()).collect::<Vec<_>>();
         let hints = export_param_hints(&resolve, world, &options.exports);
         let fragments = prepare_inputs_with_hints(inputs, source_paths, false, &imported, options.compile_fuel, true, hints)
             .map_err(|error| CompileError::Semantic(error.to_string()))?;

@@ -98,3 +98,10 @@ WIT paths; an external ID supplies no additional call authority. The same name
 encoder retains `implements` and external-ID annotations for the automatic
 randomness instance. The focused executing controls select imports/exports by ID
 and exchange native collections with exact integers and Unicode.
+
+
+[Imported resource handles](wit-resources.md) have a bounded synchronous
+constructor/method/static route with opaque carriers and explicit close. Its
+selection guard retains unsupported alias, move, borrow-result and export paths
+until their lifetime adapters are implemented. Data-value mappings and ordinary
+source collection operations remain unchanged.

@@ -2154,8 +2154,16 @@ commands, ignored-versus-executed qualifications and earlier failures; these
 focused results do not replace the import head's required full baseline/CI or
 its remaining lifetime and interoperability gates.
 
-The internal resource type encoder has an executing constructor/borrowed-method/
-static/drop control against Rust, with live counters returning to zero. Source
-resource bindings still reject at the explicit lifetime diagnostic; their actual
-source regression records that failure. Type encoding alone does not establish
-opaque source ownership, scope cleanup or resource interoperability acceptance.
+Resource declaration encoding and private carrier primitives have separately
+recorded executing Rust/GC controls. Their original unsupported-source regression
+and build failures remain retained; later source-level validation is described
+below. Encoder/unit evidence alone does not establish full lifetime acceptance.
+
+
+[Imported WIT resource handles](../runtime/wit-resources.md) have executing
+source constructor/method/static/explicit-close controls with exact values,
+borrowed receivers, GC, closed/forged/cross-type rejection and try/finally cleanup.
+The expanded five-test command passes on its recorded resource source; original
+unsupported and failed fixture/build observations remain retained. Contextual
+provider identities, own moves, exported handles and full lifetime/cancellation
+acceptance retain explicit guards and separate work.

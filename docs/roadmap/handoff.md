@@ -37319,3 +37319,53 @@ moves, borrowed results, exported handles, exceptional/cancellation scopes and
 guest-defined resources retain their acceptance work. Raw receipts are in
 `opaque-resource-carriers-first/`, `opaque-resource-carriers-abi-value/` and
 `opaque-resource-carriers-heap-type/`.
+
+
+### 2026-11-28: executing imported resource source bindings
+
+Selected synchronous constructors, methods and statics now install ordinary
+Runtime closures. Resource results become opaque private GC carriers; methods
+validate the declared resource ordinal/live state before borrowing an owner.
+`suss.resource/close!` is predeclared as Runtime authority, installed before user
+initialization and wired to canonical resource.drop. Constructor/method/static
+public paths remain explicit mappings. Canonical drop functions share the
+internal provider instance with distinct private names; component/core function
+indices count those callbacks separately. Source macros receive no host/drop
+provider. The generic graph preserves raw canonical handles through private
+carriers and releases transfer buffers without dropping newly owned results.
+
+The first assembly build failed because a setup block was placed in the async
+bridge; its corrected source command returned0: one test,88.85s execution/
+283.401s including build, all13,902 captured inputs and HEAD conserved. Sixty
+real guest constructor/read/close/static round trips preserve0/>2^53/u64::MAX;
+Rust verifies borrowed receivers, exactly sixty canonical destructor calls and
+zero live resources after every call, with forced GC.
+
+The three-control run then exposed two fixture assumptions: pinned WIT rejects
+borrowed results during resolution, and compiled macro exceptions omit the
+string payload. Failed commands retain both observations. Corrected controls
+returned0 (three passed, zero failed/ignored,138.06s execution/144.963s including
+build), conserving13,911 inputs/HEAD. Numeric/collection/nil/false forgeries
+cannot reach the host while an owner is live; closed aliases cannot read or close
+again. Unsupported provider aliases/dependencies, own arguments and exported
+handles reject before macro invocation; borrowed results reject in the resolver.
+A valid-world calibration actually invokes the macro and throws.
+
+The complete expanded five-test command also returned0:
+`cargo test -p suss-compile --locked --test portable_aot_wit_resources -- --test-threads=2`.
+It took268.583s including build; all13,914 captured inputs
+and HEAD stayed fixed. Its added tests reject cross-type opaque handle use before host calls, and execute source try/finally cleanup before
+a caught language error returns. These run against the independent Rust resource
+table and check exact values, destructor order/counts, zero live objects and GC.
+Raw command folders retain the initial failure, corrected single path, two
+fixture failures and the complete passing controls.
+
+Provider aliases/foreign resource uses still require contextual type/graph
+identities; owned-argument moves, exported handles and guest-defined resources
+remain gated. Source try/finally establishes ordinary language-exception cleanup;
+automatic scope/cancellation and post-trap cleanup are not claimed. Canonical
+traps require Store retirement. Next implement atomic owned moves (including
+all-argument duplicate detection), call-scoped borrow/export adapters and
+remaining lifetime/independent interoperability/application gates. The separate
+workspace baselines remain on their own frozen data/import heads and do not
+certify this resource source.

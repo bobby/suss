@@ -401,6 +401,17 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         })
 }
 
+pub(crate) fn resource_api_symbols(
+    resolve: &Resolve,
+    world: WorldId,
+) -> Result<Vec<Symbol>, Diagnostic> {
+    Ok(if resources::Plan::selected(resolve, world)?.is_some() {
+        vec![Symbol::namespaced("suss.resource", "close!")]
+    } else {
+        Vec::new()
+    })
+}
+
 /// Check explicit host mappings without executing source or granting Macro authority.
 pub(crate) fn validate_import_boundary(
     resolve: &Resolve,
@@ -739,7 +750,11 @@ pub fn component_with_imports(
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
     }
+    let resource_plan = resources::Plan::selected(resolve, world)?;
     let mut registry = composite::Registry::new(resolve);
+    if resource_plan.is_some() {
+        registry = registry.permit_resources();
+    }
     for export in &exports {
         for ty in export.params.iter().map(|(_, ty)| *ty).chain(export.result) {
             if let Boundary::Generic(id) = ty {
@@ -755,6 +770,23 @@ pub fn component_with_imports(
                 .map(|value| value.global().clone())
         })
         .collect::<Result<Vec<_>, Diagnostic>>()?;
+    let resource_close = if resource_plan.is_some() {
+        Some(
+            last.environment
+                .resolve(
+                    Phase::Runtime,
+                    &Symbol::namespaced("suss.resource", "close!"),
+                    0..0,
+                )?
+                .global()
+                .clone(),
+        )
+    } else {
+        None
+    };
+    let resource_count = resource_plan
+        .as_ref()
+        .map_or(0, |plan| plan.resources.len() as u32);
     for import in &host_imports {
         for ty in import
             .wit
@@ -864,6 +896,8 @@ pub fn component_with_imports(
         &registry,
         &host_imports,
         &import_globals,
+        resource_plan.as_ref(),
+        resource_close.as_ref(),
     )?;
     let asynchronous = exports
         .iter()
@@ -1282,14 +1316,39 @@ pub fn component_with_imports(
             );
         }
         component.section(&lowered);
+        let mut drops = CanonicalFunctionSection::new();
+        if let Some(plan) = &resource_plan {
+            for resource in &plan.resources {
+                drops.resource_drop(
+                    resolved_types
+                        .existing(resource.id)
+                        .ok_or_else(|| error("Resource provider type identity is missing"))?,
+                );
+            }
+        }
+        if resource_count != 0 {
+            component.section(&drops);
+        }
         let mut installed = InstanceSection::new();
-        installed.export_items(host_imports.iter().enumerate().map(|(index, import)| {
+        let mut provider_functions = host_imports
+            .iter()
+            .enumerate()
+            .map(|(index, import)| {
+                (
+                    import.name.clone(),
+                    ExportKind::Func,
+                    random_count + 1 + index as u32,
+                )
+            })
+            .collect::<Vec<_>>();
+        provider_functions.extend((0..resource_count).map(|i| {
             (
-                import.name.as_str(),
+                resources::drop_name(i as usize),
                 ExportKind::Func,
-                random_count + 1 + index as u32,
+                random_count + 1 + host_count + i,
             )
         }));
+        installed.export_items(provider_functions);
         args.push((
             "suss.host".to_owned(),
             ModuleArg::Instance(adapter_instance - 1),
@@ -1297,7 +1356,7 @@ pub fn component_with_imports(
         installed.instantiate(adapter_module, args);
         component.section(&installed);
     }
-    let completion_base = random_count + host_count + u32::from(has_memory);
+    let completion_base = random_count + host_count + resource_count + u32::from(has_memory);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
@@ -1675,6 +1734,8 @@ fn adapter(
     registry: &composite::Registry,
     host_imports: &[imports::Import],
     import_globals: &[super::resolve::Global],
+    resource_plan: Option<&resources::Plan>,
+    resource_close: Option<&super::resolve::Global>,
 ) -> Result<Vec<u8>, Diagnostic> {
     let resolve = registry.resolve;
     let generic_schema = !registry.nodes.is_empty();
@@ -1803,6 +1864,16 @@ fn adapter(
             resolve,
         )
     });
+    let resource_first = helpers
+        + fragment_count as u32
+        + if host_wiring.is_some() {
+            2 + host_imports.len() as u32
+        } else {
+            0
+        };
+    let resource_wiring =
+        resource_plan.map(|plan| resources::wire(&mut types, &mut imports, resource_first, plan));
+    let resource_types = resource_plan.map(|_| resources::Types::declare(&mut types));
     // Components forbid duplicate module/name imports. Multiple WIT exports
     // may intentionally map to one live source var, so share only its import.
     let mut global_indices = std::collections::BTreeMap::new();
@@ -1810,6 +1881,7 @@ fn adapter(
         .iter()
         .map(|export| &export.global)
         .chain(import_globals)
+        .chain(resource_close)
     {
         if !global_indices.contains_key(global) {
             let index = global_indices.len() as u32;
@@ -1846,12 +1918,37 @@ fn adapter(
             2 + host_imports.len() as u32
         } else {
             0
-        };
+        }
+        + resource_plan.map_or(0, |plan| 2 + plan.resources.len() as u32);
     let posts = exports
         .iter()
         .filter(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
         .count() as u32;
     let generic_base = imported + exports.len() as u32 + 1 + posts;
+    let resource_base =
+        composite::function(generic_base, registry.nodes.len(), 0) + host_imports.len() as u32;
+    let resource_descriptor = generic_root + u32::from(generic_schema);
+    let resource_carrier = resource_types.map(|types| resources::Carrier {
+        types,
+        helpers: resources::Helpers {
+            object_new: resource_wiring.as_ref().unwrap().object_new,
+            string_new: 4,
+            string_set: 5,
+            error_new: 3,
+            error_tag: 0,
+        },
+        descriptor: resource_descriptor,
+        check_function: resource_base + 1,
+        close_function: resource_base + 2,
+    });
+    let resource_codec = resource_plan.map(|plan| resources::Codec {
+        plan,
+        resolve,
+        drop_calls: &resource_wiring.as_ref().unwrap().drop_calls,
+        make_function: resource_base,
+        check_function: resource_base + 1,
+        state_type: resource_types.unwrap().state,
+    });
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
@@ -2312,7 +2409,7 @@ fn adapter(
     let start_type = types.len() + runtime_abi::TYPE_COUNT - 1;
     types.ty().function([], []);
     functions.function(start_type);
-    let mut start = Function::new([]);
+    let mut start = Function::new([(1, VALUE)]);
     let schema_count =
         usize::from(option_schema) + usize::from(list_schema) + usize::from(generic_schema);
     for index in 0..fragment_count - schema_count {
@@ -2342,6 +2439,22 @@ fn adapter(
             start
                 .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
                 .instruction(&Instruction::GlobalSet(generic_root));
+        }
+        if index == 0 {
+            if let Some(carrier) = &resource_carrier {
+                resources::initialize_descriptor(
+                    &mut start,
+                    carrier.helpers,
+                    resource_wiring.as_ref().unwrap().descriptor_new,
+                    resource_descriptor,
+                );
+                resources::install_close(
+                    &mut start,
+                    global_indices[resource_close.expect("resource close cell")],
+                    resource_base + 3,
+                    host_wiring.as_ref().expect("resource host wiring"),
+                );
+            }
         }
         if let Some(wiring) = &host_wiring {
             if index == 0 {
@@ -2431,6 +2544,7 @@ fn adapter(
             generic_base,
             generic_root,
             sentinels,
+            resource_codec.as_ref(),
         );
         for export in exports {
             if let Some(Boundary::Generic(id)) = export.result {
@@ -2453,6 +2567,18 @@ fn adapter(
             generic_base,
             generic_root,
         )?;
+    }
+    if let Some(carrier) = &resource_carrier {
+        debug_assert_eq!(imported + functions.len(), resource_base);
+        for (ty, body) in [
+            (carrier.types.make, carrier.make()),
+            (carrier.types.check, carrier.check()),
+            (carrier.types.close, carrier.close()),
+            (runtime_abi::INVOKE, carrier.invoke_close()),
+        ] {
+            functions.function(ty);
+            code.function(&body);
+        }
     }
     let mut module = Module::new();
     module
@@ -2482,9 +2608,9 @@ fn adapter(
     {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
-    if option_schema || list_schema || generic_schema {
+    if option_schema || list_schema || generic_schema || resource_plan.is_some() {
         let mut globals = GlobalSection::new();
-        for _ in 0..schema_count {
+        for _ in 0..schema_count + usize::from(resource_plan.is_some()) {
             globals.global(
                 GlobalType {
                     val_type: VALUE,
@@ -2503,9 +2629,14 @@ fn adapter(
     if host_wiring.is_some() {
         let first = composite::function(generic_base, registry.nodes.len(), 0);
         let mut elements = ElementSection::new();
-        elements.declared(Elements::Functions(std::borrow::Cow::Owned(
-            (0..host_imports.len()).map(|i| first + i as u32).collect(),
-        )));
+        let mut refs = (0..host_imports.len())
+            .map(|i| first + i as u32)
+            .collect::<Vec<_>>();
+        if let Some(wiring) = &resource_wiring {
+            refs.extend(wiring.drop_calls.iter().copied());
+            refs.push(resource_base + 3);
+        }
+        elements.declared(Elements::Functions(std::borrow::Cow::Owned(refs)));
         module.section(&elements);
     }
     module.section(&code);

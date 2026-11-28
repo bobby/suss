@@ -44,6 +44,16 @@ pub(super) fn selected(
             "Mixed automatic randomness and explicit host import mappings remain unimplemented",
         ));
     }
+    let resources = super::resources::Plan::selected(resolve, world)?;
+    if resources.is_some()
+        && mappings
+            .iter()
+            .any(|(_, source)| source.namespace.as_deref() == Some("suss.resource"))
+    {
+        return Err(error(
+            "WIT mappings cannot replace resource lifetime bindings",
+        ));
+    }
     let mut add =
         |name: String, function: &wit_parser::Function, interface| -> Result<(), Diagnostic> {
             let source = mappings
@@ -55,12 +65,24 @@ pub(super) fn selected(
                         "WIT import {name} needs an explicit source var mapping"
                     ))
                 })?;
-            if function.kind != FunctionKind::Freestanding {
+            let supported_kind = match function.kind {
+                FunctionKind::Freestanding => true,
+                FunctionKind::Constructor(id)
+                | FunctionKind::Method(id)
+                | FunctionKind::Static(id) => resources
+                    .as_ref()
+                    .is_some_and(|plan| plan.ordinal(resolve, id).is_some()),
+                _ => false,
+            };
+            if !supported_kind {
                 return Err(error(
                     "Synchronous WIT imports require freestanding functions",
                 ));
             }
             let mut registry = composite::Registry::new(resolve);
+            if resources.is_some() {
+                registry = registry.permit_resources();
+            }
             for ty in function.params.iter().map(|p| p.ty).chain(function.result) {
                 registry.add(ty)?;
             }
@@ -83,6 +105,12 @@ pub(super) fn selected(
         let interface = &resolve.interfaces[provider.id];
         let mut registry = composite::Registry::new(resolve);
         for id in interface.types.values() {
+            if resources
+                .as_ref()
+                .is_some_and(|plan| plan.declaration(resolve, *id))
+            {
+                continue;
+            }
             // A resource declaration has no canonical value layout. Diagnose
             // its lifetime adapter before asking SizeAlign for memory32 size.
             if matches!(resolve.types[*id].kind, wit_parser::TypeDefKind::Resource) {
@@ -208,7 +236,7 @@ pub(super) fn encode_interfaces(
             }
         }
         for (name, function) in &interface.functions {
-            let index = instance_types.function(function)?;
+            let index = instance_types.resolved_function(function)?;
             instance_types.section.export(
                 super::component_name(name, None, function.external_id.as_deref()),
                 ComponentTypeRef::Func(index),
