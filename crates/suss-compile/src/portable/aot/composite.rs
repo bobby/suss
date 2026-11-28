@@ -273,6 +273,17 @@ impl<'a> Registry<'a> {
                     }
                 }
                 TypeDefKind::Map(key, value) => {
+                    // Canonical maps may discard duplicate values. The pinned
+                    // validator therefore forbids resource handles in values.
+                    if let Type::Id(id) = value {
+                        let mut live = wit_parser::LiveTypes::default();
+                        live.add_type_id(self.resolve, id);
+                        if live.iter().any(|id| {
+                            matches!(self.resolve.types[id].kind, TypeDefKind::Handle(_))
+                        }) {
+                            return Err(error("WIT map values cannot contain resource handles"));
+                        }
+                    }
                     let key_id = self.add_at(key, depth + 1)?;
                     let value_id = self.add_at(value, depth + 1)?;
                     let types = [key, value];

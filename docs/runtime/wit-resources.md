@@ -122,3 +122,8 @@ codec graph. The pinned WIT resolver rejects borrowed results. Guest-defined
 resources and generalized async/cancellation lifetimes retain separate adapters.
 Unsupported selected paths are diagnosed before source macro effects. Full WIT
 lifetime interoperability requires those remaining paths.
+
+Canonical WIT map values cannot contain own/borrow handles, including nested
+handles. The pinned validator forbids them because duplicate-key conversion
+can discard a value. Suss diagnoses this selected schema before source macros.
+Resource-bearing records, tuples and lists use their declared supported schemas.

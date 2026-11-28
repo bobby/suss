@@ -1,0 +1,12 @@
+{
+  "purpose": "Conserve all captured inputs except three identified terminal documentation updates.",
+  "source_receipt_sha256": "caf9f0f811e7b445c230355a44342d0253bf6a395f2edaf0ea2cdebd840a6252",
+  "captured_head": "681e5251303d41631827dd7a22311e676d9186b9",
+  "checked_inputs": 14050,
+  "excluded_paths": [
+    "docs/roadmap/handoff.md",
+    "docs/compatibility/README.md",
+    "docs/runtime/wit-resources.md"
+  ],
+  "changed_inputs": []
+}

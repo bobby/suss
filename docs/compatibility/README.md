@@ -2228,3 +2228,11 @@ from unknown mappings and still-unsupported async borrowed exports. All ten
 interface controls execute and pass on unchanged production code. The original
 CI/old-fixture failures and deliberately interrupted baseline remain recorded;
 they are not passing full-baseline evidence.
+
+
+Handle-bearing canonical WIT map values now reject before source macros. The
+original invalid-component and late-macro failures remain recorded; no resource
+leak was established for a schema the pinned validator does not admit. The
+complete affected exported-handle/data-shape command passes21 controls on frozen
+sources, including ordinary duplicate-key maps and bounded stress/GC controls.
+Full resource baseline and final-head acceptance remain separate.

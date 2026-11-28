@@ -22,6 +22,7 @@ fn engine() -> &'static Engine {
             .wasm_tail_call(true)
             .wasm_exceptions(true)
             .wasm_component_model(true)
+            .wasm_component_model_map(true)
             .wasm_component_model_implements(true)
             .consume_fuel(true)
             .cranelift_opt_level(wasmtime::OptLevel::None);
@@ -1024,4 +1025,41 @@ fn owned_inputs_roundtrip_to_rust_and_close_through_source_finally_on_success_or
         ),
         (6, 0, 0, 6)
     );
+}
+
+#[test]
+fn resource_maps_reject_handle_values_before_source_macro_effects() {
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("app.sus");
+    let wit = directory.path().join("api.wit");
+    std::fs::write(
+        &source,
+        r#"(ns app) (defmacro effect [] (throw "macro-ran")) (defn run [entries] (effect))"#,
+    )
+    .unwrap();
+    for value in [
+        "own<counter>",
+        "borrow<counter>",
+        "list<own<counter>>",
+        "option<own<counter>>",
+        "tuple<u64, own<counter>>",
+    ] {
+        std::fs::write(&wit, format!("package test:resource-maps; interface store {{ resource counter; }} world api {{ import store; use store.{{counter}}; type table = map<string, {value}>; export run: func(entries: table) -> u64; }}")).unwrap();
+        let error = compile_file_with_options(
+            &source,
+            &wit,
+            Some("api"),
+            &[],
+            &AotOptions {
+                exports: vec![("run".into(), Symbol::parse("app/run"))],
+                ..Default::default()
+            },
+        )
+        .unwrap_err();
+        assert!(
+            error.contains("map values cannot contain resource handles"),
+            "{value}: {error}"
+        );
+        assert!(!error.contains("macro-ran"), "{value}: {error}");
+    }
 }

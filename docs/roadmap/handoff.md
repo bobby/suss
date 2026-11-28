@@ -37714,3 +37714,33 @@ Production source is unchanged. Publish the repair to #526, investigate the
 independent review's unconfirmed overwritten-own-map concern, and restart the
 required baseline after focused validation. Final-head CI/review and remaining
 M5 lifetime/application gates stay separate.
+
+### 2026-11-28: early resource-map domain validation
+
+An independent-review follow-up suggested overwritten owners under duplicate map
+keys. Actual compilation reached component validation and failed with `map value
+type cannot contain a handle`; no call executed and no resource leak is claimed.
+The failure and exact working-tree reproducer are retained in
+`owned-map-overwritten-input-before/` (9.606s capture, 14,043 inputs fixed). The
+pinned dependency is Wasmtime51.0.0-rc.1/wasmparser0.263.0; its validator expressly
+forbids handle-bearing values because bindings may discard duplicate values.
+
+This exposed a real preflight gap. A deliberately throwing source macro executes
+before the schema is rejected (`owned-map-unsupported-before-macro-before/`).
+The registry now rejects map values whose reachable graph contains own/borrow
+handles before source preparation. A selected control passes five direct/nested
+value cases, zero failed/ignored (11 filtered),163.956s capture including build,
+14,050 inputs/HEAD fixed (`owned-map-unsupported-before-macro-guard/`).
+
+The affected command returns0 with21 passed, zero failed/ignored/filtered,
+566.709s capture and all14,053 inputs/HEAD fixed:
+`cargo test -p suss-compile --locked --test portable_aot_wit_borrows --test portable_aot_wit_value_shapes -- --test-threads=2`.
+All12 exported-handle/provider/domain controls and nine data-value-shape controls
+execute, including valid duplicate-key map semantics, native collections, exact
+integers, packed arrays, GC and the retained10,000-call stresses. Earlier
+constructor/scope/interface captures retain their source qualifications.
+
+Publish this preflight correction to #526, then restart the required exact
+workspace baseline on its new frozen head. Final-head CI/review, contextual
+resource identities, guest resources, async/cancellation and UserManager remain
+separate gates. The data draft also has its own two independent review fixes.
