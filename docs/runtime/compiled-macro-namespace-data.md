@@ -37,7 +37,7 @@ handle counts during graph construction/inspection. These counters do not prove
 live GC memory accounting.
 
 Run `scripts/test-namespace-environment-oracle.sh` with the usual bounded Cargo
-configuration. The handoff records actual terminal results and failed attempts.
+configuration. [Archived execution notes][execution-archive] record actual terminal results and failed attempts.
 Initial fixtures incorrectly put multiple namespace declarations in one input
 and omitted provided source modules; those harness failures are separate from
 the executed missing-map regression. The first projection normalized nullable
@@ -49,3 +49,5 @@ forms. Default REPL namespace shape, repeated namespace declaration/reload polic
 implicit macro autoloading, complete declaration/AST/inference data and actual
 source macro `&env` invocation are not certified by this projection. Original M3
 acceptance remains open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

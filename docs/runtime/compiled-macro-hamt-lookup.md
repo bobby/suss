@@ -30,5 +30,7 @@ budget performance and complete core acceptance are not established.
 Run `scripts/test-hamt-lookup-oracle.sh` for fresh development-only JVM/Node oracle
 observations and the independently decoded native regressions. The shipped path
 has no Java/JavaScript dependency. Commands, results and initial failed probes are
-recorded in `docs/roadmap/handoff.md`; full baseline, independent review and
+recorded in [archived execution notes][execution-archive]; full baseline, independent review and
 exact final-head CI are required before PR readiness.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

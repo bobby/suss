@@ -68,4 +68,6 @@ storage with construction records, storage snapshots, logical-source witnesses,
 memo receipts and certification. The 2026-10-25 decision makes built-in
 internals private and transported macro data immutable, so that machinery and
 its CLJS probes are removed (#276). Their history remains in Git and the archived
-handoff entries.
+[archived execution notes][execution-archive] entries.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

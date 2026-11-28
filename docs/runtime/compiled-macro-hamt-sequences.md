@@ -55,4 +55,6 @@ cargo test --workspace --locked -- --test-threads=2
 ```
 
 Actual terminal results and remaining validation gates are in
-[the handoff](../roadmap/handoff.md).
+[archived execution notes][execution-archive].
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

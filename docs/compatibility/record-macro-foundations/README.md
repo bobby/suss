@@ -190,7 +190,7 @@ The dated source-only notes above describe their authored snapshots. The test
 hold was lifted before the recorded focused and full-baseline attempts. Factory,
 label and intrinsic record-boundary execution results, regenerated bootstrap
 identities and remaining limitations are recorded in the latest
-[handoff evidence](../../roadmap/handoff.md). Those helper results establish
+[archived execution notes][execution-archive]. Those helper results establish
 those interfaces; the public record emitter, wrapper and complete generated
 protocol graph remain separate implementation and acceptance work.
 
@@ -280,3 +280,5 @@ The named-property ABI range-check optimization is recorded separately in
 the Suss crate license applies to this authored Rust source. This ABI record does
 not change or replace the upstream EPL provenance attached to the retained
 record-macro forms and helper sources.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

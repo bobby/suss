@@ -69,5 +69,7 @@ corpora. Fresh92436 ended0 with62 exact primary/native3; namespace/phase guards
 and typed-error/GC tests pass. Required independent full92345 ended0 through final
 doc tests, /private/tmp/suss-pr105-review-full.log; Python80/import96/setup4/
 reviews185partial+880unassessed verified. Provisional review fixture failures and
-corrections are recorded in handoff. Exact final reviewed-head CI remains root's
+corrections are recorded in [archived execution notes][execution-archive]. Exact final reviewed-head CI remains root's
 readiness gate; no merges or acceptance claim for unfinished collection/macros.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

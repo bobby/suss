@@ -85,7 +85,7 @@ exact-integer execution regression covering endpoints, values beyond2^53,
 low-word carries, signed overflow and GC. Fixtures use the accepted tagged-option
 and exact-integer contracts, canonical namespace paths, declarations and typed
 catch syntax; original host assertions remain. Earlier adapter and fixture
-failures are recorded in the handoff. Independent review, the full workspace
+failures are recorded in [archived execution notes][execution-archive]. Independent review, the full workspace
 baseline and final-head CI remain required for this increment.
 
 Independent file/project review found two existing full-baseline regressions:
@@ -118,7 +118,9 @@ cargo test -p suss-compile --locked --test public_compiled_files -- --test-threa
 sh scripts/verify-bootstrap.sh
 ```
 
-The handoff records actual failures and terminal results. Next migrate the
+[Archived execution notes][execution-archive] record actual failures and terminal results. Next migrate the
 remaining public artifact boundaries while preserving executing value assertions,
 then remove the production evaluator and complete pending-I/O lifecycle and
 live-memory accounting. No issue closure follows from these focused tests.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

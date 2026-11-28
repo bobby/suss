@@ -165,10 +165,12 @@ notices and reproducible extraction/patch provenance.
 Run `cargo test -p suss-compile --test portable_closures --test portable_pipeline
 --test portable_resolution --test runtime_abi --locked -- --test-threads=2` and
 `scripts/test-portable-pipeline-oracle.sh`. Full baseline/review/final-CI evidence
-is in the handoff and PR. The original legacy source corpus remains 9 differential
+is in [archived execution notes][execution-archive] and PR. The original legacy source corpus remains 9 differential
 passes / 7 exact failures / 0 skips; four arithmetic declarations have in-progress
 manual reviews and 1,061 remain unassessed. M2 remains incomplete. Namespace/module/
 definition loading and native persistent sessions now share resolved cells; the
 legacy production frontends still require migration. Next complete variadic/destructured signatures,
 core/collection foundations, dispatch/exception/async IR and compiled macros,
 then retire the old backend only after replacement acceptance.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -29,7 +29,7 @@ Fresh pinned ClojureScript artifacts, built with forced compilation and analysis
 caching disabled, executed in Node and first produced12 ordered scalar observations, then an expanded fresh build produced27.
 The native shared fixture matches all27 after GC in both caller Stores; its original12 observations remain unchanged. All four
 native tests pass, including direct `IPending` checks. Affected sequence/metadata
-suites pass29 tests across four groups; the handoff records terminal commands.
+suites pass29 tests across four groups; [archived execution notes][execution-archive] record terminal commands.
 The primary compiler's two warnings about intentional global replacements remain
 in the compile log. No failing or unknown observation is replaced by success.
 
@@ -74,3 +74,5 @@ have explicit observations. Missing-value messages retain the pending `str_`
 dependency. The combined native artifact uses one explicit50million operation
 fuel budget; its earlier10million run exhausted fuel and is retained in the log.
 Separate constructor tests pass2/0/0 and lazy suite4/0/0.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

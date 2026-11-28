@@ -67,9 +67,11 @@ declaration argument-list projections. The older staging regression now asserts 
 explicit docstrings during initializer analysis while retaining completed and
 snapshot document checks. The original 29-case corpus stays unchanged.
 
-Terminal commands and results are recorded in the handoff. Independent review,
+Terminal commands and results are recorded in [archived execution notes][execution-archive]. Independent review,
 the full workspace baseline and exact final-head CI are required before the PR
 is ready. This remains partial issue #14 progress: arbitrary declaration/AST
 schema fields, self-local method records, source and macro dependency cache
 invalidation, temporary evaluator retirement and original M3 lifecycle
 acceptance remain open. No inventory declaration is promoted to complete.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

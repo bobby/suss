@@ -100,7 +100,7 @@ records an async startup timeout before reset. Unchanged focused rechecks passed
 [recheck archive](../compatibility/caching-hash-callable/async-io-rechecks-2026-10-15.tar.gz).
 The timeout's cause remains unexplained. These rechecks do not substitute for the
 required full workspace baseline or final-head CI. Each archive includes a
-checksum manifest; commands, tested revisions and limitations are in the handoff.
+checksum manifest; commands, tested revisions and limitations are in [archived execution notes][execution-archive].
 
 The [repeated baseline failure](../compatibility/caching-hash-callable/baseline-doctest-failure-2026-10-15.tar.gz)
 retains 1,802 passing tests and 21 explicit ignores across 250 completed suites,
@@ -125,3 +125,5 @@ Hash caches of built-in types are private to `suss.core` (design decision
 2026-10-25): core's own hash fills them, user code cannot read or write them,
 and their initialization is not behavior. The earlier private memo emission
 mode, protected stores and receipts are removed with that decision.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -47,7 +47,7 @@ both phase image reproductions without Java, four bootstrap execution tests and
 Stores, repeat calls after GC, and verify retained Unicode strings while later
 argument buffers are reused. Native tests also execute compiled macros and source
 dependencies and preserve prior output on selection errors. See
-[the handoff](../roadmap/handoff.md) for actual commands and failure/fix history.
+[archived execution notes][execution-archive] for actual commands and failure/fix history.
 
 The exit tests execute status 0/73/255 and initializer status19, catch invalid
 negative/out-of-range/fractional/nonfinite/nil/boolean values, and reject capability
@@ -58,3 +58,5 @@ source suspension and rooted continuations, component-host migration, evaluator
 retirement, published dependencies and original M3 pending-I/O/lifecycle gates
 remain open. Independent review, the unfiltered workspace baseline and final-head
 CI are still required before publishing this change as ready. No M3 issue is closed.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

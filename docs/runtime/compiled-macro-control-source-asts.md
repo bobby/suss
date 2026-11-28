@@ -104,7 +104,7 @@ keeps its EPL notice and pinned provenance. Java/Node remain development oracles
 
 Parent regressions failed for primitive `let*`, conditional children, binding
 forms/children, recurrence, function methods and try regions. These failures and
-an actual bootstrap stack overflow are retained in the handoff with the repairs
+an actual bootstrap stack overflow are retained in [archived execution notes][execution-archive] with the repairs
 and terminal results. Both bootstrap phase pairs reproduce without Java.
 The unfiltered workspace baseline, independent PR review and final reviewed-head
 CI remain mandatory before readiness. No issue or milestone is closed by this
@@ -164,3 +164,5 @@ This selected corpus does not establish every method environment field, method
 type annotation, named function child schema, inference or evaluator retirement.
 Independent review, unfiltered workspace baseline and final reviewed-head CI are
 still required for this follow-up. M3 issues12–15 remain open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

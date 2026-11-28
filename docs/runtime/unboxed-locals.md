@@ -325,7 +325,7 @@ Some source and calling paths retain the following behavior:
   instructions including the control, and approximately 16 bytes to below
   resolution. Code-generation and Runtime/Macro/component tests verify raw
   calls and coercions separately. Loaded-machine walltimes are not used for
-  the program-ratio targets; commands and limitations are in the handoff.
+  the program-ratio targets; commands and limitations are in [archived execution notes][execution-archive].
 
 
 ### Literal vector storage
@@ -360,3 +360,5 @@ its public construction guard can disappear only after canonical MapEntry
 admission. Core appends one private descriptor registry without moving existing
 global/type indices. The [MapEntry receipts](../../results/m12-mapentries/README.md)
 retain source reconstruction, execution and allocation/instruction evidence.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

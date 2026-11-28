@@ -27,10 +27,12 @@ Store isolation, reset and effectful compiled macros with identical output.
 The focused/affected run passes 70 tests with no failures or ignores. A temporary
 production cache bypass fails the actual reuse assertion; the mutation is fully
 restored. Full baseline, independent review and final-head CI remain required.
-Commands and logs are retained in the handoff.
+Commands and logs are retained in [archived execution notes][execution-archive].
 
 This is a code cache prerequisite for M3, not a source/macro analysis cache.
 Macro expansion and emission still run on each input. Source-level cache keys
 including source, compiler/runtime ABI, macro dependency graph, target and flags,
 complete portable schema, evaluator removal and lifecycle acceptance remain open.
 No compatibility declaration is promoted and issue #14 remains open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

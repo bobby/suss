@@ -36,7 +36,7 @@ No collection branch or transducer reducer arity is omitted.
 The same fixture and source expressions feed fresh pinned ClojureScript and
 native tests. Forced compilation with analysis caching disabled produced 41
 exact binary64/Boolean/nil/vector observations. Initial incorrect expectations
-and failing observations are retained in the handoff's evidence paths.
+and failing observations are retained at the evidence paths cited in [archived execution notes][execution-archive].
 
 Cases distinguish small vector `IndexedSeq` demand at 31/32 from chunk demand at
 33/64/65. They cover empty/nonchunked inputs, nil/false values, shortest inputs,
@@ -97,3 +97,5 @@ scripts/verify-core-import.sh
 scripts/verify-bootstrap.sh
 cargo test --workspace --locked -- --test-threads=2
 ```
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -32,7 +32,7 @@ A stale five-case helper assertion failed the first expanded attempt and was
 corrected to require all nine identities. Final affected validation passes 27
 native tests across four suites, including all ten metadata tests, existing
 source environments, source macros and macro metadata. The reader suite passes
-30 tests, and all 108 Python tests pass. Failed logs remain in the handoff.
+30 tests, and all 108 Python tests pass. Failed logs remain in [archived execution notes][execution-archive].
 
 `SourceOrigin` caches original and located reader trees. Provenance matching checks
 syntax, explicit metadata, spans and binary64 bits, including NaN. Reader failures,
@@ -61,3 +61,5 @@ syntax quote/gensyms, versioned reproducible Java-free bootstrap, cache invalida
 obsolete evaluator removal and lifecycle/cancellation acceptance remain open.
 Independent PR review, clean full baseline and final-head CI remain required;
 these focused results complete neither an issue nor M3.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -58,14 +58,15 @@ including independent nested multi-target/duplicate fuel sweeps, escaped/thrown
 closure retention across GC and native inspection callback trap recovery.
 These are historical results. Their pre-initializer snapshot and definition
 rollback expectations are superseded by pinned Clojure1.12.6 observations.
-Current full-baseline/review/final-head CI results belong in handoff.
+Current full-baseline/review/final-head CI results belong on the relevant GitHub
+issue, with raw execution receipts in per-run `results/` files.
 
 Executing regressions are crates/suss-cli/tests/portable_dynamic_bindings.rs and
 crates/suss-compile/tests/portable_dynamic_bindings.rs. Initial six source tests
 failed before implementation; an additional fuel regression exposed leaked active
 values. A finer fuel sweep then exposed publication of the parent before restoration
-finished (root 2 rather than snapshot 1 at fuel 430). Failures are retained in the
-handoff, rather than skipped or called successful.
+finished (root 2 rather than snapshot 1 at fuel 430). Failures are retained in
+[archived execution notes][execution-archive], rather than skipped or called successful.
 
 The pinned analyzer warns for binding a var without dynamic metadata but still
 executes it; this bootstrap permits the behavior but does not yet emit that warning.
@@ -131,3 +132,5 @@ The module initialization trace observes binding-root-set with all original
 order, partial-effect and module-publication assertions unchanged. Complete
 portable22 and module11 targets pass; verify-portable-reference-checkpoint.py
 relates these test-only deltas to the unchanged318-tested production source.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

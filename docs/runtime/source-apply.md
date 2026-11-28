@@ -14,8 +14,8 @@ three explicit JVM boundaries: fixed arity, vector arity, and sequence forcing.
 The ClojureScript effect count of 124 remains recorded without alteration;
 JVM Clojure 1.12.6 produces 25 (three preflight next calls plus two first and
 two extraction next calls). Zero-prefix forcing remains 11. Fresh primary
-callback/weighted evidence is retained under target/probe and described in the
-handoff. A recording from the implementation reference does not override the
+callback/weighted evidence is retained under target/probe and described in
+[archived execution notes][execution-archive]. A recording from the implementation reference does not override the
 Clojure behavior oracle.
 
 ## Earlier implementation and evidence
@@ -86,3 +86,5 @@ Java-free artifacts, cache invalidation and evaluator removal remain open. Names
 warning/filtering and complete frontend/core acceptance are also unfinished.
 Stackless scheduler, pending-I/O cancellation, cleanup and live-GC counters remain
 required. Original milestone issues12–15 stay open; no full M3 completion claim.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -1502,7 +1502,7 @@ stanzas are explicitly pending their source types: TransformerIterator,
 PersistentQueue, PersistentQueueSeq, PersistentTreeMapSeq, BlackNode, RedNode,
 ValSeq, PersistentTreeMap, PersistentTreeSet, Range, IntegerRange, Cycle, Repeat,
 Iterate, ES6IteratorSeq and Volatile. This source increment does not certify those
-types, complete printing or M3; execution evidence is recorded in the handoff.
+types, complete printing or M3; execution evidence is recorded in [archived execution notes][execution-archive].
 The seven unchanged collection-related printing cases now execute and match
 pinned expectations in both phase Stores after forced GC (173.46s). This includes
 limits, nesting, metadata, dynamic recovery, the actual custom writer protocol and
@@ -2116,3 +2116,5 @@ pass, as do core/eval provenance checks. A failed lexical-wrapper attempt remain
 archived because nesting declarations changed the catalog snapshots under test.
 Production inputs are identical to9222862b. Exact workspace, final acceptance
 audit, independent review and final-head CI remain separate gates.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

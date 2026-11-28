@@ -93,7 +93,7 @@ behavior, root reflection and live toString lookup. The former failing own-acces
 reflection regression now passes unchanged. Independent development Node assertions
 confirm bounded descriptor/accessor behavior; they are not a fresh pinned
 ClojureScript corpus comparison. Full workspace, independent review and final-head CI evidence is recorded
-separately in the handoff.
+separately in [archived execution notes][execution-archive].
 
 Source factory/property adapters and licensed cache forms are retained in this
 slice. All 64 certified source observations, including the original 48, remain
@@ -144,3 +144,5 @@ ordering in `add-to-string-hash-cache`. `unchecked-set` and ordinary bounded mem
 assignment continue using the non-strict operation and ignore those blocked writes.
 Private `suss.bootstrap/object-set-strict` has three checked operands. No shared
 GC layout or public defineProperty API was added.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

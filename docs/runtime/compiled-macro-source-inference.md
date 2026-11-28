@@ -12,7 +12,7 @@ the inferred fields. The repaired regression matches all 32 selected tag
 observations from the pinned analyzer corpus in Runtime and Macro caller Stores
 after GC, and executes the same 11 runtime projections. A separate effect check
 retains an inferred `number` while `(+ "a" 1)` returns `"a1"`; its initializer
-runs once. Earlier test fixture failures are preserved in the handoff.
+runs once. Earlier test fixture failures are preserved in [archived execution notes][execution-archive].
 
 Covered observations include scalar and collection tags, source hints,
 do/let/loop/try results, conditional unions, dynamic vars, ordinary versus
@@ -58,3 +58,5 @@ versioned Java-free bootstrap, artifact cache invalidation, obsolete evaluator
 removal, cancellation and lifecycle acceptance remain open. No issue or M3 gate
 is completed by this corpus. Independent PR review and final-head validation
 remain required.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

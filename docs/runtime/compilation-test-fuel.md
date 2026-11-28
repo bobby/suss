@@ -63,7 +63,7 @@ The public-record command supplies `suss compile --compile-fuel`; subsequent
 
 The pinned map harness retains its existing 200M allowance. These changes do not
 alter default-fit controls in the same files or the dedicated cumulative-fuel suite.
-Validation commands and observed results are recorded in the handoff.
+Validation commands and observed results are recorded in [archived execution notes][execution-archive].
 
 
 The new `compiled_macro_large_finite` positive fixture separately uses100M for
@@ -100,3 +100,5 @@ The global-reference fixture has a separately retained old-head integration7
 allowance; the full two-test target passes with all11 oracle cases, revision/effect
 checks, Runtime settings and GC assertions retained. The other case keeps its
 original compiler allowance. Whole-workspace and final-head CI gates remain.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

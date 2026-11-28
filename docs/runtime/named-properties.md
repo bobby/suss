@@ -82,7 +82,7 @@ names initially failed to resolve their existing slots, false marker writes then
 exposed incorrect membership, and undefined method writes exposed a missing
 fallback. These failures were fixed against fresh source evidence, with49 exact
 primary observations and both native tests passing. The intentional generated
-->PropertyProbe replacement warning remains visible. See the handoff for commands
+->PropertyProbe replacement warning remains visible. See [archived execution notes][execution-archive] for commands
 and logs. No new upstream form is copied and review statuses remain partial.
 
 Independent PR review added15 source probes without changing the original49: all
@@ -91,7 +91,7 @@ fields, assignment error effects, stored nil and object-marker truthiness.
 Noncallable method probes use different default and catch values, distinguishing
 fallback from rejection. Fresh64 primary observations and all four native tests
 pass after malformed-tail, munged-schema and known host-attribute guards. Full
-review evidence is recorded in the handoff.
+review evidence is recorded in [archived execution notes][execution-archive].
 
 PR #93 review extends the explicit unsupported-schema guard to raw __proto__.
 Pinned constructors assign this.__proto__, invoking its inherited setter rather
@@ -119,3 +119,5 @@ It is a source setup adaptation, alongside the documented double-zero divisor,
 not a claim that uninitialized Clojure Vars behave like JavaScript undefined.
 The public eval primary controls separately exercise actual Unbound identity,
 Var ownership, IFn status, root replacement and failure messages.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

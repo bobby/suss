@@ -58,4 +58,6 @@ tests cover malformed handler/throw shapes and cross-region recurrence. The shar
 259-case source corpus includes14 exception observations matched against fresh pinned
 Node execution and independently decoded Suss fragments. These are bounded executing
 results, not full exception/core/dynamic-scope compatibility. The initial six source
-regressions failed before implementation; failures and commands remain in the handoff.
+regressions failed before implementation; failures and commands remain in [archived execution notes][execution-archive].
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

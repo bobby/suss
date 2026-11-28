@@ -98,7 +98,7 @@ pending; this is not public hash or milestone acceptance.
 
 Reviewed262b2d7 and root evidence160ccdc against reviewed1068e0f3b5 in isolated
 /private/tmp/suss-review-pr107 with actual detached upstreamc4295f30. Read accepted
-design/ROADMAP/inventory/handoff. All production constructors initialize appended
+design/ROADMAP/inventory/[archived execution notes][execution-archive]. All production constructors initialize appended
 UID storage; scalar-only allocator retains no owner references. Reviewed cached
 malformed guards, manifest/prelude gates, frozen ABI1 linking, private HIR/IR
 arity and complete licensed metadata source forms.
@@ -175,3 +175,5 @@ ended0/80, /private/tmp/suss-pr107-review-python-final.log. All reviewer handles
 92068/61754/68141/90053/95912/51693/26689/31023/4452/93996/29279/46577/40584/90116
 are terminal. After review fixes/evidence commit/push, heavy slot is released.
 Exact final reviewed-head CI remains root readiness gate; no merge/closure.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md
