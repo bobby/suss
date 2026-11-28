@@ -71,9 +71,24 @@ enum PublicExport {
     Interface {
         name: String,
         implements: Option<String>,
+        external_id: Option<String>,
         types: Vec<(String, wit_parser::TypeId)>,
         functions: Vec<(String, u32)>,
     },
+}
+
+/// WIT annotations are host-defined metadata; public paths remain unchanged.
+fn component_name<'a>(
+    name: &'a str,
+    implements: Option<&'a str>,
+    external_id: Option<&'a str>,
+) -> ComponentExternName<'a> {
+    ComponentExternName {
+        name: name.into(),
+        implements: implements.map(Into::into),
+        version_suffix: None,
+        external_id: external_id.map(Into::into),
+    }
 }
 #[derive(Clone, Copy)]
 enum Scalar {
@@ -421,11 +436,6 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
     // complete selected types before source effects, including unused types.
     imports::selected(resolve, world, &[])?;
     let validate_function = |function: &wit_parser::Function| -> Result<(), Diagnostic> {
-        if function.external_id.is_some() {
-            return Err(error(
-                "Portable AOT function external-id adapters remain unimplemented",
-            ));
-        }
         if !matches!(
             function.kind,
             FunctionKind::Freestanding | FunctionKind::AsyncFreestanding
@@ -451,14 +461,7 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
     for item in selected.exports.values() {
         match item {
             WorldItem::Function(function) => validate_function(function)?,
-            WorldItem::Interface {
-                id, external_id, ..
-            } => {
-                if external_id.is_some() {
-                    return Err(error(
-                        "Portable AOT interface external-id adapters remain unimplemented",
-                    ));
-                }
+            WorldItem::Interface { id, .. } => {
                 let interface = &resolve.interfaces[*id];
                 for ty in interface.types.values() {
                     boundary(resolve, Type::Id(*ty))?;
@@ -706,7 +709,9 @@ pub fn component_with_imports(
                 let index = add_function(name.clone(), function)?;
                 public_exports.push(PublicExport::Function { name, index });
             }
-            WorldItem::Interface { id, .. } => {
+            WorldItem::Interface {
+                id, external_id, ..
+            } => {
                 let interface = &resolve.interfaces[*id];
                 let mut functions = Vec::new();
                 for (function_name, function) in &interface.functions {
@@ -716,6 +721,7 @@ pub fn component_with_imports(
                 public_exports.push(PublicExport::Interface {
                     name,
                     implements: resolve.implements_value(key, item),
+                    external_id: external_id.clone(),
                     types: interface
                         .types
                         .iter()
@@ -1023,7 +1029,14 @@ pub fn component_with_imports(
     resolved_types.flush(&mut component);
     if let (Some(capability), Some(ty)) = (&randomness, random_type) {
         let mut imports = ComponentImportSection::new();
-        imports.import(&capability.name, ComponentTypeRef::Instance(ty));
+        imports.import(
+            component_name(
+                &capability.name,
+                capability.implements.as_deref(),
+                capability.external_id.as_deref(),
+            ),
+            ComponentTypeRef::Instance(ty),
+        );
         component.section(&imports);
         let mut aliases = ComponentAliasSection::new();
         aliases.alias(Alias::InstanceExport {
@@ -1044,7 +1057,10 @@ pub fn component_with_imports(
             .filter(|(_, import)| import.interface.is_none())
             .zip(host_types)
         {
-            imports.import(&import.name, ComponentTypeRef::Func(ty));
+            imports.import(
+                component_name(&import.name, None, import.wit.external_id.as_deref()),
+                ComponentTypeRef::Func(ty),
+            );
             host_functions[ordinal] = Some(next_host_function);
             next_host_function += 1;
         }
@@ -1396,7 +1412,11 @@ pub fn component_with_imports(
         match export {
             PublicExport::Function { name, index } => {
                 public.export(
-                    &name,
+                    component_name(
+                        &name,
+                        None,
+                        exports[index as usize].wit.external_id.as_deref(),
+                    ),
                     ComponentExportKind::Func,
                     component_function_base + index,
                     None,
@@ -1405,6 +1425,7 @@ pub fn component_with_imports(
             PublicExport::Interface {
                 name,
                 implements,
+                external_id,
                 types,
                 functions,
             } => {
@@ -1413,11 +1434,19 @@ pub fn component_with_imports(
                     types
                         .iter()
                         .map(|(name, id)| {
-                            (name.as_str(), ComponentExportKind::Type, public_types[id])
+                            (
+                                component_name(name, None, None),
+                                ComponentExportKind::Type,
+                                public_types[id],
+                            )
                         })
                         .chain(functions.iter().map(|(name, function)| {
                             (
-                                name.as_str(),
+                                component_name(
+                                    name,
+                                    None,
+                                    exports[*function as usize].wit.external_id.as_deref(),
+                                ),
                                 ComponentExportKind::Func,
                                 component_function_base + *function,
                             )
@@ -1425,12 +1454,7 @@ pub fn component_with_imports(
                         .collect::<Vec<_>>(),
                 );
                 public.export(
-                    ComponentExternName {
-                        name: name.as_str().into(),
-                        implements: implements.as_deref().map(Into::into),
-                        version_suffix: None,
-                        external_id: None,
-                    },
+                    component_name(&name, implements.as_deref(), external_id.as_deref()),
                     ComponentExportKind::Instance,
                     index,
                     None,

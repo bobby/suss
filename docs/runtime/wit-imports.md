@@ -90,3 +90,11 @@ schema instance. Their complete selected types are checked before source macro
 effects. The executing controls include a native record/list update with exact
 integer extrema and a schema-only instance beside the automatic randomness
 capability. Ordinary function-bearing interfaces still require explicit mappings.
+
+External IDs on supported world functions, interface instances and interface
+members survive into component runtime metadata. Hosts may inspect that metadata
+to choose providers or exports. Source mappings still use the declared public
+WIT paths; an external ID supplies no additional call authority. The same name
+encoder retains `implements` and external-ID annotations for the automatic
+randomness instance. The focused executing controls select imports/exports by ID
+and exchange native collections with exact integers and Unicode.
