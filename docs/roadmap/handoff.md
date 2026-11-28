@@ -37467,3 +37467,61 @@ Next add an explicit lexical owned-resource scope with exceptional cleanup, then
 call-scoped exported borrows and the remaining cancellation/interop/application
 adapters. Required full resource baseline, final-head CI and independent review
 are still separate gates.
+
+### 2026-11-28: explicit lexical resource cleanup
+
+`lexical-resource-scopes-before/` compiles the source fixture and fails with the
+actual unresolved Runtime name `suss.resource/call-with-scope`. The implementation
+then passes one selected control (zero failed/ignored); capture320.497s
+including build, all13,949 inputs and HEAD fixed
+(`lexical-resource-scopes-runtime-finally/`).
+
+The explicit Runtime operation invokes a zero-arity body through the existing
+trusted core `try-invoke` implementation. A private rooted frame registers every
+new owned result; cleanup restores the outer scope, clears frame links and drops
+alive owners in reverse creation order, setting closed state before callbacks.
+Moved and manually closed owners are skipped. The two Runtime lifetime vars are
+installed before source initialization; no new component-world authority/import
+is added and Macro receives neither operation. Shared ABI types stay unchanged.
+
+The actual Rust host observes36 constructors, six consuming transfers and30
+canonical destructors across six outer success/failure calls. Nested exceptions
+preserve their original payload, outer operations remain usable, and drop values
+are exactly[7,8,11,10,value] per call. GC runs inside every destructor callback
+and after each exported call. Escaped aliases fail after scope exit; zero live
+resources remain. These are synchronous language-exception scopes; exported
+borrow tokens, asynchronous suspension/cancellation and canonical-trap recovery
+are not established. Traps still require Store retirement.
+
+Next verify the updated private GC carrier unit, execute the complete resource
+target including a10,000-call automatic-scope success/error control, then publish
+source-qualified evidence to the same draft. The earlier ten-test/foundation
+receipts qualify the preceding move source and do not certify these scope changes.
+
+The updated private carrier command returned0:
+`cargo test -p suss-compile --locked --lib portable::aot::resources -- --test-threads=2`.
+One selected unit passes with zero failed/ignored; capture196.132s including
+build, all13,952 inputs and HEAD fixed
+(`lexical-resource-private-carriers/`). It validates the updated scope global and
+private GC carrier wiring, including existing forgery/type/closed-alias checks.
+The complete target adds Macro/Runtime lifetime authority controls and automatic
+scoped10,000-call success/error cleanup. Those integrations require their own
+execution results.
+
+The complete13-test resource target returned0, zero failed/ignored/filtered:
+`cargo test -p suss-compile --locked --test portable_aot_wit_resources -- --test-threads=2`.
+Capture380.560s including build; all13,955 inputs and HEAD stayed
+fixed (`imported-resource-complete-scope-controls/`). All previous constructor,
+move, native-map record, retained owner, forgery/type and exception controls run
+on the same scope sources. All three10,000-call cases pass, including5,000
+successful and5,000 language-failed automatic scopes:10,000 opens/drops, zero
+live owners after each call, forced GC and one64KiB canonical transfer page.
+
+Macro lifetime calls reject, while a macro quoting a Runtime scoped constructor
+compiles and executes exactly one open/drop, with no host calls at instantiation.
+The generator/host foundation346-test capture remains qualified to the preceding
+move source; the new private unit and complete source target qualify these scope
+changes. Next implement exported borrow-call tokens, retain unsupported own
+exports/resource-only providers until their adapters execute, and complete the
+remaining cancellation/interoperability/application gates. Full resource baseline,
+final-head CI and independent review remain required.

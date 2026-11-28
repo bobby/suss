@@ -2179,3 +2179,13 @@ the two host execution units; the generator retains its runtime-free build.
 Earlier failures remain recorded. These focused/foundation receipts do not
 replace the required full resource baseline, final-head CI/review or remaining
 scope, exported-borrow and cancellation adapters.
+
+
+Explicit `suss.resource/call-with-scope` executes a synchronous zero-arity body
+with lexical owner cleanup. Its complete13-test resource capture passes, including
+reverse/nested cleanup through exceptions, moved/already-closed owner exclusion,
+escaped owner rejection, destructor-triggered GC, Macro/Runtime authority and
+10,000 alternating successful/failed automatic scopes. The updated private
+carrier GC unit also passes. Exported borrow lifetimes, asynchronous suspension/
+cancellation, guest-defined resources and complete interoperability still require
+separate adapters and their acceptance evidence.

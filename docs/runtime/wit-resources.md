@@ -64,10 +64,28 @@ A malformed later argument likewise leaves earlier owners unchanged. Canonical
 buffers are written before the complete move is committed at handoff; collection
 of individual arguments does not change their ownership.
 
+Use `suss.resource/call-with-scope` for explicit lexical cleanup. It takes a
+zero-arity function and returns that function's value:
+
+```clojure
+(suss.resource/call-with-scope
+  (fn []
+    (let [handle (host/open value)]
+      (host/read handle))))
+```
+
+Every owned result created inside the scope is registered for cleanup, including
+owners nested in returned data. On normal return or a language exception, live
+owners close in reverse creation order. Already closed or moved owners are
+skipped. Nested scopes restore the outer scope before running destructors.
+Escaping an owner from its scope leaves a closed handle; subsequent operations
+raise a boundary error. Owners created outside the scope keep their explicit
+close/move lifetime. This API executes a synchronous body; it does not extend a
+scope across asynchronous suspension or provide cancellation cleanup.
+
 This initial route rejects repeated aliases of a resource provider and foreign
 resource dependencies until provider context is represented throughout the
-codec graph. Borrowed results, exported handles,
-guest-defined resources, generalized async resources and automatic scoped
-exception/cancellation cleanup retain separate adapters. Unsupported selected
-paths are diagnosed before source macro effects. This is a bounded imported
-resource path, not complete WIT lifetime interoperability.
+codec graph. The pinned WIT resolver rejects borrowed results. Exported handles,
+guest-defined resources and generalized async/cancellation lifetimes retain
+separate adapters. Unsupported selected paths are diagnosed before source macro
+effects. Full WIT lifetime interoperability requires those remaining paths.

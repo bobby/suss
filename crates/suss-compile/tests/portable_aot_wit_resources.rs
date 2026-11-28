@@ -34,6 +34,8 @@ struct State {
     live: Arc<AtomicUsize>,
     opened: usize,
     dropped: usize,
+    dropped_values: Vec<u64>,
+    force_gc_on_drop: bool,
     consumed: usize,
     last_opened_rep: u32,
     canonical_peak: usize,
@@ -172,12 +174,17 @@ fn linker_with_other(other: bool) -> Linker<State> {
             "counter",
             ResourceType::host::<Counter>(),
             |mut context: StoreContextMut<'_, State>, rep| {
-                context
+                let value = context
                     .data_mut()
                     .table
-                    .delete(Resource::<Counter>::new_own(rep))?;
+                    .delete(Resource::<Counter>::new_own(rep))?
+                    .value;
+                context.data_mut().dropped_values.push(value);
                 context.data_mut().dropped += 1;
                 context.data_mut().order.push("drop");
+                if context.data().force_gc_on_drop {
+                    context.gc(None)?;
+                }
                 Ok(())
             },
         )
@@ -967,4 +974,188 @@ fn runtime_initializer_owns_one_resource_across_exports_and_gc_until_explicit_cl
     assert!(rejected.call(&mut store, ()).unwrap().0);
     assert_eq!((store.data().opened, store.data().dropped), (1, 1));
     assert_eq!(store.data().order, ["open", "read", "read", "read", "drop"]);
+}
+
+#[test]
+fn lexical_resource_scopes_close_in_reverse_order_preserve_errors_and_skip_moved_or_closed_owners()
+{
+    let component = component_with_features(
+        r#"(ns app)
+        (def escaped (atom nil))
+        (defn verify [ok] (when-not ok (throw "scope assertion failed")))
+        (defn run [value fail]
+          (try
+            [:ok
+             (suss.resource/call-with-scope
+               (fn []
+                 (let [a (host/open value)]
+                   (reset! escaped a)
+                   (verify
+                     (try
+                       (suss.resource/call-with-scope
+                         (fn []
+                           (let [b (host/open 7) c (host/open 8)]
+                             (suss.resource/close! b)
+                             (verify (= 8 (host/read c)))
+                             (throw :inner))))
+                       false
+                       (catch :default error (= error :inner))))
+                   (verify (= value (host/read a)))
+                   (verify (= value (host/peek-pair a a)))
+                   (let [m (host/open 9)] (verify (= 9 (host/consume m))))
+                   (let [e (host/open 10) f (host/roundtrip e)]
+                     (verify (= 10 (host/read f))))
+                   (host/open 11)
+                   (if fail (throw [:failure value]) value))))]
+            (catch :default error
+              (if (= error [:failure value]) [:err "scope-failed"] (throw error)))))
+        (defn expired []
+          (and (try (host/read @escaped) false (catch :default error true))
+               (try (suss.resource/close! @escaped) false (catch :default error true))))"#,
+        &[("run", "app/run"), ("expired", "app/expired")],
+        "export run: func(value: u64, fail: bool) -> result<u64, string>; export expired: func() -> bool;",
+        false,
+        true,
+    );
+    let mut state = State::default();
+    state.force_gc_on_drop = true;
+    let mut store = Store::new(engine(), state);
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = transfer_linker()
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let run = instance
+        .get_typed_func::<(u64, bool), (Result<u64, String>,)>(&mut store, "run")
+        .unwrap();
+    let expired = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "expired")
+        .unwrap();
+    let mut expected_drops = Vec::new();
+    for value in [0, 9007199254740993, u64::MAX] {
+        for fail in [false, true] {
+            store.set_fuel(100_000_000).unwrap();
+            assert_eq!(
+                run.call(&mut store, (value, fail)).unwrap().0,
+                if fail {
+                    Err("scope-failed".into())
+                } else {
+                    Ok(value)
+                }
+            );
+            assert_eq!(live.load(Ordering::SeqCst), 0);
+            store.gc(None).unwrap();
+            store.set_fuel(100_000_000).unwrap();
+            assert!(expired.call(&mut store, ()).unwrap().0);
+            expected_drops.extend([7, 8, 11, 10, value]);
+            assert_eq!(store.data().dropped_values, expected_drops);
+        }
+    }
+    assert_eq!(
+        (
+            store.data().opened,
+            store.data().consumed,
+            store.data().dropped
+        ),
+        (36, 6, 30)
+    );
+}
+
+#[test]
+fn ten_thousand_lexically_scoped_successes_and_errors_release_all_owners_and_transfer_memory() {
+    let component = component(
+        r#"(ns app)
+        (defn run [value fail]
+          (try
+            [:ok (suss.resource/call-with-scope
+                   (fn [] (let [handle (host/open value) result (host/read handle)]
+                            (if fail (throw :scope-failure) result))))]
+            (catch :default error
+              (if (= error :scope-failure) [:err "scope-failure"] (throw error)))))"#,
+        &[("run", "app/run")],
+        "export run: func(value: u64, fail: bool) -> result<u64, string>;",
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    store.limiter(|state| state);
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let run = instance
+        .get_typed_func::<(u64, bool), (Result<u64, String>,)>(&mut store, "run")
+        .unwrap();
+    for index in 0..10_000 {
+        let value = [0, 9007199254740993, u64::MAX][index % 3];
+        let fail = index % 2 != 0;
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(
+            run.call(&mut store, (value, fail)).unwrap().0,
+            if fail {
+                Err("scope-failure".into())
+            } else {
+                Ok(value)
+            }
+        );
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        if index % 100 == 0 {
+            store.gc(None).unwrap();
+        }
+    }
+    store.gc(None).unwrap();
+    assert_eq!(
+        (
+            store.data().opened,
+            store.data().consumed,
+            store.data().dropped
+        ),
+        (10_000, 0, 10_000)
+    );
+    assert_eq!(store.data().order, ["open", "read", "drop"].repeat(10_000));
+    assert_eq!(store.data().canonical_peak, 65536);
+}
+
+#[test]
+fn macros_can_emit_runtime_scope_calls_without_receiving_lifetime_authority() {
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("app.sus");
+    let wit = directory.path().join("api.wit");
+    std::fs::write(&wit, "package test:scope-authority; world api { import storage: interface { resource counter { constructor(value: u64); } } export run: func(); }").unwrap();
+    let options = AotOptions {
+        imports: vec![(
+            "storage#[constructor]counter".into(),
+            Symbol::namespaced("host", "open"),
+        )],
+        exports: vec![("run".into(), Symbol::namespaced("app", "run"))],
+        ..Default::default()
+    };
+    for expression in [
+        "(suss.resource/close! nil)",
+        "(suss.resource/call-with-scope (fn [] nil))",
+    ] {
+        std::fs::write(
+            &source,
+            format!("(ns app) (defmacro effect [] {expression}) (defn run [] (effect))"),
+        )
+        .unwrap();
+        let error =
+            compile_file_with_options(&source, &wit, Some("api"), &[], &options).unwrap_err();
+        assert!(
+            error.contains("Macro") || error.contains("macro"),
+            "{error}"
+        );
+    }
+    std::fs::write(&source, "(ns app) (defmacro scoped [] '(suss.resource/call-with-scope (fn [] (host/open 0)))) (defn run [] (scoped) nil)").unwrap();
+    let bytes = compile_file_with_options(&source, &wit, Some("api"), &[], &options).unwrap();
+    let component = Component::new(engine(), bytes).unwrap();
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    assert_eq!((store.data().opened, store.data().dropped), (0, 0));
+    let run = instance
+        .get_typed_func::<(), ()>(&mut store, "run")
+        .unwrap();
+    run.call(&mut store, ()).unwrap();
+    assert_eq!((store.data().opened, store.data().dropped), (1, 1));
+    assert_eq!(live.load(Ordering::SeqCst), 0);
+    assert_eq!(store.data().order, ["open", "drop"]);
 }

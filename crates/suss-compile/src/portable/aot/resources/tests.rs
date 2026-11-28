@@ -62,6 +62,7 @@ fn module() -> Vec<u8> {
         types: carrier_types,
         helpers,
         descriptor: 0,
+        scope: 1,
         check_function: 7,
         close_function: 8,
     };
@@ -87,6 +88,14 @@ fn module() -> Vec<u8> {
             shared: false,
             ty: AbstractHeapType::Eq,
         }),
+    );
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
     );
     let mut exports = ExportSection::new();
     for (name, index) in [("make", 6), ("check", 7), ("close", 8), ("invoke", 11)] {

@@ -406,7 +406,10 @@ pub(crate) fn resource_api_symbols(
     world: WorldId,
 ) -> Result<Vec<Symbol>, Diagnostic> {
     Ok(if resources::Plan::selected(resolve, world)?.is_some() {
-        vec![Symbol::namespaced("suss.resource", "close!")]
+        resources::API_OPERATIONS
+            .iter()
+            .map(|name| Symbol::namespaced("suss.resource", *name))
+            .collect()
     } else {
         Vec::new()
     })
@@ -770,19 +773,21 @@ pub fn component_with_imports(
                 .map(|value| value.global().clone())
         })
         .collect::<Result<Vec<_>, Diagnostic>>()?;
-    let resource_close = if resource_plan.is_some() {
-        Some(
-            last.environment
-                .resolve(
-                    Phase::Runtime,
-                    &Symbol::namespaced("suss.resource", "close!"),
-                    0..0,
-                )?
-                .global()
-                .clone(),
-        )
+    let resource_bindings = if resource_plan.is_some() {
+        resources::API_OPERATIONS
+            .iter()
+            .map(|name| {
+                last.environment
+                    .resolve(
+                        Phase::Runtime,
+                        &Symbol::namespaced("suss.resource", *name),
+                        0..0,
+                    )
+                    .map(|value| value.global().clone())
+            })
+            .collect::<Result<Vec<_>, Diagnostic>>()?
     } else {
-        None
+        vec![]
     };
     let resource_count = resource_plan
         .as_ref()
@@ -897,7 +902,7 @@ pub fn component_with_imports(
         &host_imports,
         &import_globals,
         resource_plan.as_ref(),
-        resource_close.as_ref(),
+        &resource_bindings,
     )?;
     let asynchronous = exports
         .iter()
@@ -1735,7 +1740,7 @@ fn adapter(
     host_imports: &[imports::Import],
     import_globals: &[super::resolve::Global],
     resource_plan: Option<&resources::Plan>,
-    resource_close: Option<&super::resolve::Global>,
+    resource_bindings: &[super::resolve::Global],
 ) -> Result<Vec<u8>, Diagnostic> {
     let resolve = registry.resolve;
     let generic_schema = !registry.nodes.is_empty();
@@ -1881,7 +1886,7 @@ fn adapter(
         .iter()
         .map(|export| &export.global)
         .chain(import_globals)
-        .chain(resource_close)
+        .chain(resource_bindings)
     {
         if !global_indices.contains_key(global) {
             let index = global_indices.len() as u32;
@@ -1919,7 +1924,7 @@ fn adapter(
         } else {
             0
         }
-        + resource_plan.map_or(0, |plan| 2 + plan.resources.len() as u32);
+        + resource_plan.map_or(0, |plan| 3 + plan.resources.len() as u32);
     let posts = exports
         .iter()
         .filter(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
@@ -1938,6 +1943,7 @@ fn adapter(
             error_tag: 0,
         },
         descriptor: resource_descriptor,
+        scope: resource_descriptor + 1,
         check_function: resource_base + 1,
         close_function: resource_base + 2,
     });
@@ -2448,12 +2454,17 @@ fn adapter(
                     resource_wiring.as_ref().unwrap().descriptor_new,
                     resource_descriptor,
                 );
-                resources::install_close(
-                    &mut start,
-                    global_indices[resource_close.expect("resource close cell")],
-                    resource_base + 3,
-                    host_wiring.as_ref().expect("resource host wiring"),
-                );
+                for (binding, invoker) in resource_bindings
+                    .iter()
+                    .zip([resource_base + 3, resource_base + 8])
+                {
+                    resources::install_operation(
+                        &mut start,
+                        global_indices[binding],
+                        invoker,
+                        host_wiring.as_ref().expect("resource host wiring"),
+                    );
+                }
             }
         }
         if let Some(wiring) = &host_wiring {
@@ -2566,7 +2577,7 @@ fn adapter(
             wiring,
             generic_base,
             generic_root,
-            resource_plan.map(|_| (resource_base + 6, resource_base + 5)),
+            resource_plan.map(|_| (resource_base + 9, resource_base + 5)),
         )?;
     }
     if let Some(carrier) = &resource_carrier {
@@ -2578,6 +2589,19 @@ fn adapter(
             (runtime_abi::INVOKE, carrier.invoke_close()),
             (carrier.types.reserve, carrier.reserve()),
             (carrier.types.commit, carrier.commit()),
+            (carrier.types.close, carrier.cleanup_scope()),
+            (
+                runtime_abi::INVOKE,
+                carrier.invoke_scope_cleanup(resource_base + 6),
+            ),
+            (
+                runtime_abi::INVOKE,
+                carrier.invoke_scope(
+                    resource_base + 7,
+                    resource_wiring.as_ref().unwrap().try_invoke,
+                    host_wiring.as_ref().unwrap().closure_new,
+                ),
+            ),
         ] {
             functions.function(ty);
             code.function(&body);
@@ -2586,7 +2610,7 @@ fn adapter(
             &mut functions,
             &mut code,
             carrier.types.gather,
-            resource_base + 6,
+            resource_base + 9,
             resource_base + 4,
             resource_codec.as_ref().unwrap(),
         );
@@ -2621,7 +2645,7 @@ fn adapter(
     }
     if option_schema || list_schema || generic_schema || resource_plan.is_some() {
         let mut globals = GlobalSection::new();
-        for _ in 0..schema_count + usize::from(resource_plan.is_some()) {
+        for _ in 0..schema_count + 2 * usize::from(resource_plan.is_some()) {
             globals.global(
                 GlobalType {
                     val_type: VALUE,
@@ -2645,7 +2669,7 @@ fn adapter(
             .collect::<Vec<_>>();
         if let Some(wiring) = &resource_wiring {
             refs.extend(wiring.drop_calls.iter().copied());
-            refs.push(resource_base + 3);
+            refs.extend([resource_base + 3, resource_base + 7, resource_base + 8]);
         }
         elements.declared(Elements::Functions(std::borrow::Cow::Owned(refs)));
         module.section(&elements);

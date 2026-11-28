@@ -3,6 +3,8 @@ use crate::runtime_abi;
 use wasm_encoder::*;
 
 use super::VALUE;
+mod scopes;
+pub(super) const API_OPERATIONS: &[&str] = &["close!", "call-with-scope"];
 const TYPE: u32 = 0;
 const HANDLE: u32 = 1;
 const STATUS: u32 = 2;
@@ -106,6 +108,7 @@ pub(super) struct Carrier {
     pub types: Types,
     pub helpers: Helpers,
     pub descriptor: u32,
+    pub scope: u32,
     pub check_function: u32,
     pub close_function: u32,
 }
@@ -167,7 +170,7 @@ impl Carrier {
     }
     pub fn make(&self) -> Function {
         use Instruction::*;
-        let mut body = Function::new([]);
+        let mut body = Function::new([(2, VALUE)]);
         emit(
             &mut body,
             &[
@@ -177,16 +180,19 @@ impl Carrier {
                 I32Const(0),
                 I32Const(1),
                 LocalGet(2),
-                runtime_abi::sentinel_value(runtime_abi::NIL),
+                GlobalGet(self.scope),
                 StructNew(self.types.state),
+                LocalTee(3),
                 ArrayNewFixed {
                     array_type_index: runtime_abi::ARGS,
                     array_size: 1,
                 },
                 Call(self.helpers.object_new),
-                End,
+                LocalSet(4),
             ],
         );
+        scopes::register(self, &mut body, 3);
+        emit(&mut body, &[LocalGet(4), End]);
         body
     }
     /// Return the private state only after class, shape, type, status and owner
@@ -608,6 +614,7 @@ pub(super) fn drop_name(index: usize) -> String {
 pub(super) struct Wiring {
     pub descriptor_new: u32,
     pub object_new: u32,
+    pub try_invoke: u32,
     pub drop_calls: Vec<u32>,
 }
 pub(super) fn wire(
@@ -619,6 +626,7 @@ pub(super) fn wire(
     for (name, params) in [
         ("descriptor-new-core", vec![VALUE; 3]),
         ("object-new", vec![VALUE; 2]),
+        ("try-invoke", vec![VALUE; 3]),
     ] {
         let ty = next_type(types);
         types.ty().function(params, [VALUE]);
@@ -629,11 +637,12 @@ pub(super) fn wire(
         let ty = next_type(types);
         types.ty().function([ValType::I32], []);
         imports.import("suss.host", &drop_name(index), EntityType::Function(ty));
-        drop_calls.push(first + 2 + index as u32);
+        drop_calls.push(first + 3 + index as u32);
     }
     Wiring {
         descriptor_new: first,
         object_new: first + 1,
+        try_invoke: first + 2,
         drop_calls,
     }
 }
@@ -660,7 +669,7 @@ pub(super) fn initialize_descriptor(
         ],
     );
 }
-pub(super) fn install_close(
+pub(super) fn install_operation(
     body: &mut Function,
     cell: u32,
     invoker: u32,
