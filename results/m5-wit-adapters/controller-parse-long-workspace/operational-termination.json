@@ -1,0 +1,18 @@
+{
+  "time_utc": "2026-11-28T14:47:19.147332+00:00",
+  "actor": "assistant operational scheduling",
+  "reason": "Retain obsolete-source broad captures as partial; all still use the interrupt-effect test that already failed under compilation delays. Consolidate required full baseline on integrated code including the repair, without claiming these captures pass. Goal remains active.",
+  "head": "31eaee3909ffcfa6f71272c50e0ba26f20d3d533",
+  "unit": "run-p1981083-i106797658.scope",
+  "recorder_pids": [
+    1981083
+  ],
+  "terminated_processes": {
+    "1981164": "/home/bobby/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --workspace --locked -- --test-threads=2 ",
+    "2342129": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-parsing/target/probe/cargo/debug/deps/compiled_macro_compiler_catalog-c6e7793f56dde7ce --test-threads=2 "
+  },
+  "signal": "SIGTERM",
+  "old_interrupt_test_sha256": "5c182f97c0513d14f3818ebeb1d8077122217e7f9c667202b88b46e1adb56ff2",
+  "repaired_interrupt_test_sha256": "9f1dbd9dce56524eff0047aeb8c29555884f437fde2deda292fc9e4f73713c96",
+  "qualification": "The recorder is preserved to retain actual negative command exit, partial raw results and source identity. This is operational termination, not a completed workspace pass or a diagnosed new test failure."
+}

@@ -37836,3 +37836,23 @@ Runtime/Macro character platform control and both actual components. Publish
 the rebased draft/evidence to #528. The required exact full baseline, independent
 review and passing final-head CI still gate #527; #490 now independently exposes
 missing nested associative core helpers, tracked by #529.
+
+### Consolidating broad validation on the repaired integration source (2026-11-28)
+
+The exact workspace command in `controller-parse-long-workspace/` was operationally terminated with
+SIGTERM after 12296.147s. It retains 499 passing tests across
+86 completed successful target summaries; the interrupted target and all
+unreached targets are unknown. This is not a completed workspace pass. The
+recorder retains actual exit-15, raw log, 14,122 unchanged inputs
+and unchanged `31eaee39` HEAD. `operational-termination.json` records
+the actor, reason, exact processes/signals and old/repaired interrupt-test hashes.
+The earlier scheduling suspension, if present, remains recorded separately.
+
+These older runs still used the interrupt-effect harness that had already
+failed when its timer expired during compilation. Broad validation is being
+consolidated on the integrated source with the tested repair, rather than
+recording an obsolete source as current. The repaired `session_interrupt.rs`
+is copied byte-for-byte from import integration ed25ecf1; its earlier executing
+seven-test repair evidence remains on that draft. Run the focused target on
+this checkout next. A successful integrated full baseline, independent review
+and final-head CI are still required; partial capture results do not waive them.
