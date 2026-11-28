@@ -673,7 +673,8 @@ pub fn component_with_imports(
     } else {
         imports::selected(resolve, world, import_mappings)?
     };
-    if !host_imports.is_empty() && optimize {
+    let resource_plan = resources::Plan::selected(resolve, world)?;
+    if (!host_imports.is_empty() || resource_plan.is_some()) && optimize {
         return Err(error(
             "Optimized synchronous import adapters remain unimplemented",
         ));
@@ -682,7 +683,6 @@ pub fn component_with_imports(
         .last()
         .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
     let selected = &resolve.worlds[world];
-    let resource_plan = resources::Plan::selected(resolve, world)?;
     let mut exports = Vec::new();
     let mut public_exports = Vec::new();
     let mut used = std::collections::BTreeSet::new();
@@ -909,7 +909,8 @@ pub fn component_with_imports(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let has_memory = !host_imports.is_empty() || exports.iter().any(Export::uses_memory);
+    let has_host_adapter = !host_imports.is_empty() || resource_plan.is_some();
+    let has_memory = has_host_adapter || exports.iter().any(Export::uses_memory);
     let initialization = super::initialization::Plan::new(
         &fragments,
         usize::from(option_schema) + usize::from(list_schema) + usize::from(generic_schema),
@@ -1287,8 +1288,8 @@ pub fn component_with_imports(
         instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
         args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
     }
-    let adapter_instance = first_own + u32::from(has_memory) + u32::from(!host_imports.is_empty());
-    if host_imports.is_empty() {
+    let adapter_instance = first_own + u32::from(has_memory) + u32::from(has_host_adapter);
+    if !has_host_adapter {
         instances.instantiate(adapter_module, args);
         component.section(&instances);
         // Memory must be aliased before canonical task-return uses Unicode results.
@@ -1767,7 +1768,10 @@ fn adapter(
     let resolve = registry.resolve;
     let generic_schema = !registry.nodes.is_empty();
     let fragment_count = initializers.len();
-    let has_memory = !host_imports.is_empty() || exports.iter().any(Export::uses_memory);
+    // Resource-only providers still need lifetime closures and canonical drop
+    // functions, even when no provider function is mapped into source.
+    let has_host_adapter = !host_imports.is_empty() || resource_plan.is_some();
+    let has_memory = has_host_adapter || exports.iter().any(Export::uses_memory);
     let helpers = if has_memory { HELPERS + 4 } else { HELPERS }
         + if generic_schema {
             4
@@ -1882,7 +1886,7 @@ fn adapter(
             EntityType::Function(runtime_abi::TYPE_COUNT + helpers + 1),
         );
     }
-    let host_wiring = (!host_imports.is_empty()).then(|| {
+    let host_wiring = has_host_adapter.then(|| {
         imports::wire(
             &mut types,
             &mut imports,
@@ -2021,16 +2025,23 @@ fn adapter(
         if generic_schema {
             locals.push((export.params.len() as u32, ValType::I32));
         }
+        let context_base = unit
+            + 9
+            + if generic_schema {
+                export.params.len() as u32
+            } else {
+                0
+            };
+        let result_moves = resource_plan
+            .filter(|plan| plan.owned_result(resolve, &export.wit))
+            .map(|_| {
+                locals.push((1, VALUE));
+                context_base
+            });
         let borrow_context = resource_plan
             .filter(|plan| plan.borrowed_parameters(resolve, &export.wit))
             .map(|_| {
-                let first = unit
-                    + 9
-                    + if generic_schema {
-                        export.params.len() as u32
-                    } else {
-                        0
-                    };
+                let first = context_base + u32::from(result_moves.is_some());
                 locals.push((5, VALUE));
                 let returned = export
                     .result
@@ -2271,8 +2282,17 @@ fn adapter(
                         generic_base,
                         node,
                         composite::VALIDATE,
-                    )))
-                    .instruction(&Instruction::I32Const(0))
+                    )));
+                if let Some(queue) = result_moves {
+                    body.instruction(&Instruction::LocalGet(result))
+                        .instruction(&Instruction::RefNull(HeapType::Abstract {
+                            shared: false,
+                            ty: AbstractHeapType::Eq,
+                        }))
+                        .instruction(&Instruction::Call(resource_base + 10 + node as u32))
+                        .instruction(&Instruction::LocalSet(queue));
+                }
+                body.instruction(&Instruction::I32Const(0))
                     .instruction(&Instruction::I32Const(0))
                     .instruction(&Instruction::I32Const(registry.nodes[node].align as i32))
                     .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
@@ -2471,6 +2491,10 @@ fn adapter(
                 .as_ref()
                 .unwrap()
                 .finish_borrow(&mut body, context);
+        }
+        if let Some(queue) = result_moves {
+            body.instruction(&Instruction::LocalGet(queue))
+                .instruction(&Instruction::Call(resource_base + 5));
         }
         body.instruction(&Instruction::End);
         code.function(&body);

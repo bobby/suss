@@ -37610,3 +37610,78 @@ does not certify this later borrow source. Next publish the qualified borrow
 implementation and receipts to the same draft, then implement own exports and
 remaining lifetime/cancellation/interop/application requirements. Required full
 resource baseline, final-head CI and independent review remain separate.
+
+### 2026-11-28: synchronous owned exports and resource-only providers
+
+Owned-result and owned-input regressions first execute their unsupported guards
+(`exported-resource-owned-results-before/`, `exported-resource-owned-inputs-before/`).
+The first result control then passes 89.98s execution/299.435s capture, all 14,001
+inputs and HEAD fixed (`exported-resource-owned-results-atomic/`). The complete
+seven-test target passes 218.42s execution/224.721s capture, all 14,004 inputs fixed
+(`exported-resource-owned-results-complete/`): existing borrowed-call controls,
+physical Rust owner identity, old Source alias invalidation, nested own results,
+borrow cleanup before result handoff, duplicate-owner rejection before transfer
+and10,000 owned results with forced GC, zero remaining owners after host deletion
+and one64 KiB transfer page. A duplicate-result language trap requires Store
+retirement; its control does not claim Source recovery after that trap.
+
+The selected owned-input/result command returns0 with five passed, zero
+failed/ignored (four borrowed controls filtered),183.81s execution/378.802s capture,
+all 14,010 inputs and HEAD fixed (`exported-resource-owned-inputs-lifetimes/`):
+`cargo test -p suss-compile --locked --test portable_aot_wit_borrows owned_ -- --test-threads=2`.
+Incoming owners remain alive across exports/GC until explicit close; three exact
+u64 values produce nine host reads and three canonical destructors. Own-input
+roundtrips preserve physical Rust identity; Source try/finally closes six owners
+on success/caught failure, exactly once each. No guest constructors/host consumes
+occur in those input controls. Receiving an owner does not implicitly scope it.
+
+Result adapters gather ownership across the complete validated result before
+canonical allocation. They commit moves after borrowed-input cleanup and before
+native return. Private state and the shared ABI/data-codec width are unchanged.
+Synchronous own inputs reuse the existing owned carrier; async resource exports
+remain diagnosed. The unsupported-domain fixture now selects an async own input
+instead of the newly supported synchronous case.
+
+The resource-only regression first fails at the actual zero-function provider
+guard (`resource-only-provider-before/`,7.511s capture,14,013 fixed inputs).
+After adding canonical drop/lifetime wiring, it exposes an unresolved Runtime
+close! in public file compilation (`resource-only-provider-lifetime-wiring/`,
+33.52s execution/226.485s capture,14,016 fixed inputs). Both failures are retained.
+The corrected file route predeclares lifetime vars whenever a selected world
+has resources, independently of function mappings. Existing Runtime namespace
+ownership and Macro authority checks remain in effect.
+
+The first corrected control passes 59.41s execution/280.005s capture,14,019 fixed
+inputs (`resource-only-provider-public-file-lifetimes/`), with own roundtrip/close,
+borrow close rejection, exact physical identity, zero mapped function calls and
+three canonical host destructors/zero live owners. Two expanded controls then
+execute selected-import-count checks and an unused resource declaration with no
+handle value codecs (`resource-only-provider-selected-authority/`). Their actual
+summary/log records are retained. The selected component imports exactly its one
+resource provider; lifetime APIs introduce no hidden host capability.
+
+These captures qualify their recorded source snapshots. Next execute the complete
+borrow/own export and constructor/move/scope resource targets together on the
+combined production source, then publish evidence to the same draft. Required
+full resource baseline, final-head CI and independent review remain separate;
+contextual identities, guest-defined resources, async/cancellation, broader
+interoperability and UserManager remain unimplemented.
+
+The combined command returned 0 with 24 passed, zero failed/ignored/filtered:
+`cargo test -p suss-compile --locked --test portable_aot_wit_borrows --test portable_aot_wit_resources -- --test-threads=2`.
+Its capture takes 816.534s including build, all 14,025
+inputs and HEAD fixed (`resource-owned-exports-provider-complete/`). All11
+exported borrow/own/provider controls and all 13 constructor/move/scope controls
+execute on the same combined production sources. This reruns the five 10,000-call
+resource controls, exact integers, retained owners, native-record transfers,
+forgery/type/closed/moved rejection, nested exceptions and Macro authority.
+The two selected resource-only authority controls separately pass 61.21s execution/
+68.667s capture,14,022 inputs fixed, nine other controls filtered.
+
+A publication audit compares2,477 captured non-documentation/evidence
+inputs after terminal docs updates, with zero changes. This qualifies source
+identity and does not relabel the recorded HEAD as a newer commit. Publish this
+implementation/evidence to the same draft. Full resource baseline, new final-head
+CI and independent review remain required. Next implement cancellation/remaining
+interop and the representative application; the separate actual missing
+parse-long prerequisite is tracked in #527.

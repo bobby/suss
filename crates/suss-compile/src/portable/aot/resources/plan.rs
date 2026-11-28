@@ -80,7 +80,6 @@ impl Plan {
             return Ok(None);
         }
         let plan = Self { resources };
-        let mut functions = 0;
         for item in resolve.worlds[world].imports.values() {
             let funcs = match item {
                 WorldItem::Function(function) => vec![function],
@@ -90,7 +89,6 @@ impl Plan {
                 _ => continue,
             };
             for function in funcs {
-                functions += 1;
                 match function.kind {
                     FunctionKind::Freestanding => {}
                     FunctionKind::Constructor(id)
@@ -113,11 +111,6 @@ impl Plan {
                 }
             }
         }
-        if functions == 0 {
-            return Err(error(
-                "Imported resource-only provider lifetime adapters remain unimplemented",
-            ));
-        }
         for item in resolve.worlds[world].exports.values() {
             let funcs = match item {
                 WorldItem::Function(function) => vec![function],
@@ -132,11 +125,12 @@ impl Plan {
                     .iter()
                     .any(|p| has_handle(resolve, p.ty, Some(true)));
                 let borrows = plan.borrowed_parameters(resolve, function);
-                if owns
-                    || function
-                        .result
-                        .is_some_and(|ty| has_handle(resolve, ty, None))
-                    || borrows && !matches!(function.kind, FunctionKind::Freestanding)
+                let returns_owned = plan.owned_result(resolve, function);
+                if function
+                    .result
+                    .is_some_and(|ty| has_handle(resolve, ty, Some(false)))
+                    || (owns || borrows || returns_owned)
+                        && !matches!(function.kind, FunctionKind::Freestanding)
                 {
                     return Err(error(
                         "Exported resource handles require call-scope ownership adapters",
@@ -145,6 +139,11 @@ impl Plan {
             }
         }
         Ok(Some(plan))
+    }
+    pub fn owned_result(&self, resolve: &Resolve, function: &wit_parser::Function) -> bool {
+        function
+            .result
+            .is_some_and(|ty| has_handle(resolve, ty, Some(true)))
     }
     pub fn borrowed_parameters(&self, resolve: &Resolve, function: &wit_parser::Function) -> bool {
         function

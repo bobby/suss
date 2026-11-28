@@ -1,0 +1,11 @@
+{
+  "purpose": "After terminal documentation updates, verify all captured non-documentation/evidence inputs remain identical to the complete resource capture.",
+  "source_receipt_sha256": "dd98c015249b67c00ada2485c91ad686e7ab0cff53a6cef8400ef7cc4f49753f",
+  "captured_head": "6302de60d6c200ef593b8777ef4caecc3b2a2f4d",
+  "checked_inputs": 2477,
+  "excluded_prefixes": [
+    "docs/",
+    "results/"
+  ],
+  "changed_inputs": []
+}

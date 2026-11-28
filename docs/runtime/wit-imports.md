@@ -101,7 +101,9 @@ and exchange native collections with exact integers and Unicode.
 
 
 [Imported resource handles](wit-resources.md) have a bounded synchronous
-constructor/method/static route with opaque carriers and explicit close. Its
-selection guard retains unsupported alias, move, borrow-result and export paths
-until their lifetime adapters are implemented. Data-value mappings and ordinary
-source collection operations remain unchanged.
+constructor/method/static route with opaque carriers, explicit close and lexical
+cleanup. Synchronous exports accept own/borrow parameters and return owners;
+resource-only providers need no function mappings. Contextual provider aliases,
+foreign resource dependencies and generalized async lifetimes remain gated.
+The resource guide describes the ownership and borrow contracts. Data values
+continue to use ordinary source collections.

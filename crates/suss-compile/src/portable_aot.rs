@@ -307,14 +307,16 @@ pub(crate) fn compile_inputs_with_options(
     let world = resolve
         .select_world(&[package], wit_world)
         .map_err(|error| CompileError::Wit(format!("Failed to select WIT world: {error:#}")))?;
-    if !options.imports.is_empty() {
+    let resource_symbols = portable::aot::resource_api_symbols(&resolve, world)
+        .map_err(|error| CompileError::Unsupported(error.to_string()))?;
+    if !options.imports.is_empty() || !resource_symbols.is_empty() {
         if !options.async_imports.is_empty() || options.optimize {
             return Err(CompileError::Unsupported("Synchronous import mappings currently require the unoptimized synchronous-import route".into()));
         }
         portable::aot::validate_import_boundary(&resolve, world, &options.imports)
             .map_err(|error| CompileError::Unsupported(error.to_string()))?;
         let mut imported = options.imports.iter().map(|(_, source)| source.clone()).collect::<Vec<_>>();
-        imported.extend(portable::aot::resource_api_symbols(&resolve, world).map_err(|error| CompileError::Unsupported(error.to_string()))?);
+        imported.extend(resource_symbols);
         for source in &imported {
             let namespace = source.namespace.as_deref().expect("validated import namespace");
             if portable::resolve::locate_source_if_present(namespace, source_paths, 0..0)

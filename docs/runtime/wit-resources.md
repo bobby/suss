@@ -1,4 +1,4 @@
-# Imported WIT resource handles
+# Host WIT resource handles
 
 Synchronous imported constructors, methods and statics use the same explicit
 Runtime mappings as [ordinary WIT imports](wit-imports.md). Constructors return
@@ -98,10 +98,27 @@ with its original pending exception available for inspection in the Store.
 Inspect the error, then retire that Store. Ordinary WIT result errors and caught
 language exceptions remain normal values/returns.
 
+Synchronous exports also accept and return `own<resource>`, including nested
+values. An incoming owner belongs to Suss until it is explicitly closed or
+moved. It may be retained in an atom across calls and GC; returning from the
+export does not implicitly close it. Use `try`/`finally` to close an incoming
+owner after temporary use. The lexical scope API only registers owners created
+inside its body.
+
+Returning an owner transfers it to the host and invalidates every old Suss
+alias, preserving the physical host resource identity. All result values and
+ownership aliases are checked before canonical result allocation. Result moves
+commit after any borrowed-input cleanup, immediately before return. A list
+containing the same owner twice rejects before ownership is handed off.
+
+An imported interface may declare only resource types, with no mapped host
+functions. The host still supplies each declared type and its destructor.
+Suss installs the lifetime operations and canonical drops without adding
+component imports beyond the selected world.
+
 This initial route rejects repeated aliases of a resource provider and foreign
 resource dependencies until provider context is represented throughout the
-codec graph. The pinned WIT resolver rejects borrowed results. Own parameters or
-results of exported functions, guest-defined resources, resource-only providers
-and generalized async/cancellation lifetimes retain separate adapters.
+codec graph. The pinned WIT resolver rejects borrowed results. Guest-defined
+resources and generalized async/cancellation lifetimes retain separate adapters.
 Unsupported selected paths are diagnosed before source macro effects. Full WIT
 lifetime interoperability requires those remaining paths.

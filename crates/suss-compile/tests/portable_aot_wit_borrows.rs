@@ -33,6 +33,7 @@ struct State {
     table: ResourceTable,
     live: Arc<AtomicUsize>,
     constructors: usize,
+    last_constructed_rep: Option<u32>,
     reads: usize,
     consumes: usize,
     canonical_drops: usize,
@@ -70,6 +71,7 @@ fn linker() -> Linker<State> {
                 let live = cx.data().live.clone();
                 live.fetch_add(1, Ordering::SeqCst);
                 let resource = cx.data_mut().table.push(Counter { value, live })?;
+                cx.data_mut().last_constructed_rep = Some(resource.rep());
                 cx.data_mut().constructors += 1;
                 Ok((resource,))
             },
@@ -139,6 +141,14 @@ fn component() -> Component {
     )
 }
 fn component_with(wit_text: &str, app_source: &str, exports: &[(&str, &str)]) -> Component {
+    component_with_imports(wit_text, app_source, exports, true)
+}
+fn component_with_imports(
+    wit_text: &str,
+    app_source: &str,
+    exports: &[(&str, &str)],
+    host_functions: bool,
+) -> Component {
     let directory = tempfile::tempdir().unwrap();
     let source = directory.path().join("app.sus");
     let wit = directory.path().join("api.wit");
@@ -162,6 +172,7 @@ fn component_with(wit_text: &str, app_source: &str, exports: &[(&str, &str)]) ->
                 ("test:borrow-boundary/store@1.0.0#consume", "host/consume"),
             ]
             .into_iter()
+            .filter(|_| host_functions)
             .map(|(path, symbol)| (path.into(), Symbol::parse(symbol)))
             .collect(),
             exports: exports
@@ -172,7 +183,138 @@ fn component_with(wit_text: &str, app_source: &str, exports: &[(&str, &str)]) ->
         },
     )
     .unwrap();
+    if !host_functions {
+        let imported: u32 = wasmparser::Parser::new(0)
+            .parse_all(&bytes)
+            .map(|payload| match payload.unwrap() {
+                wasmparser::Payload::ComponentImportSection(section) => section.count(),
+                _ => 0,
+            })
+            .sum();
+        assert_eq!(
+            imported, 1,
+            "only the selected resource provider is imported"
+        );
+    }
     Component::new(engine(), bytes).unwrap()
+}
+
+#[test]
+fn resource_only_declarations_install_lifetimes_without_any_handle_value_codecs() {
+    let component = component_with_imports(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter; }
+        world api { import store; export ping: func(value: u64) -> u64; }"#,
+        r#"(ns app)
+        (defn ping [value] (suss.resource/call-with-scope (fn [] value)))"#,
+        &[("ping", "app/ping")],
+        false,
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let ping = instance
+        .get_typed_func::<(u64,), (u64,)>(&mut store, "ping")
+        .unwrap();
+    for value in [0, 9007199254740993, u64::MAX] {
+        assert_eq!(ping.call(&mut store, (value,)).unwrap().0, value);
+        store.gc(None).unwrap();
+    }
+    assert_eq!(
+        (
+            store.data().constructors,
+            store.data().reads,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (0, 0, 0, 0)
+    );
+    assert_eq!(store.data().live.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn resource_only_provider_wires_destructors_without_host_function_mappings() {
+    let component = component_with_imports(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter; }
+        world api { import store; use store.{counter};
+            export echo: func(handle: own<counter>) -> own<counter>;
+            export release: func(handle: own<counter>);
+            export accept: func(handle: borrow<counter>) -> bool;
+            export rejected: func() -> bool;
+        }"#,
+        r#"(ns app) (def retained (atom nil))
+        (defn rejected-close? [handle]
+          (try (suss.resource/close! handle) false (catch :default error true)))
+        (defn echo [handle] (reset! retained handle) handle)
+        (defn release [handle]
+          (reset! retained handle)
+          (suss.resource/close! handle))
+        (defn accept [handle]
+          (reset! retained handle)
+          (rejected-close? handle))
+        (defn rejected [] (rejected-close? @retained))"#,
+        &[
+            ("echo", "app/echo"),
+            ("release", "app/release"),
+            ("accept", "app/accept"),
+            ("rejected", "app/rejected"),
+        ],
+        false,
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let echo = instance
+        .get_typed_func::<(Resource<Counter>,), (Resource<Counter>,)>(&mut store, "echo")
+        .unwrap();
+    let release = instance
+        .get_typed_func::<(Resource<Counter>,), ()>(&mut store, "release")
+        .unwrap();
+    let accept = instance
+        .get_typed_func::<(Resource<Counter>,), (bool,)>(&mut store, "accept")
+        .unwrap();
+    let rejected = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "rejected")
+        .unwrap();
+    for value in [0, 9007199254740993, u64::MAX] {
+        live.fetch_add(1, Ordering::SeqCst);
+        let owner = store
+            .data_mut()
+            .table
+            .push(Counter {
+                value,
+                live: live.clone(),
+            })
+            .unwrap();
+        let rep = owner.rep();
+        assert!(
+            accept
+                .call(&mut store, (Resource::<Counter>::new_borrow(rep),))
+                .unwrap()
+                .0
+        );
+        assert_eq!(live.load(Ordering::SeqCst), 1);
+        let returned = echo.call(&mut store, (owner,)).unwrap().0;
+        assert!(returned.owned());
+        assert_eq!(returned.rep(), rep);
+        assert_eq!(store.data().table.get(&returned).unwrap().value, value);
+        assert!(rejected.call(&mut store, ()).unwrap().0);
+        store.gc(None).unwrap();
+        release.call(&mut store, (returned,)).unwrap();
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        assert!(rejected.call(&mut store, ()).unwrap().0);
+    }
+    assert_eq!(
+        (
+            store.data().constructors,
+            store.data().reads,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (0, 0, 0, 3)
+    );
 }
 
 #[test]
@@ -529,4 +671,357 @@ fn ten_thousand_borrow_calls_and_typed_errors_release_entries_without_closing_th
     assert_eq!(store.data().canonical_peak, 65536);
     store.data_mut().table.delete(owner).unwrap();
     assert_eq!(live.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn owned_export_results_move_to_rust_preserve_identity_and_invalidate_old_source_aliases() {
+    let component = component_with(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
+        world api { import store; use store.{counter}; export create: func(value: u64) -> own<counter>; export moved: func() -> bool; }"#,
+        r#"(ns app) (def retained (atom nil))
+        (defn create [value] (let [handle (host/open value)] (reset! retained handle) handle))
+        (defn moved []
+          (and (try (host/read @retained) false (catch :default error true))
+               (try (suss.resource/close! @retained) false (catch :default error true))))"#,
+        &[("create", "app/create"), ("moved", "app/moved")],
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let create = instance
+        .get_typed_func::<(u64,), (Resource<Counter>,)>(&mut store, "create")
+        .unwrap();
+    let moved = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "moved")
+        .unwrap();
+    for value in [0, 9007199254740993, u64::MAX] {
+        store.set_fuel(100_000_000).unwrap();
+        let owner = create.call(&mut store, (value,)).unwrap().0;
+        assert!(owner.owned());
+        assert_eq!(Some(owner.rep()), store.data().last_constructed_rep);
+        assert_eq!(store.data().table.get(&owner).unwrap().value, value);
+        assert_eq!(live.load(Ordering::SeqCst), 1);
+        store.gc(None).unwrap();
+        assert!(moved.call(&mut store, ()).unwrap().0);
+        assert_eq!((store.data().reads, store.data().canonical_drops), (0, 0));
+        store.data_mut().table.delete(owner).unwrap();
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+    }
+    assert_eq!(
+        (
+            store.data().constructors,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (3, 0, 0)
+    );
+}
+
+#[test]
+fn owned_result_lists_commit_after_borrow_cleanup_and_duplicate_owners_fail_before_handoff() {
+    let component = component_with(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
+        world api { import store; use store.{counter}; export create: func(parent: borrow<counter>, duplicate: bool) -> list<own<counter>>; export moved: func() -> bool; export expired: func() -> bool; }"#,
+        r#"(ns app) (def retained (atom nil)) (def parent-saved (atom nil))
+        (defn rejected? [f] (try (f) false (catch :default error true)))
+        (defn create [parent duplicate]
+          (reset! parent-saved parent)
+          (let [value (host/read parent) a (host/open value) b (host/open value)]
+            (reset! retained [a b]) (if duplicate [a a] [a b])))
+        (defn moved [] (every? (fn [handle] (and (rejected? (fn [] (host/read handle))) (rejected? (fn [] (suss.resource/close! handle))))) @retained))
+        (defn expired [] (rejected? (fn [] (host/read @parent-saved))))"#,
+        &[
+            ("create", "app/create"),
+            ("moved", "app/moved"),
+            ("expired", "app/expired"),
+        ],
+    );
+    for duplicate in [false, true] {
+        let mut store = Store::new(engine(), State::default());
+        store.set_fuel(100_000_000).unwrap();
+        let live = store.data().live.clone();
+        live.fetch_add(1, Ordering::SeqCst);
+        let parent = store
+            .data_mut()
+            .table
+            .push(Counter {
+                value: u64::MAX,
+                live: live.clone(),
+            })
+            .unwrap();
+        let instance = linker().instantiate(&mut store, &component).unwrap();
+        let create = instance
+            .get_typed_func::<(Resource<Counter>, bool), (Vec<Resource<Counter>>,)>(
+                &mut store, "create",
+            )
+            .unwrap();
+        let result = create.call(
+            &mut store,
+            (Resource::<Counter>::new_borrow(parent.rep()), duplicate),
+        );
+        assert_eq!(
+            (
+                store.data().constructors,
+                store.data().reads,
+                store.data().canonical_drops
+            ),
+            (2, 1, 0)
+        );
+        assert_eq!(live.load(Ordering::SeqCst), 3);
+        if duplicate {
+            let error = result.unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<wasmtime::Trap>(),
+                Some(&wasmtime::Trap::UncaughtException),
+                "{error:#}"
+            );
+            assert!(store.take_pending_exception().is_some());
+            // No ownership was lifted to the host. Retiring the trapped Store
+            // owns destruction of the still-resident table entries.
+            drop(store);
+            assert_eq!(live.load(Ordering::SeqCst), 0);
+        } else {
+            let owners = result.unwrap().0;
+            assert_eq!(owners.len(), 2);
+            assert_ne!(owners[0].rep(), owners[1].rep());
+            assert_eq!(Some(owners[1].rep()), store.data().last_constructed_rep);
+            for owner in &owners {
+                assert!(owner.owned());
+                assert_eq!(store.data().table.get(owner).unwrap().value, u64::MAX);
+            }
+            store.gc(None).unwrap();
+            let moved = instance
+                .get_typed_func::<(), (bool,)>(&mut store, "moved")
+                .unwrap();
+            let expired = instance
+                .get_typed_func::<(), (bool,)>(&mut store, "expired")
+                .unwrap();
+            assert!(moved.call(&mut store, ()).unwrap().0);
+            assert!(expired.call(&mut store, ()).unwrap().0);
+            for owner in owners {
+                store.data_mut().table.delete(owner).unwrap();
+            }
+            assert_eq!(live.load(Ordering::SeqCst), 1);
+            store.data_mut().table.delete(parent).unwrap();
+            assert_eq!(live.load(Ordering::SeqCst), 0);
+        }
+    }
+}
+
+#[test]
+fn ten_thousand_owned_export_results_transfer_identity_without_lingering_guest_owners() {
+    let component = component_with(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
+        world api { import store; use store.{counter}; export create: func(value: u64) -> own<counter>; export moved: func() -> bool; }"#,
+        r#"(ns app) (def retained (atom nil))
+        (defn create [value] (let [handle (host/open value)] (reset! retained handle) handle))
+        (defn moved [] (and (try (host/read @retained) false (catch :default error true)) (try (suss.resource/close! @retained) false (catch :default error true))))"#,
+        &[("create", "app/create"), ("moved", "app/moved")],
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    store.limiter(|state| state);
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let create = instance
+        .get_typed_func::<(u64,), (Resource<Counter>,)>(&mut store, "create")
+        .unwrap();
+    let moved = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "moved")
+        .unwrap();
+    for index in 0..10_000 {
+        let value = [0, 9007199254740993, u64::MAX][index % 3];
+        store.set_fuel(100_000_000).unwrap();
+        let owner = create.call(&mut store, (value,)).unwrap().0;
+        assert!(owner.owned());
+        assert_eq!(Some(owner.rep()), store.data().last_constructed_rep);
+        assert_eq!(store.data().table.get(&owner).unwrap().value, value);
+        assert_eq!(live.load(Ordering::SeqCst), 1);
+        assert!(moved.call(&mut store, ()).unwrap().0);
+        store.data_mut().table.delete(owner).unwrap();
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        if index % 100 == 0 {
+            store.gc(None).unwrap();
+        }
+    }
+    store.gc(None).unwrap();
+    assert_eq!(
+        (
+            store.data().constructors,
+            store.data().reads,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (10_000, 0, 0, 0)
+    );
+    assert_eq!(store.data().canonical_peak, 65536);
+}
+
+#[test]
+fn owned_export_inputs_can_be_retained_across_calls_until_guest_explicit_close() {
+    let component = component_with(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
+        world api { import store; use store.{counter}; export save: func(handle: own<counter>) -> u64; export read: func() -> u64; export close: func(); export closed: func() -> bool; }"#,
+        r#"(ns app) (def retained (atom nil))
+        (defn save [handle] (reset! retained handle) (host/read handle))
+        (defn read [] (host/read @retained))
+        (defn close [] (suss.resource/close! @retained))
+        (defn closed [] (and (try (host/read @retained) false (catch :default error true)) (try (suss.resource/close! @retained) false (catch :default error true))))"#,
+        &[
+            ("save", "app/save"),
+            ("read", "app/read"),
+            ("close", "app/close"),
+            ("closed", "app/closed"),
+        ],
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let save = instance
+        .get_typed_func::<(Resource<Counter>,), (u64,)>(&mut store, "save")
+        .unwrap();
+    let read = instance
+        .get_typed_func::<(), (u64,)>(&mut store, "read")
+        .unwrap();
+    let close = instance
+        .get_typed_func::<(), ()>(&mut store, "close")
+        .unwrap();
+    let closed = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "closed")
+        .unwrap();
+    for value in [0, 9007199254740993, u64::MAX] {
+        live.fetch_add(1, Ordering::SeqCst);
+        let owner = store
+            .data_mut()
+            .table
+            .push(Counter {
+                value,
+                live: live.clone(),
+            })
+            .unwrap();
+        let rep = owner.rep();
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(save.call(&mut store, (owner,)).unwrap().0, value);
+        for _ in 0..2 {
+            store.gc(None).unwrap();
+            assert_eq!(live.load(Ordering::SeqCst), 1);
+            assert_eq!(
+                store
+                    .data()
+                    .table
+                    .get(&Resource::<Counter>::new_borrow(rep))
+                    .unwrap()
+                    .value,
+                value
+            );
+            assert_eq!(read.call(&mut store, ()).unwrap().0, value);
+        }
+        close.call(&mut store, ()).unwrap();
+        store.gc(None).unwrap();
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        assert!(closed.call(&mut store, ()).unwrap().0);
+    }
+    assert_eq!(
+        (
+            store.data().reads,
+            store.data().constructors,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (9, 0, 0, 3)
+    );
+}
+
+#[test]
+fn owned_inputs_roundtrip_to_rust_and_close_through_source_finally_on_success_or_error() {
+    let component = component_with(
+        r#"package test:borrow-boundary@1.0.0;
+        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
+        world api { import store; use store.{counter}; export echo: func(handle: own<counter>) -> own<counter>; export use-value: func(handle: own<counter>, failed: bool) -> result<u64, string>; export moved: func() -> bool; }"#,
+        r#"(ns app) (def retained (atom nil))
+        (defn echo [handle] (reset! retained handle) handle)
+        (defn moved [] (and (try (host/read @retained) false (catch :default error true)) (try (suss.resource/close! @retained) false (catch :default error true))))
+        (defn use-value [handle failed]
+          (try (try (let [value (host/read handle)] (if failed (throw :owned-failure) [:ok value]))
+                    (finally (suss.resource/close! handle)))
+               (catch :default error (if (= error :owned-failure) [:err "owned-failure"] (throw error)))))"#,
+        &[
+            ("echo", "app/echo"),
+            ("use-value", "app/use-value"),
+            ("moved", "app/moved"),
+        ],
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let echo = instance
+        .get_typed_func::<(Resource<Counter>,), (Resource<Counter>,)>(&mut store, "echo")
+        .unwrap();
+    let use_value = instance
+        .get_typed_func::<(Resource<Counter>, bool), (Result<u64, String>,)>(
+            &mut store,
+            "use-value",
+        )
+        .unwrap();
+    let moved = instance
+        .get_typed_func::<(), (bool,)>(&mut store, "moved")
+        .unwrap();
+    for value in [0, 9007199254740993, u64::MAX] {
+        live.fetch_add(1, Ordering::SeqCst);
+        let owner = store
+            .data_mut()
+            .table
+            .push(Counter {
+                value,
+                live: live.clone(),
+            })
+            .unwrap();
+        let rep = owner.rep();
+        store.set_fuel(100_000_000).unwrap();
+        let returned = echo.call(&mut store, (owner,)).unwrap().0;
+        assert!(returned.owned());
+        assert_eq!(returned.rep(), rep);
+        assert_eq!(store.data().table.get(&returned).unwrap().value, value);
+        assert!(moved.call(&mut store, ()).unwrap().0);
+        store.data_mut().table.delete(returned).unwrap();
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        for failed in [false, true] {
+            live.fetch_add(1, Ordering::SeqCst);
+            let owner = store
+                .data_mut()
+                .table
+                .push(Counter {
+                    value,
+                    live: live.clone(),
+                })
+                .unwrap();
+            store.set_fuel(100_000_000).unwrap();
+            assert_eq!(
+                use_value.call(&mut store, (owner, failed)).unwrap().0,
+                if failed {
+                    Err("owned-failure".into())
+                } else {
+                    Ok(value)
+                }
+            );
+            assert_eq!(live.load(Ordering::SeqCst), 0);
+            store.gc(None).unwrap();
+        }
+    }
+    assert_eq!(
+        (
+            store.data().reads,
+            store.data().constructors,
+            store.data().consumes,
+            store.data().canonical_drops
+        ),
+        (6, 0, 0, 6)
+    );
 }

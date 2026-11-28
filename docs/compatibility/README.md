@@ -2206,3 +2206,18 @@ failed/ignored, across resource ownership/scopes, composites, world/interface
 imports and public type exports. Its source-frozen receipt preserves the earlier
 unsupported, canonical-accounting and error-boundary calibration failures. The
 full resource baseline and new final-head CI/review remain required.
+
+
+Synchronous exports have executing owned-input/result controls: explicit
+retention across calls/GC, close on normal/caught-error paths, physical Rust
+identity across roundtrips, old-alias invalidation and nested/duplicate results.
+The seven-test result capture and five selected owned-input/result controls
+retain their exact source qualifications and include10,000 bounded transfers.
+Resource-only providers execute through public file compilation with no mapped
+functions, including an unused resource declaration and selected-import-count
+controls. Initial unsupported and missing Runtime lifetime binding failures remain
+recorded. The combined resource targets, full resource baseline and final-head
+CI/review retain separate acceptance gates; async/cancellation, contextual
+resource identities and complete M5 interoperability are not established.
+
+The complete combined resource capture now passes 24 controls, zero failed/ignored/filtered, including all owned/borrowed exports and13 constructor/move/scope regressions on the same frozen production source. All five 10,000-call resource controls execute. The publication audit records unchanged non-documentation/evidence inputs. Full resource baseline, new final-head CI/review and remaining lifetime/interoperability/application criteria remain open.
