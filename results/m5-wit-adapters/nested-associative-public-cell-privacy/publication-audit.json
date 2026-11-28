@@ -1,0 +1,11 @@
+{
+  "recorded_head": "240ad5a0a3e12d2e0e47d0d65efb853187ccd860",
+  "conserved_inputs": 14214,
+  "excluded_terminal_docs_and_unexecuted_measurement_drivers": [
+    "docs/roadmap/handoff.md",
+    "examples/usermanager/README.md",
+    "examples/usermanager/build.py",
+    "examples/usermanager/measure.py"
+  ],
+  "qualification": "All selected Cargo test sources, production crates and generated core inputs are conserved. Changes to build/profile documentation and unexecuted measurement drivers do not certify an application performance run."
+}

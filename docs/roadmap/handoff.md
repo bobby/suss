@@ -37928,3 +37928,65 @@ memory; these are bounded transfer/heap observations, not peak RSS claims.
 Both sessions close with zero live host resources. Final artifacts/CLI,
 measurements, new-helper suite reconciliation and broader/full/review/CI gates
 remain separate.
+
+### 2026-11-28: standalone application build and ordinary core regression
+
+The native CLI/host binaries built with ordinary development profiles
+(exit0,318.413s,14,204 fixed inputs). The normal build.py command then compiled
+the actual application with a fresh explicit compiler cache and default supported
+budgets (exit0,414.953s,14,207 fixed inputs/HEAD/tools). Its4,586,159-byte
+component SHA256 is35ce8c60e5d3d6988c250bd89d9b4f9a6186512471a46142b5a0ea2cd682d5b7.
+Receipts are in usermanager-shipped-native-binaries/ and
+usermanager-standalone-component/. This precedes the ordinary-core repair.
+
+CI240ad shard3 exposed11 existing failures while loading retained core as
+ordinary source: get-in's public Var dereference required shipped private links.
+Raw job140974098911/head metadata is retained in
+nested-associative-ordinary-core-before/. A private compiler adapter now reads
+the actual public core cell directly, preserving the once-per-call live
+callback without Var construction. Three-argument lookup retains its captured
+primitive behavior. The adapter checks caller context, operand arity/type and
+public core declaration identity/metadata, granting no private-link access.
+The temporary forward declaration was removed and core regenerated.
+
+The first six-target repair command returned101 after517.834s with14,214 fixed
+inputs/HEAD/tools. All15 chunk controls passed (including ordinary source loading
+in both phases), and the37-case JVM nested-helper corpus passed in both phases.
+The new ordinary-core test passed Runtime value checks but exposed a missing
+private declaration-metadata guard: make-binding-var is absent from the separate
+hard-coded private-helper list. The implementation now checks actual declaration
+metadata too. The command stopped before four later targets; it is not an
+application pass. Its generated manifest also had a stale review-overlay hash
+after editing the rationale; generator checking diagnosed it, and it is now
+regenerated before the next run. Runtime source bytes were already updated.
+Raw failure remains in nested-associative-ordinary-core-repair/.
+
+Prepared measurement commands time the real compiler/component/native host and
+shared JVM namespace, including callback and inclusive startup/I/O costs.
+Expanded JVM pilots execute all five list/counter/CRUD batches for16,1,000 and
+10,000 users. These are pilot evidence only, not a final native comparison.
+An immutable older native/component pilot remains in progress. No performance
+gate or complete generic async/resource coverage is claimed.
+
+The corrected six-target command is retained in
+nested-associative-public-cell-privacy/: exit0,34 passed across all six targets,
+zero failed/ignored/filtered,772.688s including build. All14,218 inputs,
+HEAD and Binaryen tools stayed fixed. It executes ordinary source core in both
+phases, the37-case JVM corpus, all four earlier failing target groups, all29
+UserManager JVM scenarios, moved/borrowed/closed identity controls and both
+10,000-call lifetime runs. The instrumented canonical baseline remains zero.
+Generated core/import and review checks pass after refreshing the review hash.
+
+The original dev-profile native1,000-user pilot returned1 with fuel exhaustion
+in the canonical allocator's live-header scan during application handle.
+Original binary/component hashes, raw stack and independent byte-offset
+inspection are retained separately for #531. A one-request departments CLI
+pilot did complete normally with one open/close, zero live and zero writes;
+an attempted later stop found the process already gone, so no signal was sent.
+These pilot observations do not constitute completed application measurements.
+The actual Cargo profiles explain the very slow development-only startup:
+dev dependencies are unoptimized, while test dependencies use opt-level2.
+The example build and measurement commands now use the repository's supported
+optimized test profile, keeping debug assertions. Compiler budgets and the
+host's100-million fuel per call remain unchanged. Final measurements and the
+canonical allocation repair remain separate uncompleted validation work.

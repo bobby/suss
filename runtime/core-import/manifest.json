@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "92abf6dd05dfb72d665622311b007849c7a8b518126ec529a4fe17cb45b28b26",
-  "reviews-sha256": "f23f3c46d3134d06444ee0ddf9ae3abc04d6228ef91c1c6f402d00138740d8d7",
+  "recipe-sha256": "986128d20173eb7b65d36b1564bd7c0ab05430e24b9b6380da8a06cc3b662530",
+  "reviews-sha256": "7a3ce6242811bd59b7a561a26f2ac984a15416ad4481a624e3a8d89bd6eb8d9a",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -15826,8 +15826,8 @@
       "extracted": "extracted/0512.cljs",
       "extracted-sha256": "d8be0e1e76a8e47c53790bb0a8da687723e8d6ca1070bbd067109324ad229811",
       "patch": "docs/compatibility/patches/core-get-in.json",
-      "patch-sha256": "cbd9533e4b090613c8846604593ba42f0473ef3a9e3e27370417f64b2c18a823",
-      "adapted-form-sha256": "cf229b096852edda25ce8d487efbe50a2a5ae5804a648c7d1931b372764098fc",
+      "patch-sha256": "ceed1ca65e1362fed74f2286d3c7317ff10cf802e426e5a8b7a7b6514ec99fe8",
+      "adapted-form-sha256": "df14f797414311525a4fa505f65c67e76006cb70f22e07826c583436dbfe12c9",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15880,7 +15880,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "825e0a682a076922c61afcfe5fd1ae1887e9371bb7cc0331ee4a5ad342f87086"
+      "sha256": "18f1415409ca8d60a334e34c26aecc2f00c09b4bc6d76da472fde34ce549fb00"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -16408,6 +16408,6 @@
     "extracted/0511.cljs": "890438ae6d9d99f307f1c3b602800aef8f87e80b82ae090388b918b999493db5",
     "extracted/0512.cljs": "d8be0e1e76a8e47c53790bb0a8da687723e8d6ca1070bbd067109324ad229811",
     "extracted/0513.cljs": "1a0b90acfd2d9510ccb3667dc69d2bdbcc0e34396628d4ab4282f9c0bef38d6f",
-    "suss/core.sus": "e4d945859f55f4a41ff1dce4b85a68a951051a99bdccf5e092a8c5f03fde30a9"
+    "suss/core.sus": "5a57115fed5e5d129a5e346bc08d55678d52174438a6b350dec2bbeddb4a381a"
   }
 }

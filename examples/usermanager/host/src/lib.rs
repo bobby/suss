@@ -1,4 +1,9 @@
 //! Independent typed Rust persistence/transport host; application rules live in Suss.
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
+};
+use std::time::Instant;
 use std::{collections::BTreeMap, path::PathBuf};
 use wasmtime::{
     Config, Engine, Store,
@@ -38,6 +43,8 @@ pub struct State {
     pub fail_next: Option<String>,
     pub memory_events: Vec<(usize, usize)>,
     pub small_memory_limit: Option<usize>,
+    pub capability_ns: Arc<AtomicU64>,
+    pub capability_calls: Arc<AtomicU64>,
 }
 impl wasmtime::ResourceLimiter for State {
     fn memory_growing(
@@ -72,7 +79,30 @@ fn failure(message: impl ToString) -> Failure {
         message: message.to_string(),
     }
 }
+struct CapabilityTimer {
+    started: Instant,
+    counter: Arc<AtomicU64>,
+}
+impl Drop for CapabilityTimer {
+    fn drop(&mut self) {
+        self.counter
+            .fetch_add(self.started.elapsed().as_nanos() as u64, Ordering::Relaxed);
+    }
+}
 impl State {
+    fn timer(&self) -> CapabilityTimer {
+        self.capability_calls.fetch_add(1, Ordering::Relaxed);
+        CapabilityTimer {
+            started: Instant::now(),
+            counter: self.capability_ns.clone(),
+        }
+    }
+    pub fn capability_time_ns(&self) -> u64 {
+        self.capability_ns.load(Ordering::Relaxed)
+    }
+    pub fn capability_call_count(&self) -> u64 {
+        self.capability_calls.load(Ordering::Relaxed)
+    }
     fn before(&mut self, operation: &str) -> Option<Failure> {
         self.calls += 1;
         self.trace.push(operation.to_owned());
@@ -118,6 +148,7 @@ impl State {
 }
 impl suss::usermanager::storage::HostSession for State {
     fn drop(&mut self, resource: Resource<Session>) -> wasmtime::Result<()> {
+        let _timer = self.timer();
         wasmtime::ensure!(resource.owned(), "drop requires ownership");
         let session = self.table.delete(resource)?;
         self.trace.push(format!("close:{}", session.key));
@@ -140,6 +171,7 @@ fn apply(row: &mut User, patch: Patch) {
 }
 impl suss::usermanager::storage::Host for State {
     fn open(&mut self, path: String) -> wasmtime::Result<Result<Resource<Session>, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("open") {
             return Ok(Err(error));
         }
@@ -173,9 +205,11 @@ impl suss::usermanager::storage::Host for State {
         Ok(Ok(resource))
     }
     fn key(&mut self, db: Resource<Session>) -> wasmtime::Result<u64> {
+        let _timer = self.timer();
         Ok(self.borrow(&db)?.key)
     }
     fn users(&mut self, db: Resource<Session>) -> wasmtime::Result<Result<Vec<User>, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("users") {
             return Ok(Err(error));
         }
@@ -191,6 +225,7 @@ impl suss::usermanager::storage::Host for State {
         &mut self,
         db: Resource<Session>,
     ) -> wasmtime::Result<Result<Vec<Department>, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("departments") {
             return Ok(Err(error));
         }
@@ -207,6 +242,7 @@ impl suss::usermanager::storage::Host for State {
         db: Resource<Session>,
         id: i64,
     ) -> wasmtime::Result<Result<Option<User>, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("get-user") {
             return Ok(Err(error));
         }
@@ -217,6 +253,7 @@ impl suss::usermanager::storage::Host for State {
         db: Resource<Session>,
         value: Department,
     ) -> wasmtime::Result<Result<(), Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("put-department") {
             return Ok(Err(error));
         }
@@ -230,6 +267,7 @@ impl suss::usermanager::storage::Host for State {
         db: Resource<Session>,
         value: Patch,
     ) -> wasmtime::Result<Result<User, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("insert-user") {
             return Ok(Err(error));
         }
@@ -263,6 +301,7 @@ impl suss::usermanager::storage::Host for State {
         id: i64,
         value: Patch,
     ) -> wasmtime::Result<Result<Option<User>, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("update-user") {
             return Ok(Err(error));
         }
@@ -284,6 +323,7 @@ impl suss::usermanager::storage::Host for State {
         db: Resource<Session>,
         id: i64,
     ) -> wasmtime::Result<Result<bool, Failure>> {
+        let _timer = self.timer();
         if let Some(error) = self.before("delete-user") {
             return Ok(Err(error));
         }
@@ -315,7 +355,8 @@ impl Application {
             .consume_fuel(true)
             .cranelift_opt_level(wasmtime::OptLevel::None);
         let engine = Engine::new(&config)?;
-        let component = Component::new(&engine, bytes)?;
+        let component = Component::new(&engine, bytes)
+            .map_err(|error| error.context("compile UserManager component"))?;
         let imports = component
             .component_type()
             .imports(&engine)
@@ -330,7 +371,8 @@ impl Application {
         let mut store = Store::new(&engine, State::default());
         store.set_fuel(100_000_000)?;
         store.limiter(|state| state);
-        let instance = linker.instantiate(&mut store, &component)?;
+        let instance = linker.instantiate(&mut store, &component)
+            .map_err(|error| error.context("initialize UserManager component"))?;
         let bindings = Usermanager::new(&mut store, &instance)?;
         Ok(Self {
             store,
