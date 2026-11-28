@@ -1,3 +1,39 @@
+## Canonical Unicode scalars and indirect arguments (2026-11-28)
+
+The three original `portable_aot_wit_char` regressions return 101 on the merged
+numeric baseline's unsupported char/list<char> adapters. The two original
+`portable_aot_wit_indirect` regressions independently return 101 at its explicit
+indirect-parameter diagnostic. These are real prerequisite negatives, retained
+with byte hashes and test-source qualifications in `results/m5-wit-adapters`.
+
+Original adapters now convert WIT char scalars to owned one/two-unit UTF-16
+strings, validate source scalar results before casts/indexes, and handle option
+and list scalar storage. Larger parameter signatures use the pinned resolver's
+SizeAlign record offsets and typed locals; the shared source path releases
+input buffers and the record before invoking user code. Non-suspending canonical
+async entrypoints forward the same indirect pointer. No shared GC layout or
+runtime numeric conversion changes are introduced.
+
+The first character execution passes two regressions; its negative observer
+incorrectly rejects Wasmtime's canonical uncaught-exception trap before decoding
+the actual pending language payload. The observer now requires that payload and
+the exact export-specific Unicode diagnostic. The original failed log is kept.
+A separate Rust build exit 101 records the ExactSizeIterator requirement for generated
+locals; collecting them fixes that build error. Strengthened focused execution
+adds guest conj/map/reduce/count, mixed-width/Unicode/exact-ID records, retention
+after GC, canonical async lists and 10,000 calls within one transfer-memory page.
+Its terminal results, broader adapter/bootstrap/workspace checks and GitHub CI
+must retain their own evidence; the original negatives are not relabeled passes.
+
+Commands use cargo +stable, --locked, two test threads and bounded systemd user
+scopes. Development output is under target/probe; no RUSTFLAGS are set. A private
+reflink of dependency artifacts avoids changing another worktree's build cache.
+Cargo clean reordered one unchanged lockfile package entry; the exact original
+Cargo.lock bytes were restored before the later indirect/combined builds.
+The next adapter work is generated composite value schemas and selected-world
+imports, with resource ownership and independent Rust/application fixtures still
+requiring their own implementation and acceptance evidence.
+
 Numeric prerequisites now include public-eval evidence source `052668a3` and reviewed foundation `5d8a608d`. The integration changes only technical receipts and this handoff; the numeric runtime and acceptance sources remain unchanged from `fe33d5ea`. Parent test results retain their original source qualifications. This numeric tree still requires its own fresh native/full/bootstrap/review and final-head CI evidence.
 
 ## Public eval native controls and capture (2026-11-27)

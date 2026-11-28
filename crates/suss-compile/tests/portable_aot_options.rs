@@ -329,12 +329,12 @@ fn unsupported_option_shapes_fail_before_effectful_source_macros() {
     for (signature, diagnostic) in [
         ("export value: func(x: option<list<f64>>) -> f64;", "list"),
         (
-            "export value: func(a: option<f64>, b: option<f64>, c: option<f64>, d: option<f64>, e: option<f64>, f: option<f64>, g: option<f64>, h: option<f64>, i: option<f64>) -> f64;",
-            "indirect parameter",
+            "export value: func(x: option<option<f64>>) -> f64;",
+            "option",
         ),
         (
-            "export value: async func(a: option<f64>, b: option<f64>, c: option<f64>, d: option<f64>, e: option<f64>, f: option<f64>, g: option<f64>, h: option<f64>, i: option<f64>) -> f64;",
-            "indirect parameter",
+            "export value: async func(x: option<option<f64>>) -> f64;",
+            "option",
         ),
     ] {
         let wit = format!("package test:optional; world api {{ {signature} }}");

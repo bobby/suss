@@ -513,10 +513,10 @@ fn list_aliases_and_protocol_calls_use_the_resolved_type_and_real_source_vector(
 }
 
 #[test]
-fn indirect_list_signatures_reject_before_effectful_macros() {
+fn unsupported_nested_list_signatures_reject_before_effectful_macros() {
     for asynchronous in ["", "async "] {
         let wit = format!(
-            "package test:lists; world api {{ export value: {asynchronous}func(a: list<s32>, b: list<s32>, c: list<s32>, d: list<s32>, e: list<s32>, f: list<s32>, g: list<s32>, h: list<s32>, i: list<s32>) -> list<s32>; }}"
+            "package test:lists; world api {{ export value: {asynchronous}func(a: list<list<s32>>) -> list<s32>; }}"
         );
         let error = Compiler::new()
             .compile(
@@ -525,7 +525,7 @@ fn indirect_list_signatures_reject_before_effectful_macros() {
             )
             .unwrap_err()
             .to_string();
-        assert!(error.contains("indirect parameter"), "{error}");
+        assert!(error.contains("list<list<s32>>"), "{error}");
         assert!(!error.contains("17"), "source macro executed: {error}");
     }
 }

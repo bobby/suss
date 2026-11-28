@@ -14,6 +14,8 @@ mod optimize;
 mod strings;
 mod provenance;
 mod random;
+mod characters;
+mod parameters;
 
 /// Recover complete verified-input manifests retained by the assembler. These
 /// describe source inputs, not a signature of an optimizer's rewritten output.
@@ -34,6 +36,20 @@ struct Export {
     params: Vec<(String, Boundary)>,
     result: Option<Boundary>,
     asynchronous: bool,
+    indirect_params: Option<parameters::Layout>,
+}
+impl Export {
+    fn flat_params(&self) -> Vec<ValType> {
+        self.params.iter().flat_map(|(_, ty)| ty.flat()).collect()
+    }
+    fn core_params(&self) -> Vec<ValType> {
+        if self.indirect_params.is_some() { vec![ValType::I32] } else { self.flat_params() }
+    }
+    fn uses_memory(&self) -> bool {
+        self.indirect_params.is_some()
+            || self.params.iter().any(|(_, ty)| ty.uses_memory())
+            || self.result.is_some_and(Boundary::uses_memory)
+    }
 }
 enum PublicExport {
     Function {
@@ -49,6 +65,7 @@ enum PublicExport {
 #[derive(Clone, Copy)]
 enum Scalar {
     Bool,
+    Char,
     F32,
     F64,
     U8,
@@ -204,7 +221,7 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
 impl Scalar {
     fn core(self) -> ValType {
         match self {
-            Self::Bool | Self::U8 | Self::S8 | Self::U16 | Self::S16 | Self::U32 | Self::S32 => {
+            Self::Bool | Self::Char | Self::U8 | Self::S8 | Self::U16 | Self::S16 | Self::U32 | Self::S32 => {
                 ValType::I32
             }
             Self::F32 => ValType::F32,
@@ -216,7 +233,7 @@ impl Scalar {
         // Canonical option's one-byte discriminant precedes its aligned payload.
         let (offset, align) = match self {
             Self::F64 | Self::U64 | Self::S64 => (8, 3),
-            Self::F32 | Self::U32 | Self::S32 => (4, 2),
+            Self::Char | Self::F32 | Self::U32 | Self::S32 => (4, 2),
             Self::U16 | Self::S16 => (2, 1),
             _ => (1, 0),
         };
@@ -232,7 +249,7 @@ impl Scalar {
             Self::F64 => Instruction::F64Store(arg),
             Self::U64 | Self::S64 => Instruction::I64Store(arg),
             Self::F32 => Instruction::F32Store(arg),
-            Self::U32 | Self::S32 => Instruction::I32Store(arg),
+            Self::Char | Self::U32 | Self::S32 => Instruction::I32Store(arg),
             Self::U16 | Self::S16 => Instruction::I32Store16(arg),
             _ => Instruction::I32Store8(arg),
         }
@@ -243,7 +260,7 @@ impl Scalar {
             Self::F64 => Instruction::F64Load(arg),
             Self::U64 | Self::S64 => Instruction::I64Load(arg),
             Self::F32 => Instruction::F32Load(arg),
-            Self::U32 | Self::S32 => Instruction::I32Load(arg),
+            Self::Char | Self::U32 | Self::S32 => Instruction::I32Load(arg),
             Self::U16 => Instruction::I32Load16U(arg),
             Self::S16 => Instruction::I32Load16S(arg),
             Self::S8 => Instruction::I32Load8S(arg),
@@ -273,6 +290,7 @@ impl From<Scalar> for PrimitiveValType {
     fn from(value: Scalar) -> Self {
         match value {
             Scalar::Bool => Self::Bool,
+            Scalar::Char => Self::Char,
             Scalar::F32 => Self::F32,
             Scalar::F64 => Self::F64,
             Scalar::U8 => Self::U8,
@@ -312,6 +330,7 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
     for _ in 0..64 {
         return match ty {
             Type::Bool => Ok(Scalar::Bool),
+            Type::Char => Ok(Scalar::Char),
             Type::F32 => Ok(Scalar::F32),
             Type::F64 => Ok(Scalar::F64),
             Type::U8 => Ok(Scalar::U8),
@@ -385,13 +404,9 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             let ty = boundary(resolve, parameter.ty)?;
             flat_parameters += ty.flat().len();
         }
-        // Canonical lifted calls switch above sixteen flattened
-        // parameters to an indirect argument area. Diagnose that missing path
-        // before Macro effects rather than emitting an invalid core signature.
-        if flat_parameters > 16 {
-            return Err(error(
-                "Portable AOT indirect parameter adapters remain unimplemented",
-            ));
+        if flat_parameters > Resolve::MAX_FLAT_PARAMS {
+            // Check the resolver's memory32 layout before any source macros.
+            parameters::Layout::new(resolve, function)?;
         }
         if let Some(result) = function.result {
             boundary(resolve, result)?;
@@ -598,14 +613,18 @@ pub fn component_with(
                 .global()
                 .clone();
             let index = exports.len() as u32;
+            let params = function.params.iter()
+                .map(|param| Ok((param.name.clone(), boundary(resolve, param.ty)?)))
+                .collect::<Result<Vec<_>, Diagnostic>>()?;
+            let indirect_params = if params.iter().map(|(_, ty)| ty.flat().len()).sum::<usize>()
+                > Resolve::MAX_FLAT_PARAMS {
+                Some(parameters::Layout::new(resolve, function)?)
+            } else { None };
             exports.push(Export {
                 name,
                 global,
-                params: function
-                    .params
-                    .iter()
-                    .map(|param| Ok((param.name.clone(), boundary(resolve, param.ty)?)))
-                    .collect::<Result<_, Diagnostic>>()?,
+                params,
+                indirect_params,
                 result: function
                     .result
                     .map(|ty| boundary(resolve, ty))
@@ -717,10 +736,7 @@ pub fn component_with(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let has_memory = exports.iter().any(|export| {
-        export.params.iter().any(|(_, ty)| ty.uses_memory())
-            || export.result.is_some_and(Boundary::uses_memory)
-    });
+    let has_memory = exports.iter().any(Export::uses_memory);
     let initialization = super::initialization::Plan::new(&fragments, usize::from(option_schema) + usize::from(list_schema))?;
     let load_count = u32::from(initialization.module.is_some());
     let adapter = adapter(
@@ -1033,9 +1049,7 @@ pub fn component_with(
         let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
             || export.result.is_some_and(Boundary::uses_strings);
         let mut options = vec![];
-        if export.params.iter().any(|(_, ty)| ty.uses_memory())
-            || export.result.is_some_and(Boundary::uses_memory)
-        {
+        if export.uses_memory() {
             options.extend([CanonicalOption::Memory(0), CanonicalOption::Realloc(random_count)]);
             if string_boundary {
                 options.push(CanonicalOption::UTF16);
@@ -1114,11 +1128,7 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
     let mut imports = ImportSection::new();
     for (index, export) in exports.iter().enumerate() {
         types.ty().function(
-            export
-                .params
-                .iter()
-                .flat_map(|(_, ty)| ty.flat())
-                .collect::<Vec<_>>(),
+            export.core_params(),
             export.result.map(Boundary::core_result),
         );
         types.ty().function(
@@ -1181,11 +1191,7 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
     for (index, export) in exports.iter().enumerate() {
         let entry_type = types.len();
         types.ty().function(
-            export
-                .params
-                .iter()
-                .flat_map(|(_, ty)| ty.flat())
-                .collect::<Vec<_>>(),
+            export.core_params(),
             [ValType::I32],
         );
         functions.function(entry_type);
@@ -1194,11 +1200,7 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
             ExportKind::Func,
             imported + index as u32,
         );
-        let flat_params = export
-            .params
-            .iter()
-            .map(|(_, ty)| ty.flat().len())
-            .sum::<usize>();
+        let flat_params = export.core_params().len();
         let mut body = Function::new([(1, ValType::I32)]);
         for parameter in 0..flat_params {
             body.instruction(&Instruction::LocalGet(parameter as u32));
@@ -1280,10 +1282,7 @@ fn adapter(
     list_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
     let fragment_count = initializers.len();
-    let has_memory = exports.iter().any(|export| {
-        export.params.iter().any(|(_, ty)| ty.uses_memory())
-            || export.result.is_some_and(Boundary::uses_memory)
-    });
+    let has_memory = exports.iter().any(Export::uses_memory);
     let helpers = if has_memory { HELPERS + 4 } else { HELPERS } + if list_schema { 2 } else { 0 };
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
@@ -1416,27 +1415,24 @@ fn adapter(
     for (index, export) in exports.iter().enumerate() {
         let ty = runtime_abi::TYPE_COUNT + helpers + 2 + index as u32;
         types.ty().function(
-            export
-                .params
-                .iter()
-                .flat_map(|(_, ty)| ty.flat())
-                .collect::<Vec<_>>(),
+            export.core_params(),
             export.result.map(Boundary::core_result),
         );
         functions.function(ty);
         public.export(&export.name, ExportKind::Func, imported + index as u32);
-        let result = export
-            .params
-            .iter()
-            .map(|(_, ty)| ty.flat().len() as u32)
-            .sum::<u32>();
+        let parameter_base = u32::from(export.indirect_params.is_some());
+        let result = parameter_base + export.flat_params().len() as u32;
         let integer = result + 1;
         // integer + 1 is an unused f64 local.
         let pointer = integer + 2;
         let length = pointer + 1;
         let position = length + 1;
         let unit = position + 1;
-        let mut body = Function::new([
+        let flat_locals = if export.indirect_params.is_some() {
+            export.flat_params().into_iter().map(|ty| (1, ty)).collect::<Vec<_>>()
+        } else { vec![] };
+        let mut locals = flat_locals;
+        locals.extend([
             (1, VALUE),
             (1, ValType::I32),
             (1, ValType::F64),
@@ -1446,6 +1442,10 @@ fn adapter(
             (1, ValType::I64),
             (1, VALUE),
         ]);
+        let mut body = Function::new(locals);
+        if let Some(layout) = &export.indirect_params {
+            layout.read(&mut body, &export.params);
+        }
         let wide = unit + 7;
         let scratch = unit + 8;
         let string_locals = strings::Locals {
@@ -1478,7 +1478,7 @@ fn adapter(
         let list_root = schema_base + u32::from(option_schema);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
-        let mut parameter = 0;
+        let mut parameter = parameter_base;
         for (_, ty) in &export.params {
             match ty {
                 Boundary::List(element) => {
@@ -1560,7 +1560,7 @@ fn adapter(
         });
         // Every source argument now owns its GC value; release canonical input
         // buffers before invoking code that can throw a language exception.
-        let mut parameter = 0;
+        let mut parameter = parameter_base;
         for (_, ty) in &export.params {
             if let Some(element) = ty.list() {
                 lists::release_input(&mut body, element, parameter, &list_locals);
@@ -1583,6 +1583,11 @@ fn adapter(
                     .instruction(&Instruction::End);
             }
             parameter += ty.flat().len() as u32;
+        }
+        if let Some(layout) = &export.indirect_params {
+            body.instruction(&Instruction::LocalGet(0))
+                .instruction(&Instruction::I32Const(layout.size as i32))
+                .instruction(&Instruction::Call(HELPERS + 3));
         }
         body.instruction(&Instruction::Call(2))
             .instruction(&Instruction::LocalSet(result));
@@ -1872,6 +1877,7 @@ fn adapter(
 /// `wide` is an `i64` scratch local for boxing a long.
 fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
     match ty {
+        Scalar::Char => characters::lift(body, wide),
         Scalar::Bool => {
             for instruction in runtime_abi::boolean_in(sentinels) {
                 body.instruction(&instruction);
@@ -1947,6 +1953,7 @@ fn lower_scalar(
     sentinels: u32,
 ) {
     match scalar {
+        Scalar::Char => characters::lower(body, result, integer, name),
         Scalar::Bool => {
             // A WIT bool must be false or true.
             body.instruction(&Instruction::LocalGet(result))

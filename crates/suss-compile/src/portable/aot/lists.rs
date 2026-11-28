@@ -53,7 +53,7 @@ fn load(ty: Scalar) -> Instruction<'static> {
         Scalar::S8 => I32Load8S(memory(0, 0)),
         Scalar::U16 => I32Load16U(memory(0, 1)),
         Scalar::S16 => I32Load16S(memory(0, 1)),
-        Scalar::U32 | Scalar::S32 => I32Load(memory(0, 2)),
+        Scalar::Char | Scalar::U32 | Scalar::S32 => I32Load(memory(0, 2)),
         Scalar::F32 => F32Load(memory(0, 2)),
         Scalar::F64 => F64Load(memory(0, 3)),
         Scalar::U64 | Scalar::S64 => I64Load(memory(0, 3)),
@@ -64,7 +64,7 @@ fn store(ty: Scalar) -> Instruction<'static> {
     match ty {
         Scalar::Bool | Scalar::U8 | Scalar::S8 => I32Store8(memory(0, 0)),
         Scalar::U16 | Scalar::S16 => I32Store16(memory(0, 1)),
-        Scalar::U32 | Scalar::S32 => I32Store(memory(0, 2)),
+        Scalar::Char | Scalar::U32 | Scalar::S32 => I32Store(memory(0, 2)),
         Scalar::F32 => F32Store(memory(0, 2)),
         Scalar::F64 => F64Store(memory(0, 3)),
         Scalar::U64 | Scalar::S64 => I64Store(memory(0, 3)),
