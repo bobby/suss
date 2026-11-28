@@ -1,0 +1,8 @@
+{
+  "head": "240ad5a0a3e12d2e0e47d0d65efb853187ccd860",
+  "job": "https://github.com/bobby/suss/actions/runs/46143372921/job/140974098911",
+  "raw_log_sha256": "7203871a26302915e45e3929f60587133ee3c3a8620f6eb1288800193a9cc548",
+  "failure": "Var operations require shipped core while evaluating ordinary source core; 11 failures across four existing targets",
+  "core_patch_sha256": "cbd9533e4b090613c8846604593ba42f0473ef3a9e3e27370417f64b2c18a823",
+  "qualification": "CI executed the committed head. Local host measurement edits do not modify the failing core patch. This archive is original failure evidence, not a rerun."
+}

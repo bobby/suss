@@ -2310,3 +2310,32 @@ remains an explicit character platform failing verdict; all other existing suite
 failures/blocked namespaces remain visible. The e489 foundation capture and all
 later command/source qualifications are retained; full baseline/review/final-head
 CI remain separate gates.
+
+[UserManager and nested core execution](../../results/m5-wit-adapters/nested-associative-live-lookup-bootstrap-order/summary.json)
+passes two controls with zero failures/ignores/filters. get-in/assoc-in match37
+pinned JVM cases in Runtime/Macro, including rebinding and fresh sentinel identity.
+The actual typed component matches29 shared application scenarios, uses only its
+selected storage capability, retains exact/Unicode data across GC and persistence
+reopening, and closes both owners. Source provenance, original failures and raw
+JVM observations remain in the example/results directories. Larger lifetime,
+measurement, broad validation and review/CI requirements stay separate.
+
+[UserManager lifetime/allocation controls](../../results/m5-wit-adapters/usermanager-canonical-live-allocation-observer-locked/summary.json)
+pass four tests with zero failures/ignores/filters. Unmodified and explicitly
+observed artifacts each run10,000 mixed operations; two sessions remain isolated,
+retained values survive GC, and expired/moved/closed aliases fail. The observer
+preserves the original component as an exact prefix and reads the checked owned
+allocator without adding a user WIT API. Live canonical blocks/bytes return to
+zero after each checked call and final cleanup; canonical memory remains one
+page, while separate managed/numeric memories are recorded explicitly. Observer
+layout restrictions and remaining validation/measurement limits are in handoff.
+
+The owned canonical allocator maintains a private WasmGC active-start bitmap
+and a separate free list. It rejects fabricated/interior/stale allocation starts
+before reading linear metadata, and live blocks do not participate in reusable
+block searches. Its16-byte private headers retain capacity and active state;
+inactive length fields link the free list. Canonical exports remain memory,
+cabi_realloc and release. The direct10,000-live-varied-block regression and
+ownership/GC controls are recorded in the canonical-private-index-ownership-gc
+capture; this isolated module result does not establish generic cancellation
+cleanup or the large application measurements.

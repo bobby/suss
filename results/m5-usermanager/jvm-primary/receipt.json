@@ -1,0 +1,22 @@
+{
+  "command": [
+    "clojure",
+    "-M",
+    "oracle/run.clj",
+    "fixtures/scenario.json"
+  ],
+  "exit_code": 0,
+  "inputs": {
+    "deps.edn": "4a3121e912bda23199d8db71b17c7223c53e10ccb0ae36e4994c43749602c746",
+    "oracle/run.clj": "a1762d81b0b7825a302b941c110b7554fb410cc98767fce7ef21d25444bd4db9",
+    "oracle/usermanager/storage.clj": "81cadfb83256ccd6814a868179ec16233f9a15a03481df54412ddf3be7ae2f5f",
+    "src/usermanager/app.cljc": "b3221704c7b93ab982cd128d61d7c166c715b4721f12488c94a39de5ee373788",
+    "fixtures/scenario.json": "f8097795678167e055bf069116b3e0bc921a6a985157a4d21f043428429a3757",
+    "oracle/generate.py": "366348016c0fa688c403ece5cc9296a4451d487a87d1fbd76db708af3c466835"
+  },
+  "changed_inputs": [],
+  "stdout_sha256": "c7135a97f9bf170dc7562085aa7e0003bd62e020e7091073dbe575355f4a8e12",
+  "stderr_sha256": "857490e3229a1ff5ff8d672b6c1edbae08297f2b5ffdca1f4318f7b587bb7779",
+  "clojure": "1.12.6",
+  "java_version": "openjdk version \"21.0.13\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)\n"
+}

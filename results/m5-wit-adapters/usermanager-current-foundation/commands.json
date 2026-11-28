@@ -1,0 +1,165 @@
+[
+  {
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts",
+      "-p",
+      "test_*.py"
+    ],
+    "exit_code": 0,
+    "seconds": 67.10286484612152,
+    "log": "00.log.gz",
+    "log_sha256": "08a02837b986018692530b3a9eca726b105b087ffb87dab8b53c1f1b3b130c1f"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/cljs_inventory.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 1.1561147761531174,
+    "log": "01.log.gz",
+    "log_sha256": "69fdb2770db81046b95d2b1a8ecdd5fb52225b233dd3bff58758266fadf2236e"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/cljs_reviews.py"
+    ],
+    "exit_code": 0,
+    "seconds": 1.3352028410881758,
+    "log": "02.log.gz",
+    "log_sha256": "cf7df51a4c0be16846998cd078cc8ff47dc349a67597cb73e963831889b09273"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/core_import.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 5.216554746963084,
+    "log": "03.log.gz",
+    "log_sha256": "06417e0d2b4a7480cb666dbbf2309b2642a0d7db8a9c0d8f234c93d6858a0f8b"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/reader_core_catalog.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 1.9275039304047823,
+    "log": "04.log.gz",
+    "log_sha256": "3fb333e1c745e400096788b97d3611b8381fb476ecbf9ee4a2ae799593b4b001"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/apply_bootstrap.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 1.147454267833382,
+    "log": "05.log.gz",
+    "log_sha256": "5bdb53d5b984bde01e2214e0e9b386231b60dd5cf1da82a9ae84b3ae6c66153e"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/sequence_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.8427266329526901,
+    "log": "06.log.gz",
+    "log_sha256": "93628118cf46a3ab9b11b7a0dbd7cd11dc7821a5ae866c495b023e27405573d9"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_transducer_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 1.1822099830023944,
+    "log": "07.log.gz",
+    "log_sha256": "0229ff9a4a1ac5ba3bf8c07d16d187b3e0876ffa98b1eb001d7d3ba8c0c2a118"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_when_let_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.23230571392923594,
+    "log": "08.log.gz",
+    "log_sha256": "150d9a7865662baad72b40794b2f39aa6822c6d447fca87f03fb7c2855cbcae4"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/bitwise_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.1647703372873366,
+    "log": "09.log.gz",
+    "log_sha256": "e1fbd6c01dc8516dba88a1d6a73b38b32daac9617034dc459d3eb86cfee46d5c"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/wasi_lock.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.19942561816424131,
+    "log": "10.log.gz",
+    "log_sha256": "d2e2fedccd215d0b67c40a6643444bdcfeef5d4a3ab39bd2d5e804b9655f8fc0"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/numeric_runtime.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.1802088408730924,
+    "log": "11.log.gz",
+    "log_sha256": "081e403746c9a4758034db7fe4c4f4178a7d5a4ebb56b42b67781814651bdda4"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/jvm_array_oracle.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.1264973902143538,
+    "log": "12.log.gz",
+    "log_sha256": "dc1d873a2c52ff25e2be2d49d4ca5f438320d98ba4ae93e112d54e6a9dc1b849"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.23366332799196243,
+    "log": "13.log.gz",
+    "log_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py",
+      "overlap"
+    ],
+    "exit_code": 0,
+    "seconds": 0.22338309325277805,
+    "log": "14.log.gz",
+    "log_sha256": "9570d69f8ba9c1b7375a20e14241a0d6a7275d7524d1476e524aed84b00aed4e"
+  }
+]

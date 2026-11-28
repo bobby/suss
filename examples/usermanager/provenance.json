@@ -1,0 +1,39 @@
+{
+  "repository": "https://github.com/seancorfield/usermanager-example",
+  "commit": "2a9cf635cf255bf223486bc9e907a02435c7201c",
+  "license": "Apache-2.0",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/seancorfield/usermanager-example/2a9cf635cf255bf223486bc9e907a02435c7201c/LICENSE",
+      "sha256": "9854281e61317b87437cf293678c319220943ced79c66ec841c0f4b76e156f11"
+    },
+    {
+      "path": "deps.edn",
+      "url": "https://raw.githubusercontent.com/seancorfield/usermanager-example/2a9cf635cf255bf223486bc9e907a02435c7201c/deps.edn",
+      "sha256": "0514a0ced9f1f47e04d139bb346d4ac6819a0f7c4aefdbc4724c1605a6ddfaa8"
+    },
+    {
+      "path": "src/usermanager/controllers/user.clj",
+      "url": "https://raw.githubusercontent.com/seancorfield/usermanager-example/2a9cf635cf255bf223486bc9e907a02435c7201c/src/usermanager/controllers/user.clj",
+      "sha256": "ee809f2cb683cd4e64e85e032b16352f139c49542feac8e84b73f41f9e752281"
+    },
+    {
+      "path": "src/usermanager/model/user_manager.clj",
+      "url": "https://raw.githubusercontent.com/seancorfield/usermanager-example/2a9cf635cf255bf223486bc9e907a02435c7201c/src/usermanager/model/user_manager.clj",
+      "sha256": "5ac64aff4ecfb3b67accbb50a11abfb85bd50973f0d9edb698b77bdd080f4d95"
+    }
+  ],
+  "adapted_source": "src/usermanager/app.cljc",
+  "adaptations": [
+    "Replace JDBC with typed WIT raw-row CRUD and explicit owned/borrowed persistence sessions.",
+    "Keep join, name ordering, insert/update decisions, form parsing, transient key qualification, controller state and change-before-effect order in shared guest Clojure source.",
+    "Render typed view models instead of Ring/Selmer HTML; no HTTP or browser frontend.",
+    "Replace JVM Long/parseLong with exact core parse-long plus structured failure for nonempty malformed strings.",
+    "Track changes per stable host session key rather than a single process-wide atom.",
+    "Resource close uses a reader-conditional adapter; protocol/record IFn spelling follows the platform.",
+    "Absent text form fields remain absent on updates; explicit null fields remain null.",
+    "JSON persistence is an explicit SQLite adapter, with a synchronous single-writer session contract.",
+    "Seed rows through explicit typed requests instead of original SQL startup DDL/population; preserve the department_id NOT NULL storage constraint."
+  ]
+}
