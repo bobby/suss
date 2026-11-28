@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a",
+  "replacement": "(def parse-long\n  \"Parse string of decimal digits with optional leading -/+ and return an\\n  integer value, or nil if parse fails\"\n  (fn [s] (suss.bootstrap/parse-decimal-long s)))",
+  "rationale": "Original Clojure numeric-tower adaptation under ADR-0003. Preserve the public decimal-string API and docstring, but replace JavaScript regex/parseInt and safe-integer limits with checked exact signed-long parsing. The native helper reuses the complete pinned JVM UTF-16 Character.digit(char,10) domain; malformed/overflowing strings return nil and non-strings fail before coercion. The reader's separate private radix/literal parser is unchanged. Core remains an ordinary compiled first-class var in Runtime and Macro; no Java dependency is shipped. Clojure 1.12.6, not ClojureScript numeric recordings, is the behavior oracle."
+}

@@ -2290,3 +2290,23 @@ The original selection rejection remains in
 source is recorded in `resource-provider-dependencies-owner-alias/`. Repeated
 resource-owner aliases, borrowed results and async/cancellation remain separate
 guarded domains; this focused fixture does not replace broader acceptance.
+[Exact core parse-long](../runtime/number-parsing.md) has executing Runtime/Macro
+and actual component controls against783 pinned JVM Clojure1.12.6 cases, with
+exact longs, BMP decimal digits, nil-on-invalid strings and non-string rejection.
+An actual form parser raises/catches structured errors after its change-counter
+effect across10,000 varied calls with bounded canonical transfer memory and GC.
+Original unsupported and fixture failures remain retained. The reader's separate
+radix/literal parser is unchanged. These focused receipts do not establish
+UserManager persistence, full parser baseline, independent review or final CI.
+
+[Complete exact parsing controls](../../results/m5-wit-adapters/controller-parse-long-complete-platform-and-storage/summary.json)
+pass five tests including783 JVM cases, Runtime/Macro aliases/type guards,
+character-as-string platform behavior, real typed storage effects, GC and10,000
+mixed form calls. Malformed input never reaches storage and changes advance
+before parse/host errors. The
+[vendored-suite comparison](../../results/m5-wit-adapters/controller-parse-long-vendored-suite/summary.json)
+passes its narrow updated baseline with zero skipped assertions. Parse-long #28
+remains an explicit character platform failing verdict; all other existing suite
+failures/blocked namespaces remain visible. The e489 foundation capture and all
+later command/source qualifications are retained; full baseline/review/final-head
+CI remain separate gates.

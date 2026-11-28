@@ -1,0 +1,13 @@
+{:clojure-version "1.12.6"}
+{:input "0", :parse-long [:ok 0], :java-long [:ok 0]}
+{:input "9007199254740993", :parse-long [:ok 9007199254740993], :java-long [:ok 9007199254740993]}
+{:input "9223372036854775807", :parse-long [:ok 9223372036854775807], :java-long [:ok 9223372036854775807]}
+{:input "-9223372036854775808", :parse-long [:ok -9223372036854775808], :java-long [:ok -9223372036854775808]}
+{:input "9223372036854775808", :parse-long [:ok nil], :java-long [:error "java.lang.NumberFormatException"]}
+{:input "bad", :parse-long [:ok nil], :java-long [:error "java.lang.NumberFormatException"]}
+{:input "+17", :parse-long [:ok 17], :java-long [:ok 17]}
+{:input "١٧", :parse-long [:ok 17], :java-long [:ok 17]}
+{:input "１７", :parse-long [:ok 17], :java-long [:ok 17]}
+{:input " 17", :parse-long [:ok nil], :java-long [:error "java.lang.NumberFormatException"]}
+{:input "", :parse-long [:ok nil], :java-long [:error "java.lang.NumberFormatException"]}
+{:input "-0", :parse-long [:ok 0], :java-long [:ok 0]}
