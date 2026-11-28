@@ -37836,3 +37836,60 @@ Runtime/Macro character platform control and both actual components. Publish
 the rebased draft/evidence to #528. The required exact full baseline, independent
 review and passing final-head CI still gate #527; #490 now independently exposes
 missing nested associative core helpers, tracked by #529.
+
+### 2026-11-28: executed UserManager component and nested core prerequisites
+
+The example under `examples/usermanager/` retains the exact UserManager pin
+2a9cf635cf255bf223486bc9e907a02435c7201c, Apache-2.0 license/notices and raw model/
+controller/dependency sources. Shared app.cljc keeps a callable Database record,
+Lifecycle protocol, per-session guest atoms, transient form-key qualification,
+exact parsing, insert/update decisions, department joins/name sorting and typed
+view selection. The independent generated-binding Rust host supplies raw typed
+storage/JSON transport and explicit owned sessions borrowed during operations.
+JSON-file persistence is a disclosed synchronous single-writer JDBC adapter;
+Ring/Selmer rendering is a typed view model, without a Java shipped dependency.
+
+The shared namespace executes on pinned JVM Clojure1.12.6/data.json2.5.2 and
+records29 observations. They cover exact IDs above2^53, Unicode, name order,
+missing/zero/negative IDs, missing users, absent versus explicit-null fields,
+repeated updates, parse/storage errors, pending storage faults preserved across
+parse failures, NOT NULL constraints, deletes and reset effects. Raw source-
+hashed oracle results are under `results/m5-usermanager/jvm-primary/`.
+
+Actual guest execution first fails because the join adaptation used unavailable
+keep; equivalent filter/map code is used and rerun on the JVM. It next exposes
+get-in, which the original controller requires. Original failures/sources stay
+in `usermanager-primary-application-first/` and
+`usermanager-primary-application-native-join/`. #529 tracks the actual get-in/
+assoc-in prerequisite. Its formal missing-binding regression fails with exact
+Runtime diagnostics (40.079s capture,14,141 fixed inputs).
+
+Both helpers are now ordinary reviewed/imported core functions, with pinned
+forms, EPL extraction, explicit patches and518 generated files.37 JVM cases
+cover nested maps/vectors/arrays/sets, nil/false/missing values, empty/sequential
+paths, persistent updates, invalid associations, evaluation order, callback
+rebinding and custom-lookup sentinel identity. JVM get-in uses a fresh Object;
+Suss uses the existing original Unique identity type, avoiding CLJS's shared
+sentinel implementation. The first two-argument implementation fails its public
+get rebinding case. Core's private direct links require an explicit public Var
+read. That repair first exposes a late Var-constructor declaration; the forward
+declaration is added without invoking any uninitialized placeholder. Both
+failures remain preserved with their source patches.
+
+The complete command returns0 with two passed, zero failed/ignored/filtered,
+536.879s capture and all14,159 inputs/HEAD fixed:
+`cargo test -p suss-cli --locked --test clojure_nested_associative --test usermanager_application -- --test-threads=2`.
+The core control passes all37 cases in both Runtime and Macro (81.68s). The
+actual component control (53.02s) matches all29 JVM observations, verifies exactly
+one selected storage import, exercises the real typed resource/callback boundary,
+forces GC, closes/reopens JSON storage, compares retained rows and observes two
+opens/two closes/zero live resources. Raw evidence is under
+`nested-associative-live-lookup-bootstrap-order/`. The standalone typed host also
+builds independently of Suss compiler crates.
+
+Publish this meaningful draft early, stacked on #528, Refs #490 and #529. The
+10,000-operation session/lifetime run, source-escaped borrow/canonical allocation
+observations, standalone CLI/artifact capture, full application measurements,
+new-core vendored-suite reconciliation, broader checks, full baseline,
+independent review and final-head CI remain separate requirements. No application
+or M5 issue is closed from this focused result.

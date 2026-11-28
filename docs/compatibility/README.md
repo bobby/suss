@@ -2257,3 +2257,12 @@ remains an explicit character platform failing verdict; all other existing suite
 failures/blocked namespaces remain visible. The e489 foundation capture and all
 later command/source qualifications are retained; full baseline/review/final-head
 CI remain separate gates.
+
+[UserManager and nested core execution](../../results/m5-wit-adapters/nested-associative-live-lookup-bootstrap-order/summary.json)
+passes two controls with zero failures/ignores/filters. get-in/assoc-in match37
+pinned JVM cases in Runtime/Macro, including rebinding and fresh sentinel identity.
+The actual typed component matches29 shared application scenarios, uses only its
+selected storage capability, retains exact/Unicode data across GC and persistence
+reopening, and closes both owners. Source provenance, original failures and raw
+JVM observations remain in the example/results directories. Larger lifetime,
+measurement, broad validation and review/CI requirements stay separate.

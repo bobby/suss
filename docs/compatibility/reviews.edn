@@ -2,6 +2,20 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:assoc-in:5521"
+  {:source-sha256 "702a44f3026f97daf850e5f8d3d3c01ff1598742020f11cd9a18646985641ed3"
+   :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["runtime:get" "runtime:assoc" "runtime:assoc-in:5521" "compiler vector/rest destructuring"]
+   :classification :adapted :rationale "Retain the pinned public API, full docstring and path traversal, expanding defn to ordinary def/fn for bootstrap. JVM Clojure1.12.6 is the semantic oracle. Capture primitive get/assoc behavior as JVM compiled helper calls do; preserve ordinary recursive assoc-in dispatch, destructuring, nil-key empty paths, missing-level map construction, persistent updates and invalid-associative errors."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-assoc-in.json" :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_nested_associative.rs" "crates/suss-cli/tests/usermanager_application.rs"]}
+  "runtime:get-in:5497"
+  {:source-sha256 "4971ce23e507cf8b933f0346fa51b46d4f19f231e72d38b0e68e3f4607c65f9c"
+   :visibility :public :arities {:fixed [2 3] :variadic-min nil}
+   :dependencies ["runtime:get" "runtime:seq:1282" "runtime:first:1294" "runtime:next:1307" "runtime:identical?" "original Unique identity type"]
+   :classification :adapted :rationale "Retain the pinned public API, full docstring and path traversal, expanding defn to ordinary def/fn for bootstrap. JVM Clojure1.12.6 is the semantic oracle. Use a fresh original Unique per three-argument invocation, matching JVM Object sentinel identity instead of ClojureScript shared lookup-sentinel. Capture primitive lookup/identity behavior for the three-argument path; capture the live get function once per two-argument invocation, matching JVM reduce1 get and direct RT.get behavior under rebinding. Preserve nil/false/missing distinctions, empty paths and lookup evaluation order. Shipped core uses private direct links for implementation helpers; explicitly dereference the public get Var in the two-argument entry so JVM reduce1 callback rebinding remains observable."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-get-in.json" :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_nested_associative.rs" "crates/suss-cli/tests/usermanager_application.rs"]}
   "runtime:parse-long:12231"
   {:source-sha256 "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a"
    :visibility :public :arities {:fixed [1] :variadic-min nil}

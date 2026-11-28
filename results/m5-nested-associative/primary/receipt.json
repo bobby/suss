@@ -1,0 +1,15 @@
+{
+  "command": [
+    "clojure",
+    "-M",
+    "oracle.clj"
+  ],
+  "exit_code": 0,
+  "inputs": {
+    "deps.edn": "0406c8c7b58f85c068a73b25a449a0e97b3d2076a3880dd691a950b5d0fe57b4",
+    "oracle.clj": "c2f80e7c469dd3df60ef5ffd9c5159c015cc220f14dff041acf3057eed7ef7aa",
+    "inputs.json": "768c299c795b8fc5517cc99e671274036dbd839042b35094d95be5d6badc355b"
+  },
+  "stdout_sha256": "5c35429c1a1a1b6366d43b2ece68cd63d19debb371b2bd13aebb32a30da52897",
+  "stderr_sha256": "054c4ee293061b6ceb58529b43f2651cc873ee52e1814ac2f4190554d073eff4"
+}

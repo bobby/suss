@@ -1,0 +1,52 @@
+package suss:usermanager@0.1.0;
+
+interface storage {
+  resource session;
+  enum error-kind { parse, storage, invalid }
+  record failure { kind: error-kind, message: string }
+  record department { id: s64, name: string }
+  record user {
+    id: s64, first-name: option<string>, last-name: option<string>,
+    email: option<string>, department-id: option<s64>,
+  }
+  // The outer option preserves absent form columns; inner none means SQL NULL.
+  record patch {
+    first-name: option<option<string>>, last-name: option<option<string>>,
+    email: option<option<string>>, department-id: option<s64>,
+  }
+  open: func(path: string) -> result<own<session>, failure>;
+  key: func(db: borrow<session>) -> u64;
+  users: func(db: borrow<session>) -> result<list<user>, failure>;
+  departments: func(db: borrow<session>) -> result<list<department>, failure>;
+  get-user: func(db: borrow<session>, id: s64) -> result<option<user>, failure>;
+  put-department: func(db: borrow<session>, value: department) -> result<_, failure>;
+  insert-user: func(db: borrow<session>, value: patch) -> result<user, failure>;
+  update-user: func(db: borrow<session>, id: s64, value: patch) -> result<option<user>, failure>;
+  delete-user: func(db: borrow<session>, id: s64) -> result<bool, failure>;
+}
+
+interface application {
+  use storage.{session, failure, department, user};
+  record form {
+    id: option<string>, first-name: option<option<string>>,
+    last-name: option<option<string>>, email: option<option<string>>,
+    department-id: option<string>,
+  }
+  variant request {
+    list-users, edit-user(option<s64>), save-user(form), delete-user(s64),
+    departments, reset-changes, seed-department(department),
+  }
+  record joined-user { value: user, department-name: string }
+  enum view-kind { %list, form, redirect, departments, message }
+  record view {
+    kind: view-kind, users: list<joined-user>, user: option<user>,
+    departments: list<department>, changes: u64,
+    location: option<string>, message: option<string>,
+  }
+  open: func(path: string) -> result<own<session>, failure>;
+  handle: func(db: borrow<session>, value: request) -> result<view, failure>;
+  changes: func(db: borrow<session>) -> u64;
+  close: func(db: own<session>) -> u64;
+}
+
+world usermanager { import storage; export application; }

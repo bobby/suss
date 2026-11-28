@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "25e47ae88bc3672146027b16713e8087728f3a315a1835186a614133afca29c4",
-  "reviews-sha256": "e8b868aed640281f35cc60ef4c734b4b103939be1914c529ffee8f5de8db5659",
+  "recipe-sha256": "92abf6dd05dfb72d665622311b007849c7a8b518126ec529a4fe17cb45b28b26",
+  "reviews-sha256": "f23f3c46d3134d06444ee0ddf9ae3abc04d6228ef91c1c6f402d00138740d8d7",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -15809,12 +15809,78 @@
       "semantic-tests": [
         "crates/suss-cli/tests/clojure_parse_long.rs"
       ]
+    },
+    {
+      "id": "runtime:get-in:5497",
+      "name": "get-in",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5497,
+      "end-line": 5519,
+      "byte-start": 149574,
+      "byte-end": 150208,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "4971ce23e507cf8b933f0346fa51b46d4f19f231e72d38b0e68e3f4607c65f9c",
+      "extracted": "extracted/0512.cljs",
+      "extracted-sha256": "d8be0e1e76a8e47c53790bb0a8da687723e8d6ca1070bbd067109324ad229811",
+      "patch": "docs/compatibility/patches/core-get-in.json",
+      "patch-sha256": "cbd9533e4b090613c8846604593ba42f0473ef3a9e3e27370417f64b2c18a823",
+      "adapted-form-sha256": "cf229b096852edda25ce8d487efbe50a2a5ae5804a648c7d1931b372764098fc",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:get",
+        "runtime:seq:1282",
+        "runtime:first:1294",
+        "runtime:next:1307",
+        "runtime:identical?",
+        "original Unique identity type"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/clojure_nested_associative.rs",
+        "crates/suss-cli/tests/usermanager_application.rs"
+      ]
+    },
+    {
+      "id": "runtime:assoc-in:5521",
+      "name": "assoc-in",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 5521,
+      "end-line": 5528,
+      "byte-start": 150210,
+      "byte-end": 150519,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "702a44f3026f97daf850e5f8d3d3c01ff1598742020f11cd9a18646985641ed3",
+      "extracted": "extracted/0513.cljs",
+      "extracted-sha256": "1a0b90acfd2d9510ccb3667dc69d2bdbcc0e34396628d4ab4282f9c0bef38d6f",
+      "patch": "docs/compatibility/patches/core-assoc-in.json",
+      "patch-sha256": "b47cdbcea3e3740c7189f8996f3406be4763a225264fbcc7607c75060338f9f5",
+      "adapted-form-sha256": "112959facfd4b3a311d0a2b1186438d255b45d8fd1775080948b20848366c9d2",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "runtime:get",
+        "runtime:assoc",
+        "runtime:assoc-in:5521",
+        "compiler vector/rest destructuring"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/clojure_nested_associative.rs",
+        "crates/suss-cli/tests/usermanager_application.rs"
+      ]
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "18f1415409ca8d60a334e34c26aecc2f00c09b4bc6d76da472fde34ce549fb00"
+      "sha256": "825e0a682a076922c61afcfe5fd1ae1887e9371bb7cc0331ee4a5ad342f87086"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -16340,6 +16406,8 @@
     "extracted/0509.cljs": "6bbf109e23ed20487388fc3fc11b61608c9c066e1e7ebc213c92932a587d4fed",
     "extracted/0510.cljs": "4b1a77bb0f37cd6cb4e74dd708b1226a2a56defd6bab87e589a138e269191c71",
     "extracted/0511.cljs": "890438ae6d9d99f307f1c3b602800aef8f87e80b82ae090388b918b999493db5",
-    "suss/core.sus": "c9d708d166ae5272949799e52d9afeadf9062d4c4e0d3c795fb3e8dffeed6f78"
+    "extracted/0512.cljs": "d8be0e1e76a8e47c53790bb0a8da687723e8d6ca1070bbd067109324ad229811",
+    "extracted/0513.cljs": "1a0b90acfd2d9510ccb3667dc69d2bdbcc0e34396628d4ab4282f9c0bef38d6f",
+    "suss/core.sus": "e4d945859f55f4a41ff1dce4b85a68a951051a99bdccf5e092a8c5f03fde30a9"
   }
 }

@@ -6,6 +6,7 @@ members = [
     "crates/suss-cli",
     "crates/suss-compile",
     "crates/suss-compile-generator",
+    "examples/usermanager/host",
 ]
 
 [workspace.package]

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "702a44f3026f97daf850e5f8d3d3c01ff1598742020f11cd9a18646985641ed3",
+  "replacement": "(def assoc-in\n  \"Associates a value in a nested associative structure, where ks is a\n  sequence of keys and v is the new value and returns a new nested structure.\n  If any levels do not exist, hash-maps will be created.\"\n  (let [lookup get associate assoc]\n    (fn [m [k & ks] v]\n      (if ks\n        (associate m k (assoc-in (lookup m k) ks v))\n        (associate m k v)))))",
+  "rationale": "Retain the pinned public API, full docstring and path traversal, expanding defn to ordinary def/fn for bootstrap. JVM Clojure1.12.6 is the semantic oracle. Capture primitive get/assoc behavior as JVM compiled helper calls do; preserve ordinary recursive assoc-in dispatch, destructuring, nil-key empty paths, missing-level map construction, persistent updates and invalid-associative errors."
+}

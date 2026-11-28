@@ -2,6 +2,8 @@
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
 ;; Every deftype's default toString calls this (#304).
 (declare ^:private object-string)
+;; get-in reads a public Var after bootstrap initialization.
+(declare ^:private make-binding-var)
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
   counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce

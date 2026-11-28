@@ -2563,12 +2563,22 @@
       "id": "runtime:parse-long:12231",
       "source-sha256": "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a",
       "patch": "docs/compatibility/patches/core-parse-long.json"
+    },
+    {
+      "id": "runtime:get-in:5497",
+      "source-sha256": "4971ce23e507cf8b933f0346fa51b46d4f19f231e72d38b0e68e3f4607c65f9c",
+      "patch": "docs/compatibility/patches/core-get-in.json"
+    },
+    {
+      "id": "runtime:assoc-in:5521",
+      "source-sha256": "702a44f3026f97daf850e5f8d3d3c01ff1598742020f11cd9a18646985641ed3",
+      "patch": "docs/compatibility/patches/core-assoc-in.json"
     }
   ],
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "18f1415409ca8d60a334e34c26aecc2f00c09b4bc6d76da472fde34ce549fb00"
+      "sha256": "825e0a682a076922c61afcfe5fd1ae1887e9371bb7cc0331ee4a5ad342f87086"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
