@@ -19,10 +19,10 @@ against the selected WIT element schema and copied into owned canonical result
 buffers; post-return releases those buffers. A numeric list result can also
 come from its documented packed-array element type.
 
-The accepted boundary mapping also specifies persistent vectors for tuples,
-keyword-keyed maps for records, persistent maps for WIT maps, and keyword sets
-for flags. Those shapes still require their own generated adapters and executing
-acceptance evidence. A resource handle has identity, ownership and borrow
+Tuples use persistent vectors and records use keyword-keyed maps. These shapes
+compose with nested lists, options and results. The accepted mapping also
+specifies persistent maps for WIT maps and keyword sets for flags; those shapes
+still require their own generated adapters and executing acceptance evidence. A resource handle has identity, ownership and borrow
 lifetimes; collection behavior on a host-backed resource requires an explicit
 protocol implementation and a documented lifetime/error contract.
 
@@ -55,7 +55,7 @@ same record to that adapter before reporting completion.
 
 The focused regressions are `portable_aot_wit_char` and
 `portable_aot_wit_indirect`. Their commands, raw observations and limitations
-are retained under `results/m5-wit-adapters/`. Full generic imports, composite
+are retained under `results/m5-wit-adapters/`. Full generic imports, the remaining composite
 adapters, resources and async suspension have separate acceptance requirements;
 these scalar and argument conversions do not establish those capabilities.
 
@@ -67,3 +67,23 @@ one shared resolved definition. Function signatures reference those same types.
 Versioned interface names and selected aliases keep their normal mapping paths
 and implements annotations. A public type alias does not enable an unsupported
 underlying boundary shape.
+
+## Recursive data values
+
+Tuple fields are native vector elements; record fields are map entries with
+keyword keys. General options and results use `[:none]`, `[:some value]`,
+`[:ok]`/`[:ok value]` and `[:err]`/`[:err value]`, preserving payloadless cases
+and false values. These shapes compose recursively, including lists of records
+and nested options. Source functions can retain incoming values across calls
+and GC because their storage is owned by the guest.
+
+The generated result projector checks complete product shapes, record keys,
+case tags, payload arity and scalar leaves before allocating canonical output
+buffers. Tuple/record fields and mixed variant payloads use the pinned upstream
+layout and bit-preserving flat joins. Argument records and non-suspending async
+results above the flat-field limits use indirect pointers. Empty tuples and
+records are rejected before source macros because the pinned component
+validator does not admit zero-field canonical products.
+
+The executing controls are in `portable_aot_wit_composites`. They do not certify
+arbitrary imported callbacks, resource lifetimes or cancellation cleanup.

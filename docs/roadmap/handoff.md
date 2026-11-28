@@ -36914,3 +36914,34 @@ receipts, raw output, captures and archived runners remain unchanged; compressed
 copies and final audits are published alongside them. Interrupted earlier runs,
 stale-provenance outer failure and the corrected pre-Cargo launcher failure are
 retained as actual nonzero results, not relabelled as successful validation.
+
+### 2026-11-27: recursive WIT data codecs
+
+Generated codecs now compose tuples, records, lists, options and results from
+the resolved WIT graph. They lift into persistent vectors/maps and tagged
+vectors, project and validate every output leaf before canonical allocation,
+use upstream layouts/flat joins, and recursively release transferred buffers.
+Public named types retain their component identity. Generic direct, indirect
+and non-suspending canonical-async exports share this codec graph; async results
+above sixteen flat fields retain the canonical indirect pointer.
+
+`cargo test -p suss-compile --locked --test portable_aot_wit_composites -- --test-threads=2`
+returned0: six passing tests, zero failed/ignored,245.65s test execution
+(409.865s including compilation), with13,704 frozen inputs and unchanged HEAD.
+The receipt is `results/m5-wit-adapters/composites-formatted-six/`.
+Actual components validate and execute native assoc/conj, nested options/results,
+void results, mixed f32/f64 joins, u64::MAX and signed values beyond2^53,
+Unicode/NUL strings, retained values after GC, and sync/async19-field indirect
+argument/result records. Earlier four-test and separately filtered async runs
+retain their own compiler identity and source snapshots in
+`composite-first-execution/`; their original failures are preserved.
+
+The original future guard initially still expected a full outer list diagnostic;
+the generated codec reports the unsupported future leaf. Its real nonzero run
+is retained in `composites-future-guards/`. The corrected assertion still
+requires rejection before the source macro executes, as do the option controls.
+The replacement command and actual result are retained in
+`composites-future-leaf-diagnostics/`.
+
+These commands do not establish complete data-type, arbitrary-import,
+resource/lifetime, cleanup/stress, workspace or milestone acceptance.
