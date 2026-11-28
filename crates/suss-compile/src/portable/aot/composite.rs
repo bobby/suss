@@ -31,6 +31,8 @@ pub(super) enum Shape {
 
 #[derive(Clone)]
 pub(super) struct Node {
+    /// Fixed lists share product layout, but retain numeric packed-array rules.
+    pub fixed_element: Option<usize>,
     /// Enum keywords and flag sets use scalar canonical storage.
     pub symbols: Option<(bool, Vec<String>)>,
     pub shape: Shape,
@@ -124,6 +126,7 @@ impl<'a> Registry<'a> {
             _ => format!("{ty:?}").to_lowercase(),
         };
         let mut symbols = None;
+        let mut fixed_element = None;
         let shape = if ty == Type::String {
             Shape::String
         } else if let Ok(scalar) = super::scalar(self.resolve, ty) {
@@ -266,6 +269,7 @@ impl<'a> Registry<'a> {
                         return Err(error("WIT fixed-length list requires at least one element"));
                     }
                     let child = self.add_at(element, depth + 1)?;
+                    fixed_element = Some(child);
                     let stride = self.nodes[child].size;
                     Shape::Product {
                         record: false,
@@ -293,6 +297,7 @@ impl<'a> Registry<'a> {
                         .map_err(|_| error("WIT map stride exceeds memory32"))?;
                     let element = self.nodes.len();
                     self.nodes.push(Node {
+                        fixed_element: None,
                         symbols: None,
                         shape: Shape::Product {
                             record: false,
@@ -349,6 +354,7 @@ impl<'a> Registry<'a> {
         };
         let index = self.nodes.len();
         self.nodes.push(Node {
+            fixed_element,
             symbols,
             shape,
             flat: flat(self.resolve, ty),
@@ -494,13 +500,21 @@ impl<'a> Registry<'a> {
                             .map(|(i, (_, _, child))| format!("(p{child} (vs 2 parts {i}))"))
                             .collect::<Vec<_>>()
                             .join(" ");
-                        (
-                            "(fn [v] (vs 0 v 0))".into(),
+                        let vector = format!(
+                            "(let [parts (vs 1 v 0)] (if (same (vs 3 parts 0) {}) (arr {values}) {failure}))",
+                            fields.len()
+                        );
+                        let project = if let Some((_, kind)) =
+                            node.fixed_element.and_then(|child| self.packed(child))
+                        {
                             format!(
-                                "(fn [v] (let [parts (vs 1 v 0)] (if (same (vs 3 parts 0) {}) (arr {values}) {failure})))",
+                                "(fn [v] (let [v (vs 4 v {kind})] (if (suss.bootstrap/packed-array? v) (if (suss.bootstrap/object-array? v) {failure} (if (same (alen v) {}) v {failure})) {vector})))",
                                 fields.len()
-                            ),
-                        )
+                            )
+                        } else {
+                            format!("(fn [v] {vector})")
+                        };
+                        ("(fn [v] (vs 0 v 0))".into(), project)
                     }
                     Shape::List {
                         map: true, element, ..
@@ -738,6 +752,21 @@ fn array_length(body: &mut Function, value: u32, locals: &Locals) {
         &[
             Instruction::I32WrapI64,
             Instruction::LocalSet(locals.length),
+        ],
+    );
+}
+
+fn packed_data(body: &mut Function, value: u32) {
+    use Instruction::*;
+    emit(
+        body,
+        &[
+            LocalGet(value),
+            RefCastNonNull(HeapType::Concrete(crate::runtime_abi::PACKED)),
+            StructGet {
+                struct_type_index: crate::runtime_abi::PACKED,
+                field_index: 0,
+            },
         ],
     );
 }
@@ -1186,6 +1215,46 @@ impl Registry<'_> {
                 });
             }
             Shape::Product { fields, .. } => {
+                if let Some((_, kind)) = node.fixed_element.and_then(|child| self.packed(child)) {
+                    packed_data(body, 0);
+                    emit(
+                        body,
+                        &[
+                            RefTestNonNull(HeapType::Concrete(crate::runtime_abi::ARGS)),
+                            I32Eqz,
+                            If(BlockType::Empty),
+                        ],
+                    );
+                    packed_data(body, 0);
+                    emit(
+                        body,
+                        &[
+                            RefTestNonNull(HeapType::Concrete(
+                                crate::runtime_abi::PACKED_STORAGE + kind,
+                            )),
+                            I32Eqz,
+                            If(BlockType::Empty),
+                        ],
+                    );
+                    super::boundary_error_message(
+                        body,
+                        locals.value,
+                        "WIT fixed-length list returned a primitive array of another element type",
+                    );
+                    body.instruction(&End);
+                    array_length(body, 0, locals);
+                    emit(
+                        body,
+                        &[
+                            LocalGet(locals.length),
+                            I32Const(fields.len() as i32),
+                            I32Ne,
+                            If(BlockType::Empty),
+                        ],
+                    );
+                    fail(body, locals, &node.name);
+                    emit(body, &[End, Return, End]);
+                }
                 for (index, (_, _, child)) in fields.iter().enumerate() {
                     get(body, 0, index as u32);
                     body.instruction(&Call(function(base, *child, VALIDATE)));
@@ -1327,6 +1396,41 @@ impl Registry<'_> {
                 );
             }
             Shape::Product { fields, .. } => {
+                if let Some((scalar, kind)) =
+                    node.fixed_element.and_then(|child| self.packed(child))
+                {
+                    let storage = crate::runtime_abi::PACKED_STORAGE + kind;
+                    packed_data(body, 0);
+                    emit(
+                        body,
+                        &[
+                            RefTestNonNull(HeapType::Concrete(storage)),
+                            If(BlockType::Empty),
+                            LocalGet(1),
+                            LocalSet(locals.data),
+                            I32Const(fields.len() as i32),
+                            LocalSet(locals.length),
+                        ],
+                    );
+                    begin_loop(body, locals);
+                    element_address(body, locals, self.nodes[node.fixed_element.unwrap()].size);
+                    packed_data(body, 0);
+                    emit(
+                        body,
+                        &[
+                            RefCastNonNull(HeapType::Concrete(storage)),
+                            LocalGet(locals.index),
+                            if kind < 2 {
+                                ArrayGetU(storage)
+                            } else {
+                                ArrayGet(storage)
+                            },
+                            store(scalar),
+                        ],
+                    );
+                    end_loop(body, locals);
+                    emit(body, &[Return, End]);
+                }
                 for (index, (_, offset, child)) in fields.iter().enumerate() {
                     get(body, 0, index as u32);
                     address(body, 1, *offset);

@@ -2,7 +2,7 @@
 use serde_json::{Value, json};
 use std::io::Write;
 use std::time::Instant;
-use suss_usermanager_host::{Application, Department, Form, Request};
+use suss_usermanager_host::{Application, Department, Form, REQUEST_FUEL, Request};
 
 fn mark(app: &Application) -> (Instant, u64, u64) {
     (
@@ -103,7 +103,14 @@ fn main() -> wasmtime::Result<()> {
             view.users[0].value.last_name.as_deref(),
             Some("Family 00000001")
         );
-        rows.push(row(&app, before, repetition, "joined-sorted-list", size));
+        let mut measured = row(&app, before, repetition, "joined-sorted-list", size);
+        measured["fuel_budget"] = json!(REQUEST_FUEL);
+        measured["fuel_consumed"] = json!(REQUEST_FUEL - app.store.get_fuel()?);
+        println!(
+            "{}",
+            json!({"phase":"warm-operation","measurement":measured})
+        );
+        rows.push(measured);
         let before = mark(&app);
         for _ in 0..1000 {
             assert_eq!(app.changes(&db)?, changes);

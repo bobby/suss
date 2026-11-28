@@ -45,7 +45,8 @@ pub fn instrument(bytes: &[u8]) -> Vec<u8> {
                 }
                 names.sort();
                 if imports == 0
-                    && ((functions == 5 && globals == 2) || (functions == 6 && globals == 4))
+                    && ((functions == 5 && globals == 2)
+                        || ((functions == 6 || functions == 7) && globals == 4))
                     && memories == 1
                     && names == ["cabi_realloc", "memory", "release"]
                 {

@@ -38086,3 +38086,20 @@ request-policy requirement; it is not a final benchmark, a changed compiler
 budget, a numerical performance gate or a claim that allocator failures were
 resolved by increasing fuel. A first inspector build's Range type error and the
 prebuilt native-library type-identity probes are retained separately.
+
+The ordinary Cargo allocator-unit command passed all five private-index controls
+on0a359ed5 (328.755s,14,259 fixed inputs;256 unrelated tests filtered by the
+explicit module selector). The combined size-class library/application command
+then passed267 controls:263 compiler library tests and all four actual
+UserManager controls, zero failed/ignored/filtered (607.810s,14,314 fixed
+inputs/HEAD/Binaryen). That source includes seven size-class allocator tests,
+the adapted read-only observer and a bounded two-billion request allowance
+calibrated from the explicit1.09-billion whole-request observation. Compiler
+budgets and100-million allocator-unit budgets stay unchanged. Raw captures are
+canonical-private-index-cargo-unit/ and canonical-size-classes-cargo-and-usermanager/.
+
+Before final measurements, the reviewed packed fixed-numeric-list repair and
+its six upstream review regressions are also integrated, retaining resource
+adapters and the existing unified provider encoder. The preceding267 result
+does not certify this later codec addition; focused codec/resource/application
+targets follow on the combined source.

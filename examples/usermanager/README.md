@@ -99,3 +99,10 @@ all startup/storage costs stay included, without subtraction. The ordinary
 artifact exports no allocation observer; exact canonical live-counter evidence
 comes from the separate instrumented lifetime run. These are machine-specific
 baselines, not universal speed claims.
+
+The Rust example gives each application request a bounded two-billion-fuel
+allowance. The recorded10,000-user joined view uses about1.09billion after
+canonical allocation was indexed; the earlier100-million example limit was
+insufficient for this complete guest request. This host policy does not change
+compiler budgets or the allocator's unchanged100-million-fuel regression
+budget. Startup/open/change-counter/close calls retain their separate limits.

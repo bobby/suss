@@ -336,6 +336,11 @@ impl suss::usermanager::storage::Host for State {
     }
 }
 
+/// Bounded example-host request policy. The measured 10,000-user joined view
+/// uses about 1.09 billion fuel after canonical allocation is indexed. Compiler
+/// budgets and the allocator's 100-million-fuel regressions are independent.
+pub const REQUEST_FUEL: u64 = 2_000_000_000;
+
 pub struct Application {
     pub store: Store<State>,
     pub bindings: Usermanager,
@@ -391,7 +396,7 @@ impl Application {
         db: &Resource<Session>,
         request: &Request,
     ) -> wasmtime::Result<Result<View, Failure>> {
-        self.store.set_fuel(100_000_000)?;
+        self.store.set_fuel(REQUEST_FUEL)?;
         self.bindings.suss_usermanager_application().call_handle(
             &mut self.store,
             Resource::new_borrow(db.rep()),
