@@ -65,7 +65,13 @@ def main():
     (output / "command.log.gz").write_bytes(gzip.compress(raw_log.read_bytes(), mtime=0))
     raw_log.unlink()
     receipt.write_text(json.dumps(record, indent=2) + "\n")
-    print(json.dumps({key: value for key, value in record.items() if key != "inputs"}), flush=True)
+    raw_receipt = receipt.read_bytes()
+    (output / "command.json.gz").write_bytes(gzip.compress(raw_receipt, mtime=0))
+    summary = {key: value for key, value in record.items() if key != "inputs"}
+    summary.update(receipt_sha256=hashlib.sha256(raw_receipt).hexdigest(), inputs_count=len(inputs))
+    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    receipt.unlink()
+    print(json.dumps(summary), flush=True)
     return result.returncode
 
 
