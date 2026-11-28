@@ -913,6 +913,89 @@ impl Registry<'_> {
         }
     }
 
+    /// Walk validated, projected trees before allocating transfer memory. The
+    /// private queue spans all arguments, including nested resource leaves.
+    pub fn emit_resource_arguments(
+        &self,
+        functions: &mut FunctionSection,
+        code: &mut CodeSection,
+        ty: u32,
+        base: u32,
+        reserve: u32,
+        resource: &super::resources::Codec<'_>,
+    ) {
+        use Instruction::*;
+        fn has_resource(nodes: &[Node], id: usize) -> bool {
+            match &nodes[id].shape {
+                Shape::Resource { .. } => true,
+                Shape::Product { fields, .. } => {
+                    fields.iter().any(|(_, _, id)| has_resource(nodes, *id))
+                }
+                Shape::Variant { cases, .. } => cases
+                    .iter()
+                    .any(|(_, child)| child.is_some_and(|id| has_resource(nodes, id))),
+                Shape::List { element, .. } => has_resource(nodes, *element),
+                _ => false,
+            }
+        }
+        for (id, node) in self.nodes.iter().enumerate() {
+            functions.function(ty);
+            let locals = Locals::new(2);
+            let mut body = Function::new(Locals::declarations());
+            if has_resource(&self.nodes, id) {
+                match &node.shape {
+                    Shape::Resource { id, owned } => {
+                        resource.gather(&mut body, *id, *owned, reserve)
+                    }
+                    Shape::Product { fields, .. } => {
+                        for (index, (_, _, child)) in fields.iter().enumerate() {
+                            get(&mut body, 0, index as u32);
+                            emit(
+                                &mut body,
+                                &[LocalGet(1), Call(base + *child as u32), LocalSet(1)],
+                            );
+                        }
+                    }
+                    Shape::Variant { cases, .. } => {
+                        self.tree_tag(&mut body, &locals);
+                        for (index, (_, child)) in cases.iter().enumerate() {
+                            emit(
+                                &mut body,
+                                &[
+                                    LocalGet(locals.integer),
+                                    I32Const(index as i32),
+                                    I32Eq,
+                                    If(BlockType::Empty),
+                                ],
+                            );
+                            if let Some(child) = child {
+                                get(&mut body, 0, 1);
+                                emit(
+                                    &mut body,
+                                    &[LocalGet(1), Call(base + *child as u32), LocalSet(1)],
+                                );
+                            }
+                            body.instruction(&End);
+                        }
+                    }
+                    Shape::List { element, .. } => {
+                        array_length(&mut body, 0, &locals);
+                        begin_loop(&mut body, &locals);
+                        dynamic_get(&mut body, 0, locals.index, locals.wide);
+                        emit(
+                            &mut body,
+                            &[LocalGet(1), Call(base + *element as u32), LocalSet(1)],
+                        );
+                        end_loop(&mut body, &locals);
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            emit(&mut body, &[LocalGet(1), End]);
+            code.function(&body);
+        }
+    }
+
     fn copy(
         &self,
         body: &mut Function,

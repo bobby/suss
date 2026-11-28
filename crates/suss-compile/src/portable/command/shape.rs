@@ -380,5 +380,5 @@ impl<'a> Types<'a, wasm_encoder::InstanceType> {
     }
 }
 
-#[cfg(all(test, not(target_family = "wasm")))]
+#[cfg(all(test, suss_host, not(suss_generator)))]
 mod resource_tests;

@@ -2165,5 +2165,17 @@ source constructor/method/static/explicit-close controls with exact values,
 borrowed receivers, GC, closed/forged/cross-type rejection and try/finally cleanup.
 The expanded five-test command passes on its recorded resource source; original
 unsupported and failed fixture/build observations remain retained. Contextual
-provider identities, own moves, exported handles and full lifetime/cancellation
-acceptance retain explicit guards and separate work.
+provider identities, exported handles and full lifetime/cancellation acceptance
+retain explicit guards and separate work.
+
+Imported own parameters have an executing source transfer control covering moved
+aliases, all-argument duplicate/mixed-alias rejection, malformed later arguments,
+nested transfers and physical Rust resource identity through an own roundtrip.
+The complete ten-test resource target passes on its recorded sources, including
+native named-record maps/owned result payloads, repeated borrows, an owner retained
+from Runtime initialization across exports/GC, and both10,000-call stress
+controls. The repaired exact CI foundation command passes346 tests, including
+the two host execution units; the generator retains its runtime-free build.
+Earlier failures remain recorded. These focused/foundation receipts do not
+replace the required full resource baseline, final-head CI/review or remaining
+scope, exported-borrow and cancellation adapters.

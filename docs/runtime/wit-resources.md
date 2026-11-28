@@ -44,15 +44,29 @@ interface functions. The executing Rust fixture is
 `crates/suss-compile/tests/portable_aot_wit_resources.rs`. A type declaration
 alone does not supply a host storage implementation.
 
-Handles retain a private declared-type check and close state. Numeric values
-cannot stand in for them. Reuse after close raises a language boundary error
+Handles retain a private declared-type check and ownership state. Numeric values
+cannot stand in for them. Reuse after close or an ownership move raises a language boundary error
 before a host call. GC keeps carrier state alive; finalization does not close
 host resources. Keep ownership explicit. A canonical host trap requires Store
 retirement as described in the import guide.
 
+An imported `own<resource>` parameter transfers ownership to the host. Every
+alias of the previous owner becomes unusable before the host is called. An owned
+result creates a new owner, including when the host returns the same physical
+resource. A typed `result::err` does not undo an ownership transfer.
+
+All source arguments are projected and validated before canonical allocation.
+The adapter also checks for conflicting aliases across the complete argument
+set, including nested records, tuples, lists and option/result payloads. Passing
+one owner twice, or both owning and borrowing that owner in one call, raises a
+language boundary error and leaves the owner usable. Repeated borrows are valid.
+A malformed later argument likewise leaves earlier owners unchanged. Canonical
+buffers are written before the complete move is committed at handoff; collection
+of individual arguments does not change their ownership.
+
 This initial route rejects repeated aliases of a resource provider and foreign
 resource dependencies until provider context is represented throughout the
-codec graph. Consuming own arguments, borrowed results, exported handles,
+codec graph. Borrowed results, exported handles,
 guest-defined resources, generalized async resources and automatic scoped
 exception/cancellation cleanup retain separate adapters. Unsupported selected
 paths are diagnosed before source macro effects. This is a bounded imported

@@ -37388,3 +37388,82 @@ async cancellation, move transfer, borrowed/export scopes or host-trap recovery.
 Next implement atomic own-argument transfer with all-argument duplicate detection,
 then execute moved-alias and failure-before-handoff controls. Existing adapter
 regressions, required resource full baseline and final-head CI/review remain.
+
+### 2026-11-28: atomic imported-resource ownership transfer
+
+The corrected own-argument source regression compiled and failed at the explicit
+move-tracking guard (`owned-resource-moves-before-host-rep/`). Its earlier missing
+Rust fixture-field build failure is also retained. The implemented complete-call
+control passed one selected test, zero failed/ignored,96.11s execution/318.320s
+including build; all13,930 inputs and HEAD stayed fixed
+(`owned-resource-atomic-moves/`). The Rust host executes own consumption, duplicate
+own and mixed own/borrow rejection in both argument orders, malformed later
+arguments, nested list/tuple/option transfer and an own roundtrip preserving the
+physical Rust resource. Rejected calls leave every owner usable; successful moves
+invalidate old aliases. Exact0/>2^53/u64::MAX,21 constructors,18 host consumptions,
+three canonical drops and zero live resources are checked, with forced GC.
+
+The invoker validates/project all arguments and gathers a private alias queue
+before canonical allocation. After writing/loading buffers it revalidates the
+whole queue, then commits all moves immediately before canonical handoff. The
+queue includes borrowed leaves: duplicate borrows are valid; any duplicate
+involving an own is rejected without status changes. The fixed generic codec
+function width and public shared ABI stay unchanged. Provider graph guards still
+reject contexts whose runtime resource identities are not represented.
+
+The separate10,000-call transfer stress returned0: one selected test
+passed, zero failed/ignored, including10,000 own roundtrips preserving physical
+host identity,10,000 rejected duplicate nested owners,5,000 successful consumptions
+and5,000 typed host errors. Every transferred alias fails afterward; typed errors
+do not undo moves. All10,000 objects are consumed and zero remain live after
+every call, with forced GC and a bounded64KiB canonical transfer page. Capture
+298.144s including build; all13,935 inputs and HEAD fixed
+(`owned-resource-moves-stress/`). This source predates the named-record control.
+
+Existing import regression command on1e4d0e04 passed18 tests, zero failed/ignored,
+499.591s including build, all13,921 inputs/HEAD fixed
+(`resource-head-existing-import-regressions/`). It predates the move changes.
+
+CI foundation at1e4d0e04 failed with13 compile errors when new Wasmtime units
+were included in the generator's explicit library-test build. The downloaded raw
+CI log/link are retained in `resource-host-tests-generator-ci-failure/`. Both units
+now use the existing host/generator cfg split; the generator deliberately has no
+Wasmtime dependency. The exact foundation command and complete resource target
+are the next validation commands. New controls also exercise repeated borrows
+and native-map named records with owned result payloads.
+
+Owned/exported borrow scopes, guest-defined resources, scoped exceptional cleanup
+and generalized cancellation remain separate adapters. Canonical traps still
+require Store retirement. Resource final-head CI, required full baseline and
+independent review remain required; earlier data/import baselines retain only
+their own frozen sources. No full M5/resource acceptance is claimed here.
+
+The exact repaired CI foundation command returned0:
+`cargo test --workspace --locked --lib --bins --examples -- --test-threads=2`.
+It executed12 test binaries with346 passing tests,
+zero failed/ignored; capture605.319s including build, all13,938 inputs
+and HEAD fixed (`resource-foundation-host-generator-guards/`). Both new Wasmtime
+resource units execute and pass in the host build; the generator library-test
+build succeeds without a Wasmtime dependency. This precedes only the added
+retained Runtime-initializer owner integration fixture.
+
+The next complete target command is
+`cargo test -p suss-compile --locked --test portable_aot_wit_resources -- --test-threads=2`.
+The own-move focus uses the same target with filter `own_moves`; its separate
+10,000-call stress uses filter `ten_thousand_own`. The full target also executes
+named native-map records with owned result payloads and one owner retained from
+Runtime initialization across exported calls/GC until explicit close.
+
+The complete ten-test resource command returned0: ten passed, zero failed/ignored,
+268.10s execution/274.989s including build; all13,941 inputs and HEAD
+stayed fixed (`imported-resource-complete-move-controls/`). It reruns the original
+constructor/close/type/forgery/exception tests and both10,000-call controls on the
+same sources. Added controls execute repeated borrows; native `assoc` record
+construction, duplicate and malformed record rejection without moves, owned
+result payloads; and one Runtime-initializer owner retained across exports/GC
+until exactly one explicit close. No tests are filtered or ignored in this run.
+
+Next add an explicit lexical owned-resource scope with exceptional cleanup, then
+call-scoped exported borrows and the remaining cancellation/interop/application
+adapters. Required full resource baseline, final-head CI and independent review
+are still separate gates.

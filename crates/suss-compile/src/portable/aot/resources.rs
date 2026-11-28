@@ -8,6 +8,7 @@ const HANDLE: u32 = 1;
 const STATUS: u32 = 2;
 const OWNED: u32 = 3;
 const DROP: u32 = 4;
+const MOVED: i32 = 1;
 const CLOSED: i32 = 2;
 
 fn next_type(types: &TypeSection) -> u32 {
@@ -26,6 +27,9 @@ pub(super) struct Types {
     pub make: u32,
     pub check: u32,
     pub close: u32,
+    pub reserve: u32,
+    pub commit: u32,
+    pub gather: u32,
 }
 impl Types {
     /// Append after the adapter's fixed helper types; no shared ABI type changes.
@@ -69,12 +73,21 @@ impl Types {
             .function([VALUE, ValType::I32, ValType::I32], [reference(state)]);
         let close = next_type(types);
         types.ty().function([VALUE], []);
+        let reserve = next_type(types);
+        types.ty().function([VALUE, ValType::I32, VALUE], [VALUE]);
+        let commit = next_type(types);
+        types.ty().function([VALUE], []);
+        let gather = next_type(types);
+        types.ty().function([VALUE, VALUE], [VALUE]);
         Self {
             drop,
             state,
             make,
             check,
             close,
+            reserve,
+            commit,
+            gather,
         }
     }
 }
@@ -332,6 +345,147 @@ impl Carrier {
         );
         body
     }
+    /// Collect a private [state, own?, next] entry. Repeated borrows are
+    /// permitted; any repeated state involving an own is rejected atomically.
+    pub fn reserve(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([(3, VALUE)]);
+        emit(
+            &mut body,
+            &[
+                LocalGet(2),
+                LocalSet(3),
+                Block(BlockType::Empty),
+                Loop(BlockType::Empty),
+                LocalGet(3),
+                RefIsNull,
+                BrIf(1),
+                LocalGet(3),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                I32Const(0),
+                ArrayGet(runtime_abi::ARGS),
+                LocalGet(0),
+                RefEq,
+                If(BlockType::Empty),
+                LocalGet(3),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                I32Const(1),
+                ArrayGet(runtime_abi::ARGS),
+                RefCastNonNull(HeapType::I31),
+                I31GetU,
+                LocalGet(1),
+                I32Or,
+                I32Eqz,
+            ],
+        );
+        self.require(
+            &mut body,
+            "WIT resource arguments contain conflicting ownership aliases",
+        );
+        emit(
+            &mut body,
+            &[
+                End,
+                LocalGet(3),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                I32Const(2),
+                ArrayGet(runtime_abi::ARGS),
+                LocalSet(3),
+                Br(0),
+                End,
+                End,
+                LocalGet(0),
+                LocalGet(1),
+                RefI31,
+                LocalGet(2),
+                ArrayNewFixed {
+                    array_type_index: runtime_abi::ARGS,
+                    array_size: 3,
+                },
+                End,
+            ],
+        );
+        body
+    }
+    /// Revalidate every state before changing any status. There are no guest
+    /// or host calls between this check and the complete move commit.
+    pub fn commit(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([(5, VALUE)]);
+        for commit in [false, true] {
+            emit(
+                &mut body,
+                &[
+                    LocalGet(0),
+                    LocalSet(1),
+                    Block(BlockType::Empty),
+                    Loop(BlockType::Empty),
+                    LocalGet(1),
+                    RefIsNull,
+                    BrIf(1),
+                    LocalGet(1),
+                    RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                    I32Const(0),
+                    ArrayGet(runtime_abi::ARGS),
+                    LocalSet(2),
+                ],
+            );
+            if commit {
+                emit(
+                    &mut body,
+                    &[
+                        LocalGet(1),
+                        RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                        I32Const(1),
+                        ArrayGet(runtime_abi::ARGS),
+                        RefCastNonNull(HeapType::I31),
+                        I31GetU,
+                        If(BlockType::Empty),
+                    ],
+                );
+                self.state(&mut body, 2);
+                emit(
+                    &mut body,
+                    &[
+                        I32Const(MOVED),
+                        StructSet {
+                            struct_type_index: self.types.state,
+                            field_index: STATUS,
+                        },
+                        End,
+                    ],
+                );
+            } else {
+                self.state(&mut body, 2);
+                emit(
+                    &mut body,
+                    &[
+                        StructGet {
+                            struct_type_index: self.types.state,
+                            field_index: STATUS,
+                        },
+                        I32Eqz,
+                    ],
+                );
+                self.require(&mut body, "WIT resource handle is closed or moved");
+            }
+            emit(
+                &mut body,
+                &[
+                    LocalGet(1),
+                    RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                    I32Const(2),
+                    ArrayGet(runtime_abi::ARGS),
+                    LocalSet(1),
+                    Br(0),
+                    End,
+                    End,
+                ],
+            );
+        }
+        body.instruction(&End);
+        body
+    }
     pub fn invoke_close(&self) -> Function {
         use Instruction::*;
         let mut body = Function::new([]);
@@ -351,14 +505,14 @@ impl Carrier {
     }
 }
 
-#[cfg(all(test, not(target_family = "wasm")))]
+#[cfg(all(test, suss_host, not(suss_generator)))]
 mod tests;
 
 mod plan;
 pub(super) use plan::Plan;
 
-/// Data codecs borrow owned handles without changing their ownership. Own
-/// handoff remains gated until move commits are implemented for complete calls.
+/// Data codecs validate handles and write raw indices without changing state.
+/// The enclosing invoker commits complete ownership transfers before handoff.
 pub(super) struct Codec<'a> {
     pub plan: &'a Plan,
     pub resolve: &'a wit_parser::Resolve,
@@ -408,19 +562,31 @@ impl Codec<'_> {
             ],
         );
     }
+    pub fn gather(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool, reserve: u32) {
+        use Instruction::*;
+        emit(
+            body,
+            &[
+                LocalGet(0),
+                I32Const(self.ordinal(id) as i32),
+                I32Const(i32::from(owned)),
+                Call(self.check_function),
+                I32Const(i32::from(owned)),
+                LocalGet(1),
+                Call(reserve),
+                LocalSet(1),
+            ],
+        );
+    }
     pub fn write(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool) {
         use Instruction::*;
-        if owned {
-            body.instruction(&Unreachable);
-            return;
-        }
         emit(
             body,
             &[
                 LocalGet(1),
                 LocalGet(0),
                 I32Const(self.ordinal(id) as i32),
-                I32Const(0),
+                I32Const(i32::from(owned)),
                 Call(self.check_function),
                 StructGet {
                     struct_type_index: self.state_type,

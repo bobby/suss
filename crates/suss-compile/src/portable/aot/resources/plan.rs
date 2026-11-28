@@ -104,15 +104,6 @@ impl Plan {
                     }
                 }
                 if function
-                    .params
-                    .iter()
-                    .any(|p| has_handle(resolve, p.ty, Some(true)))
-                {
-                    return Err(error(
-                        "Consuming owned resource parameters requires move tracking",
-                    ));
-                }
-                if function
                     .result
                     .is_some_and(|ty| has_handle(resolve, ty, Some(false)))
                 {

@@ -2566,6 +2566,7 @@ fn adapter(
             wiring,
             generic_base,
             generic_root,
+            resource_plan.map(|_| (resource_base + 6, resource_base + 5)),
         )?;
     }
     if let Some(carrier) = &resource_carrier {
@@ -2575,10 +2576,20 @@ fn adapter(
             (carrier.types.check, carrier.check()),
             (carrier.types.close, carrier.close()),
             (runtime_abi::INVOKE, carrier.invoke_close()),
+            (carrier.types.reserve, carrier.reserve()),
+            (carrier.types.commit, carrier.commit()),
         ] {
             functions.function(ty);
             code.function(&body);
         }
+        registry.emit_resource_arguments(
+            &mut functions,
+            &mut code,
+            carrier.types.gather,
+            resource_base + 6,
+            resource_base + 4,
+            resource_codec.as_ref().unwrap(),
+        );
     }
     let mut module = Module::new();
     module
