@@ -1,0 +1,6 @@
+{
+  "bytes": 143329,
+  "sha256": "ed652e4f03c6383dac411419cbd771e258be3912609b24069f2fa6dd9d339ede",
+  "checked_component_sha256": "ed652e4f03c6383dac411419cbd771e258be3912609b24069f2fa6dd9d339ede",
+  "qualification": "Fresh locked Rust guest built by actual acceptance script and wrapped by Cargo-built workspace example; actual48calls and malformed-before-effects control execute. Outer source audit records only concurrent focused log append."
+}

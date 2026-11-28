@@ -1,0 +1,14 @@
+{
+  "common": 33,
+  "new_packages": [
+    [
+      "suss-wit-rust-guest-fixture",
+      "0.1.0",
+      null
+    ]
+  ],
+  "changed_checksums": [],
+  "original_workspace_lock_sha256": "9a33c8b342a8d0f604913e3029de671190b6555a2c54bc41790ec97954f40068",
+  "guest_lock_sha256": "954c92d61c578057ce5a5df5b7c2036e3e9c3da161a79a491985b4621fa7aae8",
+  "qualification": "Initial fixture-only Cargo build adds the independent package and prunes unrelated workspace packages from a copied workspace lock; source workspace lock untouched."
+}

@@ -1,0 +1,29 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "sh",
+    "scripts/verify-bootstrap.sh"
+  ],
+  "head": "b4b1fa58cc6bd91cd27eb344e25169f4c15ce614",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p2493603-i107332383.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-interop/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 145.3607270065695,
+  "log_sha256": "b5484f32d7ce1dae06d26fe01ec6ecd68e83aad1f7b14747475fef0900f5b770",
+  "changed_inputs": [
+    "results/m5-wit-adapters/wip-consolidated-workspace/command.log"
+  ],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "bfe3a1c889222888538dede83b7e61990249d09fda0b0bd1983c1e3124c00ab6",
+  "inputs_count": 14695
+}

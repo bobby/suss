@@ -1,0 +1,36 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-C",
+    "opt-level=1",
+    "crates/suss-compile/examples/wit_interop_componentize.rs",
+    "-L",
+    "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-interop/target/probe/cargo/debug/deps",
+    "--extern",
+    "wit_component=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-interop/target/probe/cargo/debug/deps/libwit_component-b64908a4c655b05f.rlib",
+    "--extern",
+    "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-rust-interop/target/probe/cargo/debug/deps/libwasmparser-d54bd7dcfed2f0c3.rlib",
+    "-o",
+    "target/probe/wit-interop-componentize"
+  ],
+  "head": "2a779949f84e5d856a0860671e2de65263259e21",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-graphical.slice/app-Hyprland-xdg\\x2dterminal\\x2dexec-68bf02f5.scope\n",
+  "environment": {
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 4.561570776626468,
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "10bf667319e2297eb9071e7e8e45d7c5f5e98d0d9d370fd9405da71a15772993",
+  "inputs_count": 14328
+}
