@@ -60,8 +60,8 @@ is development-only; shipped guest/host code does not use Java.
 The first recorded component comparison executes all29 shared JVM observations
 and reopens persistent storage with retained rows, two closes and zero live
 resources. Its source-qualified commands and limitations are recorded in
-`../../results/m5-wit-adapters/nested-associative-live-lookup-bootstrap-order/`
-and the repository handoff. These focused controls are separate from the larger
+`../../results/m5-wit-adapters/nested-associative-live-lookup-bootstrap-order/`.
+These focused controls are separate from the larger
 lifetime stress and application cost measurements.
 
 The application regression target also runs 10,000 mixed operations with isolated
