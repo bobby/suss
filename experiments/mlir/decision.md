@@ -38,7 +38,7 @@ ongoing maintenance has been established.
 
 Original commands and limitations live in [README](README.md),
 [source profile](bridge/source-schema.md), [effects profile](bridge/effects-schema.md)
-and the handoff. Portable current-main logs, command/status records and identity manifests are
+and [archived execution notes](https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md). Portable current-main logs, command/status records and identity manifests are
 retained under [evidence](evidence/); [reproduction](reproduce.md) covers clean setup.
 
 ## Route assessment

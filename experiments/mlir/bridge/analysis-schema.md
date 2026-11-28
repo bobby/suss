@@ -200,5 +200,6 @@ No native success is claimed for this repair.
    and SSA IDs distinct. Roundtrip complete facts; mutate metadata, source child
    order, shadows, inferred tag, false/nil/absence, span and binding references;
    require mismatch/rejection. Do not interpret attachment payload as runtime IR.
-5. Record commands, terminal results, limitations and next task in the handoff
-   under coordinator ownership. Baseline/full milestone acceptance remains separate.
+5. Retain commands, terminal results and source qualifications in per-run evidence.
+   Keep supported limitations in maintained documentation and progress/next work
+   on the relevant GitHub issue. Baseline/full milestone acceptance remains separate.

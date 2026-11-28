@@ -61,7 +61,7 @@ message/data/cause, without guest printing or equality.
 The seven former failures—binary64 rounding, signed zero, surrogate escape forms,
 quoted sequence and variadic rest collection kinds, and ExceptionInfo—are resolved
 in this bounded corpus. Their original failure records remain in Git at parent
-`88abea7` and the migration handoff retains the actual unexpected-pass failure
+`88abea7` and [archived migration notes](https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md) retain the actual unexpected-pass failure
 before baseline reconciliation. An empty current failure file proves this corpus
 only; it does not establish full core compatibility or complete M3 acceptance.
 Manual observation capture still uses the explicitly ignored `record_observations`
