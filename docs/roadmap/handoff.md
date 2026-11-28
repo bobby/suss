@@ -37219,3 +37219,31 @@ Those new combinations and affected existing pure/import/randomness/async tests
 are the next command; the focused three-test receipt does not certify them.
 Resource ownership, general async suspension/cancellation, optimized mapped
 imports and UserManager retain independent implementation/acceptance work.
+
+### 2026-11-27: complete affected import-adapter validation
+
+The nine-target command on frozen bc7ce665 returned0:60 tests passed, zero
+failed; the existing Binaryen-dependent optimized-randomness test was explicitly
+ignored in this ordinary command. All13,870 captured inputs and HEAD stayed
+fixed;863.968s including build. It includes all ten interface controls with
+annotated schema-only/async exports and the annotated randomness alias, all eight
+world-import controls,13 pure-AOT controls, six recursive composites, nine value
+shapes (including10,000 calls), two named-type controls, three canonical async
+exports, seven existing file async-import controls and two ordinary randomness
+controls. Its exact command/raw log are retained in
+`interface-imports-existing-adapter-regressions/`.
+
+The remaining optimized-randomness control then ran explicitly with the retained
+Binaryen133 wasm-opt/wasm-merge and `--include-ignored`: one passed, zero
+failed/ignored,2.509s including build. All13,873 inputs, HEAD and both Binaryen
+hashes stayed fixed. This certifies existing optimized automatic randomness,
+not optimized explicit host mappings (`interface-imports-optimized-randomness/`).
+
+`scripts/verify-bootstrap.sh` returned0 on this same production source with Java
+and Node absent from PATH. Both phases regenerated identically, compiler identity
+checks passed, and all four bootstrap integration tests passed;355.487s including
+build, all13,876 inputs and HEAD conserved. Receipt/raw log are in
+`interface-imports-bootstrap/`. These results preserve all actual failures and
+earlier source qualifications; they do not complete generic resource/async/
+cleanup or application acceptance. Next run the exact full workspace baseline
+on a frozen import head and continue ownership work in its separate worktree.
