@@ -2276,3 +2276,13 @@ allocator without adding a user WIT API. Live canonical blocks/bytes return to
 zero after each checked call and final cleanup; canonical memory remains one
 page, while separate managed/numeric memories are recorded explicitly. Observer
 layout restrictions and remaining validation/measurement limits are in handoff.
+
+The owned canonical allocator maintains a private WasmGC active-start bitmap
+and a separate free list. It rejects fabricated/interior/stale allocation starts
+before reading linear metadata, and live blocks do not participate in reusable
+block searches. Its16-byte private headers retain capacity and active state;
+inactive length fields link the free list. Canonical exports remain memory,
+cabi_realloc and release. The direct10,000-live-varied-block regression and
+ownership/GC controls are recorded in the canonical-private-index-ownership-gc
+capture; this isolated module result does not establish generic cancellation
+cleanup or the large application measurements.

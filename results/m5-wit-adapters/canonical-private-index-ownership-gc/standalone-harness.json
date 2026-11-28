@@ -1,0 +1,38 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "--test",
+    "-C",
+    "opt-level=1",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/target/probe/memory-module-harness.rs",
+    "-L",
+    "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+    "-o",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/target/probe/memory-module-harness",
+    "--extern",
+    "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-7a99b647eeae9602.rlib",
+    "--extern",
+    "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-b47e6a5178c4c8a5.rlib"
+  ],
+  "versions": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\n",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)\n"
+  },
+  "inputs": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/target/probe/memory-module-harness.rs": "a689c6d867caba79489e75ac3fad777fd1ac68344ce3d572f4cae390056358b2",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/crates/suss-compile/src/portable/command/memory.rs": "be599596aa9397f40270fd7104729e644e017729df7258b2949a2a93098c7ced",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/Cargo.lock": "9a33c8b342a8d0f604913e3029de671190b6555a2c54bc41790ec97954f40068",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-7a99b647eeae9602.rlib": "cc7a495f4f797de4bbe84ebcc92296a76a1f2bdaeae980d7560ed1a099566704",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-b47e6a5178c4c8a5.rlib": "0016859e4adf6133e50309854e5ade3569e546618b293bd4e02a6eeb4547ced4"
+  },
+  "qualification": "Production Rust module imported directly; prebuilt third-party rlibs explicitly identified. This is not a Cargo/workspace baseline.",
+  "binary_sha256": "549273da73595723d1151bad48cffbf84de7aa0bb9b4bf2882e788da37e86cf6",
+  "test_command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-memory/target/probe/memory-module-harness",
+    "--test-threads=2",
+    "--nocapture"
+  ],
+  "exit_code": 0,
+  "changed_inputs": []
+}
