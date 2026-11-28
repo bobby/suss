@@ -7,22 +7,28 @@ The implementation is `crates/suss-reader/src/edn.rs`.
 
 ## Data model
 
-`suss_reader::edn::Value` has these variants: nil, booleans, binary64 numbers,
-strings, keywords, symbols, lists, vectors, maps, sets, tagged values, and a
-symbol, collection or tagged value with metadata.
+`suss_reader::edn::Value` has nil, booleans, doubles, signed 64-bit longs,
+BigInt, BigInteger, Ratio, Decimal, strings, UUIDs, keywords, symbols, lists,
+vectors, maps, sets, tagged values, and metadata. Decimal holds an arbitrary-
+precision unscaled integer and signed 32-bit scale; it preserves trailing zeros.
 
 - Characters read as one-character strings, as Suss represents them.
 - Strings are Unicode. A lone surrogate escape (`"\ud800"`), which Suss
   language strings allow, is an error here.
 - Equality and order are structural and total.
-  - Numbers compare by `f64::total_cmp`, so `-0.0` differs from `0`. Every NaN
-    is one value, the `##NaN` that prints and reads.
+  - Doubles compare by `f64::total_cmp`, so `-0.0` differs from `0.0`. Every
+    NaN is one tooling value, the `##NaN` that prints and reads.
+  - Exact numeric categories remain distinct. Decimal structural identity
+    includes both coefficient and scale, so `1.0M` and `1.00M` remain different
+    tooling values even though Clojure numeric equality considers them equal.
   - Lists and vectors are different values.
   - Metadata is ignored, as Clojure's `=` ignores it, however deeply it is
     nested.
   - Values are ordered by kind: nil, boolean, number, string, keyword, symbol,
-    list, vector, map, set, tagged. Within a kind they are ordered by content,
-    with names compared as (namespace, name).
+    list, vector, map, set, tagged, BigInt, Ratio, BigInteger, UUID, Decimal.
+    Within a kind they are ordered by content, with names compared as
+    (namespace, name). Decimal order compares coefficient, then scale; this is
+    deterministic storage order, not the runtime numeric comparison operation.
 
 ## Canonical printing
 
@@ -34,15 +40,15 @@ every process.
 - **Map and set entries** appear in the value order above. Map entries are
   separated by `, `, as Clojure's `pr` separates them.
 - **Numbers:**
-  - an exact numeric literal binary64 can't hold, such as `1/3`, appears in
-    analyzer output as `#suss/exact-number "1/3"` (#333);
-  - an integer within ±2^53 prints without a fraction. A larger integral
-    value prints as a double, such as `9007199254740994.0`, because an integer
-    literal beyond 2^53 reads as an exact number, not binary64 (#333);
-  - `-0.0` keeps its sign;
-  - infinities and NaN print as `##Inf`, `##-Inf` and `##NaN`;
-  - anything else prints in Rust's shortest round-trip form, such as `0.1` or
-    `1e300`.
+  - longs print as integers, BigInts with `N`, normalized non-integral Ratios
+    as `numerator/denominator`, and Decimals with `M`;
+  - Decimal printing follows Clojure's plain/scientific threshold, retains its
+    coefficient and scale, and uses scientific notation at extreme scales
+    without allocating billions of padding zeros;
+  - BigInteger uses `#suss/biginteger "digits"` so emitted source preserves that
+    projection rather than reading the token as Long or BigInt;
+  - doubles always include a fraction or exponent, preserving their category
+    and signed zero, with `##Inf`, `##-Inf` and `##NaN` for nonfinite values.
 - **Strings** escape `"`, `\`, newline, tab, return, backspace and form feed by
   name. Other control characters use `\uXXXX`; everything else prints as is.
 - **Metadata** prints as a full map: `^{:k true} x`.
@@ -74,7 +80,8 @@ malformed text with the same message and span.
   rejects them instead, so code is never mistaken for data.
 - **Tags:**
   - a tag is read by its entry in `Options::readers`, if it has one;
-  - otherwise the built-in `#queue` applies, which requires a vector;
+  - otherwise built-in tags apply: `#queue` requires a vector, `#uuid` a UUID
+    string, and `#suss/biginteger` an exact decimal integer string;
   - otherwise `Options::default` applies, if set;
   - otherwise reading fails with Clojure's "No reader function for tag …".
 
@@ -88,7 +95,8 @@ malformed text with the same message and span.
   `^T` or `^"T"` becomes `{:tag T}`. When prefixes repeat, the outermost wins.
   Metadata on the metadata map itself is dropped.
 - **Numbers** follow the compiler's reader, which supports decimal, hex, octal,
-  radix and `##` forms. Ratios and `N`/`M` suffixes fail.
+  radix, ratios, `N`/`M` suffixes and `##` forms. Numeric categories and Decimal
+  scale remain exact through native value/form conversion and source emission.
 - **Bounds:**
   - input size is charged to `Options::work_allowance`, one unit per byte up
     front and one per form;
@@ -100,14 +108,16 @@ malformed text with the same message and span.
 
 ### Differences from `clojure.edn`
 
-- `#queue` is a Suss addition, matching the language reader's built-in tag.
-  `#inst` and `#uuid` are not built in, because Suss has no instant or UUID
-  types yet. A caller can supply readers for them.
+- `#queue` and `#suss/biginteger` are Suss additions matching the language
+  reader's built-in tags. `#inst` needs a caller-supplied reader.
 - Namespaced maps (`#:ns{...}`) are not supported, as in the compiler's reader.
-- Duplicate keys are found by the structural order above, not by Clojure's `=`:
-  - `#{1 1.0}` is a duplicate, because every number is a binary64;
-  - `#{0.0 -0.0}` and `{[1] :a (1) :b}` are accepted, though Clojure rejects
-    both.
+- Duplicate numeric keys use reader identities in addition to structural
+  order. Long/BigInt/BigInteger integers coalesce by value, and Decimal keys
+  coalesce across scales, including inside nested keys. `#{1 1.0}` and
+  `#{1 1M}` retain distinct categories, while `#{1 1N}` and `#{1.0M 1.00M}`
+  fail. These rules also prevent printing a manually constructed value with
+  duplicate numeric keys. The existing structural differences remain:
+  `#{0.0 -0.0}` and `{[1] :a (1) :b}` are accepted, though Clojure rejects both.
 - Keyword and symbol tokens follow the compiler's reader. For example, `:a/1`
   is rejected.
 
@@ -127,7 +137,10 @@ bridge serde types to EDN:
 - `None` and `()` become nil;
 - unit variants become keywords. Every other variant becomes a one-entry map
   from its keyword to its content;
-- integers must be exact in binary64, so magnitudes above 2^53 are an error.
+- signed and unsigned integers retain their exact bits through 128 bits;
+- a Ratio or Decimal cannot be projected into a Serde primitive without an
+  exact representation. Those conversions fail explicitly; callers can retain
+  the typed EDN value instead of silently rounding to a double.
 
 Persisted types use `#[serde(rename_all = "kebab-case")]` and
 `deny_unknown_fields`. As in serde_json, `Some(None)` and `None` both print as

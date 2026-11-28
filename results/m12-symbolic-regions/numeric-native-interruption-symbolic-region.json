@@ -1,0 +1,10 @@
+{
+  "reason": "Confirmed enclosing-function symbolic pool mismatch in compiler-generated try regions; intentional interruption, not timeout or semantic success.",
+  "head": "9c33e2277bd36ce5b778d60ea926cc8bad34918a",
+  "phase": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/reviewed-core-native-after-symbolic-arities",
+  "recorder_pid": 4193592,
+  "cargo_pid": 553,
+  "signal": "SIGTERM",
+  "at": 1795805389.928802,
+  "targets": []
+}

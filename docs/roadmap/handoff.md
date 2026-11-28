@@ -1,3 +1,5 @@
+Numeric prerequisites now include public-eval evidence source `052668a3` and reviewed foundation `5d8a608d`. The integration changes only technical receipts and this handoff; the numeric runtime and acceptance sources remain unchanged from `fe33d5ea`. Parent test results retain their original source qualifications. This numeric tree still requires its own fresh native/full/bootstrap/review and final-head CI evidence.
+
 ## Public eval native controls and capture (2026-11-27)
 
 On clean consumer `41725409c6f4ae29bc4cb56f2fedf6ebc079343b`, fresh pinned
@@ -36,6 +38,12 @@ published-head CI require their own receipts. Complete numeric criteria and the
 229/200 tagged host corpus retain their numeric-consumer evidence.
 
 Public eval consumes the independent core foundation (#521). Its original criteria and wrapper tests remain here; scoped core receipts do not validate this consumer tree.
+
+Earlier prerequisite integration records (historical source qualifications):
+
+Numeric prerequisites are integrated through public-eval source `a06e0c30` and repaired foundation `d05aa8ef`. Historical commands and results below retain their original source qualifications; execution of this merged numeric source requires fresh receipts.
+
+The numeric branch now inherits the focused core checkpoint ec2f4208 through #516. The parent records28 scoped Rust test executions and its primary/source qualifications; those do not validate this numeric tree. Core ownership, Var metadata and publication work belongs in #521 (#519/#520), public eval in #516, numeric completion here. See docs/runtime/host-macro-boundary.md and the parent scoped receipts.
 
 All foundation results below retain their a97 source identity; this consumer requires its own native validation.
 
@@ -208,23 +216,457 @@ Use results/native-host-foundation/baseline-before-review/review-baseline.py for
 
 ### Independent Var and Symbol conformance controls
 
-Two integration controls used public eval indirectly, including through the retained Var primary fixture. Their core counterparts now call the installed capability directly, preserving every assertion and all40 identifier rows in both phases. The original wrapper controls remain unchanged on #516. The complete portable_symbol_conversion target passes6 tests with frozen inputs; production inputs are unchanged from the earlier positive core batches. The combined focused record is34 Rust test executions, distinct from #516's separate34 eval assertions. Full baseline, bootstrap, review and final-head CI remain separate gates.
+Numeric changes are layered above the public eval consumer (#516) and core host/Macro/Var foundation (#521, #519, #520). See docs/runtime/host-macro-boundary.md for core ownership and publication contracts. Historical validation below retains its original source qualifications; it does not validate this restacked source.
 
-### Quoted Var metadata and independent core validation
+### Root effects, executable metadata and native transport
 
-The core foundation specifies host/Macro ownership and Var publication in docs/runtime/host-macro-boundary.md. Quoted declaration data now uses original core constructors while expressions retain live user resolution. The original AOT option-schema constructor-redefinition test changes from actual101 to actual0. Primary controls distinguish initializer failure from metadata failure after the new root is bound; Runtime and Macro match all three transitions.
+Compiler declaration staging now distinguishes its own writes from real root effects, including an identical root write, metadata execution and later restaging. Only the converted declaration root uses the ABI14 definition setter; nested/user definitions retain ordinary write semantics. Reloading a source macro as an ordinary value updates the retained caller Var's actual root, metadata and macro status. Declaration metadata executes user expressions while its literal containers retain original core constructors.
 
-Seven frozen command groups across three positive batches pass28 Rust executions: the original AOT regression, native_host_boundary/runtime_evaluation, three direct-capability owner/service/budget controls, bounded scalar export, the new definition transition regression, original export precedence and all nine constructor AST projections in both caller phases. Production inputs are identical across those batches. Python364 passes with its exact source qualification; core/Var provenance and core import checks pass. See results/native-host-foundation/focused-validation.json, per-command receipts/logs and archived source overlays/runners. The initial missing export dependency-root101 and deliberately interrupted extraction batch remain explicit.
+Imported functions recover declaration-body transport proofs only after authenticating the actual isolated function root. This preserves compiler-catalog policy and default-budget stream expansion. Native transport indexes candidate roots by existing owner UID and still verifies exact root/capability identity; a forced-collision/GC/round-trip regression prevents the index from becoming authority. The export index holds weak references and sweeps one paid bucket per insertion. No operation allowance is increased.
 
-Ten additional original public-eval-dependent tests stay on #516; three also have independently validated core capability variants. Full ownership/source/ABI coverage, bootstrap, exact two-thread workspace validation, issue acceptance, independent review and final-head CI are separate required gates. No publication, promotion or completion is implied by these scoped results.
+Fifteen successful command groups across two frozen batches return actual0: complete-public-eval=103, ci-macro-and-stream-targets=14, ownership-library=138, source-frontends=58, runtime-abi-and-structural-guards=71, named-calling-hash-sealing-and-ci-display=33, persistent-repl-display-controls=8, java-node-free-bootstrap=4. Only the REPL display test and its provenance verification files change between the two batches; production inputs are identical. The original display-target101 remains in its receipt. Python tests, original/source/core/sequence provenance and Java/Node-free bootstrap also return0. These local results do not replace fresh complete native conformance, the exact two-thread workspace baseline, issue acceptance, independent review or final-head CI.
 
-### Native host/Macro and Var foundation extraction
+Run `python3 results/m12-eval/root-metadata-checkpoint/verify.py --current` to reconstruct all recorded inputs and verify current source plus the explicit documentation publication. Omit `--current` for historical verification after later implementation.
 
-The core boundary is specified in [host-macro-boundary.md](../runtime/host-macro-boundary.md), with ownership, transport, retirement, dynamic context and Var publication transition/test maps. The foundation excludes the public language eval wrapper and its original body guard; those remain in #516. Numeric implementation remains in #518. Fourteen original tests move unchanged to CLI native_host_boundary; public-eval controls and historical execution archives remain on #516. Test-body hashes and the extraction map distinguish code movement from new validation.
+The display correction checks every output byte while deriving only valid identity hex values, checks matching array identity spellings and distinct IDs, and adds repeated-value identity stability. Allocation order of compiler-owned identities is not a Clojure contract.
 
-Use the native_host_boundary, runtime_evaluation, portable_aot_options and original pinned case/map targets, then ownership library, source/macro/ABI controls, bootstrap reproduction and the exact two-thread workspace baseline. Existing historical successes do not establish validation of the extracted tree. Current failures, commands and results belong in the linked issues and scoped receipts; extraction alone does not satisfy acceptance or promotion.
+The archive retains every failed attempt, including missing constructors, misplaced root annotation, lost compiler policy, fuel exhaustion, a bad provenance assumption and unit compilation errors. Two deliberate stops preserve their exact source/runner/log inputs and stop reasons; their Cargo101 results remain failures and are not coverage passes. Original fixtures, count/skip/opaque rules and operation allowances remain unchanged.
 
-Earlier handoff follows.
+Earlier validation follows.
+
+### Source macro import and journal checkpoint
+
+Use `python3 results/m12-eval/source-import-checkpoint/verify.py --current`
+to verify the final overlay, 33 historical source/runner/tool/log
+receipts and explicit documentation publication. All eleven final commands
+return0 with source/HEAD/Binaryen conserved: public eval101, ownership137,
+source58, ABI/structural71,
+named/calling/hash/sealing/display/namespace32,
+Python tests, source/primary/core/sequence provenance and Java/Node-free
+bootstrap. The runners retain exact commands and their own actual terminals.
+These local results do not replace the complete native capture, exact
+`cargo test --workspace --locked -- --test-threads=2`, issue acceptance,
+independent promotion review, numeric parent integration or final-head CI.
+
+Canonical source Var roots/metadata now publish after completed source linking
+or an imported dependency definition. Completed imports advance every active
+journal baseline, including when later source stages that same name again.
+The fresh-caller and retained-function controls preserve the actual new root,
+metadata, identity and completed prefix effects. Reader callback counts/order
+and lazy-sequence realization, default budgets, cancellation and GC boundaries
+keep their original assertions. All negative receipts remain explicit.
+
+Earlier validation follows.
+
+### Native namespace and Unbound receipts
+
+The source-frozen ordinary-unbound-working overlay on 214d999f completes all ten
+recorded commands. Public eval returns 101 with 87/88 tests passing: the sole
+failure is the unresolved core macro Var `when-let`, in both Runtime and Macro.
+The unchanged full20 transport test now matches all20 observations in each phase.
+All five namespace declaration-boundary controls match in each phase, including
+failed initializers, untaken/uncalled definitions and analysis before a later
+compile error. Generated metadata and the new genuine Unbound/actual-root
+controls pass. The same overlay returns0 for runtime ABI62, ownership137,
+built-in sealing8, the original string/hash3, Python364 and core import checking.
+
+The subsequent ABI13 overlay changes only runtime_abi::VERSION from12 to13 in
+nonresult inputs. Its six commands all return0: runtime ABI62, the two Unbound
+regression tests, two actual no-import AOT capability tests, the core-function
+catalog, Python364 and core import checking. These67 Rust test executions are a
+focused follow-up; the complete88-test eval target and full workspace have not
+been rerun on ABI13. Exact sources/HEAD/runner/pinned Binaryen remain conserved
+within each batch. The ABI bump accounts for the added Var-owned Unbound GC root
+in the shared cell layout. See docs/runtime/native-var-values.md for behavior.
+
+Run `python3 results/m12-eval/namespace-native-values-checkpoint/verify.py --current`
+to check fifteen exact historical source/runner/log receipts, the one-line ABI
+change, explicit prose-only publication deltas and current source conservation.
+Omitting --current checks historical evidence after later source changes.
+Negative receipts retain catalog fuel exhaustion, the unguarded hashing failure
+on live helper replacement, generated-metadata publication errors, private-field
+and ordinary-read mismatches, and a mistakenly selected nonexistent CLI ABI
+target. The latter executed no ABI tests; the actual runtime_abi target is in
+suss-compile and passes62 in the final two batches. Original protected fixtures,
+primary/comparison/count/skip rules and operation allowances stay unchanged.
+
+Core/mixed source macro Var publication still needs the actual caller-owned Var
+with its real isolated transformer root, correct caller namespace, live root
+replacement and source-link publication boundaries without initializer replay.
+Full workspace/bootstrap/native/conformance, numeric-parent integration and
+independent promotion review/final-head CI remain separate gates. GitHub issues
+remain the authoritative acceptance records; this checkpoint makes no closure,
+promotion or merge claim.
+
+### Immutable metadata transport checks
+
+The source-frozen overlay on 0c2914c4 passes the 137-test ownership library,
+nine-case public isolated-macro test in both phases, two strict eval self-value
+tests, 58 source/module/REPL/AOT tests and record-macro provenance. The 198 distinct
+current passing test executions include exact original-object return, compiler
+cell-count conservation, GC release and the existing private capability guards.
+The initial identity regression returns 101 before the fix. A separate earlier
+working revision typechecks and passes the focused regression and 11 private
+tests; its twelve passing executions repeat coverage with weaker lifetime checks.
+
+Run `python3 results/m12-eval/immutable-native-values-checkpoint/verify.py --current`
+to verify exact sources, runner/command/log hashes, pinned primary inputs and the
+explicit publication prose delta. Without --current, verification checks the
+recorded historical inputs even after subsequent implementation changes.
+The complete unchanged full20 test still returns 101 with 19 matches per phase
+for the missing ns-interns/dependent catalog declarations. Genuine user/core
+interning and mixed source/native Var-root publication remain required behavior;
+fresh full workspace/bootstrap/conformance/numeric integration and promotion
+review/CI are separate gates. The three original M12 issues remain authoritative
+on GitHub; these receipts make no issue-completion or promotion claim.
+
+### Named-property provenance follow-up
+
+On dc1364d0 plus the corrected named-property source-file hash, the exact
+15-command CI inventory/scanner step and a separate record-macro provenance
+check all return 0. The Python suite executes all 364 tests. Source inputs and
+HEAD stay unchanged through the commands; compressed logs, runner and input
+manifest are in results/m12-eval/provenance-followup-dc136/commands.json.
+The source-file hash accounts for the live nominal-field forwarding changes;
+the named-property guard hash, algorithm, license and upstream pins are unchanged.
+CI run 45758336090 failed on the prior source-file hash. This follow-up validates
+that failure's fix locally; bootstrap execution, Rust tests and remote CI are
+separate checks. The earlier live-value checkpoint verifier applies to dc1364d0;
+its current-tree conservation assertion intentionally excludes later changes.
+
+### Caller-owned macro source and frontend checks
+
+The source-frozen working overlay on ba917029 returns actual0 for Rust checking,
+the unchanged reset/display1handle guard, synchronized independent-Macro worker
+compilation during Runtime, all55source/script/module/AOT/REPL tests, public74
+and host120. The broad targets contain249 unique test executions; the two focused
+controls repeat members of those targets. Exact commands, compressed original
+positive/negative receipts, pinned primary controls and limits are under
+results/m12-eval/caller-source-frontends-checkpoint. Source declarations retain
+the isolated Store; native eval declarations use real caller-owned bindings.
+Script Runtime execution still follows complete preparation. Source journals
+finish at linking before dependency/Runtime code. Compiler helper and predicate
+roots retain GC ownership without inflating external handle accounting.
+
+The separate script-native-publication probe records native exit1 for retained
+Runtime definitions and const names after a later prepared input; explicit future
+source redefinition is a passing control. Foreign-Store function/Var transport
+also remains unsupported. These results do not replace a fresh exact workspace,
+independent final review or final published-head CI. Original protected programs,
+primary/baseline observations, count/skip/opaque policies and allowances remain.
+
+### Literal roots, false metadata and GC validation
+
+The frozen literal/metadata follow-up returns0 for complete public eval62
+(including retained original-object roots across forced GC in both phases)
+and host119. The production-identical full runtime ABI62 also returns0; its
+source/target/fixtures are conserved across the separate new GC test and
+provenance additions. These243 distinct target executions do not include the
+supplemental repeated new2 controls. Original13 pinned primary controls retain
+actual values and explicit nested-Atom rejection. The initial2-test101 for the
+reserved ExceptionInfo descriptor remains a negative receipt.
+
+Run `python3 results/m12-eval/verify-self-values-metadata-checkpoint.py` to
+check actual terminals and preserve every executed input across this explicit
+prose/evidence publication. Later production changes require new relevant
+validation; old full-workspace/CI passes remain specific to their old inputs.
+The retained macro-live-state-before controls still show the caller-global and
+nested-definition mismatches, and function/Var macro transport remains to fix.
+No complete issue, promotion or merge is established by this checkpoint.
+
+### Literal and false metadata review controls
+
+The first frozen working-overlay command returns101: both new aggregate tests
+reach an unsupported ExceptionInfo literal. A per-case diagnostic records the
+other12 controls matching, including the original Atom/Delay failures, unchanged
+nested-Atom rejection and false/nil metadata/identity. Runtime-owned exception
+descriptors reserve identities below the source descriptor counter and do not
+carry the core privacy flag; the direct-literal classifier now includes them.
+The next frozen command returns0 for both13-control native/actual-Macro tests
+and the complete62-test runtime ABI target, with source/HEAD/tools unchanged.
+These working receipts are under self-values-false-metadata-reserved-errors-working.
+A separate retained-root GC regression and broader checks remain to execute.
+
+An additional pinned primary/native comparison under macro-live-state-before
+records caller-global reads/atom updates and nested-eval definitions diverging
+inside eval-defined macros. Function/Var transport and live macro-state work
+remain required; the positive literal/metadata receipts do not cover those cases.
+
+### Native literal and false metadata review regressions
+
+Independent xhigh review at42aa08e8 confirms four remaining mismatches: function/Var
+arguments through ordinary macros, macro authorization after an earlier expansion
+changes its actual Var, top-level Atom/Delay literals, and false/nil macro metadata.
+Exact unchanged-source primary/native receipts are under
+results/m12-eval/review-42aa-before. Existing positive fa0da workspace/CI receipts
+remain specific to their tested inputs; they do not cover these counterexamples.
+
+The working follow-up separates top-level non-syntax core objects from portable
+macro syntax, retaining actual roots. Original compiled predicates and the checked
+nominal ABI distinguish symbols/collections and user type constant contexts;
+nested opaque constants retain their existing compilation errors. False/nil macro
+metadata is admitted and retained without enabling expansion. Thirteen new pinned
+Clojure1.12.6 controls return0 under self-values-and-false-metadata-primary, with
+native and actual-Macro regressions added. These source changes have not yet been
+built or executed. Function/Var macro transport and live in-unit authorization
+still require fixes; current broader/full/review/final-head CI remain separate.
+
+### Macro flag opcode guard alignment
+
+The3c4a clean run returns0 for its first five commands, including all34 observed
+CI-failing targets (176 tests across36 executables, zero ignores). The next full
+eval/ABI/dynamic command returns101 at an existing structural opcode guard: it
+expects constant1/eq immediately after a flag read, while the corrected emitter
+first masks macro metadata using constant-17/and. Its remaining native tests
+before that target pass; host-library execution has not started in this receipt.
+
+The guard now explicitly checks the mask and retains every original inline-root,
+no-cast, else-branch and dynamic-call assertion. All three dynamic compiler guards
+then return0. This follow-up changes the assertion and derived provenance, with
+all production inputs and original language observations conserved. Fresh full
+eval/ABI/async, host, native/bootstrap and exact workspace results remain separate.
+
+### Generic source Vars and ordinary macro-function reads
+
+CI on0e7b33fe reports ordinary source-core loads rejected by private Var macro
+adapters. Generic source loading now retains its own Var metadata, evaluating
+adapter operands in order and returning the same getter without reading or
+writing canonical native root flags. A host-extracted getter regression verifies
+that ordinary source entering the core namespace cannot gain that authority;
+canonical field access and other namespaces retain their existing checks.
+
+An independent retained entrypoint test also returns101 before any rejected
+script executes. Actual compiled macro observations identify user/keep in both
+Var spellings: dereferencing the Var calls17, while reading its raw function
+reports unbound. GlobalRead compared flags exactly with bound1, so the new macro
+metadata bit made bound17 appear undefined. The read now masks only that metadata
+bit, preserving every other flag's root/frame behavior. The original before/after
+script expectations remain, with an added before-script assertion. Temporary
+inspection code is archived and removed from the regression source.
+
+The combined working-overlay command returns0 for complete native entrypoints
+(10 tests), six source-core CI targets (33) and all root/privacy controls (15):
+58 actual passes with source, HEAD, overlay and Binaryen unchanged. The earlier
+wrong private-field test setup, actual CI failures, raw-read101 controls and the
+deliberately interrupted0e workspace101 remain explicit under results/m12-eval.
+This diagnostic is not a clean-head full baseline. Fresh source-bound focused,
+all observed CI targets, native/bootstrap/workspace, independent review and
+final published-head CI results must be established separately. Original primary,
+baseline, source programs, count/skip/opaque rules and allowances remain unchanged.
+
+### Native lexical projection and ordinary operation budgets
+
+The frozen6b435045 root-filter command returns101 with9pass/3fail. The actual
+fuel/cancel diagnostics show unqualified user Var names at a raw function
+invocation, which has no input namespace frame. Pinned Clojure records
+[:unresolved 42] under the equivalent core namespace. Qualified Runtime controls
+then return0 (2tests) with the same200000 fuel and separate observer-triggered
+cancellation limits. Macro-only observation hooks keep their existing API.
+
+A paid-work trace enters the aggregate compiled macro with9996238 fuel, then
+completes its first two controls with9809785 and9659252. Its env-reading third
+control exhausts the remaining allowance while a local initializer AST includes
+unrelated namespace definition bodies. Caching immutable Var metadata alone
+still returns101; that negative remains recorded. Native lexical graphs now
+retain actual locals, initializer ASTs and namespace membership without importing
+those unrelated bodies. Explicit compiler-catalog/record projections keep their
+existing full interfaces. This is a projection boundary, not a substituted local
+value, raised allowance, new skip or altered primary.
+
+The follow-up also retains atomic expanded functions in C.EVAL and maps in the
+collection constant context. An independent pinned control records actual
+identity [true false false false] for direct/map/vector/set results. All14 root
+regressions return0 on the recorded working-tree overlay at original allowances,
+including both phases/actual macros, typed cancellation/fuel and identity. See
+`macro-thread-cost-before` and `macro-thread-bounded-local-diagnostic` for actual
+terminals and qualifications. Fresh clean-commit complete focused, bootstrap,
+native, exact workspace, independent review and final-head CI remain required.
+
+### Caller-owned macro bindings and stable Var metadata
+
+At8a93677f, both new root/duplicate tests return0 across both phases and actual
+macros. Its broader focused command returns101 on an unchanged retained Var
+fixture: that Var uses an ordinary thunk rather than a native binding getter.
+The frozen receipts are under `macro-thread-followup-before`. Two independent
+immutable8a CLI commands return0 but disagree with fresh pinned Clojure controls
+on metadata-map identity after root clearing and on a thread-selected macro
+transformer. Their actual outputs remain under `metadata-identity-primary` and
+`thread-macro-binding-before`.
+
+The follow-up guards native getter classification, caches cleared Var metadata,
+and prepares a thread-selected transformer through the existing analyzer/emitter
+while invoking it in its actual caller Store. Macro service steps release their
+Store before caller execution; a scoped operation owner keeps catalogs exclusive
+and permits same-thread reentry. Selected functions are read at each expansion,
+without inheriting the old function's unused-form/environment proofs. Nine fresh
+primary controls retain actual captures/effects, form/environment, recursive
+evaluation, changing bindings, existing function/Var identity and failed prefix
+effects. Pure component capability and original oracle/baseline policies remain.
+
+The current Rust check returns0 (24.39 seconds). New native focused, service
+ownership/cancellation, bootstrap/native/full workspace, independent review and
+final-head CI results must be recorded separately before any new pass claim.
+
+### Root macro status and duplicate source keys
+
+An independent immutable-binary review found two actual primary/native
+counterexamples: a redefined macro Var expanded its old catalog transformer,
+and duplicate with-redefs source keys ran a suppressed initializer. Fresh pinned
+Clojure 1.12.6 records thirteen controls under
+`results/m12-eval/macro-root-and-duplicate-primary` (actual exit 0).
+Root binding clears macro status during replacement and after restoration.
+Identical source symbols suppress the earlier initializer before analysis;
+distinct source spellings resolving to one Var evaluate both initializers and
+then throw before root replacement. Ordinary binding retains both effects.
+
+The follow-up adds a macro bit on actual binding cells, private compiled-core
+access through their real getters, and source-key handling in the existing
+bounded analyzer. Public Var metadata and native macro synchronization read that
+root status. No public marker values or foreign Store references are introduced.
+`cargo check -p suss-compile --locked` returns 0 (31.88 seconds). The earlier
+133b full-workspace and CI receipts remain historical: changed production code
+requires fresh focused, native, bootstrap and exact workspace execution before
+it can support a new validation claim. Existing primary/baseline policies and
+negative review receipts are preserved.
+
+## Exact workspace and CI evidence (2026-11-25)
+
+At recorded code head `133b7024762d5006d4c784416e66ecef5a73f6b8`, run
+`cargo test --workspace --locked -- --test-threads=2`: actual Cargo exit 0
+in 10,420.338 seconds, with all 8,439 recorded inputs and HEAD unchanged throughout.
+The complete run records 377 successful test groups, 2,566 passed tests and 15
+existing ignored tests. The compiler-expression target has 305 passes and 10
+existing prototype-harness ignores; manual baseline/catalog generators and the
+selected random guard retain their existing ignore policy. The optimized random
+guard separately passes when explicitly selected by the conserved broader run.
+No source/test/oracle is changed to obtain these outcomes.
+
+All 48 public-eval tests, complete 22-test Clojure suite (including its actual
+native comparison against the reviewed baseline), original 5-test some-fn target
+with 372 controls and 47 actual AOT components, and complete 22/11 portable/module
+targets pass within that run. The raw 397-case corpus, 142 existing corrections,
+two additional qualified primary controls and every original module order,
+partial-effect, retry and publication assertion remain. The recorded complete
+native comparison keeps existing unrelated failures and guest judgments explicit;
+it does not establish whole-language conformance.
+
+All ten required checks in CI 45586341822 pass on that same code head: foundation,
+eight integration partitions and the final aggregate check. The failed C9 CI
+logs and deliberately interrupted C9 workspace 101 remain preserved separately.
+Original primary, baseline, comparator and count/skip/opaque rules are unchanged.
+
+Receipts/logs are in results/m12-eval/full-workspace-after-portable-reference-alignment,
+portable-reference-workspace-gates and final-ci-133b. Run
+`python3 results/m12-eval/verify-133b-workspace-checkpoint.py` to verify the actual
+terminals and conserve every executed code/test/fixture input across publication
+of these prose/evidence files. Later code changes require fresh relevant checks;
+independent review and passing final-head CI remain separate requirements.
+
+## Portable references and module observers (2026-11-25)
+
+C9 CI run45577012191
+fails portable_pipeline on two supplementary ClojureScript scope expectations,
+and portable_modules on two initialization traces. The complete portable target
+now returns0 (22tests,705.135s including compilation); all397 original source IDs
+and142 existing correction paths still execute. Two additional pinned Clojure
+controls record Long2 and Long9. The definition case is the exact original
+source. For the initializer case Clojure rejects root set! (actual1); its legal
+outer-thread-binding control returns2. The original native root-set spelling
+remains an explicit bootstrap extension and is still executed. This qualified
+reference does not claim raw-source Clojure equivalence for that extension.
+The original raw CLJS corpus and primary/baseline/count/skip/opaque rules remain
+unchanged. Primary source, exact outputs, JVM failure and JAR hashes are retained
+under results/m12-eval/portable-dynamic-primary.
+
+The module observer now intercepts binding-root-set, the actual import used by
+definitions. Only two hook strings change; every initialization order, partial
+effect, retry and provided-module assertion remains unchanged. The full module
+target returns0 (11tests,16.753s including compilation). Production code stays
+byte-identical to the318-test root-scope gate and its ten passing broader
+commands, including Java/Node-free bootstrap, native0 and strict5564-row capture.
+Run python3 results/m12-eval/verify-portable-reference-checkpoint.py to verify
+that conservation and both new target receipts. Older source-specific verifiers
+remain historical. The C9 exact workspace was deliberately interrupted for the
+confirmed CI reference mismatch: actual101 in1954.140s, source/HEAD unchanged.
+That receipt and both failed CI logs remain under results/m12-eval. A fresh exact
+two-thread workspace terminal, independent review and final-head CI remain
+required; targeted passes do not replace those gates.
+
+
+## Root redefinitions and thread bindings (2026-11-25)
+
+The frozen root-scope gate passes318 tests:48 public eval,62 runtime ABI,
+2 publication,2 raw-core/native-AOT,11 CLI binding,10 async analysis,14 closures,
+3 compiler binding,14 resolution,28 async scheduler,6 dynamic switch and118
+host-library tests. Twelve fresh pinned Clojure1.12.6 controls match Runtime,
+isolated Macro and actual compiled macros. The new2000-step fuel sweep covers
+root installation/restoration traps without undoing unrelated effects. Forced-GC
+pending-await return/cancellation and fork tests retain root ownership; all four
+independently measured context-budget ledgers and earlier binding controls pass.
+
+`with-redefs` now replaces real roots and restores their old values/boundness;
+`binding` changes thread bindings and preserves definitions. Existing thread
+bindings keep priority over root redefinitions. HIR/IR carry the scope kind;
+root-mode old-value slots are explicit nil placeholders because actual roots are
+captured on entry. Private GC-owned binding-cell wrappers retain the real cell
+and prior bound bit without changing shared layouts or exposing fabricated Vars.
+Validation precedes root mutation. A rooted lease precedes the first root write;
+reverse pop is restartable and restores only that lease's selected roots. Forks
+inherit thread bindings while omitting globally owned root leases. A pending
+scope keeps its roots globally visible until its owning return/cancellation.
+
+The published50d7 source returned wrong native values on4/6 fresh controls even
+though both primary/native commands exited0. Its actual pinned-reader comparison
+returns1; source/head/binary hashes and source archive are retained. The first
+new focused run returns101 at the existing IR Value-only snapshot check (46pass,
+2fail); the new scope kind now requires Nil placeholders while ordinary bindings
+still require Value snapshots. Its exact before source and terminal are retained.
+The previous50d7 workspace was deliberately interrupted for the proven semantic
+regression: actual Cargo101 after1831.858s, source/HEAD unchanged. Obsolete-head
+CI45567451208 was cancelled. Earlier broader native0/strict5564 evidence keeps its
+original source qualification; none of these is a current full-workspace pass.
+
+Reproduce source/evidence conservation with
+`python3 results/m12-eval/verify-root-redefs-checkpoint.py` and source/primary
+provenance with `python3 results/m12-eval/verify-live-vars.py`. Positive receipts
+are in with-redefs-root-focused-after-ir-kind; before and initial101 evidence
+are in with-redefs-root-before and with-redefs-root-focused. Fresh broader,
+Java/Node-free bootstrap/native capture, exact workspace, independent review and
+final-head CI remain separate gates. Original primary, baseline and count/skip/
+opaque rules stay unchanged; complete numeric source-body closure stays separate.
+
+## Binding initializer and root effects (2026-11-25)
+
+The frozen binding-effects focused gate passes all301 tests:46 public eval,
+62 runtime ABI,2 publication,10 CLI binding,14 closures,3 compiler binding,
+14 resolution,27 async scheduler,5 dynamic switch and118 host-library tests.
+Nine fresh Clojure1.12.6 initializer controls and eight root controls compare in
+Runtime, isolated Macro and actual compiled macros. Actual pending-await/GC
+regressions preserve initializer writes and distinguish root definitions from
+selected frames. Both original fuel sweep ranges and four independently measured
+context-budget ledgers pass.
+
+All initializers now run before outer-frame snapshots in synchronous and async
+lowering. Definitions use a private root write; `set!` keeps current-frame
+assignment. Frame exit never rewrites a root it did not replace. The older three
+rollback assertions are corrected against the pinned primary while retaining their
+fuel sweeps. A later comment-only correction in runtime_dynamic_switch is checked
+by exact reverse substitution in verify-binding-effects-checkpoint.py; all other
+executed code/test/primary bytes are conserved.
+
+Actual predecessor executions returned0 but produced wrong values on3/5
+initializer and5/6 body controls; their pinned-reader comparisons return1. The
+initializer-only focused run returns101 on three historical rollback assertions.
+The previous exact workspace was deliberately interrupted for the proven effect
+bug, actual Cargo101 after7806.643s with unchanged source/HEAD. These are retained
+as failures, not timeouts or passes. The301-test success and before evidence are
+under results/m12-eval/binding-effects-focused and binding-effects-before; the
+checkpoint verifier conserves their source, primary and baseline hashes.
+
+Fresh broader provenance/bootstrap/native capture, exact two-thread workspace,
+independent review and final-head CI remain required for this changed compiler.
+Earlier C266 CI success and broader native0 receipts validate their own source.
+No original primary/baseline/count/skip/opaque judgments are changed.
 
 ## Object-overload random controls and complete assert execution (2026-11-23)
 
@@ -247,6 +689,28 @@ The completed assert target is idle. New RNG public checks reuse that existing
 workspace-feature target after verifying no active source/target processes,
 avoiding a duplicate dependency rebuild. The existing isolated private target
 retains its separate receipts; no source inputs are changed during native runs.
+
+
+## Compiled eval before-regressions and private capability slot (2026-11-23)
+
+The idle13189154 checkout is reused at1d4f2fa3 after all59 untracked evidence
+files are copied/hash-verified under cleanup/suss-20261123/eval-reuse-case-budget.
+Its original branch and a backup ref preserve tracked inputs. No extra checkout
+or Cargo target is allocated for this step.
+
+run-before.py links the actual clojure_eval.rs source against exact immutable
+PR507 producer libraries, without writing that Cargo target. Build returns0
+in4.749s. All three native groups return101 in127.305s at unresolved eval in
+Runtime/Macro; ordinary namespace fixture setup succeeds. Exact input and
+library hashes remain unchanged. Complete raw receipts/logs are archived.
+
+The runtime now appends a nullable typed evaluation callback outside its shared
+ABI prelude and existing global indices. Its missing-capability branch throws
+an ordinary language error. The private endpoint transports a same-Store GC
+value to a supplied compiler callback; it does not add a public eval binding or
+interpret data. The new boundary test requires explicit installation, payload
+identity across GC, nil transport and clearing. It is a test requirement until
+native execution; the persistent/reentrant compiler host remains the next step.
 
 ## Public rand-int Object-overload fixture correction (2026-11-23)
 
@@ -34348,6 +34812,139 @@ also return0 (452.479s). Receipts and full logs are under
 `results/m12-random/complete-capture-and-bootstrap` and
 `results/m12-reader-followup/full-suite-after-random-and-assert`.
 
+
+## Compiled-host reentry and form-data transport (2026-11-24)
+
+`results/m12-eval/run-installation.py borrowed-nominal-forms-first-native`
+returns0 at4196f081, inputs unchanged: one private runtime capability/GC test
+and two real compiler-reentry tests pass in Runtime/Macro. Actual nominal
+form data is decoded directly and compiled while its Wasm caller remains
+live, sharing existing binding cells and retaining numeric results across GC.
+The native executions take3.35s and44.13s (249.851/539.219s including builds).
+The earlier compile101 and original incomplete receipt stay preserved with a
+posthoc input check; no failed attempt is relabeled. Persistent publication,
+macro expansion, real Vars, public eval and complete primary/body acceptance
+remain separate requirements. The runtime capability alone implements no eval.
+
+
+## Shared compiler publication (2026-11-24)
+
+Atadb66ae9, the owned session and borrowed callback share one authoritative
+compiler catalog/cell map. The three private reentry tests pass in both phases:
+callback definitions are visible to later owned inputs, owned definitions are
+visible to callbacks, and a compiled function survives GC and sees live root
+redefinition. Namespace getters return owned metadata snapshots. No Store alias
+or Session pointer is captured, and metadata locks do not cross Wasm execution.
+
+`run-state-gates.py after-shared-compiler-publication` returns0 at0d7f5e9e,
+inputs unchanged:36 session library, nine inline module, four observation and
+four bootstrap tests pass. Java/Node-free double bootstrap and source identity
+verification also pass (277.446s). Full receipts/logs are retained under
+`results/m12-eval/after-shared-compiler-publication`. Public eval, borrowed macro
+host authority, real Vars and complete primary/body acceptance remain required.
+
+
+## Borrowed session data interface (2026-11-24)
+
+At6c864a34, `run-installation.py borrowed-session-view-cancellation-contract
+--borrowed-session-only` returns0 with unchanged inputs (295.633s including
+build,23.67s native). Both phases reuse owned-session FormBridge/invocation/
+compiler methods through an explicit Store borrow, compile real data to3/2,
+and retain it over GC. The owned Session stays Send. A view cannot reset its
+owner, refill caller fuel, or cancel owner requests on drop. The negative
+entry consumes cancellation and exhausts fuel; retry fails OutOfFuel and
+owner teardown cancels the pending native request exactly once.
+
+Original compile failures and the incorrect sticky-flag fixture failure remain
+retained. The final test follows the existing consumed-request/zero-fuel policy
+without changing consume_host_work. Request configuration is captured before
+entry; compiler/native state remains shared. Public eval, macro authority,
+real Vars and full primary/body acceptance remain required.
+
+The broader borrowed-interface gate at e403e68d returns 0 with unchanged
+inputs: 37 session library tests, nine inline module macro tests, four
+isolated observation tests and four original bootstrap execution tests pass.
+The Java/Node-free double bootstrap and compiler identity checks also pass.
+Command times are 21.942, 86.937, 4.945 and 85.704 seconds respectively.
+Full receipts and logs are retained in
+`results/m12-eval/after-borrowed-session-interface`. These 54 regressions
+validate the borrowed interface while public eval, shared macro authority,
+real Vars and complete primary/body acceptance remain required.
+
+At f8f78da5, the borrowed analysis graph gate returns 0 with unchanged
+inputs. Runtime/Macro callbacks use the ordinary expansion-context transport,
+then invoke a compiled transformer and compile its real result to 3/2 across
+GC, without refilling caller fuel or retiring owner requests. All 60 existing
+analysis-graph regressions also pass (393.767 seconds including the build for
+the callback test; 8.329 seconds for the graph target). Full receipts/logs are
+under `results/m12-eval/borrowed-analysis-first-native`. Shared user-macro
+authority and public eval acceptance remain required.
+
+At 5e89daf1, borrowed Macro authority uses one authoritative shared catalog
+for definitions, provenance, loading, caches and declaration transactions. The
+explicit typed evaluation-capability fixture expands an existing user macro
+in the active Macro Store, publishes a callback-defined macro to later owned
+inputs, and retains its result across GC. The gate returns 0 with unchanged
+inputs: all 13 macro-library tests (including that fixture) and nine original
+inline-module tests pass. Command times are 358.885 seconds including build
+for the focused fixture, 12.016 seconds for the macro library and 121.126
+seconds for inline modules. Full receipts/logs are retained under
+`results/m12-eval/borrowed-macro-through-evaluation-capability`.
+
+The initial duplicate-import compile failure remains archived. The subsequent
+research run also returned 0, but its observation-hook fixture violated that
+hook's non-reentrant contract and is explicitly unsuitable as capability
+validation. The replacement uses evaluate-form directly; observation hooks
+retain their contract. Public eval, the Runtime service handle, real Vars and
+complete primary/body acceptance remain required.
+
+At 61e24bef, the native Macro service owns the existing phase Store through
+an exclusive owned lease. Preparation reuses its loaded macros and catalog;
+the lease returns before Runtime execution and on request unwind. The direct
+Runtime callback test expands the original user macro once per input, returns
+a callable function across GC after dropping the public owner, and preserves
+the existing macro-side effect counter without replay. The interruption handle
+remains available while the host is lent. No Session pointer or self-borrowing
+mutex guard is captured.
+
+`run-installation.py runtime-macro-service-after-owned-form-api
+--macro-service-only` returns 0 with unchanged inputs. There are 68 distinct
+passing regressions: 14 macro-library, nine inline-module, 37 session-library,
+four observation and four original bootstrap execution tests. The focused
+service test is also run separately (464.193 seconds including build); the
+subsequent command times are 15.200, 117.565, 24.929, 4.516 and 115.161 seconds.
+Java/Node-free double bootstrap and compiler identity verification pass. Full
+receipts/logs are retained under
+`results/m12-eval/runtime-macro-service-after-owned-form-api`. The missing
+inline forwarding method and test-only owned-form API compile failures remain
+archived. Public eval, request-scoped callback installation, real Vars and the
+complete primary/body acceptance still remain required.
+
+
+## Public eval entry and current native boundary (2026-11-24)
+
+The ordinary public eval function now decodes actual nominal form data and
+compiles it through the persistent native compiler. It reuses caller binding
+cells, the isolated Macro authority, current dynamic namespace and math
+context, and cumulative allowances. Function constants return the original
+root. No prior source is replayed and form data is not printed and reread.
+
+At ab2caa9b, the strict reentrant compiled-macro group returns0 (160.200s
+including build). The complete clojure_eval target returns101:4 tests pass
+and1 fails. All15 independent controls match in both Runtime and Macro,
+including retained post-GC comparisons. Runtime fixture controls for embedded
+globals, qualified globals and dynamic namespace selection match; the group
+then fails at ordinary-var-result, leaving later fixture controls unexecuted.
+All recorded inputs remain unchanged. Receipts and complete logs are under
+`results/m12-eval/public-eval-context-after-target-correction`.
+
+The preceding launch used an incorrect target path, was intentionally
+interrupted and returned-2 with unchanged inputs. It establishes no native
+pass; its receipt, partial log and target-correction explanation are retained
+under `results/m12-eval/public-eval-function-and-namespace-context`.
+Real live-cell Vars, top-level failure/effect boundaries, all34 unchanged
+original eval assertions, capability/budget/GC regressions and full validation
+remain required before claiming issue515 acceptance.
 ## Min-key full-workspace completion evidence (2026-11-24)
 
 The exact `cargo test --workspace --locked -- --test-threads=2` process at
@@ -34413,6 +35010,1723 @@ unchanged from447c1957, so the frozen61397661 native results retain the
 source-equivalence qualification above. Final-head remote checks remain
 required after this documentation-only correction.
 
+
+## Native live Vars and complete eval body (2026-11-24)
+
+At6a82a270, all10 fresh Clojure1.12.6 live-Var controls match in both
+Runtime and Macro, including independent retained comparisons after GC.
+The focused Cargo command returns0 (159.481s including build). Canonical
+phase binding identities intern actual nominal Vars; their compiled getters
+read live public/dynamic cells without constant substitution. Definition
+results, redefinition, metadata, callable references, eval identity, failed
+initializers and const-root reads are covered. Source/primary verification is
+`python3 results/m12-eval/verify-live-vars.py`; all22 inherited IFn signatures
+remain explicit in the retained source adaptation.
+
+The complete unchanged original34-assertion eval body also returns0
+(11.231s including Cargo):29 host matches and the original five opaque
+function/Var judgments at ordinals15–19, with no failed, missing or skipped
+rows. Exact numeric ordinals5–7 are independent host matches. The full
+public target still returns101 (6.916s):5 tests pass and1 fails at the
+primary do-prefix-effects-before-compile-error control. Its observed prefix
+trace is empty; the primary requires[:prefix]. Later fixture rows remain
+unexecuted. All recorded production/test inputs and HEAD remain unchanged.
+Receipts and complete logs are under
+`results/m12-eval/live-vars-after-canonical-descriptor`; earlier compile,
+metadata-binding, special-form and descriptor errors are preserved separately.
+
+This extends focused execution evidence, not a complete eval/numeric issue or
+full-suite acceptance claim. Macro-expanded top-level do boundaries, additional
+namespace/capability/budget/GC regressions, complete-capture preservation,
+bootstrap, exact full workspace validation, independent review and final CI
+remain required. The next durable recorder also hashes every tracked fixture
+and evidence input; untracked result outputs alone stay excluded.
+
+Reconciling parent974ed7e7 changes ancestry only: its tree equals the
+previously reviewed parent8d81cf3c, and the merge index equals6a82a270's
+complete tree before these evidence/doc additions.
+
+
+## Existing host and bootstrap regressions after live Vars (2026-11-24)
+
+At6be4ee43, `run-installation.py after-live-vars-existing-regressions
+--macro-service-only` returns0. All7,702 recorded inputs, including tracked
+fixtures/evidence, and checked-out HEAD remain unchanged. The focused service
+test passes (134.052s including library build), followed by14 macro-library,
+nine inline-module,37 session-library, four observation and four original
+bootstrap execution tests:68 distinct regressions. Command times are7.433,
+36.812,11.081,3.205 and69.960 seconds. Java/Node-free double bootstrap and
+compiler identity reproduction pass. Receipts/logs are retained under
+`results/m12-eval/after-live-vars-existing-regressions`. The separately recorded
+public do-prefix failure remains101; this gate does not relabel it or establish
+full eval/numeric acceptance.
+
+
+## Public eval top-level compilation boundaries (2026-11-24)
+
+At3d51d8b5, the top-level boundary gate returns0 with all recorded inputs
+and HEAD unchanged. Eleven fresh primary controls match in both native phases
+and after GC, including macro-produced/nested do, lexical-body precompilation,
+runtime throws, definitions before later errors, once-only macro expansion and
+reentrant compiled Macro eval. The focused command returns0 in158.281s
+including build; the complete public target returns0 in9.156s (all7 tests).
+All24 original public controls now match in both phases. The complete original
+34-row eval body returns0 again in10.944s:29 host matches/five original opaque
+judgments; numeric ordinals5–7 remain host matches. Archives are under
+`results/m12-eval/top-level-do-first-native`.
+
+The native compiler expands only the root to select Clojure Compiler.eval's
+top-level do boundary, then compiles and executes each unit through the ordinary
+pipeline against the same live cells. Lexical bodies retain whole-form analysis;
+no operator or expression body is interpreted on the host. Namespace mutation,
+capability/budget/cancellation checks and broader capture/validation remain
+separate acceptance gates. New pinned namespace controls are under
+`results/m12-eval/namespace-primary`; they are primary evidence only.
+
+
+## Eval dynamic namespace context (2026-11-24)
+
+Atd2d3e7fc, all15 fresh namespace controls match in Runtime and Macro and
+after GC (162.458s including build). Eval inherits the actual caller frame;
+scoped bindings restore, unscoped namespace directives persist to later inputs,
+and namespace prefix changes survive later compile errors. Dependencies retain
+ordinary load frames, and native eval policy is cleared before publishing
+catalogs. The complete public target returns0 with all8 tests (11.372s),
+rerunning all60 primary controls in both phases and the reentrant path. The
+complete original34-row body returns0 again (10.848s). All recorded inputs and
+HEAD remain unchanged; archives are under
+`results/m12-eval/namespace-after-rooted-checkpoint`. Earlier failing context
+and compile attempts remain archived without success reclassification. Capability,
+operation budget/cancellation, full capture, broader regression/workspace and
+review/CI gates retain their separate requirements.
+
+
+## Public capability, allowance, cancellation and retained functions (2026-11-24)
+
+At88d244c0, the complete public target returns0 with13 tests (38.388s
+including build), and the complete original34-row body returns0 again
+(6.322s). A real AOT component has no host imports and reports the missing
+compiler capability. Repeated eval and eval of a compiled infinite loop exhaust
+the caller's original200,000-unit allowance in both native phases; a watchdog
+would fail an accidental refill. Runtime and actual reentrant Macro eval cancel
+after their compiled lexical bodies reach independent signal-only observers;
+both remain usable and the Macro lease returns. Returned public-eval functions
+survive GC and public macro-owner teardown while reading live redefined roots.
+All recorded inputs and HEAD are unchanged. Archives are under
+`results/m12-eval/public-eval-capability-budget-first-native`.
+
+The standalone primary verifier checks all60 ordered expressions, observations
+and pinned jars plus the complete eval adaptation. Source provenance metadata
+for the retained char/min-key/some-fn/assert/random forms is refreshed after the
+eval/Var additions; their actual adapted forms and primary fixtures are unchanged.
+These metadata updates do not reclassify old frozen receipts. The new broader
+gate hashes every tracked input and keeps a separate strict capture review before
+any baseline update.
+
+### 2026-11-24: native eval review corrections
+
+The broader native run at `b7d344dfdbc5b674b6cb0ba7b7736528d0503492`
+ended with actual exit 101. Public eval controls and portable host regressions
+passed; `runtime_namespaces::aot_namespace_frame_size_is_bounded_per_form`
+rejected the additional Var construction code. Its frozen-input receipt and logs
+are retained in `results/m12-eval/complete-eval-broader-acceptance/`; both Binaryen
+executables were checked unchanged after the terminal result. The original size
+limits and all original suite bodies, primary fixtures and budgets remain intact.
+
+The next source checkpoint retains nested function/Var values in private,
+phase-owned cells through analysis, quotation and emission. Ordinary macro/EDN
+transport rejects these opaque constants. Vars capture their real binding cell
+through one shared core getter, and `isMacro` returns a Boolean. Fresh pinned
+Clojure controls are in `results/m12-eval/review-corrections-primary/`; four
+macro-declaration controls there are research, with no native pass claimed.
+The evaluated macro-declaration review finding still requires a publication
+path through the persistent Macro authority without duplicate expansion effects.
+
+Run the focused correction gate using the external durable launcher with
+`constant-var-review-first-native --constant-var-review-only`. It runs the
+capability/owner guards, new nested-constant controls, all public eval controls,
+retained symbol/Var arity guards, the unchanged AOT namespace size test and the
+complete original eval body. Source and HEAD must stay frozen through its
+terminal receipt. Passing this gate alone does not establish issue or PR
+acceptance; broader capture, full baseline and final independent review remain
+required. Do not merge without the user's later explicit instruction.
+
+The focused correction gate at `58470278815e4433c4bc6462ed885b318f455e71`
+returned actual exit 0 for all six commands, with HEAD and all recorded inputs
+unchanged. Receipts/logs and their limited qualification are retained under
+`results/m12-eval/constant-var-after-legacy-corpus-adaptation/`.
+
+- Two native capability/owner guards pass.
+- Ten new nested-function/Var controls match fresh Clojure in both phases and
+  after collection; a returned function retains its constant after later input
+  compilation and the public macro owner's drop.
+- The complete public eval target passes all 16 tests, including actual
+  reentrant Macro constants, the original 60 primary controls, capability,
+  cumulative budget, cancellation, namespace and diagnostic guards.
+- All six retained identifier tests pass. The forty-row corpus and all original
+  0–20/final-spread invocation guards remain exercised. Two ClojureScript Var
+  implementation assumptions use explicit, fresh Clojure-backed adaptations in
+  `results/m12-eval/var-implementation-primary/`; the original corpus is retained
+  unchanged and its SHA verified.
+- The unchanged AOT namespace size guard passes: 3,678 bytes per form for both
+  plain/scoped cases, with 25 extra code bytes per split form. Its original limits
+  remain 3,900 bytes, 128 extra code bytes and 32 scoped bytes.
+- The unchanged original eval body passes: all 34 ordered rows execute, with
+  29 host matches and precisely the original five guest judgments at ordinals
+  15–19; no failures, unexecuted rows or skips. Numeric rows 5–7 are host matches.
+
+Earlier failed runs retain actual exit 101 receipts, including the guard-test
+build error, the unrelated boolean? dependency in a new control, and the old
+ClojureScript Var metadata-copy expectation. They are not relabeled by this pass.
+Publication is source-equivalent to the tested head for executable compiler,
+core and tests; added evidence/handoff/verifier files are not a new full baseline.
+The remaining macro-declaration finding still precedes broader capture, exact
+workspace validation, bootstrap reproduction and independent promotion review.
+
+### Native evaluated macro declarations and live namespace facts (2026-11-24)
+
+Source and evaluated declarations share one preparation/publication path. The
+actual function body is analyzed once in its owning Macro Store. A caller-side
+closure retains that real function root and owning service, using the existing
+universal closure ABI and supported form-data transport. Its initializer is an
+authenticated native constant, excluded from public Runtime source initializer
+facts; the body retains genuine Macro-phase analysis. No second body compilation,
+new runtime import, public handle registry or source replay is introduced. Raw
+calls return data, and captured old roots survive redefinition, GC, owner drop
+and a replacement public macro service. Opaque roots cannot cross Stores.
+
+Macro operations use cumulative caller allowances and exclusive owned leases.
+A signal-only cancellation relay uses engine/flag handles, never Store pointers,
+and joins before returning the lease. Cancellation immediately before commit
+restores the host namespace. Top-level native macro expansion supplies nil &env;
+lexical bodies supply actual Symbol-keyed bindings. Explicit compiler-catalog
+requests and regular source analysis retain their existing graph interface.
+
+Stable Var getters now share one Wasm runtime body, keeping source core generic
+and avoiding one function per definition. Actual Var metadata determines macro
+availability for one native analysis. That transient snapshot is restored for
+the root after ordinary dependency preparation, then cleared on publication and
+source records. It never rewrites immutable declaration revisions or rolls back
+successful nested effects. New explicit macro declarations supersede it. Public
+alias retains pinned Clojure signature/doc/metadata and mutates the actual
+Namespace alias table atomically. Each eval unit snapshots actual current aliases
+through the original private accessor captured at bootstrap. The alias test
+fixture establishes namespaces through ns forms; public create-ns remains a gap.
+
+Run the primary/source verifiers:
+
+```sh
+python3 results/m12-eval/verify-primary.py
+python3 results/m12-eval/verify-live-vars.py
+python3 scripts/core_import.py --check
+```
+
+Primary recordings retain24 base,10 Var,11 top-level do,15 namespace,14 review,
+2 legacy-Var adaptation,22 macro-declaration,15 alias,3 lexical-environment and
+5 failure-boundary observations. Review declarations overlap the complete22;
+these are not summed as independent coverage. JAR/source/stdout hashes and
+complete upstream adaptations are verified. The last5 preserve the original3
+failure rows and add2 lexical controls; no upstream corpus/count/skip is changed.
+
+At `721631738b654ba1411153731094fc304e5d9578`, the frozen
+`lexical-macro-publication-checkpoint --lexical-macro-review-only` run passes all
+four commands, with unchanged HEAD/inputs:
+
+- All5 failure-boundary rows execute in Runtime and Macro, retaining real old
+  macro roots after failure, clearing status on same-root ordinary replacement,
+  preserving nested success and compile-time lexical expansion.
+- All24 public eval tests pass, including the complete22-row declaration matrix,
+  alias/environment controls, actual reentrant Macro eval, captured-root/GC
+  lifetimes, original allowance exhaustion and cancellation through isolated RPC.
+- All3 source-environment guards pass, retaining snapshot/catalog/source scope
+  assertions. Legacy declaration tests read the live root immediately after def;
+  def's real Var return is checked by the dedicated primary controls.
+- All34 original eval assertions execute:29 independent host matches, precisely
+  the original5 guest judgments at ordinals15–19, and no failures/unexecuted/skips.
+  Numeric ordinals5–7 are host matches.
+
+The preceding frozen run at `eb917160` passes all9 CI source/hygiene/hash/vector
+regression targets and18 runtime capability/Var/namespace controls, including
+unchanged AOT size guards. `4d6cb0e3` passes all116 portable host regressions and
+all15 chunk/all15 UUID controls, including ordinary source-core loading in both
+phases. These retain separate source-qualified receipts; they are not a final
+workspace baseline. Failed attempts keep actual101 receipts and logs in their
+named result directories, including stale macro revision/transport, test helper,
+constructor/observer setup, lookup ABI and lexical snapshot mismatches.
+
+Main's merged #513 tree is byte-identical to prerequisite `974ed7e7`; the
+no-content ancestry merge preserves the entire evaluated source tree. This
+follow-up adds evidence and handoff only, source-equivalent to tested72163173 for
+compiler/core/tests/manifests/lockfiles. The next durable command is
+`eval-broader-after-live-macro-publication --broader-eval-only`, through the
+external launcher. Freeze source/HEAD through its terminal receipt. It runs
+public/unit/numeric/module/artifact/budget guards, optimized random effects,
+Java/Node-free bootstrap reproduction, the complete unfiltered suite capture
+and strict conservation review. Preserve actual inner native101 from the old
+known-failure comparison; update only measured reviewed baseline differences.
+Then run the exact two-thread workspace baseline, independent promotion review
+and final-head CI. No full numeric acceptance or ready status follows from the
+focused receipts alone.
+
+### Complete capture and newly executable Var/symbol bodies (2026-11-24)
+
+The frozen broader run at `59ee4f6a` passes the recorded24-test public target,
+the portable host group, all23 selected
+numeric/module/artifact/budget targets, the optimized random-effect guard and
+Java/Node-free bootstrap reproduction. Its complete unfiltered native capture
+returns actual101 after321s; the strict host review returns1 with unchanged
+HEAD/inputs/Binaryen. No process is killed and the original4GiB capture cap stays.
+The report `capture-before-symbol-repair-audit.json` retains5564 raw rows,
+5349host/106guest/110fail/1374unexecuted/63failed namespaces. All5346 prior
+comparable successes remain; every229 BigInt/Ratio and200 Decimal operand row
+is an independent host match. This is numeric-subset evidence, not acceptance
+of the five newly executable symbol mismatches or a workspace baseline.
+
+Real Vars let eval, symbol and var? namespaces load. The symbol body's61 rows
+expose five mismatches: core Var symbolic spelling and Clojure's strict
+String-or-nil admission for both parameters of two-argument symbol. The var?
+body executes all34 rows (26host+the original8 opaque judgments). ifn? still
+fails to load, now at the genuinely missing promise instead of var. The baseline
+is untouched; its scoped review must preserve that remaining failure explicitly.
+
+Twenty-seven fresh pinned symbol/Var observations retain complete upstream
+symbol source/JAR/stdout hashes. The public adaptation preserves the complete
+Clojure signature, doc and metadata, uses the existing portable Symbol storage
+and validates both two-argument inputs after ordinary argument evaluation.
+Var conversion constructs a fresh qualified Symbol without declaration metadata;
+core Vars use clojure.core for public source symbols while their canonical cell
+and metadata Namespace object remain suss.core. This extends the native Var
+decision without changing namespace identity or ns-refers' platform contract.
+The existing40-row identifier implementation corpus and its invocation guards
+remain unchanged. The complete original eval/symbol/var? bodies now have scoped
+supplemental checks with exact counts and original guest ordinals; the full
+harness and primary corpus remain unchanged.
+
+Run `symbol-and-var-complete-bodies-first-native --symbol-vars-only` through
+the external launcher, freeze source/HEAD until terminal, then rerun broader
+acceptance and the full capture. No five symbol failures are added to a reviewed
+baseline. Only after their complete original body passes should the strict
+capture review account for the newly enabled namespaces and unchanged ifn?
+blocker. The exact-workspace launcher is prepared externally but not started;
+its command remains cargo test --workspace --locked -- --test-threads=2.
+
+At `7fde2815`, `symbol-and-var-complete-bodies-first-native` passes all4
+commands with frozen HEAD/inputs:27 fresh symbol observations in both phases
+and after GC, all25 public target tests, all6 retained symbol/Var tests (original
+40-row implementation corpus and all fixed/spread arity guards), and complete
+unaltered eval/symbol/var? bodies. Their counts are29host+5originalguest,
+61host+0guest, and26host+8originalguest, respectively; no failures/unexecuted/
+skips. The Var conversion identity control correctly follows fresh Clojure's
+false result, and original Symbol identity remains intact.
+
+The strict complete-capture reviewer now accounts for exactly129 newly executed
+rows across those3 namespaces, with116host/13originalguest judgments. It preserves
+all previous comparable successes and all unrelated failures. The still-blocked
+ifn? diagnostic changes only from missing var to missing promise at the same
+source span. The review requires exact failure/count equality, untouched primary/
+comparator/full harness, and229/229 plus200/200 strict numeric matches. A negative
+check still rejects the actual five-symbol-failure capture; no baseline is written.
+Repeat `eval-broader-after-symbol-and-var-contract --broader-eval-only` through
+the external durable launcher and freeze source/HEAD to its terminal receipt.
+This follow-up changes review/evidence/handoff only; executable source and tests
+remain identical to validated7fde2815. Exact workspace, independent promotion
+review and final-head CI remain separate required gates.
+
+### Reviewed complete native capture and exact workspace command (2026-11-24)
+
+The frozen `eval-broader-after-symbol-and-var-contract` run at `cfdd013d`
+passes all7 recorder commands, with unchanged source/HEAD/Binaryen. The full
+native suite still returns its actual101 against the former baseline; its
+318.58s raw capture is retained. Strict review returns0 and independently
+preserves all5346 prior comparable successes. All5564 rows remain, including
+34eval/61symbol/34var? assertions with29/61/26host matches and original5/0/8
+guest ordinals. All229 BigInt/Ratio and200 Decimal tagged-operand observations
+are strict host matches. The earlier five symbol failures remain historical101
+receipts; they are not accepted as new known failures.
+
+The scoped baseline update removes only eval, symbol and var? namespace-load
+failures. It changes ifn?'s remaining diagnostic from var to promise at the same
+source span; assertion/test/skip failure maps are unchanged. All other original
+failures remain. Baseline SHA changes6fedd3e2 ->dea5db93; exact write qualification
+and the unchanged host comparator's actual0 are retained in the capture folder.
+Nine adversarial host-review controls pass, rejecting changed numeric storage
+under a pass verdict, missing/reordered body rows, guest verdict changes, erased
+unrelated failures, changed primary bytes, an invented ifn? blocker and the actual
+previous five-symbol-failure capture. These host checks are not a native rerun.
+
+Native behavior, core, compiler and native tests are source-equivalent to tested
+cfdd013d; this publication adds only evidence/docs/review guards and the measured
+baseline. Start the exact command through the prepared external
+`launch-eval-workspace.py full-workspace-after-reviewed-eval-baseline` launcher.
+It uses the existing unchanged durable workspace recorder with an absolute
+results/m12-eval output path, the warmed target and the exact command
+`cargo test --workspace --locked -- --test-threads=2`. Freeze source/HEAD through
+its terminal receipt. Final-head CI and independent promotion review remain
+required; no merge is authorized.
+
+Numeric operand-subset completion is distinguished from the remaining source-form
+candidates: eq/not-eq/num stay regex-blocked. The two common Decimal equality
+source rows and six :clj-only equality/boxing/class rows need explicit scope/
+acceptance treatment before claiming complete #338/#339 acceptance. Suss retains
+its :suss/:default reader policy and does not claim JVM primitive boxing interop.
+No extra skips, weakened criteria or regex/num shortcut is introduced here.
+
+### Exact workspace round-trip finding (2026-11-24)
+
+The exact two-thread workspace run at published `fb2761f1` is terminal101 after
+440.997s with unchanged HEAD/inputs. It builds the full target set and reaches
+4 target summaries before analyzer_edn reports15pass/1fail. The unchanged
+user_forms_round_trip guard rejects an emitted defmacro name carrying the newly
+injected :macro true flag. The data round-trip itself succeeds, but emitted
+source should use defmacro's implicit flag while preserving all other attributes.
+The source emitter now omits only that redundant flag in its defmacro branch;
+semantic AST metadata and real Var metadata keep the actual true value. A focused
+regression retains :private, custom and qualified/macro attributes and checks
+analysis/data round-trip; the existing failing assertion is unchanged.
+
+Run `analysis-macro-source-after-workspace-finding
+--analysis-macro-source-only` through the durable launcher, freezing source and
+HEAD to its terminal receipt. Then repeat the exact full workspace baseline;
+the earlier101 is never relabeled. Current-head CI45373118279 remains separate
+and is not rerun while its jobs are active. No core, eval, runtime or original
+corpus/baseline changes accompany this tooling emission repair.
+
+### Canonical macro-source focused validation (2026-11-24)
+
+At bbf77597, `analysis-macro-source-after-workspace-finding` completes all3
+commands with actual0 and unchanged HEAD/inputs. All17 analyzer EDN tests pass,
+including the unchanged original user_forms_round_trip assertion and the new
+attribute-preservation regression. The four source-environment/declaration targets
+pass all16 tests, and the complete public eval target passes all25. Deterministic
+compressed logs and source/command receipts are retained in that result folder.
+
+This follow-up adds evidence and this handoff only; executable source and tests
+are identical to validated bbf77597. Retry the exact workspace command through
+`launch-eval-workspace.py full-workspace-after-canonical-macro-source`, freezing
+source and HEAD through its terminal receipt. The earlier workspace101 and its
+actual failing assertion remain preserved; this focused0 does not replace the
+full baseline or final-head CI. No issue closure or merge is claimed.
+
+### Confirmed CI definition-result fixture repairs (2026-11-24)
+
+Published fb2761f1 CI45373118279 reports one core_import failure and five
+compiled_async_streams failures (jobs138372169209/138372169252). Their original
+logs are preserved under results/m12-eval/ci-fb276-definition-fixtures. Both
+fixture files were byte-identical in the running local9342245a checkout. The
+full workspace retry passed6 complete targets, including all17 analyzer tests,
+AOT source preparation and apply guards, before deliberate cancellation for
+these concrete same-source CI findings. Its recorder returns actual-15 after
+902.66s, with unchanged inputs/HEAD and drained scope; cancellation qualification
+and partial logs are preserved. This is neither a timeout nor a baseline pass.
+
+The identity counter helper now explicitly returns count after its def. Six
+stream source snippets retain their original definition initializers and append
+the bound name, so host checks inspect actual futures rather than the real Var
+returned by def. Every original assertion, scheduler/GC step, cancellation,
+backpressure, private-operation authority and budget guard remains. No async
+runtime, compiler, shipped core, suite or accepted failure map changes here.
+Raw Session fixtures without shipped core retain their existing no-Var fallback;
+they are not blindly rewritten.
+
+Run `definition-fixtures-after-confirmed-ci --definition-fixtures-only` via
+the external durable launcher, freezing source/HEAD through the terminal receipt.
+This runs both complete affected targets and all public eval controls. Then
+repeat the exact workspace baseline on the corrected source. Independent review
+and final-head CI remain required; no promotion, issue closure or merge is claimed.
+A separate cargo fmt --all --check observation returns1 with431 repository-wide
+file differences; it is check-only and applies no broad formatting changes.
+
+### Definition fixtures and IndexedSeq-dependent Var metadata (2026-11-24)
+
+Frozen9ae63bdc passes the complete core_import17 and compiled_async_streams12
+targets (43.80s including compilation) and all25 public eval tests (48.65s).
+HEAD/inputs remain unchanged. Original stream cancellation/backpressure/GC/private
+authority guards all execute; no async runtime fix is needed for those captures.
+
+Published CI shard0 additionally reports the already-repaired analyzer assertion,
+a large-source metadata fixture decoding a definition's Var as a number, and
+a genuine failure while redefining IndexedSeq in the unchanged indexed-data guard.
+A diagnostic using the existing CLI catches actual Invalid nominal operation;
+restoring IndexedSeq before printing confirms the error without an invented value.
+Original CI/diagnostic logs are retained in ci-fb276-definition-fixtures.
+
+The two native Var metadata helpers now use fixed-arity assoc calls, avoiding
+variadic argument packing through the mutable IndexedSeq constructor after that
+constructor's own root is replaced. Metadata operand evaluation remains ordered.
+A new Runtime/Macro regression keeps the real Var across GC, constructor
+replacement, metadata replacement and root updates, decoding actual results.
+The unchanged indexed-data constructor-retention assertions remain. The large
+source fixture now reads metadata-keep after its definition and before the
+original1MiB comment; all fuel, effect, failure and recovery assertions remain.
+The stale ns-refers comment is aligned with its unchanged symbolic-value contract.
+Core generation and all affected source/provenance records are refreshed and
+verified; primary bytes, arithmetic kernels and accepted suite failures are unchanged.
+
+Run `var-helpers-after-indexed-seq-ci --var-helper-ci-only` via the external
+durable launcher and freeze source/HEAD through its terminal receipt. It runs
+the complete two macro-data targets, sealed built-in guards, complete corrected
+identity/stream targets and all public eval tests. A fresh broader/native suite
+capture, Java/Node-free bootstrap, exact workspace baseline, independent review
+and final-head CI remain required for this executable source change.
+
+### Qualified-symbol packing follow-up (2026-11-24)
+
+The ad61ecee focused gate returns actual101 after207.80s with unchanged source/
+HEAD. All7 sealed built-in and10 source-metadata tests pass, including the
+large-source/fuel guard. The indexed-data target still has3pass/1fail at the
+original constructor-redefinition assertion; later commands do not run. Its
+failed receipt/log is retained. Separately364 host unit tests and9 original
+adversarial capture-review tests pass on ad61ecee. No failed result is a pass.
+
+Fixed-arity metadata association removes one packing dependency, but constructing
+a qualified Symbol still calls variadic str_. The symbol adaptation now joins
+its admitted String namespace, slash and unary str_ name with fixed-arity UTF-16
+concatenation. This preserves nil-name admission and all27 unchanged fresh
+Clojure symbol controls, without duplicating Symbol semantics in Var construction.
+The original IndexedSeq-retention assertion remains unchanged. Repeat the complete
+focused gate as `var-helpers-after-fixed-symbol-spelling --var-helper-ci-only`.
+
+After a focused pass, use `eval-broader-after-indexed-seq-repair
+--broader-current-baseline-only`. It repeats the original broader native targets,
+Java/Node-free reproduction and complete native suite with the reviewed current
+baseline. The new wrapper requires every inner command, including native suite
+execution, to return actual0. It reuses the unchanged strict reviewer against
+the archived original baseline/capture, requires its proposed map to equal the
+existing dea5db93 baseline, protects exact comparator/harness hashes, retains all
+5564 ordered observed identities and requires identical original counts/failures.
+It accepts no new failure/skip/guest change and writes no baseline. Numeric
+source-form acceptance scope, exact workspace, independent review and final-head
+CI remain separate gates.
+
+### Fixed-symbol Var helper focused result (2026-11-24)
+
+At1876f27d, all3 focused commands return0 with unchanged HEAD/inputs. Complete
+sealed built-in7, source metadata10, indexed-data4, core import17, stream12 and
+public eval26 targets pass:76 tests total. The unchanged IndexedSeq constructor-
+retention guard now passes. The new live-Var metadata/root regression executes
+in Runtime and Macro through GC and root/metadata replacement. All27 unchanged
+primary symbol controls match in both phases, including nil names and argument
+effects. The earlier ad61 native101 remains preserved. This follow-up adds only
+evidence/handoff and two existing targets to the broader runner; executable core,
+compiler and native tests remain identical to validated1876f27d.
+
+Start `eval-broader-after-indexed-seq-repair --broader-current-baseline-only`
+via the external launcher and freeze source/HEAD through its terminal receipt.
+The selected target group now includes the complete analyzer EDN and six legacy
+symbol-conversion regressions, alongside the prior23 numeric/module/artifact/
+budget targets. Native current-baseline suite0 and strict full-capture review
+are required separately from outer producer0. No baseline, original primary,
+skip, opaque-judgment or failure-count rule is changed. Exact workspace,
+independent promotion review and final-head CI remain required.
+
+### Fresh complete native0 after the CI repairs (2026-11-24)
+
+Atc3946719, eval-broader-after-indexed-seq-repair completes all7 commands with
+actual0 and unchanged HEAD/inputs/Binaryen. Public eval26, compiler host117 and
+193 tests across all25 selected targets pass, as do optimized random effects
+and Java/Node-free bootstrap reproduction (71.35s). The complete native suite
+returns actual0 in316.79s against unchanged baseline dea5db93. The outer producer0
+is qualified separately from the actual native0. Strict current-capture review0
+retains all5564 observed identities, all5346 earlier comparable successes, exact
+34/61/34 complete eval/symbol/var? bodies with original5/0/8 guest ordinals, and
+229/229 plus200/200 independently matching tagged numeric rows. Counts stay
+5354pass/106guest/105fail/1374unexecuted/63failednamespaces/0skip; no baseline is
+written and every unrelated failure remains. Raw captures/logs/input receipts
+are retained as deterministic gzip; the strict report stays readable.
+
+The previously published fb276 CI has green foundation and integration2/3/4/6;
+integration0/1/5 expose the preserved analyzer, definition-fixture and IndexedSeq
+findings repaired by the passing local cohorts. Integration7 is still running
+and its in-progress logs endpoint returns404; no verdict is inferred for it.
+Publishing the meaningful corrected checkpoint can supersede that old-head job
+under the existing workflow concurrency rule. This is not a budget refusal or
+a rerun of an unchanged failing source. Final corrected-head CI remains required.
+
+This follow-up changes evidence/docs only; executable compiler/core/native tests
+remain identical to validated c3946719/1876f27d. The accepted design's obsolete
+implementation-absence notes about indistinguishable types, throwing Ratio/Decimal
+values and WIT wrapper integers are removed; its full numeric behavior contract
+and original issue criteria remain. Numeric eq/not-eq/num source blockers are
+not waived and no numeric issue is closed.
+
+Start the exact cargo test --workspace --locked -- --test-threads=2 command via
+`launch-eval-workspace.py full-workspace-after-indexed-seq-repair`, freezing source
+and HEAD through its terminal receipt. Publish this corrected checkpoint to the
+existing draft516, then require exact workspace0, independent promotion review
+and passing final-head CI before ready status. No merge is authorized.
+
+### Current-source AOT metadata constructor counterexample (2026-11-24)
+
+After37cf0d7c publication supersedes old CI45373118279, the now-downloadable
+cancelled shard7 log exposes another actual failure: the unchanged portable AOT
+option constructor/function-redefinition test traps during initialization. The
+job's preceding15 other option tests pass, but the target is not green; later
+interrupted targets have no inferred verdict. The current workspace freshly
+compiled that same original test executable with the current exact generated
+core embedded. Directly invoking the single unchanged case returns actual101
+in43.52s at37cf0d7c, with binary/source/HEAD unchanged. The original log, binary
+hash, exact command, frozen receipts and diagnostic recorder are preserved in
+results/m12-eval/ci-aot-option-core-metadata. No assertion is weakened.
+
+The exact workspace attempt is deliberately cancelled for this concrete current-
+source counterexample during compilation: actual-15 after308.98s, unchanged
+inputs/HEAD, drained scope. The corrected-head CI45385164552 is also cancelled
+for the same confirmed failure to avoid further superseded work. Its results
+do not certify this source; it is not an Actions budget refusal or a blind
+rerun of an unchanged source. The already-complete c394 native baseline0 and
+strict capture review remain valid only for their own measured scope.
+
+Compiler-generated Var metadata previously quoted argument-list vectors and
+keyword/map data through mutable public core roots. That newly exposed path
+can fail after PersistentVector or Keyword is replaced. Its data-only lowering
+now reads the original private core cells and temporarily excludes public
+:const substitutions. Both analyzer settings are restored before propagating
+a diagnostic or analyzing further user forms; declaration metadata remains
+data, never user expression evaluation. Ordinary source resolution is unchanged.
+A new Runtime/Macro regression replaces those constructors both ordinarily and
+as :const, keeps a real Var across nested metadata/root updates and GC, and
+checks that a following user initializer still calls the redefined count.
+
+Run `var-metadata-after-aot-constructor-ci --var-metadata-core-links-only`
+through the external launcher, freezing source/HEAD through the terminal receipt.
+It first tests the new native regression and exact unchanged AOT counterexample,
+then all original option/metadata/indexed/sealed targets and complete public
+eval/identity/stream targets. Compiler logic and one authored regression change;
+core source, numeric kernels, primary, upstream suite and accepted failure map
+do not. A fresh broader/native capture, exact workspace0, independent review
+and final-head CI remain required before ready status.
+
+### Scoped core metadata focused validation (2026-11-24)
+
+Atf3ae547d, var-metadata-after-aot-constructor-ci completes all4 commands with
+actual0 and unchanged HEAD/inputs. The new native ordinary/:const constructor
+replacement, retained nested metadata/root/GC and subsequent user-resolution
+control passes in Runtime and Macro (156.69s including compilation). The exact
+unchanged original AOT failure case passes (41.96s). All37 complete option16/
+source metadata10/indexed4/sealed7 tests pass (459.09s), followed by all56 complete
+public eval27/identity17/stream12 tests (101.69s). These are93 complete-target tests;
+the two preceding targeted checks repeat cases included in those full targets.
+Original assertions, budget limits, fixture bodies and primary bytes remain.
+
+This follow-up changes evidence/docs only; compiler/core/native tests remain
+identical to validated f3ae547d. Run `eval-broader-after-var-metadata-core-links
+--broader-current-baseline-only` through the external launcher and freeze source
+and HEAD through its terminal receipt. Retain the existing25 selected targets;
+the unchanged-source complete option target already has a current focused pass
+and need not be redundantly added to that group. Its same-source receipt remains
+part of acceptance, and the required unfiltered workspace command includes it.
+The fresh full native capture must return actual0 and satisfy the unchanged
+strict reviewer with no new baseline change. Then retry the exact two-thread
+workspace baseline before independent review and final-head CI. No promotion,
+issue closure, merge or numeric source-form scope exception is claimed.
+
+### Fresh native0 after original-core Var metadata lowering (2026-11-24)
+
+Atd65fa9f4, eval-broader-after-var-metadata-core-links completes all7 commands
+with actual0 and unchanged source/HEAD/Binaryen. Public eval27, compiler host117,
+193 tests across25 selected targets, optimized random effects and Java/Node-free
+bootstrap (69.65s) pass. The original complete option16/metadata/indexed/sealed
+and public/identity/stream targets already have the same-source93-test focused
+pass atf3ae547d. The fresh full native suite returns actual0 in337.21s
+against unchanged dea5db93 baseline; strict review0 retains all5564 observed
+identities, prior comparable successes, original counts/failures/skips/opaque
+judgments and229/229 plus200/200 tagged numeric host matches. No baseline is
+written. Exact complete eval34/symbol61/var?34 bodies retain29/61/26 host matches
+and original5/0/8 guest ordinals. Deterministic compressed logs and raw capture
+are retained; the strict review report stays readable.
+
+This follow-up changes evidence/docs only; compiler/core/native tests remain
+identical to validated d65fa9f4/f3ae547d. Start the exact required command via
+`launch-eval-workspace.py full-workspace-after-var-metadata-core-links`, freezing
+source and HEAD through its terminal receipt. Publish the corrected meaningful
+checkpoint to the existing draft516. Exact workspace0, independent promotion
+review and passing final-head CI remain required before ready status. No merge
+is authorized and the complete M12 acceptance scope remains unchanged.
+
+Separate read-only numeric audit finds a concrete tooling gap: a tiny external
+Rust program linked against the unchanged reader rlib returns actual101 for
+edn::read_one("1.0M"), showing the old unsupported-numeric diagnostic despite
+runtime Decimal support. Its command/source/rlib hashes and output are retained
+under the external eval-next-step/decimal-tooling-before directory. Fresh pinned
+Clojure1.12.6 controls return0 for126 coefficient/scale/printing/admission/duplicate
+observations, including i32 scale boundaries. A 300KiB reader/core source copy
+is isolated under external decimal-tooling-lab, with only fixture reads linking
+to this checkout. Its unchanged offline baseline passes with original dependency
+identities after subset-lock reconciliation; the initial --locked refusal is
+retained. The copy's Decimal implementation remains separate from this frozen
+eval source and has no claimed workspace integration or acceptance pass.
+
+
+### Existing scalar identity counterexample (2026-11-24)
+
+Atf17f7077 the current workspace-built CLI embeds the exact current core source
+and returns0 for the scalar eval probe, but its twelve identity observations are
+[true true true true true true false false false true true false]. Fresh pinned
+Clojure1.12.6 returns0 with all twelve true. The differences are actual BigInt,
+Ratio, Decimal and UUID inputs. Binary/core/HEAD stay unchanged; comparison101
+is separate from the JVM/native process exit codes. No artifact build or source
+mutation is involved in this diagnostic. Its exact source, outputs, hashes and
+commands are retained in results/m12-eval/scalar-identity-before.
+
+The required exact workspace run is deliberately stopped for this confirmed
+same-source semantic counterexample: actual-15 after4185.71s, source and HEAD
+unchanged, recorder retained and scope drained. Its successful completed prefix
+is evidence only for that prefix; the canceled run is not a pass. Current-head
+CI45392660131 is also canceled for the confirmed bug, with seven integration
+shards and foundation already successful. This is not an Actions budget refusal.
+
+A primary-backed regression now checks all twelve scalar identities, retained
+roots after GC in Runtime/Macro, and actual reentrant Macro execution. First run
+`scalar-identity-regression-before-fix --scalar-identity-before-only` against the
+unchanged implementation, freezing source/HEAD through its terminal receipt.
+Then preserve actual scalar argument roots while keeping executable form data on
+the existing compiled path; validate the exact regression, complete public and
+capability controls and definition/stream targets before a new broader capture,
+exact workspace baseline, independent review and final-head CI. No promotion or
+completion is inferred from the earlier passing scopes.
+
+
+### Scalar-root regression reproduced before the correction (2026-11-24)
+
+At3c45cf69 the new exact regression returns actual101, with unchanged source/HEAD,
+for the same four Runtime identity observations. The test body reports12 scalar
+results with BigInt/Ratio/Decimal/UUID false against the independent twelve-true
+primary vector. It fails semantically after successful compilation, not from a
+resource cap or unavailable dependency. Frozen receipts and logs are retained.
+
+The native callback now returns the caller-owned actual root for admitted scalar
+literal kinds after ordinary bounded decoding. It retains the existing compiled
+path for symbolic/executable/collection form data and the authenticated constant
+path for Functions/Vars. Source arithmetic, numeric kernels, persistent encodings,
+core/provenance, AOT capability imports and existing suite judgments do not change.
+The native regression also binds its expected output to the actual primary stdout
+and exact oracle expression, keeps the original object through GC in both phases,
+and executes the identity control inside a real isolated compiled macro.
+
+Run `scalar-identity-after-root-preservation --scalar-identity-only`, freezing
+source and HEAD through all terminal receipts. It first tests the exact regression,
+then complete public/capability and original definition/stream targets. Fresh
+broader/native capture, exact workspace baseline, independent promotion review and
+passing final-head CI remain required. No promotion or merge is claimed.
+
+
+### Scalar correction passes; generated numeric class data probe (2026-11-24)
+
+At5c1a135c all3 scalar validation commands return0, with unchanged source/HEAD:
+exact regression160.19s including compilation; complete public28/capability2
+59.96s; original import17/stream12 44.06s. These are59 complete-target tests;
+the exact check repeats one of them. Runtime, Macro, real reentrant Macro and
+retained-GC scalar identity observations pass. Receipts are preserved separately.
+
+A preflight for generated numeric forms finds another concrete transfer gap.
+Pinned Clojure1.12.6 returns0 with six [true true] class-identity/instance? pairs
+for Long, Double, BigInt, Ratio, Decimal and BigInteger values. The current CLI
+returns1: Invalid or unsupported compiled macro data: Unexpected structure layout.
+Binary/core/HEAD stay unchanged and the binary embeds the exact current core.
+Its direct source, commands and outputs are retained under class-data-before.
+No new workspace run has been started after this preflight.
+
+The class-data regression and primary fixture are added to the same eval branch.
+First run `class-data-regression-before-fix --class-data-before-only` against the
+unchanged bridge. After its actual terminal result, extend the existing native
+constant admission with the runtime's real class-value classifier, preserving
+same-Store owner/roots and strict ordinary macro/source/display readers. Keep
+all exact regression/public/capability/definition and broader/native/workspace/
+review/final-head CI gates. No class marker fixture or serialized fake is used.
+
+
+### Native eval class constants (2026-11-24)
+
+At7c64c12c the exact class-data regression returns101 after successful compilation
+(4.82s build, 2.05s test). Runtime raises the same actual unsupported-layout language
+exception; source and HEAD remain unchanged. No assertion or primary is rewritten.
+Its command/log/recorder receipts are retained in deterministic compressed form.
+
+Native eval constant admission now also calls the existing runtime class-value-is
+classifier before decoding ordinary syntax. Recognized actual class objects use
+the existing same-Store native-constant owner/index/root mechanism, including when
+nested inside generated forms. No symbolic name or reconstructed class marker is
+substituted. Functions and Vars keep their prior admission; ordinary macro/source/
+display readers retain their strict whitelist. Runtime ABI exports, numeric kernels,
+core source, dependencies and persistent encodings do not change.
+
+Run `class-data-after-native-constant-admission --class-data-only`, preserving
+source/HEAD through terminal receipts. It exercises actual class identity and
+numeric instance? forms across Runtime, Macro, retained GC and real reentrant Macro,
+then all public/capability and original import/stream controls. Fresh broader/native,
+exact workspace, independent review and final-head CI still gate promotion.
+
+
+### Scalar and class-root focused validation (2026-11-24)
+
+Atf789ea80 all3 class-data commands return actual0, source/HEAD unchanged. The
+exact new case passes in162.06s including compilation across Runtime/Macro, retained
+GC and actual reentrant Macro. Complete public29/capability2 passes in61.14s, and
+original import17/stream12 passes in43.89s:60 complete-target tests, with the exact
+check repeating one of them. The scalar identity correction remains covered in
+the full public target. Deterministic compressed receipts preserve each scope.
+
+Run `eval-broader-after-scalar-and-class-root-corrections
+--broader-current-baseline-only`, freezing source and HEAD. It must finish all
+seven commands, including fresh actual native0 and strict review against unchanged
+baseline/primary/skip/count/opaque rules. Then rerun the exact two-thread workspace
+command. Publish this validated correction checkpoint to existing draft516; keep
+Refs515/338/339 until local issue acceptance, independent promotion review and
+passing final-head CI satisfy the named issue's gates. Numeric source-form scope
+remains unchanged; no promotion, closure, milestone completion or merge is claimed.
+
+
+### Exact native Decimal tooling follow-up (2026-11-24)
+
+The numeric completion branch is based on f17f7077 without modifying the frozen
+compiled-eval checkout. Native EDN now retains Decimal coefficient/scale, prints
+ordinary M literals, and projects exact source forms. Scale-aware reader key
+identities preserve storage while rejecting numeric duplicates; Serde refuses
+lossy primitive conversion. The unused unsupported-numeric diagnostic is removed.
+
+`cargo test -p suss-reader --locked --offline -- --test-threads=2` completes with
+actual0 in39.26s in the real workspace dependency graph, source/primary/HEAD
+unchanged. It reuses only the inactive isolated reader target; it never writes
+the active eval workspace build target. The original failing Rust control and
+126 fresh pinned JVM coefficient/scale/printing/admission/duplicate controls are
+retained under results/m12-decimal-tooling. Original suite bodies, primary,
+skips, accepted failures, dependency versions and numeric runtime kernels stay
+unchanged.
+
+Next validate analyzer/source and actual Runtime/Macro/AOT integration, implement
+the real Pattern literal/value prerequisite needed to load complete eq/not-eq/
+num bodies, and execute those original numeric source bodies. Fresh independent
+Pattern observations show stable function/loop literal-site identity and reader
+syntax validation are required; allocating markers per call is incorrect.
+Retain the exact workspace, independent review and final-head CI gates before
+promotion. The focused reader result does not prove those broader gates.
+
+
+### Checked Pattern source admission (2026-11-24)
+
+The separate numeric branch adds an original Rust checked-source parser for Java
+pattern grammar. Its exact UTF-16 source/flag data and generated Unicode15.0 name/
+codepoint/property facts are prepared for compiler-reader integration. It does not
+yet add source-form or compiled Pattern value support and is not a matching engine.
+No Java dependency or JDK implementation code is shipped. The full observed Unicode
+name/codepoint table is front-coded, round-trip checked and accompanied by its
+Unicode notice; regeneration uses the retained compressed primary observations.
+
+The initial76 JVM cases pass natively. An independent116-case challenge exposes19
+real discrepancies (actual101, frozen source archived). Their original observations
+are preserved; quote/flag boundaries, class ranges, supplementary escapes and named
+codepoint/property handling are corrected. The complete reader command returns0
+for90 tests in36.38s, including192 admission cases and original Decimal controls.
+Following private accessors and formatting, both full admission targets return0 in
+13.90s. Exact commands, hashes, failures and receipts are retained under
+results/m12-pattern-values; no suite counts, primary, skips or baseline are changed.
+
+Next wire checked source through forms, source/graph quoting and canonical macro
+transfer; add actual immutable Pattern objects and per-literal-site root caching,
+then exercise Runtime/Macro/AOT/GC/ownership and the complete original numeric
+bodies. Pinned value controls require retained function/loop literal identity and
+a fresh instance for separately compiled constants. Do not substitute fabricated
+pattern fixtures or a JVM primitive-boxing Checker. Preserve the accepted :suss/
+:default feature contract and the exact workspace/review/final-head CI gates.
+
+
+### Checked Pattern literal/value integration (2026-11-24)
+
+The numeric branch integrates all published eval corrections at3f79ff38. It adds
+checked regex source forms, lossless source tooling with projection-local literal
+identities, sealed immutable nominal Pattern values and private per-compilation
+literal roots. Exact macro-class authority validates transferred source/flags;
+GC, direct scalar eval, closure/loop lifetime and protected core construction use
+ordinary compiled machinery. No matching engine or Java implementation is shipped.
+
+`cargo test -p suss-reader --locked --offline -- --test-threads=2` returns0 for93
+tests in43.28s. A frozen expanded native command for clojure_pattern_literals,
+analyzer_edn, builtin_construction_sealed and builtin_internals_sealed returns0
+for34 tests in503.18s. It includes18 primary value and6 collection controls in both
+phases, independent retained storage checks and21 actual AOT controls, executed
+twice. All before-failures, the verified old tooling source archive and terminal
+receipts remain under results/m12-pattern-values. These focused results do not
+establish complete numeric bodies, workspace, independent review or final-head CI.
+
+Next execute the complete original numeric-dependent eq/not-eq/num bodies.
+Preserve the accepted Suss/default feature contract and unchanged original JVM
+primary/count/opaque rules. A supplemental complete original default-num JVM
+recording has26 assertions:23 pass and three Short/Byte/Integer preservation
+checks fail because JVM num widens those narrow boxes. Suss deliberately has no
+narrow boxed values (ADR-0003); keep these differences explicit, never label them
+host matches or fabricate JVM Checker fixtures. Preserve exact frozen eval
+workspace validation independently of numeric-branch edits.
+
+
+### Complete numeric source-body counterexamples and num (2026-11-24)
+
+The complete original eq/not-eq bodies now load with real Pattern literals and
+execute142 ordered assertions. Their actual first comparison fails on boxed NaN:
+eq#70 and not-eq#70/71. Exact Decimal/Ratio rows12/68/69 match independently. The
+strict142-host-match check stays failing until the actual semantic gaps are fixed.
+No original suite bytes, primary, comparator, count/skip/opaque rule or reviewed
+baseline is modified. Existing MPL patch0006 adds only a Suss guard for the six
+unchanged Clojure-rule assertions already under Clj.
+
+The num body initially cannot load because num is missing. The complete pinned
+Clojure form is retained with EPL provenance; its JVM Number cast is adapted to
+checked nil/Number projection under ADR-0003. Four supplemental pinned JVM
+recordings of the entire original default body retain26 observations:23 pass and
+3 actual narrow boxed-type failures, actual exits1 each. The separate metadata
+builder preserves all of them, adding only standard canonical IDs/fields.
+
+After fixing an initial test setup error (reference generation failed before the
+native command was started), the complete default-num body check returns0 in9.38s
+on unchanged source/HEAD. It records23 independent host matches,3 explicit accepted
+Short/Byte/Integer platform differences, zero guests/skips/unexecuted rows and all26
+ordered identities. Ratio/BigInt/Decimal rows4/5/6 match. Before-failures and full
+captures remain under results/m12-numeric-source-bodies. Runtime/Macro/AOT API
+controls and broader/workspace/review/CI gates retain separate evidence.
+
+Fresh development-only scalar/source boxing controls also expose existing NaN
+object identity/equality and numeric literal lifetime differences. The actual
+native process returns0 but independent comparison fails101 on16 of34 controls.
+Do not manufacture passing NaN special cases: source overloads, raw locals, actual
+boxed values, literal sites, collection construction and returned constants must
+follow independently observed Clojure behavior. Preserve the isolated frozen eval
+workspace run independently; do not cancel it for unrelated old numeric gaps.
+
+
+### Exact literal sites survive calls, GC and inlining (2026-11-24)
+
+Actual primary controls expose fresh BigInt/Ratio/Decimal literal objects on each
+compiled call. The regression returns101 in both phases and independently fails
+retained reference identity. Lazy module-owned exact-number cache globals retain
+one immutable object per original site, publish only after construction and add
+no session binding history, numeric fields or kernel changes. A compiler-local
+IR site token survives inlining/continuation clones; source-free synthetic
+instructions keep fresh construction. Only deterministic indices are emitted.
+
+The intermediate per-emitted-instruction cache returns101: retained cross-fragment
+roots work, but inlining duplicates the original site's cache. Exact failure inputs
+and successful prefix are preserved. After keeping original site identities, the
+expanded frozen command returns0 for33 tests in537.85s. It covers8 primary exact
+literal cases in Runtime/Macro and actual AOT, independent retained references
+across calls/fragments/GC, all18 analyzer tests and existing BigInteger/BigInt/
+Ratio/Decimal targets. See results/m12-numeric-literal-identity for commands and
+before/after receipts. Primitive boxing/NaN semantics, IR/API/resource/continuation
+and artifact guards, broader/workspace/review/CI retain separate evidence.
+
+The strict original142-row eq/not-eq gate still has3 actual boxed-NaN failures.
+Fresh development-only JVM fixture bytecode confirms Object/Object, Double/Double
+and mixed Object/Double equality overloads differ, as do primitive boxing and
+object constant pools. Generic list literals reuse a boxed constant, while
+primitive vector elements box separately. Do not patch NaN outcomes directly;
+implement source-selected primitive/Object equality and literal object context,
+keeping source hints separate from physical storage and WIT specialization.
+
+
+### Original literal-site aliasing participates in source artifact reuse (2026-11-24)
+
+A frozen f1a011e3 standalone cache probe builds0 and returns101: original-site
+alias partitions emit different fresh Wasm but incorrectly share a source cache
+key. Hashes confirm unchanged source/HEAD/rlib. The selected IR/artifact run is
+explicitly stopped for this actual counterexample; cargo returns101 on SIGTERM
+after2044.14s, with five complete groups37 pass and21 other pipeline successes.
+Its pending397-case corpus has no terminal verdict. Receipts remain under
+results/m12-numeric-literal-identity; this command is not a pass.
+
+Source keys now include a deterministic first-traversal literal-site alias
+partition across nested functions and continuations, without serializing process
+addresses. Focused regressions require separate cache artifacts for different
+partitions and reuse for fresh allocations with identical partitions. Dedicated
+cache/native checks and strict original numeric bodies remain separate evidence.
+
+
+The cache-key correction passes12 unit tests and40 selected IR/API/artifact/
+native tests, including retained exact literal roots and actual AOT. One earlier
+new nested fixture wrongly discarded an unused function and returns101 before
+correction; its exact inputs remain retained. The subsequent10-case NaN
+regression returns101 in Runtime/Macro independent decoding and actual AOT;
+four source-context cases differ. Both decoder adversarial controls pass.
+See results/m12-number-source-objects and the per-command frozen receipts under
+results/m12-numeric-literal-identity. Apply source-directed primitive/Object
+boxing next, then re-run those controls and the unchanged strict142-row bodies.
+
+### Source primitive/Object numeric boundaries (2026-11-24)
+
+Source-directed floating boxing and original-function Object constant pools now
+preserve actual numeric roots while keeping source overloads separate from storage
+inference. Generic equality admits actual same references; source primitive
+comparisons keep their numeric overloads. Object-array traversal uses lexical
+source facts even when its only operand is a local. A NaN-only verdict exception
+is not used. The shared ABI, persistent numeric fields, wire formats and native
+authority remain unchanged; no Java dependency is shipped.
+
+Two compile/setup failures and the subsequent two primitive-vector native/AOT
+failures are preserved with exact input overlays. After the array traversal fix,
+the frozen batch returns0 for compilation/bootstrap (46.66s),7 native/AOT tests
+(579.39s), and2 complete-body tests (166.88s). Native execution covers16 contexts,
+28 selected source/float/exact controls, and8 actual retained literal-root
+categories across calls/fragments/GC in both phases. Capture controls already
+matched before the array fix; do not label them negative counterexamples.
+
+All142 original eq/not-eq assertions now independently host-match in order,
+with no guests/skips/unexecuted rows. Complete default num preserves26 ordered
+observations:23 host matches and3 explicit accepted narrow-value differences.
+Original suite/primary/count/comparator/skip/opaque rules are unchanged.
+Receipts and qualifications are under results/m12-number-source-objects.
+Next align legacy floating identity expectations with the pinned primary and run
+broader predicate/hint/WIT/raw-lane/budget/bootstrap/artifact checks. The separate
+frozen eval workspace run retains its own source/HEAD and terminal evidence.
+
+
+### Deferred source Objects, exceptional printing and atom identity (2026-11-24)
+
+A typed local Double call exposed eager Object allocation inside its numeric
+loop: the corrected emitted-code check first returns101 in2.14s, then0 in172.14s
+after deferring physical materialization of the distinct source Object SSA value.
+The first broader check finds a missing raw-consumer classification and panics;
+its exact pre-correction source is retained. After that fix all20 raw primitive/
+local/capture layout tests pass, along with Object and box-reuse targets.
+
+The next actual failure is computed negative infinity printing -Infinity instead
+of ##-Inf: literal reference identity no longer stands in for numeric comparison.
+The printer now uses numeric comparisons for both infinities. Atom identity drops
+the obsolete JavaScript NaN fallback. Eight fresh Clojure1.12.6 controls retain
+computed exceptional printing and primitive/shared/distinct NaN atom behavior.
+
+The frozen deferred-object-consumption-after-printer-fix gate returns0 for all
+eight commands, source and HEAD unchanged. It runs6 capture/atom tests (original18
+capture programs plus8 new primary controls in Runtime/Macro and actual AOT),
+15 Object/literal/predicate/box-reuse target tests, strict complete142-row original
+eq/not-eq bodies and all26 default-num rows (23 host matches, the same three
+explicit narrow-number differences), Java/Node-free double bootstrap and4
+bootstrap execution tests, core-import/sequence/numeric provenance and unchanged
+upstream contract. Individual actual receipts, earlier failures, source overlays
+and independent primary outputs are under results/m12-number-source-objects.
+
+Public num inline boundaries still need their own regression/correction. Full
+numeric issue acceptance, exact workspace, independent review and final-head CI
+remain separate gates; original suite/primary/count/skip/opaque rules do not change.
+
+
+### Public num inline and alias boundaries (2026-11-24)
+
+The complete14-control Clojure1.12.6 API primary and separate6 binding controls
+retain two direct-call compilation failures and18 value/effect observations.
+The native/AOT negative command returns101 in75.659s, with source/HEAD unchanged:
+five discrepancies per native phase, plus actual AOT value and arity-stage
+failures. An earlier fixture setup failure on unloaded subs is retained separately.
+
+Authenticated direct source calls now implement the original num :inline rule:
+bad arities fail analysis; primitive floating inputs box freshly; existing Object
+inputs retain their roots. Ordinary aliases keep the original function's runtime
+arity, evaluation effects and live bindings. Compiler-owned NumCheck admits nil
+and actual Numbers or throws an owned error. The first emitter attempt passes
+Rust checking but fails generated Wasm validation because number-test inherited
+the generic import signature. Its exact source overlay and terminal101 are saved.
+Declaring the existing predicate as (eqref)->i32 fixes the import; no runtime
+export, Java dependency, original core form/notice or numeric kernel changes.
+
+The frozen complete-native-aot-after-import-signature-fix gate returns0 for all
+three commands: source check24.753s; all4 complete API/decoder tests271.810s;
+strict original numeric bodies157.948s. Runtime/Macro retain all20 controls and
+actual AOT checks18 values plus2 compile-stage failures. Original eq/not-eq keeps
+142 host matches; complete default-num retains26 rows with23 host matches and
+the same3 explicit narrow-number platform differences. Source/HEAD unchanged.
+Broader compiler/hint/WIT/cache/budget guards, complete capture, exact workspace,
+independent review and final-head CI remain separate requirements.
+
+
+### Source floating Objects retain boxed replacement dispatch (2026-11-24)
+
+The broader source-hint command returns101 at clean5b0a9726: original ADR-0004
+raw-core Runtime/Macro and actual AOT controls trap when raw-double is replaced
+by a boxed Long function. These controls are explicitly Suss's primitive-entry
+fallback contract; no primary or test expectation changes. Three earlier source
+hint/overload/method targets pass; later command stages do not execute.
+
+The physical floating Object materializer now tests the actual value before
+copying Double fields. Definite primitive Doubles retain the raw path; actual
+boxed Doubles get a fresh Object; other boxed replacements retain their actual
+value for ordinary numeric dispatch or language errors. The previous blind
+Double cast caused the trap. The frozen focused gate returns0 for all three
+commands: original raw-core, complete Num/Object native and AOT targets, and
+strict complete numeric bodies. All20 Num API and16 Object-context controls,
+142 equality host matches and26 default-num rows retain their earlier results.
+Source/HEAD unchanged; individual seconds and receipts are retained. Wider
+compiler/resource/WIT/cache/budget/bootstrap and final acceptance remain separate.
+
+
+### Broader compiler validation after boxed fallback correction (2026-11-24)
+
+At45733e74 all9 durable command stages return0, source and HEAD unchanged:
+source hints/primitive methods/overloads/raw-core/parameter/type guards; raw
+locals/captures, actual WIT, HIR resource and expression-artifact guards; source
+artifact/identity, default budgets and built-in authority guards; compiler
+library guards; Java/Node-free double bootstrap; and core-import, sequence,
+numeric and unchanged upstream contract checks. Full per-command logs/times
+are retained under results/m12-num-api/broader-compiler-after-boxed-replacement-fix.
+This checkpoint does not replace the full captured numeric acceptance, exact
+workspace, prerequisite eval review fixes, independent review or final-head CI.
+
+
+### Complete original capture after numeric source corrections (2026-11-24)
+
+At3ba85b35 the actual native complete-suite command returns101 in486.812s,
+with source/HEAD unchanged. The outer producer returns0; an explicit terminal
+verifier correctly rejects calling that a native pass. Complete source locking
+passes. Original global primary, comparator, count/skip/opaque rules and reviewed
+baseline remain unchanged. Full capture/command/log archives are retained.
+
+The read-only conservation reviewer preserves every prior ordered row, every
+old test's observed count, every previously loaded namespace and every successful
+row judgment. All229 BigInt/Ratio and200 Decimal tagged observations still match.
+The four newly loaded bodies execute186 additional rows:71 eq,71 not-eq,26 num
+and18 remove. All142 equality rows match. Global measured counts move from
+5354 host matches/106 guest judgments/105 failures/1374 unexecuted/63 failed
+namespaces to5512/107/132/1196/59, with zero skips in both captures.
+
+The newly exposed assertion differences are exactly the original JVM/clj num
+primary's18-row count versus Suss/default26 (including8 extra observed rows),
+and remove ordinal18 expecting a Character sequence error. Suss character
+literals are one-unit UTF-16 strings under the accepted platform contract, so
+that newly executed row reports no throw. Four other namespace failures advance
+past regex reading to the actual missing re-matcher/repeatedly/clojure.string
+dependencies. No new difference is accepted or hidden by this audit; native0
+and final workspace acceptance are not established. The separately recorded
+Clojure default-num26 reference and its explicit3 narrow-number differences
+remain distinct from the unchanged global JVM/clj18 primary.
+
+Run `python3 results/m12-num-api/review-full-capture-conservation.py
+results/m12-num-api/full-suite-after-source-inline` to reproduce the audit. It
+checks the exact previous/primary/baseline hashes and never writes a baseline.
+Its per-row5369 host-compatible decisions are not the old global5354 count:
+existing count guards also affect the global classification. Scope and evidence
+review of these newly visible differences is required before any baseline change.
+
+### Eval validation at the frozen scalar/class correction (2026-11-24)
+
+At3f79ff38 the exact baseline `cargo test --workspace --locked --
+--test-threads=2` returns0 in14,291.917s. The durable scope terminates normally;
+all recorded inputs and checked-out HEAD remain unchanged. Compressed full log
+and source receipt are retained under
+`results/m12-eval/full-workspace-after-scalar-and-class-root-corrections`.
+
+The preceding seven-command broader gate also returns0, including public eval,
+existing hosts, numeric/module/artifact/budget guards, the optimized random
+effect check, Java/Node-free double-bootstrap reproduction, fresh actual native
+suite capture and unchanged strict capture review. Complete eval retains34 rows:
+29 host matches and the same five guest judgments at ordinals15-19; all three
+numeric eval rows match independently. Symbol61 and Var34 retain their exact
+counts/judgments. All5,346 prior comparable successes are conserved; no baseline,
+primary, skip/count/opaque rule or original suite bytes change. Numeric tagged
+subsets match229/229 and200/200; full #338/#339 source-form acceptance remains a
+separate requirement.
+
+Remote foundation, all eight integration shards and aggregate pass on3f79ff38
+in run45411802198. The primary verifier passes again after the workspace terminal.
+The live-Var verifier first detects three stale source digests from the scalar/
+class corrections. Refreshing only those digests makes it pass; upstream, primary,
+adaptation, verifier and frozen native receipts are unchanged. The old record and
+actual before/after exits are kept under provenance-refresh-after-scalar-class-roots.
+Independent review and passing CI on the final published head still gate ready
+status. No merge is authorized.
+
+
+### Independent eval promotion review regressions (2026-11-24)
+
+Independent review at a881b165 records three concrete primary/native differences:
+embedded capture-free functions need fresh instances while captured functions
+fail constant initialization before their evaluated unit body; isolated macro
+expansion/raw calls need the caller's math context; directly invoked evaluated
+macros must preserve transferable ExceptionInfo message/data. Existing top-level
+function eval identity remains true. Captured-function failure is materialization
+(ExceptionInInitializerError on JVM), not a compile-syntax error.
+
+Fresh pinned source, actual stdout/exit/hash records and reviewer findings are
+retained under results/m12-eval/promotion-review-findings. New independent
+Runtime/Macro regressions retain all6 function,2 exception and3 math controls.
+Before implementation changes the native command returns101 in16.285s: all three
+new tests fail; two existing primary boundary tests pass. Source/HEAD unchanged.
+The prior complete workspace result remains valid evidence for its frozen source,
+but does not cover these controls. CI45460496718 is canceled for these confirmed
+defects, not a budget refusal. Keep the same draft PR; fix, validate, independently
+review and require passing final-head CI before ready status.
+
+
+### Isolated eval MathContext inheritance and restoration (2026-11-24)
+
+The first correction transfers only validated precision/rounding scalars between
+Stores, preserving nil separately from an unlimited MathContext. The leased Macro
+host binds its own real *math-context* cell in a scoped dynamic frame. Preparation,
+evaluated macro declaration and raw invocation receive the actual caller context;
+restoration covers ordinary errors and uncatchable traps without refilling caller
+fuel. No MathContext object, Store pointer or frame crosses phase ownership.
+
+The first frozen gate returns0 for source check and the original3 primary controls
+in Runtime/Macro. A separate8-control primary records function constant alias/unit
+boundaries and three context rounding/nil/error-recovery controls. The subsequent
+frozen gate returns0 for both context tests, existing public eval budget/capability/
+cancellation controls, isolated-function cumulative budget and cancellation
+recovery. Its final command deliberately runs the still-unfixed five function
+constant/unit controls and returns101. This mixed-result batch is not all-pass
+evidence. All source/HEAD hashes remain unchanged; exact receipts are retained.
+
+The context values match the primary across rounding modes, nil/unlimited context
+and a throwing macro call. Function constant materialization and ExceptionInfo
+transfer remain separate review fixes, followed by fresh whole validation/review/
+final-head CI. Keep the same draft PR and do not merge.
+
+
+### Owned language-exception transfer across evaluated macro calls (2026-11-24)
+
+An isolated language exception now transfers owned message/data/cause Forms,
+using actual original accessor functions retained by the Macro bridge. It never
+transfers a source Store GC root. The caller reconstructs actual local Error or
+ExceptionInfo values, using its original ex-info constructor captured before user
+source exposure. Exact numeric data and UTF-16 messages retain their categories
+and scale. VM traps retain their trap path. Unsupported data transfer reports
+its actual diagnostic; causes are bounded to256 levels and ordinary work fuel.
+
+The first frozen correction gate returns0 for source check, both original
+ExceptionInfo observations in Runtime/Macro, and both math-context/restoration
+tests. Three additional pinned controls cover Decimal1.00M/Ratio2/3 data through
+a nested cause, ordinary division-error message/nil data, and nil ExceptionInfo
+message/empty data. Their native Runtime/Macro test passes, as do the original
+error controls and cumulative isolated-function budget check. Exact per-command
+receipts are retained; source/HEAD remain unchanged through each terminal.
+
+The final command deliberately checks the remaining function materialization
+problem and returns101. Its new3-control primary includes top-level metadata
+function identity, earlier top-level-do effects before nested metadata-function
+materialization failure, and existing captured-function top-level identity.
+No all-pass batch or completed eval issue is inferred. Function materialization,
+full validation, independent re-review and final-head CI still gate promotion.
+
+The function-constant review fix uses compiler-emitted calls through the existing
+universal closure ABI to initialize each original source function's constant
+pool at construction. Private site identities survive inlining and are shared
+across arities; direct C.EVAL def-prefix forms retain actual roots. The retained
+first eager-pool timing run exits101; the construction-time refinement passes
+all five context/pool, six original function and three timing primary controls
+in both phases. See `results/m12-eval/function-{def-and-pool,pool-initialization}-primary`
+and compressed receipts/source overlays under the `promotion-review-function-*`
+directories. No primary, baseline, count, skip or opaque rules change.
+
+Run `cargo test -p suss-cli --locked --offline --test clojure_eval -- --nocapture
+--test-threads=2`: all38 tests pass, actual0 in298.55s including compilation.
+Run `cargo test -p suss-compile --locked --offline --lib
+portable_session::installation::tests -- --nocapture --test-threads=2`: all3
+pass, actual0 in150.06s. Both commands finish with source and HEAD unchanged in
+`promotion-review-function-construction-complete-eval`. Provenance digests are
+refreshed separately under `provenance-refresh-after-review-fixes`, preserving
+upstream, adaptation, primary and historical frozen receipts. Broader compiler,
+complete native suite/capture and exact workspace validation must be rerun after
+these code changes; the earlier 3f79 workspace result is historical evidence.
+
+The numeric branch integrates eval9a02658e in0b0af7b3; source merges automatically,
+and the appended handoff conflict preserves both branches' evidence. Refresh only
+current source hashes in eval/num provenance; keep original primary/adaptation/
+license and frozen receipts unchanged. `results/m12-num-api/review-expanded-failure-ledger.py`
+returns0 for the precise newly executable failure accounting: four loaded
+namespaces, four failures advancing to missing dependencies,26 num count/profile
+rows and remove#18 Character/string verdict. ADR-0003 Types and the accepted
+UTF-16 string contract support the classifications. Original global JVM/clj18
+and independent default26 remain separate; the latter keeps23 host matches and
+three explicit narrow-wrapper differences. No primary/comparator/count/skip/
+opaque rule changes. The former ledger is archived; its native101 stays101.
+The new ledger explicitly retains132 failed global comparisons, rather than
+calling them passes. Fresh native capture, complete controls and exact workspace
+validation are required on this integrated source. The integrated capture
+reviewer requires actual inner native0, all prior observation identities and
+successful decisions, plus229/200 tagged numeric matches against the unchanged
+primary; outer producer0 alone is insufficient.
+
+CI45482784311 at7b71 exposes two reader-test NaN assumptions and a missing
+Pattern leaf in the record-factory span eraser. Exact source/logs are retained
+under results/m12-num-api/ci-reader-pattern-repair-before. The fresh pinned
+reader-nan-ci-primary controls and existing native binary both return
+[[true false false] [true true false] [true true true]]: same-object Object
+equality is reflexive for NaN, numeric == is not, and repeated special-token
+reads retain the root. Use numeric == for the structural NaN detector; retain
+explicit Object/numeric and repeated-read checks. Add Pattern as a leaf to the
+span eraser without changing golden factory bytes or the shared reader corpus.
+Only owned test helpers and arithmetic documentation change; numeric production,
+original primary, suite/count/skip/opaque rules and explicit ledger stay intact.
+The numeric14-stage terminal is already complete, so its queued7b71 full baseline
+must be replaced after these repairs are validated. Keep the active9a026 eval
+workspace untouched; its result remains independent. The old controller's numeric
+head guard must refuse the superseded head before launching any old baseline.
+
+Atc526ae71, compile-all-tests returns0 in774.960s, complete reader16 plus original
+record-factory preservation1 return0 in79.785s, and all remaining repair metadata
+checks return0, with source/HEAD/Binaryen unchanged. See compressed receipts under
+results/m12-num-api/ci-reader-pattern-repair-validation. CI integration4 also
+exposes the owned vector control's documented historical boxed-NaN divergence.
+Fresh pinned/native2 controls agree on retained [true false true] versus computed
+[false false false]. Promote only the old gap's expected value; preserve all23
+ordered source expressions, original21 primary pairs and the constructor control.
+Keep earlier frozen divergence evidence unchanged. The complete native/Macro/AOT
+vector target and a fresh complete capture must validate the repaired head before
+publishing the combined checkpoint and replacing the numeric workspace queue.
+
+
+The completed CI45482784311 run also exposes a now-under-budget macro-effect
+batch, a computed Double/Object identity expectation, and the pinned CLJS
+NaN identity result in the portable matrix. Exact CI/source/local fuel101
+evidence is preserved under results/m12-num-api/ci5-repair-before. Fresh
+Clojure1.12.6/native identity controls both return [true 0 false false]. Keep
+the immutable397-case CLJS fixture and142 retarget count; use the measured
+Clojure override for symbolic NaN and computed-versus-Var Double identity.
+The macro-effect control retains its100000 fuel limit, single-call success,
+actual cumulative guest trap, retained effect and recovery checks;128 finite
+calls exceed the same budget where the former32 now fit. Production defaults
+and all1229 production inputs remain unchanged from7b71.
+
+Atb244f519, all eight CI-repair commands return0 with source/HEAD/Binaryen
+unchanged. The complete macro-fuel8/raw-AOT1 targets finish in
+83.192s; the complete portable22 target, including all397
+ordered source observations, finishes in1435.39s. Core import,
+eval provenance, original comparison contract and explicit-ledger checks pass.
+Fresh actual native0 finishes in672.661s and the strict integrated
+capture preserves5750 ordered observations, prior successful judgments and
+229 BigInt/Ratio plus200 Decimal host matches. The exact committed default26
+checker also returns0 on that fresh full capture, retaining23 host matches
+and3 explicit narrow-wrapper differences. See compressed receipts in
+results/m12-num-api/ci5-all-repairs-validation and the separate
+ci5-repaired-fullcapture-default26-review. Original primary/comparator/count/
+skip/opaque contracts and the132 explicit global failures are unchanged.
+Exact two-thread workspace, independent review and final-head CI remain gates;
+the superseded7b71 queue is replaced only with this validated repaired source.
+
+
+CI45502526357 at a4513977 completes with seven integration jobs passing and
+integration6 failing the retained-source sequence NaN comparison. Exact CI
+and local101 evidence is under results/m12-num-api/ci6-sequence-before. Fresh
+Clojure1.12.6 distinguishes canonical primitive `(= ##NaN ##NaN)` (false)
+from the same objects passed through an ordinary `=` function binding (true).
+The normal native CLI agrees. Original nested-list NaNs compare true.
+The 135-case retained-source fixture includes implementation-internals controls,
+so its source-loading setup remains; canonical user input correctly rejects
+its private EMPTY-field control. Exploratory canonical-setup failures remain
+archived and are not reported as language compatibility counterexamples.
+
+Keep all 135 original source/expected rows immutable. Apply only measured
+Clojure boxed-profile NaN corrections in the owned comparison helper and add
+five canonical primitive/Object controls in Runtime and Macro phases. Both
+profiles retain their distinct observations; the canonical primitive false is
+not weakened to match boxed behavior. The other five retained-source tests
+remain. Complete portable_sequences7 and clojure_number_source_objects4
+(including actual AOT) return0 in184.199s with source/HEAD/Binaryen unchanged.
+All 1229 production inputs remain unchanged from7b71. See the fresh
+ci6-sequence-{nan-context,boxed}-primary and focused-repair receipts. Original
+fixture/count/coercion-correction/skip/opaque/ledger contracts are unchanged.
+Fresh provenance/complete-native/conservation checks, exact workspace,
+independent review and final-head CI remain required on the repaired branch.
+
+
+The CI6 retained-source repair passes all eight source-frozen conservation,
+provenance and capture commands on source 75488c08. Focused execution already
+returns 0 for all seven sequence tests (the immutable 135-case source matrix
+and five canonical primitive/Object controls in Runtime/Macro) plus all four
+existing source-object tests including actual AOT. The subsequent conservation
+check proves executable/test/primary inputs remain byte-identical across the
+evidence-only commit; the focused receipt retains its actual original HEAD.
+
+Fresh full native exit 0 takes 697.803s. Strict comparison preserves
+all 5,750 ordered observations, prior successful judgments and 229 BigInt/Ratio
+plus 200 Decimal tagged host matches. The exact committed default26 checker
+also returns 0 on this fresh capture, retaining 23 host matches and three
+explicit narrow-wrapper differences. See compressed receipts under
+results/m12-num-api/ci6-sequence-all-repairs-validation and the separate
+ci6-repaired-fullcapture-default26-review. The original 135-case fixture,
+JVM primary, comparator, count/skip/opaque contracts and 132 explicit global
+failures remain unchanged. The canonical primitive NaN=false and ordinary
+function/object NaN=true profiles are both retained. Exact workspace,
+independent review and passing final-head CI remain required.
+
+
+The final eval review-fix source at 9a02658e completes all ten broader
+validation commands with source, HEAD and pinned Binaryen unchanged. They
+cover source/primary provenance, core and sequence imports, compiler library,
+25 numeric/module/artifact/budget targets, the optimized random-effect guard,
+Java/Node-free bootstrap reproduction, and the complete native capture.
+Actual native exit 0 takes 469.394s. Strict conservation retains
+all 5,564 ordered observations, 5,346 prior comparable successes, all 34
+original eval assertions (29 host matches and the same five guest judgments),
+the complete symbol/Var bodies, and 229 BigInt/Ratio plus 200 Decimal tagged
+host matches. The existing baseline, primary, count/skip/opaque rules and
+unrelated failures remain unchanged. See the compressed terminals under
+results/m12-eval/promotion-review-all-fixes-broader.
+
+Run `cargo test --workspace --locked -- --test-threads=2`: actual exit 0 in
+13637.983s, with source and HEAD unchanged throughout the
+durable run. The exact command, Rust toolchain, input hashes and full output
+are archived under full-workspace-after-promotion-review-fixes. This validates
+the construction-time function pools, owned exception transfer and inherited
+math context on the current executable source; earlier workspace results
+remain historical. During the continuous run, the temporary CPU ceiling was
+raised from three to six cores after the numeric capture freed host capacity;
+test threads, build jobs, memory limits, source and HEAD remained unchanged.
+The measured scheduling observation is archived as resource-policy.json.gz.
+Independent follow-up review and passing final-head CI
+still gate ready status. Numeric source-body closure remains separate in #518.
+
+
+Fresh pinned Clojure controls cover unused invalid math contexts, actual
+keyword/map reads, macro and raw-macro access, decimal-consumption effects,
+lazy/function bindings and nested precision/nil overrides. The compiler
+snapshots valid MathContext scalar fields or existing nominal data without
+validating them as numeric context. Unsupported cross-phase data retain an
+honest diagnostic at an actual binding read; unused lazy/function bindings do
+not execute or fail. Dynamic-frame saves use a compiler-only unforced read,
+so a macro can install a valid inner context and restore the outer value.
+Deferred diagnostics live in private GC-owned messages and produce ordinary
+language Errors on read; no foreign roots, fake values or per-request host
+callbacks are added. The existing nominal macro-data transport boundary remains.
+
+The source-frozen focused commands return0 for all40 public-eval tests, all60
+runtime ABI tests and all3 borrowed-installation tests. The new20-control
+primary executes in Runtime/Macro and inside actual compiled Macro functions,
+with post-GC observations. The immutable terminals and exact runner are under
+results/m12-eval/lazy-math-context-frame-focused; verify-lazy-context-checkpoint.py
+links their actual dirty-source HEAD to this committed source by hash without
+relabeling history. Retained negatives include the original eager validation,
+the initial library-test compile error (now fixed), and the actual nested
+binding counterexamples. The intermediate GC run was intentionally interrupted
+for that confirmed production defect and its real nonzero terminal is retained.
+
+Earlier source9a workspace/native/bootstrap results remain historical after
+this source change. Fresh full native capture and strict conservation,
+Java/Node-free bootstrap, exact two-thread workspace validation, independent
+follow-up review and passing final-head CI retain separate gates. No primary,
+baseline, count/skip/opaque or unrelated suite judgments change.
+
+
+The numeric integration applies the parent eval lazy-context/frame-snapshot
+source delta without changing other numeric production, test, runtime or
+configuration inputs. Both append-only handoff sections are preserved and the
+live-Var provenance is regenerated from the combined tree. Parent focused
+40+60+3 results and numeric CI at ea76 are historical evidence for their own
+sources; the combined tree requires fresh execution and exact workspace checks.
+The ea76 numeric full workspace was intentionally interrupted for the confirmed
+shared context bug, with actual101 and unchanged source/HEAD; it is not a pass.
+Existing primary, comparison, count/skip/opaque and explicit failure ledgers
+remain unchanged. Parent-only verify-lazy-context-checkpoint.py remains scoped
+to its recorded parent source; it is not an integrated numeric acceptance check.
+
+Caller math-context snapshot work now precedes child-allowance selection in
+native eval preparation, macro declaration and raw macro invocation. An
+independent resource-ledger regression measures actual caller snapshot cost,
+direct-child first-effect cost and public-entry first-effect cost. All four
+Runtime/Macro controls fail before the fix (256/1024 datum contexts); after
+the fix the public effect boundary covers both measured costs. No production
+fuel limit or arbitrary fixed instruction threshold changes.
+
+Run the source-frozen host-library controls and complete public eval: all
+118 matching host-library tests and all40 public-eval tests return0.
+These include the new ledger, cancellation, ownership and borrowed installation,
+and the unchanged20 primary math-context controls. Exact positive/negative
+receipts and source overlays are under context-fuel-accounting-focused,
+context-fuel-ledger-before and context-fuel-audit-before in results/m12-eval.
+The budget checkpoint verifier preserves each receipt's actual source HEAD
+and proves committed-source conservation rather than relabeling history.
+
+The A482 source's ten preceding provenance/bootstrap/native/conservation
+commands really pass, including native0 in315.614s and all5564 ordered rows,
+prior5346 successes and229/200 tagged host matches. Its exact workspace was
+intentionally interrupted for the confirmed fuel defect: real Cargo101 in
+747.609s, with unchanged inputs/HEAD. The historical recorder returns outer0
+after saving that inner101, so the new checked wrapper explicitly propagates
+and verifies the real Cargo terminal. Real historical101 and0 receipts test
+this propagation without rerunning or fabricating a baseline. The earlier
+workspace run is not an all-pass gate. Fresh bootstrap/native/full workspace,
+independent follow-up review and passing final-head CI remain required after
+this source change. Primary, baseline, count/skip/opaque and unrelated failed
+judgments remain unchanged; source-specific earlier verifiers stay historical.
+
+
+The numeric source integration applies the parent context-fuel fix: snapshot
+work precedes child-allowance selection in all three native entries. Its three
+source/test file changes equal the parent delta applied to the prior numeric
+tree, with every other1474 source/test/runtime/config input unchanged. Both
+prose sides are preserved and combined live-Var provenance is regenerated.
+Parent118 host-library/all40 public-eval results remain evidence for their
+recorded source; fresh combined validation remains required. The preceding
+numeric queue never started execution because the exact parent workspace
+correctly exposed actualCargo101 after intentional interruption for the fuel
+bug. The checked workspace wrapper now verifies and propagates the inner
+Cargo terminal. Parent-only checkpoint verifiers remain historical/scoped;
+combined numeric acceptance uses its own conservation and execution receipts.
+No primary, comparison, count/skip/opaque or explicit failure ledger changes.
+
+Binding snapshots and unbound dynamic roots (2026-11-24): CI run45541143411
+fails the unchanged publication-cell regression at source4003dc28. The same
+existing test independently returns101 locally, with its executable and HEAD
+unchanged. Strict binding-get cannot save an unbound root while entering a
+binding. Compiler snapshots now use a nonforcing binding-snapshot; ordinary
+dynamic reads use binding-read, while Var dereference keeps strict binding-get.
+Nil and false frame values take precedence over an unbound root. Frame cleanup
+restores matching parent entries without turning an unbound root into a bound
+undefined value. Deferred errors still throw on consumption and remain GC-owned.
+
+Run the frozen focused commands recorded in unbound-dynamic-focused: complete
+runtime_abi61, unchanged compiled_macro_publication_cells2, clojure_eval42 and
+portable host-library118 all return0. Six pinned Clojure1.12.6 observations cover
+nil, false, nested frames, eval, throwing cleanup and once-only initializer
+effects; normal Runtime/Macro and actual compiled macros retain their results.
+The earlier20 math-context controls and four measured fuel-ledger cases pass.
+The42-test eval target consists of40 declared eval tests and2 decoder guards.
+
+The three existing source-order instrumentation targets now observe binding-read
+with their effect/order assertions unchanged: portable_closures14,
+portable_dynamic_bindings3 and portable_resolution14 all return0. Source
+conservation and provenance checks pass. Commands, frozen input hashes, exact
+positive/negative terminals and source overlays are retained under results/m12-eval;
+run python3 results/m12-eval/verify-unbound-checkpoint.py to check conservation.
+
+The source4003 workspace was deliberately interrupted for this confirmed CI
+regression, with actual Cargo101 in1483.632s and unchanged source/HEAD. Its ten
+preceding broader commands pass, including native0 and strict conservation of
+all5564 ordered rows, prior5346 successes and229/200 tagged numeric host matches.
+Those broader results are historical after this runtime change. Fresh native
+capture, Java/Node-free bootstrap, exact two-thread workspace validation,
+independent follow-up review and passing final-head CI retain separate gates.
+No primary, baseline, count/skip/opaque rule or unrelated suite judgment changes.
+
+The numeric source integration retains the unbound snapshot/read/cleanup delta
+and its six primary controls. Parent-only conservation receipts remain scoped
+to the recorded parent tree; the combined numeric tree requires its own fresh
+execution and conservation receipts. The preceding numeric queue stopped with
+actual1 before execution when its parent full run exposed the genuine101
+interruption for the CI defect. Original numeric source/primary/comparison and
+explicit failure contracts remain intact. Heavy validation runs sequentially
+after the parent exact workspace terminal.
+
+
+Recorded validation at code `fa0da7ec`: exact
+`cargo test --workspace --locked -- --test-threads=2` returns actual Cargo 0 in
+10212.760 seconds with source/HEAD unchanged. The run records
+377 successful groups, 2578 passed test executions and
+15 existing ignores. All 336 focused controls and ten broader
+commands return 0. Separately, 176 prior CI-target passes across 34 targets are
+conserved from production-identical `3c4a59e8`, rather than fresh fa0da runs.
+The broader gates include Java/Node-free bootstrap, complete native execution
+and strict comparison of 5,564 rows with prior successes and explicit failures/
+guest judgments retained. Source conservation is checked by
+`python3 results/m12-eval/verify-fa0da-workspace-checkpoint.py`; receipts, real negative
+controls and limits remain under `results/m12-eval/`. Independent full-scope review
+and final published-head CI are separate requirements.
+
+### Static script publication and executed native definitions
+
+The script-source-publication-metered-working receipt records all six actual
+commands returning0 with source/HEAD/Binaryen conserved. It includes Rust check,
+three repeated focused publication controls, source/script/module/AOT/REPL58,
+public eval74 and host ownership/budget120:252 distinct target executions.
+Run the exact commands from the archived commands.json under
+results/m12-eval/script-source-publication-checkpoint; raw logs and input hashes
+are retained there as deterministic gzip files. Earlier Rust visibility errors
+and pre-metering execution are retained as separate historical receipts.
+
+Scripts now publish each reached form's static declarations onto the actual
+live compiler catalog, preserving definitions created by earlier native eval,
+future explicit source precedence, actual later macro reassertions and linked
+prefix effects before Runtime errors. Static publication contains no Runtime
+values or initializer replay. Pure AOT does not capture native declarations.
+Source identities are reserved before Runtime so private function pools and
+reader identifiers cannot collide with nested eval.
+
+Isolated source function/Var transport, mixed source/native root forwarding,
+full current workspace/bootstrap validation and a fresh independent review
+remain required. These focused passes do not establish issue completion.
+
+### Scoped suspended-ancestor Store access
+
+The suspended-host-registry-borrowed-display-working receipt records all five
+actual commands returning0 with source/HEAD/Binaryen conserved. Exact commands
+and input hashes are archived with logs under
+results/m12-eval/suspended-host-registry-checkpoint. The three focused mechanical
+controls also run in host123; public eval74 and source/frontend58 bring broad
+coverage to255 distinct target executions. The initial Rust check101 for an
+owned-only display signature remains a separate negative receipt.
+
+A synchronous scoped registry now lends actual suspended ancestor SessionHosts
+without Store pointers, captured lifetime extensions, cross-thread Store access
+or guards held across guest execution. Selecting a host removes it from the
+registry until its next real Caller lends it again. Native code forbids unsafe
+code; native-only scoped-tls-hkt0.1.5 supplies scoped mutable TLS. The lockfile
+adds only this dependency and package. MacroService may borrow its own suspended
+Store/catalog instead of trying to reacquire its owned lease. Nested requests cap
+existing physical fuel and settle saved-parent-minus-total-child-work, preserving
+reentrant work without a second debit. Temporary limits are restored on unwind.
+Borrowed displays use the same printer/error helpers as owned sessions.
+
+The tests execute real Runtime/Macro/Macro Wasmtime callbacks through64levels,
+check linear guest fuel, finite exhaustion/recovery, selection uniqueness, panic
+cleanup, roots/GC/reset identity and live MacroService effects. They do not
+implement or prove Fn/Var transport. Actual value proxies, cross-phase metadata/
+Namespace/live-cell behavior, retirement and cancellation forwarding still need
+implementation and language acceptance before complete workspace/review gates.
+
+### Source analysis placeholders and interrupted dynamic restoration
+
+The cancellation-restoration-and-analyzer-fixed-working receipt records all seven
+actual commands returning0 with source/HEAD/Binaryen conserved. Commands and
+input hashes are archived under results/m12-eval/cancellation-analyzer-checkpoint.
+Source/frontend58, public eval74, host126, analyzer18 and macro analysis/source
+metadata15 give291 distinct passing test executions; focus6 repeats host tests.
+The exact positive source overlay and the reconstructed pre-fix overlay (all six
+modified source hashes verified against the negative receipt) are archived too.
+
+The source analyzer now marks only compiled macro-declaration placeholders.
+The declaration remains represented in its owning phase without another Runtime
+nil AST; real source nils and genuine nil-valued macro expansions remain visible.
+This fixes the four analyzer_edn failures from CI45724644593/integration0 on00707;
+that failed log remains evidence, not a green result. The local pre-fix analyzer
+run retained13 passes and5 failures, including the new nil-preservation control.
+
+Suspended-parent cancellation now reaches guest loops and native host work.
+Only the target consumes its own request; ancestors consume theirs while
+unwinding. Same-engine/exact-parent flags avoid an extra relay thread; distinct
+engines/unregistered parents keep the existing relay. Wasmtime51's epoch hook
+has read-only Store access, so interrupt fuel is exhausted at execution_error,
+then preserved through cleanup. A private scoped guard allows only finite runtime
+frame/cell restoration to finish while the ancestor request remains pending.
+It does not mask source bodies, finally handlers or the current session's own
+requests. The strengthened guest control first failed during math-frame restore
+and now verifies restoration, nil context, exhausted fuel and recovery.
+
+Native function/Var transport and actual mixed source/native Var-root forwarding
+remain unimplemented. These passes do not establish complete issue acceptance,
+a current full workspace/bootstrap/conformance pass or promotion review.
+
+### Native function and immutable metadata capabilities
+
+The current partial native transport checkpoint executes real caller closures
+through isolated source macros, retaining their captured effects, recursive eval,
+math context and owned exceptions. GC-held authenticated capabilities share one
+invocation callback per destination; source lookup is weak and destination roots
+are scoped to an operation. Same-source handles retain logical identity and hash,
+including immutable function metadata. Canonical empty roots use actual source
+root identity and keywords retain destination interning. Mutable/opaque nested
+values still report unsupported transport; no marker data substitutes for Vars
+or Namespaces.
+
+Request-scoped error transfer now preserves a typed interrupt through an actual
+source function callback. The negative reached guest execution and returned
+OutOfFuel; its positive preserves Interrupt and recovery. The earlier published
+CI cancellation race has a guest/controller handshake with the same2,000,000 fuel
+and unchanged REPL/AOT recovery assertions.
+
+Both current frozen batches reached their actual terminals with all input and
+Binaryen hashes conserved: host131, ABI62, source/REPL/module/AOT58 and identity
+hash4 return0. Public eval returns101 with76 passes and the one full20
+Var/Namespace fixture failing (12/20 matching controls in each phase, all40
+attempted). Private capability5 and focused metadata/callback2 repeat within
+those broader targets. Fresh pinned Clojure metadata identity yields five true
+relations; native before the fix yielded true,true,true,false,true, and the
+regression now matches in both phases after GC.
+
+Exact commands, actual failures, input manifests, current source overlay and
+historical source-reconstruction limits are under
+results/m12-eval/native-values-checkpoint. Historical full workspace passes do
+not cover these production changes. Genuine Var/Namespace/state-array transport,
+ns-interns, actual mixed source/native root projection, current full validation
+and independent promotion review remain to do.
+
+### Scoped nested function metadata
+
+Native function metadata now carries actual nested callable roots in a temporary
+transport bundle. Repeated handles preserve logical identity and hashes, call
+the real captured state and survive GC. Both source and destination compiler
+cell counts remain unchanged by transfer; collecting the bundle releases its
+nested endpoints after replacing the ordinary call-site cache's last callee.
+An initial root-guarded run retained that independently cached callee and failed
+its lifetime assertion; both actual negative targets and their exact source
+overlay remain archived. The final control exercises cache replacement before
+requiring collection. Ordinary syntax/display readers and nested Atom rejection
+retain their existing contracts. Transport root handling is distinct from eval
+constant handling, so an opaque root is not recursively captured as its own child.
+
+A fresh pinned Clojure1.12.6 control returns [[true true true true true 42] 42].
+The native before run returns101 at the Runtime metadata boundary. The final guarded
+implementation matches in Runtime and Macro, including retained results after
+GC. All eight frozen commands return0 with source, HEAD and Binaryen unchanged:
+ownership library134, source-macro6 and five focused eval tests pass. The eight
+private capability tests repeat within library134; there are145 distinct target
+executions and153 including those repeats. The focus checks retain strict
+self-value/opaque rejection, metadata map identity and typed callback interruption.
+
+Commands, exact current source overlay, frozen manifests and actual negative
+receipts are under results/m12-eval/nested-native-metadata-checkpoint. Its verifier
+accounts for only this documentation delta after testing. The first working
+receipt predates the root guard and lacks a complete independently archived
+source overlay; it is supplemental historical evidence. The before overlay is
+reconstructible from the recorded base plus the unchanged new CLI test.
+
+Var/Namespace live fields and state arrays, complete namespace interning, nested
+Namespace values and mixed source/native Var-root projection are still required.
+The original20-control aggregate is unchanged and was not rerun in this focused
+checkpoint. Its76-pass/one-failure full eval receipt belongs to74db1fb3. Current
+full workspace/bootstrap/native/conformance/provenance validation and independent
+promotion review follow completion of the remaining behavior. Numeric integration
+continues to await those completed shared changes.
+
+### Authenticated live Vars and Namespaces
+
+Native isolated macros now retain the caller's actual Vars, Namespace objects
+and namespace state arrays. Operations borrow the actual source Store or lease
+its owning Macro service, preserving live cells, identity/hash, metadata and
+macro flags after callbacks. Shared operation callbacks use GC-owned private
+capabilities, not numeric/name authority or one permanent callback per value.
+Namespace reads made by the host use the same actual descriptor validation.
+Ordinary syntax/display readers and opaque Atom rejection keep their contracts.
+
+The unchanged20-control source fixture now matches19/20 in each Runtime and
+Macro phase, attempting all40 observations. The remaining declaration and
+catalog failure is the missing ns-interns function. Actual Var root updates,
+dynamic reads, macro-status changes, metadata aliases and Namespace mutation
+match the pinned primary. A separate ownership regression confirms round-trip
+unwrapping of the exact original Var and mutation of the original state array.
+
+An array regression exposed direct alength casting private native storage as a
+local array. Guarded lowering now declines that path; hinted object-array reads
+and writes also forward authenticated native arrays. The regression exercises
+aliases, clone independence, overlapping copy, range failure before writes,
+elements, GC, exact return identity and source retirement. The actual initial
+cast failures and complete source overlays remain in the evidence archive.
+
+The final10-command frozen batch returns0 for typecheck, library136, ABI62,
+source/REPL/module/AOT58 and four focused eval tests; full20 remains actual101
+with only the stated ns-interns errors. These are260 distinct passing target
+executions and one failing aggregate; separate live1 and private10 repeat library
+controls. Source, HEAD and pinned Binaryen are conserved through actual terminal.
+Exact commands, logs, complete current/negative source overlays and reconstruction
+checks are under results/m12-eval/live-native-values-checkpoint.
+
+Namespace interning must cover real user and core cells, and mixed source/native
+Var-root publication still needs completion without replaying initializers.
+Fresh primary research for immutable nested metadata sharing and user/core Var
+catalogs is separate from these native results; no native pass is claimed for it.
+Current complete workspace/bootstrap/native/conformance/provenance validation
+and independent promotion review remain after the required implementation.
+
+
+### Executable metadata fixture and native diagnostic validation
+
+The [declaration metadata checkpoint](../../results/m12-eval/declaration-metadata-checkpoint/summary.json)
+records fresh complete native0: all5,564 ordered assertion decisions are preserved,
+including the complete34-assertion eval body and229 BigInt/Ratio plus200 Decimal
+independent host matches. The actual native101 before review remains archived;
+only two blocked namespace diagnostics advance from `alter-var-root` to `ref`.
+All counts, skips, guest judgments and unrelated failures remain explicit.
+
+Pinned Clojure1.12.6 confirms declaration metadata executes. The original compiler
+projection fixtures now supply explicit symbol-value bindings for previously
+unbound metadata expressions; their raw declarations and all expected projections
+remain unchanged. Four original projection tests and a new six-control regression
+pass, as do core/eval provenance checks. A failed lexical-wrapper attempt remains
+archived because nesting declarations changed the catalog snapshots under test.
+Production inputs are identical to9222862b. Exact workspace, final acceptance
+audit, independent review and final-head CI remain separate gates.
 
 ## Exact frozen-source host/Var workspace execution (2026-11-27)
 
@@ -34486,3 +36800,51 @@ these repairs; it is not a repaired-source full-run result.
 Independent xhigh review of `56e030f6` against merged main `ac0b485e` found one P3 authored-handoff category/ordinal mapping error, corrected above against the unchanged source and independently decoded capture: BigInt5, Decimal6 (unscaled10, scale1), Ratio7 (1/2). No runtime finding was reported. Fifteen freshly recorded Clojure controls matched in both native phases, and two additional held-value checks retained Var identity and live closure roots after GC. All12,672 frozen probe/source/tool inputs remained unchanged through actual terminal and archive. The original and refined diagnostic/control outcomes remain distinct in `independent-review-56e030f6/`.
 
 The review retains the accepted source-preparation distinction: ordinary source input is prepared before its execution and preserves compile-error atomicity; public eval separately compiles the ordered units of its form argument. Moving a control into eval's form is not evidence that an outer already-being-prepared source form has JVM Compiler.eval unit timing. Embedded local Atom constants are rejected by both pinned Clojure and native controls, while direct eval of Atom and ExceptionInfo preserves identity. Final published-head CI retains a separate source identity.
+
+
+### 2026-11-27: numeric consumer integration and published CI reproduction
+
+The numeric layer now includes published eval checkpoint `2ab330b8`, including the tested symbol/Var registration repair and independent review evidence. Its actual exact2694-pass baseline and separately executed complete eight-test affected target retain their source qualifications; parent results do not certify this numeric source. Numeric test bodies, budgets and all261 prior paths ending cases.json remain protected. A redundant unreachable Pattern match arm was removed without changing the existing early Pattern rejection.
+
+Published numeric head `5ad621b4` failed CI run45868728125 in two `compiled_macro_cumulative_fuel` controls: the effect-preservation negative returned an unlocated Runtime fuel trap, and the completed-helper positive exhausted artifact preparation. Actual old-head logs and hashes are retained in `results/m12-num-api/published-ci-5ad621b4/`. Both test files, including the existing100,000 budget and128-call effect batch, remain unchanged; the prepared native controller executes the original entire eight-test target first. Its subsequent30-target native pass includes the now-registered symbol/Var controls; corpus/default26/bootstrap/full results retain their own actual source identities.
+
+
+### Exact numeric source and workspace validation (2026-11-27)
+
+Numeric runtime source `6ceb25674ceea2600c9e2346b78179740cd0a37a` completes
+`cargo test --workspace --locked -- --test-threads=2` with actual exit 0:
+2,732 passing executions across 388 result groups, zero failures, 15 existing
+ignored executions, in 13,268.372 seconds. All 13,510 input files, HEAD, runner,
+pinned Binaryen and external prerequisite receipts are conserved through actual
+termination and archive. The separate post-run audit also exits 0.
+
+The complete dedicated native controller exits 0 for all 11 commands, including
+222 numeric tests across 33 targets, nine macro fuel tests, 143 ownership and
+transport executions, the explicit random-effect guard, 24 complete suite/body
+tests, strict capture, Java/Node-free bootstrap and both provenance checks.
+All declared tests in the original 17 criterion-mapped targets pass in both
+that batch and the full workspace run.
+
+Fresh native and workspace captures independently preserve all 5,750 ordered
+rows and 5,638 prior successful decisions; all 229 tagged BigInt/Ratio and 200
+Decimal rows host-match. The independent complete default-num checker passes
+with 23 host matches and the same three explicit narrow-class differences among
+26 original rows. The unchanged global ledger retains 132 residual failures,
+107 guest judgments, 1,196 unexecuted primary rows and 59 failed namespaces;
+there are zero skips. These results do not claim language-wide conformance.
+
+Pinned Clojure 1.12.6 controls preserve source-function symbolic constant pools
+across arities and compiler-created try/catch/finally and thread-binding regions.
+Nested source functions, including with-redefs' implicit function, remain
+separate. Genuine before failures, passing Runtime/Macro/AOT results and cache
+alias-partition controls retain their exact source qualifications. The macro
+fuel diagnostic only identifies actual transformer binding-lookup exhaustion;
+original allowances and effect/span/recovery contracts remain unchanged.
+
+See docs/runtime/numeric-acceptance.md for the complete criterion map, measurement
+qualification and command-specific evidence. The manifest is at
+results/m12-num-api/reviewed-core-final-evidence/manifest.json. Actual native/full
+receipts, raw output, captures and archived runners remain unchanged; compressed
+copies and final audits are published alongside them. Interrupted earlier runs,
+stale-provenance outer failure and the corrected pre-Cargo launcher failure are
+retained as actual nonzero results, not relabelled as successful validation.

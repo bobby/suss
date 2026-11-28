@@ -19,3 +19,6 @@ pub use parser::{parse, parse_all, ParseError, ParserState};
 
 /// Re-export span type
 pub use chumsky::span::SimpleSpan as Span;
+
+/// Checked Java-pattern source data for the portable compiler reader.
+pub mod pattern;

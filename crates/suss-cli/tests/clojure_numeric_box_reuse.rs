@@ -3,13 +3,14 @@ use suss_cli::portable_session::Session;
 
 const DEFINITIONS: &str = "";
 
-// The value/NaN cases match fresh JVM Clojure 1.12.6. The identity case preserves
-// Suss numeric value identity, verified against the frozen before-cache binary
-// and documented in docs/runtime/scalar-predicates.md; JVM identity differs.
+// All four cases are checked against the pinned Clojure1.12.6 primary.
+// Distinct Object uses of a primitive double receive distinct boxes; backend
+// storage reuse cannot merge those source Objects. See the retained reference
+// under results/m12-number-source-objects/box-reuse-primary.
 const CASES: &[(&str, &str)] = &[
     ("(let [x (* -0.0 1.0) y (+ 3000000000 5) f (fn [v] v)] (loop [i 0 out []] (if (< i 4) (let [a (f x) b (if (zero? (bit-and i 1)) (f y) (identity y))] (recur (inc i) (conj out [a b]))) [x y out])))", "[-0.0 3000000005 [[-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005] [-0.0 3000000005]]]"),
     ("(let [f (fn [v] v)] (loop [i 0 d 1.5 w 3000000000 out []] (if (< i 4) (let [a (f d) b (f w) a2 (if (zero? (bit-and i 1)) (f d) (identity d)) b2 (f w)] (recur (inc i) (+ d 0.5) (+ w 2) (conj out [a b a2 b2]))) out)))", "[[1.5 3000000000 1.5 3000000000] [2.0 3000000002 2.0 3000000002] [2.5 3000000004 2.5 3000000004] [3.0 3000000006 3.0 3000000006]]"),
-    ("(let [f (fn [v] v) x (+ 1.25 0.5)] [(if true (f x) :unused) (if false :unused (f x)) (f x) (identical? (f x) (f x))])", "[1.75 1.75 1.75 true]"),
+    ("(let [f (fn [v] v) x (+ 1.25 0.5)] [(if true (f x) :unused) (if false :unused (f x)) (f x) (identical? (f x) (f x))])", "[1.75 1.75 1.75 false]"),
     ("(let [x (+ ##NaN 0.0) f (fn [v] v) same (identity identical?) a (if (identity true) (f x) nil) b (if (identity false) nil (f x))] [(= a b) (== a b) (identical? a b) (same a b) (count (hash-set a b)) (get {a 1} b :miss)])", "[false false false false 2 :miss]"),
 ];
 

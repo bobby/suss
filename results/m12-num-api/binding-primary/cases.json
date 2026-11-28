@@ -1,0 +1,32 @@
+[
+  {
+    "name": "direct-num-under-number-rebinding",
+    "expression": "(with-redefs [number? (constantly false)] (num 1))",
+    "observed_edn": "1"
+  },
+  {
+    "name": "alias-num-under-number-rebinding",
+    "expression": "(let [f num] (with-redefs [number? (constantly false)] (f 1)))",
+    "observed_edn": "1"
+  },
+  {
+    "name": "alias-num-rejects-string-under-number-rebinding",
+    "expression": "(let [f num] (with-redefs [number? (constantly true)] (try (f \"x\") (catch Throwable e :error))))",
+    "observed_edn": ":error"
+  },
+  {
+    "name": "direct-num-under-num-rebinding",
+    "expression": "(with-redefs [num (fn [x] :rebound)] (num 1))",
+    "observed_edn": "1"
+  },
+  {
+    "name": "alias-num-under-num-rebinding",
+    "expression": "(with-redefs [num (fn [x] :rebound)] (let [f num] (f 1)))",
+    "observed_edn": ":rebound"
+  },
+  {
+    "name": "lexically-shadowed-num",
+    "expression": "(let [num (fn [& xs] (count xs))] [(num) (num 1 2)])",
+    "observed_edn": "[0 2]"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pattern-compiled-target/debug/deps/compiled_macro_cumulative_fuel-a7deead3cdf4db20",
+    "--exact",
+    "exhausted_expansion_preserves_effects_already_executed_in_the_macro_store",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "seconds": 37.31031060218811,
+  "head": "9f573766ca082fd34b872b1f360bd1caf7fd5c00"
+}

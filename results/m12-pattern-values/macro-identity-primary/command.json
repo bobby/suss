@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-pattern-values/macro-identity-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.7606620788574219,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "796d8fd987894ea6e8470e63dd6042d56718a4a634711952aa31a6de3316dc48",
+  "stdout_sha256": "1d54f8b9ab46d28deef8d581ec8fd7723b2d69153c6af31df751d49b44c31449",
+  "controls": 8,
+  "qualification": "Fresh pinned primary observations of pattern-object identity across macro duplication, literal sites and eval constant compilation. No native Pattern support is inferred."
+}

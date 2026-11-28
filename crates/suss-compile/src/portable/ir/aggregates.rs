@@ -495,6 +495,7 @@ fn transform(
         });
         arguments[5] = array;
         instructions.push(Instruction {
+            literal_site: None,
             result: array,
             span: span.clone(),
             operation: Operation::Array {
@@ -537,6 +538,7 @@ fn transform(
             span: span.clone(),
         });
         function.blocks[current].instructions.push(Instruction {
+            literal_site: None,
             result,
             span: span.clone(),
             operation: Operation::Nominal {
@@ -563,6 +565,7 @@ fn transform(
         span: span.clone(),
     });
     function.blocks[current].instructions.push(Instruction {
+        literal_site: None,
         result,
         span,
         operation: Operation::Nominal {

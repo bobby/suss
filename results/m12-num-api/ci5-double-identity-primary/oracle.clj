@@ -1,0 +1,1 @@
+(println (pr-str [(identical? ##NaN ##NaN) (do (def d 3.0) (let [f (fn [n] (if (identical? (* (+ n 1.5) 2) d) 1 0))] (f 0))) (let [x (+ 1.5 1.5)] (identical? x x)) (let [f (fn [n] (identical? (* (+ n 1.5) 2) (* (+ n 1.5) 2)))] (f 0))]))

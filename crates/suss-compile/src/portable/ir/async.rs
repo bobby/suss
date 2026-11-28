@@ -467,11 +467,13 @@ mod tests {
                 parameters: vec![ValueId(0)],
                 instructions: vec![
                     Instruction {
+                        literal_site: None,
                         result: ValueId(1),
                         operation: Operation::Await { future: ValueId(0) },
                         span: 0..1,
                     },
                     Instruction {
+                        literal_site: None,
                         result: ValueId(2),
                         operation: Operation::Await { future: ValueId(1) },
                         span: 0..1,
@@ -594,6 +596,7 @@ mod tests {
                 Block {
                     parameters: vec![],
                     instructions: vec![Instruction {
+                        literal_site: None,
                         result: ValueId(3),
                         operation: Operation::Arithmetic {
                             operator: crate::portable::hir::Arithmetic::Add,
@@ -661,6 +664,7 @@ mod tests {
                 Block {
                     parameters: vec![],
                     instructions: vec![Instruction {
+                        literal_site: None,
                         result: ValueId(2),
                         operation: Operation::Literal(crate::portable::hir::Literal::Number(1.0)),
                         span: 0..1,
@@ -673,6 +677,7 @@ mod tests {
                 Block {
                     parameters: vec![],
                     instructions: vec![Instruction {
+                        literal_site: None,
                         result: ValueId(3),
                         operation: Operation::Literal(crate::portable::hir::Literal::Number(2.0)),
                         span: 0..1,

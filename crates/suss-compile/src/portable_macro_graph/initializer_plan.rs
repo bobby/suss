@@ -62,6 +62,7 @@ pub(super) fn same(session: &mut SessionHost<'_>, a: &Form, b: &Form) -> Result<
             (Kind::Number(a), Kind::Number(b)) if a.to_bits() == b.to_bits() => {}
             (Kind::Long(a), Kind::Long(b)) if a == b => {}
             (Kind::Uuid(a), Kind::Uuid(b)) if a == b => {}
+            (Kind::Pattern(a), Kind::Pattern(b)) if a == b => {}
             (Kind::Exact(a), Kind::Exact(b)) if a.text == b.text => {}
             (Kind::String(a), Kind::String(b)) => {
                 if !text(session, a, b)? { return Ok(false); }

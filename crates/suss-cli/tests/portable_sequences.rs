@@ -1,4 +1,4 @@
-use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
+use suss_cli::{portable_macros::CompiledMacros, portable_session::{RuntimeNumber, Session, SessionValue}};
 
 #[path = "support/clojure_corrections.rs"]
 mod clojure_corrections;
@@ -7,10 +7,15 @@ mod clojure_corrections;
 const CORRECTIONS: &[clojure_corrections::Correction] = &[
     ("equal-string-value", "", "+ requires number operands"),
 ];
-/// Recorded observations that `=` equates a long and a double; JVM Clojure
-/// 1.12's `=` keeps the categories apart (#336).
+/// Retained source installs ordinary function bindings, including `=`. Match
+/// Clojure's boxed-call profile: long/double categories stay apart, while a
+/// shared NaN object is reflexive, including through sequences. Fresh pinned
+/// profiles are under results/m12-num-api/ci6-sequence-{boxed,nan-context}-primary.
+/// Canonical primitive `=` remains non-reflexive for NaN, checked separately.
 const CLOJURE_EQUALITY: &[(&str, bool)] = &[
     ("equal-signed-zero", false),
+    ("equal-nan", true),
+    ("equal-nested-nan", true),
     ("review-equality-negative-zero-nan-rest", false),
 ];
 
@@ -47,10 +52,9 @@ fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
     }
     expected.clone()
 }
-fn eval_bool(session: &mut Session, source: &str) -> bool {
-    let value = session.eval(source).unwrap();
+fn boolean(session: &mut Session, value: &SessionValue) -> bool {
     session
-        .inspect(&value, |mut store, value| {
+        .inspect(value, |mut store, value| {
             match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
@@ -60,6 +64,10 @@ fn eval_bool(session: &mut Session, source: &str) -> bool {
         })
         .unwrap()
 }
+fn eval_bool(session: &mut Session, source: &str) -> bool {
+    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+    boolean(session, &value)
+}
 
 #[test]
 fn sequence_foundations_match_independently_encoded_primary_observations() {
@@ -67,6 +75,9 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
         serde_json::from_str(include_str!("../../../tests/oracle/sequence-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 135);
+    // Exercise the retained source and its ordinary replacement bindings. This
+    // fixture also contains implementation-internals controls, distinct from
+    // the canonical user-input profile checked below.
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -94,6 +105,31 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
         session.collect().unwrap();
     }
     assert_eq!(corrected, CORRECTIONS.len());
+}
+
+#[test]
+fn canonical_nan_primitive_and_object_calls_match_pinned_clojure() {
+    // Exact Clojure 1.12.6 sources/results are recorded in
+    // results/m12-num-api/ci6-sequence-nan-context-primary. Do not use the
+    // retained-source boxed profile to weaken canonical primitive behavior.
+    for (phase, mut session) in [
+        ("Runtime", Session::new_repl().unwrap()),
+        ("Macro", Session::new_macro().unwrap()),
+    ] {
+        let mut macros = CompiledMacros::new().unwrap();
+        for (source, expected) in [
+            ("(= ##NaN ##NaN)", false),
+            ("(let [f =] (f ##NaN ##NaN))", true),
+            ("((identity =) ##NaN ##NaN)", true),
+            ("(let [x (identity ##NaN)] (= x x))", true),
+            ("(= (list ##NaN) (list ##NaN))", true),
+        ] {
+            let value = session.eval_with_macros(source, &mut macros)
+                .unwrap_or_else(|error| panic!("{phase} {source}: {error:?}"));
+            session.collect().unwrap();
+            assert_eq!(boolean(&mut session, &value), expected, "{phase} {source}");
+        }
+    }
 }
 
 #[test]

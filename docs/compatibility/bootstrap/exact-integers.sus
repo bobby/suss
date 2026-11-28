@@ -103,6 +103,24 @@
               (UUID. most least))))))))
 ;; END UUID values and tagged-reader parser
 
+;; BEGIN checked immutable Pattern literals
+;; Original Suss implementation. Checked UTF-16 source and flags arrive only
+;; through compiler-owned literal construction or authenticated macro transfer.
+;; A Pattern is an identity value, not a map/vector source descriptor.
+(deftype Pattern [source flags]
+  Object
+  (toString [this] source)
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (-write writer (str "#\"" source "\""))))
+(def ^:private pattern-from-source (fn [source flags] (Pattern. source flags)))
+;; END checked immutable Pattern literals
+
+
 
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
@@ -2649,6 +2667,22 @@
         (assoc (assoc metadata :name name) :ns namespace)))
     (suss.bootstrap/binding-getter-macro-set! (.-val v) (boolean (:macro metadata)))
     v))
+
+;; BEGIN Clojure num checked Number projection
+;; Copyright (c) Rich Hickey. All rights reserved.
+;; The use and distribution terms for this software are covered by the
+;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;; which can be found in runtime/core-import/epl-v10.html.
+;; By using this software in any fashion, you agree to be bound by its terms.
+;; Do not remove this notice or any other from this software.
+;; Complete Clojure1.12.6 num: the Number cast becomes the checked Suss numeric
+;; category projection. ADR-0003 has no narrow boxed Number classes to widen.
+(def ^{:tag Number :doc "Coerce to Number" :added "1.0"} num
+  (fn [x]
+    (if (nil? x) x
+      (if (number? x) x
+        (throw (suss.bootstrap/error "Cannot cast value to Number"))))))
+;; END Clojure num checked Number projection
 
 ;; BEGIN Clojure alter-var-root
 ;; Copyright (c) Rich Hickey. All rights reserved. EPL-1.0.

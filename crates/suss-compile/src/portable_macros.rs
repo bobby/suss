@@ -174,6 +174,19 @@ fn failure(form: &Form, message: &str) -> SessionError {
         message: message.into(),
     })
 }
+// Canonical binding accessors execute guest code before transformer invocation.
+// Exhausting fuel there still belongs to this call's expansion stage. Keep
+// other diagnostics unchanged, including cancellation and owned exceptions.
+fn binding_diagnostic(form: &Form, error: SessionError) -> Diagnostic {
+    let exhausted = matches!(&error, SessionError::Trap(trap)
+        if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel));
+    Diagnostic {
+        span: form.span.clone(),
+        message: if exhausted {
+            format!("Compiled macro expansion failed during transformer binding lookup: {error}")
+        } else { error.to_string() },
+    }
+}
 fn trace_fuel(session: &SessionHost<'_>, target: &(String, String), stage: &str) -> Result<(), SessionError> {
     if std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some() {
         eprintln!("macro-fuel {}/{} {stage}: {}", target.0, target.1,
@@ -1418,9 +1431,7 @@ impl ExpansionHost for MacroHost<'_> {
             && (self.fallback.is_some() || context.origin.and_then(|origin| origin.native_owner()) == Some(self.session.native_owner()));
         let live_status = if native {
             match context.environment.native_macro_global(context.phase, &target.0, &target.1, self.session.native_owner()) {
-                Some(global) => self.session.native_macro_enabled(&global).map_err(|e| Diagnostic {
-                    span: form.span.clone(), message: e.to_string(),
-                })?,
+                Some(global) => self.session.native_macro_enabled(&global).map_err(|error| binding_diagnostic(form, error))?,
                 None => None,
             }
         } else { None };
@@ -1435,13 +1446,9 @@ impl ExpansionHost for MacroHost<'_> {
         let function = if native {
             if let Some(global) = context.environment.native_macro_global(context.phase, &target.0, &target.1, self.session.native_owner())
                 && (function.is_some() || live_status == Some(true)) {
-                let selected = self.session.binding_value(&global).map_err(|error| Diagnostic {
-                    span: form.span.clone(), message: error.to_string(),
-                })?;
+                let selected = self.session.binding_value(&global).map_err(|error| binding_diagnostic(form, error))?;
                 binding_override = match function.as_ref() {
-                    Some(function) => !self.session.identical_values(function, &selected).map_err(|error| Diagnostic {
-                        span: form.span.clone(), message: error.to_string(),
-                    })?,
+                    Some(function) => !self.session.identical_values(function, &selected).map_err(|error| binding_diagnostic(form, error))?,
                     None => true,
                 };
                 Some(selected)
@@ -1449,15 +1456,9 @@ impl ExpansionHost for MacroHost<'_> {
         } else if let Some(original) = function {
             let global = crate::portable::resolve::Environment::default()
                 .declare_cell(self.session.phase(), &target.0, &target.1)?;
-            if self.session.native_macro_enabled(&global).map_err(|error| Diagnostic {
-                span: form.span.clone(), message: error.to_string(),
-            })? == Some(false) { return Ok(None); }
-            let selected = self.session.binding_value(&global).map_err(|error| Diagnostic {
-                span: form.span.clone(), message: error.to_string(),
-            })?;
-            binding_override = !self.session.identical_values(&original, &selected).map_err(|error| Diagnostic {
-                span: form.span.clone(), message: error.to_string(),
-            })?;
+            if self.session.native_macro_enabled(&global).map_err(|error| binding_diagnostic(form, error))? == Some(false) { return Ok(None); }
+            let selected = self.session.binding_value(&global).map_err(|error| binding_diagnostic(form, error))?;
+            binding_override = !self.session.identical_values(&original, &selected).map_err(|error| binding_diagnostic(form, error))?;
             Some(selected)
         } else { None };
         let Some(function) = function else {
@@ -1477,11 +1478,11 @@ impl ExpansionHost for MacroHost<'_> {
         // rather than deriving its body proofs from the cell's owner.
         if native && binding_override {
             self.session.charge_host_work((target.0.len() + target.1.len()) as u64 * 4 + 32)
-                .map_err(|error| Diagnostic { span: form.span.clone(), message: error.to_string() })?;
+                .map_err(|error| binding_diagnostic(form, error))?;
             let proof = self.fallback.as_ref().and_then(|service| service.source_macro_function_proofs(&target));
             if let Some(proof) = proof {
                 let matches = self.session.matches_imported_function_root(&function, &proof.root)
-                    .map_err(|error| Diagnostic { span: form.span.clone(), message: error.to_string() })?;
+                    .map_err(|error| binding_diagnostic(form, error))?;
                 if matches {
                     caller_form_free = proof.caller_form_free;
                     environment_free = proof.environment_free;

@@ -1,0 +1,205 @@
+# Public num source inline and ordinary alias boundaries
+
+The pinned Clojure1.12.6 primary retains all14 initial API controls, including
+12 values/effect observations and2 direct-call compilation-stage failures. A
+separate six-control primary records number?/num rebinding and lexical shadowing;
+it does not replace or alter the original14. JAR, source, stdout and actual
+terminal receipts are retained.
+
+Two independent frozen native CLI probes expose the current source discrepancy.
+The four literal controls return [true true true true], against the actual
+[false false true true]. The six binding controls retain five matches, while
+a direct num call under num rebinding returns :rebound instead of1. Both CLI
+commands themselves return0 and their comparisons return101; source/HEAD/binary
+hashes remain unchanged. These CLI probes are not complete native/AOT results.
+
+Run clojure_num_api against the unchanged implementation before the inline
+correction. It preserves all20 controls in each native phase, independently
+decodes values after GC, and checks18 actual AOT values plus2 compilation-stage
+failures. Owned language catches replace only the unavailable Java catch classes;
+alias arity checks retain the actual diagnostic and evaluation effects.
+
+The first native/AOT test attempt fails setup because public subs is not loaded.
+Its exact test and actual101 are retained; it is not the semantic counterexample.
+Using the owned UTF-16 slice only for the diagnostic prefix fixes setup. The next
+frozen command returns101 in75.66s including compilation: each native phase
+records five discrepancies (two direct arity stages, two NaN inline identities,
+and direct-call num rebinding). The actual AOT reports the same value differences
+and accepts both bad-arity units, which should fail compilation. Decoder guards
+pass. All20 primary controls are retained; source and HEAD remain unchanged.
+
+
+### Public num inline and alias boundaries (2026-11-24)
+
+The complete14-control Clojure1.12.6 API primary and separate6 binding controls
+retain two direct-call compilation failures and18 value/effect observations.
+The native/AOT negative command returns101 in75.659s, with source/HEAD unchanged: 
+five discrepancies per native phase, plus actual AOT value and arity-stage
+failures. An earlier fixture setup failure on unloaded subs is retained separately.
+
+Authenticated direct source calls now implement the original num :inline rule:
+bad arities fail analysis; primitive floating inputs box freshly; existing Object
+inputs retain their roots. Ordinary aliases keep the original function's runtime
+arity, evaluation effects and live bindings. Compiler-owned NumCheck admits nil
+and actual Numbers or throws an owned error. The first emitter attempt passes
+Rust checking but fails generated Wasm validation because number-test inherited
+the generic import signature. Its exact source overlay and terminal101 are saved.
+Declaring the existing predicate as (eqref)->i32 fixes the import; no runtime
+export, Java dependency, original core form/notice or numeric kernel changes.
+
+The frozen complete-native-aot-after-import-signature-fix gate returns0 for all
+three commands: source check24.753s; all4 complete API/decoder tests271.810s;
+strict original numeric bodies157.948s. Runtime/Macro retain all20 controls and
+actual AOT checks18 values plus2 compile-stage failures. Original eq/not-eq keeps
+142 host matches; complete default-num retains26 rows with23 host matches and
+the same3 explicit narrow-number platform differences. Source/HEAD unchanged.
+Broader compiler/hint/WIT/cache/budget guards, complete capture, exact workspace,
+independent review and final-head CI remain separate requirements.
+
+
+### Source floating Objects retain boxed replacement dispatch (2026-11-24)
+
+The broader source-hint command returns101 at clean5b0a9726: original ADR-0004
+raw-core Runtime/Macro and actual AOT controls trap when raw-double is replaced
+by a boxed Long function. These controls are explicitly Suss's primitive-entry
+fallback contract; no primary or test expectation changes. Three earlier source
+hint/overload/method targets pass; later command stages do not execute.
+
+The physical floating Object materializer now tests the actual value before
+copying Double fields. Definite primitive Doubles retain the raw path; actual
+boxed Doubles get a fresh Object; other boxed replacements retain their actual
+value for ordinary numeric dispatch or language errors. The previous blind
+Double cast caused the trap. The frozen focused gate returns0 for all three
+commands: original raw-core, complete Num/Object native and AOT targets, and
+strict complete numeric bodies. All20 Num API and16 Object-context controls,
+142 equality host matches and26 default-num rows retain their earlier results.
+Source/HEAD unchanged; individual seconds and receipts are retained. Wider
+compiler/resource/WIT/cache/budget/bootstrap and final acceptance remain separate.
+
+
+### Broader compiler validation after boxed fallback correction (2026-11-24)
+
+At45733e74 all9 durable command stages return0, source and HEAD unchanged:
+source hints/primitive methods/overloads/raw-core/parameter/type guards; raw
+locals/captures, actual WIT, HIR resource and expression-artifact guards; source
+artifact/identity, default budgets and built-in authority guards; compiler
+library guards; Java/Node-free double bootstrap; and core-import, sequence,
+numeric and unchanged upstream contract checks. Full per-command logs/times
+are retained under results/m12-num-api/broader-compiler-after-boxed-replacement-fix.
+This checkpoint does not replace the full captured numeric acceptance, exact
+workspace, prerequisite eval review fixes, independent review or final-head CI.
+
+
+### Complete original capture after numeric source corrections (2026-11-24)
+
+At3ba85b35 the actual native complete-suite command returns101 in486.812s,
+with source/HEAD unchanged. The outer producer returns0; an explicit terminal
+verifier correctly rejects calling that a native pass. Complete source locking
+passes. Original global primary, comparator, count/skip/opaque rules and reviewed
+baseline remain unchanged. Full capture/command/log archives are retained.
+
+The read-only conservation reviewer preserves every prior ordered row, every
+old test's observed count, every previously loaded namespace and every successful
+row judgment. All229 BigInt/Ratio and200 Decimal tagged observations still match.
+The four newly loaded bodies execute186 additional rows:71 eq,71 not-eq,26 num
+and18 remove. All142 equality rows match. Global measured counts move from
+5354 host matches/106 guest judgments/105 failures/1374 unexecuted/63 failed
+namespaces to5512/107/132/1196/59, with zero skips in both captures.
+
+The newly exposed assertion differences are exactly the original JVM/clj num
+primary's18-row count versus Suss/default26 (including8 extra observed rows),
+and remove ordinal18 expecting a Character sequence error. Suss character
+literals are one-unit UTF-16 strings under the accepted platform contract, so
+that newly executed row reports no throw. Four other namespace failures advance
+past regex reading to the actual missing re-matcher/repeatedly/clojure.string
+dependencies. No new difference is accepted or hidden by this audit; native0
+and final workspace acceptance are not established. The separately recorded
+Clojure default-num26 reference and its explicit3 narrow-number differences
+remain distinct from the unchanged global JVM/clj18 primary.
+
+Run `python3 results/m12-num-api/review-full-capture-conservation.py
+results/m12-num-api/full-suite-after-source-inline` to reproduce the audit. It
+checks the exact previous/primary/baseline hashes and never writes a baseline.
+Its per-row5369 host-compatible decisions are not the old global5354 count:
+existing count guards also affect the global classification. Scope and evidence
+review of these newly visible differences is required before any baseline change.
+
+### Explicit failure ledger after newly executable bodies (2026-11-24)
+
+`review-expanded-failure-ledger.py` returns0 after reviewing the original
+complete101 capture against the accepted platform contract. ADR-0003 Types has
+no narrow boxed Short/Byte/Integer values; the accepted design uses one-unit
+UTF-16 strings for characters. The unchanged global JVM/clj num18 reference
+therefore cannot align with the actual default26 body, and remove#18's Java
+Character sequence error differs from the accepted string representation. The
+four-run pinned Clojure/default26 primary remains separate:23 host matches and
+three explicit narrow-wrapper differences, never26 host matches. No fake Checker,
+Character marker, changed primary/count guard, skip or opaque rule is introduced.
+
+The ledger now records all26 num count/unexpected-assertion differences and the
+one remove verdict failure individually. Four namespaces become loaded; four
+reader failures advance to actual missing re-matcher/repeatedly/clojure.string
+errors. All old test failures and other assertion failures remain. The exact
+historical dea5db93 ledger is archived as `baseline-before-expansion.json.gz`,
+and the conservation script reads compressed-only archives as well as local raw
+files. Its original native101 remains101. The new ledger is failure accounting;
+it does not turn these132 failed global comparisons into passing assertions.
+
+The numeric branch incorporates eval9a02658e via0b0af7b3; the only merge conflict
+was appended handoff prose, with both sets of evidence retained. Current source
+hashes are refreshed in `provenance-after-eval-review-integration`, preserving
+original primary/source/adaptation/license records and earlier frozen receipts.
+A fresh integrated-source native capture is required. Run
+`review-integrated-capture.py <capture-directory>` only after all actual inner
+terminals finish: it requires native0 against the explicit ledger, unchanged
+complete row identities/classifications, preserved earlier successful judgments
+and229/200 independently matching numeric tagged rows. API/AOT, default26,
+workspace, independent review and final-head CI remain separate gates.
+
+### Reader and record-test alignment after full CI (2026-11-24)
+
+At7b71, CI45482784311 integration3 reports two owned reader-test failures:
+its structural NaN detector uses `(not= x x)`, and a direct reader check expects
+that expression to be true for a retained boxed NaN. Integration6 fails Rust
+exhaustiveness checking because the record-factory span eraser lacks the new
+Pattern leaf. The actual logs and exact source-before overlay are retained in
+`ci-reader-pattern-repair-before`; these are source/test diagnostics, not an
+Actions budget refusal or a native numeric-kernel failure.
+
+Fresh pinned Clojure1.12.6 and the existing native binary agree on all three
+reader controls: the same NaN object has `=` true, `not=` false and numeric `==`
+false; repeated special-token reads retain the actual root; numeric `==` detects
+NaN without depending on generic Object equality. See `reader-nan-ci-primary`.
+The conformance helper now uses numeric `==` for NaN detection. Direct assertions
+check the observed Object and numeric behavior, including repeated-read identity.
+The immutable shared corpus, original suite primary/count/skip/opaque rules and
+numeric production code are unchanged. The record span eraser treats Pattern as
+a leaf while retaining every existing byte-pinned factory comparison.
+
+The current arithmetic page also replaces its stale statements that integer
+fractions return doubles and promoting arithmetic awaits BigInt. That prose
+follows the accepted ADR and retained exact numeric controls; the historical
+ABI-v3 record remains unchanged. These edits occur after the numeric14-stage
+terminal, before a replacement numeric workspace baseline. The old queued7b71
+baseline is superseded; #516's live9a026 workspace is untouched. Fresh compilation
+of all tests and execution of the affected targets are required before publishing
+this repair checkpoint. Earlier7b71 receipts retain their exact source identity.
+
+Atc526ae71, all six reader/Pattern repair commands return0 with source, HEAD and
+Binaryen unchanged. Every workspace test target compiles (774.960s); all16 reader
+tests and the byte-pinned record-factory preservation test pass (79.785s total),
+as do source/provenance/comparison/ledger checks. Production-input conservation
+checks1,229 files against the earlier7b71 numeric capture. Exact compressed
+commands/logs are under `ci-reader-pattern-repair-validation`.
+
+CI integration4 additionally exposes the explicitly documented old Suss boxed
+NaN vector control. Fresh pinned/native observations in `vector-nan-ci-primary`
+return [true false true] for the retained destructured object and
+[false false false] for the computed distinct NaN. The owned matrix now promotes
+the former gap to Clojure conformance. All23 ordered source expressions are
+preserved: the original21 primary pairs are unchanged, only the old gap's expected
+value changes, and the Suss-specific mutable-constructor control remains intact.
+Earlier frozenf5056ffe divergence evidence stays archived. Complete Runtime/Macro
+and actual AOT matrix validation, followed by fresh full capture on this repaired
+head, are separate required terminals. No production, original primary/corpus,
+comparison/count/skip/opaque rule or explicit ledger changes.

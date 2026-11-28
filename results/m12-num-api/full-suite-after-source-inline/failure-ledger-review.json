@@ -1,0 +1,73 @@
+{
+  "historical_capture_counts": {
+    "pass": 5512,
+    "guest-judged": 107,
+    "fail": 132,
+    "not-executed": 1196,
+    "skipped": 0,
+    "namespaces-failed": 59
+  },
+  "preserved_numeric_tagged_host_matches": {
+    "bigint-ratio": 229,
+    "decimal": 200
+  },
+  "current_ledger_sha256": "5bd064ef7328859f1acba4647256724408828984f69c9c6d71135c1023151f6c",
+  "primary_unchanged": true,
+  "comparator_unchanged": true,
+  "loaded_namespaces": [
+    "clojure.core-test.eq",
+    "clojure.core-test.not-eq",
+    "clojure.core-test.num",
+    "clojure.core-test.remove"
+  ],
+  "advanced_dependencies": {
+    "clojure.core-test.nth": "re-matcher",
+    "clojure.core-test.repeatedly": "repeatedly",
+    "clojure.core-test.random-uuid": "clojure.string",
+    "clojure.string-test.replace": "clojure.string"
+  },
+  "new_explicit_failures": {
+    "clojure.core-test.num/test-num#1": "count:26/18",
+    "clojure.core-test.num/test-num#2": "count:26/18",
+    "clojure.core-test.num/test-num#3": "count:26/18",
+    "clojure.core-test.num/test-num#4": "count:26/18",
+    "clojure.core-test.num/test-num#5": "count:26/18",
+    "clojure.core-test.num/test-num#6": "count:26/18",
+    "clojure.core-test.num/test-num#7": "count:26/18",
+    "clojure.core-test.num/test-num#8": "count:26/18",
+    "clojure.core-test.num/test-num#9": "count:26/18",
+    "clojure.core-test.num/test-num#10": "count:26/18",
+    "clojure.core-test.num/test-num#11": "count:26/18",
+    "clojure.core-test.num/test-num#12": "count:26/18",
+    "clojure.core-test.num/test-num#13": "count:26/18",
+    "clojure.core-test.num/test-num#14": "count:26/18",
+    "clojure.core-test.num/test-num#15": "count:26/18",
+    "clojure.core-test.num/test-num#16": "count:26/18",
+    "clojure.core-test.num/test-num#17": "count:26/18",
+    "clojure.core-test.num/test-num#18": "count:26/18",
+    "clojure.core-test.num/test-num#19": "unexpected-assertion",
+    "clojure.core-test.num/test-num#20": "unexpected-assertion",
+    "clojure.core-test.num/test-num#21": "unexpected-assertion",
+    "clojure.core-test.num/test-num#22": "unexpected-assertion",
+    "clojure.core-test.num/test-num#23": "unexpected-assertion",
+    "clojure.core-test.num/test-num#24": "unexpected-assertion",
+    "clojure.core-test.num/test-num#25": "unexpected-assertion",
+    "clojure.core-test.num/test-num#26": "unexpected-assertion",
+    "clojure.core-test.remove/test-remove#18": "verdict:fail"
+  },
+  "complete_default_num": {
+    "pass": 23,
+    "guest-judged": 0,
+    "fail": 3,
+    "not-executed": 0,
+    "skipped": 0,
+    "namespaces-failed": 0
+  },
+  "contracts": {
+    "docs/adr/0003-clojure-numeric-tower.md": "0cf136ad1e030a0f4ecc9d061f485c926f8cd69fede48e06742f6f04e39ff16c",
+    "docs/design/suss-0.3.1.md": "4f1a078e2f94a88e5a8779ed3fdeea78d93cbe3cdb73ceab1d8a7312262ef303",
+    "vendor/clojure-test-suite/upstream/test/clojure/core_test/num.cljc": "ac6d931f0056bede47c51c484033431acf22b28945463e2a36271f2d4615dd36",
+    "vendor/clojure-test-suite/upstream/test/clojure/core_test/remove.cljc": "e0e443aed3f83f024be9747f993022628a9f07958a87b3dacd484a85c984959f"
+  },
+  "qualification": "Failure-ledger accounting only: exact count/profile and character differences remain failures, with no new skip or opaque judgment. Historical native101 is retained. This does not establish a fresh native0 on integrated source or substitute for workspace, independent review or final-head CI."
+}

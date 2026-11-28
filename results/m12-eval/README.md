@@ -1,3 +1,7 @@
+The numeric integration retains the parent eval evidence below at its exact
+recorded source. Fresh validation of the combined tree remains separate; the
+parent-specific checkpoint verifier does not certify numeric changes.
+
 ### Root and metadata follow-up evidence
 
 Compiler declaration staging now distinguishes its own writes from real root effects, including an identical root write, metadata execution and later restaging. Only the converted declaration root uses the ABI14 definition setter; nested/user definitions retain ordinary write semantics. Reloading a source macro as an ordinary value updates the retained caller Var's actual root, metadata and macro status. Declaration metadata executes user expressions while its literal containers retain original core constructors.

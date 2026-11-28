@@ -1,0 +1,5 @@
+input=1.0M result=Err(Error { message: "Unsupported numeric literal 1.0M: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)", span: Some(0..4) })
+
+thread 'main' (2951188) panicked at /home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/decimal-tooling-before/probe.rs:5:5:
+BigDecimal literal admission remains missing from the tooling EDN value model
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

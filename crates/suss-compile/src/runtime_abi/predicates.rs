@@ -91,13 +91,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         declared.push(factory(b, name, 1, &[], &body));
     }
 
-    // JavaScript strict identity compares primitive number/string values, but
-    // nominal objects and closures by identity. RefEq alone fails boxed scalars.
-    // A direct function, so inline `identical?` calls it without a closure
-    // when its operands are distinct references (#356).
+    // Scalar integral/UTF-16 identity follows their platform representation.
+    // Floating Objects retain their actual references; source primitive boxing
+    // is selected before IR, rather than inferred from raw storage here.
     let mut body = vec![LocalGet(0), LocalSet(2), LocalGet(1), LocalSet(3)];
-    // Two longs are identical when equal, as an i31 is; two doubles too,
-    // as JavaScript's primitive numbers were. A long is never a double.
+    // Canonical long identity remains value based; a long is never a double.
     let long_test = b.names["long-test"];
     let long_unbox = b.names["long-unbox"];
     body.extend([
@@ -124,18 +122,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32And,
         If(BlockType::Empty),
         LocalGet(2),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
         LocalGet(3),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
-        F64Eq,
+        RefEq,
     ]);
     boolean(&mut body);
     body.extend([

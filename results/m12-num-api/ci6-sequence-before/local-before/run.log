@@ -1,0 +1,17 @@
+
+running 1 test
+test sequence_foundations_match_independently_encoded_primary_observations ... 
+thread 'sequence_foundations_match_independently_encoded_primary_observations' (279307) panicked at crates/suss-cli/tests/portable_sequences.rs:93:9:
+assertion `left == right` failed: equal-nan: (= ##NaN ##NaN)
+  left: Object {"tag": String("bool"), "value": Bool(true)}
+ right: Object {"tag": String("bool"), "value": Bool(false)}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    sequence_foundations_match_independently_encoded_primary_observations
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 25.32s
+

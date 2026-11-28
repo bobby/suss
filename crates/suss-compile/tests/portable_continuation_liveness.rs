@@ -158,6 +158,7 @@ fn graph(types: &[Type], blocks: Vec<Block>) -> Function {
 }
 fn literal(result: usize, value: Literal) -> Instruction {
     Instruction {
+        literal_site: None,
         result: ValueId(result),
         operation: Operation::Literal(value),
         span: 0..1,

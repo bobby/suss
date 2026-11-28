@@ -1,0 +1,14 @@
+[
+  {
+    "name": "async-root-scope",
+    "primary_expression": "(deref (future (let [outside [##NaN] inside (with-redefs [*print-length* 7] [##NaN])] (if (identical? (nth outside 0) (nth inside 0)) 1 0))))",
+    "native_expression": "(suss.async/future* (let [outside [##NaN] inside (with-redefs [test/v 7] [##NaN])] (if (identical? (nth outside 0) (nth inside 0)) 1 0)))",
+    "observed_long": 0
+  },
+  {
+    "name": "async-thread-binding",
+    "primary_expression": "(deref (future (let [outside [##NaN] inside (binding [*print-length* 7] [##NaN])] (if (identical? (nth outside 0) (nth inside 0)) 1 0))))",
+    "native_expression": "(suss.async/future* (let [outside [##NaN] inside (binding [test/v 7] [##NaN])] (if (identical? (nth outside 0) (nth inside 0)) 1 0)))",
+    "observed_long": 0
+  }
+]

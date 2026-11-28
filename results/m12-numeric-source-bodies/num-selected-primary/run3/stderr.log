@@ -1,0 +1,5 @@
+Execution error (AssertionError) at user/eval1092 (oracle.clj:32).
+Assert failed: (zero? (+ (:fail summary) (:error summary)))
+
+Full report at:
+/tmp/clojure-4619927658879925882.edn

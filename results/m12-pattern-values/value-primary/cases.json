@@ -1,0 +1,106 @@
+[
+  {
+    "name": "separate-literal-equality",
+    "expression": "(= #\"my regex\" #\"my regex\")"
+  },
+  {
+    "name": "separate-literal-identity",
+    "expression": "(identical? #\"my regex\" #\"my regex\")"
+  },
+  {
+    "name": "same-binding-equality",
+    "expression": "(let [r #\"my regex\" r2 r] (= r r2))"
+  },
+  {
+    "name": "same-binding-identity",
+    "expression": "(let [r #\"my regex\" r2 r] (identical? r r2))"
+  },
+  {
+    "name": "same-function-literal",
+    "expression": "(let [f (fn [] #\"a\")] (identical? (f) (f)))"
+  },
+  {
+    "name": "same-function-literal-equality",
+    "expression": "(let [f (fn [] #\"a\")] (= (f) (f)))"
+  },
+  {
+    "name": "different-function-literal",
+    "expression": "(let [f (fn [] #\"a\") g (fn [] #\"a\")] (= (f) (g)))"
+  },
+  {
+    "name": "loop-site-retention",
+    "expression": "(loop [i 0 before nil result true] (if (= i 3) result (let [r #\"a\"] (recur (inc i) r (and result (or (nil? before) (identical? before r)))))))"
+  },
+  {
+    "name": "eval-pattern-self",
+    "expression": "(let [r #\"a\"] (identical? r (eval r)))"
+  },
+  {
+    "name": "eval-quoted-pattern-self",
+    "expression": "(let [r #\"a\"] (identical? r (eval (list (quote quote) r))))"
+  },
+  {
+    "name": "eval-generated-vector-pattern",
+    "expression": "(let [r #\"a\"] (identical? r (first (eval [r]))))"
+  },
+  {
+    "name": "separate-read-pattern",
+    "expression": "(= (read-string \"#\\\"a\\\"\") (read-string \"#\\\"a\\\"\"))"
+  },
+  {
+    "name": "re-pattern-identity",
+    "expression": "(let [r #\"a\"] (identical? r (re-pattern r)))"
+  },
+  {
+    "name": "print-pattern",
+    "expression": "(pr-str #\"my regex\")"
+  },
+  {
+    "name": "str-pattern",
+    "expression": "(str #\"my regex\")"
+  },
+  {
+    "name": "regex-backslash-print",
+    "expression": "(pr-str #\"\\d+\\s\")"
+  },
+  {
+    "name": "regex-backslash-str",
+    "expression": "(str #\"\\d+\\s\")"
+  },
+  {
+    "name": "regex-inline-flags",
+    "expression": "(str #\"(?im)a\")"
+  },
+  {
+    "name": "pattern-meta",
+    "expression": "(meta #\"a\")"
+  },
+  {
+    "name": "pattern-class",
+    "expression": "(.getName (class #\"a\"))"
+  },
+  {
+    "name": "pattern-identity-hash",
+    "expression": "(let [r #\"a\"] (= (hash r) (System/identityHashCode r)))"
+  },
+  {
+    "name": "pattern-print-read-fresh",
+    "expression": "(let [r #\"a\" next (read-string (pr-str r))] [(= r next) (= (str r) (str next))])"
+  },
+  {
+    "name": "numeric-predicate-pattern",
+    "expression": "(mapv #(% #\"a\") [number? integer? rational? decimal?])"
+  },
+  {
+    "name": "num-pattern-error",
+    "expression": "(try (num #\"a\") :accepted (catch Throwable e [:error (.getName (class e))]))"
+  },
+  {
+    "name": "invalid-pattern-reader",
+    "expression": "(try (read-string \"#\\\"[\\\"\") :accepted (catch Throwable e [:error (.getName (class e))]))"
+  },
+  {
+    "name": "invalid-pattern-discard",
+    "expression": "(try (read-string \"#_#\\\"[\\\" 1\") :accepted (catch Throwable e [:error (.getName (class e))]))"
+  }
+]

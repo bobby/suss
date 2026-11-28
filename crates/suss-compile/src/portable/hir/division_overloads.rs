@@ -38,9 +38,9 @@ pub(super) fn annotate(
 }
 
 #[derive(Clone, Copy, Default)]
-struct Features { overloads: bool, hints: bool, extrema: bool, numeric_core: bool }
+struct Features { overloads: bool, hints: bool, extrema: bool, numeric_core: bool, objects: bool }
 impl Features {
-    fn include(&mut self, other: Self) { self.overloads |= other.overloads; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; }
+    fn include(&mut self, other: Self) { self.overloads |= other.overloads; self.hints |= other.hints; self.extrema |= other.extrema; self.numeric_core |= other.numeric_core; self.objects |= other.objects; }
 }
 
 struct Pass<'a> {
@@ -105,6 +105,14 @@ impl Pass<'_> {
         needed.hints |= primitive_returns::numeric_hint(&hir.metadata, &hir.span, self.meter)?.is_some();
         needed.extrema |= extrema::is_call(hir);
         needed.numeric_core |= local_hints::numeric_call(hir);
+        needed.objects |= matches!(&*hir.kind, Expression::Literal(Literal::Number(_))
+            | Expression::Nominal { operation: super::Nominal::Identical | super::Nominal::DoubleCast, .. }
+            // A local alone has no context-free feature, but its settled source
+            // type still selects fresh Object boxing when stored in an array.
+            | Expression::Array { operation: ArrayOperation::Objects | ArrayOperation::Literal, .. });
+        needed.objects |= matches!(&*hir.kind, Expression::Call { .. })
+            && hir.source.as_ref().is_some_and(|source|
+                !source.origin.as_ref().is_some_and(|origin| origin.is_privileged()));
         self.needed.insert(key, needed);
         Ok(needed)
     }
@@ -113,7 +121,7 @@ impl Pass<'_> {
         (self.meter)(1)?;
         if !self.hints && !self.validate_methods {
             let needed = self.features(hir)?;
-            if !needed.overloads && !needed.extrema && !needed.numeric_core { return Ok(()); }
+            if !needed.overloads && !needed.extrema && !needed.numeric_core && !needed.objects { return Ok(()); }
         }
         let key = Arc::as_ptr(&hir.kind) as usize;
         if let Some((rewritten, ty)) = self.rewritten.get(&key) {
@@ -123,12 +131,16 @@ impl Pass<'_> {
         }
         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
             if !self.validate_only && (self.hints || local_hints::numeric_call(hir)) {
-                local_hints::inline(hir, facts, self.meter)?;
+                local_hints::inline(hir, facts, self.source_casts, self.meter)?;
             }
             if !self.validate_only { extrema::inline(hir, facts, self.meter)?; }
             // Generated nary comparison pairs are calls on Object temporaries,
             // not Clojure's binary :inline overloads.
             let source_comparison = hir.source.is_some();
+            let primitive_parameters = if let Expression::Call { callee, arguments } = &*hir.kind {
+                super::super::primitive::call_shape(hir, callee, self.meter)?
+                    .and_then(|shape| shape.fixed(arguments.len()).map(|signature| signature.parameters.clone()))
+            } else { None };
             use Expression::*;
             match hir.kind_mut() {
                 LetFn { bindings, body } => {
@@ -187,7 +199,13 @@ impl Pass<'_> {
                 Function { parameters, body, .. } => {
                     let previous = parameters.iter().map(|parameter|
                         (parameter.id, facts.insert(parameter.id, Primitive::Boxed))).collect();
-                    let result = self.walk(body, facts);
+                    let result = self.walk(body, facts).and_then(|()| {
+                        if !self.validate_only && !matches!(&*body.kind, Expression::Nominal {
+                            operation: super::Nominal::LongCast | super::Nominal::DoubleCast, .. }) {
+                            object_context::object(body, true, facts, self.source_casts, self.meter)?;
+                        }
+                        Ok(())
+                    });
                     restore(facts, previous);
                     result?;
                 }
@@ -195,7 +213,13 @@ impl Pass<'_> {
                     for method in methods {
                         let previous = method.parameters.iter().map(|parameter|
                             (parameter.id, facts.insert(parameter.id, Primitive::Boxed))).collect();
-                        let result = self.walk(&mut method.body, facts);
+                        let result = self.walk(&mut method.body, facts).and_then(|()| {
+                            if !self.validate_only && !matches!(&*method.body.kind, Expression::Nominal {
+                                operation: super::Nominal::LongCast | super::Nominal::DoubleCast, .. }) {
+                                object_context::object(&mut method.body, true, facts, self.source_casts, self.meter)?;
+                            }
+                            Ok(())
+                        });
                         restore(facts, previous);
                         result?;
                     }
@@ -268,6 +292,9 @@ impl Pass<'_> {
                         | super::Nominal::DoubleCast | super::Nominal::UncheckedLongCast);
                     for argument in arguments { self.walk(argument, facts)?;
                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
+                        if !self.validate_only && *operation == super::Nominal::Identical {
+                            object_context::object(argument, true, facts, self.source_casts, self.meter)?;
+                        }
                     }
                 }
                 Recur { target, arguments } => {
@@ -276,9 +303,15 @@ impl Pass<'_> {
                         method.validate_recur(arguments, facts, self.meter)?;
                     }
                 }
-                Array { arguments, .. } | Do(arguments) => {
-                    for argument in arguments { self.walk(argument, facts)?; }
+                Array { operation, arguments } => {
+                    for argument in arguments {
+                        self.walk(argument, facts)?;
+                        if !self.validate_only && matches!(operation, ArrayOperation::Objects | ArrayOperation::Literal) {
+                            object_context::object(argument, false, facts, self.source_casts, self.meter)?;
+                        }
+                    }
                 }
+                Do(arguments) => { for argument in arguments { self.walk(argument, facts)?; } }
                 DynamicScope { bindings, body, .. } | AsyncDynamicScope { bindings, body, .. } => {
                     for (_, value) in bindings { self.walk(value, facts)?; }
                     self.walk(body, facts)?;
@@ -295,7 +328,12 @@ impl Pass<'_> {
                 }
                 Call { callee, arguments } => {
                     self.walk(callee, facts)?;
-                    for argument in arguments { self.walk(argument, facts)?; }
+                    for (position, argument) in arguments.iter_mut().enumerate() {
+                        self.walk(argument, facts)?;
+                        let boxed = primitive_parameters.as_ref().and_then(|parameters| parameters.get(position))
+                            .is_none_or(|kind| *kind == super::super::primitive::Kind::Boxed);
+                        if !self.validate_only && boxed { object_context::object(argument, true, facts, self.source_casts, self.meter)?; }
+                    }
                 }
                 Definition { initializer, .. } => {
                     if let Some(value) = initializer { self.walk(value, facts)?; }

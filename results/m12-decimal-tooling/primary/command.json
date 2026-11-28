@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/decimal-tooling-primary-full/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8144123554229736,
+  "controls": 126,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "a08cf8a528b9cebc63ca699e528b02127c4118647ef882ea1948636e2368325b",
+  "stdout_sha256": "1f98867beaa7ce35d36fbbe9049fd35f99e856c3ad8eab2c6e584b56ab70a959",
+  "qualification": "Fresh pinned Clojure1.12.6 host tooling Decimal controls. No native/workspace acceptance is inferred. Scale floor/ceiling, plain/scientific thresholds, exact coefficients and duplicate equality are observed independently."
+}

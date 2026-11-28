@@ -160,7 +160,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         parts.sort_unstable();
                     }
                     let own = match &node.kind {
-                        Kind::NativeConstant { .. } => return Ok(None),
+                        Kind::NativeConstant { .. } | Kind::Pattern(_) => return Ok(None),
                         Kind::Nil | Kind::Discard(_) | Kind::Prefix { .. } => 1,
                         Kind::Tagged { tag, .. } => identifier_size(tag.namespace.as_deref(), &tag.name),
                         Kind::Bool(_) => 2,
@@ -198,7 +198,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         append_parts(&mut out, metadata, meter, &node.span)?;
                     }
                     match &node.kind {
-                        Kind::NativeConstant { .. } => return Ok(None),
+                        Kind::NativeConstant { .. } | Kind::Pattern(_) => return Ok(None),
                         Kind::Nil => out.push(0),
                         Kind::Bool(v) => out.extend([1, u8::from(*v)]),
                         Kind::Number(v) => {
@@ -746,7 +746,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
                 return Ok(Some(named(match value {
                     Literal::Nil | Literal::Undefined => "clj-nil",
                     Literal::Bool(_) => "boolean",
-                    Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. } => "number",
+                    Literal::Number(_) | Literal::ObjectNumber(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. } => "number",
                     Literal::String(_) => "string",
                 })));
             }

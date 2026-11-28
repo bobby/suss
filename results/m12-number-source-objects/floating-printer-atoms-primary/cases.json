@@ -1,0 +1,42 @@
+[
+  {
+    "name": "computed-positive-infinity",
+    "expression": "(pr-str (/ 1.0 0.0))",
+    "observed_edn": "\"##Inf\""
+  },
+  {
+    "name": "computed-negative-infinity",
+    "expression": "(pr-str (/ -1.0 0.0))",
+    "observed_edn": "\"##-Inf\""
+  },
+  {
+    "name": "computed-nan",
+    "expression": "(pr-str (/ 0.0 0.0))",
+    "observed_edn": "\"##NaN\""
+  },
+  {
+    "name": "cas-primitive-nan",
+    "expression": "(let [x ##NaN a (atom x)] [(compare-and-set! a x :updated) (pr-str @a)])",
+    "observed_edn": "[false \"##NaN\"]"
+  },
+  {
+    "name": "cas-object-nan",
+    "expression": "(let [x (identity ##NaN) a (atom x)] [(compare-and-set! a x :updated) @a])",
+    "observed_edn": "[true :updated]"
+  },
+  {
+    "name": "cas-distinct-nan",
+    "expression": "(let [a (atom (/ 0.0 0.0))] [(compare-and-set! a (/ 0.0 0.0) :updated) (pr-str @a)])",
+    "observed_edn": "[false \"##NaN\"]"
+  },
+  {
+    "name": "cas-shared-literal-nan",
+    "expression": "(let [a (atom ##NaN)] [(compare-and-set! a ##NaN :updated) @a])",
+    "observed_edn": "[true :updated]"
+  },
+  {
+    "name": "swap-nan",
+    "expression": "(let [a (atom (/ 0.0 0.0))] [(swap! a (fn [x] :updated)) @a])",
+    "observed_edn": "[:updated :updated]"
+  }
+]

@@ -1,0 +1,1 @@
+(println (pr-str [(let [x (read-string "##NaN")] [(= x x) (not= x x) (== x x)]) (let [a (read-string "##NaN") b (read-string "##NaN")] [(= a b) (identical? a b) (== a b)]) (let [a (read-string "##NaN") b (read-string "##NaN")] [(not (== a a)) (not (== b b)) (and (not (== a a)) (not (== b b)))])]))

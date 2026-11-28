@@ -1,0 +1,2 @@
+Fresh artifacts differ: distinct=1056 bytes, shared=1051 bytes
+After requesting both original-site alias partitions: CacheStats { hits: 1, misses: 1, bypasses: 0, entries: 1, bytes: 1056 }

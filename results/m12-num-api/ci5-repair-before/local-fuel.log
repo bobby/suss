@@ -1,0 +1,15 @@
+
+running 1 test
+test exhausted_expansion_preserves_effects_already_executed_in_the_macro_store ... 
+thread 'exhausted_expansion_preserves_effects_already_executed_in_the_macro_store' (52923) panicked at crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs:305:10:
+called `Result::unwrap_err()` on an `Ok` value: SessionValue { identity: 2, value: Some(OwnedRooted<wasmtime::runtime::gc::enabled::anyref::AnyRef> { inner: GcRootIndex { store_id: StoreId(65), generation: 0, index: PackedIndex::Owned(Id(3)) } }), handles: 2 }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    exhausted_expansion_preserves_effects_already_executed_in_the_macro_store
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 37.13s
+

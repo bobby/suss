@@ -1,0 +1,42 @@
+[
+  {
+    "name": "macro-duplicates-one-object",
+    "expression": "(let [[a b] (duplicate-pattern #\"a\")] (identical? a b))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "same-macro-root-in-one-compilation",
+    "expression": "(let [a (retained-pattern-value) b (retained-pattern-value)] (identical? a b))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "distinct-macro-created-objects",
+    "expression": "(let [[a b] (fresh-pattern-pair)] (identical? a b))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "eval-container-repeated-object",
+    "expression": "(let [r #\"a\" [a b] (eval [r r])] [(identical? a b) (identical? a r)])",
+    "observed_edn": "[false false]"
+  },
+  {
+    "name": "separate-eval-compilations",
+    "expression": "(let [r #\"a\" a (first (eval [r])) b (first (eval [r]))] (identical? a b))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "eval-quoted-repeated-object",
+    "expression": "(let [r #\"a\" [a b] (eval (list (quote quote) [r r]))] [(identical? a b) (identical? a r)])",
+    "observed_edn": "[false false]"
+  },
+  {
+    "name": "same-compiled-site-across-closures",
+    "expression": "(let [make (fn [] (fn [] #\"a\")) a (make) b (make)] (identical? (a) (b)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "separate-compiled-sites",
+    "expression": "(let [a (fn [] #\"a\") b (fn [] #\"a\")] (identical? (a) (b)))",
+    "observed_edn": "false"
+  }
+]

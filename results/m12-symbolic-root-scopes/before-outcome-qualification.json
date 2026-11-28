@@ -1,0 +1,11 @@
+{
+  "before_head": "7e3661448e5c87a6b330573766148ba4c227f124",
+  "actual_sync_regression_exit": 101,
+  "actual_sync_tests_failed": 2,
+  "actual_async_setup_exit": 101,
+  "actual_async_setup_error": "Unresolved Runtime name suss.core/PersistentVector",
+  "async_test_removed_reason": "Exploratory cases0/0 do not discriminate this scope rule; added low-level fixture cannot load PersistentVector. Restore original async target byte-for-byte and keep all original async/WIT validation. No async lowering changed.",
+  "original_async_target_sha256": "8e038424b5d5f0cf70649a4863b522f464ee7f1b037ff8b53bd98db48b6c33ee",
+  "raw_before_receipt_sha256": "859ae0bdfe782221cae4c3816c8cba786aa97cb0c040e196805fa72990d3d4f7",
+  "qualification": "Only the synchronous Runtime/Macro/AOT results demonstrate the root-function sharing defect. The separate async failure was fixture setup, not semantic evidence."
+}

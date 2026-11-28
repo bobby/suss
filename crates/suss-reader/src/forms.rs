@@ -3,8 +3,8 @@
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates. Integer literals in the long range are longs and
 //! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
-//! [`ExactNumber`]s. BigInt and Ratio evaluate as exact GC values; Decimal
-//! evaluation still needs their runtime types (ADR-0003, #338, #339).
+//! [`ExactNumber`]s. Their arbitrary-precision fields pass directly to the
+//! compiler, native tooling EDN and compiled Runtime/Macro numeric values.
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -57,6 +57,7 @@ impl Form {
     pub fn clone_metered(&self, meter: &mut WorkMeter<'_>) -> Result<Self, ParseError> {
         let text = match &self.kind {
             Kind::String(x) => x.len() as u64,
+            Kind::Pattern(x) => x.source().units().len() as u64,
             Kind::Symbol(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
             Kind::Keyword(x) | Kind::AutoKeyword(x) => {
                 (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64
@@ -158,10 +159,10 @@ fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
     Ok(())
 }
 
-/// A Clojure numeric literal that binary64 can't hold exactly: an `N` or `M`
-/// literal, an integer beyond ±2^53, or a ratio that doesn't reduce to an
-/// integer within ±2^53 (ADR-0003). It reads anywhere, so reader-conditional
-/// branches that mention one load, but evaluating it fails (#333).
+/// An exact Clojure BigInt, BigInteger, Ratio or BigDecimal datum. Ordinary
+/// integers in the signed 64-bit range use `Kind::Long`; larger integers and
+/// suffixed literals retain their category and arbitrary-precision fields.
+/// Unselected reader-conditional branches still validate numeric syntax.
 #[derive(Debug, Clone)]
 pub struct ExactNumber {
     /// The literal as written, for diagnostics and macro data.
@@ -184,9 +185,8 @@ impl PartialEq for ExactNumber {
         self.value == other.value
     }
 }
-/// Exact literals without a runtime value use this macro-data placeholder
-/// namespace. BigInt and Ratio have real runtime values; Decimal still uses a
-/// symbol named by the literal text, which decoding restores.
+/// The reserved namespace recognized by `ExactNumber::from_symbol` when
+/// decoding symbolic macro input. Native numeric transport uses exact fields.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {
     /// The decimal-string payload of the Suss BigInteger source/data carrier.
@@ -241,13 +241,6 @@ impl ExactNumber {
             ExactValue::Decimal { unscaled, scale } => format!("{unscaled}E{}M", -i64::from(*scale)),
         }
     }
-    /// The evaluation-time failure for a runtime type not yet implemented.
-    pub fn unsupported_message(&self) -> String {
-        format!(
-            "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
-            self.text
-        )
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -266,6 +259,8 @@ pub enum Kind {
     Exact(ExactNumber),
     /// Immutable UUID with two signed 64-bit halves, selected from #uuid.
     Uuid(crate::uuid::Uuid),
+    /// Checked immutable regular-expression source, with literal-site identity.
+    Pattern(crate::pattern::PatternLiteral),
     String(Vec<u16>),
     Symbol(Symbol),
     Keyword(Keyword),
@@ -547,6 +542,11 @@ fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), P
             Kind::String(units) if String::from_utf16(units).ok().and_then(|s| ExactNumber::biginteger_text(&s)).is_some() => Ok(()),
             _ => Err(error(span, "BigInteger literal expects a decimal string.")),
         },
+        (Some("suss"), "pattern") => match &target.kind {
+            Kind::String(units) => crate::pattern::PatternLiteral::compile(units)
+                .map(|_| ()).map_err(|e| error(span, e.to_string())),
+            _ => Err(error(span, "Pattern literal expects a string.")),
+        },
         _ => Err(error(span, format!("No reader function for tag {tag}"))),
     }
 }
@@ -645,7 +645,10 @@ fn select_inner(
             };
             form.span.end = target.span.end;
             check_tagged(&tag, &target, form.span.clone())?;
-            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
+            form.kind = if tag.namespace.as_deref() == Some("suss") && tag.name == "pattern" {
+                let Kind::String(units) = &target.kind else { unreachable!() };
+                Kind::Pattern(crate::pattern::PatternLiteral::compile(units).expect("validated Pattern"))
+            } else if tag.namespace.as_deref() == Some("suss") && tag.name == "biginteger" {
                 let Kind::String(units) = &target.kind else { unreachable!() };
                 Kind::Exact(ExactNumber::biginteger_text(&String::from_utf16(units).unwrap()).unwrap())
             } else if tag.namespace.is_none() && tag.name == "uuid" {
@@ -1096,6 +1099,7 @@ impl Reader<'_, '_, '_> {
                     }));
                 }
                 Some('{') => Kind::Set(self.items(start, '}')?),
+                Some('"') => Kind::Pattern(self.pattern(start)?),
                 Some('_') => {
                     let target = self.required()?;
                     if pending_prefix(&target.kind, self.meter, target.span.clone())? {
@@ -1273,6 +1277,28 @@ impl Reader<'_, '_, '_> {
                     if let Some(form) = self.form()? {
                         items.push(form);
                     }
+                }
+            }
+        }
+    }
+    fn pattern(&mut self, start: usize) -> Result<crate::pattern::PatternLiteral, ParseError> {
+        let mut units = Vec::new();
+        loop {
+            match self.take() {
+                None => return Err(self.incomplete(start, "EOF while reading regex")),
+                Some('"') => return crate::pattern::PatternLiteral::compile(&units)
+                    .map_err(|failure| self.fail(start, failure.to_string())),
+                Some('\\') => {
+                    // Regex escapes belong to Pattern, including the slash
+                    // before a quote. Only suppress that quote's termination.
+                    units.push(92);
+                    let c = self.take().ok_or_else(|| self.incomplete(start, "EOF while reading regex"))?;
+                    let mut buffer = [0; 2];
+                    units.extend_from_slice(c.encode_utf16(&mut buffer));
+                }
+                Some(c) => {
+                    let mut buffer = [0; 2];
+                    units.extend_from_slice(c.encode_utf16(&mut buffer));
                 }
             }
         }

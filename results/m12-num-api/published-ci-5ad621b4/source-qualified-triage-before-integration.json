@@ -1,0 +1,42 @@
+{
+  "published_run": 45868728125,
+  "published_head": "5ad621b40574a00e0771ca63e2c6c92e6e37bc6b",
+  "current_numeric_head": "af007facae80f96e325106a2e4db322396204719",
+  "actual_published_failures": [
+    "exhausted_expansion_preserves_effects_already_executed_in_the_macro_store",
+    "completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers"
+  ],
+  "source_conservation": {
+    "crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs": {
+      "published_failing_and_current_numeric_source_equal": true,
+      "numeric_sha256": "4e3fc80547887370fea37f1a23662d1310a1d2ff9a64747aa8daea9150b1cfbe",
+      "eval_sha256": "71241f56e5ee93ed8f363cf0d614076522a7113dd0823916b341c46881b221e3",
+      "eval_and_numeric_source_equal": false
+    },
+    "crates/suss-cli/tests/support/completed_macro_work.rs": {
+      "published_failing_and_current_numeric_source_equal": true,
+      "numeric_sha256": "49e5196581043a0e7b1244b56c5c363ae41a02fc4fe385ae2f28e3514744a7f3",
+      "eval_sha256": "49e5196581043a0e7b1244b56c5c363ae41a02fc4fe385ae2f28e3514744a7f3",
+      "eval_and_numeric_source_equal": true
+    }
+  },
+  "current_eval_completed_target": {
+    "head": "052668a3776a64fcc6ce58269ee5d0f524b315a1",
+    "target": "compiled_macro_cumulative_fuel",
+    "actual_passes": 8,
+    "raw_section_sha256": "b2d48dc0c9170ed91da177843b66e8862c0f1bdbd72e36a65ae38b306cb206b1",
+    "whole_workspace_still_pending": true
+  },
+  "next_numeric_first_command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "compiled_macro_cumulative_fuel",
+    "--",
+    "--nocapture",
+    "--test-threads=2"
+  ],
+  "qualification": "The same completed-helper regression passes in the current eval layer. The main cumulative-fuel target differs between eval and numeric by the already published32-to128 effect batch, and the numeric compiler differs. Current numeric execution is required; no fixed/pass claim is inferred from ancestor success."
+}

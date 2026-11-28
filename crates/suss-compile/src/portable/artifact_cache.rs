@@ -388,6 +388,49 @@ mod tests {
         assert_eq!(cache.stats().hits, 0);
     }
     #[test]
+    fn source_cache_distinguishes_literal_site_alias_partitions_without_pointer_keys() {
+        fn share_sites(function: &mut ir::Function, first: &mut Option<std::sync::Arc<()>>) {
+            for instruction in function.blocks.iter_mut().flat_map(|block| &mut block.instructions) {
+                if let Some(site) = &mut instruction.literal_site {
+                    *site = first.get_or_insert_with(|| site.clone()).clone();
+                }
+                match &mut instruction.operation {
+                    ir::Operation::MakeClosure { body, .. } => share_sites(&mut body.function, first),
+                    ir::Operation::MakeGeneralClosure { body, .. } => {
+                        for method in &mut body.methods { share_sites(&mut method.function, first); }
+                    }
+                    ir::Operation::MakeFuture { body, .. } => share_sites(&mut body.continuation.function, first),
+                    _ => {}
+                }
+            }
+        }
+        // The second graph can result from copying a source site during
+        // inlining. It has identical Debug fields but a different alias
+        // partition. That partition crosses nested original function bodies.
+        for source in ["(do 1N 1N)", "(fn [x] (if x 1N 1N))", "(fn ([] 1N) ([x] 1N))", "(fn [x] (if x 1N (try 1N (finally nil))))"] {
+            let distinct = graph(source);
+            let mut shared = distinct.clone();
+            share_sites(&mut shared, &mut None);
+            assert_eq!(format!("{distinct:?}"), format!("{shared:?}"));
+            let fresh = |function: &ir::Function| emit(&mut ArtifactCache::default(), function, source, None);
+            let distinct_wasm = fresh(&distinct);
+            let shared_wasm = fresh(&shared);
+            assert!(distinct_wasm != shared_wasm, "fresh artifacts must differ for {source}");
+            let mut cache = ArtifactCache::default();
+            assert_eq!(emit(&mut cache, &distinct, source, Some(&[])), distinct_wasm);
+            assert_eq!(emit(&mut cache, &shared, source, Some(&[])), shared_wasm);
+            assert_eq!(cache.stats().misses, 2);
+            assert_eq!(cache.stats().hits, 0);
+            // A fresh allocation with the same original-site partition must
+            // hit: process addresses must never enter an artifact key.
+            let mut fresh_shared = graph(source);
+            share_sites(&mut fresh_shared, &mut None);
+            assert_eq!(emit(&mut cache, &fresh_shared, source, Some(&[])), shared_wasm);
+            assert_eq!(cache.stats().misses, 2);
+            assert_eq!(cache.stats().hits, 1);
+        }
+    }
+    #[test]
     fn source_cache_preserves_nan_payload_bits_and_checks_integrity() {
         let mut cache = ArtifactCache::default();
         let mut function = graph("0.0");
@@ -544,21 +587,40 @@ fn debug_field(
 fn numbers(hash: &mut Sha256, function: &ir::Function,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<(), Diagnostic> {
-    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+    literal_fields(hash, function, &mut std::collections::HashMap::new(), meter)
+}
 
+// Shared site tokens are compiler-local identities, but Debug prints each as
+// `()`. Hash their alias partition using deterministic first-traversal indices,
+// including aliases spanning closure/continuation bodies. Addresses are only
+// transient lookup keys and are never written into the artifact identity.
+fn literal_fields(
+    hash: &mut Sha256, function: &ir::Function,
+    sites: &mut std::collections::HashMap<usize, u64>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<(), Diagnostic> {
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
     for block in &function.blocks {
         meter(1)?;
         for instruction in &block.instructions {
-            meter(1)?;
+            meter(2)?;
+            if let Some(site) = &instruction.literal_site {
+                let next = sites.len() as u64;
+                let ordinal = *sites.entry(std::sync::Arc::as_ptr(site) as usize).or_insert(next);
+                field(hash, b"original-literal-site");
+                hash.update(ordinal.to_le_bytes());
+            } else {
+                field(hash, b"fresh-literal-site");
+            }
             match &instruction.operation {
-                ir::Operation::Literal(super::hir::Literal::Number(value)) => {
+                ir::Operation::Literal(super::hir::Literal::Number(value) | super::hir::Literal::ObjectNumber(value)) => {
                     hash.update(value.to_bits().to_le_bytes());
                 }
-                ir::Operation::MakeFuture { body, .. } => numbers(hash, &body.continuation.function, meter)?,
-                ir::Operation::MakeClosure { body, .. } => numbers(hash, &body.function, meter)?,
+                ir::Operation::MakeFuture { body, .. } => literal_fields(hash, &body.continuation.function, sites, meter)?,
+                ir::Operation::MakeClosure { body, .. } => literal_fields(hash, &body.function, sites, meter)?,
                 ir::Operation::MakeGeneralClosure { body, .. } => {
                     for method in &body.methods {
-                        numbers(hash, &method.function, meter)?;
+                        literal_fields(hash, &method.function, sites, meter)?;
                     }
                 }
                 _ => {}

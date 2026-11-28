@@ -1,0 +1,471 @@
+{
+  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+  "assertions": [
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 1,
+      "kind": "predicate",
+      "verdict": "pass",
+      "line": 89,
+      "column": 24,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#1",
+      "deterministic": true,
+      "form": "(NaN? (num ##NaN))",
+      "operands": [
+        {
+          "tag": "f64",
+          "bits": "7ff8000000000000"
+        }
+      ]
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 2,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#2",
+      "deterministic": true,
+      "form": "(and (= 0 (num 0)) (= (type 0) (type (num 0))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 3,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#3",
+      "deterministic": true,
+      "form": "(and (= 0.1 (num 0.1)) (= (type 0.1) (type (num 0.1))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 4,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#4",
+      "deterministic": true,
+      "form": "(and (= 1/2 (num 1/2)) (= (type 1/2) (type (num 1/2))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 5,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#5",
+      "deterministic": true,
+      "form": "(and (= 1N (num 1N)) (= (type 1N) (type (num 1N))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 6,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#6",
+      "deterministic": true,
+      "form": "(and (= 1.0M (num 1.0M)) (= (type 1.0M) (type (num 1.0M))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 7,
+      "kind": "value",
+      "verdict": "fail",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#7",
+      "deterministic": true,
+      "form": "(and (= (short 1) (num (short 1))) (= (type (short 1)) (type (num (short 1)))))",
+      "value": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 8,
+      "kind": "value",
+      "verdict": "fail",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#8",
+      "deterministic": true,
+      "form": "(and (= (byte 1) (num (byte 1))) (= (type (byte 1)) (type (num (byte 1)))))",
+      "value": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 9,
+      "kind": "value",
+      "verdict": "fail",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#9",
+      "deterministic": true,
+      "form": "(and (= (int 1) (num (int 1))) (= (type (int 1)) (type (num (int 1)))))",
+      "value": {
+        "tag": "bool",
+        "value": false
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 10,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#10",
+      "deterministic": true,
+      "form": "(and (= (long 1) (num (long 1))) (= (type (long 1)) (type (num (long 1)))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 11,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#11",
+      "deterministic": true,
+      "form": "(and (= (float 1.0) (num (float 1.0))) (= (type (float 1.0)) (type (num (float 1.0)))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 12,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#12",
+      "deterministic": true,
+      "form": "(and (= (double 1.0) (num (double 1.0))) (= (type (double 1.0)) (type (num (double 1.0)))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 13,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#13",
+      "deterministic": true,
+      "form": "(and (= nil (num nil)) (= (type nil) (type (num nil))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 14,
+      "kind": "value",
+      "verdict": "pass",
+      "line": 90,
+      "column": 29,
+      "contexts": [
+        "positive cases"
+      ],
+      "id": "clojure.core-test.num/test-num#14",
+      "deterministic": true,
+      "form": "(and (= ##Inf (num ##Inf)) (= (type ##Inf) (type (num ##Inf))))",
+      "value": {
+        "tag": "bool",
+        "value": true
+      }
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 15,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#15",
+      "deterministic": true,
+      "form": "(p/thrown? (num (fn [])))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 16,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#16",
+      "deterministic": true,
+      "form": "(p/thrown? (num f))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 17,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#17",
+      "deterministic": true,
+      "form": "(p/thrown? (num {}))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 18,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#18",
+      "deterministic": true,
+      "form": "(p/thrown? (num #{}))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 19,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#19",
+      "deterministic": true,
+      "form": "(p/thrown? (num []))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 20,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#20",
+      "deterministic": true,
+      "form": "(p/thrown? (num (quote ())))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 21,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#21",
+      "deterministic": true,
+      "form": "(p/thrown? (num \\1))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 22,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#22",
+      "deterministic": true,
+      "form": "(p/thrown? (num \\a))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 23,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#23",
+      "deterministic": true,
+      "form": "(p/thrown? (num \"\"))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 24,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#24",
+      "deterministic": true,
+      "form": "(p/thrown? (num \"1\"))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 25,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#25",
+      "deterministic": true,
+      "form": "(p/thrown? (num (quote a)))",
+      "threw": true
+    },
+    {
+      "test": "clojure.core-test.num/test-num",
+      "ordinal": 26,
+      "kind": "thrown",
+      "verdict": "pass",
+      "line": 110,
+      "column": 22,
+      "contexts": [
+        "positive cases",
+        "exceptions thrown"
+      ],
+      "id": "clojure.core-test.num/test-num#26",
+      "deterministic": true,
+      "form": "(p/thrown? (num #\"\"))",
+      "threw": true
+    }
+  ],
+  "schema": 2,
+  "skips": [],
+  "summary": {
+    "test": 1,
+    "pass": 23,
+    "fail": 3,
+    "error": 0
+  },
+  "feature-selection": [
+    "suss",
+    "default"
+  ],
+  "upstream": "clojure-1.12.6",
+  "namespaces": [
+    "clojure.core-test.num"
+  ],
+  "tests": [
+    "clojure.core-test.num/test-num"
+  ],
+  "reporter-errors": []
+}

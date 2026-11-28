@@ -96,6 +96,10 @@ pub enum Operation {
 }
 #[derive(Debug, Clone)]
 pub struct Instruction {
+    /// Identity of an immutable source constant's allocation site. IR cloning
+    /// (including closure inlining and continuation splitting) preserves it.
+    /// This is compiler-local lifetime information, never serialized authority.
+    pub literal_site: Option<std::sync::Arc<()>>,
     pub result: ValueId,
     pub operation: Operation,
     pub span: Range<usize>,
@@ -190,6 +194,14 @@ pub struct GeneralClosureBody {
     pub self_capture: bool,
     pub rest_class: Option<Global>,
 }
+type SymbolicNumberSites = HashMap<u64, std::sync::Arc<()>>;
+
+#[derive(Clone, Copy)]
+enum LiteralPool {
+    NewFunction,
+    EnclosingFunction,
+}
+
 struct Lowerer<'a> {
     suspendable: bool,
     function: Function,
@@ -198,6 +210,8 @@ struct Lowerer<'a> {
     recursive: HashMap<BindingId, (ValueId, usize)>,
     callables: HashMap<ValueId, super::primitive::Shape>,
     closures: HashSet<ValueId>,
+    /// Symbolic reader doubles share objects only within this original function.
+    symbolic_number_sites: SymbolicNumberSites,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 }
@@ -219,6 +233,7 @@ impl<'a> Lowerer<'a> {
             recursive: HashMap::new(),
             callables: HashMap::new(),
             closures: HashSet::new(),
+            symbolic_number_sites: HashMap::new(),
             targets: HashMap::new(),
             meter,
         };
@@ -241,13 +256,16 @@ impl<'a> Lowerer<'a> {
         self.function.blocks[0].parameters.push(value);
         Ok(())
     }
-    fn finish(mut self, hir: &Hir) -> Result<Function, Diagnostic> {
+    fn finish(self, hir: &Hir) -> Result<Function, Diagnostic> {
+        self.finish_with_sites(hir).map(|(function, _)| function)
+    }
+    fn finish_with_sites(mut self, hir: &Hir) -> Result<(Function, SymbolicNumberSites), Diagnostic> {
         let value = self.expression(hir)?;
         if let Some(value) = value {
             self.charge(1, &hir.span)?;
             self.function.blocks[self.current].terminator = Terminator::Return(value);
         }
-        Ok(self.function)
+        Ok((self.function, self.symbolic_number_sites))
     }
     fn value(&mut self, ty: Type, span: Range<usize>) -> Result<ValueId, Diagnostic> {
         self.charge(1, &span)?;
@@ -332,6 +350,7 @@ impl<'a> Lowerer<'a> {
         self.function.blocks[self.current]
             .instructions
             .push(Instruction {
+                literal_site: None,
                 result,
                 operation,
                 span,
@@ -342,15 +361,83 @@ impl<'a> Lowerer<'a> {
         let ty = value.ty();
         self.emit(Operation::Literal(value), ty, span)
     }
-    fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
-        self.charge(expression_preallocation_work(hir), &hir.span)?;
-        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.expression_inner(hir))
+    fn closure(
+        &mut self, hir: &Hir, parameters: &[super::hir::Parameter],
+        captures: &[BindingId], body: &Hir, pool: LiteralPool,
+    ) -> Result<ValueId, Diagnostic> {
+        self.charge(captures.len().saturating_mul(2), &hir.span)?;
+        let mut captured = Vec::new();
+        let mut capture_types = Vec::new();
+        let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
+        for id in captures {
+            let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
+                span: hir.span.clone(),
+                message: "Undefined HIR capture".into(),
+            })?;
+            let ty = self.function.values[value.0].ty;
+            captured.push(value);
+            capture_types.push(ty);
+            inner_parameters.push((*id, ty, hir.span.clone()));
+        }
+        for parameter in parameters {
+            inner_parameters.push((parameter.id, Type::Value, parameter.span.clone()));
+        }
+        let inherited = matches!(pool, LiteralPool::EnclosingFunction)
+            .then(|| std::mem::take(&mut self.symbolic_number_sites));
+        let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
+        if let Some(sites) = inherited { inner.symbolic_number_sites = sites; }
+        for (id, ty, span) in inner_parameters {
+            inner.parameter(id, ty, span)?;
+            if let Some((_, slot)) = self.recursive.get(&id) {
+                inner.recursive.insert(id, (inner.bindings[&id], *slot));
+            }
+        }
+        let (function, sites) = inner.finish_with_sites(body)?;
+        if matches!(pool, LiteralPool::EnclosingFunction) {
+            self.symbolic_number_sites = sites;
+        }
+        let display_name = self.display_name(hir)?;
+        let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
+        self.emit(
+            Operation::MakeClosure {
+                body: Box::new(ClosureBody {
+                    display_name,
+                    arity_name: super::function_names::arity_name(hir),
+                    variadic: false,
+                    capture_types,
+                    arity: parameters.len(),
+                    primitive,
+                    function,
+                }),
+                captures: captured,
+            },
+            Type::Closure(parameters.len()),
+            hir.span.clone(),
+        )
     }
-    fn expression_inner(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+    fn expression(&mut self, hir: &Hir) -> Result<Option<ValueId>, Diagnostic> {
+        self.expression_in(hir, LiteralPool::NewFunction)
+    }
+    fn expression_in(&mut self, hir: &Hir, pool: LiteralPool) -> Result<Option<ValueId>, Diagnostic> {
+        self.charge(expression_preallocation_work(hir), &hir.span)?;
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || self.expression_inner(hir, pool))
+    }
+    fn expression_inner(&mut self, hir: &Hir, pool: LiteralPool) -> Result<Option<ValueId>, Diagnostic> {
         // Divergent operands stop lowering following effects, including publication.
         macro_rules! operand {
             ($value:expr) => {
                 match self.expression($value)? {
+                    Some(value) => value,
+                    None => return Ok(None),
+                }
+            };
+        }
+
+        // These are compiler-created control regions, not source function
+        // definitions. Their constants belong to the enclosing function.
+        macro_rules! region {
+            ($value:expr) => {
+                match self.expression_in($value, LiteralPool::EnclosingFunction)? {
                     Some(value) => value,
                     None => return Ok(None),
                 }
@@ -442,7 +529,9 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect::<Result<Vec<_>, Diagnostic>>()?;
                 operands.extend(values);
-                operands.push(operand!(body));
+                // with-redefs introduces a source function; thread binding
+                // remains a control region of the enclosing source function.
+                operands.push(if *roots { operand!(body) } else { region!(body) });
                 self.emit(
                     Operation::DynamicScope { roots: *roots, globals, operands },
                     Type::Value,
@@ -456,13 +545,24 @@ impl<'a> Lowerer<'a> {
             }
             Expression::Try { regions } => {
                 let regions = [
-                    operand!(&regions[0]),
-                    operand!(&regions[1]),
-                    operand!(&regions[2]),
+                    region!(&regions[0]),
+                    region!(&regions[1]),
+                    region!(&regions[2]),
                 ];
                 self.emit(Operation::Try { regions }, Type::Value, hir.span.clone())?
             }
-            Expression::Literal(value) => self.literal(value.clone(), hir.span.clone())?,
+            Expression::Literal(value) => {
+                let result = self.literal(value.clone(), hir.span.clone())?;
+                if matches!(value, Literal::ObjectNumber(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::Decimal { .. }) {
+                    self.charge(1, &hir.span)?;
+                    let site = if let Literal::ObjectNumber(number) = value && !number.is_finite() {
+                        self.symbolic_number_sites.entry(number.to_bits()).or_insert_with(|| std::sync::Arc::new(())).clone()
+                    } else { std::sync::Arc::new(()) };
+                    self.function.blocks[self.current].instructions.last_mut()
+                        .expect("just emitted a source literal").literal_site = Some(site);
+                }
+                result
+            },
             Expression::GlobalCell(global) => {
                 if hir.ty != Type::Value {
                     return Err(Diagnostic {
@@ -626,54 +726,8 @@ impl<'a> Lowerer<'a> {
                 }
                 self.emit(Operation::Call { operands, primitive }, Type::Value, hir.span.clone())?
             }
-            Expression::Function {
-                parameters,
-                captures,
-                body,
-            } => {
-                self.charge(captures.len().saturating_mul(2), &hir.span)?;
-                let mut captured = Vec::new();
-                let mut capture_types = Vec::new();
-                let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
-                for id in captures {
-                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
-                        span: hir.span.clone(),
-                        message: "Undefined HIR capture".into(),
-                    })?;
-                    let ty = self.function.values[value.0].ty;
-                    captured.push(value);
-                    capture_types.push(ty);
-                    inner_parameters.push((*id, ty, hir.span.clone()));
-                }
-                for parameter in parameters {
-                    inner_parameters.push((parameter.id, Type::Value, parameter.span.clone()));
-                }
-                let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
-                for (id, ty, span) in inner_parameters {
-                    inner.parameter(id, ty, span)?;
-                    if let Some((_, slot)) = self.recursive.get(&id) {
-                        inner.recursive.insert(id, (inner.bindings[&id], *slot));
-                    }
-                }
-                let function = inner.finish(body)?;
-                let display_name = self.display_name(hir)?;
-                let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
-                self.emit(
-                    Operation::MakeClosure {
-                        body: Box::new(ClosureBody {
-                            display_name,
-                            arity_name: super::function_names::arity_name(hir),
-                            variadic: false,
-                            capture_types,
-                            arity: parameters.len(),
-                            primitive,
-                            function,
-                        }),
-                        captures: captured,
-                    },
-                    Type::Closure(parameters.len()),
-                    hir.span.clone(),
-                )?
+            Expression::Function { parameters, captures, body } => {
+                self.closure(hir, parameters, captures, body, pool)?
             }
             Expression::GeneralFunction {
                 methods,
@@ -694,6 +748,10 @@ impl<'a> Lowerer<'a> {
                 }
                 self.charge(methods.len(), &hir.span)?;
                 let mut lowered = Vec::new();
+                // Clojure's original function owns the symbolic constant pool
+                // across all its methods. Nested function definitions start
+                // their own pools; ordinary literal occurrences stay distinct.
+                let mut symbolic_number_sites = HashMap::new();
                 for method in methods {
                     self.charge(
                         captures
@@ -705,6 +763,7 @@ impl<'a> Lowerer<'a> {
                     let primitive = super::primitive::signature(&method.parameters, &method.body, &mut *self.meter)?;
                     let mut inner =
                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
+                    inner.symbolic_number_sites = symbolic_number_sites;
                     for (id, ty) in captures.iter().zip(&capture_types) {
                         inner.parameter(*id, *ty, hir.span.clone())?;
                         if let Some((_, slot)) = self.recursive.get(id) {
@@ -720,6 +779,8 @@ impl<'a> Lowerer<'a> {
                     for parameter in &method.parameters {
                         inner.parameter(parameter.id, Type::Value, parameter.span.clone())?;
                     }
+                    let (function, sites) = inner.finish_with_sites(&method.body)?;
+                    symbolic_number_sites = sites;
                     lowered.push(ClosureBody {
                         display_name: None,
                         arity_name: None,
@@ -727,7 +788,7 @@ impl<'a> Lowerer<'a> {
                         capture_types: environment_types,
                         arity: method.parameters.len(),
                         primitive,
-                        function: inner.finish(&method.body)?,
+                        function,
                     });
                 }
                 let display_name = self.display_name(hir)?;
@@ -1454,7 +1515,7 @@ fn loop_safe(operation: &Operation) -> bool {
                 operation,
                 N::IsMathContext | N::DecimalNew | N::CheckNumericCallee | N::ScalarVectorGuard | N::ScalarMapEntryGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
-                    | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
+                    | N::NumCheck | N::BoxDoubleObject | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
                     | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
                     | N::IsNativeObject | N::IsTypeConstructor | N::IsLanguageError | N::LanguageError

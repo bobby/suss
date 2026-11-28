@@ -1,0 +1,51 @@
+{
+  "head": "c526ae711aa0300dfcf0c48e0860ff039f8e189d",
+  "production_binary_head": "7b71a47b8b60c3b47e69ebb3eabe098270521725",
+  "binary_sha256": "4bc50d0a1678cac13759a95517bfd4c8ae28127fc6a14c1ef04b9e61c0b978c0",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    [
+      "retained-destructured-nan",
+      "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])"
+    ],
+    [
+      "computed-distinct-nan",
+      "(let [[a] [##NaN] b (+ a 0.0)] [(= a b) (== a b) (identical? a b)])"
+    ]
+  ],
+  "oracle_sha256": "2506df0b615fd963ff37e8f89046038cddb1138173e5d7a1a165bb9b629fd6e5",
+  "commands": [
+    {
+      "name": "primary",
+      "command": [
+        "java",
+        "-Xmx256m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/vector-nan-ci-primary/oracle.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 2.103245973587036,
+      "stdout": "[[true false true] [false false false]]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/suss",
+        "-e",
+        "[(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)]) (let [[a] [##NaN] b (+ a 0.0)] [(= a b) (== a b) (identical? a b)])]"
+      ],
+      "exit_code": 0,
+      "seconds": 4.3994526863098145,
+      "stdout": "[[true false true] [false false false]]\n",
+      "stderr_tail": ""
+    }
+  ],
+  "complete": true
+}

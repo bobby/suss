@@ -1,0 +1,1220 @@
+{
+  "runtime_head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+  "phases": [
+    {
+      "phase": "results/m12-symbolic-arities/before-shared-function-pool",
+      "head": "400fa2d6eb3b3bbf3b218cf7c00e36028d08bed8",
+      "actual_exit": 101,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 101
+        }
+      ],
+      "qualification": "Actual two-test semantic regression before arity sharing.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/commands.json",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/commands.json.gz",
+          "source_sha256": "e281c1c77339c55563529c6e15d2694847ecc0b7e44722933f4020f41eec19d0",
+          "staged_sha256": "926aaba82cdee99cdc0fc5ab6f0f421d010fcfbac3fdde4f09c2b5bea133d8bb"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/deleted.json",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/runner.py.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/runner.py.gz",
+          "source_sha256": "aa7b6f3595e44243c409053c62f0e011e9280d5ee539403a0ca2906fbff711d3",
+          "staged_sha256": "aa7b6f3595e44243c409053c62f0e011e9280d5ee539403a0ca2906fbff711d3"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/before-shared-function-pool/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-arities/before-shared-function-pool/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "78d32e43671a63a3a2a90dbf690449671f0bf2d2fe184040c8a24dac4c7d59e3",
+          "staged_sha256": "82c70eea199de762f27d9364993c8f8bab6a23214e96eca475d2359b1b779037"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-symbolic-arities/after-shared-function-pool",
+      "head": "9c33e2277bd36ce5b778d60ea926cc8bad34918a",
+      "actual_exit": 0,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 0
+        },
+        {
+          "name": "literal-alias-partition-cache",
+          "actual_exit": 0
+        }
+      ],
+      "qualification": "Historical120 affected tests plus1 cache pass on9c; later region/root defects were separately reproduced.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/commands.json",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/commands.json.gz",
+          "source_sha256": "9e2f2248a4026e634c15153ae18f37f172b6312c20987501efd10eee65cfc729",
+          "staged_sha256": "7507b8e7563d7430d3a1e3d64c85b90610843778165cc5ab0115f01066fcc50b"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/deleted.json",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/literal-alias-partition-cache.log",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/literal-alias-partition-cache.log.gz",
+          "source_sha256": "4b4afe58707cfdf7397ff3755181aff149bd4f8135724674105e6e80af463407",
+          "staged_sha256": "617e6c1fd72941b88a629c549d12a7fa429b62176194209daeec92e62e9c7d34"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/runner.py.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/runner.py.gz",
+          "source_sha256": "aa7b6f3595e44243c409053c62f0e011e9280d5ee539403a0ca2906fbff711d3",
+          "staged_sha256": "aa7b6f3595e44243c409053c62f0e011e9280d5ee539403a0ca2906fbff711d3"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-arities/after-shared-function-pool/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-arities/after-shared-function-pool/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "4bc95ebf28ce234b658dcd536f7ae118d2d0ce9cf1c774e9579908783e28b22d",
+          "staged_sha256": "f32f3f2f79dd58fd24650bc0c55966a48d99075787d0b0ad4d2670e658fd166f"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-symbolic-regions/before-enclosing-function-pool",
+      "head": "feb6683f82c975aae2e77d2f342d59b7766b3370",
+      "actual_exit": 101,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 101
+        }
+      ],
+      "qualification": "Actual two-test semantic regression before enclosing-region sharing.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/commands.json",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/commands.json.gz",
+          "source_sha256": "dbe4541c5c4273cec9ee1f664320aa738d674ca650336c98c05f9586c412a0bf",
+          "staged_sha256": "d83dfe30ffbe3cd8aa18664115231723626851bdcd0debf4fce104cb1d60d28c"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/deleted.json",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/runner.py.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/runner.py.gz",
+          "source_sha256": "1eac4a6002338ef25f7fcd5ccf330e3bf474975d164a923adee35ef802d2ff41",
+          "staged_sha256": "1eac4a6002338ef25f7fcd5ccf330e3bf474975d164a923adee35ef802d2ff41"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/before-enclosing-function-pool/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-regions/before-enclosing-function-pool/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "3e15ab18e7612cc73afed20b3c192cfaed4b8c9a79a2ba548ae54ee57ebf4f31",
+          "staged_sha256": "868ecaaacf916490774862508b640bb77573b555f4af4b5d1998d4b79365705a"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-symbolic-regions/after-enclosing-function-pool",
+      "head": "149924b91d799ae1581a395a0a9892a0bd8eebed",
+      "actual_exit": 0,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 0
+        },
+        {
+          "name": "literal-alias-partition-cache",
+          "actual_exit": 0
+        }
+      ],
+      "qualification": "Historical122 affected tests plus1 cache pass on1499; implicit root-function boundary was corrected later.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/commands.json",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/commands.json.gz",
+          "source_sha256": "fdbd6b192d630b0fb07568138d2c58b4e2454e154bb6c39a72af2d94ac60e1a8",
+          "staged_sha256": "4d55d143a8acdc8efb40a37971dfd6b208f78777fa81c2f264d0687854974ca9"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/deleted.json",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/literal-alias-partition-cache.log",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/literal-alias-partition-cache.log.gz",
+          "source_sha256": "c40faf438fc99400b54f7c57676fac4d807b512db908a91b3a2d3dcdc7cad99d",
+          "staged_sha256": "f1711463e16276a4e4cdab6526f5225b797310fff4c1b000f6a4897f98925b84"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/runner.py.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/runner.py.gz",
+          "source_sha256": "1eac4a6002338ef25f7fcd5ccf330e3bf474975d164a923adee35ef802d2ff41",
+          "staged_sha256": "1eac4a6002338ef25f7fcd5ccf330e3bf474975d164a923adee35ef802d2ff41"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-regions/after-enclosing-function-pool/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-regions/after-enclosing-function-pool/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "650bc9eeaa2d572089ca05f6f1133acf872100e62dd88c047d2f4910777001f5",
+          "staged_sha256": "a50afebd455f03fe9657b97709889ecee2debfd798b591862e683a6ae828e807"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-symbolic-root-scopes/before-root-function-distinction",
+      "head": "7e3661448e5c87a6b330573766148ba4c227f124",
+      "actual_exit": 101,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 101
+        },
+        {
+          "name": "async-root-scope-guard",
+          "actual_exit": 101
+        }
+      ],
+      "qualification": "Root tests both genuinely fail. Separate exploratory async fixture failed setup; see committed before-outcome-qualification.json. Original async source restored on6ceb.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/async-root-scope-guard.log",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/async-root-scope-guard.log.gz",
+          "source_sha256": "c80c775eb2a7ff3cdebf05b231b4dce3835779f913d78174f66873e57e0bf9ac",
+          "staged_sha256": "4a4c1bc465b6c3ff22875af327b23e675b312ab4bb18459155b51d008fce837b"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/commands.json",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/commands.json.gz",
+          "source_sha256": "859ae0bdfe782221cae4c3816c8cba786aa97cb0c040e196805fa72990d3d4f7",
+          "staged_sha256": "9a83bea8bf0098bc3031b125896950c10db801932b77ecddacd93cba2cd31e47"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/deleted.json",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/runner.py.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/runner.py.gz",
+          "source_sha256": "54b98a23176ccaccc64255af394b39bdf023a2d855ade14411f655b3c9f5854c",
+          "staged_sha256": "54b98a23176ccaccc64255af394b39bdf023a2d855ade14411f655b3c9f5854c"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/before-root-function-distinction/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-root-scopes/before-root-function-distinction/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "6343dafbaaefa0315ccb7c4784a18a0b95608a28da8288a8f05039dcd034eab2",
+          "staged_sha256": "aec5b8fa47392b5c0708aa934a083a8771089918cc4b86802fe67fc270bcdce6"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-symbolic-root-scopes/after-root-function-distinction",
+      "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+      "actual_exit": 0,
+      "commands": [
+        {
+          "name": "symbolic-arity-and-source-contexts",
+          "actual_exit": 0
+        },
+        {
+          "name": "literal-alias-partition-cache",
+          "actual_exit": 0
+        }
+      ],
+      "qualification": "Current124 affected tests plus1 cache pass with all original async tests unchanged.",
+      "files": [
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/commands.json",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/commands.json.gz",
+          "source_sha256": "1711997469fcbb53958186d10fc52a7666023aa09eb974e22fd1e9885c407f48",
+          "staged_sha256": "0b6548249473ba312be12d7c1a4d910d45568439a6dd5436e61d6315f9f9717a"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/deleted.json",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/literal-alias-partition-cache.log",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/literal-alias-partition-cache.log.gz",
+          "source_sha256": "cf1fddc3d6d1d5887e0a2c74646b80cc0a486ceae9320a89ab921f679ce8ddf4",
+          "staged_sha256": "013a4ee2693d1720242a22b621a199342e9be519a1fb5b62e0cbb84a2d38dfba"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/runner.py.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/runner.py.gz",
+          "source_sha256": "e46b55287658d2ab95b7ace3c79a3dd6582ccd2efa26204ca6c3d76276b4053b",
+          "staged_sha256": "e46b55287658d2ab95b7ace3c79a3dd6582ccd2efa26204ca6c3d76276b4053b"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-symbolic-root-scopes/after-root-function-distinction/symbolic-arity-and-source-contexts.log",
+          "staged": "results/m12-symbolic-root-scopes/after-root-function-distinction/symbolic-arity-and-source-contexts.log.gz",
+          "source_sha256": "92322ed6762fe6f4b98344e3c273b6a2dc57f01ef57236b109b9bb93fe4c74c1",
+          "staged_sha256": "47d834a94660c8d87ef74ffbda654202b73d37cec99f3cfb0917f4b5a1217c04"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-num-api/reviewed-core-native-root-function-boundary",
+      "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+      "actual_exit": 0,
+      "commands": [
+        {
+          "name": "published-ci-macro-fuel-regressions",
+          "actual_exit": 0
+        },
+        {
+          "name": "complete-numeric-criteria-and-core-regressions",
+          "actual_exit": 0
+        },
+        {
+          "name": "host-library-ownership-and-transport",
+          "actual_exit": 0
+        },
+        {
+          "name": "optimized-random-effect-guard",
+          "actual_exit": 0
+        },
+        {
+          "name": "suite-build",
+          "actual_exit": 0
+        },
+        {
+          "name": "suite-run",
+          "actual_exit": 0
+        },
+        {
+          "name": "suite-lock",
+          "actual_exit": 0
+        },
+        {
+          "name": "strict-integrated-capture",
+          "actual_exit": 0
+        },
+        {
+          "name": "java-node-free-bootstrap",
+          "actual_exit": 0
+        },
+        {
+          "name": "eval-source-provenance",
+          "actual_exit": 0
+        },
+        {
+          "name": "core-import-source-provenance",
+          "actual_exit": 0
+        }
+      ],
+      "qualification": "Complete current11-command native acceptance actual0. Workspace baseline remains a separate running gate.",
+      "files": [
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/commands.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/commands.json.gz",
+          "source_sha256": "cb66d59db7e815d8b080e60015bace5c6485fc79ad6070b8c8eff03d0304b479",
+          "staged_sha256": "78efd2a50b1978b695b2e85f186a84d4123a483cb5ffd77ec2edd5e972c6f9b3"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/integrated-capture-review.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/integrated-capture-review.json.gz",
+          "source_sha256": "fdfa2dbe47fc78d68f1a0c02ab39aed7f4967987f91a5b13ebfac0b3a0e986f8",
+          "staged_sha256": "3e2c65964d51a00528a814f53a68fa829a42b205225c20e11a8f39b2aba499d2"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-build.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-build.log.gz",
+          "source_sha256": "7188151a1e30741e320e6f16100c688f34e22744e7a532cf040b33cf1cfb6186",
+          "staged_sha256": "8207f8134490d317d1dc094237c6f68bb6010eeaf90aec9305c01c6e3f102529"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/equality-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/equality-observations.json.gz",
+          "source_sha256": "781f81e028461a6ab9cea3c2a0e5fa4c4c99fe39f4b503d66f0a923a2953296a",
+          "staged_sha256": "882e749adce2cd8861579b5b906eb841a35f961d48cfc0146355de405a3991ad"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/eval-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/eval-observations.json.gz",
+          "source_sha256": "67ed3f30e291e87ba1ab9d2d2c006723fe6d95f702aeeafda82d6ee1d0c65984",
+          "staged_sha256": "f6f16fa8f37254e96146c719481b8b4546282487931286d84c076c87bed024e0"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/fixture-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/fixture-observations.json.gz",
+          "source_sha256": "870530ce4fb48ef0ea7edf414b0fab1d7084998726e6eb097cfbd2a4a32b0715",
+          "staged_sha256": "946c9f521d080ca277401d0337ea08095f330f0c5c5c186401152dfd3261633b"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/map-transport-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/map-transport-observations.json.gz",
+          "source_sha256": "742cadf42be8a063c9ef7b1609f8b1dcc2552dcf7055b3432d5fc0e16a7c98f6",
+          "staged_sha256": "b0d4a9eaea9e086f1c1a07572c4e72b72c5f7b045f287a63085c7b1bc6415ce3"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/num-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/num-observations.json.gz",
+          "source_sha256": "d56bbf816782a91dda94dc4680b5322d8f44c8d1138aacff0aa7c7154c446e45",
+          "staged_sha256": "c2c733424ff6415ce419bb14b334496afc4d50a198f2a4a6082bd2be627ce520"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/suite-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/suite-observations.json.gz",
+          "source_sha256": "169a58a260f2ff198de957bcc9ce9eaf98edd2295e7c721c5c47351f0d48dd92",
+          "staged_sha256": "ecb655b02eeca72fc0eaf1e48503076aad7baadab079135ec9995c88cc5097f9"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/symbol-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/symbol-observations.json.gz",
+          "source_sha256": "7ae3fcf89454885a4df05b912bf23a999a10666d2aabf16efceac106a708703c",
+          "staged_sha256": "4b6be4cc1e21cdab30bac735c3bfd55dac737bee9b0ada4a5f5a5ea7eba02ef2"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/var_qmark-observations.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-capture/var_qmark-observations.json.gz",
+          "source_sha256": "a219f155b3eb8b4f6f3daea15caefb9a40c125c29bde9f86dbf2fb7a3b5fff5c",
+          "staged_sha256": "86418421d7dbd4fd61867552a5cc9e13f17a12cb3000e212186c6a37e2454ad2"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-commands.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-commands.json.gz",
+          "source_sha256": "87ab36ac226e57db188ab710bd2fc2d4849baf5a802b9dd7b9ce357c3ebb247a",
+          "staged_sha256": "1b39644a45c0fdb5eef1490971da99b2cfa0e357398752b6e4fe882a222eda42"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-lock.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-lock.log.gz",
+          "source_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3",
+          "staged_sha256": "5597824e4c0507e2e5f5306f428896f7db8e833e493c5f64c32dc7b1f5caeb7b"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-run.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-capture/suite-run.log.gz",
+          "source_sha256": "0f5131ca59b14885702157202ab8558345b21b86a8c3a125a8cdf7dad46ded74",
+          "staged_sha256": "53aea958efb60c42b7a66d5804fa60895e53c23541c1e9ba53e7a442830bce65"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-numeric-criteria-and-core-regressions.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/complete-numeric-criteria-and-core-regressions.log.gz",
+          "source_sha256": "df0725b5d37fd704621c1f030c1950d79d7bfd4943477b072be9d437785029be",
+          "staged_sha256": "661f61af777ab2b254f4e0dc4f97320ab91a204b076b1d60f6f7b386de85747d"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/core-import-source-provenance.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/core-import-source-provenance.log.gz",
+          "source_sha256": "05d17b17d9fe2442b7b221d4f705ec42cc12975f21ae209b780360a70ca9bd22",
+          "staged_sha256": "69cb110d12ba8a78ac1e9cbd8b52cddc79c1176829b375c88b387242da058782"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/deleted.json",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/eval-source-provenance.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/eval-source-provenance.log.gz",
+          "source_sha256": "2928287639289a63e06682a3f19a24886094e0c23f2aa491933a54c8f9179941",
+          "staged_sha256": "ca9d9fdbb8642d02747e20df4a7576bc445771dd2d95894fb29fe85c20aa0228"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/host-library-ownership-and-transport.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/host-library-ownership-and-transport.log.gz",
+          "source_sha256": "74500fe937e3b65300441e0d61a925b52a6bbe9d74392697589dc01b77d8e4cc",
+          "staged_sha256": "fdcd2f49f6fbf8314f7a6efb1c27f88b3f678aae87949652251af91336d09d3c"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/java-node-free-bootstrap.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/java-node-free-bootstrap.log.gz",
+          "source_sha256": "9c82232e81a045729cb803fb34e0658019e3157576c581537b74a2aba503331e",
+          "staged_sha256": "626a814e9aefa5de249d2eb6dac89b53b7b9f3e46b5da617981a95f49a9426a7"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/optimized-random-effect-guard.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/optimized-random-effect-guard.log.gz",
+          "source_sha256": "b7aea2f2a9164611ae3c12affa4d957fcec15e2877282882670843a243691a22",
+          "staged_sha256": "a271d489cd4b0f164988b6e4202c62d68e1397da265c58e518491075c21b223d"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/published-ci-macro-fuel-regressions.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/published-ci-macro-fuel-regressions.log.gz",
+          "source_sha256": "f1adca15c0071ece9bd1c8b514d257e0dc498ad62d9215d7b2bfab84d4dc2147",
+          "staged_sha256": "8899d1b2b610ce36e269a732ea50b1e0c167ee06a0034612c62b566356b87099"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/runner.py.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/runner.py.gz",
+          "source_sha256": "c87e9321b51f3c55a210db8901ac92d518bfa806c1797488ee0d88932a3719b4",
+          "staged_sha256": "c87e9321b51f3c55a210db8901ac92d518bfa806c1797488ee0d88932a3719b4"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-admission.json.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-admission.json.gz",
+          "source_sha256": "36886ea4e1aba137070398a41312f6c8c51475bac9755fe2c1fdc0d962b9977b",
+          "staged_sha256": "36886ea4e1aba137070398a41312f6c8c51475bac9755fe2c1fdc0d962b9977b"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "results/m12-num-api/reviewed-core-native-root-function-boundary/strict-integrated-capture.log",
+          "staged": "results/m12-num-api/reviewed-core-native-root-function-boundary/strict-integrated-capture.log.gz",
+          "source_sha256": "fdfa2dbe47fc78d68f1a0c02ab39aed7f4967987f91a5b13ebfac0b3a0e986f8",
+          "staged_sha256": "3e2c65964d51a00528a814f53a68fa829a42b205225c20e11a8f39b2aba499d2"
+        }
+      ]
+    },
+    {
+      "phase": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary",
+      "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+      "actual_exit": 0,
+      "commands": [
+        {
+          "name": "exact-two-thread-workspace",
+          "actual_exit": 0
+        }
+      ],
+      "qualification": "Actual exact two-thread workspace run, with conserved source, tools and archives; raw producer receipt is unchanged.",
+      "files": [
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/equality-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/equality-observations.json.gz",
+          "source_sha256": "781f81e028461a6ab9cea3c2a0e5fa4c4c99fe39f4b503d66f0a923a2953296a",
+          "staged_sha256": "882e749adce2cd8861579b5b906eb841a35f961d48cfc0146355de405a3991ad"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/eval-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/eval-observations.json.gz",
+          "source_sha256": "67ed3f30e291e87ba1ab9d2d2c006723fe6d95f702aeeafda82d6ee1d0c65984",
+          "staged_sha256": "f6f16fa8f37254e96146c719481b8b4546282487931286d84c076c87bed024e0"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/fixture-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/fixture-observations.json.gz",
+          "source_sha256": "870530ce4fb48ef0ea7edf414b0fab1d7084998726e6eb097cfbd2a4a32b0715",
+          "staged_sha256": "946c9f521d080ca277401d0337ea08095f330f0c5c5c186401152dfd3261633b"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/map-transport-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/map-transport-observations.json.gz",
+          "source_sha256": "742cadf42be8a063c9ef7b1609f8b1dcc2552dcf7055b3432d5fc0e16a7c98f6",
+          "staged_sha256": "b0d4a9eaea9e086f1c1a07572c4e72b72c5f7b045f287a63085c7b1bc6415ce3"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/num-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/num-observations.json.gz",
+          "source_sha256": "d56bbf816782a91dda94dc4680b5322d8f44c8d1138aacff0aa7c7154c446e45",
+          "staged_sha256": "c2c733424ff6415ce419bb14b334496afc4d50a198f2a4a6082bd2be627ce520"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/suite-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/suite-observations.json.gz",
+          "source_sha256": "9035e6e7dabae52941e59bcdb2430c4ce7bba0c4db407af5b16c5b32e1d94d03",
+          "staged_sha256": "632200567f4b8ae37431a69f8edfee3ad2b01c87e681772a5906405dab8e9d90"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/symbol-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/symbol-observations.json.gz",
+          "source_sha256": "7ae3fcf89454885a4df05b912bf23a999a10666d2aabf16efceac106a708703c",
+          "staged_sha256": "4b6be4cc1e21cdab30bac735c3bfd55dac737bee9b0ada4a5f5a5ea7eba02ef2"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/var_qmark-observations.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/capture/var_qmark-observations.json.gz",
+          "source_sha256": "a219f155b3eb8b4f6f3daea15caefb9a40c125c29bde9f86dbf2fb7a3b5fff5c",
+          "staged_sha256": "86418421d7dbd4fd61867552a5cc9e13f17a12cb3000e212186c6a37e2454ad2"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/commands.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/commands.json.gz",
+          "source_sha256": "df432d16b3862249a27a4ed8ee08dfc5383b5d3515a98ee51d2125f3c546c486",
+          "staged_sha256": "43f6153cd9e1d9aa2a42fadde320ff534b9629a4281c40349290549629879503"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/deleted.json",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/deleted.json.gz",
+          "source_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "staged_sha256": "abc129be8d26e8d4afe9ce45f9d5a73c8ed9aa62810ca24ee789fe4581dc4a80"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/exact-two-thread-workspace.log",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/exact-two-thread-workspace.log.gz",
+          "source_sha256": "11213eabc9cb3f7b3bf7963d7e9c67b53ea64288943c52203e274e77678fda30",
+          "staged_sha256": "e4f9b490fde4df8b2c41fcec9d85ce1018c06f08d69a836d3918c5d43ec13acc"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/runner.py.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/runner.py.gz",
+          "source_sha256": "b1d063563bb5c091103848acbee423f559cc0ae785cd787ef916df18be980b1b",
+          "staged_sha256": "b1d063563bb5c091103848acbee423f559cc0ae785cd787ef916df18be980b1b"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-admission.json.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-admission.json.gz",
+          "source_sha256": "36886ea4e1aba137070398a41312f6c8c51475bac9755fe2c1fdc0d962b9977b",
+          "staged_sha256": "36886ea4e1aba137070398a41312f6c8c51475bac9755fe2c1fdc0d962b9977b"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-all-repairs-validation/focused-source-and-primary-conservation.log.gz",
+          "source_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a",
+          "staged_sha256": "7555f2d4fb7410ad749c4e1e37e399b28f1881274f9769e598b0dc48657ece4a"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-diagnostic/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f",
+          "staged_sha256": "8644239522bea43de2fa9fbec78d43af8d44d46a3e4364658b0a0cd6adc25e6f"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/ci6-sequence-canonical-setup-negative/canonical-sequence-context-before-nested-primary-override.log.gz",
+          "source_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc",
+          "staged_sha256": "9889c8be1ce11c444993b75e7667f3916b9a98f81c278721585351871d4b69fc"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/fa0da-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/integrated-eval-review-and-ledger-validation/primary-provenance.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/portable-reference-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-after-pattern-initializer/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        },
+        {
+          "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "staged": "results/m12-num-api/exact-workspace-reviewed-core-numeric-root-function-boundary/source-overlay/results/m12-num-api/root-metadata-integrated-validation/original-eval-primary.log.gz",
+          "source_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e",
+          "staged_sha256": "8d03b7f9c6515b56ea68b1b100efac8485d5d06c7c471b493ecae5e0f06c8f0e"
+        }
+      ]
+    }
+  ],
+  "workspace_result_included": true,
+  "qualification": "Completed native and exact workspace evidence on the recorded runtime HEAD. Historical before/after runs retain their actual outcomes and source qualifications. Residual global suite failures remain explicit. Independent review and final-published-head CI are separate gates.",
+  "ci_checkpoint": {
+    "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+    "run": 46068803133,
+    "actual_all_ten_jobs_success": true,
+    "passing_test_executions": 2744,
+    "critical_targets_actual_passes": {
+      "clojure_eval": 90,
+      "portable_symbol_conversion": 8,
+      "clojure_test_suite": 24,
+      "native_host_boundary": 51,
+      "runtime_namespaces": 10,
+      "compiled_macro_cumulative_fuel": 8,
+      "compiled_macro_fuel_stages": 1,
+      "clojure_symbolic_numeric_arities": 2,
+      "clojure_symbolic_numeric_regions": 2,
+      "clojure_symbolic_numeric_root_scopes": 2
+    },
+    "files": [
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495227.json",
+        "sha256": "6ab2e16d5ceac8f0a88cf1c706740131aadbbc6d85bebacd2379c239d3338042"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495227.log.gz",
+        "sha256": "20e69ee3c2ab978a817894be49e46b025793c93557d42ce11e31ca6179c9131f"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495517.json",
+        "sha256": "5424d1cf8c5ca5efb764bc9f9e402fd0787cbeb0e559443387fbdd931b6f8c87"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495517.log.gz",
+        "sha256": "63614df529e2d2a7484f11db6e74b37b6d2fa6f3e729579be3b4b137345c79c0"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495527.json",
+        "sha256": "026132d1e97959bb4352fb0193e5eb2da41a2dfc3bf2fb25ea1325a1e1642b76"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495527.log.gz",
+        "sha256": "94354533af7c9ac7930ae5d18fec40050d83abc01adcf3184d0981125f767331"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495564.json",
+        "sha256": "2d5a6aa26f44a248f01a5da20ec1f03945898ccaee943bc7c55afd1fe7cbcdaa"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495564.log.gz",
+        "sha256": "7bb64f8e476c3f7529e64177d47da4315556323b81f7bd44927e885fb4cd3343"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495599.json",
+        "sha256": "845b575f5f95e256269372092bd54d1a8befccc9cadf0fb8faf6510bc28fef83"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495599.log.gz",
+        "sha256": "5352a4af612072eaaa9a6fbfe50df3b13531c27ed493eda8af51ca94dd39ad38"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495601.json",
+        "sha256": "5fb7c555979a92deca48acf60041f403f134bf6da0cc1a9404273edbb8b2cf56"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495601.log.gz",
+        "sha256": "885a1c4d9ec82326749b3c0d09e836949dc499d49689a96a489e7e5727a61eda"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495607.json",
+        "sha256": "7747487fabd6d644227e5efb79c86c2fa421dcd997a9844553fbd3bbaf68b0d9"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495607.log.gz",
+        "sha256": "7c9e6a238ae6670f24a8b6ac76b1e0046f268491247690c1ea96d679fb7745e4"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495628.json",
+        "sha256": "82284a1dc0878b113ab0d6a82d8dd1dc5b2716172996eb19c3b643d5fc338f9b"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495628.log.gz",
+        "sha256": "d765c40a4fe09696e5844b35d8da1feda4c178dc6f640d4e44d1bbf8eeefc269"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495920.json",
+        "sha256": "b0dcc6f81a1c8fdd000acea59aa017cea03cae2b699368025b77d5156c80f65b"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140740495920.log.gz",
+        "sha256": "e6b24dbb3a2d175b63dc312066b876be11315674981731a1988075e9e4ca71c0"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140765081104.json",
+        "sha256": "d029f4e6d4b2d4604862119c7ca51af3741fbc663be53f4e82902eb431fc084c"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/140765081104.log.gz",
+        "sha256": "42291fdefdf5d7cde186627acd0d1125c9d363bd5d40b939b1cea6b60bf53e50"
+      },
+      {
+        "staged": "results/m12-num-api/ci-6ceb2567/audit.json",
+        "sha256": "cf82050be6e7de3d0a7adfa88f08540b11511085d348cc7ea469e4d8ec72a412"
+      }
+    ],
+    "qualification": "Published6ceb source CI actual success. Local exact baseline and independent review remain separate gates; later final-batch CI must match its own head."
+  },
+  "qualification_files": [
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-reviewed-core-current-source-admission.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-reviewed-core-current-source-admission.json.gz",
+      "source_sha256": "88d4c273cb379e53ff1a625913dc51b4aeadc249fedb766ed398a67af8caa94e",
+      "staged_sha256": "36886ea4e1aba137070398a41312f6c8c51475bac9755fe2c1fdc0d962b9977b"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-reviewed-core-current-native-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-reviewed-core-current-native-audit.json.gz",
+      "source_sha256": "d31b36a2149c01b872a16853e627628b226682e343dca6724c594faa83b527ed",
+      "staged_sha256": "c49d197c48fab59865af095033a16105ce18e35bf4afc561994395123891d241"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-current-mapped-execution-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-current-mapped-execution-audit.json.gz",
+      "source_sha256": "d471e828e62bc2631e28c836d4404d0119ad6635f5bbc96b4b4dda0fc1fc06e7",
+      "staged_sha256": "739740ab6f8e9cbfb504f702b7c41f9320814b796f1b56ad6c083739e54f8c82"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-root-boundary-positive-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-root-boundary-positive-audit.json.gz",
+      "source_sha256": "0e09b9a7eca34c1e55c46c1f62e0a7484edb4d7f5ebc9cbd1d7d760d2b04fb97",
+      "staged_sha256": "08670a8109159f8fbd9f105c0bd55762666c3a80ec3a9e69fb461085350445ff"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-reviewed-core-measured-placement-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-reviewed-core-measured-placement-audit.json.gz",
+      "source_sha256": "95e5f81ab62af038bce0c8ffe016f0c48529a7bfb6bc02d1135684db1586dd4b",
+      "staged_sha256": "b5ae1ab2e99e962d369b38cfe37b2fd2ee1f8bac1730ee97a8ae271a4a2140d3"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-reviewed-core-semantic-before-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-reviewed-core-semantic-before-audit.json.gz",
+      "source_sha256": "be041ec0b5189fdc648674cf0d2d0b1ff054251b679ce647bf15ac5a5adfc461",
+      "staged_sha256": "f05e502397021fb6538b510f12a7564db09c6e1d654e52c2e5e7df3d104602d2"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-reviewed-core-bigint-ratio-before-audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-reviewed-core-bigint-ratio-before-audit.json.gz",
+      "source_sha256": "f983fb637df39721d6f4a70db5ba0f29fc008a37f30d41e561b9ecc1acd6834a",
+      "staged_sha256": "ddd3dbb884ec57bcdaceca0c9b43a2d29bcc532956df31e995a4450fa8525479"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-after-exact-audit-state.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-after-exact-audit-state.json.gz",
+      "source_sha256": "4d52a426ce1eb93f7ba3c3be54e14c5f3f9437b508f7627d50c0741e4ac0d621",
+      "staged_sha256": "8cfd19b6a8407ace7ed8c65f8787cdd256092b0f8441f9de2faf30b9a1235944"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-after-exact-audit.log",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-after-exact-audit.log.gz",
+      "source_sha256": "ed90cf84883680df8d23f20aea709f4a75229d1f89c5b428479af5d65f66c84f",
+      "staged_sha256": "a6e80b48bb17f3d2d8f126f9e30c4e111b84777600a62a78b53f12b05412f4b7"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-after-exact-auditor-controller.py.gz",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/numeric-after-exact-auditor-controller.py.gz",
+      "source_sha256": "22877c3b30a253b405b1b6254b51fd649eba8f00be3c581db8e41af7acf6d886",
+      "staged_sha256": "22877c3b30a253b405b1b6254b51fd649eba8f00be3c581db8e41af7acf6d886"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/audit-numeric-exact-workspace.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/audit-numeric-exact-workspace.py.gz",
+      "source_sha256": "b3a1a818ada35cd7ee3de2639afabfdc4673dca5bb60a85d39a87bb550fc31b9",
+      "staged_sha256": "6a25d6fdd5d74662b59100e22d3fb1b9a317b86a716cf0f6f2be546f70fb712b"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/audit-numeric-reviewed-core-placement.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/audit-numeric-reviewed-core-placement.py.gz",
+      "source_sha256": "e3fa10c853ee24eee66eac7e42930ee63b240159b3fdf8e363c2fe838905fc4c",
+      "staged_sha256": "79f4f71a4c5f99290f11979fb98835eec87972a992fa77c549578f54824cd5a4"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/audit-numeric-reviewed-core-semantic-before.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/audit-numeric-reviewed-core-semantic-before.py.gz",
+      "source_sha256": "97089fd86b89c19e5f295fc85cda62c867a92f2af7d0fa85eb3eb9d3c0e4068a",
+      "staged_sha256": "15e8bfaecd619316504202c214ee5b09f0228896e0a0e3336b5c60e1440428cc"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/audit-numeric-bigint-ratio-negatives.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/audit-numeric-bigint-ratio-negatives.py.gz",
+      "source_sha256": "4402c31b7eefeb86a34ede973210df4d66785c59f128685569724d609a44d338",
+      "staged_sha256": "9f37420eab0743db0a8a07b6beb92bc064abfa3cf95c33a2e2ad7f30a25478b1"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/verify-numeric-reviewed-core-source.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/verify-numeric-reviewed-core-source.py.gz",
+      "source_sha256": "97c347f7d77a08665438ffe0f45c85dbd0a5269bb51d371af4b9762edc794d7a",
+      "staged_sha256": "4db3cd3c24a7fe0ea397afa20728f6abbfc04caafb516a865f280dcd43ce8d1a"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-exact-workspace-reviewed-core-numeric-root-function-boundary-audit/actual-full-capture-num-view.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/workspace/actual-full-capture-num-view.json.gz",
+      "source_sha256": "65d30afca0b0f5b4840f372c92b922b2ee5189c695a7342514bc6bc9c2679c08",
+      "staged_sha256": "0d06daaf4e585680620a6a7e0d7dcd80e098ac6527aeb146c31b20f15b83247f"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-exact-workspace-reviewed-core-numeric-root-function-boundary-audit/audit.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/workspace/audit.json.gz",
+      "source_sha256": "c41cef311fd5de6bbe057a514f433da78f81aea1ca58eabfbe6755cd525c99f9",
+      "staged_sha256": "169186d12e4fb70694bcf3ca052f8fa1c9ad4a59f53942aa2ebdb2a740571a5c"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-exact-workspace-reviewed-core-numeric-root-function-boundary-audit/default26-stderr.log",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/workspace/default26-stderr.log.gz",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "staged_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-exact-workspace-reviewed-core-numeric-root-function-boundary-audit/default26-stdout.log",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/workspace/default26-stdout.log.gz",
+      "source_sha256": "b96357ec96ef9b642072e1168c99cf2904e2926c3855e79a936052bf9942f730",
+      "staged_sha256": "408eb1e484c8e6fed98246b86b1f319e6b3d3a76ee0269f3eb9163eb6afa5a58"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-exact-workspace-reviewed-core-numeric-root-function-boundary-audit/exact-committed-default26-checker.py",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/workspace/exact-committed-default26-checker.py.gz",
+      "source_sha256": "f6ed2489ca1dd37ce4e98c57e70d026a568045b68820411b77fa26694483162f",
+      "staged_sha256": "322c7d7edf908503a549451c129c60ae45427e5e804a1d8976d4c6b5085ea0a5"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-workspace-preflight-missing-field/actual-chain-state.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/preflight-failure/actual-chain-state.json.gz",
+      "source_sha256": "e0e5f6ea58ce866ea57be43d5a5c57d2701ccca9296875095e659479928d9b82",
+      "staged_sha256": "e251f025429494169a99dcdedce37ae092ab2140ba2839daa131d693d183bfc8"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-workspace-preflight-missing-field/actual-error.log",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/preflight-failure/actual-error.log.gz",
+      "source_sha256": "71f375daf10108a2ff8ba2c472ab11f832ce938bb7d6648d1d6c2175df7cb907",
+      "staged_sha256": "3424b1c32915593b4c2f24855c24595792c65ea5c07f353e59342f97879b6be7"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-workspace-preflight-missing-field/qualification.json",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/preflight-failure/qualification.json.gz",
+      "source_sha256": "89bf52318dfc1d30cdcf083aac19fb1fa23e2f3167023dc959673c8be16d1a45",
+      "staged_sha256": "0d76b44a80811feb0414d1d2d70be5e9963029abc1b8cb1ffaca338b84dd6542"
+    },
+    {
+      "source": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-workspace-preflight-missing-field/runner.py.gz",
+      "staged": "results/m12-num-api/reviewed-core-final-audits/preflight-failure/runner.py.gz",
+      "source_sha256": "4bf996c389c980945e4ff2c86881567253abedc097d6b21c04d4a62d251452ef",
+      "staged_sha256": "4bf996c389c980945e4ff2c86881567253abedc097d6b21c04d4a62d251452ef"
+    }
+  ],
+  "workspace_summary": {
+    "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+    "actual_workspace_exit": 0,
+    "passing_test_executions": 2732,
+    "successful_test_groups": 388,
+    "ignored_executions": 15,
+    "seconds": 13268.371627739165,
+    "frozen_input_count": 13510,
+    "capture_sha256": "9035e6e7dabae52941e59bcdb2430c4ce7bba0c4db407af5b16c5b32e1d94d03",
+    "numeric_tagged_host_matches": {
+      "bigint-ratio": 229,
+      "decimal": 200
+    }
+  }
+}

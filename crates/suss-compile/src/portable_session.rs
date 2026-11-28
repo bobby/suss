@@ -2114,7 +2114,7 @@ impl SessionHost<'_> {
                     .get(&mut scope);
                 own(&mut scope, value, self.identity, &self.handles)
             }
-            Literal::Number(value) => {
+            Literal::Number(value) | Literal::ObjectNumber(value) => {
                 let function = self
                     .runtime
                     .get_func(&mut scope, "number-box")

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "literal-list-elements",
+    "expression": "(identical? (first (list ##NaN)) (first (list ##NaN)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "literal-vector-elements",
+    "expression": "(identical? (first [##NaN]) (first [##NaN]))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "literal-vector-element-object-equality",
+    "expression": "((fn [x y] (= x y)) (first [##NaN]) (first [##NaN]))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "object-local-containers",
+    "expression": "(let [x (identity ##NaN)] [(= x x) (= [x] [x]) (= (list x) (list x)) (not= x x)])",
+    "observed_edn": "[true true true false]"
+  },
+  {
+    "name": "raw-local-containers",
+    "expression": "(let [x ##NaN] [(= x x) (= [x] [x]) (= (list x) (list x)) (not= x x)])",
+    "observed_edn": "[false false false true]"
+  },
+  {
+    "name": "computed-object-containers",
+    "expression": "(let [x (identity (/ 0.0 0.0))] [(= x x) (= [x] [x]) (= (list x) (list x)) (not= x x)])",
+    "observed_edn": "[true true true false]"
+  },
+  {
+    "name": "computed-raw-containers",
+    "expression": "(let [x (/ 0.0 0.0)] [(= x x) (= [x] [x]) (= (list x) (list x)) (not= x x)])",
+    "observed_edn": "[false false false true]"
+  },
+  {
+    "name": "literal-list-vs-vector",
+    "expression": "(= (list ##NaN) [##NaN])",
+    "observed_edn": "false"
+  },
+  {
+    "name": "same-object-direct-identity",
+    "expression": "(let [x (identity 0.1)] (identical? x x))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "raw-direct-identity",
+    "expression": "(let [x 0.1] (identical? x x))",
+    "observed_edn": "false"
+  }
+]

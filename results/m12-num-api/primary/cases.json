@@ -1,0 +1,72 @@
+[
+  {
+    "name": "nil",
+    "expression": "(nil? (num nil))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "long-category",
+    "expression": "(let [x (num 1)] [(integer? x) (= 1 x)])",
+    "observed_edn": "[true true]"
+  },
+  {
+    "name": "double-category",
+    "expression": "(let [x (num 1.5)] [(float? x) (= 1.5 x)])",
+    "observed_edn": "[true true]"
+  },
+  {
+    "name": "exact-identities",
+    "expression": "(let [a 1N b 1/3 c 1.00M] [(identical? a (num a)) (identical? b (num b)) (identical? c (num c)) (str (num c))])",
+    "observed_edn": "[true true true \"1.00\"]"
+  },
+  {
+    "name": "invalid-string-effects",
+    "expression": "(let [seen (atom [])] [(try (num (do (swap! seen conj :argument) \"1\")) (catch Throwable e :error)) @seen])",
+    "observed_edn": "[:error [:argument]]"
+  },
+  {
+    "name": "invalid-boolean",
+    "expression": "(try (num true) (catch Throwable e :error))",
+    "observed_edn": ":error"
+  },
+  {
+    "name": "ordinary-alias-zero",
+    "expression": "(let [f num] (try (f) (catch clojure.lang.ArityException e :arity)))",
+    "observed_edn": ":arity"
+  },
+  {
+    "name": "ordinary-alias-two-effects",
+    "expression": "(let [f num seen (atom [])] [(try (f (do (swap! seen conj :first) 1) (do (swap! seen conj :second) 2)) (catch clojure.lang.ArityException e :arity)) @seen])",
+    "observed_edn": "[:arity [:first :second]]"
+  },
+  {
+    "name": "direct-zero-compile-error",
+    "expression": "(try (eval (quote (num))) (catch clojure.lang.Compiler$CompilerException e :compile-error))",
+    "observed_edn": ":compile-error"
+  },
+  {
+    "name": "direct-two-compile-error",
+    "expression": "(try (eval (quote (num 1 2))) (catch clojure.lang.Compiler$CompilerException e :compile-error))",
+    "observed_edn": ":compile-error"
+  },
+  {
+    "name": "inline-num-literal-nan-object",
+    "expression": "(identical? (num ##NaN) ##NaN)",
+    "observed_edn": "false"
+  },
+  {
+    "name": "inline-num-separate-results",
+    "expression": "(identical? (num ##NaN) (num ##NaN))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "inline-num-object-input",
+    "expression": "(let [x (identity ##NaN)] (identical? (num x) x))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "alias-num-literal-nan-object",
+    "expression": "(let [f num] (identical? (f ##NaN) ##NaN))",
+    "observed_edn": "true"
+  }
+]

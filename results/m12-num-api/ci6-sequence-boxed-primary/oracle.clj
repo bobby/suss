@@ -1,0 +1,1 @@
+(println (pr-str (let [= =] [(= ##NaN) (= ##NaN ##NaN) (= (list ##NaN) (list ##NaN)) (let [xs (list ##NaN)] (= xs xs)) (and (= 0 -0.0 0 -0.0) (false? (= 0 0 ##NaN)) (false? (= ##NaN ##NaN ##NaN))) (== ##NaN ##NaN) (let [a (+ ##NaN 0.0) b (+ ##NaN 0.0)] (= a b))])))

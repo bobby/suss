@@ -1,0 +1,48 @@
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:36.1755031Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:36.1755830Z running 8 tests
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:37.6219032Z test exhausted_expansion_preserves_effects_already_executed_in_the_macro_store ... FAILED
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:37.6868255Z test completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers ... FAILED
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:38.1014903Z test independent_macro_calls_in_one_fragment_share_fuel_and_next_repl_input_recovers ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:38.7894783Z test infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effects ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:49.6009619Z test macros_cannot_mutate_transported_metadata_storage ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:50.1030184Z test recursive_macro_reexpansion_does_not_reset_the_fragment_budget ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:51.1358146Z test source_metadata_observer_and_nonobserver_survive_macro_input_and_result_transport ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2711545Z test interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2712004Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2712094Z failures:
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2712215Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2712479Z ---- exhausted_expansion_preserves_effects_already_executed_in_the_macro_store stdout ----
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2712815Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2713298Z thread 'exhausted_expansion_preserves_effects_already_executed_in_the_macro_store' (4414) panicked at crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs:29:5:
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2714177Z failure must be attributed to a source macro expansion stage: runtime trap: error while executing at wasm backtrace:
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2714856Z     0:  0x12663 - <unknown>!<wasm function 222>: wasm trap: all fuel consumed by webassembly at bytes 742..759
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2715413Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2715702Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2716049Z ---- completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers stdout ----
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2716460Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2717316Z thread 'completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers' (4413) panicked at crates/suss-cli/tests/support/completed_macro_work.rs:24:14:
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2719454Z called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..18, message: "Artifact preparation budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly" })
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2720547Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2720553Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2720687Z failures:
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2721350Z     completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2722349Z     exhausted_expansion_preserves_effects_already_executed_in_the_macro_store
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2722875Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2723297Z test result: FAILED. 6 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.10s
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.2723870Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.3752287Z ^[[1m^[[91merror^[[0m: test failed, to rerun pass `-p suss-cli --test compiled_macro_cumulative_fuel`
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.3753248Z ^[[1m^[[92m     Running^[[0m tests/compiled_macro_forms.rs (target/debug/build/suss-cli/cc076db48cd4bdee/out/compiled_macro_forms-cc076db48cd4bdee)
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.3770420Z 
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:54.3771406Z running 6 tests
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:55.2968826Z test compiled_macro_forms_keep_locations_metadata_and_compile_atomicity ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:01:55.3668961Z test compiled_macro_forms_preserve_utf16_and_binary64_without_source_roundtrip ... ok
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8219979Z                              output=stdout, stderr=stderr)
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8230925Z subprocess.CalledProcessError: Command '['cargo', 'test', '--workspace', '--locked', '--no-fail-fast', '--test', 'biginteger_carrier', '--test', 'clojure_bigint_integers', '--test', 'clojure_core_predicates', '--test', 'clojure_exact_inline', '--test', 'clojure_num_api', '--test', 'clojure_pattern_literals', '--test', 'clojure_test_suite', '--test', 'compile_expr', '--test', 'compiled_artifact_identities', '--test', 'compiled_core_bindings', '--test', 'compiled_macro_analysis_graph', '--test', 'compiled_macro_cumulative_fuel', '--test', 'compiled_macro_forms', '--test', 'compiled_macro_initializer_plan', '--test', 'compiled_macro_publication_cells', '--test', 'compiled_macro_source_hint_boundaries', '--test', 'compiled_official_command', '--test', 'compiled_raw_value_uses', '--test', 'compiled_source_macros', '--test', 'core_import', '--test', 'forms', '--test', 'map_lookups', '--test', 'object_printing', '--test', 'portable_aot_options', '--test', 'portable_async_execution', '--test', 'portable_calling_convention', '--test', 'portable_command', '--test', 'portable_core_expression_dependencies', '--test', 'portable_error_constructors', '--test', 'portable_hash_numeric_boundaries', '--test', 'portable_inline_predicates', '--test', 'portable_method_cache', '--test', 'portable_native_protocols', '--test', 'portable_phase_modules', '--test', 'portable_reader_constructors', '--test', 'portable_reduce_kv_fallback', '--test', 'portable_sequence_observations', '--test', 'portable_str_concat', '--test', 'portable_transducers', '--test', 'program_paths', '--test', 'reader_runtime', '--test', 'runtime_abi', '--test', 'runtime_namespaces', '--test', 'session_lifecycle_reset_pending', '--test', 'syntax_quote_live_binding', '--test', 'user_named_sites', '--', '--test-threads=2']' returned non-zero exit status 101.
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8405174Z ##[error]Process completed with exit code 1.
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8463148Z ##[group]Run find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8463804Z ^[[36;1mfind target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true^[[0m
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8483083Z shell: /usr/bin/bash -e {0}
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8483352Z env:
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8483553Z   CARGO_BUILD_JOBS: 2
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8483797Z   CARGO_HOME: /home/runner/.cargo
+integration (5)	UNKNOWN STEP	2026-11-26T18:31:57.8484071Z   CARGO_INCREMENTAL: 0

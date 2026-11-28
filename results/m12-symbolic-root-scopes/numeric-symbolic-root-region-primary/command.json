@@ -1,0 +1,29 @@
+{
+  "command": [
+    "java",
+    "-Xmx128m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/core-boundary-foundation/numeric-symbolic-root-region-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 0.9818601789884269,
+  "source_sha256": "aa3609d8f7a807ba5bde590651f9ffed0c5ce940b3ee997ccc80b8f8e487db66",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "forms": [
+    "(let [f (fn [x] (if x ##NaN (with-redefs [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "(let [f (fn [] (with-redefs [*print-length* 3] ##NaN))] (identical? (f) (f)))",
+    "(let [f (fn [x] (if x ##NaN (binding [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))"
+  ],
+  "observations": [
+    "false",
+    "true",
+    "true"
+  ],
+  "qualification": "Supplemental primary: with-redefs implicit function boundary versus ordinary binding region. No current native defect claim."
+}

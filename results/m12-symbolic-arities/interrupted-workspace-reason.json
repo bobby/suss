@@ -1,0 +1,13 @@
+{
+  "reason": "Confirmed source numeric identity mismatch across arities; not an observer timeout or semantic pass. Stop the known-bad checkpoint before editing source.",
+  "head": "94e089b7bbaffc3f7be92d1c0c490e412ac4a390",
+  "workspace_phase": "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-num-api/exact-workspace-reviewed-core-numeric",
+  "recorder_pid": 4008824,
+  "cargo_pid": 4008926,
+  "test_pid": 4100531,
+  "descendants": [
+    4150952
+  ],
+  "signal": "SIGTERM",
+  "at": 1795803413.9751203
+}

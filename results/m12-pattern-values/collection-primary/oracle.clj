@@ -1,0 +1,6 @@
+(prn (count #{#"a" #"a"}))
+(prn (count {#"a" 1 #"a" 2}))
+(prn (let [r #"a"] (count (hash-set r r))))
+(prn (let [r #"a"] (get (hash-map r 1 r 2) r)))
+(prn (pr-str #{#"a" #"a"}))
+(prn (sort (vals {#"a" 1 #"a" 2})))

@@ -1,0 +1,12 @@
+{
+  "head": "a4513977926dfc553779cd97acab5e68c6b634b6",
+  "command": [
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pattern-compiled-target/debug/deps/portable_sequences-2a7f3e2d76adee84",
+    "--exact",
+    "sequence_foundations_match_independently_encoded_primary_observations",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "seconds": 25.48079824447632
+}

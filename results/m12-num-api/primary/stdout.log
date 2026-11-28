@@ -1,0 +1,14 @@
+true
+[true true]
+[true true]
+[true true true "1.00"]
+[:error [:argument]]
+:error
+:arity
+[:arity [:first :second]]
+:compile-error
+:compile-error
+false
+false
+true
+true

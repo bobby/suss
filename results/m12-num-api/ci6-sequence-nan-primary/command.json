@@ -1,0 +1,63 @@
+{
+  "head": "a4513977926dfc553779cd97acab5e68c6b634b6",
+  "production_binary_head": "7b71a47b8b60c3b47e69ebb3eabe098270521725",
+  "binary_sha256": "4bc50d0a1678cac13759a95517bfd4c8ae28127fc6a14c1ef04b9e61c0b978c0",
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "cases": [
+    [
+      "original-equal-nan",
+      "(= ##NaN ##NaN)"
+    ],
+    [
+      "numeric-equal-nan",
+      "(== ##NaN ##NaN)"
+    ],
+    [
+      "computed-distinct-nan",
+      "(let [a (+ ##NaN 0.0) b (+ ##NaN 0.0)] (= a b))"
+    ],
+    [
+      "retained-object-nan",
+      "(let [a (identity ##NaN)] (= a a))"
+    ],
+    [
+      "nested-symbolic-nan",
+      "(= [##NaN] [##NaN])"
+    ]
+  ],
+  "oracle_sha256": "b6e2a11e56d5f8be7de46abd42dffb9bab622a3b512d18995903bc3badd2d175",
+  "commands": [
+    {
+      "name": "primary",
+      "command": [
+        "java",
+        "-Xmx256m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/ci6-sequence-nan-primary/oracle.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 2.50771427154541,
+      "stdout": "[false false false true false]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/suss",
+        "-e",
+        "[(= ##NaN ##NaN) (== ##NaN ##NaN) (let [a (+ ##NaN 0.0) b (+ ##NaN 0.0)] (= a b)) (let [a (identity ##NaN)] (= a a)) (= [##NaN] [##NaN])]"
+      ],
+      "exit_code": 0,
+      "seconds": 5.741633176803589,
+      "stdout": "[false false false true false]\n",
+      "stderr_tail": ""
+    }
+  ],
+  "complete": true
+}

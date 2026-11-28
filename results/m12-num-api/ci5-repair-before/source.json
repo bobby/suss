@@ -1,0 +1,10 @@
+{
+  "head": "9f573766ca082fd34b872b1f360bd1caf7fd5c00",
+  "files": {
+    "crates/suss-cli/tests/compiled_macro_cumulative_fuel.rs": "8d3e152093d7666b8f9342b72ad9442d53232a76acf87a5ea19802308fe8489f",
+    "crates/suss-cli/tests/compiled_raw_value_uses.rs": "5fc733f32547723fbe39d3219987e381d98744328f73e244173c86c4606d1c50",
+    "crates/suss-compile/tests/portable_pipeline.rs": "97a31ded4376519ad1e15bfd969d572bb5ed690b98be6d74ed76201f072279b4",
+    "tests/oracle/portable-cases.json": "65c4bea5bc76ceea7fe2c8c8bcf307336e2478782deef65e6af3a02032834601"
+  },
+  "qualification": "Actual CI failures and exact local fuel101 preserved before repairs. Original portable CLJS fixture is immutable; pinned Clojure primary governs numeric identity."
+}

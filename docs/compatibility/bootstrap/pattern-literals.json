@@ -1,0 +1,26 @@
+{
+  "implementation": "Original Suss implementation of immutable checked Pattern literal values; no matching engine, Java implementation or Java runtime dependency.",
+  "source": "docs/compatibility/bootstrap/exact-integers.sus",
+  "block_sha256": "62147fd374c766e03450306988e6643cb35e0321e4d5c49bffbf62d0ab332ea2",
+  "reader": "crates/suss-reader/src/pattern/SOURCE.md",
+  "unicode_notice": "crates/suss-reader/src/pattern/UNICODE-LICENSE.md",
+  "primary": {
+    "version": "org.clojure/clojure 1.12.6",
+    "value_controls": 18,
+    "collection_controls": 6,
+    "reader_token_controls": 20,
+    "syntax_admission_controls": 192
+  },
+  "validation": {
+    "reader_tests": 93,
+    "compiled_target_tests": 34,
+    "phases": [
+      "Runtime",
+      "Macro"
+    ],
+    "aot_controls": 21,
+    "aot_fresh_invocations": 2
+  },
+  "evidence": "results/m12-pattern-values",
+  "limits": "Literal/value/source tooling only. Matching APIs, runtime regex reading, JVM Pattern class interop, complete numeric source bodies, full workspace, independent review and final-head CI retain separate evidence."
+}

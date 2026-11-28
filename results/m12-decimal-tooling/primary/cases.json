@@ -1,0 +1,884 @@
+[
+  {
+    "name": "literal-1",
+    "input": "1M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1M\" \"1\" \"1\" 0]"
+  },
+  {
+    "name": "literal-2",
+    "input": "1.0M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1.0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1.0M\" \"1.0\" \"10\" 1]"
+  },
+  {
+    "name": "literal-3",
+    "input": "1.00M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1.00M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1.00M\" \"1.00\" \"100\" 2]"
+  },
+  {
+    "name": "literal-4",
+    "input": "0M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"0M\" \"0\" \"0\" 0]"
+  },
+  {
+    "name": "literal-5",
+    "input": "0.00M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0.00M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"0.00M\" \"0.00\" \"0\" 2]"
+  },
+  {
+    "name": "literal-6",
+    "input": "-0.00M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-0.00M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"0.00M\" \"0.00\" \"0\" 2]"
+  },
+  {
+    "name": "literal-7",
+    "input": "1.50M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1.50M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1.50M\" \"1.50\" \"150\" 2]"
+  },
+  {
+    "name": "literal-8",
+    "input": "-1.50M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1.50M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"-1.50M\" \"-1.50\" \"-150\" 2]"
+  },
+  {
+    "name": "literal-9",
+    "input": "1e2M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1e2M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1E+2M\" \"1E+2\" \"1\" -2]"
+  },
+  {
+    "name": "literal-10",
+    "input": "1e-6M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1e-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"0.000001M\" \"0.000001\" \"1\" 6]"
+  },
+  {
+    "name": "literal-11",
+    "input": "1e-7M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1e-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1E-7M\" \"1E-7\" \"1\" 7]"
+  },
+  {
+    "name": "literal-12",
+    "input": "1.2e20M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1.2e20M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1.2E+20M\" \"1.2E+20\" \"12\" -19]"
+  },
+  {
+    "name": "literal-13",
+    "input": "1.200e-20M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1.200e-20M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1.200E-20M\" \"1.200E-20\" \"1200\" 23]"
+  },
+  {
+    "name": "literal-14",
+    "input": "123456789012345678901234567890.00100M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"123456789012345678901234567890.00100M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"123456789012345678901234567890.00100M\" \"123456789012345678901234567890.00100\" \"12345678901234567890123456789000100\" 5]"
+  },
+  {
+    "name": "literal-15",
+    "input": "1e2147483647M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1e2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1E+2147483647M\" \"1E+2147483647\" \"1\" -2147483647]"
+  },
+  {
+    "name": "literal-16",
+    "input": "1e-2147483647M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1e-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"1E-2147483647M\" \"1E-2147483647\" \"1\" 2147483647]"
+  },
+  {
+    "name": "literal-17",
+    "input": "0.0e-2147483646M",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0.0e-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "kind": "fields",
+    "expected": "[\"0E-2147483647M\" \"0E-2147483647\" \"0\" 2147483647]"
+  },
+  {
+    "name": "exponent-admission-1",
+    "input": "1e2147483648M",
+    "expression": "(try (edn/read-string \"1e2147483648M\") :accepted (catch Throwable _ :rejected))",
+    "kind": "admission",
+    "expected": ":accepted"
+  },
+  {
+    "name": "exponent-admission-2",
+    "input": "1e-2147483648M",
+    "expression": "(try (edn/read-string \"1e-2147483648M\") :accepted (catch Throwable _ :rejected))",
+    "kind": "admission",
+    "expected": ":rejected"
+  },
+  {
+    "name": "exponent-admission-3",
+    "input": "1.0e-2147483647M",
+    "expression": "(try (edn/read-string \"1.0e-2147483647M\") :accepted (catch Throwable _ :rejected))",
+    "kind": "admission",
+    "expected": ":rejected"
+  },
+  {
+    "name": "exponent-admission-4",
+    "input": "1e99999999999M",
+    "expression": "(try (edn/read-string \"1e99999999999M\") :accepted (catch Throwable _ :rejected))",
+    "kind": "admission",
+    "expected": ":rejected"
+  },
+  {
+    "name": "exponent-admission-5",
+    "input": "1.0MM",
+    "expression": "(try (edn/read-string \"1.0MM\") :accepted (catch Throwable _ :rejected))",
+    "kind": "admission",
+    "expected": ":rejected"
+  },
+  {
+    "name": "duplicate-1",
+    "input": "{1.0M :a 1.00M :b}",
+    "expression": "(try (edn/read-string \"{1.0M :a 1.00M :b}\") :accepted (catch Throwable _ :rejected))",
+    "kind": "duplicate",
+    "expected": ":rejected"
+  },
+  {
+    "name": "duplicate-2",
+    "input": "#{1.0M 1.00M}",
+    "expression": "(try (edn/read-string \"#{1.0M 1.00M}\") :accepted (catch Throwable _ :rejected))",
+    "kind": "duplicate",
+    "expected": ":rejected"
+  },
+  {
+    "name": "duplicate-3",
+    "input": "{[1.0M] :a [1.00M] :b}",
+    "expression": "(try (edn/read-string \"{[1.0M] :a [1.00M] :b}\") :accepted (catch Throwable _ :rejected))",
+    "kind": "duplicate",
+    "expected": ":rejected"
+  },
+  {
+    "name": "duplicate-4",
+    "input": "#{[1.0M] [1.00M]}",
+    "expression": "(try (edn/read-string \"#{[1.0M] [1.00M]}\") :accepted (catch Throwable _ :rejected))",
+    "kind": "duplicate",
+    "expected": ":rejected"
+  },
+  {
+    "name": "distinct-integral-category",
+    "input": "{1M :decimal 1 :integer}",
+    "expression": "(let [x (edn/read-string \"{1M :decimal 1 :integer}\")] [(count x) (get x 1M) (get x 1)])",
+    "kind": "fields",
+    "expected": "[2 :decimal :integer]"
+  },
+  {
+    "name": "matrix-0--2147483648",
+    "input": "0E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E+2147483648M\" \"0E+2147483648\" \"0\" -2147483648]"
+  },
+  {
+    "name": "matrix-0--2147483647",
+    "input": "0E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E+2147483647M\" \"0E+2147483647\" \"0\" -2147483647]"
+  },
+  {
+    "name": "matrix-0--8",
+    "input": "0E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E+8M\" \"0E+8\" \"0\" -8]"
+  },
+  {
+    "name": "matrix-0--1",
+    "input": "0E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E+1M\" \"0E+1\" \"0\" -1]"
+  },
+  {
+    "name": "matrix-0-0",
+    "input": "0E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0M\" \"0\" \"0\" 0]"
+  },
+  {
+    "name": "matrix-0-1",
+    "input": "0E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.0M\" \"0.0\" \"0\" 1]"
+  },
+  {
+    "name": "matrix-0-6",
+    "input": "0E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.000000M\" \"0.000000\" \"0\" 6]"
+  },
+  {
+    "name": "matrix-0-7",
+    "input": "0E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E-7M\" \"0E-7\" \"0\" 7]"
+  },
+  {
+    "name": "matrix-0-12",
+    "input": "0E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E-12M\" \"0E-12\" \"0\" 12]"
+  },
+  {
+    "name": "matrix-0-2147483646",
+    "input": "0E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E-2147483646M\" \"0E-2147483646\" \"0\" 2147483646]"
+  },
+  {
+    "name": "matrix-0-2147483647",
+    "input": "0E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"0E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0E-2147483647M\" \"0E-2147483647\" \"0\" 2147483647]"
+  },
+  {
+    "name": "matrix-1--2147483648",
+    "input": "1E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E+2147483648M\" \"1E+2147483648\" \"1\" -2147483648]"
+  },
+  {
+    "name": "matrix-1--2147483647",
+    "input": "1E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E+2147483647M\" \"1E+2147483647\" \"1\" -2147483647]"
+  },
+  {
+    "name": "matrix-1--8",
+    "input": "1E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E+8M\" \"1E+8\" \"1\" -8]"
+  },
+  {
+    "name": "matrix-1--1",
+    "input": "1E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E+1M\" \"1E+1\" \"1\" -1]"
+  },
+  {
+    "name": "matrix-1-0",
+    "input": "1E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1M\" \"1\" \"1\" 0]"
+  },
+  {
+    "name": "matrix-1-1",
+    "input": "1E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.1M\" \"0.1\" \"1\" 1]"
+  },
+  {
+    "name": "matrix-1-6",
+    "input": "1E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.000001M\" \"0.000001\" \"1\" 6]"
+  },
+  {
+    "name": "matrix-1-7",
+    "input": "1E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E-7M\" \"1E-7\" \"1\" 7]"
+  },
+  {
+    "name": "matrix-1-12",
+    "input": "1E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E-12M\" \"1E-12\" \"1\" 12]"
+  },
+  {
+    "name": "matrix-1-2147483646",
+    "input": "1E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E-2147483646M\" \"1E-2147483646\" \"1\" 2147483646]"
+  },
+  {
+    "name": "matrix-1-2147483647",
+    "input": "1E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1E-2147483647M\" \"1E-2147483647\" \"1\" 2147483647]"
+  },
+  {
+    "name": "matrix-2--2147483648",
+    "input": "-1E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E+2147483648M\" \"-1E+2147483648\" \"-1\" -2147483648]"
+  },
+  {
+    "name": "matrix-2--2147483647",
+    "input": "-1E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E+2147483647M\" \"-1E+2147483647\" \"-1\" -2147483647]"
+  },
+  {
+    "name": "matrix-2--8",
+    "input": "-1E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E+8M\" \"-1E+8\" \"-1\" -8]"
+  },
+  {
+    "name": "matrix-2--1",
+    "input": "-1E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E+1M\" \"-1E+1\" \"-1\" -1]"
+  },
+  {
+    "name": "matrix-2-0",
+    "input": "-1E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1M\" \"-1\" \"-1\" 0]"
+  },
+  {
+    "name": "matrix-2-1",
+    "input": "-1E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-0.1M\" \"-0.1\" \"-1\" 1]"
+  },
+  {
+    "name": "matrix-2-6",
+    "input": "-1E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-0.000001M\" \"-0.000001\" \"-1\" 6]"
+  },
+  {
+    "name": "matrix-2-7",
+    "input": "-1E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E-7M\" \"-1E-7\" \"-1\" 7]"
+  },
+  {
+    "name": "matrix-2-12",
+    "input": "-1E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E-12M\" \"-1E-12\" \"-1\" 12]"
+  },
+  {
+    "name": "matrix-2-2147483646",
+    "input": "-1E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E-2147483646M\" \"-1E-2147483646\" \"-1\" 2147483646]"
+  },
+  {
+    "name": "matrix-2-2147483647",
+    "input": "-1E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-1E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1E-2147483647M\" \"-1E-2147483647\" \"-1\" 2147483647]"
+  },
+  {
+    "name": "matrix-3--2147483648",
+    "input": "10E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E+2147483649M\" \"1.0E+2147483649\" \"10\" -2147483648]"
+  },
+  {
+    "name": "matrix-3--2147483647",
+    "input": "10E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E+2147483648M\" \"1.0E+2147483648\" \"10\" -2147483647]"
+  },
+  {
+    "name": "matrix-3--8",
+    "input": "10E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E+9M\" \"1.0E+9\" \"10\" -8]"
+  },
+  {
+    "name": "matrix-3--1",
+    "input": "10E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E+2M\" \"1.0E+2\" \"10\" -1]"
+  },
+  {
+    "name": "matrix-3-0",
+    "input": "10E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"10M\" \"10\" \"10\" 0]"
+  },
+  {
+    "name": "matrix-3-1",
+    "input": "10E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0M\" \"1.0\" \"10\" 1]"
+  },
+  {
+    "name": "matrix-3-6",
+    "input": "10E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.000010M\" \"0.000010\" \"10\" 6]"
+  },
+  {
+    "name": "matrix-3-7",
+    "input": "10E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.0000010M\" \"0.0000010\" \"10\" 7]"
+  },
+  {
+    "name": "matrix-3-12",
+    "input": "10E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E-11M\" \"1.0E-11\" \"10\" 12]"
+  },
+  {
+    "name": "matrix-3-2147483646",
+    "input": "10E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E-2147483645M\" \"1.0E-2147483645\" \"10\" 2147483646]"
+  },
+  {
+    "name": "matrix-3-2147483647",
+    "input": "10E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"10E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.0E-2147483646M\" \"1.0E-2147483646\" \"10\" 2147483647]"
+  },
+  {
+    "name": "matrix-4--2147483648",
+    "input": "-10E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E+2147483649M\" \"-1.0E+2147483649\" \"-10\" -2147483648]"
+  },
+  {
+    "name": "matrix-4--2147483647",
+    "input": "-10E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E+2147483648M\" \"-1.0E+2147483648\" \"-10\" -2147483647]"
+  },
+  {
+    "name": "matrix-4--8",
+    "input": "-10E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E+9M\" \"-1.0E+9\" \"-10\" -8]"
+  },
+  {
+    "name": "matrix-4--1",
+    "input": "-10E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E+2M\" \"-1.0E+2\" \"-10\" -1]"
+  },
+  {
+    "name": "matrix-4-0",
+    "input": "-10E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-10M\" \"-10\" \"-10\" 0]"
+  },
+  {
+    "name": "matrix-4-1",
+    "input": "-10E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0M\" \"-1.0\" \"-10\" 1]"
+  },
+  {
+    "name": "matrix-4-6",
+    "input": "-10E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-0.000010M\" \"-0.000010\" \"-10\" 6]"
+  },
+  {
+    "name": "matrix-4-7",
+    "input": "-10E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-0.0000010M\" \"-0.0000010\" \"-10\" 7]"
+  },
+  {
+    "name": "matrix-4-12",
+    "input": "-10E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E-11M\" \"-1.0E-11\" \"-10\" 12]"
+  },
+  {
+    "name": "matrix-4-2147483646",
+    "input": "-10E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E-2147483645M\" \"-1.0E-2147483645\" \"-10\" 2147483646]"
+  },
+  {
+    "name": "matrix-4-2147483647",
+    "input": "-10E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-10E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.0E-2147483646M\" \"-1.0E-2147483646\" \"-10\" 2147483647]"
+  },
+  {
+    "name": "matrix-5--2147483648",
+    "input": "100E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E+2147483650M\" \"1.00E+2147483650\" \"100\" -2147483648]"
+  },
+  {
+    "name": "matrix-5--2147483647",
+    "input": "100E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E+2147483649M\" \"1.00E+2147483649\" \"100\" -2147483647]"
+  },
+  {
+    "name": "matrix-5--8",
+    "input": "100E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E+10M\" \"1.00E+10\" \"100\" -8]"
+  },
+  {
+    "name": "matrix-5--1",
+    "input": "100E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E+3M\" \"1.00E+3\" \"100\" -1]"
+  },
+  {
+    "name": "matrix-5-0",
+    "input": "100E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"100M\" \"100\" \"100\" 0]"
+  },
+  {
+    "name": "matrix-5-1",
+    "input": "100E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"10.0M\" \"10.0\" \"100\" 1]"
+  },
+  {
+    "name": "matrix-5-6",
+    "input": "100E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.000100M\" \"0.000100\" \"100\" 6]"
+  },
+  {
+    "name": "matrix-5-7",
+    "input": "100E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.0000100M\" \"0.0000100\" \"100\" 7]"
+  },
+  {
+    "name": "matrix-5-12",
+    "input": "100E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E-10M\" \"1.00E-10\" \"100\" 12]"
+  },
+  {
+    "name": "matrix-5-2147483646",
+    "input": "100E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E-2147483644M\" \"1.00E-2147483644\" \"100\" 2147483646]"
+  },
+  {
+    "name": "matrix-5-2147483647",
+    "input": "100E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"100E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.00E-2147483645M\" \"1.00E-2147483645\" \"100\" 2147483647]"
+  },
+  {
+    "name": "matrix-6--2147483648",
+    "input": "1234567E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E+2147483654M\" \"1.234567E+2147483654\" \"1234567\" -2147483648]"
+  },
+  {
+    "name": "matrix-6--2147483647",
+    "input": "1234567E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E+2147483653M\" \"1.234567E+2147483653\" \"1234567\" -2147483647]"
+  },
+  {
+    "name": "matrix-6--8",
+    "input": "1234567E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E+14M\" \"1.234567E+14\" \"1234567\" -8]"
+  },
+  {
+    "name": "matrix-6--1",
+    "input": "1234567E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E+7M\" \"1.234567E+7\" \"1234567\" -1]"
+  },
+  {
+    "name": "matrix-6-0",
+    "input": "1234567E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1234567M\" \"1234567\" \"1234567\" 0]"
+  },
+  {
+    "name": "matrix-6-1",
+    "input": "1234567E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"123456.7M\" \"123456.7\" \"1234567\" 1]"
+  },
+  {
+    "name": "matrix-6-6",
+    "input": "1234567E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567M\" \"1.234567\" \"1234567\" 6]"
+  },
+  {
+    "name": "matrix-6-7",
+    "input": "1234567E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.1234567M\" \"0.1234567\" \"1234567\" 7]"
+  },
+  {
+    "name": "matrix-6-12",
+    "input": "1234567E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"0.000001234567M\" \"0.000001234567\" \"1234567\" 12]"
+  },
+  {
+    "name": "matrix-6-2147483646",
+    "input": "1234567E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E-2147483640M\" \"1.234567E-2147483640\" \"1234567\" 2147483646]"
+  },
+  {
+    "name": "matrix-6-2147483647",
+    "input": "1234567E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1234567E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.234567E-2147483641M\" \"1.234567E-2147483641\" \"1234567\" 2147483647]"
+  },
+  {
+    "name": "matrix-7--2147483648",
+    "input": "-123456789012345678901234567890E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E+2147483677M\" \"-1.23456789012345678901234567890E+2147483677\" \"-123456789012345678901234567890\" -2147483648]"
+  },
+  {
+    "name": "matrix-7--2147483647",
+    "input": "-123456789012345678901234567890E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E+2147483676M\" \"-1.23456789012345678901234567890E+2147483676\" \"-123456789012345678901234567890\" -2147483647]"
+  },
+  {
+    "name": "matrix-7--8",
+    "input": "-123456789012345678901234567890E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E+37M\" \"-1.23456789012345678901234567890E+37\" \"-123456789012345678901234567890\" -8]"
+  },
+  {
+    "name": "matrix-7--1",
+    "input": "-123456789012345678901234567890E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E+30M\" \"-1.23456789012345678901234567890E+30\" \"-123456789012345678901234567890\" -1]"
+  },
+  {
+    "name": "matrix-7-0",
+    "input": "-123456789012345678901234567890E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-123456789012345678901234567890M\" \"-123456789012345678901234567890\" \"-123456789012345678901234567890\" 0]"
+  },
+  {
+    "name": "matrix-7-1",
+    "input": "-123456789012345678901234567890E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-12345678901234567890123456789.0M\" \"-12345678901234567890123456789.0\" \"-123456789012345678901234567890\" 1]"
+  },
+  {
+    "name": "matrix-7-6",
+    "input": "-123456789012345678901234567890E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-123456789012345678901234.567890M\" \"-123456789012345678901234.567890\" \"-123456789012345678901234567890\" 6]"
+  },
+  {
+    "name": "matrix-7-7",
+    "input": "-123456789012345678901234567890E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-12345678901234567890123.4567890M\" \"-12345678901234567890123.4567890\" \"-123456789012345678901234567890\" 7]"
+  },
+  {
+    "name": "matrix-7-12",
+    "input": "-123456789012345678901234567890E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-123456789012345678.901234567890M\" \"-123456789012345678.901234567890\" \"-123456789012345678901234567890\" 12]"
+  },
+  {
+    "name": "matrix-7-2147483646",
+    "input": "-123456789012345678901234567890E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E-2147483617M\" \"-1.23456789012345678901234567890E-2147483617\" \"-123456789012345678901234567890\" 2147483646]"
+  },
+  {
+    "name": "matrix-7-2147483647",
+    "input": "-123456789012345678901234567890E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"-123456789012345678901234567890E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"-1.23456789012345678901234567890E-2147483618M\" \"-1.23456789012345678901234567890E-2147483618\" \"-123456789012345678901234567890\" 2147483647]"
+  },
+  {
+    "name": "matrix-8--2147483648",
+    "input": "1000000000000000000000000E2147483648M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E2147483648M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E+2147483672M\" \"1.000000000000000000000000E+2147483672\" \"1000000000000000000000000\" -2147483648]"
+  },
+  {
+    "name": "matrix-8--2147483647",
+    "input": "1000000000000000000000000E2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E+2147483671M\" \"1.000000000000000000000000E+2147483671\" \"1000000000000000000000000\" -2147483647]"
+  },
+  {
+    "name": "matrix-8--8",
+    "input": "1000000000000000000000000E8M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E8M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E+32M\" \"1.000000000000000000000000E+32\" \"1000000000000000000000000\" -8]"
+  },
+  {
+    "name": "matrix-8--1",
+    "input": "1000000000000000000000000E1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E+25M\" \"1.000000000000000000000000E+25\" \"1000000000000000000000000\" -1]"
+  },
+  {
+    "name": "matrix-8-0",
+    "input": "1000000000000000000000000E0M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E0M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1000000000000000000000000M\" \"1000000000000000000000000\" \"1000000000000000000000000\" 0]"
+  },
+  {
+    "name": "matrix-8-1",
+    "input": "1000000000000000000000000E-1M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-1M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"100000000000000000000000.0M\" \"100000000000000000000000.0\" \"1000000000000000000000000\" 1]"
+  },
+  {
+    "name": "matrix-8-6",
+    "input": "1000000000000000000000000E-6M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-6M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1000000000000000000.000000M\" \"1000000000000000000.000000\" \"1000000000000000000000000\" 6]"
+  },
+  {
+    "name": "matrix-8-7",
+    "input": "1000000000000000000000000E-7M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-7M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"100000000000000000.0000000M\" \"100000000000000000.0000000\" \"1000000000000000000000000\" 7]"
+  },
+  {
+    "name": "matrix-8-12",
+    "input": "1000000000000000000000000E-12M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-12M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1000000000000.000000000000M\" \"1000000000000.000000000000\" \"1000000000000000000000000\" 12]"
+  },
+  {
+    "name": "matrix-8-2147483646",
+    "input": "1000000000000000000000000E-2147483646M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-2147483646M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E-2147483622M\" \"1.000000000000000000000000E-2147483622\" \"1000000000000000000000000\" 2147483646]"
+  },
+  {
+    "name": "matrix-8-2147483647",
+    "input": "1000000000000000000000000E-2147483647M",
+    "kind": "fields",
+    "expression": "(let [^java.math.BigDecimal x (edn/read-string \"1000000000000000000000000E-2147483647M\")] [(pr-str x) (str x) (str (.unscaledValue x)) (.scale x)])",
+    "expected": "[\"1.000000000000000000000000E-2147483623M\" \"1.000000000000000000000000E-2147483623\" \"1000000000000000000000000\" 2147483647]"
+  }
+]

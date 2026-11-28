@@ -1,0 +1,21 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/pattern-value-primary/oracle.clj"
+  ],
+  "exit_code": 0,
+  "seconds": 1.227569341659546,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "05e8965d4ed94102fed31117e0295cdec0b1a9095721c1d427f015c9b2e0e1be",
+  "stdout_sha256": "25aca7e0f26557d6ac3e10cd5a40493993a6e1864fdb95fa0d28e0ba25db82ec",
+  "intended_controls": 26,
+  "qualification": "Fresh Clojure1.12.6 observations to establish the real Pattern literal/value semantics blocking complete eq/not-eq/num numeric source bodies. No Suss support or numeric acceptance is inferred."
+}

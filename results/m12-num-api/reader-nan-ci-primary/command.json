@@ -1,0 +1,54 @@
+{
+  "head": "7b71a47b8b60c3b47e69ebb3eabe098270521725",
+  "cases": [
+    [
+      "same-reader-nan",
+      "(let [x (read-string \"##NaN\")] [(= x x) (not= x x) (== x x)])"
+    ],
+    [
+      "separate-reader-nans",
+      "(let [a (read-string \"##NaN\") b (read-string \"##NaN\")] [(= a b) (identical? a b) (== a b)])"
+    ],
+    [
+      "nan-structural-detection",
+      "(let [a (read-string \"##NaN\") b (read-string \"##NaN\")] [(not (== a a)) (not (== b b)) (and (not (== a a)) (not (== b b)))])"
+    ]
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "oracle_sha256": "af1eea2cd76aadffce34f280fb69051e783f1a9c477a527627af8952f6dcc040",
+  "binary_sha256": "4bc50d0a1678cac13759a95517bfd4c8ae28127fc6a14c1ef04b9e61c0b978c0",
+  "commands": [
+    {
+      "name": "primary",
+      "command": [
+        "java",
+        "-Xmx256m",
+        "-cp",
+        "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+        "clojure.main",
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/oracle.clj"
+      ],
+      "exit_code": 0,
+      "seconds": 1.0674505233764648,
+      "stdout": "[[true false false] [true true false] [true true true]]\n",
+      "stderr_tail": ""
+    },
+    {
+      "name": "native",
+      "command": [
+        "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/reader-nan-ci-primary/suss",
+        "-e",
+        "[(let [x (read-string \"##NaN\")] [(= x x) (not= x x) (== x x)]) (let [a (read-string \"##NaN\") b (read-string \"##NaN\")] [(= a b) (identical? a b) (== a b)]) (let [a (read-string \"##NaN\") b (read-string \"##NaN\")] [(not (== a a)) (not (== b b)) (and (not (== a a)) (not (== b b)))])]"
+      ],
+      "exit_code": 0,
+      "seconds": 35.519102811813354,
+      "stdout": "[[true false false] [true true false] [true true true]]\n",
+      "stderr_tail": ""
+    }
+  ],
+  "complete": true
+}

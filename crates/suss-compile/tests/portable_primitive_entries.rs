@@ -1,7 +1,66 @@
 //! Primitive entries are real Wasm functions, owned by the code struct's
 //! signature subtype. The generic entry is only a checked cast/call/box bridge.
 use suss_compile::{portable, runtime_abi};
-use wasmparser::{CompositeInnerType, FuncType, Operator, Parser, Payload, TypeRef, ValType};
+use wasmparser::{CompositeInnerType, FuncType, Operator, Parser, Payload, TypeRef, ValType, StorageType};
+
+#[test]
+fn local_typed_double_calls_do_not_materialize_object_arguments_in_the_loop() {
+    let source = "(fn ^double []
+      (let [f (fn ^double [^double x] (+ x 1.0))]
+        (loop [i 0 d 0.0]
+          (if (< i 1234571)
+            (recur (inc i) (+ (f d) 0.0))
+            d))))";
+    let bytes = portable::compile(source).unwrap();
+    let mut double_boxes = Vec::new();
+    let mut type_index = 0;
+    for payload in Parser::new(0).parse_all(&bytes) {
+        if let Payload::TypeSection(types) = payload.unwrap() {
+            for group in types {
+                for subtype in group.unwrap().into_types() {
+                    if let CompositeInnerType::Struct(ty) = &subtype.composite_type.inner {
+                        if ty.fields.len() == 1 && !ty.fields[0].mutable
+                            && matches!(ty.fields[0].element_type, StorageType::Val(ValType::F64)) {
+                            double_boxes.push(type_index);
+                        }
+                    }
+                    type_index += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(double_boxes.len(), 1, "the canonical Double box must be identified");
+    let mut found = 0;
+    for payload in Parser::new(0).parse_all(&bytes) {
+        let Payload::CodeSectionEntry(body) = payload.unwrap() else { continue };
+        let ops = body.get_operators_reader().unwrap().into_iter()
+            .map(Result::unwrap).collect::<Vec<_>>();
+        if !ops.iter().any(|op| matches!(op, Operator::I64Const { value: 1234571 })) { continue; }
+        found += 1;
+        let mut scopes = Vec::new();
+        for (index, op) in ops.iter().enumerate() {
+            match op {
+                Operator::Loop { .. } => scopes.push(true),
+                Operator::Block { .. } | Operator::If { .. } => scopes.push(false),
+                Operator::End => { scopes.pop(); }
+                Operator::StructNew { struct_type_index }
+                    if double_boxes.contains(struct_type_index) && scopes.contains(&true) =>
+                {
+                    let terminal = ops[index + 1..].iter().position(|op|
+                        matches!(op, Operator::Call { .. } | Operator::Return))
+                        .map(|distance| index + 1 + distance);
+                    let throwing = terminal.is_some_and(|call|
+                        matches!(ops[call], Operator::Call { .. })
+                            && matches!(ops.get(call + 1), Some(Operator::Drop))
+                            && matches!(ops.get(call + 2), Some(Operator::Unreachable)));
+                    assert!(throwing, "typed numeric consumption must not allocate an Object in its loop");
+                }
+                _ => {}
+            }
+        }
+    }
+    assert_eq!(found, 1, "one numeric loop must be inspected");
+}
 
 fn check_entry(source: &str, parameters: &[ValType], result: ValType, error_calls: usize) {
     let bytes = portable::compile(source).unwrap();

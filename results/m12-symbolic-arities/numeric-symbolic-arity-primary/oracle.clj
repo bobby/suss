@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(prn (let [f (fn ([] ##NaN) ([x] ##NaN))] [(identical? (f) (f)) (identical? (f 0) (f 1)) (identical? (f) (f 0))]))
+(prn (let [f (fn ([] ##Inf) ([x] ##Inf))] (identical? (f) (f 0))))
+(prn (let [f (fn ([] 1.5) ([x] 1.5))] (identical? (f) (f 0))))
+(prn (let [f (fn [] ##NaN) g (fn [] ##NaN)] (identical? (f) (g))))

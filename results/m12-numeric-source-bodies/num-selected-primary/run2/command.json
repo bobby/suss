@@ -1,0 +1,29 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar:/home/bobby/.m2/repository/org/clojure/tools.reader/1.5.0/tools.reader-1.5.0.jar:/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/tests/oracle/jvm/src:/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/vendor/clojure-test-suite/upstream/test",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/numeric-selected-primary-run2/oracle.clj",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/vendor/clojure-test-suite/upstream/test/clojure/core_test/num.cljc",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/numeric-selected-primary-run2/observations.json",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/numeric-selected-primary-run2/selected-forms.clj"
+  ],
+  "exit_code": 1,
+  "seconds": 5.231099605560303,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb",
+    "/home/bobby/.m2/repository/org/clojure/tools.reader/1.5.0/tools.reader-1.5.0.jar": "bfc8f709efb843f2ccc4daa93e2842ceb86e7b8d11d5544dc0ee68b6a0f4db3c"
+  },
+  "inputs": {
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/vendor/clojure-test-suite/upstream/test/clojure/core_test/num.cljc": "ac6d931f0056bede47c51c484033431acf22b28945463e2a36271f2d4615dd36",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/tests/oracle/jvm/src/suss_oracle/clojure_test_suite_jvm.clj": "776da924297c2a8fee39c1679a4fed33145b0c75ed36f9e3658d2635adec5f5c",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/numeric-selected-primary-run2/oracle.clj": "22af303332be4408bcc402a3132c6c46b4ddc5fc9c984253b9d32e5425583e0b",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/tests/oracle/clojure-test-suite-observations.json": "449264ab6bca1dcf761d0204e4a64de4de91562e576615c4e84a63246839f4c7"
+  },
+  "inputs_unchanged": true,
+  "qualification": "Supplemental complete original num namespace selected by the accepted Suss/default feature contract using pinned tools.reader1.5.0; executed on actual Clojure1.12.6 with the unchanged primary observation encoder. Does not replace, slice, reclassify or alter the original JVM/clj primary, assertion counts, opaque rules, baseline or global comparison."
+}

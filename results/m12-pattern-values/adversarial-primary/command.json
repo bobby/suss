@@ -1,0 +1,24 @@
+{
+  "command": [
+    "java",
+    "-Xmx256m",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-pattern-values/admission-primary/pattern-oracle.clj",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-pattern-values/adversarial-primary/pattern-inputs.edn",
+    "/home/bobby/.codex-workspaces/cleanup/suss-20261123/eval-next-step/m12-numeric-completion/results/m12-pattern-values/adversarial-primary/pattern-cases.edn"
+  ],
+  "exit_code": 0,
+  "seconds": 0.8950948715209961,
+  "controls": 116,
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "source_sha256": "8f9e0daa7f5b81546f4239f450fd287474a6ff0e8d1087377ccab3311609a7d1",
+  "input_sha256": "d54c50a77317ddadd10e01b94f86f76fc5894192746842a04eb82828488e9515",
+  "qualification": "Fresh pinned primary controls for unresolved parser concerns: empty quotes/flags, class ranges, supplementary characters, names and property spelling. Expected outputs are actual JVM observations.",
+  "output_sha256": "9db6069550b8e53d220d46e4b627d671fd039a4297353d27001f7597de2dcc02"
+}

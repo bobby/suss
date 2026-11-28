@@ -352,6 +352,7 @@ impl Evaluation {
                 | suss_reader::forms::Kind::String(_)
                 | suss_reader::forms::Kind::Keyword(_)
                 | suss_reader::forms::Kind::Uuid(_)
+                | suss_reader::forms::Kind::Pattern(_)
         ) {
             return Ok(value);
         }

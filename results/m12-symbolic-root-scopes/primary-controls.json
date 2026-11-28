@@ -1,0 +1,17 @@
+[
+  {
+    "name": "root-scope-new-function",
+    "expression": "(let [f (fn [x] (if x ##NaN (with-redefs [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "observed_edn": "false"
+  },
+  {
+    "name": "root-scope-retains-own-function-constant",
+    "expression": "(let [f (fn [] (with-redefs [*print-length* 3] ##NaN))] (identical? (f) (f)))",
+    "observed_edn": "true"
+  },
+  {
+    "name": "thread-binding-enclosing-function",
+    "expression": "(let [f (fn [x] (if x ##NaN (binding [*print-length* 3] ##NaN)))] (identical? (f true) (f false)))",
+    "observed_edn": "true"
+  }
+]
