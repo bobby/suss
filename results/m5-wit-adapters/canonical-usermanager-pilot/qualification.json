@@ -1,0 +1,19 @@
+{
+  "native_1000_pilot_exit_code": 1,
+  "native_departments_cli_exit_code": 0,
+  "departments_cli_result": {
+    "opened": 1,
+    "closed": 1,
+    "live": 0,
+    "writes": 0
+  },
+  "actual_component_sha256": "35ce8c60e5d3d6988c250bd89d9b4f9a6186512471a46142b5a0ea2cd682d5b7",
+  "actual_component_bytes": 4586159,
+  "module_inspection": {
+    "allocator_module": 35,
+    "allocation_scan_offset": "0x459e9f",
+    "realloc_call_offset": "0x459fbe",
+    "application_handle_export_function": 37
+  },
+  "qualification": "Retrospective archive of tool-executed probes. Original component/measure identity file precedes execution; original native-build and CLI-compile before/after receipts included. The failed 1000-user run is not a benchmark pass. The departments CLI completed before the attempted stop inspected /proc; no signal was sent and no cancellation result is claimed. Native binaries use the unoptimized dev profile. Inspector source/raw output retained; source-repair and optimized-profile final artifacts require separate validation."
+}

@@ -1,0 +1,15 @@
+Running as unit: run-p2123176-i106941885.scope; invocation ID: a391fb4e157b4e378acddb5ae889a2b4
+Error: error while executing at wasm backtrace:
+    0: 0x459e9f - <unknown>!<wasm function 0>
+    1: 0x459fbe - <unknown>!<wasm function 2>
+    2: 0x45816f - <unknown>!<wasm function 261>
+    3: 0x3d26b0 - <unknown>!<wasm function 72>
+    4: 0x3f7887 - <unknown>!<wasm function 59>
+    5: 0x414a38 - <unknown>!<wasm function 166>
+    6:  0x2e695 - <unknown>!<wasm function 571>
+    7: 0x4116bb - <unknown>!<wasm function 165>
+    8: 0x4442b8 - <unknown>!<wasm function 37>
+
+Caused by:
+    wasm trap: all fuel consumed by WebAssembly
+

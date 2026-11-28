@@ -37744,3 +37744,46 @@ Publish this preflight correction to #526, then restart the required exact
 workspace baseline on its new frozen head. Final-head CI/review, contextual
 resource identities, guest resources, async/cancellation and UserManager remain
 separate gates. The data draft also has its own two independent review fixes.
+
+### 2026-11-28: canonical allocation scalability probe
+
+The actual native UserManager1,000-user pilot exhausted100-million fuel in a
+call to the application handle export. Independent wasmparser inspection maps
+the innermost0x459e9f frame to the canonical allocator's retained-header search
+and0x459fbe to cabi_realloc calling it. This is a failed pilot, not a performance
+result. A separate actual CLI departments request returned successfully with
+one open/close, zero live and zero writes. The attempted later stop found the
+process already finished; no signal was sent. The original unoptimized dev
+binaries, compile receipts, component/hash, raw logs and inspection source are
+qualified in results/m5-wit-adapters/canonical-usermanager-pilot/.
+
+A direct executing production-module regression allocated10,000 simultaneously
+live varied blocks, validated payloads, released and reused them under a total
+100-million fuel budget. Before implementation, allocation2717 exhausted fuel:
+three existing controls passed and the new control failed (exit101,7.437s).
+Raw command and standalone-tool identities are in
+canonical-many-live-allocations-before/. This imports the real Rust production
+module into a narrowly compiled unit harness, reusing explicitly hashed
+third-party libraries; it is not a Cargo/workspace baseline.
+
+Allocation now searches only reusable blocks. A private packed WasmGC bitmap
+validates active allocation starts before reading caller-writable linear headers,
+so release/realloc no longer traverse the retained ownership chain. Canonical
+function exports/signatures stay unchanged. Linear headers retain their16-byte
+layout; an inactive header's logical-length field now links the free list.
+The private module has six functions and four globals, including its GC bitmap;
+strict allocator observers must recognize this implementation and ignore inactive
+length fields when checking logical lengths. The bitmap uses one bit per16
+canonical-memory bytes (at most32MiB for4GiB), grows after checked linear growth
+and retains active bits. Free-list search can still depend on reusable-block
+fragmentation; this does not claim constant-time general allocation.
+
+The first corrected four-test command passed (9.632s); the strengthened command
+then passed all five controls (10.328s,14,064 inputs/HEAD/tools fixed), including
+forced GC, page alignment, forged interior headers, stale-header resurrection,
+incorrect lengths, failed growth preserving the old payload, realloc copying
+and capacity reuse. The10,000-live-block allocate/release/reuse workload consumed
+5,221,721 fuel. Raw evidence and a hash-verified production-source snapshot are
+in canonical-private-index-ownership-gc/. This is the isolated allocator proof;
+actual large WIT/UserManager execution, updated observers, ordinary Cargo checks,
+bootstrap/full baseline, independent review and final-head CI remain required.

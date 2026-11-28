@@ -2236,3 +2236,13 @@ leak was established for a schema the pinned validator does not admit. The
 complete affected exported-handle/data-shape command passes21 controls on frozen
 sources, including ordinary duplicate-key maps and bounded stress/GC controls.
 Full resource baseline and final-head acceptance remain separate.
+
+The owned canonical allocator maintains a private WasmGC active-start bitmap
+and a separate free list. It rejects fabricated/interior/stale allocation starts
+before reading linear metadata, and live blocks do not participate in reusable
+block searches. Its16-byte private headers retain capacity and active state;
+inactive length fields link the free list. Canonical exports remain memory,
+cabi_realloc and release. The direct10,000-live-varied-block regression and
+ownership/GC controls are recorded in the canonical-private-index-ownership-gc
+capture; this isolated module result does not establish generic cancellation
+cleanup or the large application measurements.
