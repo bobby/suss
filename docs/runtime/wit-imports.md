@@ -81,3 +81,12 @@ updates, and a non-suspending canonical async export calling a synchronous
 provider. It separately checks authority and unsupported selected types before
 source macro effects. General async suspension and resource lifetimes retain
 their own acceptance gates.
+
+
+Interfaces containing only supported data-type declarations carry schema
+identity without granting function authority. They need no imported-function
+mapping or runtime linker provider; the component still declares the original
+schema instance. Their complete selected types are checked before source macro
+effects. The executing controls include a native record/list update with exact
+integer extrema and a schema-only instance beside the automatic randomness
+capability. Ordinary function-bearing interfaces still require explicit mappings.

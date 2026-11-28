@@ -418,7 +418,9 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             "Portable AOT imported WIT adapters remain unimplemented",
         ));
     }
-    schemas::validate(resolve, world)?;
+    // Schema-only interfaces grant no host call authority. Validate their
+    // complete selected types before source effects, including unused types.
+    imports::selected(resolve, world, &[])?;
     let validate_function = |function: &wit_parser::Function| -> Result<(), Diagnostic> {
         if function.external_id.is_some() {
             return Err(error(
@@ -921,14 +923,13 @@ pub fn component_with_imports(
     let component_function_base = random_count + host_count;
     let mut resolved_types = super::command::shape::Types::new(resolve);
     let (interface_imports, mut host_functions, mut next_host_function) =
-        if host_imports.is_empty() {
-            (schemas::encode(resolve, world, &mut component, &mut resolved_types)?, Vec::new(), 0)
-        } else {
-            imports::encode_interfaces(
-                resolve, world, &host_imports, &mut component, &mut resolved_types,
-            )?
-        };
-    let schema_imports = interface_imports;
+        imports::encode_interfaces(
+            resolve,
+            world,
+            &host_imports,
+            &mut component,
+            &mut resolved_types,
+        )?;
     let imported_instance_count = random_count + interface_imports;
     let random_type = randomness
         .as_ref()
@@ -1027,7 +1028,7 @@ pub fn component_with_imports(
         component.section(&imports);
         let mut aliases = ComponentAliasSection::new();
         aliases.alias(Alias::InstanceExport {
-            instance: schema_imports,
+            instance: interface_imports,
             kind: ComponentExportKind::Func,
             name: "get-random-u64",
         });
