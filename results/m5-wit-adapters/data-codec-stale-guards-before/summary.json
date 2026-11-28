@@ -1,0 +1,38 @@
+{
+  "input_selection": "All tracked files in the frozen committed data worktree, excluding other untracked live capture output. The actual standalone runner is archived alongside this receipt.",
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "public_compiled_files",
+    "--test",
+    "public_compiled_pipeline",
+    "unsupported_boundary",
+    "--",
+    "--test-threads=2"
+  ],
+  "head": "ab4cbd0e9aa12407af1adcb8bc6d9a4785d21dd5",
+  "runner_sha256": "9a19c372db9540fab122311c3542b804f48750371ac5297a3c40ced05ab3920a",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p1150988-i105974386.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-composites/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 101,
+  "seconds": 6.781291957944632,
+  "log_sha256": "d0b959d1f134f4f717e3cd5a8d83f06bd8a776fd4711d8f5d6f30fcf1fde97cf",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "237051006580f92c623f125d70fac9534bc6f83ace2cf897b65b7d92e7c286f6",
+  "inputs_count": 13791
+}

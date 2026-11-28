@@ -64,11 +64,11 @@ fn prototype_reports_unsupported_boundary_shapes_instead_of_unknown_types() {
     // Parser support is distinct from implemented language adapters. These
     // diagnostics can be retired one shape at a time with executing fixtures.
     for (shape, diagnostic) in [
-        ("map<string, u32>", "map"),
+        ("map<string, future<u32>>", "future"),
         ("future<u8>", "future"),
         ("stream<u8>", "stream"),
         ("error-context", "error-context"),
-        ("list<map<string, u32>>", "map"),
+        ("list<future<map<string, u32>>>", "future"),
     ] {
         let wit = format!(
             "package test:unsupported; world boundary {{ export echo: func(x: {shape}) -> {shape}; }}"
@@ -354,4 +354,56 @@ fn wit_external_id_survives_encoding_and_selects_an_executing_export() {
         .unwrap();
     assert_eq!(increment.call(&mut store, (41,)).unwrap(), (42,));
     increment.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn public_compiler_executes_declared_map_with_native_conj_and_count() {
+    use wasmtime::{
+        Config, Engine, Store,
+        component::{Component, Linker, Val},
+    };
+    let bytes = suss_compile::Compiler::new().compile(
+        "(def ^:export echo (fn [m] (conj m [\"added\" (count m)])))",
+        "package test:map-profile; world api { export echo: func(x: map<string, u32>) -> map<string, u32>; }",
+    ).unwrap();
+    let mut config = Config::new();
+    config
+        .wasm_gc(true)
+        .wasm_function_references(true)
+        .wasm_tail_call(true)
+        .wasm_exceptions(true)
+        .wasm_component_model(true)
+        .wasm_component_model_map(true)
+        .consume_fuel(true)
+        .cranelift_opt_level(wasmtime::OptLevel::None);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, bytes).unwrap();
+    assert_eq!(component.component_type().imports(&engine).count(), 0);
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(100_000_000).unwrap();
+    let instance = Linker::new(&engine)
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let echo = instance.get_func(&mut store, "echo").unwrap();
+    let input = Val::Map(vec![
+        (Val::String("left".into()), Val::U32(0)),
+        (Val::String("left".into()), Val::U32(7)),
+        (Val::String("right".into()), Val::U32(u32::MAX)),
+    ]);
+    for _ in 0..5 {
+        let mut output = [Val::Bool(false)];
+        echo.call(&mut store, &[input.clone()], &mut output)
+            .unwrap();
+        let Val::Map(entries) = &output[0] else {
+            panic!("expected map: {output:?}")
+        };
+        assert_eq!(entries.len(), 3);
+        for expected in [("left", 7), ("right", u32::MAX), ("added", 2)] {
+            assert!(
+                entries.contains(&(Val::String(expected.0.into()), Val::U32(expected.1))),
+                "{entries:?}"
+            );
+        }
+        store.gc(None).unwrap();
+    }
 }

@@ -1,0 +1,13 @@
+{
+  "run_id": 46104514605,
+  "head": "ab4cbd0e9aa12407af1adcb8bc6d9a4785d21dd5",
+  "jobs": {
+    "integration-1": 140854237540,
+    "integration-2": 140854237521
+  },
+  "qualification": "Actual complete failed job logs retrieved via the jobs/logs API while other run jobs remain pending. Shard1 public_compiled_files:13 pass/1 fail; shard2 public_compiled_pipeline:10 pass/3 fail. All four failures are obsolete unsupported-boundary fixtures selecting now-supported list<map<string,u32>> and consequently executing their throwing source macros. This is not a final run or CI success claim.",
+  "raw_log_sha256": {
+    "1": "60432751d39e10689ed8ca51648b722d889c6327073244ce59982ac2da38fb55",
+    "2": "eb6f1c63be982110fba7220660521b5b3959753822e79e4af06616fa1adef7f9"
+  }
+}

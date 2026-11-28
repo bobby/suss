@@ -1220,6 +1220,14 @@ own frozen source. Arbitrary imports, resource/cancellation accounting and full
 workspace/CI validation have separate acceptance gates; no upstream declaration
 is reclassified by these interoperability controls.
 
+The public string/file map controls also execute native map updates and retain
+original values after GC. All29 public frontend and nine toolchain-profile
+controls pass in their separately recorded commands, including original Macro,
+compile-budget and recovery policies. Obsolete map-rejection fixtures now use
+unsupported future payloads; original failed CI logs and the interrupted full
+command remain retained. These focused results do not replace the fresh full
+baseline or final-head CI.
+
 [Portable AOT component assembly](../runtime/compiled-aot-components.md) now has
 five executing compiler tests for scalar component exports, source ordering/live
 cells, GC, phase guards and independently decoded boundary exceptions. A shared
