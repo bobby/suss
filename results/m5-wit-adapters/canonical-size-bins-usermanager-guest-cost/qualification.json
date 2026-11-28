@@ -1,0 +1,23 @@
+{
+  "mode": "diagnostic, not final application performance baseline",
+  "component_change": "Exactly one original allocator619-byte core module replaced; all other encoded component bytes conserved; full validation executed.",
+  "budgets": "Production host remains100-million per request; this explicit caller uses3-billion for lists only. Normal compiler budgets unchanged.",
+  "large_workload": "Both1000/10000 datasets finish all5list/counter/100CRUD batches and close one resource with zero live.",
+  "list_fuel_consumed": {
+    "1000": [
+      107924241,
+      107059322,
+      107059306,
+      107059322,
+      107059306
+    ],
+    "10000": [
+      1090438178,
+      1081168038,
+      1081168022,
+      1081168038,
+      1081168022
+    ]
+  },
+  "limits": "Final ordinary compiled component, final host policy, observer integration and repeated reproducible JVM comparison still need separate captures. No universal speed claim."
+}

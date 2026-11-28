@@ -1,0 +1,256 @@
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:51:97
+   |
+34 | fn main() -> wasmtime::Result<()> {
+   |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+51 |         Application::load(&bytes).map_err(|error| error.context("load measurement application"))?;
+   |         -------------------------                                                               ^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   |         |
+   |         this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:54:26
+   |
+34 | fn main() -> wasmtime::Result<()> {
+   |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+54 |         .open(":memory:")?
+   |          ----------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   |          |
+   |          this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:57:45
+   |
+34 | fn main() -> wasmtime::Result<()> {
+   |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+57 |         .request(&db, &Request::Departments)?
+   |          -----------------------------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   |          |
+   |          this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:72:6
+   |
+34 |   fn main() -> wasmtime::Result<()> {
+   |                -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+66 |       app.request(
+   |  _________-
+67 | |         &db,
+68 | |         &Request::SeedDepartment(Department {
+69 | |             id: 4,
+70 | |             name: "Development".into(),
+71 | |         }),
+72 | |     )?
+   | |     -^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   | |_____|
+   |       this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:85:10
+   |
+34 |   fn main() -> wasmtime::Result<()> {
+   |                -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+76 |           app.request(
+   |  _____________-
+77 | |             &db,
+78 | |             &Request::SaveUser(Form {
+79 | |                 id: None,
+...  |
+84 | |             }),
+85 | |         )?
+   | |         -^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   | |_________|
+   |           this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+  --> target/probe/usermanager-budget-diagnostic.rs:95:40
+   |
+34 | fn main() -> wasmtime::Result<()> {
+   |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+95 |         app.store.set_fuel(fuel_budget)?;
+   |                   ---------------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+   |                   |
+   |                   this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0308]: mismatched types
+   --> target/probe/usermanager-budget-diagnostic.rs:97:42
+    |
+ 97 |             .call_handle(&mut app.store, wasmtime::component::Resource::new_borrow(db.rep()), &Request::ListUsers)
+    |              -----------                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Resource<Session>`, found `Resource<_>`
+    |              |
+    |              arguments to this method are incorrect
+    |
+note: there are multiple different versions of crate `wasmtime` in the dependency graph
+   --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/component/resources/host_static.rs:140:1
+    |
+140 | pub struct Resource<T: 'static>(HostResource<Static<T>, ()>);
+    | ------------------------------- this is the found type
+    |
+   ::: /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/component/resources/host_static.rs:140:1
+    |
+140 | pub struct Resource<T: 'static>(HostResource<Static<T>, ()>);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this is the expected type
+    = help: you can use `cargo tree` to explore your dependency tree
+note: method defined here
+   --> examples/usermanager/host/src/lib.rs:13:0
+    = note: this error originates in the macro `wasmtime::component::bindgen` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:100:15
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+ 97 |             .call_handle(&mut app.store, wasmtime::component::Resource::new_borrow(db.rep()), &Request::ListUsers)
+    |              ----------------------------------------------------------------------------------------------------- this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+...
+100 |             })?
+    |               ^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:110:73
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+110 |         list["fuel_consumed"] = json!(fuel_budget - app.store.get_fuel()?);
+    |                                                               ----------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                                                               |
+    |                                                               this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:115:40
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+115 |             assert_eq!(app.changes(&db)?, changes);
+    |                            ------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                            |
+    |                            this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:128:81
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+128 |             app.request(&db, &Request::SaveUser(form(None, "temporary".into())))?
+    |                 ----------------------------------------------------------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                 |
+    |                 this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:130:70
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+130 |             let edit = app.request(&db, &Request::EditUser(Some(id)))?.unwrap();
+    |                            ------------------------------------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                            |
+    |                            this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:135:14
+    |
+ 34 |   fn main() -> wasmtime::Result<()> {
+    |                -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+132 |               app.request(
+    |  _________________-
+133 | |                 &db,
+134 | |                 &Request::SaveUser(form(Some(id.to_string()), "updated".into())),
+135 | |             )?
+    | |             -^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    | |_____________|
+    |               this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:137:55
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+137 |             app.request(&db, &Request::DeleteUser(id))?.unwrap();
+    |                 --------------------------------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                 |
+    |                 this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:147:36
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+147 |         assert_eq!(app.changes(&db)?, changes);
+    |                        ------------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |                        |
+    |                        this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error[E0277]: `?` couldn't convert the error: `wasmtime_internal_core::error::error::Error: std::error::Error` is not satisfied
+   --> target/probe/usermanager-budget-diagnostic.rs:149:18
+    |
+ 34 | fn main() -> wasmtime::Result<()> {
+    |              -------------------- required `wasmtime_internal_core::error::error::Error: std::error::Error` because of this
+...
+149 |     app.close(db)?;
+    |         ---------^ the trait `std::error::Error` is not implemented for `wasmtime_internal_core::error::error::Error`
+    |         |
+    |         this has type `Result<_, wasmtime_internal_core::error::error::Error>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = note: required for `wasmtime::Error` to implement `From<wasmtime_internal_core::error::error::Error>`
+
+error: aborting due to 16 previous errors
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.

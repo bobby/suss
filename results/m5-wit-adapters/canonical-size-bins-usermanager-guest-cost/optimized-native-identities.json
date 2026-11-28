@@ -1,0 +1,14 @@
+{
+  "suss": {
+    "bytes": 83194968,
+    "sha256": "587899b873957388028ec258f405aea63c8bddcdd91507af0249a503f70aaef4"
+  },
+  "suss-usermanager-host": {
+    "bytes": 31452456,
+    "sha256": "f4b98ddb5856810bcc3043c00b682ebe614e89628795698a9f806b969c6e7634"
+  },
+  "measure": {
+    "bytes": 31453848,
+    "sha256": "05548b1696d580109327d2244b5ac320f8d47922088f6c76da977446bd8e0887"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "target/probe/cargo/debug/measure": {
+    "bytes": 79154840,
+    "sha256": "8fa118d141f1932be878fc30dac4cedf8674b8707b739557ec6fbb15296838b1"
+  },
+  "target/probe/usermanager-standalone/application.wasm": {
+    "bytes": 4586159,
+    "sha256": "35ce8c60e5d3d6988c250bd89d9b4f9a6186512471a46142b5a0ea2cd682d5b7"
+  }
+}

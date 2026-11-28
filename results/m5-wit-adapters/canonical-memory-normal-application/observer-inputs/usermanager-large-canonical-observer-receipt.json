@@ -1,0 +1,37 @@
+{
+  "qualification": "Standalone Rust harness using the identified prebuilt host library and unmodified normal CLI component, with test-only exact-prefix read-only canonical observer; host seeding isolates large lists. Not a Cargo/workspace baseline or timing comparison.",
+  "inputs": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-large-canonical-observer.rs": "1bf4c0aef8d67c9605bbc08b104cd3de64881b32444fd6ef99e1b20d054400f4",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/crates/suss-cli/tests/support/usermanager_canonical_stats.rs": "9a5dab01f8976499ef91096d3b8f25dca889297d21187a9f86f4184c086cb979",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-measurements-final/application-0.wasm": "9202f3c8b81f2149c1a85861ea5eaf4faf27a519de38c2ee8a12e31962004bc5",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/Cargo.lock": "4981cb27d8367c53e962ccd545fb859405c5153b1baf1cba856c9a29ca69d1d6",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib": "afbbf8e3bb48cf708ac759318474dd10c20c8b2dc8c8b08cfc40e6d9bf9000b9",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-0ca795981cba27c6.rlib": "5d41e718cb5aba9af51e553329afcfff310bd3d1b7dc572e229e4795060436d1",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmparser-d54bd7dcfed2f0c3.rlib": "3af5c778fd1f31b5799d8588267365470bc43a9a06755a47a7a29bdc3c162402"
+  },
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-C",
+    "opt-level=1",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-large-canonical-observer.rs",
+    "-L",
+    "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+    "-o",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-large-canonical-observer",
+    "--extern",
+    "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+    "--extern",
+    "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-0ca795981cba27c6.rlib",
+    "--extern",
+    "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmparser-d54bd7dcfed2f0c3.rlib"
+  ],
+  "build_exit_code": 0,
+  "binary_sha256": "2dd77dafc2ddb4226899779389750e9fced73438a46500609cbc6345ea8789b5",
+  "run_command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-large-canonical-observer",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/usermanager-measurements-final/application-0.wasm"
+  ],
+  "exit_code": 0,
+  "changed_inputs": []
+}
