@@ -181,7 +181,7 @@ fn generated_rust_guest_and_suss_preserve_boundary_values_and_reject_before_host
             .into_iter()
             .map(|(name, source)| (name.into(), Symbol::parse(source)))
             .collect(),
-            exports: ["echo", "seen", "rejected"]
+            exports: ["echo", "replay", "seen", "rejected"]
                 .into_iter()
                 .map(|name| (name.into(), Symbol::namespaced("fixture.app", name)))
                 .collect(),
@@ -254,7 +254,17 @@ fn generated_rust_guest_and_suss_preserve_boundary_values_and_reject_before_host
     let through = instance
         .get_export_index(&mut store, Some(&suss), "echo")
         .unwrap();
+    let replay = instance
+        .get_export_index(&mut store, Some(&suss), "replay")
+        .unwrap();
+    let seen = instance
+        .get_export_index(&mut store, Some(&suss), "seen")
+        .unwrap();
+    let seen = instance
+        .get_typed_func::<(), (u32,)>(&mut store, seen)
+        .unwrap();
     let mut count = 0;
+    let mut retained = 0;
     for number in 0..3 {
         for option in 0..4 {
             for variant in [false, true] {
@@ -271,17 +281,24 @@ fn generated_rust_guest_and_suss_preserve_boundary_values_and_reject_before_host
                     store.gc(None).unwrap();
                     count += 1;
                 }
+                // Read the packet retained by Suss after GC, without replacing
+                // any fields, and verify the independent guest really ran.
+                store.gc(None).unwrap();
+                store.set_fuel(100_000_000).unwrap();
+                let before = seen.call(&mut store, ()).unwrap().0;
+                let function = instance.get_func(&mut store, replay).unwrap();
+                let mut results = [Val::Bool(false)];
+                function.call(&mut store, &[], &mut results).unwrap();
+                check_bits(&results[0], &expected);
+                assert_eq!(normalize(results[0].clone()), normalize(expected));
+                assert_eq!(seen.call(&mut store, ()).unwrap().0, before + 1);
+                retained += 1;
             }
         }
     }
     assert_eq!(count, 48);
-    let seen = instance
-        .get_export_index(&mut store, Some(&suss), "seen")
-        .unwrap();
-    let seen = instance
-        .get_typed_func::<(), (u32,)>(&mut store, seen)
-        .unwrap();
-    assert_eq!(seen.call(&mut store, ()).unwrap().0, 48);
+    assert_eq!(retained, 24);
+    assert_eq!(seen.call(&mut store, ()).unwrap().0, count + retained);
     let rejected = instance
         .get_export_index(&mut store, Some(&suss), "rejected")
         .unwrap();
@@ -291,10 +308,10 @@ fn generated_rust_guest_and_suss_preserve_boundary_values_and_reject_before_host
     assert!(rejected.call(&mut store, ()).unwrap().0);
     assert_eq!(
         seen.call(&mut store, ()).unwrap().0,
-        48,
+        count + retained,
         "invalid flags reached Rust guest"
     );
     println!(
-        "PASS48direct-Rust and Rust-host -> Suss -> generated-Rust-guest calls; malformed source flags reject before Rust effects; no outer imports"
+        "PASS48direct-Rust and Rust-host -> Suss -> generated-Rust-guest calls plus24successful retained-packet replays after GC; malformed source flags reject before Rust effects; no outer imports"
     );
 }

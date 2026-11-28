@@ -3,9 +3,9 @@
   "source_hashes": {
     "Cargo.toml": "1e3e010f1e4c131e21dddbbf8bc6a650720e021e65dbc076fb97d712726774ee",
     "Cargo.lock": "954c92d61c578057ce5a5df5b7c2036e3e9c3da161a79a491985b4621fa7aae8",
-    "api.wit": "20efb95d90b7b915df01cc9ca9a0b6c647a50a0e42f6fd219c0ce187e55d5daa",
+    "api.wit": "9bace6251c83e49c60f0ed3778f72accd64bc4d219091c237cc6c1d1b50b2333",
     "src/lib.rs": "b0d4ab96b5267b06f3ecf2cac5f9514cdfcb46375ca6384b6aa18292b5fcf96b",
-    "app.sus": "37d9083ee88ea5517e7fae463f12888cc814645b4c1ae852ba445bc1fffcc67a"
+    "app.sus": "b2d20d09050b27297552c5128c3bbaea486506b4aa4fe9ef4342177ae2df76ae"
   },
   "component_sha256": "ed652e4f03c6383dac411419cbd771e258be3912609b24069f2fa6dd9d339ede",
   "component_bytes": 143329,

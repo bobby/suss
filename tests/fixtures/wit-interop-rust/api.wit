@@ -20,6 +20,7 @@ world rust-provider { export provider; }
 world suss-consumer {
  import provider; use provider.{packet};
  export echo:func(value:packet)->packet;
+ export replay:func()->packet;
  export seen:func()->u32;
  export rejected:func()->bool;
 }
