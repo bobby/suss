@@ -1,0 +1,67 @@
+diff --git i/crates/suss-compile/tests/portable_aot_wit_borrows.rs w/crates/suss-compile/tests/portable_aot_wit_borrows.rs
+index dabe8944..a9928e8d 100644
+--- i/crates/suss-compile/tests/portable_aot_wit_borrows.rs
++++ w/crates/suss-compile/tests/portable_aot_wit_borrows.rs
+@@ -22,6 +22,7 @@ fn engine() -> &'static Engine {
+             .wasm_tail_call(true)
+             .wasm_exceptions(true)
+             .wasm_component_model(true)
++            .wasm_component_model_map(true)
+             .wasm_component_model_implements(true)
+             .consume_fuel(true)
+             .cranelift_opt_level(wasmtime::OptLevel::None);
+@@ -1025,3 +1026,54 @@ fn owned_inputs_roundtrip_to_rust_and_close_through_source_finally_on_success_or
+         (6, 0, 0, 6)
+     );
+ }
++
++#[test]
++fn duplicate_map_keys_release_overwritten_incoming_owners_before_source_receives_the_map() {
++    use wasmtime::component::{ResourceAny, Val};
++    let component = component_with(
++        r#"package test:borrow-boundary@1.0.0;
++        interface store { resource counter { constructor(value: u64); read: func() -> u64; } consume: func(handle: own<counter>) -> u64; }
++        world api { import store; use store.{counter};
++            type table = map<string, own<counter>>;
++            export run: func(entries: table) -> u64;
++        }"#,
++        r#"(ns app)
++        (defn run [entries]
++          (when-not (= 1 (count entries)) (throw "duplicate key was not coalesced"))
++          (let [handle (get entries "same") value (host/read handle)]
++            (suss.resource/close! handle)
++            value))"#,
++        &[("run", "app/run")],
++    );
++    let mut store = Store::new(engine(), State::default());
++    store.set_fuel(100_000_000).unwrap();
++    let live = store.data().live.clone();
++    let instance = linker().instantiate(&mut store, &component).unwrap();
++    let run = instance.get_func(&mut store, "run").unwrap();
++    let mut entries = Vec::new();
++    for value in [1, 9007199254740993] {
++        live.fetch_add(1, Ordering::SeqCst);
++        let owner = store
++            .data_mut()
++            .table
++            .push(Counter {
++                value,
++                live: live.clone(),
++            })
++            .unwrap();
++        let handle = ResourceAny::try_from_resource(owner, &mut store).unwrap();
++        entries.push((Val::String("same".into()), Val::Resource(handle)));
++    }
++    let mut output = [Val::Bool(false)];
++    run.call(&mut store, &[Val::Map(entries)], &mut output)
++        .unwrap();
++    assert_eq!(output, [Val::U64(9007199254740993)]);
++    store.gc(None).unwrap();
++    assert_eq!(
++        live.load(Ordering::SeqCst),
++        0,
++        "the overwritten owner was transferred to the guest but never exposed to Source"
++    );
++    assert_eq!(store.data().canonical_drops, 2);
++    assert_eq!(store.data().reads, 1);
++}

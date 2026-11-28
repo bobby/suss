@@ -9,6 +9,10 @@ use wit_parser::{Int, Resolve, SizeAlign, Type, TypeDefKind};
 pub(super) enum Shape {
     Scalar(Scalar),
     String,
+    Resource {
+        id: wit_parser::TypeId,
+        owned: bool,
+    },
     Product {
         fields: Vec<(Option<String>, u32, usize)>,
         record: bool,
@@ -43,6 +47,7 @@ pub(super) struct Registry<'a> {
     pub resolve: &'a Resolve,
     sizes: SizeAlign,
     ids: HashMap<Type, usize>,
+    resource_values: bool,
     pub nodes: Vec<Node>,
 }
 
@@ -88,8 +93,13 @@ impl<'a> Registry<'a> {
             resolve,
             sizes,
             ids: HashMap::new(),
+            resource_values: false,
             nodes: vec![],
         }
+    }
+    pub fn permit_resources(mut self) -> Self {
+        self.resource_values = true;
+        self
     }
     pub fn index(&self, ty: Type) -> usize {
         self.ids[&normalized(self.resolve, ty)]
@@ -123,6 +133,10 @@ impl<'a> Registry<'a> {
             Shape::Scalar(scalar)
         } else if let Type::Id(id) = ty {
             match self.resolve.types[id].kind.clone() {
+                TypeDefKind::Handle(handle) if self.resource_values => match handle {
+                    wit_parser::Handle::Own(id) => Shape::Resource { id, owned: true },
+                    wit_parser::Handle::Borrow(id) => Shape::Resource { id, owned: false },
+                },
                 TypeDefKind::Tuple(tuple) => {
                     if tuple.types.is_empty() {
                         return Err(error("WIT tuple requires at least one element"));
@@ -263,6 +277,17 @@ impl<'a> Registry<'a> {
                     }
                 }
                 TypeDefKind::Map(key, value) => {
+                    // Canonical maps may discard duplicate values. The pinned
+                    // validator therefore forbids resource handles in values.
+                    if let Type::Id(id) = value {
+                        let mut live = wit_parser::LiveTypes::default();
+                        live.add_type_id(self.resolve, id);
+                        if live.iter().any(|id| {
+                            matches!(self.resolve.types[id].kind, TypeDefKind::Handle(_))
+                        }) {
+                            return Err(error("WIT map values cannot contain resource handles"));
+                        }
+                    }
                     let key_id = self.add_at(key, depth + 1)?;
                     let value_id = self.add_at(value, depth + 1)?;
                     let types = [key, value];
@@ -318,7 +343,7 @@ impl<'a> Registry<'a> {
             return Err(error(format!("Unsupported WIT value {ty:?}")));
         };
         let dynamic = match &shape {
-            Shape::Scalar(_) => false,
+            Shape::Scalar(_) | Shape::Resource { .. } => false,
             Shape::String | Shape::List { .. } => true,
             Shape::Product { fields, .. } => fields
                 .iter()
@@ -423,7 +448,9 @@ impl<'a> Registry<'a> {
                 }
             } else {
                 match &node.shape {
-                    Shape::Scalar(_) | Shape::String => ("(fn [v] v)".into(), "(fn [v] v)".into()),
+                    Shape::Scalar(_) | Shape::String | Shape::Resource { .. } => {
+                        ("(fn [v] v)".into(), "(fn [v] v)".into())
+                    }
                     Shape::Product {
                         fields,
                         record: true,
@@ -861,6 +888,7 @@ impl Registry<'_> {
         base: u32,
         root: u32,
         sentinels: u32,
+        resource: Option<&super::resources::Codec<'_>>,
     ) {
         let mut signatures = vec![];
         let mut blocks = vec![];
@@ -911,9 +939,9 @@ impl Registry<'_> {
                 }
                 let mut body = Function::new(declarations);
                 match operation {
-                    COPY => self.copy(&mut body, id, base, root, sentinels, &locals),
-                    VALIDATE => self.validate(&mut body, id, base, sentinels, &locals),
-                    WRITE => self.write(&mut body, id, base, sentinels, &locals),
+                    COPY => self.copy(&mut body, id, base, root, sentinels, &locals, resource),
+                    VALIDATE => self.validate(&mut body, id, base, sentinels, &locals, resource),
+                    WRITE => self.write(&mut body, id, base, sentinels, &locals, resource),
                     FREE => self.free(&mut body, id, base, &locals),
                     STORE_FLAT => self.store_flat(&mut body, id, base, &locals),
                     LOAD_FLAT => self.load_flat(&mut body, id, base, blocks[id], &locals),
@@ -925,6 +953,89 @@ impl Registry<'_> {
         }
     }
 
+    /// Walk validated, projected trees before allocating transfer memory. The
+    /// private queue spans all arguments, including nested resource leaves.
+    pub fn emit_resource_arguments(
+        &self,
+        functions: &mut FunctionSection,
+        code: &mut CodeSection,
+        ty: u32,
+        base: u32,
+        reserve: u32,
+        resource: &super::resources::Codec<'_>,
+    ) {
+        use Instruction::*;
+        fn has_resource(nodes: &[Node], id: usize) -> bool {
+            match &nodes[id].shape {
+                Shape::Resource { .. } => true,
+                Shape::Product { fields, .. } => {
+                    fields.iter().any(|(_, _, id)| has_resource(nodes, *id))
+                }
+                Shape::Variant { cases, .. } => cases
+                    .iter()
+                    .any(|(_, child)| child.is_some_and(|id| has_resource(nodes, id))),
+                Shape::List { element, .. } => has_resource(nodes, *element),
+                _ => false,
+            }
+        }
+        for (id, node) in self.nodes.iter().enumerate() {
+            functions.function(ty);
+            let locals = Locals::new(2);
+            let mut body = Function::new(Locals::declarations());
+            if has_resource(&self.nodes, id) {
+                match &node.shape {
+                    Shape::Resource { id, owned } => {
+                        resource.gather(&mut body, *id, *owned, reserve)
+                    }
+                    Shape::Product { fields, .. } => {
+                        for (index, (_, _, child)) in fields.iter().enumerate() {
+                            get(&mut body, 0, index as u32);
+                            emit(
+                                &mut body,
+                                &[LocalGet(1), Call(base + *child as u32), LocalSet(1)],
+                            );
+                        }
+                    }
+                    Shape::Variant { cases, .. } => {
+                        self.tree_tag(&mut body, &locals);
+                        for (index, (_, child)) in cases.iter().enumerate() {
+                            emit(
+                                &mut body,
+                                &[
+                                    LocalGet(locals.integer),
+                                    I32Const(index as i32),
+                                    I32Eq,
+                                    If(BlockType::Empty),
+                                ],
+                            );
+                            if let Some(child) = child {
+                                get(&mut body, 0, 1);
+                                emit(
+                                    &mut body,
+                                    &[LocalGet(1), Call(base + *child as u32), LocalSet(1)],
+                                );
+                            }
+                            body.instruction(&End);
+                        }
+                    }
+                    Shape::List { element, .. } => {
+                        array_length(&mut body, 0, &locals);
+                        begin_loop(&mut body, &locals);
+                        dynamic_get(&mut body, 0, locals.index, locals.wide);
+                        emit(
+                            &mut body,
+                            &[LocalGet(1), Call(base + *element as u32), LocalSet(1)],
+                        );
+                        end_loop(&mut body, &locals);
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            emit(&mut body, &[LocalGet(1), End]);
+            code.function(&body);
+        }
+    }
+
     fn copy(
         &self,
         body: &mut Function,
@@ -933,10 +1044,20 @@ impl Registry<'_> {
         root: u32,
         sentinels: u32,
         locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
     ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.copy(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+                return;
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), load(*scalar)]);
                 super::lift_scalar(body, scalar, sentinels, locals.wide);
@@ -1050,10 +1171,26 @@ impl Registry<'_> {
         schema_call(body, root, id, false, locals.tree);
     }
 
-    fn validate(&self, body: &mut Function, id: usize, base: u32, sentinels: u32, locals: &Locals) {
+    fn validate(
+        &self,
+        body: &mut Function,
+        id: usize,
+        base: u32,
+        sentinels: u32,
+        locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
+    ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.validate(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), LocalSet(locals.value)]);
                 super::lower_scalar(
@@ -1201,10 +1338,26 @@ impl Registry<'_> {
         );
     }
 
-    fn write(&self, body: &mut Function, id: usize, base: u32, sentinels: u32, locals: &Locals) {
+    fn write(
+        &self,
+        body: &mut Function,
+        id: usize,
+        base: u32,
+        sentinels: u32,
+        locals: &Locals,
+        resource: Option<&super::resources::Codec<'_>>,
+    ) {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { id, owned } => {
+                if let Some(codec) = resource {
+                    codec.write(body, *id, *owned);
+                } else {
+                    body.instruction(&Unreachable);
+                }
+            }
+
             Shape::Scalar(scalar) => {
                 emit(body, &[LocalGet(0), LocalSet(locals.value), LocalGet(1)]);
                 super::lower_scalar(
@@ -1402,7 +1555,7 @@ impl Registry<'_> {
     fn free(&self, body: &mut Function, id: usize, base: u32, locals: &Locals) {
         use Instruction::*;
         match &self.nodes[id].shape {
-            Shape::Scalar(_) => {}
+            Shape::Scalar(_) | Shape::Resource { .. } => {}
             Shape::String => emit(
                 body,
                 &[
@@ -1485,6 +1638,10 @@ impl Registry<'_> {
         let node = &self.nodes[id];
         let pointer = node.flat.len() as u32;
         match &node.shape {
+            Shape::Resource { .. } => emit(
+                body,
+                &[LocalGet(pointer), LocalGet(0), I32Store(memory(0, 2))],
+            ),
             Shape::Scalar(scalar) => {
                 if let Some((flags, names)) = &node.symbols {
                     if !flags || names.len() < 32 {
@@ -1567,6 +1724,7 @@ impl Registry<'_> {
         use Instruction::*;
         let node = &self.nodes[id];
         match &node.shape {
+            Shape::Resource { .. } => emit(body, &[LocalGet(0), I32Load(memory(0, 2))]),
             Shape::Scalar(scalar) => emit(body, &[LocalGet(0), load(*scalar)]),
             Shape::String | Shape::List { .. } => emit(
                 body,

@@ -1,0 +1,11 @@
+{
+  "purpose": "After updating documentation with terminal results, verify all captured non-documentation/evidence inputs still match the complete source test capture.",
+  "source_receipt_sha256": "4b012de935e8bccc918883341aaa42d91c02be9e984c695e40400271ffed3aec",
+  "captured_head": "1e4d0e04b756dff61a8acd74116d2387e1dc7a4b",
+  "checked_inputs": 2474,
+  "excluded_prefixes": [
+    "docs/",
+    "results/"
+  ],
+  "changed_inputs": []
+}

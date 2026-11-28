@@ -1,0 +1,116 @@
+{
+  "id": 140935822568,
+  "run_id": 46130949511,
+  "workflow_name": "prototype-baseline",
+  "head_branch": "codex/m5-resource-adapters",
+  "run_url": "https://api.github.com/repos/bobby/suss/actions/runs/46130949511",
+  "run_attempt": 1,
+  "node_id": "CR_kwDOQsffic8AAAAg0G386A",
+  "head_sha": "1d47cff5dd393193a53292ba8d421dc88c73025d",
+  "url": "https://api.github.com/repos/bobby/suss/actions/jobs/140935822568",
+  "html_url": "https://github.com/bobby/suss/actions/runs/46130949511/job/140935822568",
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2026-11-28T09:32:53Z",
+  "started_at": "2026-11-28T09:32:55Z",
+  "completed_at": "2026-11-28T09:48:40Z",
+  "name": "integration (1)",
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1,
+      "started_at": "2026-11-28T09:32:55Z",
+      "completed_at": "2026-11-28T09:32:57Z"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2,
+      "started_at": "2026-11-28T09:32:57Z",
+      "completed_at": "2026-11-28T09:33:09Z"
+    },
+    {
+      "name": "Run dtolnay/rust-toolchain@stable",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3,
+      "started_at": "2026-11-28T09:33:09Z",
+      "completed_at": "2026-11-28T09:33:22Z"
+    },
+    {
+      "name": "Run Swatinem/rust-cache@v2",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4,
+      "started_at": "2026-11-28T09:33:22Z",
+      "completed_at": "2026-11-28T09:33:28Z"
+    },
+    {
+      "name": "Restore compiled core images",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5,
+      "started_at": "2026-11-28T09:33:28Z",
+      "completed_at": "2026-11-28T09:33:35Z"
+    },
+    {
+      "name": "Execute complete integration suites in this partition",
+      "status": "completed",
+      "conclusion": "failure",
+      "number": 6,
+      "started_at": "2026-11-28T09:33:35Z",
+      "completed_at": "2026-11-28T09:48:28Z"
+    },
+    {
+      "name": "Keep only large compiled modules",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7,
+      "started_at": "2026-11-28T09:48:28Z",
+      "completed_at": "2026-11-28T09:48:28Z"
+    },
+    {
+      "name": "Save compiled core images",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8,
+      "started_at": "2026-11-28T09:48:28Z",
+      "completed_at": "2026-11-28T09:48:39Z"
+    },
+    {
+      "name": "Post Run Swatinem/rust-cache@v2",
+      "status": "completed",
+      "conclusion": "skipped",
+      "number": 15,
+      "started_at": "2026-11-28T09:48:39Z",
+      "completed_at": "2026-11-28T09:48:39Z"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 16,
+      "started_at": "2026-11-28T09:48:39Z",
+      "completed_at": "2026-11-28T09:48:39Z"
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 17,
+      "started_at": "2026-11-28T09:48:39Z",
+      "completed_at": "2026-11-28T09:48:39Z"
+    }
+  ],
+  "check_run_url": "https://api.github.com/repos/bobby/suss/check-runs/140935822568",
+  "labels": [
+    "ubuntu-latest"
+  ],
+  "runner_id": 1000012427,
+  "runner_name": "GitHub Actions 1000012427",
+  "runner_group_id": 0,
+  "runner_group_name": "GitHub Actions"
+}
