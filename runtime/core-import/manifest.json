@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "e0f54fdc9ec4fa475689f985df1bd22a8e6830318a07f819b83fd00eb28461a0",
-  "reviews-sha256": "1beb00a3f66cd14edb1dc67fad76416d1e4843e1b0b3ca73821da0abebfba131",
+  "recipe-sha256": "25e47ae88bc3672146027b16713e8087728f3a315a1835186a614133afca29c4",
+  "reviews-sha256": "e8b868aed640281f35cc60ef4c734b4b103939be1914c529ffee8f5de8db5659",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -15781,6 +15781,34 @@
       "semantic-tests": [
         "crates/suss-cli/tests/clojure_stable_sort.rs"
       ]
+    },
+    {
+      "id": "runtime:parse-long:12231",
+      "name": "parse-long",
+      "kind": "defn",
+      "phase": "runtime",
+      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
+      "line": 12231,
+      "end-line": 12241,
+      "byte-start": 349560,
+      "byte-end": 349965,
+      "context": [],
+      "source-file-sha256": "d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b",
+      "source-sha256": "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a",
+      "extracted": "extracted/0511.cljs",
+      "extracted-sha256": "890438ae6d9d99f307f1c3b602800aef8f87e80b82ae090388b918b999493db5",
+      "patch": "docs/compatibility/patches/core-parse-long.json",
+      "patch-sha256": "5c0adfc0c84ccd3fa3be6c3afae9e4aa3334947270c8fa07c5b79042a683b289",
+      "adapted-form-sha256": "f4006762b46006d72ea89842bb4644a2c7ae06b99de67e022141fc3287dac143",
+      "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+      "review-classification": ":adapted",
+      "review-status": ":in-progress",
+      "dependencies": [
+        "suss.bootstrap/parse-decimal-long"
+      ],
+      "semantic-tests": [
+        "crates/suss-cli/tests/clojure_parse_long.rs"
+      ]
     }
   ],
   "loader": {
@@ -16311,6 +16339,7 @@
     "extracted/0508.cljs": "77326b79c0347440e41ece228e7fe66e5693f05eaeb78d743dc5c5c35c1bf2a4",
     "extracted/0509.cljs": "6bbf109e23ed20487388fc3fc11b61608c9c066e1e7ebc213c92932a587d4fed",
     "extracted/0510.cljs": "4b1a77bb0f37cd6cb4e74dd708b1226a2a56defd6bab87e589a138e269191c71",
-    "suss/core.sus": "34eb6cac654675a8b9102e8065d9b301ccb47cf2a185ce6f74fd5426cdae5333"
+    "extracted/0511.cljs": "890438ae6d9d99f307f1c3b602800aef8f87e80b82ae090388b918b999493db5",
+    "suss/core.sus": "c9d708d166ae5272949799e52d9afeadf9062d4c4e0d3c795fb3e8dffeed6f78"
   }
 }

@@ -24,6 +24,7 @@ mod exception_info;
 mod exceptions;
 mod identity_hash;
 mod longs;
+mod parse_long;
 mod bigints;
 mod ratios;
 mod decimals;
@@ -2045,6 +2046,7 @@ fn build_module() -> Vec<u8> {
     let bitwise_functions = bitwise::functions(&mut b);
     decimals::constructor(&mut b);
     decimals::context_constructor(&mut b);
+    parse_long::function(&mut b);
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.push(binding_getter_entry);

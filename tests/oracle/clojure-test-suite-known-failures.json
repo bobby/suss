@@ -106,10 +106,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.parse-double (Some(\"<root>/clojure/core_test/parse_double.cljc\")): Unresolved Runtime name parse-double at bytes 245..1751"
   },
-  "clojure.core-test.parse-long": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.parse-long (Some(\"<root>/clojure/core_test/parse_long.cljc\")): Unresolved Runtime name parse-long at bytes 256..2069"
-  },
   "clojure.core-test.parse-uuid": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unresolved Runtime name parse-uuid at bytes 259..2057"
@@ -325,6 +321,7 @@
   "clojure.core-test.num/test-num#7": "count:26/18",
   "clojure.core-test.num/test-num#8": "count:26/18",
   "clojure.core-test.num/test-num#9": "count:26/18",
+  "clojure.core-test.parse-long/test-parse-long#28": "verdict:fail",
   "clojure.core-test.pr-str/test-pr-str#2": "verdict:fail",
   "clojure.core-test.prn-str/test-prn-str#2": "verdict:fail",
   "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#1": "verdict:fail",

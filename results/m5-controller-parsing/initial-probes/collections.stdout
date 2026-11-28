@@ -1,0 +1,1 @@
+{:clojure-version "1.12.6", :count 2, :seq [1 2], :conj [:error "java.lang.ClassCastException"], :into-vector [1 2 3]}

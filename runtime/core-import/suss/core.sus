@@ -9791,6 +9791,10 @@ reduces them without incurring seq initialization"
                    (finish! size))))))
          (with-meta (seq a) (meta coll)))
        ()))))
+
+(def parse-long
+  "Parse string of decimal digits with optional leading -/+ and return an\n  integer value, or nil if parse fails"
+  (fn [s] (suss.bootstrap/parse-decimal-long s)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
