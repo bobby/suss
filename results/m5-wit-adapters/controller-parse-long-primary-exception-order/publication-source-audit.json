@@ -1,0 +1,11 @@
+{
+  "purpose": "Conserve all captured inputs, including core recipes, review overlays, patches and oracle fixtures, except the two identified terminal documentation updates.",
+  "source_receipt_sha256": "f57a610547ac984c0c85222671d42dd2c07c75ef443121ed24fa7b8de72d7d9a",
+  "captured_head": "1d47cff5dd393193a53292ba8d421dc88c73025d",
+  "checked_inputs": 14066,
+  "excluded_paths": [
+    "docs/roadmap/handoff.md",
+    "docs/compatibility/README.md"
+  ],
+  "changed_inputs": []
+}

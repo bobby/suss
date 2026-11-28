@@ -328,6 +328,8 @@ pub enum Bitwise {
     RangeCount,
     /// Private exact integer parsing for core's reader.
     ParseLong,
+    /// Private exact Clojure decimal-string parsing for public core parse-long.
+    ParseDecimalLong,
     /// Private Clojure `hasheq` of a number, for core's `hash` (#336).
     HashNumber,
     /// Private Java hashCode for case dispatch; deliberately distinct from hasheq.
@@ -488,6 +490,7 @@ impl Bitwise {
             Self::ToLong => "number-to-long",
             Self::RangeCount => "number-range-count",
             Self::ParseLong => "number-parse-long",
+            Self::ParseDecimalLong => "number-parse-decimal-long",
             Self::HashNumber => "number-hash",
             Self::CaseNumberHash => "case-number-hash",
             Self::Equiv => "number-equiv",
@@ -525,6 +528,7 @@ impl Bitwise {
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
+            | Self::ParseDecimalLong
             | Self::IntValue
             | Self::HashNumber
             | Self::CaseNumberHash
@@ -565,7 +569,7 @@ impl Bitwise {
                 | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
+        } else if matches!(self, Self::ParseLong | Self::ParseDecimalLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount | Self::EvaluateForm | Self::NamespaceInterns | Self::DeclareBinding | Self::BindingGetterUnboundInit | Self::BindingGetterRootSet | Self::BindingGetterRootGet) {
             Type::Value
         } else {
             Type::Number
@@ -3851,6 +3855,7 @@ impl Analyzer<'_> {
                 "to-long" => Some(Bitwise::ToLong),
                 "range-count" => Some(Bitwise::RangeCount),
                 "parse-long" => Some(Bitwise::ParseLong),
+                "parse-decimal-long" => Some(Bitwise::ParseDecimalLong),
                 "hash-number" => Some(Bitwise::HashNumber),
                 "case-number-hash" => Some(Bitwise::CaseNumberHash),
                 "equiv" => Some(Bitwise::Equiv),

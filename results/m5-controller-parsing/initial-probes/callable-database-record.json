@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/cargo/debug/suss",
+    "--build-dir",
+    "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/usermanager-probe-build",
+    "-e",
+    "(ns usermanager.probe) (defprotocol Lifecycle (start [this]) (stop [this])) (defrecord Database [db-spec datasource] Lifecycle (start [this] (assoc this :datasource :opened)) (stop [this] (assoc this :datasource nil)) IFn (-invoke [_] datasource)) (let [db (start (map->Database {:db-spec :test}))] [(db) ((stop db)) (record? db) (:db-spec db)])"
+  ],
+  "head": "2d5b3243e4b049a589f68989cee91e7f2f8b25e5",
+  "binary_sha256": "ebe02616823deb9756e8b848d0facba8bb1086e6f1d25fa80e1dc15db67c02eb",
+  "seconds": 3.856200066860765,
+  "exit_code": 0,
+  "stdout": "[:opened nil true :test]\n",
+  "stderr": ""
+}

@@ -940,6 +940,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
+            "number-parse-decimal-long" => (vec![VALUE], vec![VALUE]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
             "binding-getter-root-set!" => (vec![VALUE; 3], vec![VALUE]),

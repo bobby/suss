@@ -2558,6 +2558,11 @@
       "id": "runtime:sort:2557",
       "source-sha256": "aaf20b5cf4cc0a8dc3007cd36d1636e52351226373009a2b6d2744c4f0379660",
       "patch": "docs/compatibility/patches/core-stable-sort.json"
+    },
+    {
+      "id": "runtime:parse-long:12231",
+      "source-sha256": "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a",
+      "patch": "docs/compatibility/patches/core-parse-long.json"
     }
   ],
   "loader": {

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "mise",
+    "exec",
+    "--",
+    "clojure",
+    "-M",
+    "oracle.clj"
+  ],
+  "seconds": 7.166946352925152,
+  "exit_code": 0,
+  "inputs_sha256": "d5befc6ab4eff4b3cfa9a15f68bcd6355801661b8070974e05d5f58eb3ab719e",
+  "source_sha256": "b6a5218aa904c578b5b9c55c2fe3892dd074ac2432b26dd6aebb5a6133139e0e",
+  "stdout_sha256": "82f4739351d4097f6d14a11f1a6f5f3353363d81d738f414a2961f85e8a09ae6"
+}

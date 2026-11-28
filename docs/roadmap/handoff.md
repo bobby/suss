@@ -37744,3 +37744,51 @@ Publish this preflight correction to #526, then restart the required exact
 workspace baseline on its new frozen head. Final-head CI/review, contextual
 resource identities, guest resources, async/cancellation and UserManager remain
 separate gates. The data draft also has its own two independent review fixes.
+
+### 2026-11-28: exact core parse-long application prerequisite
+
+The shipped CLI probe on2d5b3243 preserves an actual unresolved parse-long
+failure; a callable Database record with Lifecycle and IFn executes under default
+budgets. Pinned Clojure1.12.6 observations distinguish core nil from Java
+Long/parseLong failures. A formal new target executes the same missing binding
+(95.73s execution/459.601s capture,13,999 inputs/HEAD fixed) in
+`controller-parse-long-before/`. Original probes and pinned JVM scripts are
+under `results/m5-controller-parsing/initial-probes/`.
+
+The implementation adds an ordinary generated core binding and a private native
+UTF-16 decimal parser, using exact checked signed-long magnitude accumulation.
+It reuses the already tested37-family digit helper without changing the reader's
+existing four-argument radix/literal parser. The reviewed core import recipe
+regenerates516 files and passes output/provenance validation. Its first Runtime/
+Macro control passes95.84s execution/430.146s capture,14,046 inputs and HEAD
+fixed (`controller-parse-long-exact-bootstrap/`).
+
+The expanded harness initially fails to compile because the pinned Wasmtime
+table-size parameters are usize, then reports two fixture failures: unavailable
+public subs and an incorrectly shared64KiB cap for a17-page numeric helper
+memory. All failures remain in `controller-parse-long-primary-component/` and
+`controller-parse-long-primary-component-table-sizes/`. Corrected controls use
+the existing UTF-16 unit primitive and separate canonical versus auxiliary
+memory bounds. Three controls pass31.61s execution/37.998s capture,14,065 fixed
+inputs (`controller-parse-long-primary-memory-utf16/`).
+
+The controller helper now actually throws ex-info on invalid nonempty input,
+and the export catches only its structured parse error after incrementing the
+change counter. The complete target returns0: three passed, zero failed/ignored/
+filtered,38.01s execution/46.007s capture,14,068 inputs and HEAD fixed
+(`controller-parse-long-primary-exception-order/`):
+`cargo test -p suss-cli --locked --test clojure_parse_long -- --test-threads=2`.
+Its783-case JVM corpus covers all37 BMP digit families, mixed scripts, exact
+long boundaries, signs, overflow, leading zeroes, malformed text and supplementary
+digits. Both phases execute alias/first-class/shadowing, non-string and lone-
+surrogate controls. The actual typed component has zero selected/hidden imports,
+compares the same corpus and runs10,000 varied form calls with a persistent
+change counter, forced GC and one64KiB canonical transfer page. Numeric/managed
+memory is separately bounded; this does not claim zero RSS or full allocation
+accounting. The pure parsing fixture has no host storage implementation.
+
+Next publish this qualified prerequisite draft, add actual storage-effect order
+controls and run relevant core/reader/bootstrap checks. Full parser baseline,
+independent review and final-head CI remain required. #527 is a bounded
+prerequisite of the still unimplemented #490 application; generic async/resource
+and other M5 acceptance work remains separate.

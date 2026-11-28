@@ -2236,3 +2236,12 @@ leak was established for a schema the pinned validator does not admit. The
 complete affected exported-handle/data-shape command passes21 controls on frozen
 sources, including ordinary duplicate-key maps and bounded stress/GC controls.
 Full resource baseline and final-head acceptance remain separate.
+
+[Exact core parse-long](../runtime/number-parsing.md) has executing Runtime/Macro
+and actual component controls against783 pinned JVM Clojure1.12.6 cases, with
+exact longs, BMP decimal digits, nil-on-invalid strings and non-string rejection.
+An actual form parser raises/catches structured errors after its change-counter
+effect across10,000 varied calls with bounded canonical transfer memory and GC.
+Original unsupported and fixture failures remain retained. The reader's separate
+radix/literal parser is unchanged. These focused receipts do not establish
+UserManager persistence, full parser baseline, independent review or final CI.

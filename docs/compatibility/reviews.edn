@@ -2,6 +2,13 @@
 {:schema 1
  :upstream-commit "c4295f303100bbf5afac449242d30bca1126f1a1"
  :reviews {
+  "runtime:parse-long:12231"
+  {:source-sha256 "5ce5cdf47dc5ef0cfa65fefd63a742755e30bc3d762946800988f8d59982672a"
+   :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["suss.bootstrap/parse-decimal-long"]
+   :classification :adapted :rationale "Original Clojure numeric-tower adaptation under ADR-0003. Preserve the public decimal-string API and docstring, but replace JavaScript regex/parseInt and safe-integer limits with checked exact signed-long parsing. The native helper reuses the complete pinned JVM UTF-16 Character.digit(char,10) domain; malformed/overflowing strings return nil and non-strings fail before coercion. The reader's separate private radix/literal parser is unchanged. Core remains an ordinary compiled first-class var in Runtime and Macro; no Java dependency is shipped. Clojure 1.12.6, not ClojureScript numeric recordings, is the behavior oracle."
+   :status :in-progress :adaptation-path "docs/compatibility/patches/core-parse-long.json" :alternative nil
+   :tests ["crates/suss-cli/tests/clojure_parse_long.rs"]}
   "runtime:sort:2557"
   {:source-sha256 "aaf20b5cf4cc0a8dc3007cd36d1636e52351226373009a2b6d2744c4f0379660"
    :visibility :public :arities {:fixed [1 2] :variadic-min nil}
