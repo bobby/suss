@@ -2136,3 +2136,18 @@ pass, as do core/eval provenance checks. A failed lexical-wrapper attempt remain
 archived because nesting declarations changed the catalog snapshots under test.
 Production inputs are identical to9222862b. Exact workspace, final acceptance
 audit, independent review and final-head CI remain separate gates.
+
+
+The exact data-codec workspace baseline on8788d7a7 returns0:2,759 passed, zero
+failed and15 existing explicit ignores across393 Rust/doc-test summaries. Its
+frozen-source receipt conserves13,813 inputs and pinned external tools. The
+ignored opt-in Binaryen control remains separate execution work; existing
+unsupported/manual/doc cases are not counted as success. That published head
+has green full CI. Independent review and final-head publication checks remain
+required for the bounded native-data-codec issue; other M5 adapters retain their
+separate acceptance criteria.
+
+The ignored Binaryen control additionally executes and passes with the pinned
+tools on the data-codec source: one passed, zero failed/ignored, two filtered.
+Full-baseline counts/ignores remain unchanged; publication receipts preserve
+source/tool identity. Independent review and final-head CI remain promotion gates.

@@ -37054,3 +37054,34 @@ These are test/fixture repairs; production data-codec source is unchanged.
 Receipts are `data-codec-public-frontends/` and
 `data-codec-toolchain-map-controls/`. A fresh exact full baseline follows;
 acceptance/review/final-head CI remain required.
+
+### 2026-11-28: exact data-codec workspace baseline
+
+The required `cargo test --workspace --locked -- --test-threads=2` command on
+frozen 8788d7a7 returns0 after 18,671.425s (about 5h11m). Its 393 Rust/doc-test
+summaries report 2,759 passed, zero failed and15 explicitly ignored, with no
+filtered cases. The ignores are ten existing unsupported prototype forms, three
+manual evidence/catalog recorders, the explicit Binaryen opt-in control and one
+existing documentation example. None is newly skipped or counted as success.
+The actual log, source/tool receipt and summary are retained in
+`results/m5-wit-adapters/data-codec-workspace-repaired-guards/`. All 13,813 inputs,
+HEAD, pinned CLJS and Binaryen133 tool digests remain fixed. Stable Rust and a
+private workspace TMPDIR were used; no RUSTFLAGS override.
+
+The same published head has passing foundation, all eight integration shards and
+final CI test gate, run 46107714444. The full command does not execute an ignored
+Binaryen test merely because its tool variable is set. Next execute
+`cargo test -p suss-compile --locked --test portable_random optimized_selected_random_import_preserves_draws -- --include-ignored --test-threads=2`
+with the pinned tool, then publish baseline evidence and perform the required
+independent acceptance review of #524. Later documentation/evidence commits
+require their own final-head CI. This bounded data work does not establish
+generic imported authority, resource/cancellation or complete M5 acceptance.
+
+The explicitly included Binaryen control returns0, one passed, zero failed/
+ignored (two filtered), 7.913s capture with 13,816 inputs, HEAD and pinned tools
+fixed (`data-codec-explicit-optimized-random/`). It really executes the optimized
+selected-world random-import artifact; the full command's opt-in ignore remains
+accurately recorded. Publication audits conserve every captured input except
+the two identified terminal documentation updates. Next obtain the independent
+#524 review and require passing CI at the final publication/fix head before
+promoting #523. No merge is authorized.

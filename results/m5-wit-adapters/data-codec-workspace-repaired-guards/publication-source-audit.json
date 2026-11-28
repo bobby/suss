@@ -1,0 +1,11 @@
+{
+  "purpose": "Conserve all captured inputs except the two identified terminal documentation updates.",
+  "source_receipt_sha256": "93b95bd8b3b253db846ef26a94848775b5b33bd852ce76817df02ac2cee3d141",
+  "captured_head": "8788d7a71ad211f2436b12da47e86f01c2f7638a",
+  "checked_inputs": 13811,
+  "excluded_paths": [
+    "docs/roadmap/handoff.md",
+    "docs/compatibility/README.md"
+  ],
+  "changed_inputs": []
+}
