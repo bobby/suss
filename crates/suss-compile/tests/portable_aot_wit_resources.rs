@@ -34,6 +34,7 @@ struct State {
     live: Arc<AtomicUsize>,
     opened: usize,
     dropped: usize,
+    canonical_peak: usize,
     order: Vec<&'static str>,
 }
 struct Counter {
@@ -426,4 +427,91 @@ fn source_try_finally_releases_owned_resources_before_caught_language_errors_ret
         store.data().order,
         ["open", "read", "drop", "static"].repeat(3)
     );
+}
+
+impl wasmtime::ResourceLimiter for State {
+    fn memory_growing(
+        &mut self,
+        current: usize,
+        desired: usize,
+        _: Option<usize>,
+    ) -> wasmtime::Result<bool> {
+        // Runtime numeric/GC memories have their own initialization sizes.
+        // Small canonical argument/result buffers must reuse one transfer page.
+        if current >= 17 * 65536 || desired == 17 * 65536 || desired == 8 * 1024 * 1024 {
+            Ok(desired <= 64 * 1024 * 1024)
+        } else {
+            self.canonical_peak = self.canonical_peak.max(desired);
+            Ok(desired <= 65536)
+        }
+    }
+    fn table_growing(&mut self, _: usize, _: usize, _: Option<usize>) -> wasmtime::Result<bool> {
+        Ok(true)
+    }
+}
+
+#[test]
+fn ten_thousand_successful_and_failed_resource_operations_return_live_and_transfer_counters_to_baseline()
+ {
+    let component = component(
+        "(ns app) (defn run [value fail]
+           (try
+             (let [handle (host/open value)]
+               (try
+                 (let [result (host/read handle)]
+                   (if fail (throw :language-failure) [:ok (host/echo result)]))
+                 (finally (suss.resource/close! handle))))
+             (catch :default error [:err \"language-failure\"])))",
+        &[("run", "app/run")],
+        "export run: func(value: u64, fail: bool) -> result<u64, string>;",
+    );
+    let mut store = Store::new(engine(), State::default());
+    store.set_fuel(100_000_000).unwrap();
+    store.limiter(|state| state);
+    let live = store.data().live.clone();
+    let instance = linker().instantiate(&mut store, &component).unwrap();
+    let run = instance
+        .get_typed_func::<(u64, bool), (Result<u64, String>,)>(&mut store, "run")
+        .unwrap();
+    for index in 0..10_000 {
+        let value = [0, 9007199254740993, u64::MAX][index % 3];
+        let fail = index % 2 != 0;
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(
+            run.call(&mut store, (value, fail)).unwrap().0,
+            if fail {
+                Err("language-failure".into())
+            } else {
+                Ok(value)
+            }
+        );
+        assert_eq!(live.load(Ordering::SeqCst), 0);
+        if index % 100 == 0 {
+            store.gc(None).unwrap();
+        }
+    }
+    store.gc(None).unwrap();
+    assert_eq!(
+        (store.data().opened, store.data().dropped),
+        (10_000, 10_000)
+    );
+    assert_eq!(
+        store
+            .data()
+            .order
+            .iter()
+            .filter(|name| **name == "read")
+            .count(),
+        10_000
+    );
+    assert_eq!(
+        store
+            .data()
+            .order
+            .iter()
+            .filter(|name| **name == "static")
+            .count(),
+        5_000
+    );
+    assert_eq!(store.data().canonical_peak, 65536);
 }

@@ -37369,3 +37369,22 @@ all-argument duplicate detection), call-scoped borrow/export adapters and
 remaining lifetime/independent interoperability/application gates. The separate
 workspace baselines remain on their own frozen data/import heads and do not
 certify this resource source.
+
+### 2026-11-28: mixed resource-operation stress
+
+The selected10,000-operation source control returned0: one passed, zero
+failed/ignored, five filtered out,46.33s execution/53.883s including build. All
+13,918 captured inputs and HEAD stayed fixed. It alternates5,000 successes with
+5,000 caught language failures through source try/finally, cycling0/>2^53/u64::MAX.
+Every operation leaves zero live host resources; the final count is10,000 opens
+and canonical destructor calls,10,000 borrowed reads and5,000 static calls.
+Forced GC runs periodically and at the end. Canonical argument/result buffers
+reuse one64KiB transfer page under a limiter; the runtime's numeric/GC memories
+are classified separately. Raw command/receipt are in
+`imported-resource-ten-thousand-operations/`.
+
+This tests explicit source cleanup and ordinary typed results, not generalized
+async cancellation, move transfer, borrowed/export scopes or host-trap recovery.
+Next implement atomic own-argument transfer with all-argument duplicate detection,
+then execute moved-alias and failure-before-handoff controls. Existing adapter
+regressions, required resource full baseline and final-head CI/review remain.
