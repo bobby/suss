@@ -45,9 +45,8 @@ pub fn instrument(bytes: &[u8]) -> Vec<u8> {
                 }
                 names.sort();
                 if imports == 0
-                    && functions == 5
+                    && ((functions == 5 && globals == 2) || (functions == 6 && globals == 4))
                     && memories == 1
-                    && globals == 2
                     && names == ["cabi_realloc", "memory", "release"]
                 {
                     assert!(
@@ -174,6 +173,9 @@ fn observer() -> Module {
         LocalTee(4),
         LocalGet(2),
         I32GtU,
+        // Inactive headers now link the free list through their length slot.
+        LocalGet(3),
+        I32And,
         If(BlockType::Empty),
         Unreachable,
         End,

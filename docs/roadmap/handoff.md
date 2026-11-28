@@ -38033,3 +38033,20 @@ and capacity reuse. The10,000-live-block allocate/release/reuse workload consume
 in canonical-private-index-ownership-gc/. This is the isolated allocator proof;
 actual large WIT/UserManager execution, updated observers, ordinary Cargo checks,
 bootstrap/full baseline, independent review and final-head CI remain required.
+
+The actual application target also passed with the private-bitmap/free-list
+allocator and its read-only observer adaptation: four passed, zero
+failed/ignored/filtered,565.155s including build; all14,256 inputs, HEAD and
+Binaryen hashes fixed. Raw evidence is in usermanager-private-allocator-observer/.
+The observer recognizes the five-function/two-global original and the
+six-function/four-global private-bitmap module, validating logical lengths only
+for active headers because inactive lengths now link free blocks. Its original
+component remains an exact prefix. Both10,000-call runs retain the one-page
+canonical bound; the instrumented live count/bytes return to zero, and all29
+JVM scenario/identity controls pass.
+
+The1,000/10,000-user diagnostic using an isolated allocator-module replacement
+remains separate from these checks. It retained a second-call fragmented-free
+search failure at10,000 users even with an explicitly increased diagnostic list
+budget; no default policy or measurement completion is inferred. The bounded
+allocator issue's next regression addresses that observed fragmentation.

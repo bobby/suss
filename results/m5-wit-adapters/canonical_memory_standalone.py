@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Execute production allocator unit tests with explicitly identified prebuilt tools.
 
-The normal acceptance route remains cargo test -p suss-compile --lib canonical_.
+The normal acceptance route remains cargo test -p suss-compile --lib command::memory::tests.
 This narrow probe avoids a duplicate dependency build while other frozen worktrees
 run their workspace baselines. It imports the actual production Rust module.
 """
