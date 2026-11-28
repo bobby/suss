@@ -37823,3 +37823,9 @@ request-policy requirement; it is not a final benchmark, a changed compiler
 budget, a numerical performance gate or a claim that allocator failures were
 resolved by increasing fuel. A first inspector build's Range type error and the
 prebuilt native-library type-identity probes are retained separately.
+
+### Allocator in the normal CLI application (2026-11-28)
+
+The byte-identical allocator was exercised by the normal application compiler/host at published application HEAD `2a779949`. `results/m5-wit-adapters/canonical-memory-normal-application/README.md` records the exact commands, input qualifications and limitations. Native binary build passed6.698s; the complete three-repetition CLI/native/JVM driver passed1,342.408s with unchanged production inputs/binaries, three identical4,585,724-byte components, actual persistence write/reopen and all16/1,000/10,000-user workloads. A separate exact-prefix read-only observer passed154.930s: all five1,000-row and five10,000-row responses, typed errors, GC and close returned canonical live blocks/bytes to zero and host live resources to zero. Committed canonical memory remains reusable and does not shrink.
+
+Native startup and operations remain slower than the JVM on this bounded, busy machine; all inclusive timings, raw callbacks, RSS, cgroups/load, adapter differences and component/native identities are retained. The2billion-fuel application request policy is explicit; allocator regressions retain100million. These are executed application proofs, not a separate full workspace/foundation result for this branch. Continue required branch validation and independent review before promotion.
