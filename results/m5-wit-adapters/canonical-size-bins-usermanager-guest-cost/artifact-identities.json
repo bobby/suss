@@ -1,0 +1,14 @@
+{
+  "target/probe/usermanager-size-bins.wasm": {
+    "bytes": 4585724,
+    "sha256": "b4c0f9a866d1fd739f8710055102ae53ea38bba03b376bad2f4605404954e85b"
+  },
+  "target/probe/canonical-size-bins.wasm": {
+    "bytes": 1310,
+    "sha256": "758fb89432bd562feae56796ca75817c340ed188ce32ac7de2799677b71d9abb"
+  },
+  "target/probe/usermanager-budget-diagnostic": {
+    "bytes": 35811072,
+    "sha256": "0aa089e6410b75ed1519592c5af52380cacc1c9cf0cdcca4f1ecac9246cfd6c6"
+  }
+}

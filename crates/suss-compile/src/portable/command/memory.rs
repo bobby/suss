@@ -6,6 +6,11 @@
 use wasm_encoder::*;
 
 const HEADER: u64 = 16;
+const BINS: u32 = 400;
+const MAX_BASE: u32 = BINS;
+const MAP_BASE: u32 = 2 * BINS;
+const BIN_WORDS: u32 = BINS.div_ceil(32);
+const BIN_SLOTS: u32 = MAP_BASE + BIN_WORDS;
 fn access(offset: u64) -> MemArg {
     MemArg {
         offset,
@@ -29,8 +34,9 @@ pub(crate) fn module() -> Vec<u8> {
         .ty()
         .function([ValType::I32, ValType::I32], [ValType::I32]); // check
     types.ty().array(&StorageType::I8, true); // 5: private ownership bitmap
+    types.ty().array(&StorageType::Val(ValType::I32), true); // 6: free heads/maxima/nonempty bits
     let mut functions = FunctionSection::new();
-    for ty in [0, 1, 2, 3, 4, 1] {
+    for ty in [0, 1, 2, 3, 4, 1, 3] {
         functions.function(ty);
     }
     let mut memories = MemorySection::new();
@@ -60,12 +66,15 @@ pub(crate) fn module() -> Vec<u8> {
     ); // end
     globals.global(
         GlobalType {
-            val_type: ValType::I32,
+            val_type: ValType::Ref(RefType {
+                nullable: true,
+                heap_type: HeapType::Concrete(6),
+            }),
             mutable: true,
             shared: false,
         },
-        &ConstExpr::i32_const(0),
-    ); // free-list head, linked by inactive headers' length field
+        &ConstExpr::ref_null(HeapType::Concrete(6)),
+    ); // private free heads, conservative capacity maxima and nonempty-class bits
     globals.global(
         GlobalType {
             val_type: ValType::Ref(RefType {
@@ -84,7 +93,7 @@ pub(crate) fn module() -> Vec<u8> {
     let mut code = CodeSection::new();
 
     // Parameters size/align; locals pointer/header (i32), pointer/end/pages (i64).
-    let mut allocate = Function::new([(2, ValType::I32), (3, ValType::I64), (1, ValType::I32)]);
+    let mut allocate = Function::new([(2, ValType::I32), (3, ValType::I64), (5, ValType::I32)]);
     emit(
         &mut allocate,
         &[
@@ -112,10 +121,85 @@ pub(crate) fn module() -> Vec<u8> {
             I32Const(0),
             Return,
             End,
+            // Search only nonempty capacity classes at or above this request.
+            // A class maximum is an upper bound; a failed complete scan tightens
+            // it, preventing repeated scans of smaller blocks in the same class.
             GlobalGet(2),
-            LocalSet(2),
+            RefIsNull,
+            I32Eqz,
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(6),
+            LocalSet(8),
+            Block(BlockType::Empty),
+            Loop(BlockType::Empty),
+            LocalGet(8),
+            I32Const(BINS as i32),
+            I32GeU,
+            BrIf(1),
+            LocalGet(8),
+            I32Const(5),
+            I32ShrU,
+            LocalSet(10),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(10),
+            I32Add,
+            ArrayGet(6),
+            I32Const(-1),
+            LocalGet(8),
+            I32Const(31),
+            I32And,
+            I32Shl,
+            I32And,
+            LocalSet(9),
+            Block(BlockType::Empty),
+            Loop(BlockType::Empty),
+            LocalGet(9),
+            BrIf(1),
+            LocalGet(10),
+            I32Const(1),
+            I32Add,
+            LocalTee(10),
+            I32Const(BIN_WORDS as i32),
+            I32GeU,
+            BrIf(3),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(10),
+            I32Add,
+            ArrayGet(6),
+            LocalSet(9),
+            Br(0),
+            End,
+            End,
+            LocalGet(10),
+            I32Const(5),
+            I32Shl,
+            LocalGet(9),
+            I32Ctz,
+            I32Add,
+            LocalSet(8),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(8),
+            I32Add,
+            ArrayGet(6),
+            LocalGet(0),
+            I32GeU,
+            If(BlockType::Empty),
             I32Const(0),
             LocalSet(7),
+            I32Const(0),
+            LocalSet(11),
+            GlobalGet(2),
+            RefAsNonNull,
+            LocalGet(8),
+            ArrayGet(6),
+            LocalSet(2),
             Block(BlockType::Empty),
             Loop(BlockType::Empty),
             LocalGet(2),
@@ -125,6 +209,15 @@ pub(crate) fn module() -> Vec<u8> {
             I32Const(HEADER as i32),
             I32Sub,
             LocalSet(3),
+            LocalGet(3),
+            I32Load(access(4)),
+            LocalGet(11),
+            I32GtU,
+            If(BlockType::Empty),
+            LocalGet(3),
+            I32Load(access(4)),
+            LocalSet(11),
+            End,
             LocalGet(3),
             I32Load(access(12)),
             I32Eqz,
@@ -141,13 +234,15 @@ pub(crate) fn module() -> Vec<u8> {
             I32Eqz,
             I32And,
             If(BlockType::Empty),
-            // Unlink this free block before publishing its new live length.
             LocalGet(7),
             I32Eqz,
             If(BlockType::Empty),
+            GlobalGet(2),
+            RefAsNonNull,
+            LocalGet(8),
             LocalGet(3),
             I32Load(access(8)),
-            GlobalSet(2),
+            ArraySet(6),
             Else,
             LocalGet(7),
             I32Const(HEADER as i32),
@@ -155,6 +250,44 @@ pub(crate) fn module() -> Vec<u8> {
             LocalGet(3),
             I32Load(access(8)),
             I32Store(access(8)),
+            End,
+            GlobalGet(2),
+            RefAsNonNull,
+            LocalGet(8),
+            ArrayGet(6),
+            I32Eqz,
+            If(BlockType::Empty),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(8),
+            I32Add,
+            I32Const(0),
+            ArraySet(6),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(8),
+            I32Const(5),
+            I32ShrU,
+            I32Add,
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(8),
+            I32Const(5),
+            I32ShrU,
+            I32Add,
+            ArrayGet(6),
+            I32Const(1),
+            LocalGet(8),
+            I32Const(31),
+            I32And,
+            I32Shl,
+            I32Const(-1),
+            I32Xor,
+            I32And,
+            ArraySet(6),
             End,
             LocalGet(2),
             I32Const(1),
@@ -174,6 +307,22 @@ pub(crate) fn module() -> Vec<u8> {
             I32Load(access(8)),
             LocalSet(2),
             Br(0),
+            End,
+            End,
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(8),
+            I32Add,
+            LocalGet(11),
+            ArraySet(6),
+            End,
+            LocalGet(8),
+            I32Const(1),
+            I32Add,
+            LocalSet(8),
+            Br(0),
+            End,
             End,
             End,
             // Do arithmetic in i64; neither alignment nor size may wrap memory32.
@@ -244,7 +393,11 @@ pub(crate) fn module() -> Vec<u8> {
             GlobalGet(0),
             I32Store(access(0)),
             LocalGet(3),
-            LocalGet(0),
+            // Use the already reserved 16-byte rounding, without growing more.
+            LocalGet(5),
+            LocalGet(4),
+            I64Sub,
+            I32WrapI64,
             I32Store(access(4)),
             LocalGet(3),
             LocalGet(0),
@@ -263,7 +416,7 @@ pub(crate) fn module() -> Vec<u8> {
     );
     code.function(&allocate);
 
-    let mut release = Function::new([(1, ValType::I32)]);
+    let mut release = Function::new([(2, ValType::I32)]);
     emit(
         &mut release,
         &[
@@ -280,6 +433,17 @@ pub(crate) fn module() -> Vec<u8> {
             LocalGet(1),
             Call(4),
             LocalSet(2),
+            GlobalGet(2),
+            RefIsNull,
+            If(BlockType::Empty),
+            I32Const(BIN_SLOTS as i32),
+            ArrayNewDefault(6),
+            GlobalSet(2),
+            End,
+            LocalGet(2),
+            I32Load(access(4)),
+            Call(6),
+            LocalSet(3),
             LocalGet(0),
             I32Const(0),
             Call(5),
@@ -288,9 +452,63 @@ pub(crate) fn module() -> Vec<u8> {
             I32Store(access(12)),
             LocalGet(2),
             GlobalGet(2),
+            RefAsNonNull,
+            LocalGet(3),
+            ArrayGet(6),
             I32Store(access(8)),
+            GlobalGet(2),
+            RefAsNonNull,
+            LocalGet(3),
             LocalGet(0),
-            GlobalSet(2),
+            ArraySet(6),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(3),
+            I32Add,
+            LocalGet(2),
+            I32Load(access(4)),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(3),
+            I32Add,
+            ArrayGet(6),
+            I32GtU,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(2),
+            I32Load(access(4)),
+            Else,
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAX_BASE as i32),
+            LocalGet(3),
+            I32Add,
+            ArrayGet(6),
+            End,
+            ArraySet(6),
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(3),
+            I32Const(5),
+            I32ShrU,
+            I32Add,
+            GlobalGet(2),
+            RefAsNonNull,
+            I32Const(MAP_BASE as i32),
+            LocalGet(3),
+            I32Const(5),
+            I32ShrU,
+            I32Add,
+            ArrayGet(6),
+            I32Const(1),
+            LocalGet(3),
+            I32Const(31),
+            I32And,
+            I32Shl,
+            I32Or,
+            ArraySet(6),
             End,
         ],
     );
@@ -566,6 +784,54 @@ pub(crate) fn module() -> Vec<u8> {
         ],
     );
     code.function(&mark);
+
+    // Classify unsigned sizes: exact 16-byte classes through 512 bytes, then
+    // sixteen subdivisions per power of two. All memory32 sizes fit 400 classes.
+    let mut classify = Function::new([(1, ValType::I32)]);
+    emit(
+        &mut classify,
+        &[
+            LocalGet(0),
+            I32Const(256),
+            I32LeU,
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            I32Const(15),
+            I32Add,
+            I32Const(4),
+            I32ShrU,
+            I32Const(1),
+            I32Sub,
+            Else,
+            I32Const(31),
+            LocalGet(0),
+            I32Const(1),
+            I32Sub,
+            I32Clz,
+            I32Sub,
+            LocalSet(1),
+            I32Const(16),
+            LocalGet(1),
+            I32Const(8),
+            I32Sub,
+            I32Const(4),
+            I32Shl,
+            I32Add,
+            LocalGet(0),
+            I32Const(1),
+            I32Sub,
+            LocalGet(1),
+            I32Const(4),
+            I32Sub,
+            I32ShrU,
+            I32Const(15),
+            I32And,
+            I32Add,
+            End,
+            End,
+        ],
+    );
+    code.function(&classify);
     let mut module = Module::new();
     module
         .section(&types)
@@ -651,6 +917,77 @@ mod tests {
         assert_eq!(memory.size(&store), pages);
         println!(
             "10000 varied live blocks, release and reuse: {} fuel consumed",
+            100_000_000 - store.get_fuel().unwrap()
+        );
+    }
+
+    #[test]
+    fn reusable_small_blocks_do_not_hide_thousands_of_fitting_larger_blocks() {
+        let (mut store, memory, realloc, release) = allocator(64 * 65536);
+        let mut large = Vec::new();
+        let mut small = Vec::new();
+        for _ in 0..5000 {
+            large.push(realloc.call(&mut store, (0, 0, 8, 32)).unwrap());
+        }
+        for _ in 0..5000 {
+            small.push(realloc.call(&mut store, (0, 0, 8, 16)).unwrap());
+        }
+        let pages = memory.size(&store);
+        for &pointer in &large {
+            release.call(&mut store, (pointer, 32)).unwrap();
+        }
+        for &pointer in &small {
+            release.call(&mut store, (pointer, 16)).unwrap();
+        }
+        let mut retained = Vec::new();
+        for (index, &expected) in large.iter().rev().enumerate() {
+            let pointer = realloc
+                .call(&mut store, (0, 0, 8, 32))
+                .unwrap_or_else(|error| panic!("fragmented reuse {index}: {error:?}"));
+            assert_eq!(pointer, expected);
+            retained.push(pointer);
+        }
+        for pointer in retained {
+            release.call(&mut store, (pointer, 32)).unwrap();
+        }
+        assert_eq!(memory.size(&store), pages);
+        println!(
+            "fragmented 10000-block reuse: {} fuel consumed",
+            100_000_000 - store.get_fuel().unwrap()
+        );
+    }
+
+    #[test]
+    fn partial_size_class_miss_tightens_its_maximum_without_losing_free_capacity() {
+        let (mut store, memory, realloc, release) = allocator(256 * 65536);
+        let mut small = Vec::new();
+        for _ in 0..3000 {
+            small.push(realloc.call(&mut store, (0, 0, 8, 1025)).unwrap());
+        }
+        let largest = realloc.call(&mut store, (0, 0, 8, 1057)).unwrap();
+        for pointer in small {
+            release.call(&mut store, (pointer, 1025)).unwrap();
+        }
+        release.call(&mut store, (largest, 1057)).unwrap();
+        let first = realloc.call(&mut store, (0, 0, 8, 1057)).unwrap();
+        assert_eq!(first, largest);
+        // The bucket's conservative maximum is now stale. The first failed
+        // search must tighten it rather than scan all 3000 small blocks again
+        // for every new larger request within this same fractional class.
+        let mut live = vec![first];
+        for _ in 0..3000 {
+            live.push(realloc.call(&mut store, (0, 0, 8, 1057)).unwrap());
+        }
+        store.gc(None).unwrap();
+        for pointer in live {
+            release.call(&mut store, (pointer, 1057)).unwrap();
+        }
+        let pages = memory.size(&store);
+        let retained = realloc.call(&mut store, (0, 0, 8, 1025)).unwrap();
+        release.call(&mut store, (retained, 1025)).unwrap();
+        assert_eq!(memory.size(&store), pages);
+        println!(
+            "partial size-class maximum: {} fuel consumed",
             100_000_000 - store.get_fuel().unwrap()
         );
     }
