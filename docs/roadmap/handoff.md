@@ -37792,3 +37792,47 @@ controls and run relevant core/reader/bootstrap checks. Full parser baseline,
 independent review and final-head CI remain required. #527 is a bounded
 prerequisite of the still unimplemented #490 application; generic async/resource
 and other M5 acceptance work remains separate.
+
+### 2026-11-28: parsing storage order and vendored-suite reconciliation
+
+The foundation capture on e489e1f4 returns0 after20 top-level commands in890.020s:
+364 Python tests, all catalog/generator/provenance checks, Java/Node-free bootstrap
+reproduction/four execution checks,347 library/bin/example Rust controls,
+19 core-import/reader controls and the exhaustive UTF-16 digit control. Two
+ignored doc examples remain ignored. Raw commands/count audit are under
+`controller-parse-long-foundation/`; this remains qualified to its pre-rebase head.
+
+After rebasing onto the resource interface/map-domain repairs, the four parsing
+controls pass148.61s execution/453.483s capture,14,106 inputs/HEAD fixed
+(`controller-parse-long-storage-order/`). The new actual component imports a
+storage callback. Bad/overflowing text never writes; Unicode/exact/extreme IDs
+reach storage unchanged; nil/empty input stays distinct; change counts advance
+before both parse and typed storage failures. This is a real boundary order
+control, not the full UserManager application.
+
+CI on e489 exposes the now-executable vendored parse-long namespace and exactly
+one newly observed assertion mismatch: #28 supplies a character. Under the
+accepted character-as-string platform Suss returns nil for that actual string,
+where JVM Character input throws. The failed job is preserved in
+`controller-parse-long-ci-e489/`. The narrow expected-results change removes
+only the unresolved namespace entry and records this failing character verdict.
+It neither skips the assertion nor changes the JVM oracle.
+
+The complete selected vendored suite comparison returns0: one passed, zero
+failed/ignored,23 filtered tests,1439.83s execution/1750.331s capture,14,111 inputs
+and HEAD fixed (`controller-parse-long-vendored-suite/`). Raw observations,
+before/proposed known-failure files and exact working overlay are retained.
+Counts remain explicit:5542 pass,133 known failures,107 guest-judged,
+58 blocked namespaces,1165 not executed,zero skipped. This is a passing baseline
+comparison, not universal Clojure compatibility. Its overlay also captures a
+Rust raw-string quoting mistake in the separate, uncompiled CLI character
+fixture; that fixture was repaired before compiling its own target.
+
+The final complete parsing target returns0: five passed, zero failed/ignored/
+filtered,87.37s execution/98.583s capture,14,118 inputs and HEAD fixed:
+`cargo test -p suss-cli --locked --test clojure_parse_long -- --test-threads=2`.
+`controller-parse-long-complete-platform-and-storage/` includes the explicit
+Runtime/Macro character platform control and both actual components. Publish
+the rebased draft/evidence to #528. The required exact full baseline, independent
+review and passing final-head CI still gate #527; #490 now independently exposes
+missing nested associative core helpers, tracked by #529.

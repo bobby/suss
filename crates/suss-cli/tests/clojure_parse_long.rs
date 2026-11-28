@@ -271,3 +271,177 @@ fn actual_component_parses_exact_form_ids_and_preserves_change_before_parse_erro
     assert_eq!(store.data().canonical, 65_536);
     assert!(store.data().auxiliary >= 17 * 65_536);
 }
+
+#[test]
+fn component_parses_before_storage_and_preserves_changes_across_host_errors() {
+    use suss_cli::portable_aot::{AotOptions, compile_file_with_options};
+    use suss_reader::Symbol;
+    use wasmtime::{
+        Config, Engine, Store, StoreContextMut,
+        component::{Component, Linker},
+    };
+    #[derive(Default)]
+    struct Storage {
+        writes: Vec<Option<i64>>,
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("app.sus");
+    let wit = directory.path().join("api.wit");
+    std::fs::write(
+        &source,
+        r#"(ns storage-parser)
+      (def changes (atom 0))
+      (defn submit [field]
+        (swap! changes inc)
+        (try
+          (let [text (if (= (nth field 0) :none) nil (nth field 1))
+                id (if (or (nil? text) (= text "")) nil
+                     (let [value (parse-long text)]
+                       (if (nil? value)
+                         (throw (ex-info "Invalid form ID" {:kind :parse})) value)))]
+            (storage/write-id (if (nil? id) [:none] [:some id])))
+          (catch :default error
+            (if (= (:kind (ex-data error)) :parse)
+              [:err (ex-message error)] (throw error)))))
+      (defn change-count [] @changes)"#,
+    )
+    .unwrap();
+    std::fs::write(
+        &wit,
+        r#"package test:storage-parser;
+      world api {
+        import write-id: func(id: option<s64>) -> result<u64, string>;
+        export submit: func(text: option<string>) -> result<u64, string>;
+        export change-count: func() -> u64;
+      }"#,
+    )
+    .unwrap();
+    let bytes = compile_file_with_options(
+        &source,
+        &wit,
+        Some("api"),
+        &[],
+        &AotOptions {
+            exports: vec![
+                ("submit".into(), Symbol::parse("storage-parser/submit")),
+                (
+                    "change-count".into(),
+                    Symbol::parse("storage-parser/change-count"),
+                ),
+            ],
+            imports: vec![("write-id".into(), Symbol::parse("storage/write-id"))],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let mut config = Config::new();
+    config
+        .wasm_gc(true)
+        .gc_heap_initial_size(8 * 1024 * 1024)
+        .wasm_function_references(true)
+        .wasm_tail_call(true)
+        .wasm_exceptions(true)
+        .wasm_component_model(true)
+        .consume_fuel(true)
+        .cranelift_opt_level(wasmtime::OptLevel::None);
+    let engine = Engine::new(&config).unwrap();
+    let component = Component::new(&engine, bytes).unwrap();
+    assert_eq!(component.component_type().imports(&engine).count(), 1);
+    let mut linker = Linker::new(&engine);
+    linker
+        .root()
+        .func_wrap(
+            "write-id",
+            |mut context: StoreContextMut<'_, Storage>, (id,): (Option<i64>,)| {
+                context.data_mut().writes.push(id);
+                let result = if id == Some(-17) {
+                    Err("storage unavailable".to_owned())
+                } else {
+                    Ok(context.data().writes.len() as u64)
+                };
+                Ok((result,))
+            },
+        )
+        .unwrap();
+    let mut store = Store::new(&engine, Storage::default());
+    store.set_fuel(100_000_000).unwrap();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let submit = instance
+        .get_typed_func::<(Option<String>,), (Result<u64, String>,)>(&mut store, "submit")
+        .unwrap();
+    let count = instance
+        .get_typed_func::<(), (u64,)>(&mut store, "change-count")
+        .unwrap();
+    let cases = [
+        (Some("bad"), Err("Invalid form ID"), vec![]),
+        (
+            Some("9007199254740993"),
+            Ok(1),
+            vec![Some(9_007_199_254_740_993)],
+        ),
+        (
+            Some("9223372036854775808"),
+            Err("Invalid form ID"),
+            vec![Some(9_007_199_254_740_993)],
+        ),
+        (
+            Some("-17"),
+            Err("storage unavailable"),
+            vec![Some(9_007_199_254_740_993), Some(-17)],
+        ),
+        (
+            None,
+            Ok(3),
+            vec![Some(9_007_199_254_740_993), Some(-17), None],
+        ),
+        (
+            Some(""),
+            Ok(4),
+            vec![Some(9_007_199_254_740_993), Some(-17), None, None],
+        ),
+        (
+            Some("１７"),
+            Ok(5),
+            vec![Some(9_007_199_254_740_993), Some(-17), None, None, Some(17)],
+        ),
+        (
+            Some("-9223372036854775808"),
+            Ok(6),
+            vec![
+                Some(9_007_199_254_740_993),
+                Some(-17),
+                None,
+                None,
+                Some(17),
+                Some(i64::MIN),
+            ],
+        ),
+    ];
+    for (index, (text, expected, writes)) in cases.into_iter().enumerate() {
+        store.set_fuel(100_000_000).unwrap();
+        let result = submit
+            .call(&mut store, (text.map(str::to_owned),))
+            .unwrap()
+            .0;
+        assert_eq!(
+            result.as_ref().map(|n| *n).map_err(String::as_str),
+            expected
+        );
+        assert_eq!(store.data().writes, writes);
+        assert_eq!(count.call(&mut store, ()).unwrap().0, index as u64 + 1);
+        store.gc(None).unwrap();
+    }
+}
+
+#[test]
+fn parse_long_character_platform_uses_the_actual_string_value() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(
+            printed(
+                &mut session,
+                r#"(pr-str [(string? \a) (= \a "a") (parse-long \a) (parse-long \7)])"#
+            ),
+            "[true true nil 7]"
+        );
+    }
+}

@@ -33,8 +33,17 @@ review overlay and generated EPL provenance identify the adapted pinned public
 form. Clojure 1.12.6 supplies the semantic oracle. No Java dependency is shipped.
 
 `clojure_parse_long` executes the 783-case recorded JVM corpus in both phases and
-in an actual component, plus non-string/alias/GC controls and 10,000 varied form
-calls. Canonical transfers remain within one 64 KiB page; numeric/managed
-memory has a separate bounded allowance. These are parsing controls, with no
-persistence implementation. Full UserManager, storage effect ordering, broader
-core/reader/bootstrap checks and final baseline/review/CI retain separate gates.
+in an actual component, plus non-string/alias/GC controls, explicit character-
+as-string platform controls and 10,000 varied form calls. Canonical transfers
+remain within one 64 KiB page; numeric/managed memory has a separate bounded
+allowance. A second component uses a real typed storage callback: malformed or
+overflowing strings cause no write; exact IDs reach storage intact; the change
+counter advances before parse and typed host failures. These are bounded form
+controls, separate from the complete UserManager application and persistence.
+
+The vendored parse-long namespace now executes. Its character-input assertion
+#28 remains an explicit JVM mismatch under the accepted character-as-string
+platform; it is recorded as a failing verdict, not skipped. The full suite's
+other existing failures/blocked namespaces retain their reviewed baseline.
+Full workspace, independent review and passing final-head CI remain separate
+acceptance gates.

@@ -1,0 +1,11 @@
+{
+  "captured_head": "5637a3230999826408a0f5e62923c218b2e98291",
+  "source_receipt_sha256": "c831f51f2a5bb0dccb56510732bdfbfdcd2e629ab6cf01aca619c273ae5d9de3",
+  "checked_inputs": 14115,
+  "excluded_paths": [
+    "docs/roadmap/handoff.md",
+    "docs/compatibility/README.md",
+    "docs/runtime/number-parsing.md"
+  ],
+  "changed_inputs": []
+}

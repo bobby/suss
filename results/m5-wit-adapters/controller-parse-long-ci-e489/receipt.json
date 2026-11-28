@@ -1,0 +1,8 @@
+{
+  "head": "e489e1f44185673cfa73c9a3e8f88dfcfeb7d22b",
+  "run": 46132605627,
+  "job": 140940863393,
+  "job_url": "https://github.com/bobby/suss/actions/runs/46132605627/job/140940863393",
+  "log_sha256": "36ba1920bab07b66c7c191dff1ffabbeadc3c706c31ec285c15fe15ce86509c4",
+  "observation": "parse-long namespace now executes; all but character-input assertion #28 match JVM. The accepted platform maps characters to strings."
+}

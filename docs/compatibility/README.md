@@ -2245,3 +2245,15 @@ effect across10,000 varied calls with bounded canonical transfer memory and GC.
 Original unsupported and fixture failures remain retained. The reader's separate
 radix/literal parser is unchanged. These focused receipts do not establish
 UserManager persistence, full parser baseline, independent review or final CI.
+
+[Complete exact parsing controls](../../results/m5-wit-adapters/controller-parse-long-complete-platform-and-storage/summary.json)
+pass five tests including783 JVM cases, Runtime/Macro aliases/type guards,
+character-as-string platform behavior, real typed storage effects, GC and10,000
+mixed form calls. Malformed input never reaches storage and changes advance
+before parse/host errors. The
+[vendored-suite comparison](../../results/m5-wit-adapters/controller-parse-long-vendored-suite/summary.json)
+passes its narrow updated baseline with zero skipped assertions. Parse-long #28
+remains an explicit character platform failing verdict; all other existing suite
+failures/blocked namespaces remain visible. The e489 foundation capture and all
+later command/source qualifications are retained; full baseline/review/final-head
+CI remain separate gates.

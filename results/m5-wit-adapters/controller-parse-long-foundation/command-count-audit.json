@@ -1,0 +1,286 @@
+{
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 364
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_inventory.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_reviews.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/reader_core_catalog.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/apply_bootstrap.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/sequence_provenance.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_transducer_provenance.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_when_let_provenance.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bitwise_provenance.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/wasi_lock.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/jvm_array_oracle.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "overlap"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 0,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "scripts/verify-bootstrap.sh"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 1,
+      "rust_passed": 4,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--lib",
+        "--bins",
+        "--examples",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 12,
+      "rust_passed": 347,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--doc",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 5,
+      "rust_passed": 0,
+      "rust_failed": 0,
+      "rust_ignored": 2,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "core_import",
+        "--test",
+        "portable_reader_constructors",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 2,
+      "rust_passed": 19,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "math_context_constructors",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "rust_summaries": 1,
+      "rust_passed": 1,
+      "rust_failed": 0,
+      "rust_ignored": 0,
+      "python_tests": 0
+    }
+  ],
+  "orchestrator_sha256": "0cad9c9992b75b57db15b4f19984eb46b2a4c61bb63e5428a9426087afe0c721",
+  "log_sha256": "aa71377ac49bace5561d3270d886bac3f5e4a3469045cdc70858757bdef0f397"
+}
