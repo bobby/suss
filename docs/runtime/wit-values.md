@@ -20,9 +20,8 @@ buffers; post-return releases those buffers. A numeric list result can also
 come from its documented packed-array element type.
 
 Tuples use persistent vectors and records use keyword-keyed maps. These shapes
-compose with nested lists, options and results. The accepted mapping also
-specifies persistent maps for WIT maps and keyword sets for flags; those shapes
-still require their own generated adapters and executing acceptance evidence. A resource handle has identity, ownership and borrow
+compose with nested lists, options and results. WIT maps are
+persistent maps and flags are keyword sets. A resource handle has identity, ownership and borrow
 lifetimes; collection behavior on a host-backed resource requires an explicit
 protocol implementation and a documented lifetime/error contract.
 
@@ -55,8 +54,7 @@ same record to that adapter before reporting completion.
 
 The focused regressions are `portable_aot_wit_char` and
 `portable_aot_wit_indirect`. Their commands, raw observations and limitations
-are retained under `results/m5-wit-adapters/`. Full generic imports, the remaining composite
-adapters, resources and async suspension have separate acceptance requirements;
+are retained under `results/m5-wit-adapters/`. Full generic imports, resources and async suspension have separate acceptance requirements;
 these scalar and argument conversions do not establish those capabilities.
 
 ## Public interface type identities
@@ -87,3 +85,37 @@ validator does not admit zero-field canonical products.
 
 The executing controls are in `portable_aot_wit_composites`. They do not certify
 arbitrary imported callbacks, resource lifetimes or cancellation cleanup.
+
+## Nominal values, maps and fixed-length lists
+
+Enums are ordinary keywords. Flags are persistent keyword sets, so `conj`,
+`disj`, `contains?`, equality and the other set functions apply. General variants
+use `[:case]` or `[:case payload]` with the declared case keyword. Unknown enum
+values, flag names, variant tags or payload arities are rejected.
+
+WIT maps are persistent maps. The adapter uses sequential `assoc` for incoming
+entries, so duplicate keys keep the last value. Returned map iteration order is
+unspecified. Fixed-length lists are persistent vectors with the declared length
+checked at the boundary. The pinned canonical ABI admits one through32 flags
+and nonempty fixed-length lists; unsupported declarations fail before source
+macros. Hosts must enable their pinned engine's map and fixed-length-list
+features; the shipped CLI does so.
+
+Numeric lists also accept their documented packed-array element kinds inside
+records, tuples, lists and variants. Copies preserve bits: for example, a byte
+array containing `-1` leaves a `list<u8>` boundary as255. Arrays of another
+primitive kind and user object arrays are rejected. Output projection and leaf
+validation precede canonical output allocation.
+
+Root function signatures publish nominal value types before defining their
+parents and functions, using the newly exported type identities. Declared root
+alias names are retained; a name collision appends `-value` until unique.
+Nominal dependencies reached through root aliases also receive public names.
+Interface exports retain their declared named types and versioned instance
+names. These types add no implicit host capabilities.
+
+The executing controls are `portable_aot_wit_value_shapes`, including
+malformed-result checks, core redefinitions and10,000 nested calls constrained
+to one64KiB transfer-memory page. Arbitrary imported functions, resource scopes,
+future/stream scheduling and error-context lifetimes require their separate
+adapters and ownership rules.

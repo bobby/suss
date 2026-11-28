@@ -1208,6 +1208,18 @@ baseline/final CI remain pending; no declaration or M3 acceptance gate is
 reclassified. Existing retained-source provenance and
 upstream license obligations remain unchanged.
 
+[Native WIT data values](../runtime/wit-values.md) use persistent vectors/maps,
+keyword enums/flag sets and declared tagged variants. Generated codecs compose
+records, tuples, lists, options/results, maps and supported fixed-length lists.
+The separate six-test recursive-codec run and nine-test remaining-shapes run
+execute actual components, including exact IDs, Unicode, native core operations,
+GC retention, malformed values, core redefinitions and10,000 nested calls within
+one transfer-memory page. Their receipts preserve failures and source identities
+under `results/m5-wit-adapters/`. The77-test earlier adapter command retains its
+own frozen source. Arbitrary imports, resource/cancellation accounting and full
+workspace/CI validation have separate acceptance gates; no upstream declaration
+is reclassified by these interoperability controls.
+
 [Portable AOT component assembly](../runtime/compiled-aot-components.md) now has
 five executing compiler tests for scalar component exports, source ordering/live
 cells, GC, phase guards and independently decoded boundary exceptions. A shared

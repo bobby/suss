@@ -36957,3 +36957,46 @@ async, list, option, exact numeric, character, indirect-argument and named-type
 controls. The raw log, frozen-input receipt and independent result-count audit
 are retained. This command predates the recursive composite codec and does not
 certify that implementation or full-workspace/milestone acceptance.
+
+### 2026-11-27: nominal and nested WIT value schemas
+
+The graph codec additionally handles enum keywords, keyword flag sets, general
+variants, WIT maps and supported fixed-length lists. Nested numeric lists accept
+the same typed packed arrays as root lists, including unsigned u8 byte bits;
+private projected object arrays remain distinct from user primitive arrays.
+Maps coalesce duplicate input keys by sequential assoc, keeping the last value.
+The CLI enables the pinned engine's map and fixed-length-list features.
+
+Root nominal types require staged component encoding: a type export creates a
+new identity. Types are emitted/exported in dependency order and later parent
+and function definitions reference the exported identities. Root value aliases
+retain their declared names; collisions with function exports or another public
+name append `-value` until unique. Nominal dependencies of root function types
+are public even when reached through a used alias. Exported-interface types keep
+their existing instance identities. The encoder tracks all definition/export
+indices across type sections; no host type authority is silently imported.
+
+The first value-shape build used an obsolete three-field encoder case tuple;
+its actual compilation failure is retained. The first executing five-test batch
+returned101 (two passed, three failed): fixed-length/nested packed cases executed,
+while root nominal function exports lacked public identities and the generated
+map projector had an unclosed form. A subsequent seven-test batch returned101
+(four passed, three failed): native map operations/last-duplicate-wins and the
+10,000-call nested transfer-page control passed, while root identities still
+failed. Publishing names at the end is insufficient; references must use the
+new exported identities. Original logs and source overlays are retained in
+`value-shapes-first/`, `value-shapes-encoder-pairs/` and
+`value-shapes-root-identities/` under `results/m5-wit-adapters/`.
+
+The complete staged-identity command returned0: nine passed, zero failed/ignored,
+173.43s test execution (293.719s including build), with all13,758 recorded
+inputs and HEAD unchanged. Its actual command, frozen-source receipt and raw
+output are in `value-shapes-staged-identities/`. Its malformed-result
+control checks unknown flags/tags/enum values, wrong record keys/tuple and fixed
+lengths, numeric categories/ranges, incompatible array kinds/object arrays and
+invalid UTF-16. A large valid string before an invalid later field must not
+grow transfer memory beyond its initial page. Core-redefinition controls retain
+captured classes and schema functions. The10,000-call test retains nested exact
+u64/Unicode/optional-false data across GC while restricting transfer memory to
+one64KiB page. General imports, resource/error/cancellation accounting and full
+workspace/CI acceptance remain separate requirements.
