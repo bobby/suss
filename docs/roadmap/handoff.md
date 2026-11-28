@@ -1,3 +1,33 @@
+## Indirect string acceptance repair and adapter capture (2026-11-28)
+
+The source-frozen eight-target adapter command at e41fa3eb returns 101 after
+1,641.918 seconds: 53 tests pass and the old nine-string rejection test fails
+because compilation now reaches its deliberately throwing source macro. Three
+later targets are unexecuted by that command. Inputs and HEAD stay unchanged;
+the native 101, raw log and source manifest are retained in
+results/m5-wit-adapters/focused-adapters. CI partition 2 independently fails the
+same obsolete rejection assertion; its failure is not a compatibility pass.
+
+The replacement actually executes all nine string positions in sync and canonical
+async modes, with distinct Unicode/NUL payloads, 20 repeated calls, GC and exact
+source effect counts. Its focused command returns 0 in 55.706 seconds, with
+unchanged inputs/HEAD. A separate before-macro guard for unsupported string future
+shapes returns 0. Original source fuel, memory limits and unrelated assertions
+remain unchanged. Full repaired-source string/numeric/character/indirect adapter
+coverage and final-head CI retain their own results.
+
+The initial Python foundation attempt fails because this worktree lacks the pinned
+ClojureScript checkout. Restoring exactly c4295f303100bbf5afac449242d30bca1126f1a1
+allows all 15 original checks to return 0, including 364 Python tests. Both the
+actual missing-pin failure and repaired-check logs are retained. These checks do
+not certify the independently executing compiler or a full workspace baseline.
+
+Named-type work is isolated in target/probe/m5-composites while this tree's native
+capture remains frozen. An independent current-library probe returns 101 for
+public interface type aliases, and another returns 101 for tuple boundaries.
+Their sources and raw failures are retained for the subsequent generated schema
+work. No issue or milestone closure follows from these partial adapter checks.
+
 ## Canonical Unicode scalars and indirect arguments (2026-11-28)
 
 The three original `portable_aot_wit_char` regressions return 101 on the merged
