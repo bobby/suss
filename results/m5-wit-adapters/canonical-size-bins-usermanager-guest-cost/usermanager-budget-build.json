@@ -1,0 +1,119 @@
+{
+  "attempts": [
+    {
+      "command": [
+        "rustc",
+        "+stable",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "target/probe/usermanager-budget-diagnostic.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+        "--extern",
+        "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-7a99b647eeae9602.rlib",
+        "--extern",
+        "serde_json=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libserde_json-0ac6597d8ed69b28.rlib",
+        "-o",
+        "target/probe/usermanager-budget-diagnostic"
+      ],
+      "exit_code": 1,
+      "wasmtime_sha256": "cc7a495f4f797de4bbe84ebcc92296a76a1f2bdaeae980d7560ed1a099566704"
+    },
+    {
+      "command": [
+        "rustc",
+        "+stable",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "target/probe/usermanager-budget-diagnostic.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+        "--extern",
+        "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-86ac8edbfe26fcb8.rlib",
+        "--extern",
+        "serde_json=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libserde_json-0ac6597d8ed69b28.rlib",
+        "-o",
+        "target/probe/usermanager-budget-diagnostic"
+      ],
+      "exit_code": 1,
+      "wasmtime_sha256": "f32329531e496faa7cb6d066fd4285bdde60e1f49f165fd97d458bc8949b07bc"
+    },
+    {
+      "command": [
+        "rustc",
+        "+stable",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "target/probe/usermanager-budget-diagnostic.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+        "--extern",
+        "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-6231b9cb28d7d6e4.rlib",
+        "--extern",
+        "serde_json=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libserde_json-0ac6597d8ed69b28.rlib",
+        "-o",
+        "target/probe/usermanager-budget-diagnostic"
+      ],
+      "exit_code": 1,
+      "wasmtime_sha256": "3e5f3d535afea5a1c782f788e4c4f993dc5221dc5bfaf162d3a449ac6a313a5f"
+    },
+    {
+      "command": [
+        "rustc",
+        "+stable",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "target/probe/usermanager-budget-diagnostic.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+        "--extern",
+        "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-a634b8e5ebc5c259.rlib",
+        "--extern",
+        "serde_json=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libserde_json-0ac6597d8ed69b28.rlib",
+        "-o",
+        "target/probe/usermanager-budget-diagnostic"
+      ],
+      "exit_code": 1,
+      "wasmtime_sha256": "93dfb0abc4b387f7645924ca72d44ad4d3827ae663c9c193ae3f6c5839c481cc"
+    },
+    {
+      "command": [
+        "rustc",
+        "+stable",
+        "--edition=2024",
+        "-C",
+        "opt-level=1",
+        "target/probe/usermanager-budget-diagnostic.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+        "--extern",
+        "suss_usermanager_host=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+        "--extern",
+        "wasmtime=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmtime-7fad23f82b6a71a9.rlib",
+        "--extern",
+        "serde_json=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libserde_json-0ac6597d8ed69b28.rlib",
+        "-o",
+        "target/probe/usermanager-budget-diagnostic"
+      ],
+      "exit_code": 0,
+      "wasmtime_sha256": "f9fe822630277f7fd34d8b5e2308664b0822d468e55365123334f1f19cf7f132"
+    }
+  ],
+  "source_sha256": "0791cd5c51020e957044e5d1195cfab35929b02491a09685ea12368c6e8c5e46",
+  "source_application_measure_sha256": "334990473818db7cd7ef402cc2df1d30e15eaf4877af9f66fd4b622ba82e2f63",
+  "host_library": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libsuss_usermanager_host-b530250e12750890.rlib",
+  "host_library_sha256": "1b37ec06b09ed6f6ac3e6c7a5e3d7400a6b1c06711868d8cbc1f96330eb14268",
+  "qualification": "Only joined-sorted-list calls use a caller-selected 3-billion diagnostic budget through the same typed generated export; production host defaults remain100-million. Not a final benchmark."
+}

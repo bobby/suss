@@ -1,0 +1,18 @@
+{
+  "head": "2a779949f84e5d856a0860671e2de65263259e21",
+  "profile": "test",
+  "binaries": {
+    "suss": {
+      "bytes": 83200552,
+      "sha256": "4cb2dbcf27556f3f756518a683c315b80b1be8cddab6206ac8ec3515626ebb34"
+    },
+    "suss-usermanager-host": {
+      "bytes": 31452424,
+      "sha256": "d10ff13f0aa6cf48ce4dd40711183643ee064b86cdcd8db6eedf6fb27cb824b9"
+    },
+    "measure": {
+      "bytes": 31469744,
+      "sha256": "56a00daea4660f870d9865528da22e29d98c6ff24a30cf41848584b7c1788b67"
+    }
+  }
+}

@@ -1,0 +1,349 @@
+module 0 starts 1154
+HIT module 0 body 571 range 190063..190180
+  0x2e676 I32Const { value: 0 }
+  0x2e678 ArrayNewDefault { array_type_index: 2 }
+  0x2e67b LocalSet { local_index: 6 }
+  0x2e67d Block { blockty: Empty }
+  0x2e67f Block { blockty: Type(Ref(eqref)) }
+  0x2e681 TryTable { try_table: TryTable { ty: Empty, catches: [One { tag: 0, label: 0 }] } }
+  0x2e687 Block { blockty: Empty }
+  0x2e689 Block { blockty: Type(Ref(eqref)) }
+  0x2e68b TryTable { try_table: TryTable { ty: Empty, catches: [One { tag: 0, label: 0 }] } }
+  0x2e691 LocalGet { local_index: 0 }
+  0x2e693 LocalGet { local_index: 6 }
+  0x2e695 Call { function_index: 185 }
+  0x2e698 LocalSet { local_index: 3 }
+  0x2e69a Br { relative_depth: 2 }
+  0x2e69c End
+  0x2e69d Unreachable
+  0x2e69e End
+  0x2e69f LocalSet { local_index: 4 }
+  0x2e6a1 LocalGet { local_index: 1 }
+  0x2e6a3 RefNull { hty: Abstract { shared: false, ty: Eq } }
+  0x2e6a5 RefEq
+  0x2e6a6 If { blockty: Empty }
+  0x2e6a8 LocalGet { local_index: 4 }
+  0x2e6aa Throw { tag_index: 0 }
+  0x2e6ac End
+  0x2e6ad LocalGet { local_index: 1 }
+  0x2e6af LocalGet { local_index: 4 }
+  0x2e6b1 ArrayNewFixed { array_type_index: 2, array_size: 1 }
+  0x2e6b5 Call { function_index: 185 }
+  0x2e6b8 LocalSet { local_index: 3 }
+module 1 starts 304824
+module 2 starts 442069
+module 3 starts 3805472
+module 4 starts 3807266
+module 5 starts 3813900
+module 6 starts 3873769
+module 7 starts 3885345
+module 8 starts 3895080
+module 9 starts 3905710
+module 10 starts 3924694
+module 11 starts 3943689
+module 12 starts 3955856
+module 13 starts 3972407
+module 14 starts 3984483
+module 15 starts 3994901
+HIT module 15 body 1 range 4006872..4008134
+  0x3d268e End
+  0x3d268f LocalGet { local_index: 3 }
+  0x3d2691 GlobalGet { global_index: 79 }
+  0x3d2693 CallRef { type_index: 20 }
+  0x3d2695 LocalSet { local_index: 25 }
+  0x3d2697 GlobalGet { global_index: 80 }
+  0x3d2699 LocalGet { local_index: 22 }
+  0x3d269b RefEq
+  0x3d269c I32Eqz
+  0x3d269d If { blockty: Empty }
+  0x3d269f LocalGet { local_index: 22 }
+  0x3d26a1 Call { function_index: 27 }
+  0x3d26a3 GlobalSet { global_index: 81 }
+  0x3d26a5 LocalGet { local_index: 22 }
+  0x3d26a7 GlobalSet { global_index: 80 }
+  0x3d26a9 End
+  0x3d26aa LocalGet { local_index: 22 }
+  0x3d26ac LocalGet { local_index: 25 }
+  0x3d26ae GlobalGet { global_index: 81 }
+  0x3d26b0 CallRef { type_index: 21 }
+  0x3d26b2 LocalSet { local_index: 26 }
+  0x3d26b4 Block { blockty: Type(Ref(eqref)) }
+  0x3d26b6 Block { blockty: Type(Ref(eqref)) }
+  0x3d26b8 LocalGet { local_index: 20 }
+  0x3d26ba BrOnCastFail { relative_depth: 0, from_ref_type: eqref, to_ref_type: (ref (module 119)) }
+  0x3d26c1 LocalTee { local_index: 59 }
+  0x3d26c3 StructGet { struct_type_index: 4, field_index: 0 }
+  0x3d26c7 GlobalGet { global_index: 43 }
+  0x3d26c9 RefEq
+  0x3d26ca If { blockty: Type(Ref(eqref)) }
+  0x3d26cc LocalGet { local_index: 59 }
+  0x3d26ce RefAsNonNull
+  0x3d26cf LocalGet { local_index: 26 }
+  0x3d26d1 Call { function_index: 41 }
+  0x3d26d3 Else
+module 16 starts 4020460
+module 17 starts 4033425
+module 18 starts 4042723
+module 19 starts 4054403
+module 20 starts 4078184
+module 21 starts 4088839
+module 22 starts 4113373
+module 23 starts 4129741
+module 24 starts 4148080
+HIT module 24 body 1 range 4157721..4160389
+  0x3f7864 CallRef { type_index: 22 }
+  0x3f7866 LocalSet { local_index: 98 }
+  0x3f7868 Block { blockty: Type(Ref(eqref)) }
+  0x3f786a Block { blockty: Type(Ref(eqref)) }
+  0x3f786c LocalGet { local_index: 50 }
+  0x3f786e BrOnCastFail { relative_depth: 0, from_ref_type: eqref, to_ref_type: (ref (module 98)) }
+  0x3f7875 LocalTee { local_index: 163 }
+  0x3f7878 StructGet { struct_type_index: 4, field_index: 0 }
+  0x3f787c GlobalGet { global_index: 32 }
+  0x3f787e RefEq
+  0x3f787f If { blockty: Type(Ref(eqref)) }
+  0x3f7881 LocalGet { local_index: 163 }
+  0x3f7884 RefAsNonNull
+  0x3f7885 LocalGet { local_index: 98 }
+  0x3f7887 Call { function_index: 38 }
+  0x3f7889 Else
+  0x3f788a LocalGet { local_index: 163 }
+  0x3f788d RefAsNonNull
+  0x3f788e LocalGet { local_index: 98 }
+  0x3f7890 LocalGet { local_index: 163 }
+  0x3f7893 StructGet { struct_type_index: 4, field_index: 0 }
+  0x3f7897 StructGet { struct_type_index: 19, field_index: 2 }
+  0x3f789b CallRef { type_index: 21 }
+  0x3f789d End
+  0x3f789e Br { relative_depth: 1 }
+  0x3f78a0 End
+  0x3f78a1 LocalGet { local_index: 98 }
+  0x3f78a3 Call { function_index: 21 }
+  0x3f78a5 End
+  0x3f78a6 LocalSet { local_index: 99 }
+  0x3f78a8 GlobalGet { global_index: 52 }
+  0x3f78aa LocalGet { local_index: 4 }
+module 25 starts 4163249
+module 26 starts 4178182
+module 27 starts 4180990
+module 28 starts 4193092
+module 29 starts 4202162
+module 30 starts 4211106
+module 31 starts 4242138
+HIT module 31 body 1 range 4262148..4265671
+  0x41169b LocalSet { local_index: 150 }
+  0x41169e GlobalGet { global_index: 88 }
+  0x4116a0 RefNull { hty: Abstract { shared: false, ty: Eq } }
+  0x4116a2 I32Const { value: 0 }
+  0x4116a4 RefI31
+  0x4116a6 StructNew { struct_type_index: 204 }
+  0x4116aa LocalSet { local_index: 151 }
+  0x4116ad RefNull { hty: Abstract { shared: false, ty: Eq } }
+  0x4116af LocalSet { local_index: 152 }
+  0x4116b2 LocalGet { local_index: 150 }
+  0x4116b5 LocalGet { local_index: 151 }
+  0x4116b8 LocalGet { local_index: 152 }
+  0x4116bb Call { function_index: 161 }
+  0x4116be LocalSet { local_index: 153 }
+  0x4116c1 LocalGet { local_index: 153 }
+  0x4116c4 Return
+  0x4116c5 Unreachable
+  0x4116c6 End
+HIT module 31 body 2 range 4265673..4281232
+  0x414a15 LocalGet { local_index: 84 }
+  0x414a17 LocalSet { local_index: 85 }
+  0x414a19 Block { blockty: Type(Ref(eqref)) }
+  0x414a1b Block { blockty: Type(Ref(eqref)) }
+  0x414a1d LocalGet { local_index: 84 }
+  0x414a1f BrOnCastFail { relative_depth: 0, from_ref_type: eqref, to_ref_type: (ref (module 208)) }
+  0x414a26 LocalTee { local_index: 771 }
+  0x414a29 StructGet { struct_type_index: 4, field_index: 0 }
+  0x414a2d GlobalGet { global_index: 81 }
+  0x414a2f RefEq
+  0x414a30 If { blockty: Type(Ref(eqref)) }
+  0x414a32 LocalGet { local_index: 771 }
+  0x414a35 RefAsNonNull
+  0x414a36 LocalGet { local_index: 4 }
+  0x414a38 Call { function_index: 117 }
+  0x414a3a Else
+  0x414a3b LocalGet { local_index: 771 }
+  0x414a3e RefAsNonNull
+  0x414a3f LocalGet { local_index: 4 }
+  0x414a41 LocalGet { local_index: 771 }
+  0x414a44 StructGet { struct_type_index: 4, field_index: 0 }
+  0x414a48 StructGet { struct_type_index: 19, field_index: 2 }
+  0x414a4c CallRef { type_index: 21 }
+  0x414a4e End
+  0x414a4f Br { relative_depth: 1 }
+  0x414a51 End
+  0x414a52 LocalGet { local_index: 4 }
+  0x414a54 Call { function_index: 22 }
+  0x414a56 End
+  0x414a57 LocalSet { local_index: 86 }
+  0x414a59 LocalGet { local_index: 86 }
+  0x414a5b LocalSet { local_index: 99 }
+module 32 starts 4308513
+module 33 starts 4466403
+module 34 starts 4467779
+HIT module 34 body 1 range 4473397..4473792
+  0x444295 I32Add
+  0x444296 Call { function_index: 73 }
+  0x444298 LocalGet { local_index: 0 }
+  0x44429a I32Const { value: 8 }
+  0x44429c I32Add
+  0x44429d Call { function_index: 115 }
+  0x44429f ArrayNewFixed { array_type_index: 2, array_size: 2 }
+  0x4442a3 LocalGet { local_index: 0 }
+  0x4442a5 I32Const { value: 0 }
+  0x4442a7 I32Add
+  0x4442a8 Call { function_index: 76 }
+  0x4442aa LocalGet { local_index: 0 }
+  0x4442ac I32Const { value: 8 }
+  0x4442ae I32Add
+  0x4442af Call { function_index: 118 }
+  0x4442b1 LocalGet { local_index: 0 }
+  0x4442b3 I32Const { value: 88 }
+  0x4442b6 Call { function_index: 13 }
+  0x4442b8 Call { function_index: 2 }
+  0x4442ba LocalSet { local_index: 21 }
+  0x4442bc GlobalGet { global_index: 18 }
+  0x4442be I32Const { value: 43 }
+  0x4442c0 RefI31
+  0x4442c2 Call { function_index: 16 }
+  0x4442c4 LocalGet { local_index: 21 }
+  0x4442c6 ArrayNewFixed { array_type_index: 2, array_size: 1 }
+  0x4442ca Call { function_index: 2 }
+  0x4442cc LocalSet { local_index: 21 }
+  0x4442ce LocalGet { local_index: 21 }
+  0x4442d0 Call { function_index: 170 }
+  0x4442d3 I32Const { value: 0 }
+  0x4442d5 I32Const { value: 0 }
+  0x4442d7 I32Const { value: 8 }
+  0x4442d9 I32Const { value: 136 }
+HIT module 34 body 225 range 4555032..4555153
+  0x45814c Call { function_index: 12 }
+  0x45814e LocalSet { local_index: 5 }
+  0x458150 LocalGet { local_index: 2 }
+  0x458152 LocalGet { local_index: 5 }
+  0x458154 Call { function_index: 189 }
+  0x458157 I32Const { value: 0 }
+  0x458159 I32Const { value: 0 }
+  0x45815b I32Const { value: 4 }
+  0x45815d I32Const { value: 16 }
+  0x45815f Call { function_index: 12 }
+  0x458161 LocalSet { local_index: 7 }
+  0x458163 LocalGet { local_index: 5 }
+  0x458165 Call { function_index: 192 }
+  0x458168 LocalGet { local_index: 7 }
+  0x45816a LocalGet { local_index: 4 }
+  0x45816c Call { function_index: 273 }
+  0x45816f Call { function_index: 25 }
+  0x458171 LocalGet { local_index: 7 }
+  0x458173 Call { function_index: 199 }
+  0x458176 LocalSet { local_index: 3 }
+  0x458178 LocalGet { local_index: 7 }
+  0x45817a Call { function_index: 202 }
+  0x45817d LocalGet { local_index: 7 }
+  0x45817f I32Const { value: 16 }
+  0x458181 Call { function_index: 13 }
+  0x458183 LocalGet { local_index: 5 }
+  0x458185 Call { function_index: 190 }
+  0x458188 LocalGet { local_index: 5 }
+  0x45818a I32Const { value: 4 }
+  0x45818c Call { function_index: 13 }
+  0x45818e LocalGet { local_index: 3 }
+  0x458190 End
+module 35 starts 4562432
+HIT module 35 body 0 range 4562545..4562799
+  0x459e7f I32GtU
+  0x459e80 I32Or
+  0x459e81 LocalGet { local_index: 1 }
+  0x459e83 LocalGet { local_index: 1 }
+  0x459e85 I32Const { value: 1 }
+  0x459e87 I32Sub
+  0x459e88 I32And
+  0x459e89 I32Eqz
+  0x459e8a I32Eqz
+  0x459e8b I32Or
+  0x459e8c If { blockty: Empty }
+  0x459e8e Unreachable
+  0x459e8f End
+  0x459e90 LocalGet { local_index: 0 }
+  0x459e92 I32Eqz
+  0x459e93 If { blockty: Empty }
+  0x459e95 I32Const { value: 0 }
+  0x459e97 Return
+  0x459e98 End
+  0x459e99 GlobalGet { global_index: 0 }
+  0x459e9b LocalSet { local_index: 2 }
+  0x459e9d Block { blockty: Empty }
+  0x459e9f Loop { blockty: Empty }
+  0x459ea1 LocalGet { local_index: 2 }
+  0x459ea3 I32Eqz
+  0x459ea4 BrIf { relative_depth: 1 }
+  0x459ea6 LocalGet { local_index: 2 }
+  0x459ea8 I32Const { value: 16 }
+  0x459eaa I32Sub
+  0x459eab LocalSet { local_index: 3 }
+  0x459ead LocalGet { local_index: 3 }
+  0x459eaf I32Load { memarg: MemArg { align: 2, max_align: 2, offset: 12, memory: 0 } }
+  0x459eb2 I32Eqz
+  0x459eb3 LocalGet { local_index: 3 }
+  0x459eb5 I32Load { memarg: MemArg { align: 2, max_align: 2, offset: 4, memory: 0 } }
+  0x459eb8 LocalGet { local_index: 0 }
+  0x459eba I32GeU
+  0x459ebb I32And
+  0x459ebc LocalGet { local_index: 2 }
+  0x459ebe LocalGet { local_index: 1 }
+  0x459ec0 I32Const { value: 1 }
+  0x459ec2 I32Sub
+HIT module 35 body 2 range 4562834..4562971
+  0x459f9e I32GtU
+  0x459f9f I32Or
+  0x459fa0 LocalGet { local_index: 2 }
+  0x459fa2 LocalGet { local_index: 2 }
+  0x459fa4 I32Const { value: 1 }
+  0x459fa6 I32Sub
+  0x459fa7 I32And
+  0x459fa8 I32Eqz
+  0x459fa9 I32Eqz
+  0x459faa I32Or
+  0x459fab If { blockty: Empty }
+  0x459fad Unreachable
+  0x459fae End
+  0x459faf LocalGet { local_index: 0 }
+  0x459fb1 I32Eqz
+  0x459fb2 If { blockty: Empty }
+  0x459fb4 LocalGet { local_index: 1 }
+  0x459fb6 If { blockty: Empty }
+  0x459fb8 Unreachable
+  0x459fb9 End
+  0x459fba LocalGet { local_index: 3 }
+  0x459fbc LocalGet { local_index: 2 }
+  0x459fbe Call { function_index: 0 }
+  0x459fc0 Return
+  0x459fc1 End
+  0x459fc2 LocalGet { local_index: 0 }
+  0x459fc4 LocalGet { local_index: 1 }
+  0x459fc6 Call { function_index: 4 }
+  0x459fc8 LocalSet { local_index: 4 }
+  0x459fca LocalGet { local_index: 3 }
+  0x459fcc I32Eqz
+  0x459fcd If { blockty: Empty }
+  0x459fcf LocalGet { local_index: 0 }
+  0x459fd1 LocalGet { local_index: 1 }
+  0x459fd3 Call { function_index: 1 }
+  0x459fd5 I32Const { value: 0 }
+  0x459fd7 Return
+  0x459fd8 End
+  0x459fd9 LocalGet { local_index: 4 }
+  0x459fdb I32Load { memarg: MemArg { align: 2, max_align: 2, offset: 4, memory: 0 } }
+  0x459fde LocalGet { local_index: 3 }
+  0x459fe0 I32GeU
+  0x459fe1 LocalGet { local_index: 0 }
+HIT module 0 exports Some(["native-identity-capability Func 29", "native-identity-install Func 30", "native-identical-test Func 31", "native-value-kind Func 32", "native-prototype-carrier-valid Func 33", "native-value-install Func 34", "native-value-operation Func 35", "namespace-interns Func 36", "native-local-field-set Func 37", "native-var-metadata-define Func 38", "nil Func 39", "false Func 40", "true Func 41", "number-box Func 42", "bigint-limbs-new Func 43", "bigint-new Func 44", "bigint-test Func 45", "bigint-from-long Func 46", "bigint-from-u64 Func 47", "bigint-double Func 48", "ratio-test Func 49", "ratio-double Func 50", "decimal-context-test Func 51", "decimal-test Func 52", "decimal-literal Func 53", "decimal-double Func 54", "decimal-context Func 55", "decimal-context-getter-install Func 56", "long-box Func 57", "long-test Func 58", "double-test Func 59", "number-test Func 60", "long-unbox Func 61", "number-unbox Func 62", "long-box-f64 Func 63", "long-box-i32 Func 64", "long-box-u32 Func 65", "numeric-reserve Func 66", "integer-bigint-base Func 67", "bigint-magnitude-compare Func 68", "bigint-compare Func 69", "bigint-negate Func 70", "bigint-add Func 71", "bigint-subtract Func 72", "bigint-multiply-gc Func 73", "bigint-multiply-helper Func 74", "bigint-multiply Func 75", "integer-test Func 76", "integer-bigint Func 77", "integer-biginteger Func 78", "integer-compare Func 79", "bigint-low-long Func 80", "bigint-fits-long Func 81", "bigint-fits-u64 Func 82", "bigint-word-hash Func 83", "bigint-hash Func 84", "bigint-divrem Func 85", "bigint-quot Func 86", "bigint-rem Func 87", "bigint-string Func 88", "ratio-literal Func 89", "bigint-abs Func 90", "bigint-gcd Func 91", "ratio-new Func 92", "fraction-numerator Func 93", "ratio-numerator Func 94", "fraction-denominator Func 95", "ratio-denominator Func 96", "fraction-add Func 97", "fraction-subtract Func 98", "fraction-multiply Func 99", "fraction-divide Func 100", "fraction-quot Func 101", "fraction-rem Func 102", "fraction-compare Func 103", "ratio-negate Func 104", "ratio-integer Func 105", "ratio-abs Func 106", "ratio-hash Func 107", "decimal-string Func 108", "decimal-double-impl Func 109", "decimal-float Func 110", "integer-float Func 111", "decimal-context-string Func 112", "decimal-integer-precision Func 113", "decimal-power-ten Func 114", "decimal-new Func 115", "decimal-rounded-quotient Func 116", "decimal-round Func 117", "decimal-divide-core Func 118", "decimal-from-number Func 119", "decimal-coerce Func 120", "decimal-add-rounded Func 121", "decimal-add Func 122", "decimal-subtract Func 123", "decimal-multiply Func 124", "decimal-divide Func 125", "decimal-negate Func 126", "decimal-abs Func 127", "decimal-exact-multiply Func 128", "decimal-exact-subtract Func 129", "decimal-quot-core Func 130", "decimal-quot Func 131", "decimal-rem Func 132", "decimal-compare-values Func 133", "decimal-compare Func 134", "decimal-case-equal Func 135", "decimal-hash Func 136", "decimal-low-long Func 137", "number-add Func 138", "number-promote-add Func 139", "number-subtract-primitive Func 140", "number-promote-subtract-primitive Func 141", "number-multiply Func 142", "number-promote-multiply Func 143", "number-divide Func 144", "number-negate Func 145", "number-promote-negate Func 146", "long-string Func 147", "string-append-long Func 148", "string-hash Func 149", "hash-unencoded-chars Func 150", "number-quot Func 151", "number-rem Func 152", "number-abs Func 153", "number-unchecked-add Func 154", "number-unchecked-subtract-primitive Func 155", "number-unchecked-multiply Func 156", "number-unchecked-negate Func 157", "number-long? Func 158", "number-double? Func 159", "number-to-long Func 160", "number-range-count Func 161", "number-hash Func 162", "case-number-hash Func 163", "number-subtract Func 164", "number-promote-subtract Func 165", "number-unchecked-subtract Func 166", "number-parse-long Func 167", "string-new Func 168", "string-length Func 169", "string-unit Func 170", "string-set-unit Func 171", "args-new Func 172", "closure-environment Func 173", "closure-property-fields Func 174", "closure-source-name Func 175", "closure-source-name-initialize Func 176", "closure-property-get Func 177", "closure-property-set Func 178", "closure-property-lookup Func 179", "closure-internal-property-get Func 180", "closure-internal-property-set Func 181", "arity-throw Func 182", "closure-new Func 183", "arity-error Func 184", "invoke Func 185", "arity-error-0 Func 196", "arity-error-1 Func 197", "arity-error-2 Func 198", "arity-error-3 Func 199", "arity-error-4 Func 200", "arity-error-5 Func 201", "arity-error-6 Func 202", "arity-error-7 Func 203", "arity-error-8 Func 204", "binding-new Func 205", "binding-declare Func 206", "binding-unbound Func 207", "binding-bound Func 208", "dynamic-cell-check Func 209", "dynamic-entries-roots Func 210", "root-redefs-frame? Func 211", "dynamic-find Func 212", "binding-get-unforced Func 213", "binding-snapshot Func 214", "binding-read-unforced Func 215", "binding-delay-error Func 216", "binding-force Func 217", "binding-get Func 218", "binding-read Func 219", "binding-getter Func 221", "binding-getter-cell Func 222", "binding-getter-unbound-init! Func 223", "binding-getter-macro? Func 224", "binding-getter-macro-set! Func 225", "binding-defined Func 226", "binding-root-set Func 227", "binding-root-define Func 228", "binding-set-in Func 229", "binding-set Func 230", "binding-restore-in Func 231", "binding-getter-root-set! Func 232", "binding-getter-root-get Func 233", "dynamic-frame-check Func 234", "dynamic-save Func 235", "dynamic-switch Func 236", "dynamic-fork Func 237", "dynamic-namespace-input-owner Func 238", "decimal-context-impl Func 239", "owned-constructor-prototype Func 240", "owned-descriptor-prototype Func 241", "owned-error-ancestry Func 242", "owned-prototype-instance Func 243", "owned-instance-property-get Func 244", "object-static-initialize Func 245", "owned-type-error Func 246", "language-error-canonical? Func 247", "string-concat Func 248", "ratio-string Func 249", "coerce-number Func 250", "double-string Func 251", "float-string Func 252", "coerce-string Func 253", "property-key Func 254", "value-add Func 255", "value-subtract Func 256", "value-multiply Func 257", "value-divide Func 258", "value-negate Func 259", "ratio-double-implementation Func 260", "checked-add Func 261", "checked-subtract Func 262", "checked-multiply Func 263", "checked-divide Func 264", "checked-divide-primitive Func 265", "checked-subtract-primitive Func 266", "checked-negate Func 267", "checked-identity-add Func 268", "checked-identity-multiply Func 269", "comparison-number-less Func 270", "comparison-number-less-equal Func 271", "comparison-number-greater Func 272", "comparison-number-greater-equal Func 273", "comparison-number-equal Func 274", "comparison-number-zero Func 275", "comparison-number-positive Func 276", "comparison-number-negative Func 277", "number-max Func 278", "number-double-max Func 279", "number-min Func 280", "number-double-min Func 281", "coerce-int32 Func 282", "bitwise-long-operand Func 283", "hash-scalar-number-value Func 284", "primitive-f64-time-clip Func 285", "primitive-f64-coerce Func 286", "primitive-f64-word0 Func 287", "primitive-f64-word4 Func 288", "primitive-f64-ceil Func 289", "primitive-f64-floor Func 290", "primitive-f64-finite Func 291", "primitive-f64-safe-integer Func 292", "primitive-f64-remainder Func 293", "primitive-safe-integer-remainder Func 294", "identity-uid Func 295", "numeric-class-index Func 296", "numeric-class-value Func 297", "numeric-value-class Func 298", "number-cast-long Func 299", "number-cast-long-raw Func 300", "number-cast-int Func 301", "number-cast-int-raw Func 302", "number-cast-short Func 303", "number-cast-short-raw Func 304", "number-cast-byte Func 305", "number-cast-byte-raw Func 306", "number-cast-unchecked-long Func 307", "number-cast-unchecked-long-raw Func 308", "number-cast-unchecked-int Func 309", "number-cast-unchecked-int-raw Func 310", "number-cast-unchecked-short Func 311", "number-cast-unchecked-short-raw Func 312", "number-cast-unchecked-byte Func 313", "number-cast-unchecked-byte-raw Func 314", "number-cast-float Func 315", "number-cast-float-raw Func 316", "number-cast-unchecked-float Func 317", "number-cast-unchecked-float-raw Func 318", "number-cast-double Func 319", "number-cast-double-raw Func 320", "number-cast-float-long Func 321", "number-cast-float-long-raw Func 322", "number-cast-int-object Func 323", "number-cast-int-object-raw Func 324", "number-cast-short-object Func 325", "number-cast-short-object-raw Func 326", "number-cast-byte-object Func 327", "number-cast-byte-object-raw Func 328", "number-cast-int-float Func 329", "number-cast-int-float-raw Func 330", "number-cast-char-object Func 331", "number-cast-char-object-raw Func 332", "number-cast-char-primitive Func 333", "number-cast-char-primitive-raw Func 334", "number-cast-char-float Func 335", "number-cast-char-float-raw Func 336", "number-int-value Func 337", "number-cast Func 338", "int32-int-raw Func 339", "int32-int Func 340", "int32-bit-and-raw Func 341", "int32-bit-and Func 342", "int32-bit-or-raw Func 343", "int32-bit-or Func 344", "int32-bit-xor-raw Func 345", "int32-bit-xor Func 346", "int32-bit-shift-left-raw Func 347", "int32-bit-shift-left Func 348", "int32-bit-shift-right-raw Func 349", "int32-bit-shift-right Func 350", "int32-unsigned-bit-shift-right-raw Func 351", "int32-unsigned-bit-shift-right Func 352", "int32-imul-raw Func 353", "int32-imul Func 354", "int32-bit-count-raw Func 355", "int32-bit-count Func 356", "bitwise-current-reducer Func 357", "primitive-int Func 358", "primitive-int-function Func 360", "primitive-bit-not-raw Func 361", "primitive-bit-not Func 362", "primitive-bit-not-function Func 364", "primitive-bit-and-raw Func 365", "primitive-bit-and Func 366", "primitive-bit-and-function Func 368", "primitive-bit-or-raw Func 369", "primitive-bit-or Func 370", "primitive-bit-or-function Func 372", "primitive-bit-xor-raw Func 373", "primitive-bit-xor Func 374", "primitive-bit-xor-function Func 376", "primitive-bit-and-not-raw Func 377", "primitive-bit-and-not Func 378", "primitive-bit-and-not-function Func 380", "primitive-bit-clear-raw Func 381", "primitive-bit-clear Func 382", "primitive-bit-clear-function Func 384", "primitive-bit-flip-raw Func 385", "primitive-bit-flip Func 386", "primitive-bit-flip-function Func 388", "primitive-bit-set-raw Func 389", "primitive-bit-set Func 390", "primitive-bit-set-function Func 392", "primitive-bit-test-raw Func 393", "primitive-bit-test Func 394", "primitive-bit-test-function Func 396", "primitive-bit-shift-left-raw Func 397", "primitive-bit-shift-left Func 398", "primitive-bit-shift-left-function Func 400", "primitive-bit-shift-right-raw Func 401", "primitive-bit-shift-right Func 402", "primitive-bit-shift-right-function Func 404", "primitive-unsigned-bit-shift-right-raw Func 405", "primitive-unsigned-bit-shift-right Func 406", "primitive-unsigned-bit-shift-right-function Func 408", "decimal-from-integer Func 409", "decimal-context-digit Func 410", "decimal-context-parse Func 411", "decimal-context-new Func 412", "number-parse-decimal-long Func 413", "packed-array? Func 414", "packed-array-test Func 415", "object-array-test Func 416", "packed-array-new Func 417", "object-array-new Func 418", "object-array-copy Func 419", "object-array-dimension Func 420", "object-array-make Func 421", "object-array-make-args Func 422", "object-array-elements Func 423", "packed-array-length Func 424", "packed-array-get Func 425", "packed-array-set Func 426", "packed-array-store Func 427", "packed-array-get-2 Func 428", "packed-array-set-3 Func 429", "packed-array-clone Func 430", "packed-array-copy Func 431", "invoke-arithmetic-add Func 432", "arithmetic-add Func 436", "invoke-arithmetic-subtract Func 437", "arithmetic-subtract Func 440", "invoke-arithmetic-multiply Func 441", "arithmetic-multiply Func 445", "invoke-arithmetic-divide Func 446", "arithmetic-divide Func 449", "object-array-copy-forward Func 450", "object-array-copy-backward Func 451", "array-get Func 452", "array-set Func 453", "array-length-args Func 454", "array-clone Func 455", "array-storage Func 456", "array-function Func 458", "array-predicate-function Func 460", "array-length-function Func 462", "array-clone-function Func 464", "vector-type-register Func 465", "map-entry-type-register Func 466", "vector-count Func 467", "vector-nth Func 468", "array-map-type-register Func 469", "array-get-indices Func 470", "array-get-function Func 472", "array-set-indices Func 473", "array-set-function Func 475", "array-make-function Func 477", "hash-map-type-register Func 478", "map-lookup Func 479", "map-assoc-node Func 480", "map-assoc Func 481", "chunk-long-sum Func 482", "chunk-types-register Func 483", "chunk-seq Func 484", "chunk-nth Func 485", "chunk-array Func 486", "chunk-offset Func 487", "chunk-buffer-append Func 488", "transient-vector-types-register Func 489", "transient-vector-append Func 490", "transient-map-types-register Func 491", "transient-map-bitmap-new Func 492", "transient-map-leaf-new Func 493", "transient-map-split Func 494", "transient-map-promote Func 495", "transient-map-assoc Func 496", "transient-map-conj Func 497", "evaluation-direct-literal-test Func 498", "descriptor-new-core-statics Func 499", "descriptor-new-core-closed Func 500", "descriptor-new-core-constructible Func 501", "descriptor-new Func 502", "descriptor-new-core Func 503", "object-new Func 504", "object-instance Func 505", "object-descriptor Func 506", "object-same-descriptor Func 507", "object-field-get Func 508", "object-field-set Func 509", "protocol-method-get Func 510", "protocol-method-set Func 511", "protocol-class-method-get Func 512", "constructor-new Func 515", "protocol-dispatcher-new Func 516", "constructor-descriptor Func 517", "class-value-new Func 519", "class-value-is Func 520", "class-value-name Func 521", "protocol-value-descriptor Func 522", "protocol-value-new Func 523", "protocol-key Func 524", "protocol-satisfies Func 525", "protocol-marker-satisfies Func 526", "protocol-marker-set Func 527", "nominal-source-object-new Func 528", "nominal-source-constructor-plan Func 530", "nominal-source-constructor-new Func 531", "protocol-native-kind Func 532", "protocol-native-base-kind Func 533", "protocol-native-property-truthy Func 534", "protocol-native-method Func 535", "protocol-native-marker-set Func 536", "protocol-native-method-set Func 537", "protocol-native-invoke Func 538", "js-method-invoke Func 539", "protocol-live-dispatcher-new Func 549", "ifn-live-dispatcher-new Func 550", "protocol-native-satisfies Func 551", "native-satisfies-function Func 553", "callable-bind Func 555", "var-metadata-define Func 556", "numeric-class-instance Func 557", "call-spread Func 558", "call-0 Func 559", "call-1 Func 560", "call-2 Func 561", "call-3 Func 562", "call-4 Func 563", "call-5 Func 564", "call-6 Func 565", "call-7 Func 566", "call-8 Func 567", "callable-key-register Func 568", "keyword-intern Func 569", "keyword-test Func 570", "try-invoke Func 571", "dynamic-push Func 572", "dynamic-pop Func 573", "root-redefs-push Func 575", "dynamic-invoke Func 576", "root-redefs-invoke Func 577", "predicate-false Func 579", "predicate-true Func 581", "predicate-undefined Func 583", "predicate-nil Func 585", "predicate-number Func 587", "predicate-string Func 589", "predicate-function Func 591", "identical-value Func 592", "predicate-identical Func 594", "comparison-less Func 595", "comparison-less-equal Func 596", "comparison-greater Func 597", "comparison-greater-equal Func 598", "comparison-strict-equal Func 599", "number-equiv Func 600", "comparison-case-equal Func 601", "comparison-less-function Func 603", "comparison-less-equal-function Func 605", "comparison-greater-function Func 607", "comparison-greater-equal-function Func 609", "comparison-strict-equal-function Func 611", "property-key-equal Func 612", "current-this Func 613", "object-method-key Func 614", "object-method-invoke-dispatch Func 615", "object-method-invoke Func 616", "object-method-site-0 Func 617", "object-method-invoke-0 Func 618", "object-method-call-0 Func 619", "object-method-site-1 Func 620", "object-method-invoke-1 Func 621", "object-method-call-1 Func 622", "object-method-site-2 Func 623", "object-method-invoke-2 Func 624", "object-method-call-2 Func 625", "object-method-site-3 Func 626", "object-method-invoke-3 Func 627", "object-method-call-3 Func 628", "object-method-site-4 Func 629", "object-method-invoke-4 Func 630", "object-method-call-4 Func 631", "object-method-site-5 Func 632", "object-method-invoke-5 Func 633", "object-method-call-5 Func 634", "object-method-site-6 Func 635", "object-method-invoke-6 Func 636", "object-method-call-6 Func 637", "object-method-site-7 Func 638", "object-method-invoke-7 Func 639", "object-method-call-7 Func 640", "object-method-set Func 642", "string-index-of Func 643", "string-slice Func 644", "string-from-unit Func 645", "string-char-code-at Func 646", "string-char-code-at-method Func 649", "string-char-at Func 650", "string-char-at-method Func 653", "closure-invoke-with-this Func 654", "closure-call-method Func 656", "closure-apply-method Func 658", "property-native-name Func 659", "property-field-name-supported Func 660", "property-find Func 661", "builtin-internal-get-guard Func 662", "builtin-internal-set-guard Func 663", "user-field-get-guard Func 664", "user-field-set-guard Func 665", "builtin-extension-guard Func 666", "fixed-named-property-get Func 667", "fixed-named-property-set Func 668", "closure-named-get Func 669", "descriptor-method-get Func 670", "ifn-call-method Func 672", "ifn-apply-method Func 674", "callable-property-get Func 675", "named-field-slot Func 676", "language-error-new Func 677", "language-error-is Func 678", "native-object-descriptor-check Func 679", "owned-error-backing Func 680", "native-object? Func 681", "native-object-new Func 682", "native-object-fields Func 683", "native-object-table Func 684", "native-object-own-slot Func 685", "native-object-own-descriptor Func 686", "native-object-own-get Func 687", "native-object-own-store Func 688", "native-object-own-define Func 689", "native-object-own-set Func 690", "native-object-prototype Func 691", "native-object-prototype-step Func 692", "native-object-check-chain Func 693", "native-object-prototype-set Func 694", "native-object-chain-get Func 695", "native-object-proto-write Func 696", "native-object-property-descriptor Func 697", "native-object-proto-accessor Func 698", "native-object-property-get Func 699", "native-object-property-get-with-receiver Func 700", "native-object-property-set Func 701", "native-object-property-set-strict Func 702", "native-object-legacy-define Func 703", "native-object-legacy-lookup Func 704", "named-property-get Func 705", "named-property-set Func 706", "builtin-construct-guard Func 707", "named-site-get Func 708", "user-named-site-get Func 709", "named-site-set Func 710", "string-join Func 711", "fn-fixed-arity? Func 712", "native-object-default-prototype Func 737", "object-constructor Func 738", "native-object-default-new Func 739", "native-object-factory-function Func 741", "future-is Func 742", "future-pending-new Func 743", "future-status Func 744", "async-snapshot-copy Func 745", "async-continuation-state-check Func 746", "async-continuation-read Func 747", "async-continuation-new Func 748", "async-continuation-snapshot Func 749", "async-continuation-commit Func 750", "async-continuation-cleanup-active Func 751", "async-array-append Func 752", "async-registration-invocation Func 753", "async-enter-invocation Func 754", "async-continuation-invocation Func 755", "async-queue-without-token Func 756", "async-cancelled-dependency-is Func 757", "async-owner-filter Func 758", "async-registration-compact Func 759", "async-owner-cancellation-pending Func 760", "async-task-cancel-requested Func 761", "async-current-owner Func 762", "async-task-cancel Func 763", "async-registration-find Func 764", "async-registration-generation Func 765", "async-cancellation-enqueue Func 766", "async-registration-enqueue Func 767", "async-scheduler-prune Func 768", "async-scheduler-refresh Func 769", "async-registration-create Func 770", "async-registration-new Func 771", "future-result Func 772", "future-resolve Func 773", "future-reject Func 774", "future-cancel Func 775", "async-task-start Func 776", "async-task-yield Func 777", "async-task-complete Func 778", "async-future-task-owned Func 779", "async-future-cancel Func 780", "stream-service-needed Func 781", "stream-recover-receipts Func 782", "stream-withdraw-op Func 783", "stream-prepare-op Func 784", "stream-commit-op Func 785", "stream-raw-service Func 786", "stream-raw-pair-new Func 787", "stream-pair-reader Func 788", "stream-pair-writer Func 789", "stream-raw-chunk-new Func 790", "stream-chunk-count Func 791", "stream-raw-chunk-nth Func 792", "stream-raw-chunk-set Func 793", "stream-chunk-seal Func 794", "stream-eof-is Func 795", "stream-raw-begin-read Func 796", "stream-begin-write Func 797", "stream-operation-future Func 798", "stream-raw-retire-op Func 799", "stream-close Func 800", "stream-fail Func 801", "stream-pending-count Func 802", "stream-checked-number Func 803", "stream-pair-new Func 804", "stream-chunk-new Func 805", "stream-read-limit Func 806", "stream-begin-read Func 807", "stream-write-limit Func 808", "stream-chunk-nth Func 809", "stream-chunk-set Func 810", "stream-operation-retire Func 811", "stream-service Func 812", "stream-value-kind Func 813", "value-display-text Func 814", "stream-operation-owned Func 815", "async-registration-retire Func 816", "async-scheduler-finish-turn Func 817", "async-runtime-trap-is Func 818", "async-scheduler-recover Func 819", "async-scheduler-run-selected Func 820", "async-scheduler-run-one Func 821", "async-run-invocation Func 822", "async-scheduler-dispatch-needed Func 823", "async-scheduler-counts Func 824", "async-array-ref-contains Func 825", "async-scheduler-owner-snapshot Func 826", "async-scheduler-pending-task-count Func 827", "async-scheduler-cancel-all Func 828", "async-invocation-owner-snapshot Func 829", "async-cancel-invocation Func 830", "async-invocation-retiring-count Func 831", "async-invocation-counts Func 832", "async-source-pending-function Func 834", "async-source-resolve!-function Func 836", "async-source-reject!-function Func 838", "async-source-cancel!-function Func 840", "async-source-status-function Func 842", "async-source-result-function Func 844", "async-source-stream-pair-function Func 846", "async-source-stream-pair-reader-function Func 848", "async-source-stream-pair-writer-function Func 850", "async-source-stream-read-limit-function Func 852", "async-source-stream-write-limit-function Func 854", "async-source-stream-begin-read-function Func 856", "async-source-stream-begin-write-function Func 858", "async-source-stream-operation-future-function Func 860", "async-source-stream-operation-retire-function Func 862", "async-source-stream-chunk-new-function Func 864", "async-source-stream-chunk-set-function Func 866", "async-source-stream-chunk-count-function Func 868", "async-source-stream-chunk-nth-function Func 870", "async-source-stream-eof?-function Func 872", "async-source-stream-close!-function Func 874", "async-source-stream-fail!-function Func 876", "number-constructor Func 878", "string-constructor Func 880", "boolean-constructor Func 882", "array-constructor Func 884", "packed-array-type-byte Func 886", "packed-array-type-short Func 887", "packed-array-type-int Func 888", "packed-array-type-float Func 889", "packed-array-type-long Func 890", "packed-array-type-double Func 891", "packed-array-type-object Func 892", "range-error? Func 894", "range-error-constructor Func 895", "undefined-value Func 896", "nan-value Func 897", "error-constructor Func 898", "type-error-constructor Func 899", "source-constructor-new Func 900", "source-constructor-plan Func 901", "source-construct-from-plan Func 902", "construct-site-admit Func 903", "scalar-vector-guard Func 904", "scalar-map-entry-guard Func 905", "owned-type-error-implementation Func 906", "error-to-string-method Func 909", "descriptor-js-boolean Func 910", "descriptor-same-value Func 911", "js-delete-function Func 917", "object-static-initialize-implementation Func 918", "core-exception-info-class Func 920", "core-ex-info Func 922", "exception-info-field-message Func 923", "core-ex-message Func 925", "exception-info-field-data Func 926", "core-ex-data Func 928", "exception-info-field-cause Func 929", "core-ex-cause Func 931", "value-constructor Func 932", "owned-constructor-prototype-implementation Func 933", "owned-descriptor-prototype-implementation Func 934", "owned-prototype-instance-implementation Func 935", "owned-error-ancestry-implementation Func 936", "owned-instance-property-get-implementation Func 937", "instance-site-test Func 938", "call-fallback-0 Func 939", "call-entry-0 Func 940", "call-fallback-1 Func 941", "call-entry-1 Func 942", "call-fallback-2 Func 943", "call-entry-2 Func 944", "call-fallback-3 Func 945", "call-entry-3 Func 946", "call-fallback-4 Func 947", "call-entry-4 Func 948", "call-fallback-5 Func 949", "call-entry-5 Func 950", "call-fallback-6 Func 951", "call-entry-6 Func 952", "call-fallback-7 Func 953", "call-entry-7 Func 954", "call-fallback-8 Func 955", "call-entry-8 Func 956", "apply-sequence-ops Func 957", "apply-seq Func 958", "apply-first Func 959", "apply-next Func 960", "apply-cons Func 961", "apply-ifn? Func 962", "apply-object Func 963", "apply-count Func 964", "apply-nth Func 965", "apply-fold Func 966", "apply-join Func 967", "apply-arguments Func 968", "apply-bounded-length Func 969", "apply-fixed-arguments Func 970", "apply-list-arguments Func 971", "apply-callee Func 972", "apply-to-seq Func 973", "apply Func 974", "apply-fixed Func 975", "list-captured Func 994", "list-owner-env Func 995", "list-function Func 1002", "coercion-primitive? Func 1003", "object-to-primitive Func 1004", "object-coerce-number Func 1005", "object-coerce-string Func 1006", "not-callable-descriptor Global 2", "sentinel-false Global 7", "sentinel-true Global 8", "sentinel-undefined Global 9", "random-source-install Func 1007", "random-double-raw Func 1008", "random-double Func 1009", "closure-value-test Func 1010", "evaluation-source-install Func 1011", "evaluate-form Func 1012", "protocol-epoch Global 90", "dynamic-frame Global 13", "numeric-scratch-memory Memory 0", "numeric-stack-pointer Global 6", "language-exception Tag 0"])
+HIT module 15 exports Some(["eval Func 71", "slot.564 Global 57", "link.564.code Global 47", "link.564.0 Func 5", "link.564.1 Func 72", "link.564.2 Func 7", "link.564.3 Func 8", "link.564.4 Func 9", "link.564.5 Func 10", "link.564.6 Func 11", "link.564.7 Func 12", "link.564.8 Func 13"])
+HIT module 24 exports Some(["eval Func 58", "slot.573 Global 37", "link.573.code Global 35", "link.573.0 Func 5", "link.573.1 Func 59", "link.573.2 Func 7", "link.573.3 Func 8", "link.573.4 Func 9", "link.573.5 Func 10", "link.573.6 Func 11", "link.573.7 Func 12", "link.573.8 Func 13"])
+HIT module 31 exports Some(["eval Func 164", "slot.579 Global 92", "link.579.code Global 86", "link.579.0 Func 5", "link.579.1 Func 6", "link.579.2 Func 165", "link.579.3 Func 8", "link.579.4 Func 9", "link.579.5 Func 10", "link.579.6 Func 11", "link.579.7 Func 12", "link.579.8 Func 13"])
+HIT module 34 exports Some(["suss:usermanager/application@0.1.0#open Func 36", "suss:usermanager/application@0.1.0#handle Func 37", "suss:usermanager/application@0.1.0#changes Func 38", "suss:usermanager/application@0.1.0#close Func 39", "post.suss:usermanager/application@0.1.0#open Func 41", "post.suss:usermanager/application@0.1.0#handle Func 42", "flat.suss:usermanager/application@0.1.0#open Func 72", "flat.suss:usermanager/application@0.1.0#handle Func 174", "suss.canonical.memory Memory 0"])
+HIT module 35 exports Some(["memory Memory 0", "cabi_realloc Func 2", "release Func 1"])

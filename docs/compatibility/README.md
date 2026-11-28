@@ -2118,3 +2118,13 @@ Production inputs are identical to9222862b. Exact workspace, final acceptance
 audit, independent review and final-head CI remain separate gates.
 
 [execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md
+
+The owned canonical allocator uses a private active-start bitmap and capacity
+classes to avoid repeatedly scanning live blocks. Checked alignment/growth,
+reallocation byte preservation, pointer/length validation and reuse retain
+executing allocator controls. The private header format and observer assumptions
+are documented with source-qualified evidence in
+`results/m5-wit-adapters/canonical-memory-normal-application/`. Those application
+captures execute published source2a779949 with a byte-identical allocator; they
+do not claim that this standalone branch provides the application or completes
+resource/asynchronous interoperability.
