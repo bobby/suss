@@ -2194,3 +2194,86 @@ controls also pass on that production source. Source-frozen receipts retain all
 commands, ignored-versus-executed qualifications and earlier failures; these
 focused results do not replace the import head's required full baseline/CI or
 its remaining lifetime and interoperability gates.
+
+Resource declaration encoding and private carrier primitives have separately
+recorded executing Rust/GC controls. Their original unsupported-source regression
+and build failures remain retained; later source-level validation is described
+below. Encoder/unit evidence alone does not establish full lifetime acceptance.
+
+
+[Imported WIT resource handles](../runtime/wit-resources.md) have executing
+source constructor/method/static/explicit-close controls with exact values,
+borrowed receivers, GC, closed/forged/cross-type rejection and try/finally cleanup.
+The expanded five-test command passes on its recorded resource source; original
+unsupported and failed fixture/build observations remain retained. Contextual
+provider identities, exported handles and full lifetime/cancellation acceptance
+retain explicit guards and separate work.
+
+Imported own parameters have an executing source transfer control covering moved
+aliases, all-argument duplicate/mixed-alias rejection, malformed later arguments,
+nested transfers and physical Rust resource identity through an own roundtrip.
+The complete ten-test resource target passes on its recorded sources, including
+native named-record maps/owned result payloads, repeated borrows, an owner retained
+from Runtime initialization across exports/GC, and both10,000-call stress
+controls. The repaired exact CI foundation command passes346 tests, including
+the two host execution units; the generator retains its runtime-free build.
+Earlier failures remain recorded. These focused/foundation receipts do not
+replace the required full resource baseline, final-head CI/review or remaining
+scope, exported-borrow and cancellation adapters.
+
+
+Explicit `suss.resource/call-with-scope` executes a synchronous zero-arity body
+with lexical owner cleanup. Its complete13-test resource capture passes, including
+reverse/nested cleanup through exceptions, moved/already-closed owner exclusion,
+escaped owner rejection, destructor-triggered GC, Macro/Runtime authority and
+10,000 alternating successful/failed automatic scopes. The updated private
+carrier GC unit also passes. Exported borrow lifetimes, asynchronous suspension/
+cancellation, guest-defined resources and complete interoperability still require
+separate adapters and their acceptance evidence.
+
+
+Synchronous exported functions accept call-scoped borrowed handles, including
+records in exported interfaces. The complete four-test borrow capture passes
+with old-alias expiry during later calls, close/own-transfer rejection, physical
+Rust owner preservation, pointer/float/void results, the pinned uncaught-exception
+barrier plus retained original payload, and10,000 calls with bounded canonical
+transfer memory. Two executing core carrier/finally units also pass. Original
+unsupported, canonical-accounting and fixture-calibration failures remain
+recorded. Earlier resource/foundation captures retain their own sources; affected
+regressions and full resource/final-head acceptance gates remain required.
+
+The affected adapter command on the borrow-enabled source passes39 tests, zero
+failed/ignored, across resource ownership/scopes, composites, world/interface
+imports and public type exports. Its source-frozen receipt preserves the earlier
+unsupported, canonical-accounting and error-boundary calibration failures. The
+full resource baseline and new final-head CI/review remain required.
+
+
+Synchronous exports have executing owned-input/result controls: explicit
+retention across calls/GC, close on normal/caught-error paths, physical Rust
+identity across roundtrips, old-alias invalidation and nested/duplicate results.
+The seven-test result capture and five selected owned-input/result controls
+retain their exact source qualifications and include10,000 bounded transfers.
+Resource-only providers execute through public file compilation with no mapped
+functions, including an unused resource declaration and selected-import-count
+controls. Initial unsupported and missing Runtime lifetime binding failures remain
+recorded. The combined resource targets, full resource baseline and final-head
+CI/review retain separate acceptance gates; async/cancellation, contextual
+resource identities and complete M5 interoperability are not established.
+
+The complete combined resource capture now passes 24 controls, zero failed/ignored/filtered, including all owned/borrowed exports and13 constructor/move/scope regressions on the same frozen production source. All five 10,000-call resource controls execute. The publication audit records unchanged non-documentation/evidence inputs. Full resource baseline, new final-head CI/review and remaining lifetime/interoperability/application criteria remain open.
+
+
+The resource-only interface authority fixtures now distinguish valid declarations
+from unknown mappings and still-unsupported async borrowed exports. All ten
+interface controls execute and pass on unchanged production code. The original
+CI/old-fixture failures and deliberately interrupted baseline remain recorded;
+they are not passing full-baseline evidence.
+
+
+Handle-bearing canonical WIT map values now reject before source macros. The
+original invalid-component and late-macro failures remain recorded; no resource
+leak was established for a schema the pinned validator does not admit. The
+complete affected exported-handle/data-shape command passes21 controls on frozen
+sources, including ordinary duplicate-key maps and bounded stress/GC controls.
+Full resource baseline and final-head acceptance remain separate.

@@ -98,3 +98,12 @@ WIT paths; an external ID supplies no additional call authority. The same name
 encoder retains `implements` and external-ID annotations for the automatic
 randomness instance. The focused executing controls select imports/exports by ID
 and exchange native collections with exact integers and Unicode.
+
+
+[Imported resource handles](wit-resources.md) have a bounded synchronous
+constructor/method/static route with opaque carriers, explicit close and lexical
+cleanup. Synchronous exports accept own/borrow parameters and return owners;
+resource-only providers need no function mappings. Contextual provider aliases,
+foreign resource dependencies and generalized async lifetimes remain gated.
+The resource guide describes the ownership and borrow contracts. Data values
+continue to use ordinary source collections.

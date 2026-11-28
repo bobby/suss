@@ -1,0 +1,8 @@
+{
+  "reason": "Final-head CI46130949511 job140935822568 confirms stale resource-only negative guards in portable_aot_wit_interface_imports. Preserve the incomplete baseline and repair fixtures before restarting; no passing full result claimed.",
+  "head": "1d47cff5dd393193a53292ba8d421dc88c73025d",
+  "recorder_pid": 1753813,
+  "cargo_pid": 1753949,
+  "signal": "SIGINT",
+  "signal_number": 2
+}

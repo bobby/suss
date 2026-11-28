@@ -1,0 +1,8 @@
+{
+  "run_id": 46130949511,
+  "job_id": 140935822568,
+  "head": "1d47cff5dd393193a53292ba8d421dc88c73025d",
+  "conclusion": "failure",
+  "raw_log_sha256": "0d5eb68aa3c6584302750ff7882f1f2f7c37e2a79cf5c5f127b4ebce3784cc4b",
+  "observation": "portable_aot_wit_interface_imports:9 passed,1 failed. A stale resource-only negative guard expected resource unsupported, but now reaches unknown mapping validation. No result is rewritten."
+}

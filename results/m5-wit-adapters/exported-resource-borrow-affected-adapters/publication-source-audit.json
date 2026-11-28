@@ -1,0 +1,11 @@
+{
+  "purpose": "After terminal documentation updates, verify all captured non-documentation/evidence inputs remain identical to the affected adapter capture.",
+  "source_receipt_sha256": "8734da974524567cf41901976b42367a1ae94ddac0306c8f63b494779cebca2f",
+  "captured_head": "2086f24f663622c09a01c9eb27e67c2e30757a48",
+  "checked_inputs": 2477,
+  "excluded_prefixes": [
+    "docs/",
+    "results/"
+  ],
+  "changed_inputs": []
+}

@@ -375,7 +375,7 @@ fn interface_authority_and_selected_types_reject_before_source_macro_effects() {
         (
             "interface operations { resource item; } world api { import operations; export run: func(); }",
             vec![("unknown", "host/first")],
-            "resource",
+            "mapping does not name a selected function",
         ),
         (
             "interface operations { type pending = future<string>; } world api { import operations; export run: func(); }",
@@ -383,7 +383,7 @@ fn interface_authority_and_selected_types_reject_before_source_macro_effects() {
             "future",
         ),
         (
-            "interface operations { resource item; } world api { import operations; export run: func(); }",
+            "interface operations { resource item; } world api { import operations; use operations.{item}; export run: async func(handle: borrow<item>); }",
             vec![],
             "resource",
         ),

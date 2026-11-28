@@ -1,0 +1,11 @@
+{
+  "purpose": "After recording terminal documentation evidence, verify captured inputs outside docs/results match the complete scope test capture.",
+  "source_receipt_sha256": "a1c47ab7f45aeb4c54c00ec566e8e2e0bac210c335f6c25a973d6fe028ee9995",
+  "captured_head": "94d98833cc2f60dae5e87ea0a3d93315fd66c670",
+  "checked_inputs": 2475,
+  "excluded_prefixes": [
+    "docs/",
+    "results/"
+  ],
+  "changed_inputs": []
+}
