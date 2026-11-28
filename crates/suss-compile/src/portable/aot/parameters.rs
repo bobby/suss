@@ -31,11 +31,19 @@ impl Layout {
         Ok(Self { offsets, size })
     }
 
+    pub fn offset(&self, index: usize) -> u32 {
+        self.offsets[index]
+    }
+
     /// Local 0 is the incoming canonical record pointer. Flat parameter locals
     /// start at 1; the normal source adapter's scratch locals follow them.
-    pub fn read(&self, body: &mut Function, params: &[(String, Boundary)]) {
+    pub fn read(&self, body: &mut Function, params: &[(String, Boundary)], resolve: &Resolve) {
         let mut local = 1;
         for ((_, ty), offset) in params.iter().zip(&self.offsets) {
+            if matches!(ty, Boundary::Generic(_)) {
+                local += ty.flat(resolve).len() as u32;
+                continue;
+            }
             for load in loads(*ty, *offset) {
                 body.instruction(&Instruction::LocalGet(0))
                     .instruction(&load)
@@ -71,6 +79,7 @@ fn scalar_load(ty: Scalar, offset: u32) -> Instruction<'static> {
 fn loads(ty: Boundary, offset: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     match ty {
+        Boundary::Generic(_) => unreachable!("generic fields use the generated memory adapter"),
         Boundary::Scalar(ty) => vec![scalar_load(ty, offset)],
         Boundary::Option(ty) => vec![
             I32Load8U(memory(offset, 0)),

@@ -294,18 +294,46 @@ fn eight_string_parameters_preserve_last_payload_at_flat_signature_limit() {
 }
 
 #[test]
-fn unsupported_indirect_string_signatures_fail_before_macro_effects() {
+fn indirect_string_signatures_execute_all_arguments_and_once_only_effects() {
+    let source = "(def effects (atom 0))
+        (defn ^:export value [a b c d e f g h i]
+          (swap! effects inc) (str a b c d e f g h i))
+        (defn ^:export calls [] @effects)";
+    for async_flag in ["", "async "] {
+        let (mut store, instance) = instantiate(source, &format!(
+            "export value: {async_flag}func(a: string, b: string, c: string, d: string, e: string, f: string, g: string, h: string, i: string) -> string;
+             export calls: func() -> s64;"
+        ));
+        let value = instance.get_func(&mut store, "value").unwrap();
+        let calls = instance.get_typed_func::<(), (i64,)>(&mut store, "calls").unwrap();
+        let strings = ["a", "λ", "c\0", "d", "🦀", "f", "g", "h", "last"];
+        let args = strings.iter().map(|s| wasmtime::component::Val::String((*s).into())).collect::<Vec<_>>();
+        for n in 1..=20 {
+            let mut results = [wasmtime::component::Val::Bool(false)];
+            if async_flag.is_empty() { value.call(&mut store, &args, &mut results).unwrap(); }
+            else { complete(value.call_async(&mut store, &args, &mut results)).unwrap(); }
+            assert_eq!(results[0], wasmtime::component::Val::String(strings.concat()));
+            value.post_return(&mut store).unwrap();
+            store.gc(None).unwrap();
+            assert_eq!(calls.call(&mut store, ()).unwrap(), (n,));
+            calls.post_return(&mut store).unwrap();
+        }
+    }
+}
+
+#[test]
+fn unsupported_string_future_shapes_fail_before_macro_effects() {
     let source = "(defmacro fail [] (throw 17)) (defn ^:export value [& xs] (fail))";
     for async_flag in ["", "async "] {
         let wit = format!(
-            "package test:strings; world api {{ export value: {async_flag}func(a: string, b: string, c: string, d: string, e: string, f: string, g: string, h: string, i: string) -> string; }}"
+            "package test:strings; world api {{ export value: {async_flag}func(a: future<string>) -> string; }}"
         );
         let error = Compiler::new().compile(source, &wit).unwrap_err();
         assert!(
             matches!(error, suss_compile::CompileError::Unsupported(_)),
             "{error}"
         );
-        assert!(error.to_string().contains("indirect parameter"), "{error}");
+        assert!(error.to_string().contains("future"), "{error}");
     }
 }
 

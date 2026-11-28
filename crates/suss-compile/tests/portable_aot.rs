@@ -480,7 +480,7 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
         );
     }
     let (resolve, selected) = world(
-        "package test:unsupported; world api { export f: func(x: list<list<string>>) -> list<list<string>>; }",
+        "package test:unsupported; world api { export f: func(x: list<future<string>>) -> list<future<string>>; }",
     );
     assert!(
         portable::aot::component(
@@ -491,7 +491,7 @@ fn portable_component_rejects_missing_duplicate_unknown_and_unsupported_mappings
         )
         .unwrap_err()
         .message
-        .contains("list<string>")
+        .contains("future")
     );
     let (resolve, selected) = world(
         "package test:imports; world api { import host: func(); export f: func(x: f64) -> f64; }",

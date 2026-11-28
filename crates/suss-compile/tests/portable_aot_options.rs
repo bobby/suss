@@ -327,14 +327,14 @@ fn eight_optional_parameters_preserve_the_last_flattened_payload() {
 fn unsupported_option_shapes_fail_before_effectful_source_macros() {
     let source = "(defmacro fail [] (throw 17)) (defn ^:export value [& xs] (fail))";
     for (signature, diagnostic) in [
-        ("export value: func(x: option<list<f64>>) -> f64;", "list"),
+        ("export value: func(x: option<future<f64>>) -> f64;", "future"),
         (
-            "export value: func(x: option<option<f64>>) -> f64;",
-            "option",
+            "export value: func(x: option<future<option<f64>>>) -> f64;",
+            "future",
         ),
         (
-            "export value: async func(x: option<option<f64>>) -> f64;",
-            "option",
+            "export value: async func(x: option<future<option<f64>>>) -> f64;",
+            "future",
         ),
     ] {
         let wit = format!("package test:optional; world api {{ {signature} }}");

@@ -516,7 +516,7 @@ fn list_aliases_and_protocol_calls_use_the_resolved_type_and_real_source_vector(
 fn unsupported_nested_list_signatures_reject_before_effectful_macros() {
     for asynchronous in ["", "async "] {
         let wit = format!(
-            "package test:lists; world api {{ export value: {asynchronous}func(a: list<list<s32>>) -> list<s32>; }}"
+            "package test:lists; world api {{ export value: {asynchronous}func(a: list<future<s32>>) -> list<s32>; }}"
         );
         let error = Compiler::new()
             .compile(
@@ -525,7 +525,7 @@ fn unsupported_nested_list_signatures_reject_before_effectful_macros() {
             )
             .unwrap_err()
             .to_string();
-        assert!(error.contains("list<list<s32>>"), "{error}");
+        assert!(error.contains("future"), "{error}");
         assert!(!error.contains("17"), "source macro executed: {error}");
     }
 }

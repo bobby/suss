@@ -1,25 +1,28 @@
 //! Original target assembly for already prepared portable source fragments.
 //! This development boundary supports scalar function exports, including interfaces.
-use super::{artifact_identity, core_bindings, resolve::Phase, Diagnostic, PreparedFragment};
+use super::{Diagnostic, PreparedFragment, artifact_identity, core_bindings, resolve::Phase};
 use crate::runtime_abi;
 use suss_reader::Symbol;
 use wasm_encoder::*;
 use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
+mod characters;
+mod composite;
 mod list_schema;
 mod lists;
 #[cfg(suss_host)]
 mod optimize;
-mod strings;
+mod parameters;
 mod provenance;
 mod random;
-mod characters;
-mod parameters;
+mod strings;
 
 /// Recover complete verified-input manifests retained by the assembler. These
 /// describe source inputs, not a signature of an optimizer's rewritten output.
-pub fn input_source_manifests(component: &[u8]) -> Result<Vec<artifact_identity::Manifest>, String> {
+pub fn input_source_manifests(
+    component: &[u8],
+) -> Result<Vec<artifact_identity::Manifest>, String> {
     provenance::read(component)
 }
 
@@ -40,11 +43,18 @@ struct Export {
     indirect_params: Option<parameters::Layout>,
 }
 impl Export {
-    fn flat_params(&self) -> Vec<ValType> {
-        self.params.iter().flat_map(|(_, ty)| ty.flat()).collect()
+    fn flat_params(&self, resolve: &Resolve) -> Vec<ValType> {
+        self.params
+            .iter()
+            .flat_map(|(_, ty)| ty.flat(resolve))
+            .collect()
     }
-    fn core_params(&self) -> Vec<ValType> {
-        if self.indirect_params.is_some() { vec![ValType::I32] } else { self.flat_params() }
+    fn core_params(&self, resolve: &Resolve) -> Vec<ValType> {
+        if self.indirect_params.is_some() {
+            vec![ValType::I32]
+        } else {
+            self.flat_params(resolve)
+        }
     }
     fn uses_memory(&self) -> bool {
         self.indirect_params.is_some()
@@ -92,33 +102,57 @@ enum Boundary {
     String,
     StringOption,
     List(ListElement),
+    Generic(wit_parser::TypeId),
 }
 impl Boundary {
-    fn flat(self) -> Vec<ValType> {
+    fn flat(self, resolve: &Resolve) -> Vec<ValType> {
         match self {
             Self::Scalar(ty) => vec![ty.core()],
             Self::Option(ty) => vec![ValType::I32, ty.core()],
             Self::String | Self::List(_) => vec![ValType::I32, ValType::I32],
             Self::StringOption => vec![ValType::I32; 3],
+            Self::Generic(id) => composite::flat(resolve, Type::Id(id)),
         }
     }
-    fn core_result(self) -> ValType {
-        match self {
+    fn core_result(self, resolve: &Resolve) -> Option<ValType> {
+        Some(match self {
             Self::Scalar(ty) => ty.core(),
-            Self::Option(_) | Self::String | Self::StringOption | Self::List(_) => ValType::I32,
-        }
+            Self::Generic(_) => match self.flat(resolve).as_slice() {
+                [] => return None,
+                [ty] => *ty,
+                _ => ValType::I32,
+            },
+            _ => ValType::I32,
+        })
     }
     fn string(self) -> bool {
         matches!(self, Self::String)
     }
-    fn uses_strings(self) -> bool {
-        matches!(
-            self,
-            Self::String | Self::StringOption | Self::List(ListElement::String)
-        )
+    fn uses_strings(self, resolve: &Resolve) -> bool {
+        match self {
+            Self::Generic(id) => {
+                let mut registry = composite::Registry::new(resolve);
+                let index = registry.add(Type::Id(id)).expect("validated WIT value");
+                registry
+                    .nodes
+                    .iter()
+                    .take(index + 1)
+                    .any(|node| matches!(node.shape, composite::Shape::String))
+            }
+            _ => matches!(
+                self,
+                Self::String | Self::StringOption | Self::List(ListElement::String)
+            ),
+        }
     }
     fn uses_memory(self) -> bool {
-        self.uses_strings() || self.list().is_some()
+        matches!(
+            self,
+            Self::String | Self::StringOption | Self::List(_) | Self::Generic(_)
+        )
+    }
+    fn needs_post(self, resolve: &Resolve) -> bool {
+        self.uses_memory() && (!matches!(self, Self::Generic(_)) || self.flat(resolve).len() > 1)
     }
     fn list(self) -> Option<ListElement> {
         match self {
@@ -129,8 +163,11 @@ impl Boundary {
     fn string_option(self) -> bool {
         matches!(self, Self::StringOption)
     }
-    fn indirect_result(self) -> bool {
-        self.optional() || self.string() || self.list().is_some()
+    fn indirect_result(self, resolve: &Resolve) -> bool {
+        self.optional()
+            || self.string()
+            || self.list().is_some()
+            || matches!(self, Self::Generic(_)) && self.flat(resolve).len() > 1
     }
     fn optional(self) -> bool {
         matches!(self, Self::Option(_) | Self::StringOption)
@@ -157,14 +194,10 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                                 continue;
                             }
                         }
-                        return scalar(resolve, payload)
-                            .map(|ty| Boundary::List(ListElement::Scalar(ty)))
-                            .map_err(|_| {
-                                error(format!(
-                                    "Portable AOT {} boundary adapters remain unimplemented",
-                                    boundary_description(resolve, ty, 0)
-                                ))
-                            });
+                        return match scalar(resolve, payload) {
+                            Ok(ty) => Ok(Boundary::List(ListElement::Scalar(ty))),
+                            Err(_) => generic_boundary(resolve, ty),
+                        };
                     }
                     return Err(error("Portable AOT list element alias depth exceeds64"));
                 }
@@ -180,11 +213,14 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                                 continue;
                             }
                         }
-                        return scalar(resolve, payload).map(Boundary::Option);
+                        return match scalar(resolve, payload) {
+                            Ok(ty) => Ok(Boundary::Option(ty)),
+                            Err(_) => generic_boundary(resolve, ty),
+                        };
                     }
                     return Err(error("WIT option payload alias nesting exceeds 64"));
                 }
-                _ => {}
+                _ => return generic_boundary(resolve, ty),
             }
         }
         if ty == Type::String {
@@ -195,12 +231,25 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
     Err(error("WIT boundary alias nesting exceeds 64"))
 }
 
+fn generic_boundary(resolve: &Resolve, ty: Type) -> Result<Boundary, Diagnostic> {
+    let Type::Id(id) = ty else {
+        return Err(error("Expected a resolved WIT composite type"));
+    };
+    composite::Registry::new(resolve).add(ty)?;
+    Ok(Boundary::Generic(id))
+}
+
 impl Scalar {
     fn core(self) -> ValType {
         match self {
-            Self::Bool | Self::Char | Self::U8 | Self::S8 | Self::U16 | Self::S16 | Self::U32 | Self::S32 => {
-                ValType::I32
-            }
+            Self::Bool
+            | Self::Char
+            | Self::U8
+            | Self::S8
+            | Self::U16
+            | Self::S16
+            | Self::U32
+            | Self::S32 => ValType::I32,
             Self::F32 => ValType::F32,
             Self::F64 => ValType::F64,
             Self::U64 | Self::S64 => ValType::I64,
@@ -326,7 +375,7 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         .imports
         .values()
         .any(|item| match item {
-            WorldItem::Type { id, .. } => boundary(resolve, Type::Id(*id)).is_err(),
+            WorldItem::Type { .. } => false,
             WorldItem::Interface { id, .. } => !random::Capability::supported(resolve, *id),
             WorldItem::Function(_) => true,
         })
@@ -337,6 +386,11 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
 pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
     let selected = &resolve.worlds[world];
     random::Capability::selected(resolve, world)?;
+    for item in selected.imports.values() {
+        if let WorldItem::Type { id, .. } = item {
+            boundary(resolve, Type::Id(*id))?;
+        }
+    }
     if has_unsupported_imports(resolve, world) {
         return Err(error(
             "Portable AOT imported WIT adapters remain unimplemented",
@@ -359,7 +413,7 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
         let mut flat_parameters = 0;
         for parameter in &function.params {
             let ty = boundary(resolve, parameter.ty)?;
-            flat_parameters += ty.flat().len();
+            flat_parameters += ty.flat(resolve).len();
         }
         if flat_parameters > Resolve::MAX_FLAT_PARAMS {
             // Check the resolver's memory32 layout before any source macros.
@@ -568,13 +622,21 @@ pub fn component_with(
                 .global()
                 .clone();
             let index = exports.len() as u32;
-            let params = function.params.iter()
+            let params = function
+                .params
+                .iter()
                 .map(|param| Ok((param.name.clone(), boundary(resolve, param.ty)?)))
                 .collect::<Result<Vec<_>, Diagnostic>>()?;
-            let indirect_params = if params.iter().map(|(_, ty)| ty.flat().len()).sum::<usize>()
-                > Resolve::MAX_FLAT_PARAMS {
+            let indirect_params = if params
+                .iter()
+                .map(|(_, ty)| ty.flat(resolve).len())
+                .sum::<usize>()
+                > Resolve::MAX_FLAT_PARAMS
+            {
                 Some(parameters::Layout::new(resolve, function)?)
-            } else { None };
+            } else {
+                None
+            };
             exports.push(Export {
                 name,
                 wit: function.clone(),
@@ -608,7 +670,11 @@ pub fn component_with(
                 public_exports.push(PublicExport::Interface {
                     name,
                     implements: resolve.implements_value(key, item),
-                    types: interface.types.iter().map(|(name, ty)| (name.clone(), *ty)).collect(),
+                    types: interface
+                        .types
+                        .iter()
+                        .map(|(name, ty)| (name.clone(), *ty))
+                        .collect(),
                     functions,
                 });
             }
@@ -620,6 +686,15 @@ pub fn component_with(
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
     }
+    let mut registry = composite::Registry::new(resolve);
+    for export in &exports {
+        for ty in export.params.iter().map(|(_, ty)| *ty).chain(export.result) {
+            if let Boundary::Generic(id) = ty {
+                registry.add(Type::Id(id))?;
+            }
+        }
+    }
+    let generic_schema = !registry.nodes.is_empty();
     // Compile the design's tagged option schema through the ordinary source
     // pipeline, preserving nominal persistent-vector and keyword identities.
     // This fragment has no definitions or user macro expansion.
@@ -673,18 +748,28 @@ pub fn component_with(
             Phase::Runtime,
         )?);
     }
+    if generic_schema {
+        fragments.push(super::prepare_privileged_fragment(
+            &registry.source(),
+            &fragments[0].environment,
+            Phase::Runtime,
+        )?);
+    }
     // Reject every artifact before assembling any initialization start function.
     let mut source_manifests = Vec::with_capacity(fragments.len());
     for fragment in &mut fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
             .map_err(error)?;
-        source_manifests.push(artifact_identity::verify(
-            &fragment.wasm,
-            artifact_identity::Expected {
-                phase: Some(Phase::Runtime),
-                ..Default::default()
-            },
-        ).map_err(error)?);
+        source_manifests.push(
+            artifact_identity::verify(
+                &fragment.wasm,
+                artifact_identity::Expected {
+                    phase: Some(Phase::Runtime),
+                    ..Default::default()
+                },
+            )
+            .map_err(error)?,
+        );
         fragment.wasm = artifact_identity::without_identity(&fragment.wasm).map_err(error)?;
     }
     let source_provenance = provenance::encode(&source_manifests).map_err(error)?;
@@ -694,13 +779,17 @@ pub fn component_with(
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
     let has_memory = exports.iter().any(Export::uses_memory);
-    let initialization = super::initialization::Plan::new(&fragments, usize::from(option_schema) + usize::from(list_schema))?;
+    let initialization = super::initialization::Plan::new(
+        &fragments,
+        usize::from(option_schema) + usize::from(list_schema) + usize::from(generic_schema),
+    )?;
     let load_count = u32::from(initialization.module.is_some());
     let adapter = adapter(
         &exports,
         &initialization.names,
         option_schema,
         list_schema,
+        &registry,
     )?;
     let asynchronous = exports
         .iter()
@@ -718,7 +807,11 @@ pub fn component_with(
                     if export.kind == wasmparser::ExternalKind::Global {
                         if export.name.starts_with("slot.") {
                             link_definers.insert(format!("suss.{}", export.name), index);
-                        } else if let Some(definition) = export.name.strip_prefix("link.").and_then(|name| name.strip_suffix(".code")) {
+                        } else if let Some(definition) = export
+                            .name
+                            .strip_prefix("link.")
+                            .and_then(|name| name.strip_suffix(".code"))
+                        {
                             link_definers.insert(format!("suss.link.{definition}"), index);
                         }
                     }
@@ -732,11 +825,17 @@ pub fn component_with(
         for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
             if let Ok(wasmparser::Payload::ImportSection(section)) = payload {
                 for import in section.into_imports().flatten() {
-                    if import.module.starts_with("suss.link.") || import.module.starts_with("suss.slot.") {
-                        let definer = *link_definers.get(import.module).ok_or_else(|| Diagnostic {
-                            span: 0..0,
-                            message: format!("Direct link {} has no defining fragment", import.module),
-                        })?;
+                    if import.module.starts_with("suss.link.")
+                        || import.module.starts_with("suss.slot.")
+                    {
+                        let definer =
+                            *link_definers.get(import.module).ok_or_else(|| Diagnostic {
+                                span: 0..0,
+                                message: format!(
+                                    "Direct link {} has no defining fragment",
+                                    import.module
+                                ),
+                            })?;
                         modules.insert(import.module.to_owned(), definer);
                     }
                 }
@@ -748,8 +847,10 @@ pub fn component_with(
     let randomness = random::Capability::selected(resolve, world)?;
     let random_count = u32::from(randomness.is_some());
     let mut resolved_types = super::command::shape::Types::new(resolve);
-    let random_type = randomness.as_ref()
-        .map(|capability| capability.encode(resolve, &mut resolved_types)).transpose()?;
+    let random_type = randomness
+        .as_ref()
+        .map(|capability| capability.encode(resolve, &mut resolved_types))
+        .transpose()?;
     let mut public_types = std::collections::BTreeMap::new();
     for export in &public_exports {
         if let PublicExport::Interface { types, .. } = export {
@@ -761,7 +862,13 @@ pub fn component_with(
     let mut function_types = Vec::new();
     let mut result_types = Vec::new();
     for export in &exports {
-        result_types.push(export.wit.result.map(|ty| resolved_types.value(ty)).transpose()?);
+        result_types.push(
+            export
+                .wit
+                .result
+                .map(|ty| resolved_types.value(ty))
+                .transpose()?,
+        );
         function_types.push(resolved_types.function(&export.wit)?);
     }
     component.section(&resolved_types.section);
@@ -771,7 +878,9 @@ pub fn component_with(
         component.section(&imports);
         let mut aliases = ComponentAliasSection::new();
         aliases.alias(Alias::InstanceExport {
-            instance: 0, kind: ComponentExportKind::Func, name: "get-random-u64",
+            instance: 0,
+            kind: ComponentExportKind::Func,
+            name: "get-random-u64",
         });
         component.section(&aliases);
         let mut lower = CanonicalFunctionSection::new();
@@ -779,11 +888,22 @@ pub fn component_with(
         component.section(&lower);
     }
     let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
-        .chain(std::iter::once(("suss.bindings.runtime".to_owned(), bindings.wasm)))
-        .chain(fragments.iter().enumerate().map(|(index, fragment)| {
-            (format!("suss.fragment.{index}"), fragment.wasm.clone())
-        }))
-        .chain(initialization.module.iter().map(|module| (super::initialization::MODULE.to_owned(), module.clone())))
+        .chain(std::iter::once((
+            "suss.bindings.runtime".to_owned(),
+            bindings.wasm,
+        )))
+        .chain(
+            fragments
+                .iter()
+                .enumerate()
+                .map(|(index, fragment)| (format!("suss.fragment.{index}"), fragment.wasm.clone())),
+        )
+        .chain(
+            initialization
+                .module
+                .iter()
+                .map(|module| (super::initialization::MODULE.to_owned(), module.clone())),
+        )
         .chain(std::iter::once(("suss.aot".to_owned(), adapter)))
         .collect::<Vec<_>>();
     // ADR-0005 (#357): optimizing merges these into one module, which keeps
@@ -797,7 +917,9 @@ pub fn component_with(
                 if !links.is_empty() {
                     let module = &mut modules[2 + index].1;
                     *module = optimize::rename_import_modules(module, |name| {
-                        links.get(name).map(|definer| format!("suss.fragment.{definer}"))
+                        links
+                            .get(name)
+                            .map(|definer| format!("suss.fragment.{definer}"))
                     })?;
                 }
             }
@@ -820,7 +942,9 @@ pub fn component_with(
         let index = modules.len() as u32;
         modules.push(("suss.random.wire".to_owned(), random::wire()));
         Some(index)
-    } else { None };
+    } else {
+        None
+    };
     let memory_module = modules.len() as u32;
     let bridge_module = memory_module + u32::from(has_memory);
     for (_, module) in &modules {
@@ -837,7 +961,7 @@ pub fn component_with(
         });
     }
     if !asynchronous.is_empty() {
-        let bridge = async_adapter(&asynchronous, has_memory);
+        let bridge = async_adapter(&asynchronous, has_memory, &registry);
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
             data: &bridge,
@@ -855,29 +979,53 @@ pub fn component_with(
     if separate {
         instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
         if let Some(wire) = wire_module {
-            instances.instantiate(wire, [
-                ("suss.random", ModuleArg::Instance(0)),
-                ("suss.runtime", ModuleArg::Instance(runtime_instance)),
-            ]);
+            instances.instantiate(
+                wire,
+                [
+                    ("suss.random", ModuleArg::Instance(0)),
+                    ("suss.runtime", ModuleArg::Instance(runtime_instance)),
+                ],
+            );
         }
         instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(runtime_instance))]);
         for (index, links) in fragment_links.iter().enumerate() {
             let mut args = vec![
-                ("suss.runtime".to_owned(), ModuleArg::Instance(runtime_instance)),
-                ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(bindings_instance)),
+                (
+                    "suss.runtime".to_owned(),
+                    ModuleArg::Instance(runtime_instance),
+                ),
+                (
+                    "suss.bindings.runtime".to_owned(),
+                    ModuleArg::Instance(bindings_instance),
+                ),
             ];
             args.extend(links.iter().map(|(module, definer)| {
-                (module.clone(), ModuleArg::Instance(fragment_instance + *definer as u32))
+                (
+                    module.clone(),
+                    ModuleArg::Instance(fragment_instance + *definer as u32),
+                )
             }));
             instances.instantiate(2 + index as u32, args);
         }
         if load_count != 0 {
             let load = 2 + fragments.len() as u32;
-            instances.instantiate(load, initialization.arguments(runtime_instance, bindings_instance, fragment_instance));
-            args.push((super::initialization::MODULE.to_owned(), ModuleArg::Instance(fragment_instance + fragments.len() as u32)));
+            instances.instantiate(
+                load,
+                initialization.arguments(runtime_instance, bindings_instance, fragment_instance),
+            );
+            args.push((
+                super::initialization::MODULE.to_owned(),
+                ModuleArg::Instance(fragment_instance + fragments.len() as u32),
+            ));
         }
-        args.push(("suss.runtime".to_owned(), ModuleArg::Instance(runtime_instance)));
-        args.push(("suss.bindings.runtime".to_owned(), ModuleArg::Instance(bindings_instance)));
+        args.push((
+            "suss.runtime".to_owned(),
+            ModuleArg::Instance(runtime_instance),
+        ));
+        args.push((
+            "suss.bindings.runtime".to_owned(),
+            ModuleArg::Instance(bindings_instance),
+        ));
         args.extend((0..fragments.len()).map(|index| {
             (
                 format!("suss.fragment.{index}"),
@@ -888,7 +1036,11 @@ pub fn component_with(
     if !separate && randomness.is_some() {
         args.push(("suss.random".to_owned(), ModuleArg::Instance(0)));
     }
-    let first_own = if separate { fragment_instance + fragments.len() as u32 + load_count } else { random_count };
+    let first_own = if separate {
+        fragment_instance + fragments.len() as u32 + load_count
+    } else {
+        random_count
+    };
     if has_memory {
         instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
         args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
@@ -902,7 +1054,7 @@ pub fn component_with(
     if has_memory
         || exports
             .iter()
-            .any(|export| export.result.is_some_and(Boundary::indirect_result))
+            .any(|export| export.result.is_some_and(|ty| ty.indirect_result(resolve)))
     {
         memory_aliases.alias(Alias::CoreInstanceExport {
             instance: adapter_instance,
@@ -928,8 +1080,8 @@ pub fn component_with(
         if export.asynchronous {
             // task.return takes the flattened result as parameters; a scalar
             // option is a tag and payload, not the adapter's return pointer.
-            let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
-                || export.result.is_some_and(Boundary::uses_strings);
+            let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings(resolve))
+                || export.result.is_some_and(|ty| ty.uses_strings(resolve));
             // Pinned task-return checks encoding against the lifted export even
             // for scalar/void results whose inputs required Unicode lowering.
             let mut options = vec![];
@@ -999,15 +1151,20 @@ pub fn component_with(
         });
         let entry = core_function;
         core_function += 1;
-        let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings())
-            || export.result.is_some_and(Boundary::uses_strings);
+        let string_boundary = export.params.iter().any(|(_, ty)| ty.uses_strings(resolve))
+            || export.result.is_some_and(|ty| ty.uses_strings(resolve));
         let mut options = vec![];
         if export.uses_memory() {
-            options.extend([CanonicalOption::Memory(0), CanonicalOption::Realloc(random_count)]);
+            options.extend([
+                CanonicalOption::Memory(0),
+                CanonicalOption::Realloc(random_count),
+            ]);
             if string_boundary {
                 options.push(CanonicalOption::UTF16);
             }
-        } else if !export.asynchronous && export.result.is_some_and(Boundary::indirect_result) {
+        } else if !export.asynchronous
+            && export.result.is_some_and(|ty| ty.indirect_result(resolve))
+        {
             options.push(CanonicalOption::Memory(0));
         }
         if export.asynchronous {
@@ -1015,7 +1172,7 @@ pub fn component_with(
                 CanonicalOption::Async,
                 CanonicalOption::Callback(callback.unwrap()),
             ]);
-        } else if export.result.is_some_and(Boundary::uses_memory) {
+        } else if export.result.is_some_and(|ty| ty.needs_post(resolve)) {
             let post_name = format!("post.{}", export.name);
             aliases.alias(Alias::CoreInstanceExport {
                 instance: adapter_instance,
@@ -1040,11 +1197,19 @@ pub fn component_with(
             } => {
                 let index = random_count + exported_instances.len();
                 exported_instances.export_items(
-                    types.iter().map(|(name, id)| {
-                        (name.as_str(), ComponentExportKind::Type, public_types[id])
-                    }).chain(functions.iter().map(|(name, function)| {
-                        (name.as_str(), ComponentExportKind::Func, random_count + *function)
-                    })).collect::<Vec<_>>(),
+                    types
+                        .iter()
+                        .map(|(name, id)| {
+                            (name.as_str(), ComponentExportKind::Type, public_types[id])
+                        })
+                        .chain(functions.iter().map(|(name, function)| {
+                            (
+                                name.as_str(),
+                                ComponentExportKind::Func,
+                                random_count + *function,
+                            )
+                        }))
+                        .collect::<Vec<_>>(),
                 );
                 public.export(
                     ComponentExternName {
@@ -1079,22 +1244,30 @@ pub fn component_with(
 /// Canonical callback entrypoints for non-suspending source functions. They
 /// complete the task exactly once, then report EXIT. No continuation exists:
 /// suspension points must use the future rooted-continuation lowering instead.
-fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
+fn async_adapter(
+    exports: &[&Export],
+    dynamic_memory: bool,
+    registry: &composite::Registry,
+) -> Vec<u8> {
+    let resolve = registry.resolve;
     let mut types = TypeSection::new();
     let mut imports = ImportSection::new();
     for (index, export) in exports.iter().enumerate() {
         types.ty().function(
-            export.core_params(),
-            export.result.map(Boundary::core_result),
+            export.core_params(resolve),
+            export.result.and_then(|ty| ty.core_result(resolve)),
         );
-        types.ty().function(
-            export
-                .result
-                .into_iter()
-                .flat_map(Boundary::flat)
-                .collect::<Vec<_>>(),
-            [],
-        );
+        let result_flat = export
+            .result
+            .into_iter()
+            .flat_map(|ty| ty.flat(resolve))
+            .collect::<Vec<_>>();
+        let completion_params = if result_flat.len() > Resolve::MAX_FLAT_PARAMS {
+            vec![ValType::I32]
+        } else {
+            result_flat
+        };
+        types.ty().function(completion_params, []);
         imports.import(
             "suss.aot",
             &export.name,
@@ -1108,7 +1281,7 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
     }
     if exports
         .iter()
-        .any(|export| export.result.is_some_and(Boundary::indirect_result))
+        .any(|export| export.result.is_some_and(|ty| ty.indirect_result(resolve)))
     {
         imports.import(
             "suss.aot",
@@ -1122,41 +1295,57 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
             }),
         );
     }
+    let mut loaders = std::collections::BTreeMap::new();
+    for (index, export) in exports.iter().enumerate() {
+        if let Some(Boundary::Generic(id)) = export.result {
+            let flat = Boundary::Generic(id).flat(resolve);
+            if flat.len() > 1 && flat.len() <= Resolve::MAX_FLAT_PARAMS {
+                let ty = types.len();
+                types.ty().function([ValType::I32], flat);
+                let function = 2 * exports.len() as u32 + loaders.len() as u32;
+                imports.import(
+                    "suss.aot",
+                    &format!("flat.{}", export.name),
+                    EntityType::Function(ty),
+                );
+                loaders.insert(index, function);
+            }
+        }
+    }
     let mut posts = std::collections::BTreeMap::new();
     if exports
         .iter()
-        .any(|export| export.result.is_some_and(Boundary::uses_memory))
+        .any(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
     {
         let ty = types.len();
         types.ty().function([ValType::I32], []);
         for (index, export) in exports
             .iter()
             .enumerate()
-            .filter(|(_, export)| export.result.is_some_and(Boundary::uses_memory))
+            .filter(|(_, export)| export.result.is_some_and(|ty| ty.needs_post(resolve)))
         {
-            let function = 2 * exports.len() as u32 + posts.len() as u32;
+            let function = 2 * exports.len() as u32 + loaders.len() as u32 + posts.len() as u32;
             let name = format!("post.{}", export.name);
             imports.import("suss.aot", &name, EntityType::Function(ty));
             posts.insert(index, function);
         }
     }
-    let imported = 2 * exports.len() as u32 + posts.len() as u32;
+    let imported = 2 * exports.len() as u32 + loaders.len() as u32 + posts.len() as u32;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
         let entry_type = types.len();
-        types.ty().function(
-            export.core_params(),
-            [ValType::I32],
-        );
+        types
+            .ty()
+            .function(export.core_params(resolve), [ValType::I32]);
         functions.function(entry_type);
         public.export(
             &format!("entry.{index}"),
             ExportKind::Func,
             imported + index as u32,
         );
-        let flat_params = export.core_params().len();
+        let flat_params = export.core_params(resolve).len();
         let mut body = Function::new([(1, ValType::I32)]);
         for parameter in 0..flat_params {
             body.instruction(&Instruction::LocalGet(parameter as u32));
@@ -1173,7 +1362,16 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
                 .instruction(&Instruction::LocalGet(flat_params as u32))
                 .instruction(&ty.payload_load());
         }
-        if export.result.is_some_and(Boundary::uses_memory) {
+        if let Some(Boundary::Generic(id)) = export.result {
+            let flat = Boundary::Generic(id).flat(resolve);
+            if flat.len() > 1 {
+                body.instruction(&Instruction::LocalSet(flat_params as u32))
+                    .instruction(&Instruction::LocalGet(flat_params as u32));
+                if let Some(loader) = loaders.get(&index) {
+                    body.instruction(&Instruction::Call(*loader));
+                }
+            }
+        } else if export.result.is_some_and(|ty| ty.needs_post(resolve)) {
             body.instruction(&Instruction::LocalSet(flat_params as u32));
             let optional = export.result.is_some_and(Boundary::string_option);
             if optional {
@@ -1236,10 +1434,20 @@ fn adapter(
     initializers: &[String],
     option_schema: bool,
     list_schema: bool,
+    registry: &composite::Registry,
 ) -> Result<Vec<u8>, Diagnostic> {
+    let resolve = registry.resolve;
+    let generic_schema = !registry.nodes.is_empty();
     let fragment_count = initializers.len();
     let has_memory = exports.iter().any(Export::uses_memory);
-    let helpers = if has_memory { HELPERS + 4 } else { HELPERS } + if list_schema { 2 } else { 0 };
+    let helpers = if has_memory { HELPERS + 4 } else { HELPERS }
+        + if generic_schema {
+            4
+        } else if list_schema {
+            2
+        } else {
+            0
+        };
     let mut types = runtime_abi::prelude();
     let mut imports = ImportSection::new();
     let mut signatures = vec![
@@ -1299,7 +1507,7 @@ fn adapter(
             }),
         );
     }
-    if list_schema {
+    if list_schema || generic_schema {
         for (index, (name, params)) in [
             ("object-array-new", vec![VALUE]),
             ("array-set", vec![VALUE; 3]),
@@ -1313,6 +1521,20 @@ fn adapter(
                 name,
                 EntityType::Function(runtime_abi::TYPE_COUNT + HELPERS + 4 + index as u32),
             );
+        }
+    }
+    if generic_schema {
+        for (index, (name, params)) in [
+            ("array-get", vec![VALUE; 2]),
+            ("packed-array-length", vec![VALUE]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let ty = types.len() + runtime_abi::TYPE_COUNT - 1;
+            types.ty().function(params, [VALUE]);
+            imports.import("suss.runtime", name, EntityType::Function(ty));
+            debug_assert_eq!(ty, runtime_abi::TYPE_COUNT + HELPERS + 6 + index as u32);
         }
     }
     types.ty().function([VALUE], []);
@@ -1364,20 +1586,26 @@ fn adapter(
         );
     }
     let schema_base = sentinels + runtime_abi::SENTINEL_EXPORTS.len() as u32;
+    let generic_root = schema_base + u32::from(option_schema) + u32::from(list_schema);
     let imported = helpers + fragment_count as u32;
+    let posts = exports
+        .iter()
+        .filter(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
+        .count() as u32;
+    let generic_base = imported + exports.len() as u32 + 1 + posts;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
         let ty = runtime_abi::TYPE_COUNT + helpers + 2 + index as u32;
         types.ty().function(
-            export.core_params(),
-            export.result.map(Boundary::core_result),
+            export.core_params(resolve),
+            export.result.and_then(|ty| ty.core_result(resolve)),
         );
         functions.function(ty);
         public.export(&export.name, ExportKind::Func, imported + index as u32);
         let parameter_base = u32::from(export.indirect_params.is_some());
-        let result = parameter_base + export.flat_params().len() as u32;
+        let result = parameter_base + export.flat_params(resolve).len() as u32;
         let integer = result + 1;
         // integer + 1 is an unused f64 local.
         let pointer = integer + 2;
@@ -1385,8 +1613,14 @@ fn adapter(
         let position = length + 1;
         let unit = position + 1;
         let flat_locals = if export.indirect_params.is_some() {
-            export.flat_params().into_iter().map(|ty| (1, ty)).collect::<Vec<_>>()
-        } else { vec![] };
+            export
+                .flat_params(resolve)
+                .into_iter()
+                .map(|ty| (1, ty))
+                .collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
         let mut locals = flat_locals;
         locals.extend([
             (1, VALUE),
@@ -1398,12 +1632,16 @@ fn adapter(
             (1, ValType::I64),
             (1, VALUE),
         ]);
+        if generic_schema {
+            locals.push((export.params.len() as u32, ValType::I32));
+        }
         let mut body = Function::new(locals);
         if let Some(layout) = &export.indirect_params {
-            layout.read(&mut body, &export.params);
+            layout.read(&mut body, &export.params, resolve);
         }
         let wide = unit + 7;
         let scratch = unit + 8;
+        let generic_inputs = scratch + 1;
         let string_locals = strings::Locals {
             value: result,
             pointer,
@@ -1435,8 +1673,40 @@ fn adapter(
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         let mut parameter = parameter_base;
-        for (_, ty) in &export.params {
+        for (ordinal, (_, ty)) in export.params.iter().enumerate() {
             match ty {
+                Boundary::Generic(id) => {
+                    let node = registry.index(Type::Id(*id));
+                    if let Some(layout) = &export.indirect_params {
+                        body.instruction(&Instruction::LocalGet(0))
+                            .instruction(&Instruction::I32Const(layout.offset(ordinal) as i32))
+                            .instruction(&Instruction::I32Add);
+                    } else {
+                        let local = generic_inputs + ordinal as u32;
+                        body.instruction(&Instruction::I32Const(0))
+                            .instruction(&Instruction::I32Const(0))
+                            .instruction(&Instruction::I32Const(registry.nodes[node].align as i32))
+                            .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
+                            .instruction(&Instruction::Call(HELPERS + 2))
+                            .instruction(&Instruction::LocalSet(local));
+                        for field in 0..ty.flat(resolve).len() {
+                            body.instruction(&Instruction::LocalGet(parameter + field as u32));
+                        }
+                        body.instruction(&Instruction::LocalGet(local))
+                            .instruction(&Instruction::Call(composite::function(
+                                generic_base,
+                                node,
+                                composite::STORE_FLAT,
+                            )))
+                            .instruction(&Instruction::LocalGet(local));
+                    }
+                    body.instruction(&Instruction::Call(composite::function(
+                        generic_base,
+                        node,
+                        composite::COPY,
+                    )));
+                    parameter += ty.flat(resolve).len() as u32;
+                }
                 Boundary::List(element) => {
                     lists::copy_in(
                         &mut body,
@@ -1517,7 +1787,31 @@ fn adapter(
         // Every source argument now owns its GC value; release canonical input
         // buffers before invoking code that can throw a language exception.
         let mut parameter = parameter_base;
-        for (_, ty) in &export.params {
+        for (ordinal, (_, ty)) in export.params.iter().enumerate() {
+            if let Boundary::Generic(id) = ty {
+                let node = registry.index(Type::Id(*id));
+                if let Some(layout) = &export.indirect_params {
+                    body.instruction(&Instruction::LocalGet(0))
+                        .instruction(&Instruction::I32Const(layout.offset(ordinal) as i32))
+                        .instruction(&Instruction::I32Add)
+                        .instruction(&Instruction::Call(composite::function(
+                            generic_base,
+                            node,
+                            composite::FREE,
+                        )));
+                } else {
+                    let local = generic_inputs + ordinal as u32;
+                    body.instruction(&Instruction::LocalGet(local))
+                        .instruction(&Instruction::Call(composite::function(
+                            generic_base,
+                            node,
+                            composite::FREE,
+                        )))
+                        .instruction(&Instruction::LocalGet(local))
+                        .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
+                        .instruction(&Instruction::Call(HELPERS + 3));
+                }
+            }
             if let Some(element) = ty.list() {
                 lists::release_input(&mut body, element, parameter, &list_locals);
             }
@@ -1538,7 +1832,7 @@ fn adapter(
                     .instruction(&Instruction::Call(HELPERS + 3))
                     .instruction(&Instruction::End);
             }
-            parameter += ty.flat().len() as u32;
+            parameter += ty.flat(resolve).len() as u32;
         }
         if let Some(layout) = &export.indirect_params {
             body.instruction(&Instruction::LocalGet(0))
@@ -1549,6 +1843,47 @@ fn adapter(
             .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
+            Some(Boundary::Generic(id)) => {
+                let node = registry.index(Type::Id(id));
+                composite::schema_call(&mut body, generic_root, node, true, result);
+                body.instruction(&Instruction::LocalSet(result))
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::Call(composite::function(
+                        generic_base,
+                        node,
+                        composite::VALIDATE,
+                    )))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Const(0))
+                    .instruction(&Instruction::I32Const(registry.nodes[node].align as i32))
+                    .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
+                    .instruction(&Instruction::Call(HELPERS + 2))
+                    .instruction(&Instruction::LocalSet(pointer))
+                    .instruction(&Instruction::LocalGet(result))
+                    .instruction(&Instruction::LocalGet(pointer))
+                    .instruction(&Instruction::Call(composite::function(
+                        generic_base,
+                        node,
+                        composite::WRITE,
+                    )))
+                    .instruction(&Instruction::LocalGet(pointer));
+                if Boundary::Generic(id).flat(resolve).len() <= 1 {
+                    body.instruction(&Instruction::Call(composite::function(
+                        generic_base,
+                        node,
+                        composite::LOAD_FLAT,
+                    )))
+                    .instruction(&Instruction::LocalGet(pointer))
+                    .instruction(&Instruction::Call(composite::function(
+                        generic_base,
+                        node,
+                        composite::FREE,
+                    )))
+                    .instruction(&Instruction::LocalGet(pointer))
+                    .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
+                    .instruction(&Instruction::Call(HELPERS + 3));
+                }
+            }
             Some(Boundary::List(element)) => {
                 lists::copy_out(
                     &mut body,
@@ -1655,9 +1990,15 @@ fn adapter(
                     .instruction(&Instruction::End)
                     .instruction(&Instruction::I32Const(0));
             }
-            Some(Boundary::Scalar(ty)) => {
-                lower_scalar(&mut body, ty, result, integer, wide, &export.name, sentinels)
-            }
+            Some(Boundary::Scalar(ty)) => lower_scalar(
+                &mut body,
+                ty,
+                result,
+                integer,
+                wide,
+                &export.name,
+                sentinels,
+            ),
             Some(Boundary::Option(ty)) => {
                 debug_assert!(option_schema);
                 body.instruction(&Instruction::GlobalGet(schema_base))
@@ -1691,7 +2032,15 @@ fn adapter(
                         memory_index: 0,
                     }))
                     .instruction(&Instruction::I32Const(0));
-                lower_scalar(&mut body, ty, result, integer, wide, &export.name, sentinels);
+                lower_scalar(
+                    &mut body,
+                    ty,
+                    result,
+                    integer,
+                    wide,
+                    &export.name,
+                    sentinels,
+                );
                 let store = ty.payload_store();
                 body.instruction(&store)
                     .instruction(&Instruction::End)
@@ -1705,7 +2054,8 @@ fn adapter(
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    let schema_count = usize::from(option_schema) + usize::from(list_schema);
+    let schema_count =
+        usize::from(option_schema) + usize::from(list_schema) + usize::from(generic_schema);
     for index in 0..fragment_count - schema_count {
         start
             .instruction(&Instruction::Call(helpers + index as u32))
@@ -1722,17 +2072,24 @@ fn adapter(
         }
         if list_schema && index == 0 {
             start
-                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::Call(
+                    helpers + fragment_count as u32 - 1 - u32::from(generic_schema),
+                ))
                 .instruction(&Instruction::GlobalSet(
                     schema_base + u32::from(option_schema),
                 ));
+        }
+        if generic_schema && index == 0 {
+            start
+                .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
+                .instruction(&Instruction::GlobalSet(generic_root));
         }
     }
     start.instruction(&Instruction::End);
     code.function(&start);
     for export in exports
         .iter()
-        .filter(|export| export.result.is_some_and(Boundary::uses_memory))
+        .filter(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
     {
         // TypeSection counts the shared recursive group as one entry, while
         // core type indices count all TYPE_COUNT members of that group.
@@ -1742,6 +2099,21 @@ fn adapter(
         functions.function(ty);
         public.export(&format!("post.{}", export.name), ExportKind::Func, index);
         let mut post = Function::new([(3, ValType::I32)]);
+        if let Some(Boundary::Generic(id)) = export.result {
+            let node = registry.index(Type::Id(id));
+            post.instruction(&Instruction::LocalGet(0))
+                .instruction(&Instruction::Call(composite::function(
+                    generic_base,
+                    node,
+                    composite::FREE,
+                )))
+                .instruction(&Instruction::LocalGet(0))
+                .instruction(&Instruction::I32Const(registry.nodes[node].size as i32))
+                .instruction(&Instruction::Call(HELPERS + 3))
+                .instruction(&Instruction::End);
+            code.function(&post);
+            continue;
+        }
         if let Some(element) = export.result.and_then(Boundary::list) {
             lists::post_return(&mut post, element);
             post.instruction(&Instruction::End);
@@ -1779,6 +2151,27 @@ fn adapter(
         post.instruction(&Instruction::End);
         code.function(&post);
     }
+    if generic_schema {
+        debug_assert_eq!(imported + functions.len(), generic_base);
+        registry.emit(
+            &mut types,
+            &mut functions,
+            &mut code,
+            generic_base,
+            generic_root,
+            sentinels,
+        );
+        for export in exports {
+            if let Some(Boundary::Generic(id)) = export.result {
+                let node = registry.index(Type::Id(id));
+                public.export(
+                    &format!("flat.{}", export.name),
+                    ExportKind::Func,
+                    composite::function(generic_base, node, composite::LOAD_FLAT),
+                );
+            }
+        }
+    }
     let mut module = Module::new();
     module
         .section(&runtime_abi::Manifest::default().section())
@@ -1807,7 +2200,7 @@ fn adapter(
     {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
-    if option_schema || list_schema {
+    if option_schema || list_schema || generic_schema {
         let mut globals = GlobalSection::new();
         for _ in 0..schema_count {
             globals.global(
@@ -1973,7 +2366,9 @@ fn lower_scalar(
                 .instruction(&Instruction::LocalGet(wide))
                 .instruction(&Instruction::Else)
                 .instruction(&Instruction::LocalGet(result))
-                .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
+                .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
+                    runtime_abi::BIGINT,
+                )))
                 .instruction(&Instruction::I32Eqz)
                 .instruction(&Instruction::If(BlockType::Empty));
             boundary_error(body, result, name);

@@ -130,6 +130,16 @@ impl<'a> Types<'a> {
                 self.section.defined_type().tuple(values);
                 index
             }
+            TypeDefKind::Record(record) => {
+                let fields = record
+                    .fields
+                    .iter()
+                    .map(|field| Ok((field.name.as_str(), self.value(field.ty)?)))
+                    .collect::<Result<Vec<_>, Diagnostic>>()?;
+                let index = self.section.len();
+                self.section.defined_type().record(fields);
+                index
+            }
             _ => {
                 return Err(diagnostic(
                     "Reachable command value requires a composite/resource adapter",
