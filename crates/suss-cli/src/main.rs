@@ -93,8 +93,8 @@ fn run_command(flags: args::CacheFlags, cmd: args::Command) {
         args::Command::RunFile { path } => {
             run_file(&path);
         }
-        args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, output, optimize, compile_fuel } => {
-            compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize, compile_fuel);
+        args::Command::CompileFile { source, world_wit, wit_world, src_paths, exports, imports, output, optimize, compile_fuel } => {
+            compile_source(Some(&source), None, &world_wit, wit_world.as_deref(), &src_paths, &exports, &imports, &output, optimize, compile_fuel);
         }
         args::Command::CompileMain {
             source,
@@ -106,8 +106,8 @@ fn run_command(flags: args::CacheFlags, cmd: args::Command) {
         } => {
             compile_main(&source, &namespace, &src_paths, &output, optimize, compile_fuel);
         }
-        args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, output, optimize, compile_fuel } => {
-            compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize, compile_fuel);
+        args::Command::CompileNamespace { namespace, src_paths, world_wit, wit_world, exports, imports, output, optimize, compile_fuel } => {
+            compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &imports, &output, optimize, compile_fuel);
         }
         args::Command::CompileProject { world, config_path, optimize, compile_fuel } => {
             compile_project(&flags, world.as_deref(), config_path.as_deref(), optimize, compile_fuel);
@@ -204,6 +204,7 @@ fn compile_source(
     wit_world: Option<&str>,
     source_paths: &[String],
     exports: &[String],
+    imports: &[String],
     output_path: &str,
     optimize: bool,
     compile_fuel: Option<u64>,
@@ -212,11 +213,11 @@ fn compile_source(
     let result = (|| -> Result<Vec<u8>, String> {
         use std::path::{Path, PathBuf};
         use suss_reader::Symbol;
-        let mappings = exports
+        let parse_mappings = |values: &[String], direction: &str| values
             .iter()
             .map(|mapping| {
                 let (path, var) = mapping.split_once('=').ok_or_else(|| {
-                    format!("Invalid export mapping {mapping:?}; expected WIT-PATH=SUSS-VAR")
+                    format!("Invalid {direction} mapping {mapping:?}; expected WIT-PATH=SUSS-VAR")
                 })?;
                 if path.is_empty()
                     || var.is_empty()
@@ -226,12 +227,14 @@ fn compile_source(
                     || var.matches('/').count() > 1
                 {
                     return Err(format!(
-                        "Invalid export mapping {mapping:?}; expected WIT-PATH=SUSS-VAR"
+                        "Invalid {direction} mapping {mapping:?}; expected WIT-PATH=SUSS-VAR"
                     ));
                 }
                 Ok((path.to_owned(), Symbol::parse(var)))
             })
-            .collect::<Result<Vec<_>, String>>()?;
+            .collect::<Result<Vec<_>, String>>();
+        let mappings = parse_mappings(exports, "export")?;
+        let host_mappings = parse_mappings(imports, "import")?;
         let request = compile_request(&[
             ("mode", if namespace.is_some() { "namespace" } else { "file" }.into()),
             ("source", source_path.unwrap_or_default().into()),
@@ -240,12 +243,14 @@ fn compile_source(
             ("wit-world", format!("{wit_world:?}")),
             ("src", format!("{source_paths:?}")),
             ("exports", format!("{exports:?}")),
+            ("imports", format!("{imports:?}")),
             ("compile-fuel", format!("{compile_fuel:?}")),
             ("optimize", format!("{optimize}")),
         ]);
         let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
         let options = suss_cli::portable_aot::AotOptions {
             exports: mappings,
+            imports: host_mappings,
             compile_fuel,
             optimize,
             ..Default::default()

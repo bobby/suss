@@ -37193,3 +37193,24 @@ Both commands are retained in `synchronous-imports-argument-ownership/` and
 `synchronous-imports-ownership-and-nominals/`. These and the earlier complete
 three-test command give seven distinct positive regressions on unchanged import
 production code, not one complete seven-test command.
+
+### 2026-11-27: import mappings through project and CLI frontends
+
+World configuration accepts `:imports {"WIT-PATH" host/var}`, forwarded through
+the staged project pipeline. File/namespace CLI commands accept repeatable
+`--import WIT-PATH=host/var` alongside explicit export mappings; requested import
+mappings participate in persistent CLI build keys. The project regression
+returned0 (one selected test,113.56s test execution/270.338s including build),
+conserving13,807 inputs and HEAD while two configurations select different
+provider functions through the same qualified source var.
+
+The actual CLI integration target returned0 (one test,204.49s execution/494.274s
+including build). It compiles and instantiates six actual components across
+file, namespace and project modes. Each mode changes mappings with unchanged
+source/WIT and observes the newly selected provider through Rust. The CLI
+receipt correctly records two changed inputs: the concurrently finishing project
+capture's live receipt/log. A separate audit conserves every recorded crate
+input; no source change is hidden. Both command receipts are in
+`synchronous-imports-project-mappings/` and `synchronous-imports-cli-authority/`.
+These frontend controls follow the seven earlier import regressions and do not
+certify imported interfaces, resources, optimization or generalized async imports.
