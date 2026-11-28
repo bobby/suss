@@ -17,6 +17,7 @@ mod optimize;
 mod parameters;
 mod provenance;
 mod random;
+mod resources;
 mod strings;
 
 /// Recover complete verified-input manifests retained by the assembler. These

@@ -37284,3 +37284,38 @@ Next implement opaque source carriers, canonical drop wiring and Runtime close
 bindings before lifting the existing source resource guard. Moved/closed/escaped
 borrow rejection, scoped exception/cancellation cleanup, exported guest resources
 and application lifetime acceptance remain independently required.
+
+### 2026-11-27: private opaque resource carriers
+
+Adapter-private carrier helpers use a closed native object descriptor and a GC
+state slot containing the declared type ordinal, raw canonical index, ownership/
+status and typed drop callback. The shared GC ABI is unchanged. Validation checks
+class/storage/type/status/ownership before returning private state; close marks
+that state closed before invoking the drop callback. Source resource selection
+is still gated; these helpers are not yet wired into generated source imports.
+
+The first two builds failed on a private ABI constant reference and the pinned
+encoder's explicit abstract heap-type syntax. Both logs remain retained. The
+corrected focused command returned0:
+
+```
+cargo test -p suss-compile --lib --locked opaque_resource_carriers_reject_numeric_wrong_type_and_closed_aliases_after_gc -- --test-threads=2
+```
+
+One test passed, zero failed/ignored,257 filtered out,232.722s including build;
+all13,895 captured inputs and HEAD stayed fixed. It executes the actual private
+helper module against the production GC runtime. Numeric forgery and a wrong
+declared ordinal fail before callbacks; retained aliases survive forced GC;
+close through the shared invoke signature drops raw0/1/u32::MAX exactly once;
+closed aliases cannot validate or drop again. Its drop callback is a core host
+control, not the independent canonical-resource table used by the earlier type
+encoder unit. Neither unit certifies source-language ownership or scoped cleanup.
+
+Next wire these helpers into resource-producing imports and a Runtime close
+binding. Distinct imported provider instances must not be conflated by resolved
+WIT TypeId; keep repeated provider aliases/foreign resource dependencies rejected
+until the codec graph and type cache track their actual provider context. Own
+moves, borrowed results, exported handles, exceptional/cancellation scopes and
+guest-defined resources retain their acceptance work. Raw receipts are in
+`opaque-resource-carriers-first/`, `opaque-resource-carriers-abi-value/` and
+`opaque-resource-carriers-heap-type/`.

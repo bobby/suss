@@ -1,0 +1,355 @@
+//! Opaque source carriers for imported resources. Canonical indices stay private.
+use crate::runtime_abi;
+use wasm_encoder::*;
+
+use super::VALUE;
+const TYPE: u32 = 0;
+const HANDLE: u32 = 1;
+const STATUS: u32 = 2;
+const OWNED: u32 = 3;
+const DROP: u32 = 4;
+const CLOSED: i32 = 2;
+
+fn next_type(types: &TypeSection) -> u32 {
+    types.len() + runtime_abi::TYPE_COUNT - 1
+}
+fn reference(index: u32) -> ValType {
+    ValType::Ref(RefType {
+        nullable: false,
+        heap_type: HeapType::Concrete(index),
+    })
+}
+#[derive(Clone, Copy)]
+pub(super) struct Types {
+    pub drop: u32,
+    pub state: u32,
+    pub make: u32,
+    pub check: u32,
+    pub close: u32,
+}
+impl Types {
+    /// Append after the adapter's fixed helper types; no shared ABI type changes.
+    pub fn declare(types: &mut TypeSection) -> Self {
+        let drop = next_type(types);
+        types.ty().function([ValType::I32], []);
+        let state = next_type(types);
+        types.ty().struct_([
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: true,
+            },
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(reference(drop)),
+                mutable: false,
+            },
+            FieldType {
+                element_type: StorageType::Val(VALUE),
+                mutable: false,
+            },
+        ]);
+        let make = next_type(types);
+        types
+            .ty()
+            .function([ValType::I32, ValType::I32, reference(drop)], [VALUE]);
+        let check = next_type(types);
+        types
+            .ty()
+            .function([VALUE, ValType::I32, ValType::I32], [reference(state)]);
+        let close = next_type(types);
+        types.ty().function([VALUE], []);
+        Self {
+            drop,
+            state,
+            make,
+            check,
+            close,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct Helpers {
+    pub object_new: u32,
+    pub string_new: u32,
+    pub string_set: u32,
+    pub error_new: u32,
+    pub error_tag: u32,
+}
+/// The descriptor is a closed, nonconstructible native class with one private
+/// state slot. State is neither a source number nor a source-visible collection.
+pub(super) struct Carrier {
+    pub types: Types,
+    pub helpers: Helpers,
+    pub descriptor: u32,
+    pub check_function: u32,
+    pub close_function: u32,
+}
+fn emit(body: &mut Function, code: &[Instruction<'_>]) {
+    for instruction in code {
+        body.instruction(instruction);
+    }
+}
+pub(super) fn string(body: &mut Function, helpers: Helpers, text: &str, scratch: u32) {
+    use Instruction::*;
+    let units = text.encode_utf16().collect::<Vec<_>>();
+    emit(
+        body,
+        &[
+            I32Const(units.len() as i32),
+            Call(helpers.string_new),
+            LocalSet(scratch),
+        ],
+    );
+    for (index, unit) in units.into_iter().enumerate() {
+        emit(
+            body,
+            &[
+                LocalGet(scratch),
+                I32Const(index as i32),
+                I32Const(unit as i32),
+                Call(helpers.string_set),
+                Drop,
+            ],
+        );
+    }
+    body.instruction(&LocalGet(scratch));
+}
+impl Carrier {
+    fn fail(&self, body: &mut Function, message: &str) {
+        string(body, self.helpers, message, 5);
+        emit(
+            body,
+            &[
+                Instruction::Call(self.helpers.error_new),
+                Instruction::Throw(self.helpers.error_tag),
+            ],
+        );
+    }
+    fn require(&self, body: &mut Function, message: &str) {
+        use Instruction::*;
+        emit(body, &[I32Eqz, If(BlockType::Empty)]);
+        self.fail(body, message);
+        body.instruction(&End);
+    }
+    fn state(&self, body: &mut Function, local: u32) {
+        emit(
+            body,
+            &[
+                Instruction::LocalGet(local),
+                Instruction::RefCastNonNull(HeapType::Concrete(self.types.state)),
+            ],
+        );
+    }
+    pub fn make(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([]);
+        emit(
+            &mut body,
+            &[
+                GlobalGet(self.descriptor),
+                LocalGet(1),
+                LocalGet(0),
+                I32Const(0),
+                I32Const(1),
+                LocalGet(2),
+                runtime_abi::sentinel_value(runtime_abi::NIL),
+                StructNew(self.types.state),
+                ArrayNewFixed {
+                    array_type_index: runtime_abi::ARGS,
+                    array_size: 1,
+                },
+                Call(self.helpers.object_new),
+                End,
+            ],
+        );
+        body
+    }
+    /// Return the private state only after class, shape, type, status and owner
+    /// checks. Failed validation throws a language exception before host calls.
+    pub fn check(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([(3, VALUE)]);
+        emit(
+            &mut body,
+            &[
+                LocalGet(0),
+                RefTestNonNull(HeapType::Concrete(runtime_abi::OBJECT)),
+            ],
+        );
+        self.require(&mut body, "WIT resource requires an opaque handle");
+        emit(
+            &mut body,
+            &[
+                LocalGet(0),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::OBJECT)),
+                StructGet {
+                    struct_type_index: runtime_abi::OBJECT,
+                    field_index: 0,
+                },
+                GlobalGet(self.descriptor),
+                RefEq,
+            ],
+        );
+        self.require(&mut body, "WIT resource requires an opaque handle");
+        emit(
+            &mut body,
+            &[
+                LocalGet(0),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::OBJECT)),
+                StructGet {
+                    struct_type_index: runtime_abi::OBJECT,
+                    field_index: 1,
+                },
+                LocalTee(3),
+                RefTestNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+            ],
+        );
+        self.require(&mut body, "WIT resource handle storage is invalid");
+        emit(
+            &mut body,
+            &[
+                LocalGet(3),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                ArrayLen,
+                I32Const(1),
+                I32Eq,
+            ],
+        );
+        self.require(&mut body, "WIT resource handle storage is invalid");
+        emit(
+            &mut body,
+            &[
+                LocalGet(3),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                I32Const(0),
+                ArrayGet(runtime_abi::ARGS),
+                LocalTee(4),
+                RefTestNonNull(HeapType::Concrete(self.types.state)),
+            ],
+        );
+        self.require(&mut body, "WIT resource handle storage is invalid");
+        emit(
+            &mut body,
+            &[LocalGet(1), I32Const(0), I32GeS, If(BlockType::Empty)],
+        );
+        self.state(&mut body, 4);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: TYPE,
+                },
+                LocalGet(1),
+                I32Eq,
+            ],
+        );
+        self.require(&mut body, "WIT resource handle has the wrong declared type");
+        body.instruction(&End);
+        self.state(&mut body, 4);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: STATUS,
+                },
+                I32Eqz,
+            ],
+        );
+        self.require(&mut body, "WIT resource handle is closed or moved");
+        emit(&mut body, &[LocalGet(2), If(BlockType::Empty)]);
+        self.state(&mut body, 4);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: OWNED,
+                },
+                I32Const(1),
+                I32Eq,
+            ],
+        );
+        self.require(&mut body, "WIT resource operation requires ownership");
+        body.instruction(&End);
+        self.state(&mut body, 4);
+        body.instruction(&End);
+        body
+    }
+    pub fn close(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([(1, VALUE)]);
+        emit(
+            &mut body,
+            &[
+                LocalGet(0),
+                I32Const(-1),
+                I32Const(1),
+                Call(self.check_function),
+                LocalSet(1),
+            ],
+        );
+        self.state(&mut body, 1);
+        emit(
+            &mut body,
+            &[
+                I32Const(CLOSED),
+                StructSet {
+                    struct_type_index: self.types.state,
+                    field_index: STATUS,
+                },
+            ],
+        );
+        self.state(&mut body, 1);
+        body.instruction(&StructGet {
+            struct_type_index: self.types.state,
+            field_index: HANDLE,
+        });
+        self.state(&mut body, 1);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: DROP,
+                },
+                CallRef(self.types.drop),
+                End,
+            ],
+        );
+        body
+    }
+    pub fn invoke_close(&self) -> Function {
+        use Instruction::*;
+        let mut body = Function::new([]);
+        emit(
+            &mut body,
+            &[
+                LocalGet(1),
+                RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
+                I32Const(0),
+                ArrayGet(runtime_abi::ARGS),
+                Call(self.close_function),
+                runtime_abi::sentinel_value(runtime_abi::NIL),
+                End,
+            ],
+        );
+        body
+    }
+}
+
+#[cfg(all(test, not(target_family = "wasm")))]
+mod tests;
