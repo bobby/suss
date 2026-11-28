@@ -37007,3 +37007,13 @@ isolated worktree. `results/m5-wit-adapters/data-codec-foundation/` retains each
 command and raw outcome; all13,769 recorded inputs and HEAD remained unchanged.
 The command recorder now retains Cargo/rustc versions, the CLJS pin and configured
 Binaryen tool digests, checking external tools again at termination.
+
+On the same staged-identity production code, the complete recursive-codec and
+named-alias targets also returned0: six plus two passing tests, no failures or
+ignores,106.160s including build. All13,788 recorded inputs, HEAD and external
+prerequisites remained unchanged. See `staged-composite-and-alias-regressions/`.
+The nine-test remaining-shapes command retains its own preceding working-tree
+receipt;17 distinct data/identity regressions have executing positives on this
+production code. The full required workspace command follows on a frozen
+worktree with task-owned workspace TMPDIR and pinned Binaryen; its eventual
+terminal result remains separate evidence.
