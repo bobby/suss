@@ -2136,3 +2136,12 @@ pass, as do core/eval provenance checks. A failed lexical-wrapper attempt remain
 archived because nesting declarations changed the catalog snapshots under test.
 Production inputs are identical to9222862b. Exact workspace, final acceptance
 audit, independent review and final-head CI remain separate gates.
+
+
+[Explicit WIT host functions](../runtime/wit-imports.md) map world and interface
+functions to qualified Runtime vars through file, namespace and project modes.
+Actual component controls execute versioned aliases, shared data types, native
+collection operations, imported/exported instances and canonical async exports
+calling synchronous providers. The data-codec baseline and earlier frontend
+commands retain their own source qualifications. Resource lifetimes, general
+async imports and full M5 interoperability retain separate acceptance gates.

@@ -1,7 +1,7 @@
 # Explicit WIT host functions
 
-A selected WIT world can expose synchronous world functions to qualified
-Runtime vars. For example:
+A selected WIT world can expose synchronous world and interface functions to
+qualified Runtime vars. For example:
 
 ```wit
 package example:counter;
@@ -54,12 +54,30 @@ return-pointer parameter.
 
 A typed WIT `result::err` is an ordinary value. A canonical host trap poisons the
 instance and requires Store retirement. Resource handles and error-context,
-future and stream lifetimes need their own adapters. The current route accepts
-synchronous world functions; imported interfaces, mixed automatic randomness,
-optimization and generalized async imports have separate integration work.
+future and stream lifetimes need their own adapters. The current route accepts synchronous freestanding world and interface
+functions. Mixed automatic randomness, optimization and generalized async
+imports have separate integration work.
 
 `portable_aot_wit_imports` and `compiled_aot_host_imports` retain executing
 controls for numeric/Unicode fidelity, nested and nominal values, ownership,
 Macro isolation, initialization, configured providers and cache invalidation.
 Their separate command receipts and source qualifications are retained under
 `results/m5-wit-adapters/`.
+
+Interface functions use `PUBLIC-INTERFACE-PATH#FUNCTION`, for example
+`operations#touch` for `import operations: data`, or
+`test:service/data@1.2.3#touch` for the package-qualified provider. Every function
+in the resolved selected world needs an explicit mapping. A `use` declaration
+can add its original interface provider as a dependency alongside a named alias;
+map both resolved providers when they expose functions. Imported instances keep
+their declared names, versions, `implements` annotations and exported data-type
+identities. Shared nominal dependencies alias the actual earlier provider types
+in upstream's topological import order. Unsupported resource declarations reject
+before canonical value layout or source macro execution.
+
+`portable_aot_wit_interface_imports` executes imported and exported instances,
+two aliases of one interface, shared nominal dependencies, native record/flag
+updates, and a non-suspending canonical async export calling a synchronous
+provider. It separately checks authority and unsupported selected types before
+source macro effects. General async suspension and resource lifetimes retain
+their own acceptance gates.
