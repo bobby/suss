@@ -2145,3 +2145,9 @@ collection operations, imported/exported instances and canonical async exports
 calling synchronous providers. The data-codec baseline and earlier frontend
 commands retain their own source qualifications. Resource lifetimes, general
 async imports and full M5 interoperability retain separate acceptance gates.
+
+The internal resource type encoder has an executing constructor/borrowed-method/
+static/drop control against Rust, with live counters returning to zero. Source
+resource bindings still reject at the explicit lifetime diagnostic; their actual
+source regression records that failure. Type encoding alone does not establish
+opaque source ownership, scope cleanup or resource interoperability acceptance.

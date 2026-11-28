@@ -145,6 +145,12 @@ impl<'a, S: TypeSink> Types<'a, S> {
                 "Command resource binding needs a resource adapter",
             ));
         }
+        self.resolved_function(function)
+    }
+
+    /// Encode the resolved signature after a caller has selected its resource
+    /// lifetime adapter. Resolution already supplies implicit method receivers.
+    pub fn resolved_function(&mut self, function: &Function) -> Result<u32, Diagnostic> {
         let params = function
             .params
             .iter()
@@ -155,7 +161,7 @@ impl<'a, S: TypeSink> Types<'a, S> {
         self.section
             .encoder()
             .function()
-            .async_(function.kind == FunctionKind::AsyncFreestanding)
+            .async_(function.kind.is_async())
             .params(params)
             .result(result);
         Ok(index)
@@ -207,6 +213,23 @@ impl<'a, S: TypeSink> Types<'a, S> {
         }
         let kind = self.resolve.types[id].kind.clone();
         let index = match kind {
+            TypeDefKind::Handle(handle) => {
+                let resource = match handle {
+                    wit_parser::Handle::Own(id) | wit_parser::Handle::Borrow(id) => {
+                        self.named(id)?
+                    }
+                };
+                let index = self.len();
+                match handle {
+                    wit_parser::Handle::Own(_) => {
+                        self.section.encoder().defined_type().own(resource)
+                    }
+                    wit_parser::Handle::Borrow(_) => {
+                        self.section.encoder().defined_type().borrow(resource)
+                    }
+                }
+                index
+            }
             TypeDefKind::Type(ty) => {
                 let value = self.value(ty)?;
                 self.active.remove(&id);
@@ -333,6 +356,15 @@ impl<'a> Types<'a, wasm_encoder::InstanceType> {
         self.defined.insert(id, local);
     }
     pub fn export_named(&mut self, name: &str, id: TypeId) -> Result<(), Diagnostic> {
+        if matches!(self.resolve.types[id].kind, TypeDefKind::Resource) {
+            let created = self.len();
+            self.section.export(
+                name,
+                wasm_encoder::ComponentTypeRef::Type(wasm_encoder::TypeBounds::SubResource),
+            );
+            self.defined.insert(id, created);
+            return Ok(());
+        }
         let referenced = self.named(id)?;
         let created = self.len();
         self.section.export(
@@ -347,3 +379,6 @@ impl<'a> Types<'a, wasm_encoder::InstanceType> {
         Ok(())
     }
 }
+
+#[cfg(all(test, not(target_family = "wasm")))]
+mod resource_tests;

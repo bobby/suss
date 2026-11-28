@@ -37219,3 +37219,40 @@ Those new combinations and affected existing pure/import/randomness/async tests
 are the next command; the focused three-test receipt does not certify them.
 Resource ownership, general async suspension/cancellation, optimized mapped
 imports and UserManager retain independent implementation/acceptance work.
+
+### 2026-11-27: resource declaration encoding and ownership regression
+
+The internal resolved type encoder has a resource-specific signature entrypoint.
+Instance types export declared resources with `sub resource`; own/borrow value
+types refer to that declared identity. Resolved constructor/method/static
+signatures use the resolver's implicit receivers and async-kind classification.
+The ordinary command signature entrypoint retains its resource-adapter guard.
+No language-level resource lifetime adapter is enabled by this type encoder.
+
+The new actual source-level constructor/method/static/explicit-close regression
+first compiled its independent Rust host and failed at the existing resource
+lifetime diagnostic: zero passed/one failed,243.160s including the clean build,
+all13,871 captured inputs and HEAD conserved. Its Rust resource table counts
+opens, canonical destructor calls and live objects, and its intended source path
+retains exact0/>2^53/u64::MAX values over sixty calls with forced GC. Those source
+calls have not executed; do not read the fixture as implemented behavior.
+
+The focused compiler unit command then returned0:
+
+```
+cargo test -p suss-compile --lib --locked resource_instance_type_executes_constructor_borrowed_method_static_and_drop -- --test-threads=2
+```
+
+One test passed, zero failed/ignored,256 filtered out,182.636s including build;
+all13,875 captured inputs and HEAD stayed fixed. It uses the production type
+encoder to build, validate and execute a real component against an independent
+Rust resource table. Own constructors, borrowed receivers, statics and canonical
+resource drops preserve three exact values and return live-resource counters to
+zero, with three destructor calls. This certifies the encoder/canonical mechanics,
+not source handle ownership or scopes. Raw before/unit receipts are retained in
+`imported-resource-handles-before/` and `imported-resource-type-encoding/`.
+
+Next implement opaque source carriers, canonical drop wiring and Runtime close
+bindings before lifting the existing source resource guard. Moved/closed/escaped
+borrow rejection, scoped exception/cancellation cleanup, exported guest resources
+and application lifetime acceptance remain independently required.
