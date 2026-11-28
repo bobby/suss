@@ -116,9 +116,12 @@ functions. The host still supplies each declared type and its destructor.
 Suss installs the lifetime operations and canonical drops without adding
 component imports beyond the selected world.
 
-This initial route rejects repeated aliases of a resource provider and foreign
-resource dependencies until provider context is represented throughout the
-codec graph. The pinned WIT resolver rejects borrowed results. Guest-defined
+A later imported interface may use a resource declared by the selected owning
+provider, including a renamed `use` alias. Its types refer to the actual imported
+resource identity; the consumer does not install a second destructor. The owner
+must precede its consumer and be selected exactly once. Repeated aliases of a
+resource-owning provider still require contextual identities and are rejected
+before source macros. The pinned WIT resolver rejects borrowed results. Guest-defined
 resources and generalized async/cancellation lifetimes retain separate adapters.
 Unsupported selected paths are diagnosed before source macro effects. Full WIT
 lifetime interoperability requires those remaining paths.
