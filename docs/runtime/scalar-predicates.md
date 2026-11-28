@@ -24,6 +24,13 @@ Passing a NaN Object through an ordinary function and comparing that retained
 Object to itself is true. These observations are independent of physical raw
 storage and numeric box-cache optimization.
 
+Symbolic constants share across all arities of the same source function and
+its compiler-created try/catch, finally and thread-binding regions. A nested
+source function has a separate pool; `with-redefs` introduces such a function.
+Artifact cache keys preserve this literal alias partition. Pinned controls
+and actual Runtime/Macro/AOT results are recorded in
+[numeric acceptance](numeric-acceptance.md).
+
 Long and UTF-16 scalar identity retain their recorded platform choices. For
 example, `(identical? 1000000000000 1000000000000)` is true in Suss even though
 the JVM's separately boxed values differ; small JVM longs also depend on its

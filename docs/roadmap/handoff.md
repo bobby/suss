@@ -36807,3 +36807,44 @@ The review retains the accepted source-preparation distinction: ordinary source 
 The numeric layer now includes published eval checkpoint `2ab330b8`, including the tested symbol/Var registration repair and independent review evidence. Its actual exact2694-pass baseline and separately executed complete eight-test affected target retain their source qualifications; parent results do not certify this numeric source. Numeric test bodies, budgets and all261 prior paths ending cases.json remain protected. A redundant unreachable Pattern match arm was removed without changing the existing early Pattern rejection.
 
 Published numeric head `5ad621b4` failed CI run45868728125 in two `compiled_macro_cumulative_fuel` controls: the effect-preservation negative returned an unlocated Runtime fuel trap, and the completed-helper positive exhausted artifact preparation. Actual old-head logs and hashes are retained in `results/m12-num-api/published-ci-5ad621b4/`. Both test files, including the existing100,000 budget and128-call effect batch, remain unchanged; the prepared native controller executes the original entire eight-test target first. Its subsequent30-target native pass includes the now-registered symbol/Var controls; corpus/default26/bootstrap/full results retain their own actual source identities.
+
+
+### Exact numeric source and workspace validation (2026-11-27)
+
+Numeric runtime source `6ceb25674ceea2600c9e2346b78179740cd0a37a` completes
+`cargo test --workspace --locked -- --test-threads=2` with actual exit 0:
+2,732 passing executions across 388 result groups, zero failures, 15 existing
+ignored executions, in 13,268.372 seconds. All 13,510 input files, HEAD, runner,
+pinned Binaryen and external prerequisite receipts are conserved through actual
+termination and archive. The separate post-run audit also exits 0.
+
+The complete dedicated native controller exits 0 for all 11 commands, including
+222 numeric tests across 33 targets, nine macro fuel tests, 143 ownership and
+transport executions, the explicit random-effect guard, 24 complete suite/body
+tests, strict capture, Java/Node-free bootstrap and both provenance checks.
+All declared tests in the original 17 criterion-mapped targets pass in both
+that batch and the full workspace run.
+
+Fresh native and workspace captures independently preserve all 5,750 ordered
+rows and 5,638 prior successful decisions; all 229 tagged BigInt/Ratio and 200
+Decimal rows host-match. The independent complete default-num checker passes
+with 23 host matches and the same three explicit narrow-class differences among
+26 original rows. The unchanged global ledger retains 132 residual failures,
+107 guest judgments, 1,196 unexecuted primary rows and 59 failed namespaces;
+there are zero skips. These results do not claim language-wide conformance.
+
+Pinned Clojure 1.12.6 controls preserve source-function symbolic constant pools
+across arities and compiler-created try/catch/finally and thread-binding regions.
+Nested source functions, including with-redefs' implicit function, remain
+separate. Genuine before failures, passing Runtime/Macro/AOT results and cache
+alias-partition controls retain their exact source qualifications. The macro
+fuel diagnostic only identifies actual transformer binding-lookup exhaustion;
+original allowances and effect/span/recovery contracts remain unchanged.
+
+See docs/runtime/numeric-acceptance.md for the complete criterion map, measurement
+qualification and command-specific evidence. The manifest is at
+results/m12-num-api/reviewed-core-final-evidence/manifest.json. Actual native/full
+receipts, raw output, captures and archived runners remain unchanged; compressed
+copies and final audits are published alongside them. Interrupted earlier runs,
+stale-provenance outer failure and the corrected pre-Cargo launcher failure are
+retained as actual nonzero results, not relabelled as successful validation.

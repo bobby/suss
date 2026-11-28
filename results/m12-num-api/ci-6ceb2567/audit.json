@@ -1,0 +1,1048 @@
+{
+  "head": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+  "run": {
+    "conclusion": "success",
+    "headSha": "6ceb25674ceea2600c9e2346b78179740cd0a37a",
+    "jobs": [
+      {
+        "completedAt": "2026-11-27T21:29:16Z",
+        "conclusion": "success",
+        "databaseId": 140740495227,
+        "name": "foundation",
+        "startedAt": "2026-11-27T21:12:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:12:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:12:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:06Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:12:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:16Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:13:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:17Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:13:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:40Z",
+            "conclusion": "success",
+            "name": "Verify upstream inventory and scanner",
+            "number": 5,
+            "startedAt": "2026-11-27T21:13:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:25:23Z",
+            "conclusion": "success",
+            "name": "Reproduce and execute versioned bootstrap without Java",
+            "number": 6,
+            "startedAt": "2026-11-27T21:13:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:25:24Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 7,
+            "startedAt": "2026-11-27T21:25:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:28:55Z",
+            "conclusion": "success",
+            "name": "Test libraries, binaries, examples and documentation",
+            "number": 8,
+            "startedAt": "2026-11-27T21:25:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:28:55Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 9,
+            "startedAt": "2026-11-27T21:28:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:28:59Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 10,
+            "startedAt": "2026-11-27T21:28:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:29:14Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 19,
+            "startedAt": "2026-11-27T21:28:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:29:14Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 20,
+            "startedAt": "2026-11-27T21:29:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:29:14Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-11-27T21:29:14Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495227"
+      },
+      {
+        "completedAt": "2026-11-27T21:42:45Z",
+        "conclusion": "success",
+        "databaseId": 140740495517,
+        "name": "integration (2)",
+        "startedAt": "2026-11-27T21:12:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:12:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:12:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:05Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:12:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:15Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:13:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:16Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:13:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:20Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:13:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:30Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:13:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:30Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T21:42:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:37Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T21:42:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:43Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T21:42:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:43Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T21:42:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:42:43Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T21:42:43Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495517"
+      },
+      {
+        "completedAt": "2026-11-27T22:01:12Z",
+        "conclusion": "success",
+        "databaseId": 140740495527,
+        "name": "integration (6)",
+        "startedAt": "2026-11-27T21:46:10Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:46:12Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:46:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:26Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:46:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:35Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:46:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:42Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:46:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:57Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:46:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:00:56Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:46:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:00:56Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T22:00:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:01:11Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T22:00:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:01:11Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T22:01:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:01:11Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T22:01:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:01:11Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T22:01:11Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495527"
+      },
+      {
+        "completedAt": "2026-11-27T22:11:13Z",
+        "conclusion": "success",
+        "databaseId": 140740495564,
+        "name": "integration (5)",
+        "startedAt": "2026-11-27T21:43:40Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:43:41Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:43:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:57Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:43:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:44:07Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:43:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:44:16Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:44:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:44:23Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:44:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:00Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:44:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:00Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T22:11:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:11Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T22:11:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:11Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T22:11:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:12Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T22:11:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:11:12Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T22:11:12Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495564"
+      },
+      {
+        "completedAt": "2026-11-27T22:16:37Z",
+        "conclusion": "success",
+        "databaseId": 140740495599,
+        "name": "integration (7)",
+        "startedAt": "2026-11-27T21:59:36Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:59:38Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:59:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:51Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:59:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:00:01Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:59:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:00:08Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T22:00:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:00:14Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T22:00:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:20Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T22:00:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:20Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T22:16:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:35Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T22:16:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:35Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T22:16:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:35Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T22:16:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:16:35Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T22:16:35Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495599"
+      },
+      {
+        "completedAt": "2026-11-27T21:43:38Z",
+        "conclusion": "success",
+        "databaseId": 140740495601,
+        "name": "integration (0)",
+        "startedAt": "2026-11-27T21:12:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:12:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:12:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:11Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:12:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:19Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:13:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:20Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:13:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:33Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:13:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:11Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:13:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:11Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T21:43:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:26Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T21:43:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:35Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T21:43:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:35Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T21:43:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:36Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T21:43:36Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495601"
+      },
+      {
+        "completedAt": "2026-11-27T21:46:09Z",
+        "conclusion": "success",
+        "databaseId": 140740495607,
+        "name": "integration (1)",
+        "startedAt": "2026-11-27T21:12:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:12:54Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:12:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:35Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:12:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:44Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:13:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:46Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:13:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:53Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:13:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:45:40Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:13:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:45:40Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T21:45:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:45:57Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T21:45:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:06Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T21:45:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:06Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T21:46:06Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:46:07Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T21:46:07Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495607"
+      },
+      {
+        "completedAt": "2026-11-27T21:59:35Z",
+        "conclusion": "success",
+        "databaseId": 140740495628,
+        "name": "integration (4)",
+        "startedAt": "2026-11-27T21:42:46Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:42:48Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:42:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:02Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:42:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:15Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:43:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:23Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:43:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:43:32Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:43:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:20Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:43:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:20Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T21:59:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:32Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T21:59:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:32Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T21:59:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:33Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T21:59:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:59:33Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T21:59:33Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495628"
+      },
+      {
+        "completedAt": "2026-11-27T22:24:10Z",
+        "conclusion": "success",
+        "databaseId": 140740495920,
+        "name": "integration (3)",
+        "startedAt": "2026-11-27T21:12:51Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T21:12:53Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T21:12:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:13Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "startedAt": "2026-11-27T21:12:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:24Z",
+            "conclusion": "success",
+            "name": "Run dtolnay/rust-toolchain@stable",
+            "number": 3,
+            "startedAt": "2026-11-27T21:13:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:25Z",
+            "conclusion": "success",
+            "name": "Run Swatinem/rust-cache@v2",
+            "number": 4,
+            "startedAt": "2026-11-27T21:13:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T21:13:30Z",
+            "conclusion": "success",
+            "name": "Restore compiled core images",
+            "number": 5,
+            "startedAt": "2026-11-27T21:13:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:23:46Z",
+            "conclusion": "success",
+            "name": "Execute complete integration suites in this partition",
+            "number": 6,
+            "startedAt": "2026-11-27T21:13:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:23:46Z",
+            "conclusion": "success",
+            "name": "Keep only large compiled modules",
+            "number": 7,
+            "startedAt": "2026-11-27T22:23:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:00Z",
+            "conclusion": "success",
+            "name": "Save compiled core images",
+            "number": 8,
+            "startedAt": "2026-11-27T22:23:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:07Z",
+            "conclusion": "success",
+            "name": "Post Run Swatinem/rust-cache@v2",
+            "number": 15,
+            "startedAt": "2026-11-27T22:24:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:07Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@v4",
+            "number": 16,
+            "startedAt": "2026-11-27T22:24:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:07Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 17,
+            "startedAt": "2026-11-27T22:24:07Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140740495920"
+      },
+      {
+        "completedAt": "2026-11-27T22:24:14Z",
+        "conclusion": "success",
+        "databaseId": 140765081104,
+        "name": "test",
+        "startedAt": "2026-11-27T22:24:12Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-27T22:24:12Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-27T22:24:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:13Z",
+            "conclusion": "success",
+            "name": "Require every verification job to succeed",
+            "number": 2,
+            "startedAt": "2026-11-27T22:24:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-27T22:24:13Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-11-27T22:24:13Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/bobby/suss/actions/runs/46068803133/job/140765081104"
+      }
+    ],
+    "status": "completed"
+  },
+  "completed_job_evidence": [
+    {
+      "job": "foundation",
+      "id": "140740495227",
+      "actual_conclusion": "success",
+      "metadata_sha256": "6ab2e16d5ceac8f0a88cf1c706740131aadbbc6d85bebacd2379c239d3338042",
+      "raw_log_sha256": "475fe9738dfbb87dc091592578bc4455599505c15616adf8ecce0ba7efced174",
+      "passing_executions": 348
+    },
+    {
+      "job": "integration (2)",
+      "id": "140740495517",
+      "actual_conclusion": "success",
+      "metadata_sha256": "5424d1cf8c5ca5efb764bc9f9e402fd0787cbeb0e559443387fbdd931b6f8c87",
+      "raw_log_sha256": "d86ab700edc9cf98c973b9c2b5af9ceff70665ff89145d33eefbb4a574ae4707",
+      "passing_executions": 194
+    },
+    {
+      "job": "integration (6)",
+      "id": "140740495527",
+      "actual_conclusion": "success",
+      "metadata_sha256": "026132d1e97959bb4352fb0193e5eb2da41a2dfc3bf2fb25ea1325a1e1642b76",
+      "raw_log_sha256": "0566dab30bfbe82eea90beb224640fb0651bd4dc59743d0a6b74f1eec85d1ee6",
+      "passing_executions": 232
+    },
+    {
+      "job": "integration (5)",
+      "id": "140740495564",
+      "actual_conclusion": "success",
+      "metadata_sha256": "2d5a6aa26f44a248f01a5da20ec1f03945898ccaee943bc7c55afd1fe7cbcdaa",
+      "raw_log_sha256": "b3618f77c31dd9f823c416e83601085493cb244b79e3941f470dad63059188af",
+      "passing_executions": 331
+    },
+    {
+      "job": "integration (7)",
+      "id": "140740495599",
+      "actual_conclusion": "success",
+      "metadata_sha256": "845b575f5f95e256269372092bd54d1a8befccc9cadf0fb8faf6510bc28fef83",
+      "raw_log_sha256": "46b6f3c6ee9e14f60818e07696f3e9250dd75283a25525b015d7f98193405d77",
+      "passing_executions": 213
+    },
+    {
+      "job": "integration (0)",
+      "id": "140740495601",
+      "actual_conclusion": "success",
+      "metadata_sha256": "5fb7c555979a92deca48acf60041f403f134bf6da0cc1a9404273edbb8b2cf56",
+      "raw_log_sha256": "e21779ac912d3cd7079823378d261d82e307585845d22cde856c1e93caf6785b",
+      "passing_executions": 573
+    },
+    {
+      "job": "integration (1)",
+      "id": "140740495607",
+      "actual_conclusion": "success",
+      "metadata_sha256": "7747487fabd6d644227e5efb79c86c2fa421dcd997a9844553fbd3bbaf68b0d9",
+      "raw_log_sha256": "77670ed991dba8e2591896a5cd1fcca97b6d9e82d75924e4c47fc24c8f727594",
+      "passing_executions": 329
+    },
+    {
+      "job": "integration (4)",
+      "id": "140740495628",
+      "actual_conclusion": "success",
+      "metadata_sha256": "82284a1dc0878b113ab0d6a82d8dd1dc5b2716172996eb19c3b643d5fc338f9b",
+      "raw_log_sha256": "a2c99233d7be0c76558318ac888f054c4bcba166373323d6db5a1b92bb2b2aa0",
+      "passing_executions": 305
+    },
+    {
+      "job": "integration (3)",
+      "id": "140740495920",
+      "actual_conclusion": "success",
+      "metadata_sha256": "b0dcc6f81a1c8fdd000acea59aa017cea03cae2b699368025b77d5156c80f65b",
+      "raw_log_sha256": "0b3a7b54f7b57ef00db2304e59149d34403f21120d1daa23f86e6f5132ab91d7",
+      "passing_executions": 219
+    },
+    {
+      "job": "test",
+      "id": "140765081104",
+      "actual_conclusion": "success",
+      "metadata_sha256": "d029f4e6d4b2d4604862119c7ca51af3741fbc663be53f4e82902eb431fc084c",
+      "raw_log_sha256": "75baa32b1f5c67e9ea1d3b24f6f202eef7e716628e858c3d4797494787a0e5ba",
+      "passing_executions": 0
+    }
+  ],
+  "passing_executions": 2744,
+  "critical_targets_actual_passes": {
+    "clojure_eval": 90,
+    "portable_symbol_conversion": 8,
+    "clojure_test_suite": 24,
+    "native_host_boundary": 51,
+    "runtime_namespaces": 10,
+    "compiled_macro_cumulative_fuel": 8,
+    "compiled_macro_fuel_stages": 1,
+    "clojure_symbolic_numeric_arities": 2,
+    "clojure_symbolic_numeric_regions": 2,
+    "clojure_symbolic_numeric_root_scopes": 2
+  },
+  "qualification": "Actual all10-job success for the published6ceb corrected runtime. Exact local workspace baseline and its audit are still running, and independent review remains required. Any later final batch needs its own actual final-head CI."
+}
