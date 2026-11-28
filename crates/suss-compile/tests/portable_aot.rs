@@ -966,7 +966,8 @@ fn reviewed_interface_wrappers_preserve_live_cells_void_effects_and_boundary_pay
 }
 
 #[test]
-fn exported_function_external_ids_are_rejected_without_silent_loss() {
+fn exported_function_external_ids_are_preserved_and_select_actual_calls() {
+    use wasmtime::component::types::ComponentItem;
     let fragment =
         portable::prepare_fragment("(def f (fn [] 1))", &Environment::default(), Phase::Runtime)
             .unwrap();
@@ -981,29 +982,60 @@ fn exported_function_external_ids_are_rejected_without_silent_loss() {
         ),
     ] {
         let (resolve, selected) = world(wit);
-        let annotated = resolve.worlds[selected]
-            .exports
-            .values()
-            .find_map(|item| match item {
-                wit_parser::WorldItem::Function(function) => function.external_id.as_deref(),
-                wit_parser::WorldItem::Interface { id, .. } => {
-                    resolve.interfaces[*id].functions["f"]
-                        .external_id
-                        .as_deref()
-                }
-                _ => None,
-            });
-        assert_eq!(annotated, Some("urn:test:f"));
-        let error = portable::aot::component(
+        let bytes = portable::aot::component(
             std::slice::from_ref(&fragment),
             &resolve,
             selected,
             &[(path.into(), Symbol::new("f"))],
         )
-        .unwrap_err();
-        assert_eq!(
-            error.message,
-            "Portable AOT function external-id adapters remain unimplemented"
-        );
+        .unwrap();
+        let engine = engine();
+        let component = Component::new(&engine, bytes).unwrap();
+        let (outer, member) = if let Some((outer, expected_member)) = path.split_once('#') {
+            let interface = component
+                .component_type()
+                .exports(&engine)
+                .find_map(|(name, item)| (name == outer).then_some(item.ty))
+                .unwrap();
+            let ComponentItem::ComponentInstance(interface) = interface else {
+                panic!("wrong type")
+            };
+            let member = interface
+                .exports(&engine)
+                .find_map(|(name, item)| {
+                    (item.external_id == Some("urn:test:f")).then(|| name.to_owned())
+                })
+                .expect("member external ID lost");
+            assert_eq!(member, expected_member);
+            (outer.to_owned(), Some(member))
+        } else {
+            let name = component
+                .component_type()
+                .exports(&engine)
+                .find_map(|(name, item)| {
+                    (item.external_id == Some("urn:test:f")).then(|| name.to_owned())
+                })
+                .expect("world function external ID lost");
+            assert_eq!(name, path);
+            (name, None)
+        };
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(100_000_000).unwrap();
+        let instance = Linker::new(&engine)
+            .instantiate(&mut store, &component)
+            .unwrap();
+        let (_, outer_index) = instance.get_export(&mut store, None, &outer).unwrap();
+        let function_index = if let Some(member) = member {
+            instance
+                .get_export(&mut store, Some(&outer_index), &member)
+                .unwrap()
+                .1
+        } else {
+            outer_index
+        };
+        let function = instance
+            .get_typed_func::<(), (u32,)>(&mut store, function_index)
+            .unwrap();
+        assert_eq!(function.call(&mut store, ()).unwrap().0, 1);
     }
 }

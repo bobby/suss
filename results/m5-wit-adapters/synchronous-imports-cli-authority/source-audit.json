@@ -1,0 +1,5 @@
+{
+  "changed_inputs_qualification": "Only the concurrent project-capture live receipt/log changed; both terminal commands and their outcomes remain retained.",
+  "crate_inputs_conserved_through_post_command_audit": 669,
+  "changed_crate_inputs": []
+}

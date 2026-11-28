@@ -1,0 +1,1 @@
+{"reason": "Stop unintended cargo fmt --all churn before rebuilding only intended files; partial run is not interface acceptance evidence.", "cargo_pid": 1210574}

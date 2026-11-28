@@ -6,6 +6,8 @@ use wit_parser::{FunctionKind, InterfaceId, Type, WorldItem};
 
 pub(super) struct Capability {
     pub name: String,
+    pub implements: Option<String>,
+    pub external_id: Option<String>,
     id: InterfaceId,
 }
 
@@ -13,7 +15,10 @@ impl Capability {
     pub fn selected(resolve: &Resolve, world: WorldId) -> Result<Option<Self>, Diagnostic> {
         let mut capability = None;
         for (key, item) in &resolve.worlds[world].imports {
-            let WorldItem::Interface { id, .. } = item else {
+            let WorldItem::Interface {
+                id, external_id, ..
+            } = item
+            else {
                 continue;
             };
             if !Self::supported(resolve, *id) {
@@ -26,6 +31,8 @@ impl Capability {
             }
             capability = Some(Self {
                 name: resolve.name_world_key(key),
+                implements: resolve.implements_value(key, item),
+                external_id: external_id.clone(),
                 id: *id,
             });
         }

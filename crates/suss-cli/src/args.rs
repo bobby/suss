@@ -21,6 +21,7 @@ pub enum Command {
         wit_world: Option<String>,
         src_paths: Vec<String>,
         exports: Vec<String>,
+        imports: Vec<String>,
         output: String,
         optimize: bool,
         compile_fuel: Option<u64>,
@@ -44,6 +45,7 @@ pub enum Command {
         world_wit: String,
         wit_world: Option<String>,
         exports: Vec<String>,
+        imports: Vec<String>,
         /// Output path
         output: String,
         optimize: bool,
@@ -174,6 +176,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
     let mut compile_fuel = None;
     let mut wit_world = None;
     let mut exports = Vec::new();
+    let mut imports = Vec::new();
 
     while let Some(arg) = parser.next()? {
         match arg {
@@ -200,6 +203,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
             Long("wit-world") => wit_world = Some(parser.value()?.string()?),
             Long("export") => exports.push(parser.value()?.string()?),
+            Long("import") => imports.push(parser.value()?.string()?),
             Short('o') | Long("output") => {
                 output = Some(parser.value()?.string()?);
             }
@@ -246,6 +250,9 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             "--wit-world and --export require file or namespace mode with -w/--wit".into(),
         ));
     }
+    if !imports.is_empty() && !(world_wit.is_some() && main_ns.is_none() && (source.is_some() || entry_ns.is_some())) {
+        return Err(lexopt::Error::Custom("--import requires file or namespace mode with -w/--wit".into()));
+    }
     // Determine mode based on arguments
     if entry_ns.is_some() && world_wit.is_some() {
         // Namespace mode: compile from entry namespace with multi-file support
@@ -269,6 +276,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             world_wit,
             wit_world,
             exports,
+            imports,
             output,
             optimize,
             compile_fuel,
@@ -295,6 +303,7 @@ fn parse_compile(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             wit_world,
             src_paths,
             exports,
+            imports,
             output,
             optimize,
             compile_fuel,
@@ -505,6 +514,7 @@ COMMANDS:
         -w, --wit <PATH>     WIT file or package directory (including deps)
         --wit-world <WORLD>  Select a world (required if the WIT package is ambiguous)
         --export <PATH=VAR>  Explicit WIT export path to Suss var (repeatable)
+        --import <PATH=VAR>  Explicit WIT import path to Runtime var (repeatable)
         --src <DIR>         Source dependency directory (repeatable)
         -o, --output <FILE>  Output WASM file path
 
@@ -514,6 +524,7 @@ COMMANDS:
         -w, --wit <PATH>     WIT file or package directory (including deps)
         --wit-world <WORLD>  Select a world
         --export <PATH=VAR>  Explicit WIT export path to Suss var (repeatable)
+        --import <PATH=VAR>  Explicit WIT import path to Runtime var (repeatable)
         -o, --output <FILE>  Output WASM file path
 
     run - Execute a WASM component:

@@ -1,0 +1,30 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "sh",
+    "scripts/verify-bootstrap.sh"
+  ],
+  "head": "ed25ecf1b52fc1abde1949f351ac5d4efa99c949",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p2361037-i107204730.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 717.5858772322536,
+  "log_sha256": "ee2cd1a12046206c787c7b490966b92b3d093e09f460f298b9a0353b1c046262",
+  "changed_inputs": [
+    "results/m5-wit-adapters/rebased-imports-optimized-random/command.json",
+    "results/m5-wit-adapters/rebased-imports-optimized-random/command.log"
+  ],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "3b4b8e1010af8f1ff32552cf57b47071c971d5fb1e16cd5f9a868c8e9058050c",
+  "inputs_count": 13997
+}
