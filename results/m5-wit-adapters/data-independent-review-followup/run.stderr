@@ -1,0 +1,8 @@
+
+thread 'main' (1942959) panicked at target/probe/review-524-followup/probe.rs:6:45:
+called `Result::unwrap()` on an `Err` value: failed to parse WebAssembly module
+
+Caused by:
+    the `cm-implements` feature is not active (at offset 0x1f)
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

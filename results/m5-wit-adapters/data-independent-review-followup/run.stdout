@@ -1,0 +1,4 @@
+original-provider imports=["test:review-aliases/data@1.2.3"]
+original-provider PASS
+dependency-order imports=["test:review-deps/base@1.2.3", "test:review-deps/derived@1.2.3"]
+dependency-order PASS

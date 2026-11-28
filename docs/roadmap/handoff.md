@@ -37117,3 +37117,31 @@ provider control uses the public file compiler. Earlier packed/schema-focused
 passes retain their exact source qualifications. Publish these repairs to #523;
 the independent review follow-up, fresh broader validation and final-head CI
 remain gates. The earlier full workspace pass belongs to8788, not these fixes.
+
+The independent review follow-up is terminal with both P2 findings addressed
+and no new finding. It executes four positive scenarios across the qualified
+commands, including reversed dependency order and repeated provider aliases,
+signed/unsigned byte arrays and vector-of values. Its final artifact-only
+inspector passes all three malformed-value controls (exit0,52.942s). Earlier
+missing cm-implements and structured-payload-inspection mistakes remain exit101
+receipts, with their completed assertions separately qualified. Production/test/
+linked-library bytes remain fixed; the middle receipt truthfully records the
+publication transition9bb6→04bf rather than claiming unchanged HEAD. Report,
+commands, raw receipts, source hashes and artifact hashes are archived under
+`data-independent-review-followup/`. Full baseline and final-head CI stay separate.
+
+### 2026-11-28: repaired data-codec foundation
+
+Fresh foundation validation of04bf plus the archived independent review returns0
+for all20 commands in1382.797s,13,915 inputs and HEAD fixed
+(`data-review-foundation/`). The checked-in orchestrator/count audit records364
+Python tests, all generator/catalog/provenance checks, Java/Node-free bootstrap
+reproduction/four execution controls,344 library/bin/example controls,
+19 core-import/reader controls and the full UTF-16 digit-domain control. In total
+368 Rust controls pass, zero fail/filter; two explicit doc ignores remain
+ignored. This includes the generic TypeSink's broader command/unit paths.
+
+Publish the terminal review/foundation evidence, then run the exact workspace
+baseline on its frozen head. Current-head CI is required after publication;
+the earlier8788 full pass and04bf focused results keep their original source
+qualifications. No issue closure/promotion/merge is implied.

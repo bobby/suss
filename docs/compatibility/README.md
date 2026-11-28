@@ -2160,3 +2160,10 @@ kind/length and exact raw bits; tuples retain their vector requirement. Original
 review failures and intermediate harness failures remain in adjacent evidence.
 The earlier full workspace result retains its8788 source qualification; fresh
 validation/review/CI of these repairs remains separate.
+
+[Fresh repaired-codec foundation](../../results/m5-wit-adapters/data-review-foundation/summary.json)
+returns0 for all20 commands:364 Python checks,368 Rust controls including
+bootstrap/core/reader/unit paths,zero failures/filters and two explicit doc
+ignores. The archived independent follow-up confirms both original P2 repairs
+with no new finding. The required fresh full baseline and final-head CI retain
+separate source qualifications.
