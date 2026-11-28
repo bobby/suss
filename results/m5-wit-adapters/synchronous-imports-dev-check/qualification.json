@@ -1,0 +1,4 @@
+{
+  "actual_exit_code": 0,
+  "qualification": "Development cargo check output only. Source changed while the command ran; this is not a frozen-source validation result. The subsequent actual three-test component command has its own frozen input receipt."
+}

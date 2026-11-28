@@ -25,6 +25,8 @@ pub struct AotOptions {
     /// None preserves the shipped compilation budget. Does not configure artifact execution.
     pub compile_fuel: Option<u64>,
     pub exports: Vec<(String, Symbol)>,
+    /// Explicit synchronous WIT path to qualified Runtime var mappings.
+    pub imports: Vec<(String, Symbol)>,
     pub async_imports: Vec<AsyncImportMapping>,
     /// Merge the component's modules and optimize them with Binaryen
     /// (ADR-0005). Needs a separately installed Binaryen.
@@ -88,6 +90,7 @@ pub fn compile_file(
         source_paths,
         &AotOptions {
             exports: mappings.to_vec(),
+            imports: Vec::new(),
             async_imports: Vec::new(),
             compile_fuel: None,
             optimize: false,
@@ -275,6 +278,7 @@ pub(crate) fn compile_inputs_typed(
         source_paths,
         &AotOptions {
             exports: mappings.to_vec(),
+            imports: Vec::new(),
             async_imports: Vec::new(),
             compile_fuel: None,
             optimize: false,
@@ -303,6 +307,28 @@ pub(crate) fn compile_inputs_with_options(
     let world = resolve
         .select_world(&[package], wit_world)
         .map_err(|error| CompileError::Wit(format!("Failed to select WIT world: {error:#}")))?;
+    if !options.imports.is_empty() {
+        if !options.async_imports.is_empty() || options.optimize {
+            return Err(CompileError::Unsupported("Synchronous import mappings currently require the unoptimized synchronous-import route".into()));
+        }
+        portable::aot::validate_import_boundary(&resolve, world, &options.imports)
+            .map_err(|error| CompileError::Unsupported(error.to_string()))?;
+        for (_, source) in &options.imports {
+            let namespace = source.namespace.as_deref().expect("validated import namespace");
+            if portable::resolve::locate_source_if_present(namespace, source_paths, 0..0)
+                .map_err(|error| CompileError::Semantic(error.to_string()))?.is_some() {
+                return Err(CompileError::Semantic(format!("Host namespace {namespace} is owned by a source module; import mapping would hide its initialization")));
+            }
+        }
+        let imported = options.imports.iter().map(|(_, source)| source.clone()).collect::<Vec<_>>();
+        let hints = export_param_hints(&resolve, world, &options.exports);
+        let fragments = prepare_inputs_with_hints(inputs, source_paths, false, &imported, options.compile_fuel, true, hints)
+            .map_err(|error| CompileError::Semantic(error.to_string()))?;
+        let mappings = portable::aot::source_export_mappings(&fragments, &resolve, world, &options.exports)
+            .map_err(|error| CompileError::ExportMismatch(error.to_string()))?;
+        return portable::aot::component_with_imports(&fragments, &resolve, world, &mappings, &options.imports, false)
+            .map_err(|error| CompileError::Component(error.to_string()));
+    }
     if options.async_imports.is_empty() {
         portable::aot::validate_boundary(&resolve, world)
             .map_err(|error| CompileError::Unsupported(error.to_string()))?;
