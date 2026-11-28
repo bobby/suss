@@ -37178,3 +37178,18 @@ existing async import path retains its original scope. Resource ownership and
 general cancellation/error cleanup still have their own acceptance criteria.
 The full data-codec baseline continues on the separate frozen ab4cbd0e tree;
 it does not certify these new import changes.
+
+Four additional import regressions returned0 in a separately filtered command:
+146.84s test execution (152.974s including build), no failures or ignores, three
+earlier tests filtered out. All13,804 recorded inputs and HEAD remained fixed.
+They execute caught boundary errors with large string prefixes before a bad
+scalar and verify once-only left-to-right source effects without invoking the
+host;1,00019-argument calls through indirect argument and return records within
+one page; nominal records/enums/flags/variants/maps with u64::MAX and astral
+characters; and rejection of host calls from isolated Macro execution. The
+initial added-test build used the older dynamic callback arity and failed to
+compile; the corrected callback includes the pinned API's function-type argument.
+Both commands are retained in `synchronous-imports-argument-ownership/` and
+`synchronous-imports-ownership-and-nominals/`. These and the earlier complete
+three-test command give seven distinct positive regressions on unchanged import
+production code, not one complete seven-test command.
