@@ -148,7 +148,7 @@ Executing regression locations include `compiled_macro_cumulative_fuel`,
 `portable_module_discovery_budget`, `portable::syntax_quote::tests`,
 `portable::ir::metering_tests`, `portable::origin::tests`, and
 `portable::origin::form_metadata::tests`. Commands, actual outcomes and raw
-failure locations are retained in the handoff; issue acceptance evidence belongs
+failure locations are retained in [archived execution notes][execution-archive]; issue acceptance evidence belongs
 in GitHub.
 
 The native source-constructor argument-buffer copy charges one host-work unit
@@ -218,3 +218,5 @@ reserved key-entry publication follows without allocation or charging. Generic
 charge failures preserve the prior table and IDs. Checked native capacity/layout
 overflow and the existing Vec allocation panic/OOM policy remain separate from
 recoverable operation fuel; this change adds no memory-admission guarantee.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

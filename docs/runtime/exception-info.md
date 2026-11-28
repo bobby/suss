@@ -42,7 +42,7 @@ Nine original native regressions plus three independent review regressions plus 
 adding the ordinary-call regression. New getters/class/GC/source order tests failed before implementation.
 Live-cell factory initialization first exposed a scoped-root lifetime error; a
 reordered-class regression then exposed positional rather than named field lookup.
-Both failures and fixes remain recorded in handoff.
+Both failures and fixes remain recorded in [archived execution notes][execution-archive].
 
 The fresh 303-case portable comparison adds25 ExceptionInfo observations to the
 unchanged278 inputs; all16 actual decoded pipeline tests pass. Exact false values
@@ -82,7 +82,9 @@ construction). Runtime factory initialization roots both class and self binding 
 The pinned generated JavaScript generic wrapper also consults global arity slots:
 a saved generic call can dispatch to the replacement's corresponding arity, and a
 fixed-arity replacement lacking those JS slots can cause a host TypeError. These
-raw observations are retained in the review handoff. The current universal callable
+raw observations are retained in the review [archived execution notes][execution-archive]. The current universal callable
 ABI selects captured implementations; generic JS wrapper/global-slot compatibility
 is an unresolved adaptation, not a claimed passing source behavior. Full core callable
 compatibility remains incomplete.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

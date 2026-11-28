@@ -67,12 +67,12 @@ does not certify current-head acceptance. The original bodies of
 remain open. Scope includes the public collection contracts in design section 4,
 including record behavior. This audit was authored under the user's test hold.
 The user subsequently authorized focused validation followed by the full baseline;
-current execution evidence is recorded in the latest handoff entries. The full
+current execution evidence is recorded in the latest [archived execution notes][execution-archive] entries. The full
 baseline and original-criterion completion audit remain pending.
 
 | Original criterion | Authoritative source coverage located | Remaining acceptance evidence/work |
 | --- | --- | --- |
-| #16 notices and hashes | [Import gate](../../scripts/verify-core-import.sh), retained extracted originals, EPL notice, manifest and explicit patch hashes. | Previous gate results are recorded in handoff; reproduce the current published snapshot before closure. |
+| #16 notices and hashes | [Import gate](../../scripts/verify-core-import.sh), retained extracted originals, EPL notice, manifest and explicit patch hashes. | Previous gate results are recorded in [archived execution notes][execution-archive]; reproduce the current published snapshot before closure. |
 | #16 source updates invalidate reviews | [Review validator regressions](../../scripts/test_cljs_reviews.py) and source hashes in the reviewed inventory. | Retain stale-hash rejection evidence with the final source snapshot. |
 | #16 portable forms load in Suss namespaces | [Executable import tests](../../crates/suss-cli/tests/core_import.rs), reproducible runtime/macro bootstrap. | Import and bootstrap execution gates remain required after final changes. |
 | #16 adaptations are explicit | [Import recipe](../compatibility/core-import.json), [review overlay](../compatibility/reviews.edn), whole-form patches and dependency ledgers. | Complete provenance for any further record imports; extraction alone is not execution. |
@@ -230,3 +230,5 @@ separate decision. Keep future M5–M7 work outside this record.
 The consolidated focused run passed HAMT 8, chunk 2, lazy 4 and reduction 3 tests, but failed all three Subvec tests on the fixture’s unresolved defn. The shared helper was repaired to def/fn, preserving all 45 pinned observations; the rerun passed two Subvec tests and failed the public corpus on unresolved empty. The complete upstream empty form is now imported with source provenance, 324-file reproduction, 421 reviewed/644 unassessed overlay validation and 15 importer tests passing. Bootstrap regeneration is running in an isolated target directory after a shared-target dependency-identity compilation failure. Empty native tests and the final combined rerun remain pending. Neither setup failures nor authored tests count as acceptance.
 
 Combined regenerated-bootstrap native gate completed exit 0: HAMT 8, chunk 2, empty 3, lazy 4, reduction 3, Subvec 3, exact transient errors 1 = 24 passed; zero failures/ignores/filters across seven suites. Command and log `/private/tmp/suss-m4-collection-combined-second.log` preserve the complete selected targets. This supersedes earlier Subvec unresolved defn/empty failures. Fresh transient oracle confirmation, independent final combined review, unfiltered full workspace baseline and final-head CI remain pending; no original issue is closed by this partial gate.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

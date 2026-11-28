@@ -88,7 +88,7 @@ require the provenance/EPL process.
 Commands: `cargo test -p suss-compile --test portable_resolution --test portable_pipeline
 --test runtime_abi --locked -- --test-threads=2` and
 `scripts/test-portable-pipeline-oracle.sh`. Full baseline and review evidence are
-recorded in the handoff/PR. The legacy source corpus remains 9 differential
+recorded in [archived execution notes][execution-archive]/PR. The legacy source corpus remains 9 differential
 passes, 7 exact failures, 0 skips; all 1,065 inventory declarations remain
 unassessed. M2 remains incomplete. Next, connect source namespace loading/definitions, extended signatures, portable
 coercions and unified
@@ -118,3 +118,5 @@ var itself has been bound (#354). Suss doesn't require `^:dynamic` to bind a
 var, so the flag follows what is bound rather than its metadata.
 Fresh [forward-declaration evidence](forward-declarations.md) supersedes the old
 source-read assumption while preserving the ABI cell distinction.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

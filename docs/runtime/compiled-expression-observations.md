@@ -31,7 +31,7 @@ zero failures, ignores or filters. The first collection run recorded eleven
 passes and five unsupported-layout failures. After implementing storage reads,
 three large fixture builders exhausted the interactive10M fuel budget before
 decoding; these fixtures now use explicit bounded1B fuel without changing their
-inputs or assertions. The final same16 run passed in2.72seconds. The handoff
+inputs or assertions. The final same16 run passed in2.72seconds. The [archived execution notes][execution-archive]
 records those failures and logs. These results do not establish all201 corpus
 acceptance or current-head acceptance after alignment tob48e8bf.
 
@@ -154,3 +154,5 @@ in 71.44 seconds. Both phase pairs regenerate and reproduce twice byte-exact
 without Java/Node; all four executing bootstrap checks pass. The failed full CI
 log remains evidence of a failure, not an accepted baseline. A passing exact
 final-head full run and CI are still required before readiness.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

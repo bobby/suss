@@ -114,4 +114,5 @@ Next integrate source module plans with persistent compiled clients and explicit
 runtime recovery, reload/cache and lifecycle policy. Then
 extend signatures/core coercions/collections and the remaining IR forms, compiled
 macros and target adapters. Retire the legacy backend only after replacement
-acceptance. Commands and actual review/CI evidence belong in the handoff and PR.
+acceptance. Commands and actual review/CI evidence belong in per-run `results/` files and
+the relevant PR.

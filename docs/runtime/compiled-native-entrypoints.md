@@ -44,7 +44,7 @@ bounded to 8 MiB. Unsupported data fails explicitly. Raw source arrays,
 arbitrary nominal objects and non-data values inside collections are not given
 fabricated string representations; full printing remains a separate requirement.
 
-Executing evidence and commands are recorded in the handoff. Initial command
+Executing evidence and commands are recorded in [archived execution notes][execution-archive]. Initial command
 regressions failed on prototype `&env`, `meta` and global assignment. A first
 migration exposed unsupported vector display; the unchanged vector assertions
 now pass, including original file positions. Focused tests also cover numeric
@@ -56,3 +56,5 @@ workspace baseline and exact final-head CI remain publication gates.
 This is partial M3 progress. Complete source environments/inference, source/macro
 cache keys and invalidation, evaluator retirement, remaining frontend migration
 and lifecycle/cancellation acceptance remain open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

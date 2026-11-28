@@ -76,5 +76,7 @@ defect was found in the retained algorithms or complete setup statements.
 Independent review Python80/import74/setup4/reviews159+906 checks pass. Final
 latest-source full workspace baseline passes after tightened native effect tests,
 with all required enabled suites passing and existing manual ignored/diagnostic
-gaps unchanged. Review logs and commands are in the handoff. Exact reviewed-head
+gaps unchanged. Review logs and commands are in [archived execution notes][execution-archive]. Exact reviewed-head
 CI remains a separate readiness gate; PR102 review makes no M4/M7 completion claim.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -43,7 +43,7 @@ function and forward record differences in both phases. Runtime checks passed.
 After the fix the expanded regression and 39 related checks pass. An additional
 regression failed before correcting generated declaration metadata precedence.
 Independent review, final-head full baseline and CI remain pending at publication
-preparation; current results are recorded in the handoff.
+preparation; current results are recorded in [archived execution notes][execution-archive].
 
 This is partial progress for #13/#14. Full portable environments/inference,
 source/macro dependency cache invalidation, evaluator retirement and M3 lifecycle
@@ -56,3 +56,5 @@ record. Both views remain unchanged across the nested declaration, and the live
 record retains its original doc and absence of private metadata. The native
 regression asserts the same distinction in both phases. No significant
 production finding was found; final-head full baseline and CI are still required.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

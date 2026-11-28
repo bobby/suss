@@ -51,9 +51,11 @@ canonical file path is asserted independently before the primary fixture path
 normalization. The full core namespace remains subject to the existing graph
 and occurrence-work bounds.
 
-Commands, failures and terminal results are recorded in the handoff. Independent
+Commands, failures and terminal results are recorded in [archived execution notes][execution-archive]. Independent
 PR review, full workspace baseline and successful final-head CI are required.
 This is partial progress on issue #14. Complete declaration field presence,
 argument metadata outside the observed cases, self-local method binding records,
 return/union inference, source/macro cache invalidation, evaluator retirement and
 M3 lifecycle acceptance remain open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

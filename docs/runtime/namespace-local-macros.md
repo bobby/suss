@@ -28,5 +28,7 @@ source identity work use the configured compilation allowance.
 The executing regressions are in `inline_module_macros`, the source metadata and
 native frontend suites, and `portable_session::tests::namespace_local_macros_roll_back_on_real_link_failure`.
 `results/m12-reader-followup/inline-source-origin-and-cache-work` records the67
-focused passing tests and exact inputs. The handoff and GitHub issues retain the
+focused passing tests and exact inputs. The [archived execution notes][execution-archive] and GitHub issues retain the
 full-suite, workspace, CI and review evidence and remaining limitations.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

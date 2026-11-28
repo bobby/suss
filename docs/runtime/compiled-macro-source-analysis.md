@@ -46,7 +46,7 @@ after its ID lookup. A copied descriptor carrying the same ID is rejected for
 sets, KeySeq and all previously supported nominal data classes after GC. Private
 catch names also avoid fields and user catch aliases, preserving the distinct
 payload and user binding records. Review regressions failed before these repairs;
-the handoff records their separate results and final validation. These are native
+[archived execution notes][execution-archive] record their separate results and final validation. These are native
 transport repairs, not complete portable environment or bootstrap acceptance.
 
 Source records now also retain immutable pre-analysis namespace catalogs, lexical
@@ -133,3 +133,5 @@ source rules rather than substitute physical HIR types. This reference evidence
 does not certify native portable inference, full source ASTs, implicit `&env`,
 bootstrap, or M3 acceptance. Helpers are original repository code; the development
 compiler uses the existing pinned source and retained EPL notices.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

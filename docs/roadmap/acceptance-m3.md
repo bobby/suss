@@ -43,7 +43,7 @@ outcome is recorded on PR #221 rather than requiring a self-referential commit.
 - Independent full-diff, repair, fixture and original-criterion reviews: no unresolved material findings or missing original criterion. Author repairs were reviewed independently. The full-baseline pass supports the implementation criteria; final-head CI and promotion remain separate required gates.
 
 Commands, failures, interrupted obsolete runs and terminal logs are preserved in
-[handoff](handoff.md). Interrupted baselines and prior-head green checks are not
+[archived execution notes][execution-archive]. Interrupted baselines and prior-head green checks are not
 final acceptance. The workspace baseline also retains pre-existing, individually
 explained ignores: 37 legacy prototype cases awaiting compiled support, three
 manual evidence-recording commands, and one pre-existing compiler documentation
@@ -95,3 +95,5 @@ The 10,000-task test proves sequential task retirement and actual heap recovery,
 not a generic WIT or OS-resource stress claim. Existing unassessed compatibility
 inventory entries remain unassessed. The broader constructor corpus uses 100M fuel
 and has a separate default-budget regression.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

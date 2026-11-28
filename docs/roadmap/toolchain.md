@@ -87,7 +87,7 @@ cargo test -p suss-compile --test toolchain_profile --test toolchain_async \
 
 The local M0-02 named feasibility acceptance probes now pass. Issue #2 remains
 open during draft PR #40 acceptance review. See the
-criterion-by-criterion audit in the handoff. This does not establish generated
+criterion-by-criterion audit in [archived execution notes][execution-archive]. This does not establish generated
 Suss boundary adapters, nested async values, arbitrary payload shapes, endpoint
 write cancellation or production Suss scheduling. These belong to the M5/M6
 acceptance suites.
@@ -97,7 +97,7 @@ its referenced upstream issue #11833 remains open. Dropping a Rust call future
 is not cancellation. The executing guest-driven cancellation paths above do
 not establish top-level host interruption or Suss session cancellation.
 The optional Wasm compiler-component build fails on native-only CLI imports;
-see the handoff for its failed command and limits. The production bundled WIT remains
+see [archived execution notes][execution-archive] for its failed command and limits. The production bundled WIT remains
 in use pending replacement binding tests.
 M0-04 executes the full required core feature probe set in Chrome
 154.0.8037.58: GC, typed function references, tail calls and exceptions return 42.
@@ -132,3 +132,5 @@ probe; it is not a shipped dependency. The HTTP server binds only to localhost
 and Chrome uses a temporary isolated profile. Other browsers, production typed
 host bindings, canonical async browser interoperability and distributable browser
 artifacts remain M8 acceptance work.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

@@ -63,7 +63,7 @@ arguments preserve positions and f32 promotion through both branches. Signed
 NaNs remain NaN across f64-to-f32 after GC. All seven compiler AOT tests pass;
 original expectations remain unchanged. Their full baseline passed1129/0/17 and
 CI passed at the original reviewed head; the integration rebase changes only
-handoff text and requires replacement final-head CI.
+[archived execution notes][execution-archive] text and requires replacement final-head CI.
 
 The checked small integer working increment passes all eight compiler AOT tests.
 Its new typed component regression round-trips all six integer types at extrema,
@@ -231,3 +231,5 @@ diagnostics. Nested/composite lists, exact64, resource/import adapters, source
 suspension, cancellation and the original M3 acceptance gates remain unfinished.
 Independent review, complete workspace baseline, bootstrap reproduction and
 final-head CI are required before publishing this increment as ready.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

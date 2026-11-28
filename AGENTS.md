@@ -2,8 +2,7 @@
 
 Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 [GitHub milestones](https://github.com/bobby/suss/milestones),
-[compatibility inventory](docs/compatibility/README.md) and
-[handoff](docs/roadmap/handoff.md) before changing architecture.
+[compatibility inventory](docs/compatibility/README.md) before changing architecture.
 
 * Suss is a well-behaved Clojure. Clojure semantics and the vendored jank
   clojure-test-suite are the behavior oracle. Pinned ClojureScript is an
@@ -44,7 +43,11 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
   milestone or work-package status in repository files. Post progress, evidence
   and the next unblocked task as comments on the relevant issue; close an issue
   only when its acceptance criteria pass. Keep `[Mx-yy]` issue title IDs stable.
-* Update docs/roadmap/handoff.md with commands, results and limitations.
+* Keep supported commands and limitations in the relevant runtime/example docs.
+  Keep progress, dependencies and next work on GitHub issues and PRs. Retain raw
+  commands, results and source qualifications in separate per-run `results/`
+  files. Temporary agent/session notes belong in ignored local files; do not
+  maintain a shared execution diary.
 
 Existing crates: `suss-core` (forms), `suss-reader`, `suss-compile`, `suss-cli`.
 The tree-walking macro evaluator and prototype expression route are removed;

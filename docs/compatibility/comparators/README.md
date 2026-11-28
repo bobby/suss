@@ -51,8 +51,8 @@ compilation. Private-function warnings are expected and retained.
 The old 64-case fixture, observations and actual logs are copied unchanged into
 `evidence/historical-64/`, with hash/byte receipts. They are historical pinned
 reference only, not execution of this source draft. New authoring failures are
-retained separately and are not passes. Current gate results are recorded in the
-handoff and evidence README after terminal status.
+retained separately and are not passes. Record current gate results on the relevant GitHub issue and in the evidence
+README after terminal status.
 
 `portable_comparators.rs` is authored, UNCOMPILED/UNEXECUTED. It evaluates the
 complete candidate corpus and separate policy cases in both caller phases after

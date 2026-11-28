@@ -55,7 +55,7 @@ cache invalidation and cooperative cancellation remain M3 requirements. Issues
 #12–#15 remain open.
 
 Validation commands and actual terminal results are recorded in
-[the handoff](../roadmap/handoff.md). A passing focused suite is not the required
+[archived execution notes][execution-archive]. A passing focused suite is not the required
 full workspace baseline or final-head CI.
 
 
@@ -101,8 +101,10 @@ The lane is `/private/tmp/suss-m4-hamt-deletion`, branch
 `portable/m4-hamt-deletion` based on `3c80b60`. Python strict corpus/transport tests
 pass 5+8; touched Rust parses through rustfmt; diff whitespace check passes. No
 Cargo/native build, commit or push ran here while baseline PID 65986 owns the native lane.
-Exact commands, oracle setup failures, logs and remaining gates are in the handoff.
+Exact commands, oracle setup failures, logs and remaining gates are in [archived execution notes][execution-archive].
 Next run the complete `compiled_macro_hash_maps` native suite after scheduling,
 resolve genuine compile/semantic/resource failures, then require full workspace
 baseline, independent final review and exact-head CI. This bounded coverage does
 not establish sorted collections, records or complete #18/#19 acceptance.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

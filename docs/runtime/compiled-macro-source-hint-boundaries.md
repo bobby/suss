@@ -42,5 +42,7 @@ caller production fuel/graph bounds are unchanged.
 
 Affected suites, Java-free bootstrap reproduction, independent review, required
 exact final-head full workspace baseline and CI gate PR readiness. Current results
-are recorded in the handoff. Full environments/inference, source/macro cache
+are recorded in [archived execution notes][execution-archive]. Full environments/inference, source/macro cache
 invalidation, evaluator retirement and pending-I/O lifecycle remain M3 requirements.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

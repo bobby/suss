@@ -41,9 +41,11 @@ Canonical transport parity after GC covers collection metadata, source locations
 lone surrogates, signed zero and NaN payloads. The broader affected run passes
 73 tests; final bounds/graph/core checks pass 23 tests. Bootstrap manifests have
 the updated compiler identity; both Wasm images remain byte-identical.
-Commands, unsuccessful intermediate attempts and logs are in the handoff.
+Commands, unsuccessful intermediate attempts and logs are in [archived execution notes][execution-archive].
 
 Full workspace baseline, independent PR review and exact final-head CI remain
 required. This resolves a bounded construction prerequisite for issue #14;
 complete portable schema, source/macro artifact cache keys, temporary evaluator
 removal and M3 lifecycle acceptance remain open.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

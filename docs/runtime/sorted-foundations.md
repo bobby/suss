@@ -15,7 +15,7 @@ function/native-object constructor properties and object ToPrimitive remain
 unsupported by the bounded type prerequisite; full public comparators, sorted
 collections and nominal records are not implemented by these protocol probes.
 Older counts, extracted indexes and process handles below describe their earlier
-snapshots. Current commands/results are recorded in the handoff.
+snapshots. Current commands/results are recorded in [archived execution notes][execution-archive].
 
 ## Earlier prerequisite record
 
@@ -89,7 +89,7 @@ and runtime_abi.rs's nominal error descriptor initialization (`+ 1`). These
 strengthened assertions remain uncompiled and unexecuted. This uses the existing bounded compiler
 adapter, not evidence that the upstream defprotocol macro has been compiled.
 
-Executed commands/results are recorded in the handoff. The development-only
+Executed commands/results are recorded in [archived execution notes][execution-archive]. The development-only
 runner `sh scripts/test-sorted-interface-oracle.sh` checks the pinned inventory,
 compiles the original fixture with Java/ClojureScript, executes Node, and compares
 strict tagged observations. It deliberately has no Cargo invocation. Generated
@@ -272,3 +272,5 @@ protocol/scalar-constructor tests, followed by Java/Node-free bootstrap proof,
 independent final review, full locked baseline and final-head CI. Full public type
 support, array/object conversion, complete compare family and persistent trees/
 records remain original M4 work; this draft does not satisfy them.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

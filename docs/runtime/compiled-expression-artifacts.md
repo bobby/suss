@@ -201,5 +201,7 @@ through redefinition; captured functions are re-read and called after collection
 The two original function-printing cases also pass in both phases. A direct ABI
 regression roots an exact UTF16 label only through its closure and rejects unset
 names, wrong owners and wrong initializer values as language exceptions.
-Full original corpus/consumer checks follow in the handoff; this does not complete
+Full original corpus/consumer checks follow in [archived execution notes][execution-archive]; this does not complete
 constructor/storage branches, all printer contracts or the original M3 gates.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

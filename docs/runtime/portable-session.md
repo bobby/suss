@@ -128,7 +128,7 @@ runtime cancellation: reset returns `Trap::Interrupt`, the future remains Pendin
 and the old closure remains callable. After budget refresh, reset retries without
 replaying the hook or releasing its captured guard twice, and rejects late old
 handles after replacement. No sleep or synthetic interruption result is used.
-Commands and logs are recorded in the [handoff](../roadmap/handoff.md).
+Commands and logs are recorded in the [archived execution notes][execution-archive].
 
 These results cover native reset storage and cleanup only. Task cancellation
 still lacks an operation-to-waiter ownership association for pending host I/O;
@@ -290,7 +290,7 @@ Printing a future observes nominal status without implicit await, source executi
 or terminal-payload rooting. Resident code counters remain distinct from the
 test-only actual post-GC live-byte probe.
 
-Current evidence and limitations are recorded in the milestone issues and handoff.
+Current evidence and limitations are recorded in the milestone issues and [archived execution notes][execution-archive].
 The staged native implementation does not certify all M3 acceptance criteria.
 
 
@@ -336,3 +336,5 @@ intent across an interrupted second preflight. Non-interrupt failures after a
 completed submission terminate conservatively rather than leave a stuck prompt.
 This observation path does not classify uncertain scheduler mutation or teardown
 as recovered.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md

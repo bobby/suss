@@ -9,7 +9,8 @@ The current compiler is a prototype. It does not yet implement that target:
 WIT support is partial, the persistent compiled REPL is incomplete, and the core library has
 known semantic gaps. See the [accepted specification](docs/design/suss-0.3.1.md),
 [roadmap](ROADMAP.md) (status in [milestones](https://github.com/bobby/suss/milestones)), [compatibility inventory](docs/compatibility/README.md)
-and [latest implementation evidence](docs/roadmap/handoff.md).
+and [per-run execution evidence](results/). Current progress and next work live
+on the relevant [GitHub issues](https://github.com/bobby/suss/issues).
 
 ## Development
 

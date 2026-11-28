@@ -3,7 +3,8 @@
 Status: accepted target design, 2026-09-29. **This describes the intended system,
 not features already implemented.** Implementation status lives in
 [GitHub milestones and issues](https://github.com/bobby/suss/milestones); the plan is
-[the roadmap](../../ROADMAP.md) and session notes are in [the handoff](../roadmap/handoff.md).
+[the roadmap](../../ROADMAP.md). Execution evidence is retained under `results/`;
+current progress and next work belong on the relevant GitHub issues and PRs.
 
 [ADR-0001](../adr/0001-result-option-and-panic.md) proposes a staged move to nominal
 Result/Option types and eventually native semantics without nil or throw/catch.
@@ -415,8 +416,8 @@ skipped and unassessed counts separately.
 
 ## 12. Session protocol and decisions
 
-Read this spec, ROADMAP, inventory and handoff before implementation. Select an
-unblocked issue; add a regression before fixing behavior. Implement a bounded
+Read this spec, ROADMAP, inventory and the relevant GitHub issue before
+implementation. Select an unblocked issue; add a regression before fixing behavior. Implement a bounded
 vertical slice, validate it, then update known failures and post evidence and the
 next concrete step on the GitHub issue. Every milestone closes only when its acceptance evidence exists.
 Record deviations here and change affected tests/docs in the same change.
@@ -453,7 +454,7 @@ objects. UID identity is not structural equality and does not replace Murmur3.
 Artifact manifests reject ABI1 before initialization; actual incompatible Wasm
 layouts also fail linking. Existing generated artifacts must be rebuilt. The
 universal invocation, source semantics and release gates do not change. Evidence
-and remaining limits belong in docs/runtime/identity-hashing.md and handoff.
+and remaining limits belong in docs/runtime/identity-hashing.md and per-run evidence.
 
 2026-10-01 collection literal ordering decision: preserve textual evaluation
 order for vector, map and set literals. In a map, evaluate each key followed by
@@ -476,7 +477,7 @@ emitter in `clojurescript/src/main/clojure/cljs/compiler.cljc` evaluates tempora
 assigns the frame parameters and emits `continue`. The existing tail-position and
 arity diagnostics remain required. General optimization of ordinary recursive
 calls is not added by this clarification. Executing evidence and validation gates
-belong in the runtime docs and handoff; this entry does not claim M3 complete.
+belong in the runtime docs and per-run evidence; this entry does not claim M3 complete.
 
 2026-10-25 behavior oracle and immutable macro data decision: Suss is a
 well-behaved Clojure. Clojure semantics and the vendored jank clojure-test-suite

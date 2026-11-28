@@ -56,7 +56,7 @@ CARGO_TARGET_DIR=/Users/bobby/code/github/bobby/suss/target CARGO_BUILD_JOBS=2 c
 The first regression failed with unresolved Macro PersistentVector. Subsequent
 checks exposed the unadapted Error construction, munged property name, missing
 ILookup, absent Array.slice member and bounded stress fuel exhaustion; all are
-recorded in the handoff. No failures were hidden by skips. Fresh pinned compiler/Node execution produced 40 exact scalar observations,
+recorded in [archived execution notes][execution-archive]. No failures were hidden by skips. Fresh pinned compiler/Node execution produced 40 exact scalar observations,
 and independently decoded execution matches all 40 in each of both native phases.
 Run `sh scripts/test-macro-vector-oracle.sh` to reproduce the reference and native
 checks; JVM/Node remain development-only oracles. Full baseline, independent PR
@@ -122,3 +122,5 @@ source: `/private/tmp/suss-m4-vector-fuel-diagnostic.rs`. The temporary test was
 removed before the coordinator's full focused run.
 
 The complete `cargo test -p suss-cli --test compiled_macro_vectors --locked -- --test-threads=2` run passed all eight tests, with zero failures, ignores or filters (18.42s, exit 0). Log: `/private/tmp/suss-m4-vector-focused-500m.log`. The required full baseline and repaired final-head CI remain pending; the earlier 100M failures are retained.
+
+[execution-archive]: https://github.com/bobby/suss/blob/915be2fb1b8892b99a830d15bdf8a405e479c5f6/docs/roadmap/handoff.md
