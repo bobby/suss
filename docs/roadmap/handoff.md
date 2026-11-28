@@ -37787,3 +37787,39 @@ and capacity reuse. The10,000-live-block allocate/release/reuse workload consume
 in canonical-private-index-ownership-gc/. This is the isolated allocator proof;
 actual large WIT/UserManager execution, updated observers, ordinary Cargo checks,
 bootstrap/full baseline, independent review and final-head CI remain required.
+
+The isolated application probe then exposed fragmented free-space search:
+the1,000-user case completed with an explicit3-billion diagnostic list budget,
+but the10,000-user second list again exhausted fuel in allocate. The original
+100-million production budget was unchanged. Raw failure is retained in
+canonical-usermanager-explicit-guest-budget/; a matching direct regression
+fails at fragmented reuse669 under the original100-million unit budget
+(five earlier controls still pass). Its exact production source is retained in
+canonical-fragmented-reuse-before/.
+
+Reusable blocks are now indexed by400 capacity classes with a nonempty-class
+bitmap and conservative per-class maxima. A failed scan tightens its maximum.
+Already-reserved16-byte padding becomes usable capacity; physical allocation
+sizes/growth are unchanged. The private module now has seven functions/four
+globals and two private GC arrays. Normal canonical alignments have exact
+16-byte capacity classes through512 bytes; general larger/stronger-alignment
+searches can still depend on fragmentation, without scanning unrelated classes.
+The first six-control run passes (6.855s); all seven then pass including partial
+class maxima/GC (7.379s,14,103 fixed inputs). Fragmented10,000-block reuse uses
+5,426,113 fuel, varied live/reuse7,402,630 and partial-class maxima8,170,101,
+all within the unchanged100-million unit budget.
+
+A test-only component transformation replaces exactly the old619-byte allocator
+module and asserts every other component byte unchanged; pinned0.258.0 encoder/
+parser validation passes. The ordinary1,000-user caller still hits its original
+100-million request limit after setup, now outside the allocator. The explicit
+3-billion diagnostic caller completes both1,000/10,000-user datasets, all five
+joined lists, counter and100-CRUD batches, and one close with zero live resources
+(exit0,165.128s,14,125 fixed inputs). Joined-list fuel stabilizes near107million
+for1,000 rows and1.081billion for10,000 rows; first calls use107,924,241 and
+1,090,438,178. Source/module/build identities and raw results remain in
+canonical-size-bins-usermanager-guest-cost/. This identifies a separate total
+request-policy requirement; it is not a final benchmark, a changed compiler
+budget, a numerical performance gate or a claim that allocator failures were
+resolved by increasing fuel. A first inspector build's Range type error and the
+prebuilt native-library type-identity probes are retained separately.

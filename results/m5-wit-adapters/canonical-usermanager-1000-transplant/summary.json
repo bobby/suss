@@ -1,0 +1,26 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "../m5-usermanager/target/probe/usermanager-optimized-bin/measure",
+    "target/probe/usermanager-optimized-private-index.wasm",
+    "1000"
+  ],
+  "head": "1952a42acb21e4aa328a38eafaea086f87f609cc",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p2182917-i107006967.scope\n",
+  "environment": {
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 1,
+  "seconds": 47.81947764288634,
+  "log_sha256": "66ac103956f61d3c0d66940a18ee9571f3fb62e456c4e5ea99ff3dea47a64c7d",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "3a270dffc2464e8dcbc8f1ad137d0fbde69cc2f197201ae53e3af63a8bd004ae",
+  "inputs_count": 14085
+}

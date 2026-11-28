@@ -1,0 +1,8 @@
+error: found crates (`wasmtime` and `wasmtime`) with colliding StableCrateId values
+  --> target/probe/usermanager-budget-diagnostic.rs:43:5
+   |
+43 |     wasmtime::ensure!(
+   |     ^^^^^^^^
+
+error: aborting due to 1 previous error
+

@@ -1,0 +1,29 @@
+{
+  "command": [
+    "rustc",
+    "+stable",
+    "--edition=2024",
+    "target/probe/transplant-canonical-allocator.rs",
+    "-L",
+    "dependency=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps",
+    "-o",
+    "target/probe/transplant-canonical-allocator",
+    "--extern",
+    "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-b47e6a5178c4c8a5.rlib",
+    "--extern",
+    "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmparser-cd5217d899adbed8.rlib"
+  ],
+  "exit_code": 0,
+  "source_sha256": "126c8c9e69dc737f13b283daa11c6e7c9f3408b0f26b07ad5b1d8c3db760f9b0",
+  "libraries": {
+    "wasm_encoder": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-b47e6a5178c4c8a5.rlib",
+      "sha256": "0016859e4adf6133e50309854e5ade3569e546618b293bd4e02a6eeb4547ced4"
+    },
+    "wasmparser": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmparser-cd5217d899adbed8.rlib",
+      "sha256": "a42e7b9114dc531f36b06962811101bcb963a578b2f32925fba5c09218fc0c60"
+    }
+  },
+  "pinned_encoder_parser": "0.258.0"
+}
