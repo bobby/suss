@@ -1,0 +1,135 @@
+[
+  {
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts",
+      "-p",
+      "test_*.py"
+    ],
+    "exit_code": 0,
+    "seconds": 22.646221971139312
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/cljs_inventory.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.3467863528057933
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/cljs_reviews.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.5510154669173062
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/core_import.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 1.7408732930198312
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/reader_core_catalog.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.6516149831004441
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/apply_bootstrap.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.4423501919955015
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/sequence_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.3473477540537715
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_transducer_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.44281122414395213
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_when_let_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.07407146692276001
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/bitwise_provenance.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.05527714593335986
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/wasi_lock.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06823769025504589
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/numeric_runtime.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0652014329098165
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/jvm_array_oracle.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.04516231408342719
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.08224302809685469
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/clojure_test_suite.py",
+      "overlap"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0857657827436924
+  }
+]
