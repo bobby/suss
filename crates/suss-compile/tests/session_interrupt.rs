@@ -50,7 +50,9 @@ fn is_interrupt(result: &Result<SessionValue, SessionError>) -> bool {
 
 fn number(session: &mut Session, source: &str) -> i64 {
     let mut decoder = Decoder::capture(session, 1_000).unwrap();
-    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
+    let value = session
+        .eval(source)
+        .unwrap_or_else(|error| panic!("{source}: {error}"));
     match decoder.decode_session(session, &value).unwrap() {
         Observation::Long(value) => value,
         other => panic!("{source}: {other:?}"),
@@ -61,12 +63,28 @@ fn number(session: &mut Session, source: &str) -> i64 {
 fn interrupt_stops_running_code_without_rolling_back_effects() {
     let mut session = Session::new_repl_with_options(unbounded()).unwrap();
     session.eval("(def progress (atom 0))").unwrap();
-    let result = interrupted(session.interrupt_handle(), || {
-        session.eval("(loop [] (swap! progress inc) (recur))")
-    });
-    assert!(is_interrupt(&result), "{:?}", result.map(|_| ()));
-    // Effects before the interrupt remain; the session accepts the next input.
-    assert!(number(&mut session, "(deref progress)") > 0);
+    // Compile before starting the timer: interrupting analysis/code generation
+    // is valid but does not exercise effects from running guest code.
+    let spin = session
+        .eval("(fn [] (loop [] (swap! progress inc) (recur)))")
+        .unwrap();
+    let mut observed_effect = false;
+    for _ in 0..16 {
+        let result = interrupted(session.interrupt_handle(), || session.invoke(&spin, &[]));
+        assert!(is_interrupt(&result), "{:?}", result.map(|_| ()));
+        if number(&mut session, "(deref progress)") > 0 {
+            observed_effect = true;
+            break;
+        }
+        // Scheduling can still deliver a request before invocation enters the
+        // body. Retry that unexercised case; rolling back guest effects on every
+        // interruption can never satisfy the assertion below.
+    }
+    // Effects from the interrupted operation remain; the next input succeeds.
+    assert!(
+        observed_effect,
+        "interrupts never retained a guest-side effect"
+    );
     assert_eq!(number(&mut session, "(+ 1 2)"), 3);
 }
 
@@ -87,9 +105,15 @@ fn interrupting_one_session_leaves_another_running() {
     assert!(is_interrupt(&result));
     // Every request advanced the shared engine epoch; the other Store continued.
     thread::sleep(Duration::from_millis(200));
-    assert!(!running.is_finished(), "the other session must still be running");
+    assert!(
+        !running.is_finished(),
+        "the other session must still be running"
+    );
     let other = interrupted(other_handle, || running.join().unwrap());
-    assert!(matches!(&other, Err(error) if error.is_interrupt()), "{other:?}");
+    assert!(
+        matches!(&other, Err(error) if error.is_interrupt()),
+        "{other:?}"
+    );
 }
 
 #[test]
@@ -107,12 +131,20 @@ fn interrupt_stops_a_running_macro_expansion() {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
     macros.set_operation_fuel(u64::MAX);
-    macros.define("(defmacro spin [] (loop [] (recur)))").unwrap();
+    macros
+        .define("(defmacro spin [] (loop [] (recur)))")
+        .unwrap();
     let result = interrupted(macros.interrupt_handle(), || {
         session.eval_with_macros("(spin)", &mut macros)
     });
-    let error = result.map(|_| ()).expect_err("interrupted expansion").to_string();
-    assert_eq!(error, "Compiled macro expansion failed during compiled macro invocation: Interrupted at bytes 0..6");
+    let error = result
+        .map(|_| ())
+        .expect_err("interrupted expansion")
+        .to_string();
+    assert_eq!(
+        error,
+        "Compiled macro expansion failed during compiled macro invocation: Interrupted at bytes 0..6"
+    );
     // Both phases accept the next input.
     macros.define("(defmacro answer [] 42)").unwrap();
     let value = session.eval_with_macros("(answer)", &mut macros).unwrap();
