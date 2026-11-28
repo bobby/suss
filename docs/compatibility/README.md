@@ -2277,3 +2277,16 @@ leak was established for a schema the pinned validator does not admit. The
 complete affected exported-handle/data-shape command passes21 controls on frozen
 sources, including ordinary duplicate-key maps and bounded stress/GC controls.
 Full resource baseline and final-head acceptance remain separate.
+
+A cross-interface resource dependency has an executing independent Rust fixture:
+a single imported owner declares the resource; a consumer uses a renamed alias.
+Source scopes call both providers, preserve exact integer payloads, and close only
+the owning destructor on success and language exceptions. Exported borrows and
+owned relay preserve the original Rust resource-table identity; the old source
+alias rejects after move. The one-test command passes191.71s execution
+(603.308s including compilation) with14,061 unchanged recorded inputs/HEAD.
+The original selection rejection remains in
+`results/m5-wit-adapters/resource-provider-dependencies-before/`; the repaired
+source is recorded in `resource-provider-dependencies-owner-alias/`. Repeated
+resource-owner aliases, borrowed results and async/cancellation remain separate
+guarded domains; this focused fixture does not replace broader acceptance.

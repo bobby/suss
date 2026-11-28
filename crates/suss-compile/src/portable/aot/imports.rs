@@ -134,6 +134,7 @@ pub(super) fn selected(
                             | wit_parser::TypeDefKind::Enum(_)
                             | wit_parser::TypeDefKind::Flags(_)
                             | wit_parser::TypeDefKind::Variant(_)
+                            | wit_parser::TypeDefKind::Resource
                     )
                     && !providers.iter().any(|p| p.id == owner)
                 {
@@ -225,6 +226,7 @@ pub(super) fn encode_interfaces(
                             | wit_parser::TypeDefKind::Enum(_)
                             | wit_parser::TypeDefKind::Flags(_)
                             | wit_parser::TypeDefKind::Variant(_)
+                            | wit_parser::TypeDefKind::Resource
                     ) {
                         return Err(error(
                             "Imported WIT interface dependency must precede its user",

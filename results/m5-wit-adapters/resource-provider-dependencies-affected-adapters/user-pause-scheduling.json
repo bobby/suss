@@ -1,0 +1,9 @@
+{
+  "time_utc": "2026-11-28T14:57:50.836047+00:00",
+  "actor": "assistant",
+  "reason": "User explicitly paused the goal; preserve in-flight source-qualified validation for resumption.",
+  "unit": "run-p2349963-i107181697.scope",
+  "action": "freeze",
+  "exit_code": 0,
+  "stderr": ""
+}
