@@ -1,0 +1,4 @@
+
+thread 'main' (1955144) panicked at target/probe/review-524-followup/probe-repaired.rs:32:196:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

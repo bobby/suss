@@ -1,0 +1,25 @@
+{
+  "log_sha256": "d1b901b5a49270f08ce7f263c79c34c0aa19f21c3f4fa6f4d0d928145ab283fd",
+  "test_summaries": 393,
+  "passed": 2759,
+  "failed": 0,
+  "ignored": 15,
+  "filtered": 0,
+  "ignored_tests": [
+    "test test_cond_thread_first ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support",
+    "test test_cond_thread_first_false ... ignored, compiled pipeline: Unresolved Runtime name cond->; see prototype_cases_awaiting_compiled_support",
+    "test test_print_no_newline ... ignored, compiled pipeline: Unresolved Runtime name print; see prototype_cases_awaiting_compiled_support",
+    "test test_println_basic ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_multiple_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_no_args ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_println_number ... ignored, compiled pipeline: Unresolved Runtime name println; see prototype_cases_awaiting_compiled_support",
+    "test test_prn_basic ... ignored, compiled pipeline: Unresolved Runtime name prn; see prototype_cases_awaiting_compiled_support",
+    "test test_some_thread_first ... ignored, compiled pipeline: Unresolved Runtime name some->; see prototype_cases_awaiting_compiled_support",
+    "test test_when_first ... ignored, compiled pipeline: Unresolved Runtime name when-first; see prototype_cases_awaiting_compiled_support",
+    "test record_case_catalog ... ignored, manual input catalog update; review removed cases and changed expectations",
+    "test record_known_failures ... ignored, manual evidence capture; review the diff before accepting this baseline",
+    "test record_observations ... ignored, manual observation capture only; never updates expected failures",
+    "test optimized_selected_random_import_preserves_draws ... ignored, requires Binaryen133 or later; run explicitly with --include-ignored and SUSS_WASM_OPT",
+    "test crates/suss-compile/src/lib.rs - (line 20) ... ignored"
+  ]
+}

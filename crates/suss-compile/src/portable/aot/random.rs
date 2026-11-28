@@ -81,7 +81,7 @@ impl Capability {
             });
             instance.export(name, ComponentTypeRef::Func(index as u32));
         }
-        let ty = types.section.len();
+        let ty = types.len();
         types.section.instance(&instance);
         Ok(ty)
     }

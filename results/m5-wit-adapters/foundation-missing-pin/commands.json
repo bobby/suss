@@ -1,0 +1,16 @@
+[
+  {
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts",
+      "-p",
+      "test_*.py"
+    ],
+    "exit_code": 1,
+    "seconds": 2.295950009021908
+  }
+]

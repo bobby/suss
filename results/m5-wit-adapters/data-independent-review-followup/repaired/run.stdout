@@ -1,0 +1,6 @@
+repeated-provider imports=["left", "right", "test:review-repeat/data@1.2.3"]
+repeated-provider PASS
+fixed-packed imports=[]
+fixed-packed PASS
+fixed-negatives imports=[]
+bad-length expected rejection: WIT bytes requires its declared value shape

@@ -1,0 +1,10 @@
+Running as unit: run-p1935750-i106771642.scope; invocation ID: a3b1b54665624f769062292509b051aa
+error[E0463]: can't find crate for `wasmtime`
+ --> target/probe/review-524-followup/probe.rs:2:5
+  |
+2 | use wasmtime::{Config,Engine,Store,component::{Component,Linker,Val}};
+  |     ^^^^^^^^ can't find crate
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0463`.

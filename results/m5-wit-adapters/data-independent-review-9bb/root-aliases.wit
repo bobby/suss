@@ -1,0 +1,1 @@
+package test:review-root-aliases; world api { record inner { v: u8 } record outer { x: inner } type late = inner; export run: func(x: outer, y: late) -> outer; }

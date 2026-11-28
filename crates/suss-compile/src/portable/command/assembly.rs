@@ -126,7 +126,7 @@ fn assemble(
         run.result
             .ok_or_else(|| diagnostic("Official command result missing"))?,
     )?;
-    let environment_type = types.section.len();
+    let environment_type = types.len();
     let mut environment = InstanceType::new();
     environment.alias(Alias::Outer {
         kind: ComponentOuterAliasKind::Type,
@@ -142,7 +142,7 @@ fn assemble(
     );
     if let Some((name, function, _)) = &exit {
         let function_type = types.function(function)?;
-        let instance_type = types.section.len();
+        let instance_type = types.len();
         let mut instance = InstanceType::new();
         instance.alias(Alias::Outer {
             kind: ComponentOuterAliasKind::Type,

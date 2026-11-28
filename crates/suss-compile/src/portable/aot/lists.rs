@@ -1,6 +1,8 @@
 //! Original canonical list copy emission. Source storage is owned GC data;
 //! canonical element and nested-string buffers have explicit transfer ownership.
-use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar, HELPERS};
+use super::{
+    HELPERS, ListElement, Scalar, boundary_error_message, lift_scalar, lower_scalar, strings,
+};
 use crate::runtime_abi;
 use wasm_encoder::{BlockType, Function, HeapType, Instruction, MemArg};
 
@@ -53,7 +55,7 @@ fn load(ty: Scalar) -> Instruction<'static> {
         Scalar::S8 => I32Load8S(memory(0, 0)),
         Scalar::U16 => I32Load16U(memory(0, 1)),
         Scalar::S16 => I32Load16S(memory(0, 1)),
-        Scalar::U32 | Scalar::S32 => I32Load(memory(0, 2)),
+        Scalar::Char | Scalar::U32 | Scalar::S32 => I32Load(memory(0, 2)),
         Scalar::F32 => F32Load(memory(0, 2)),
         Scalar::F64 => F64Load(memory(0, 3)),
         Scalar::U64 | Scalar::S64 => I64Load(memory(0, 3)),
@@ -64,7 +66,7 @@ fn store(ty: Scalar) -> Instruction<'static> {
     match ty {
         Scalar::Bool | Scalar::U8 | Scalar::S8 => I32Store8(memory(0, 0)),
         Scalar::U16 | Scalar::S16 => I32Store16(memory(0, 1)),
-        Scalar::U32 | Scalar::S32 => I32Store(memory(0, 2)),
+        Scalar::Char | Scalar::U32 | Scalar::S32 => I32Store(memory(0, 2)),
         Scalar::F32 => F32Store(memory(0, 2)),
         Scalar::F64 => F64Store(memory(0, 3)),
         Scalar::U64 | Scalar::S64 => I64Store(memory(0, 3)),
@@ -119,7 +121,12 @@ fn schema(body: &mut Function, root: u32, operation: i32, value: u32, index: Opt
     use Instruction::*;
     emit(
         body,
-        &[GlobalGet(root), I32Const(operation), RefI31, LocalGet(value)],
+        &[
+            GlobalGet(root),
+            I32Const(operation),
+            RefI31,
+            LocalGet(value),
+        ],
     );
     if let Some(index) = index {
         body.instruction(&LocalGet(index));
@@ -188,11 +195,7 @@ pub(super) fn copy_in(
     begin(body, locals.length, locals.index);
     emit(
         body,
-        &[
-            LocalGet(locals.array),
-            LocalGet(locals.index),
-            RefI31,
-        ],
+        &[LocalGet(locals.array), LocalGet(locals.index), RefI31],
     );
     match element {
         ListElement::Scalar(ty) => {
@@ -221,7 +224,15 @@ fn release(body: &mut Function, element: ListElement, locals: &Locals) {
         address(body, locals.pointer, locals.index, element);
         body.instruction(&I32Load(memory(0, 2)));
         address(body, locals.pointer, locals.index, element);
-        emit(body, &[I32Load(memory(4, 2)), I32Const(2), I32Mul, Call(HELPERS + 3)]);
+        emit(
+            body,
+            &[
+                I32Load(memory(4, 2)),
+                I32Const(2),
+                I32Mul,
+                Call(HELPERS + 3),
+            ],
+        );
         end(body, locals.index);
     }
     emit(
@@ -345,7 +356,11 @@ fn copy_packed(body: &mut Function, ty: Scalar, kind: u32, locals: &Locals, expo
             LocalGet(locals.container),
             RefCastNonNull(HeapType::Concrete(storage)),
             LocalGet(locals.index),
-            if kind < 2 { ArrayGetU(storage) } else { ArrayGet(storage) },
+            if kind < 2 {
+                ArrayGetU(storage)
+            } else {
+                ArrayGet(storage)
+            },
             store(ty),
         ],
     );

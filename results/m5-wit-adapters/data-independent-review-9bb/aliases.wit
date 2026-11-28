@@ -1,0 +1,1 @@
+package test:review-aliases; interface data { record inner { v: u8 } record outer { x: inner } } world api { use data.{outer, inner as late}; export run: func(x: outer, y: late) -> outer; }

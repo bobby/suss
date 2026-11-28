@@ -1,0 +1,10 @@
+{
+  "captured_head": "9bb6c3dcf8d704a141d571a8013ec4e40afd47ba",
+  "source_receipt_sha256": "22dc288793e331f024bacc5e964b068dd69aab09df0ca0bf4fd7f650d577e439",
+  "checked_inputs": 13877,
+  "excluded_paths": [
+    "docs/roadmap/handoff.md",
+    "docs/compatibility/README.md"
+  ],
+  "changed_inputs": []
+}

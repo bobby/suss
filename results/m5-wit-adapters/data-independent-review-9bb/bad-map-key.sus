@@ -1,0 +1,1 @@
+(ns app) (defmacro effect [] (throw "review-macro-ran")) (defn ^:export run [] (effect))

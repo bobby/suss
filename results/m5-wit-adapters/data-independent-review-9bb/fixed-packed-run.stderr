@@ -1,0 +1,5 @@
+Running as unit: run-p1825097-i106668981.scope; invocation ID: 54ea188ee0bc45ef80d5605efbc5d3ec
+Error: Failed to call 'run': error while executing at wasm backtrace:
+    0:  0x6c0e1 - <unknown>!<wasm function 68>
+    1:  0x6e68c - <unknown>!<wasm function 75>
+    2:  0x6f639 - <unknown>!<wasm function 21>

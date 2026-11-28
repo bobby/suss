@@ -1,0 +1,1 @@
+package test:review-bad-map-enum; world api { enum key { a, b } type table = map<key, u8>; export run: func() -> table; }

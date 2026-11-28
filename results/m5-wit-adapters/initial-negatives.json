@@ -1,0 +1,26 @@
+[
+  {
+    "log": "wit-char-before.log.gz",
+    "uncompressed_sha256": "a1b72e0ceee08bdaba58c042cdca4563fed9bdac786bce8fd760de86f2be0c6c",
+    "exit_code": 101,
+    "qualification": "Original three regressions fail before source preparation with unsupported char/list<char>; tests subsequently add core operations and repair the exception observer."
+  },
+  {
+    "log": "wit-char-after.log.gz",
+    "uncompressed_sha256": "2e34d71cb0d29202b8c38e270c6aa3b89fa98d6b6b025029bd056ee7cd4b6c3f",
+    "exit_code": 101,
+    "qualification": "Initial implementation: two tests pass; negative observer incorrectly rejects the canonical uncaught-exception trap before decoding its pending language payload."
+  },
+  {
+    "log": "wit-indirect-before.log.gz",
+    "uncompressed_sha256": "e0cbd44e34b9d9348708d0815f766da1d75181a2c7328e494085080c15327d8b",
+    "exit_code": 101,
+    "qualification": "Original two regressions fail on unsupported indirect arguments. Stress/async/core-operation controls subsequently extend the same target."
+  },
+  {
+    "log": "wit-char-indirect-after.log.gz",
+    "uncompressed_sha256": "ebdf27cf65aefdf92695c6dce10a112ffa904e016e3c539960b40be71cc0fe91",
+    "exit_code": 101,
+    "qualification": "Rust build fails because wasm-encoder Function::new needs an ExactSizeIterator; collect locals before construction."
+  }
+]
