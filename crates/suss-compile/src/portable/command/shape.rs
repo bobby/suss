@@ -82,6 +82,32 @@ impl<'a> Types<'a> {
         Ok(())
     }
 
+    /// Structural type imports carry schema identity and require no runtime
+    /// provider. They let declared host functions refer to nominal values.
+    pub fn import_value(
+        &mut self,
+        component: &mut wasm_encoder::Component,
+        name: &str,
+        id: TypeId,
+    ) -> Result<(), Diagnostic> {
+        let referenced = self.named(id)?;
+        self.flush(component);
+        let created = self.base;
+        self.base += 1;
+        let mut imports = wasm_encoder::ComponentImportSection::new();
+        imports.import(
+            name,
+            wasm_encoder::ComponentTypeRef::Type(wasm_encoder::TypeBounds::Eq(referenced)),
+        );
+        component.section(&imports);
+        for index in self.defined.values_mut() {
+            if *index == referenced {
+                *index = created;
+            }
+        }
+        Ok(())
+    }
+
     pub fn alias_instance_value(
         &mut self,
         component: &mut wasm_encoder::Component,

@@ -52,6 +52,8 @@ pub struct WorldConfig {
     pub wit_world: Option<String>,
     /// Exact exported WIT path to qualified source var mappings.
     pub exports: Vec<(String, Symbol)>,
+    /// Exact synchronous imported WIT paths to qualified Runtime vars.
+    pub imports: Vec<(String, Symbol)>,
 }
 
 impl SussConfig {
@@ -168,6 +170,7 @@ impl SussConfig {
         let mut namespace = None;
         let mut wit_world = None;
         let mut exports = Vec::new();
+        let mut imports = Vec::new();
 
         for (key, val) in map {
             match key {
@@ -191,18 +194,14 @@ impl SussConfig {
                         };
                         wit_world = Some(name.clone());
                     }
-                    "exports" => {
-                        let Edn::Map(pairs) = val else {
-                            return Err(CompileError::Config("World :exports must be a map".into()));
-                        };
+                    "exports" | "imports" => {
+                        let direction = kw.name.as_str();
+                        let Edn::Map(pairs) = val else { return Err(CompileError::Config(format!("World :{direction} must be a map"))); };
                         for (path, var) in pairs {
-                            let (Edn::String(path), Edn::Symbol(var)) = (path, var) else {
-                                return Err(CompileError::Config("World :exports maps WIT path strings to qualified source symbols".into()));
-                            };
-                            if path.is_empty() || var.namespace.is_none() {
-                                return Err(CompileError::Config("World :exports needs nonempty paths and qualified source symbols".into()));
-                            }
-                            exports.push((path.clone(), var.clone()));
+                            let (Edn::String(path), Edn::Symbol(var)) = (path, var) else { return Err(CompileError::Config(format!("World :{direction} maps WIT path strings to qualified source symbols"))); };
+                            if path.is_empty() || var.namespace.is_none() { return Err(CompileError::Config(format!("World :{direction} needs nonempty paths and qualified source symbols"))); }
+                            if direction == "imports" { imports.push((path.clone(), var.clone())); }
+                            else { exports.push((path.clone(), var.clone())); }
                         }
                     }
                     _ => {}
@@ -218,6 +217,7 @@ impl SussConfig {
             namespace,
             wit_world,
             exports,
+            imports,
         })
     }
 
