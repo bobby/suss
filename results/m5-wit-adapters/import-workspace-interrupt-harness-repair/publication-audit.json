@@ -1,0 +1,8 @@
+{
+  "recorded_head": "2d5b3243e4b049a589f68989cee91e7f2f8b25e5",
+  "inputs_conserved": 13881,
+  "excluded_terminal_documentation": [
+    "docs/roadmap/handoff.md"
+  ],
+  "qualification": "All recorded non-excluded inputs match after focused repair; full baseline remains failed."
+}

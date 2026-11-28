@@ -37338,3 +37338,27 @@ build, all13,876 inputs and HEAD conserved. Receipt/raw log are in
 earlier source qualifications; they do not complete generic resource/async/
 cleanup or application acceptance. Next run the exact full workspace baseline
 on a frozen import head and continue ownership work in its separate worktree.
+
+### 2026-11-28: full import baseline and interrupt harness repair
+
+The exact full command `cargo test --workspace --locked -- --test-threads=2`
+on frozen2d5b3243 returned101 after23,020.731s. Across369 terminal target
+summaries it recorded2,620 passed, one failed,14 ignored and zero filtered.
+All13,879 inputs, HEAD and prerequisite tools remained fixed. Cargo stopped at
+`session_interrupt`; later targets were not executed. Raw evidence remains in
+`results/m5-wit-adapters/import-adapters-workspace/`; this is a failed baseline.
+
+The failing effect-retention test started its timer before compiling an infinite
+loop. An interrupt during compilation can validly leave the progress atom at
+zero, without testing guest rollback. The test now compiles its function before
+starting the timer and invokes it with up to16 bounded attempts for an interrupt
+that enters guest execution. Each attempt must still report interruption;
+rolling back every interrupted operation can never satisfy the positive effect
+assertion. The final ordinary expression must still succeed.
+
+`cargo test -p suss-compile --locked --test session_interrupt -- --test-threads=2`
+returned0: seven passed, zero failed/ignored/filtered,11.723s including build.
+All13,882 inputs and HEAD remained fixed. Raw output, receipt and publication
+audit are in `import-workspace-interrupt-harness-repair/`. This focused result
+does not convert the earlier full failure into a pass; rerun the full baseline
+on the repaired source. Other worktrees' ongoing captures remain unchanged.
