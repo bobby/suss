@@ -1,0 +1,4 @@
+bad-length expected rejection: WIT bytes requires its declared value shape
+bad-kind expected rejection: WIT fixed-length list returned a primitive array of another element type
+bad-tuple expected rejection: WIT list requires a persistent vector
+ALL THREE INDEPENDENT NEGATIVE CONTROLS PASSED

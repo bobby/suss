@@ -1,0 +1,2 @@
+Running as unit: run-p1816428-i106626521.scope; invocation ID: 239cfcd5be2d42c9b4b86b015a3ebd69
+Compilation error: Unsupported feature: Portable AOT imported WIT adapters remain unimplemented at bytes 0..0

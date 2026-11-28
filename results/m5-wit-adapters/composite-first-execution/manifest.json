@@ -1,0 +1,45 @@
+{
+  "compiler_source_sha256": "6e8d9273592d87496e4874be68c0113dffde9587f8994955a31000de7ccb1e4b",
+  "compiled_build_script_matches_source": true,
+  "inputs": {
+    "crates/suss-compile/src/portable/aot.rs": "a1fb86126092054e44645252ae983da8c6f86dd25000fec675f2ff71baaea602",
+    "crates/suss-compile/src/portable/aot/composite.rs": "2f02000d9f656ff3ea1b31707e0412a9d5c190c2e3e92a01e40dc393c1ccf5bd",
+    "crates/suss-compile/src/portable/aot/parameters.rs": "d7c0e35a58acbec5175712f19c3599e600d2f5d52c1160182cf405b51dd0a89e",
+    "crates/suss-compile/src/portable/command/shape.rs": "f3fec28e51acbe5c7eb8e82cbffbab264ed13985802904433ef11f544834ea93",
+    "crates/suss-compile/tests/portable_aot_wit_composites.rs": "a500d7e944495ccb8821a818d1f754c49e09c1359dc9394a6378ffbaac3d7586"
+  },
+  "binary_sha256": "0b69ebf0e66b0974ed536ff78c27b50c8ef6cfc043a88afb8532170767e37fbd",
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_aot_wit_composites",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "passed": 4,
+  "failed": 0,
+  "ignored": 0,
+  "qualification": "Four actual validated/executed component regressions on the captured compiler source; this is not complete data-codec, workspace, bootstrap, CI or milestone acceptance. Earlier logs preserve actual negatives, including the wrong low-level object-array-new argument and invalid canonical empty-product fixture. The named-type target separately executes two tests alongside all13 original AOT cases on the preceding named-type source. Two later separately filtered commands each passed one additional regression on unchanged production source; their complete six-test source snapshot is retained separately.",
+  "additional_commands": [
+    {
+      "log": "wit-composites-async-lists.log.gz",
+      "passed": 1,
+      "exit_code": 0,
+      "test_name": "nested_lists_and_optional_lists_execute_core_conj_in_sync_and_async_modes",
+      "argv_qualification": "Original shell argv not independently captured; retained raw output identifies the one selected test."
+    },
+    {
+      "log": "wit-composites-indirect-async.log.gz",
+      "passed": 1,
+      "exit_code": 0,
+      "test_name": "large_tuple_arguments_and_async_results_use_indirect_canonical_records",
+      "argv_qualification": "Original shell argv not independently captured; retained raw output identifies the one selected test."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "path": "probe",
+    "sha256": "d11d8511d0819d8d6513270010ce564c71713b034e9a40de379828f7b15e98f5",
+    "bytes": 64533840
+  },
+  {
+    "path": "original-provider.wasm",
+    "sha256": "380bd4e1a6d4f7e1a7fa7a3a490b73ef0d87b4602d1eaaec621b19ac99223cd6",
+    "bytes": 3845110
+  },
+  {
+    "path": "dependency-order.wasm",
+    "sha256": "1eefc58d055a3fd51a5b1862e1da732c8d1af129368871aa5b085c73a9805194",
+    "bytes": 3845258
+  },
+  {
+    "path": "repeated-provider.wasm",
+    "sha256": "4371c559292a64a9bedde29944d96d902841075bf5c777cfd0cf0a65714f5d3d",
+    "bytes": 3842494
+  },
+  {
+    "path": "probe-repaired",
+    "sha256": "56f2f6173130845c9ed4b5d01e4ddc44962a09b7426279cd27eae2fd5f45aabd",
+    "bytes": 64543720
+  },
+  {
+    "path": "fixed-packed.wasm",
+    "sha256": "5377373dbbfd0fbb941b714fef51b04d9a15d2ed2c2eed6994c1eec158d181ce",
+    "bytes": 3854861
+  },
+  {
+    "path": "fixed-negatives.wasm",
+    "sha256": "760c840b9ead28e81e475ef1814427113ccd27b5ecb192a485c46c4c18f88ad6",
+    "bytes": 3864230
+  },
+  {
+    "path": "probe-negatives",
+    "sha256": "d9c6b6cdec41e8b9f53cdf098e3940a2adb8c44801fc9ab4026a96bab8b8eaf8",
+    "bytes": 35658808
+  }
+]

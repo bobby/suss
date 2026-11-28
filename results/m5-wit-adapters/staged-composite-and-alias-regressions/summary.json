@@ -1,0 +1,36 @@
+{
+  "prerequisite_tools": {},
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_aot_wit_composites",
+    "--test",
+    "portable_aot_wit_type_exports",
+    "--",
+    "--test-threads=2"
+  ],
+  "head": "b00b7150e88740b3150d3c824614f8cdbd7e660c",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p1084437-i105926850.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-composites/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 106.16020198818296,
+  "log_sha256": "2c9477d1d7d0da6284e4b4225ba3a383320b6b5a82773b88923bd662f5ed5ac6",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "d70ecf41908f5181fdc54049fa56beb1fc72ce3ade22d3b3fbbe64a49942edc8",
+  "inputs_count": 13788
+}

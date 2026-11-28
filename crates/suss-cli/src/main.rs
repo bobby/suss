@@ -501,6 +501,8 @@ fn run_component_impl(
     suss_compile::portable_session::configure_collector(&mut config)?;
     config.wasm_component_model(true);
     config.wasm_component_model_implements(true);
+    config.wasm_component_model_map(true);
+    config.wasm_component_model_fixed_length_lists(true);
     config.wasm_component_model_async(true);
     config.wasm_gc(true);
     config.wasm_function_references(true);

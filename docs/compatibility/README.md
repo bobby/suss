@@ -1208,6 +1208,26 @@ baseline/final CI remain pending; no declaration or M3 acceptance gate is
 reclassified. Existing retained-source provenance and
 upstream license obligations remain unchanged.
 
+[Native WIT data values](../runtime/wit-values.md) use persistent vectors/maps,
+keyword enums/flag sets and declared tagged variants. Generated codecs compose
+records, tuples, lists, options/results, maps and supported fixed-length lists.
+The separate six-test recursive-codec run and nine-test remaining-shapes run
+execute actual components, including exact IDs, Unicode, native core operations,
+GC retention, malformed values, core redefinitions and10,000 nested calls within
+one transfer-memory page. Their receipts preserve failures and source identities
+under `results/m5-wit-adapters/`. The77-test earlier adapter command retains its
+own frozen source. Arbitrary imports, resource/cancellation accounting and full
+workspace/CI validation have separate acceptance gates; no upstream declaration
+is reclassified by these interoperability controls.
+
+The public string/file map controls also execute native map updates and retain
+original values after GC. All29 public frontend and nine toolchain-profile
+controls pass in their separately recorded commands, including original Macro,
+compile-budget and recovery policies. Obsolete map-rejection fixtures now use
+unsupported future payloads; original failed CI logs and the interrupted full
+command remain retained. These focused results do not replace the fresh full
+baseline or final-head CI.
+
 [Portable AOT component assembly](../runtime/compiled-aot-components.md) now has
 five executing compiler tests for scalar component exports, source ordering/live
 cells, GC, phase guards and independently decoded boundary exceptions. A shared
@@ -2128,3 +2148,33 @@ are documented with source-qualified evidence in
 captures execute published source2a779949 with a byte-identical allocator; they
 do not claim that this standalone branch provides the application or completes
 resource/asynchronous interoperability.
+
+The exact data-codec workspace baseline on8788d7a7 returns0:2,759 passed, zero
+failed and15 existing explicit ignores across393 Rust/doc-test summaries. Its
+frozen-source receipt conserves13,813 inputs and pinned external tools. The
+ignored opt-in Binaryen control remains separate execution work; existing
+unsupported/manual/doc cases are not counted as success. That published head
+has green full CI. Independent review and final-head publication checks remain
+required for the bounded native-data-codec issue; other M5 adapters retain their
+separate acceptance criteria.
+
+The ignored Binaryen control additionally executes and passes with the pinned
+tools on the data-codec source: one passed, zero failed/ignored, two filtered.
+Full-baseline counts/ignores remain unchanged; publication receipts preserve
+source/tool identity. Independent review and final-head CI remain promotion gates.
+
+[Independent WIT data review repairs](../../results/m5-wit-adapters/data-review-public-provider-and-packed/summary.json)
+execute23 affected controls with zero failures/ignores/filters. Schema-only
+imports preserve real named type-provider aliases and both public/random
+instance indices. Fixed numeric lists accept matching packed arrays with checked
+kind/length and exact raw bits; tuples retain their vector requirement. Original
+review failures and intermediate harness failures remain in adjacent evidence.
+The earlier full workspace result retains its8788 source qualification; fresh
+validation/review/CI of these repairs remains separate.
+
+[Fresh repaired-codec foundation](../../results/m5-wit-adapters/data-review-foundation/summary.json)
+returns0 for all20 commands:364 Python checks,368 Rust controls including
+bootstrap/core/reader/unit paths,zero failures/filters and two explicit doc
+ignores. The archived independent follow-up confirms both original P2 repairs
+with no new finding. The required fresh full baseline and final-head CI retain
+separate source qualifications.

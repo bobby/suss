@@ -1,0 +1,22 @@
+[
+  {
+    "event": "freeze-for-disk-coordination",
+    "utc": "2026-11-28T12:02:25.050020+00:00",
+    "unit": "run-p2037116-i106877797.scope",
+    "disk_free_bytes": 3006210048,
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "qualification": "Other baselines and application validation continue; no source/HEAD mutation or skipped tests. Actual wall time includes suspension."
+  },
+  {
+    "event": "thaw-after-terminal-root-cache-cleanup",
+    "utc": "2026-11-28T12:20:49.812096+00:00",
+    "unit": "run-p2037116-i106877797.scope",
+    "disk_free_bytes": 3562926080,
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "qualification": "Native app build terminal; data full already executing integration targets, front-loaded Cargo builds finished. Source/HEAD unchanged; prune only completed generated targets while monitoring disk. Wall time includes prior suspension."
+  }
+]

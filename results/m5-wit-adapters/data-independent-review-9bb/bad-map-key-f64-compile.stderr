@@ -1,0 +1,2 @@
+Running as unit: run-p1841144-i106684670.scope; invocation ID: 541bbb30d6b64b89adef101f3c36cd8d
+Compilation error: WIT error: Failed to resolve WIT target/probe/review-524/bad-map-key-f64.wit: invalid map key type: map keys must be bool, u8, u16, u32, u64, s8, s16, s32, s64, char, or string

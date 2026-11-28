@@ -22,6 +22,7 @@ fn engine() -> Engine {
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
                 .wasm_component_model(true)
+                .wasm_component_model_map(true)
                 .wasm_component_model_async(true)
                 .wasm_component_model_implements(true)
                 .consume_fuel(true)
@@ -146,14 +147,14 @@ fn public_file_keeps_io_and_unsupported_boundary_errors_distinct() {
     write(
         root.path(),
         "api.wit",
-        "package test:unsupported-file; world api { export calculate: func(x: list<map<string, u32>>) -> f64; }",
+        "package test:unsupported-file; world api { export calculate: func(x: list<future<map<string, u32>>>) -> f64; }",
     );
     let error = Compiler::new()
         .compile_files(source.to_str().unwrap(), wit.to_str().unwrap())
         .unwrap_err();
     assert!(matches!(error, CompileError::Unsupported(_)), "{error}");
     assert!(
-        error.to_string().contains("list<map<string, u32>>"),
+        error.to_string().contains("future"),
         "{error}"
     );
 }
@@ -490,4 +491,17 @@ fn public_file_compile_fuel_preserves_preflight_zero_and_default_recovery() {
         }.unwrap();
         execute(bytes, None, &[(41.0, 42.0), (0.0, 1.0)]);
     }
+}
+
+#[path = "support/wit_map_values.rs"]
+mod wit_map_values;
+
+#[test]
+fn public_file_compiler_executes_nested_maps_with_native_collection_operations() {
+    let root = tempfile::tempdir().unwrap();
+    let source = root.path().join("app.sus"); let wit = root.path().join("api.wit");
+    std::fs::write(&source, wit_map_values::SOURCE).unwrap();
+    std::fs::write(&wit, wit_map_values::WIT).unwrap();
+    let bytes = Compiler::new().compile_files(source.to_str().unwrap(), wit.to_str().unwrap()).unwrap();
+    wit_map_values::exercise(bytes, &engine());
 }

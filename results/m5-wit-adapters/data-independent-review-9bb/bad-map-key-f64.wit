@@ -1,0 +1,1 @@
+package test:review-bad-map; world api { type table = map<f64, u8>; export run: func() -> table; }
