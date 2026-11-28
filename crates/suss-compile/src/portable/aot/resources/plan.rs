@@ -37,7 +37,16 @@ impl Plan {
         let mut resources = Vec::new();
         let mut owners = BTreeSet::<InterfaceId>::new();
         let mut ids = BTreeSet::<TypeId>::new();
-        for (key, item) in &resolve.worlds[world].imports {
+        let providers = resolve.worlds[world]
+            .imports
+            .values()
+            .enumerate()
+            .filter_map(|(position, item)| match item {
+                WorldItem::Interface { id, .. } => Some((*id, position)),
+                _ => None,
+            })
+            .collect::<std::collections::BTreeMap<_, _>>();
+        for (position, (key, item)) in resolve.worlds[world].imports.iter().enumerate() {
             let WorldItem::Interface { id, .. } = item else {
                 continue;
             };
@@ -50,16 +59,27 @@ impl Plan {
             if live_resources.is_empty() {
                 continue;
             }
-            if !owners.insert(*id) {
+            let declares_resource = live_resources
+                .iter()
+                .any(|resource| resolve.types[*resource].owner == TypeOwner::Interface(*id));
+            if declares_resource && !owners.insert(*id) {
                 return Err(error(
                     "Distinct aliases of a resource provider require contextual resource identities",
                 ));
             }
             for resource in live_resources {
                 if resolve.types[resource].owner != TypeOwner::Interface(*id) {
-                    return Err(error(
-                        "Foreign resource dependencies require contextual resource identities",
-                    ));
+                    // A `use` reference has the identity and destructor of its
+                    // actual owner. The consumer does not declare a resource.
+                    let TypeOwner::Interface(owner) = resolve.types[resource].owner else {
+                        return Err(error(
+                            "Resource dependency needs its declared interface provider",
+                        ));
+                    };
+                    if !providers.get(&owner).is_some_and(|owner| *owner < position) {
+                        return Err(error("Resource dependency provider must precede its user"));
+                    }
+                    continue;
                 }
                 if ids.insert(resource) {
                     resources.push(Resource {

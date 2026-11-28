@@ -41,13 +41,14 @@ fn component() -> Component {
         r#"package test:resource-dependency;
         interface objects { resource item { constructor(value:s64); value:func()->s64; } }
         interface consumer {
-            use objects.{item};
-            read:func(value:borrow<item>)->s64;
-            relay:func(value:own<item>)->own<item>;
+            use objects.{item as ticket};
+            read:func(value:borrow<ticket>)->s64;
+            relay:func(value:own<ticket>)->own<ticket>;
         }
         world api {
             import objects; import consumer; use objects.{item};
             export run:func(value:s64)->s64;
+            export fail:func()->s64;
             export inspect:func(value:borrow<item>)->s64;
             export roundtrip:func(value:own<item>)->own<item>;
         }"#,
@@ -60,6 +61,11 @@ fn component() -> Component {
           (suss.resource/call-with-scope
             (fn [] (let [item (host/new value)] (+ (host/value item) (host/read item))))))
         (defn inspect [value] (host/read value))
+        (defn fail []
+          (try
+            (suss.resource/call-with-scope
+              (fn [] (let [item (host/new 17)] (host/read item) (throw "stop"))))
+            (catch :default error 77)))
         (defn roundtrip [value]
           (let [result (host/relay value)]
             (when-not (try (host/read value) false (catch :default error true))
@@ -88,7 +94,7 @@ fn component() -> Component {
             .into_iter()
             .map(|(name, source)| (name.into(), Symbol::parse(source)))
             .collect(),
-            exports: ["run", "inspect", "roundtrip"]
+            exports: ["run", "fail", "inspect", "roundtrip"]
                 .into_iter()
                 .map(|name| (name.into(), Symbol::parse(&format!("app/{name}"))))
                 .collect(),
@@ -135,7 +141,7 @@ fn linker() -> Linker<State> {
     // This is an alias of the same host type, not a second resource identity.
     consumer
         .resource(
-            "item",
+            "ticket",
             ResourceType::host::<Item>(),
             |_: StoreContextMut<'_, State>, _| {
                 panic!("an alias must not install a second destructor")
@@ -179,6 +185,11 @@ fn imported_resource_dependencies_preserve_borrows_moves_identity_and_one_destru
         store.gc(None).unwrap();
     }
     assert_eq!(store.data().drops, 3);
+    let fail = instance
+        .get_typed_func::<(), (i64,)>(&mut store, "fail")
+        .unwrap();
+    assert_eq!(fail.call(&mut store, ()).unwrap().0, 77);
+    assert_eq!(store.data().drops, 4);
     let handle = store.data_mut().table.push(Item(i64::MIN)).unwrap();
     let rep = handle.rep();
     let inspect = instance
@@ -199,6 +210,6 @@ fn imported_resource_dependencies_preserve_borrows_moves_identity_and_one_destru
     assert_eq!(returned.rep(), rep);
     assert_eq!(store.data().relayed, Some(rep));
     assert_eq!(store.data().table.get(&returned).unwrap().0, i64::MIN);
-    assert_eq!((store.data().reads, store.data().drops), (4, 3));
+    assert_eq!((store.data().reads, store.data().drops), (5, 4));
     store.data_mut().table.delete(returned).unwrap();
 }

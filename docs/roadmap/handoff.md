@@ -37750,3 +37750,22 @@ separate gates. The data draft also has its own two independent review fixes.
 `RUSTUP_TOOLCHAIN=stable CARGO_BUILD_JOBS=1 cargo test -p suss-compile --locked --test portable_aot_wit_resource_dependencies -- --test-threads=1 --nocapture` compiled and executed the new Rust fixture, then failed at WIT selection with `Foreign resource dependencies require contextual resource identities`. The selected world imports the resource owner and a consumer using the same declared resource. The fixture checks host-to-guest borrows, guest-to-host owned relay, original Rust resource-table identity, exact integer values, source moved-alias rejection and the owning destructor. No expected value was relaxed.
 
 Raw command, failure, source hashes and toolchain identity are in `results/m5-wit-adapters/resource-provider-dependencies-before/`: exit101,575.317s including compilation/build-lock wait,14,058 unchanged inputs and unchanged `aec7d409` HEAD. The command explicitly reused the application worktree's Cargo dependency directory; workspace crates were rebuilt from this worktree. This is a failing regression, not an interoperability success. Next, preserve the single selected owner through the consumer's type aliases while retaining ambiguous-owner and lifetime guards.
+
+### Resource owner identities through consumer aliases (2026-11-28)
+
+The same focused Cargo command now passes the actual independent Rust fixture,
+including a renamed consumer alias, exact9,007,199,254,740,993/i64-min values,
+borrowed exports, owned relay preserving the Rust resource-table representation,
+old moved-alias rejection and exactly one owning destructor on normal/error
+scope exit. `resource-provider-dependencies-owner-alias/` retains exit0,
+603.308s including compilation,191.71s test execution,14,061 unchanged inputs
+and unchanged5346d64b HEAD with the recorded production working changes. The
+selection plan registers declarations only at their single actual owner;
+consumer type encoding aliases that existing identity. Ambiguous repeated owner
+imports remain guarded before source macros. The former rejection of a valid
+consumer is replaced by the executing positive; the corresponding authority
+negative retains an omitted-mapping check before the effectful source macro.
+
+Next run the affected resource, borrow and interface-import suites, foundation/
+bootstrap and workspace baseline, then independent review and final-head CI.
+This does not establish generic async/cancellation ownership or guest resources.

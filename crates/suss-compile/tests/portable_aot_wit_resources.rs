@@ -588,8 +588,8 @@ fn unsupported_resource_domains_reject_before_source_macro_effects() {
         ),
         (
             "interface store { resource item; } interface operations { use store.{item}; read: func(x: borrow<item>); } world api { import store; import operations; export run: func(); }",
-            vec![("test:resource-guards/operations#read", "host/read")],
-            "Foreign resource dependencies",
+            vec![],
+            "needs an explicit source var mapping",
         ),
         (
             "interface store { resource item; wait: async func(); } world api { import store; export run: func(); }",
