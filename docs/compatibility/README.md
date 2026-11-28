@@ -2151,3 +2151,12 @@ The ignored Binaryen control additionally executes and passes with the pinned
 tools on the data-codec source: one passed, zero failed/ignored, two filtered.
 Full-baseline counts/ignores remain unchanged; publication receipts preserve
 source/tool identity. Independent review and final-head CI remain promotion gates.
+
+[Independent WIT data review repairs](../../results/m5-wit-adapters/data-review-public-provider-and-packed/summary.json)
+execute23 affected controls with zero failures/ignores/filters. Schema-only
+imports preserve real named type-provider aliases and both public/random
+instance indices. Fixed numeric lists accept matching packed arrays with checked
+kind/length and exact raw bits; tuples retain their vector requirement. Original
+review failures and intermediate harness failures remain in adjacent evidence.
+The earlier full workspace result retains its8788 source qualification; fresh
+validation/review/CI of these repairs remains separate.

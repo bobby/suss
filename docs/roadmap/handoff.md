@@ -37085,3 +37085,35 @@ accurately recorded. Publication audits conserve every captured input except
 the two identified terminal documentation updates. Next obtain the independent
 #524 review and require passing CI at the final publication/fix head before
 promoting #523. No merge is authorized.
+
+### 2026-11-28: independent data-codec review repairs
+
+Independent review of9bb6c3dc confirms two concrete gaps: a schema-only imported
+interface cannot supply later/nested named aliases, and a fixed numeric list
+rejects its matching packed array. Original reproducers, actual failures and
+artifact hashes remain in `data-independent-review-9bb/` and
+`data-review-regressions-before/`. Neither finding is waived.
+
+Schema-only providers now encode actual imported instance types and alias their
+nominal exports, preserving dependencies and provider identity. The automatic
+randomness and public exported-interface instance indices include these type
+providers. Fixed numeric list nodes retain their element identity alongside the
+product layout. Source/backend checks validate matching packed kind and exact
+length before allocation; raw typed storage preserves unsigned byte bits, exact
+integer extrema and floating-point bits. Tuples still require persistent vectors.
+
+The complete affected command passes23 controls, zero failed/ignored/filtered,
+964.760s capture,13,879 inputs and HEAD fixed:
+`cargo test -p suss-compile --locked --test portable_aot_wit_review_regressions --test portable_aot_wit_value_shapes --test portable_aot_wit_composites --test portable_aot_wit_type_exports -- --test-threads=2`.
+It includes all six review controls, nested packed kinds, both instance-index
+paths, type exports, native maps/sets/vectors, malformed preallocation controls,
+indirect async data and the10,000-call transfer/GC stress. Raw output and source
+receipt are in `data-review-public-provider-and-packed/`.
+
+Intermediate failures remain preserved: wrong Rust float variant names,
+missing cm-implements in a test Engine, accidental chaining of unit-returning
+func_wrap, and an unbootstrapped low-level composite fixture. The final mixed
+provider control uses the public file compiler. Earlier packed/schema-focused
+passes retain their exact source qualifications. Publish these repairs to #523;
+the independent review follow-up, fresh broader validation and final-head CI
+remain gates. The earlier full workspace pass belongs to8788, not these fixes.

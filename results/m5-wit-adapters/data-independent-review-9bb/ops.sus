@@ -1,0 +1,1 @@
+(ns suss.core) (def < (fn [x y] false)) (def + (fn [x y] 0)) (ns app) (defn ^:export run [] [[1 2]])

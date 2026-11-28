@@ -16,6 +16,7 @@ mod optimize;
 mod parameters;
 mod provenance;
 mod random;
+mod schemas;
 mod strings;
 
 /// Recover complete verified-input manifests retained by the assembler. These
@@ -376,7 +377,10 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         .values()
         .any(|item| match item {
             WorldItem::Type { .. } => false,
-            WorldItem::Interface { id, .. } => !random::Capability::supported(resolve, *id),
+            WorldItem::Interface { id, .. } => {
+                !random::Capability::supported(resolve, *id)
+                    && !resolve.interfaces[*id].functions.is_empty()
+            }
             WorldItem::Function(_) => true,
         })
 }
@@ -396,6 +400,7 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             "Portable AOT imported WIT adapters remain unimplemented",
         ));
     }
+    schemas::validate(resolve, world)?;
     let validate_function = |function: &wit_parser::Function| -> Result<(), Diagnostic> {
         if function.external_id.is_some() {
             return Err(error(
@@ -847,6 +852,7 @@ pub fn component_with(
     let randomness = random::Capability::selected(resolve, world)?;
     let random_count = u32::from(randomness.is_some());
     let mut resolved_types = super::command::shape::Types::new(resolve);
+    let schema_imports = schemas::encode(resolve, world, &mut component, &mut resolved_types)?;
     let random_type = randomness
         .as_ref()
         .map(|capability| capability.encode(resolve, &mut resolved_types))
@@ -927,7 +933,7 @@ pub fn component_with(
         component.section(&imports);
         let mut aliases = ComponentAliasSection::new();
         aliases.alias(Alias::InstanceExport {
-            instance: 0,
+            instance: schema_imports,
             kind: ComponentExportKind::Func,
             name: "get-random-u64",
         });
@@ -1244,7 +1250,7 @@ pub fn component_with(
                 types,
                 functions,
             } => {
-                let index = random_count + exported_instances.len();
+                let index = schema_imports + random_count + exported_instances.len();
                 exported_instances.export_items(
                     types
                         .iter()
