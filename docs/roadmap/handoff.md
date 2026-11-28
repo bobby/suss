@@ -37017,3 +37017,36 @@ receipt;17 distinct data/identity regressions have executing positives on this
 production code. The full required workspace command follows on a frozen
 worktree with task-owned workspace TMPDIR and pinned Binaryen; its eventual
 terminal result remains separate evidence.
+
+### 2026-11-27: explicit synchronous Runtime host calls
+
+A separate import branch adds `AotOptions.imports` and owned reverse codecs for
+explicit world-function mappings. Qualified Runtime cells hold shared-ABI
+closures installed after core/schema initialization and before user initializers.
+Canonical lowering is wired after allocator instantiation and before adapter
+start, so guest initialization can call the selected host. Imported results
+use the upstream GuestImport ABI: multi-flat results receive an extra return
+pointer rather than returning a guest-export pointer. Structural type imports
+carry declared nominal schemas and require no runtime host type implementation.
+Arguments are completely projected/validated before transfer allocation; returned
+values are copied into guest storage before transfer buffers are retired. A
+canonical host trap requires retirement of the poisoned Store.
+
+The complete `portable_aot_wit_imports` command returned0: three tests passed,
+zero failed/ignored,127.44s test execution (132.016s including build), with all
+13,796 recorded inputs and HEAD unchanged. It executes once-only initialization
+calls, exact signed values beyond2^53,1,000 nested round trips plus a typed error,
+Unicode/NUL and u64::MAX, optional false/none, forced GC, native source updates
+and a single64KiB transfer-page limit. Missing/invalid mappings and unsupported
+selected types reject before the source macro. The first fixture command failed
+before component execution because its file options omitted explicit export
+mappings; the failed log and the corrected actual command remain distinct in
+`synchronous-imports-first/` and `synchronous-imports-explicit-exports/`. The
+development check is explicitly not source-frozen and certifies no source.
+
+Imported interfaces, configuration/CLI mappings, mixed automatic random imports,
+optimization and generalized async import mapping remain separate work. The
+existing async import path retains its original scope. Resource ownership and
+general cancellation/error cleanup still have their own acceptance criteria.
+The full data-codec baseline continues on the separate frozen ab4cbd0e tree;
+it does not certify these new import changes.

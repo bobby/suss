@@ -9,6 +9,7 @@ pub use wit_parser::{Resolve, WorldId};
 
 mod characters;
 mod composite;
+mod imports;
 mod list_schema;
 mod lists;
 #[cfg(suss_host)]
@@ -381,6 +382,23 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         })
 }
 
+/// Check explicit host mappings without executing source or granting Macro authority.
+pub(crate) fn validate_import_boundary(
+    resolve: &Resolve,
+    world: WorldId,
+    mappings: &[(String, Symbol)],
+) -> Result<(), Diagnostic> {
+    if mappings.is_empty() {
+        return validate_boundary(resolve, world);
+    }
+    imports::selected(resolve, world, mappings)?;
+    let mut values = resolve.clone();
+    values.worlds[world]
+        .imports
+        .retain(|_, item| !matches!(item, WorldItem::Function(_)));
+    validate_boundary(&values, world)
+}
+
 /// Check only implemented WIT adapter capabilities, before source macro effects.
 /// Source mappings, code generation and artifact validation have separate errors.
 pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
@@ -596,7 +614,29 @@ pub fn component_with(
     mappings: &[(String, Symbol)],
     optimize: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
-    validate_boundary(resolve, world)?;
+    component_with_imports(fragments, resolve, world, mappings, &[], optimize)
+}
+
+/// Assemble explicitly mapped synchronous host calls with owned value codecs.
+pub fn component_with_imports(
+    fragments: &[PreparedFragment],
+    resolve: &Resolve,
+    world: WorldId,
+    mappings: &[(String, Symbol)],
+    import_mappings: &[(String, Symbol)],
+    optimize: bool,
+) -> Result<Vec<u8>, Diagnostic> {
+    validate_import_boundary(resolve, world, import_mappings)?;
+    let host_imports = if import_mappings.is_empty() {
+        Vec::new()
+    } else {
+        imports::selected(resolve, world, import_mappings)?
+    };
+    if !host_imports.is_empty() && optimize {
+        return Err(error(
+            "Optimized synchronous import adapters remain unimplemented",
+        ));
+    }
     let last = fragments
         .last()
         .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
@@ -694,6 +734,25 @@ pub fn component_with(
             }
         }
     }
+    let import_globals = host_imports
+        .iter()
+        .map(|import| {
+            last.environment
+                .resolve(Phase::Runtime, &import.source, 0..0)
+                .map(|value| value.global().clone())
+        })
+        .collect::<Result<Vec<_>, Diagnostic>>()?;
+    for import in &host_imports {
+        for ty in import
+            .wit
+            .params
+            .iter()
+            .map(|p| p.ty)
+            .chain(import.wit.result)
+        {
+            registry.add(ty)?;
+        }
+    }
     let generic_schema = !registry.nodes.is_empty();
     // Compile the design's tagged option schema through the ordinary source
     // pipeline, preserving nominal persistent-vector and keyword identities.
@@ -778,7 +837,7 @@ pub fn component_with(
         .flat_map(|fragment| fragment.cells.iter().cloned())
         .collect::<Vec<_>>();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let has_memory = exports.iter().any(Export::uses_memory);
+    let has_memory = !host_imports.is_empty() || exports.iter().any(Export::uses_memory);
     let initialization = super::initialization::Plan::new(
         &fragments,
         usize::from(option_schema) + usize::from(list_schema) + usize::from(generic_schema),
@@ -790,6 +849,8 @@ pub fn component_with(
         option_schema,
         list_schema,
         &registry,
+        &host_imports,
+        &import_globals,
     )?;
     let asynchronous = exports
         .iter()
@@ -846,6 +907,13 @@ pub fn component_with(
     let mut component = Component::new();
     let randomness = random::Capability::selected(resolve, world)?;
     let random_count = u32::from(randomness.is_some());
+    if !host_imports.is_empty() && randomness.is_some() {
+        return Err(error(
+            "Mixed automatic randomness and explicit host import mappings remain unimplemented",
+        ));
+    }
+    let host_count = host_imports.len() as u32;
+    let component_function_base = random_count + host_count;
     let mut resolved_types = super::command::shape::Types::new(resolve);
     let random_type = randomness
         .as_ref()
@@ -854,6 +922,11 @@ pub fn component_with(
     // Publish nominal root values before defining their parents/functions:
     // component type exports introduce new identities, not just names.
     let mut live = wit_parser::LiveTypes::default();
+    let mut imported_types = wit_parser::LiveTypes::default();
+    for import in &host_imports {
+        imported_types.add_func(resolve, &import.wit);
+        live.add_func(resolve, &import.wit);
+    }
     let mut root_names = std::collections::BTreeMap::new();
     for (key, item) in &selected.imports {
         if let WorldItem::Type { id, .. } = item {
@@ -898,7 +971,11 @@ pub fn component_with(
             name.push_str("-value");
         }
         public_names.insert(name.clone());
-        resolved_types.export_value(&mut component, &name, id)?;
+        if imported_types.contains(id) {
+            resolved_types.import_value(&mut component, &name, id)?;
+        } else {
+            resolved_types.export_value(&mut component, &name, id)?;
+        }
     }
     let mut public_types = std::collections::BTreeMap::new();
     for export in &public_exports {
@@ -920,6 +997,10 @@ pub fn component_with(
         );
         function_types.push(resolved_types.function(&export.wit)?);
     }
+    let host_types = host_imports
+        .iter()
+        .map(|import| resolved_types.function(&import.wit))
+        .collect::<Result<Vec<_>, Diagnostic>>()?;
     resolved_types.flush(&mut component);
     if let (Some(capability), Some(ty)) = (&randomness, random_type) {
         let mut imports = ComponentImportSection::new();
@@ -935,6 +1016,13 @@ pub fn component_with(
         let mut lower = CanonicalFunctionSection::new();
         lower.lower(0, std::iter::empty::<CanonicalOption>());
         component.section(&lower);
+    }
+    if !host_imports.is_empty() {
+        let mut imports = ComponentImportSection::new();
+        for (import, ty) in host_imports.iter().zip(host_types) {
+            imports.import(&import.name, ComponentTypeRef::Func(ty));
+        }
+        component.section(&imports);
     }
     let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
         .chain(std::iter::once((
@@ -1094,34 +1182,78 @@ pub fn component_with(
         instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
         args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
     }
-    let adapter_instance = first_own + u32::from(has_memory);
-    instances.instantiate(adapter_module, args);
-    component.section(&instances);
-    // Memory must be aliased before canonical task-return uses Unicode results.
-    // Alias realloc first so its core function index is stable across sync/async.
-    let mut memory_aliases = ComponentAliasSection::new();
-    if has_memory
-        || exports
-            .iter()
-            .any(|export| export.result.is_some_and(|ty| ty.indirect_result(resolve)))
-    {
-        memory_aliases.alias(Alias::CoreInstanceExport {
-            instance: adapter_instance,
+    let adapter_instance = first_own + u32::from(has_memory) + u32::from(!host_imports.is_empty());
+    if host_imports.is_empty() {
+        instances.instantiate(adapter_module, args);
+        component.section(&instances);
+        // Memory must be aliased before canonical task-return uses Unicode results.
+        // Alias realloc first so its core function index is stable across sync/async.
+        let mut memory_aliases = ComponentAliasSection::new();
+        if has_memory
+            || exports
+                .iter()
+                .any(|export| export.result.is_some_and(|ty| ty.indirect_result(resolve)))
+        {
+            memory_aliases.alias(Alias::CoreInstanceExport {
+                instance: adapter_instance,
+                kind: ExportKind::Memory,
+                name: "suss.canonical.memory",
+            });
+        }
+        if has_memory {
+            memory_aliases.alias(Alias::CoreInstanceExport {
+                instance: adapter_instance - 1,
+                kind: ExportKind::Func,
+                name: "cabi_realloc",
+            });
+        }
+        if !memory_aliases.is_empty() {
+            component.section(&memory_aliases);
+        }
+    } else {
+        // Canon lower needs memory/realloc before the adapter start function
+        // can call a provider during guest source initialization.
+        component.section(&instances);
+        let mut aliases = ComponentAliasSection::new();
+        aliases.alias(Alias::CoreInstanceExport {
+            instance: first_own,
             kind: ExportKind::Memory,
-            name: "suss.canonical.memory",
+            name: "memory",
         });
-    }
-    if has_memory {
-        memory_aliases.alias(Alias::CoreInstanceExport {
-            instance: adapter_instance - 1,
+        aliases.alias(Alias::CoreInstanceExport {
+            instance: first_own,
             kind: ExportKind::Func,
             name: "cabi_realloc",
         });
+        component.section(&aliases);
+        let mut lowered = CanonicalFunctionSection::new();
+        for index in 0..host_count {
+            lowered.lower(
+                random_count + index,
+                [
+                    CanonicalOption::Memory(0),
+                    CanonicalOption::Realloc(random_count),
+                    CanonicalOption::UTF16,
+                ],
+            );
+        }
+        component.section(&lowered);
+        let mut installed = InstanceSection::new();
+        installed.export_items(host_imports.iter().enumerate().map(|(index, import)| {
+            (
+                import.name.as_str(),
+                ExportKind::Func,
+                random_count + 1 + index as u32,
+            )
+        }));
+        args.push((
+            "suss.host".to_owned(),
+            ModuleArg::Instance(adapter_instance - 1),
+        ));
+        installed.instantiate(adapter_module, args);
+        component.section(&installed);
     }
-    if !memory_aliases.is_empty() {
-        component.section(&memory_aliases);
-    }
-    let completion_base = random_count + u32::from(has_memory);
+    let completion_base = random_count + host_count + u32::from(has_memory);
     // Task-return builtins precede bridge instantiation, so the bridge can call
     // the canonical completion operation directly without a mutable shim.
     let mut completion = CanonicalFunctionSection::new();
@@ -1236,7 +1368,12 @@ pub fn component_with(
     for export in public_exports {
         match export {
             PublicExport::Function { name, index } => {
-                public.export(&name, ComponentExportKind::Func, random_count + index, None);
+                public.export(
+                    &name,
+                    ComponentExportKind::Func,
+                    component_function_base + index,
+                    None,
+                );
             }
             PublicExport::Interface {
                 name,
@@ -1255,7 +1392,7 @@ pub fn component_with(
                             (
                                 name.as_str(),
                                 ComponentExportKind::Func,
-                                random_count + *function,
+                                component_function_base + *function,
                             )
                         }))
                         .collect::<Vec<_>>(),
@@ -1484,11 +1621,13 @@ fn adapter(
     option_schema: bool,
     list_schema: bool,
     registry: &composite::Registry,
+    host_imports: &[imports::Import],
+    import_globals: &[super::resolve::Global],
 ) -> Result<Vec<u8>, Diagnostic> {
     let resolve = registry.resolve;
     let generic_schema = !registry.nodes.is_empty();
     let fragment_count = initializers.len();
-    let has_memory = exports.iter().any(Export::uses_memory);
+    let has_memory = !host_imports.is_empty() || exports.iter().any(Export::uses_memory);
     let helpers = if has_memory { HELPERS + 4 } else { HELPERS }
         + if generic_schema {
             4
@@ -1603,22 +1742,35 @@ fn adapter(
             EntityType::Function(runtime_abi::TYPE_COUNT + helpers + 1),
         );
     }
+    let host_wiring = (!host_imports.is_empty()).then(|| {
+        imports::wire(
+            &mut types,
+            &mut imports,
+            helpers + fragment_count as u32,
+            host_imports,
+            resolve,
+        )
+    });
     // Components forbid duplicate module/name imports. Multiple WIT exports
     // may intentionally map to one live source var, so share only its import.
     let mut global_indices = std::collections::BTreeMap::new();
-    for export in exports {
-        if !global_indices.contains_key(&export.global) {
+    for global in exports
+        .iter()
+        .map(|export| &export.global)
+        .chain(import_globals)
+    {
+        if !global_indices.contains_key(global) {
             let index = global_indices.len() as u32;
             imports.import(
-                export.global.import_module(),
-                &export.global.import_name(),
+                global.import_module(),
+                &global.import_name(),
                 EntityType::Global(GlobalType {
                     val_type: runtime_abi::binding_cell_type(),
                     mutable: false,
                     shared: false,
                 }),
             );
-            global_indices.insert(export.global.clone(), index);
+            global_indices.insert(global.clone(), index);
         }
     }
     // False, true and undefined follow the binding cells; schema roots follow them.
@@ -1636,7 +1788,13 @@ fn adapter(
     }
     let schema_base = sentinels + runtime_abi::SENTINEL_EXPORTS.len() as u32;
     let generic_root = schema_base + u32::from(option_schema) + u32::from(list_schema);
-    let imported = helpers + fragment_count as u32;
+    let imported = helpers
+        + fragment_count as u32
+        + if host_wiring.is_some() {
+            2 + host_imports.len() as u32
+        } else {
+            0
+        };
     let posts = exports
         .iter()
         .filter(|export| export.result.is_some_and(|ty| ty.needs_post(resolve)))
@@ -1646,7 +1804,7 @@ fn adapter(
     let mut public = ExportSection::new();
     let mut code = CodeSection::new();
     for (index, export) in exports.iter().enumerate() {
-        let ty = runtime_abi::TYPE_COUNT + helpers + 2 + index as u32;
+        let ty = types.len() + runtime_abi::TYPE_COUNT - 1;
         types.ty().function(
             export.core_params(resolve),
             export.result.and_then(|ty| ty.core_result(resolve)),
@@ -2099,7 +2257,7 @@ fn adapter(
         body.instruction(&Instruction::End);
         code.function(&body);
     }
-    let start_type = runtime_abi::TYPE_COUNT + helpers + 2 + exports.len() as u32;
+    let start_type = types.len() + runtime_abi::TYPE_COUNT - 1;
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
@@ -2132,6 +2290,18 @@ fn adapter(
             start
                 .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
                 .instruction(&Instruction::GlobalSet(generic_root));
+        }
+        if let Some(wiring) = &host_wiring {
+            if index == 0 {
+                imports::install(
+                    &mut start,
+                    host_imports,
+                    import_globals,
+                    &global_indices,
+                    wiring,
+                    composite::function(generic_base, registry.nodes.len(), 0),
+                );
+            }
         }
     }
     start.instruction(&Instruction::End);
@@ -2221,6 +2391,17 @@ fn adapter(
             }
         }
     }
+    if let Some(wiring) = &host_wiring {
+        imports::emit_invokers(
+            host_imports,
+            registry,
+            &mut functions,
+            &mut code,
+            wiring,
+            generic_base,
+            generic_root,
+        )?;
+    }
     let mut module = Module::new();
     module
         .section(&runtime_abi::Manifest::default().section())
@@ -2264,12 +2445,18 @@ fn adapter(
         }
         module.section(&globals);
     }
-    module
-        .section(&public)
-        .section(&StartSection {
-            function_index: imported + exports.len() as u32,
-        })
-        .section(&code);
+    module.section(&public).section(&StartSection {
+        function_index: imported + exports.len() as u32,
+    });
+    if host_wiring.is_some() {
+        let first = composite::function(generic_base, registry.nodes.len(), 0);
+        let mut elements = ElementSection::new();
+        elements.declared(Elements::Functions(std::borrow::Cow::Owned(
+            (0..host_imports.len()).map(|i| first + i as u32).collect(),
+        )));
+        module.section(&elements);
+    }
+    module.section(&code);
     Ok(module.finish())
 }
 /// `wide` is an `i64` scratch local for boxing a long.
