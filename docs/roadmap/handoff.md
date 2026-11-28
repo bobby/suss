@@ -37744,3 +37744,9 @@ Publish this preflight correction to #526, then restart the required exact
 workspace baseline on its new frozen head. Final-head CI/review, contextual
 resource identities, guest resources, async/cancellation and UserManager remain
 separate gates. The data draft also has its own two independent review fixes.
+
+### Cross-interface resource dependency regression (2026-11-28)
+
+`RUSTUP_TOOLCHAIN=stable CARGO_BUILD_JOBS=1 cargo test -p suss-compile --locked --test portable_aot_wit_resource_dependencies -- --test-threads=1 --nocapture` compiled and executed the new Rust fixture, then failed at WIT selection with `Foreign resource dependencies require contextual resource identities`. The selected world imports the resource owner and a consumer using the same declared resource. The fixture checks host-to-guest borrows, guest-to-host owned relay, original Rust resource-table identity, exact integer values, source moved-alias rejection and the owning destructor. No expected value was relaxed.
+
+Raw command, failure, source hashes and toolchain identity are in `results/m5-wit-adapters/resource-provider-dependencies-before/`: exit101,575.317s including compilation/build-lock wait,14,058 unchanged inputs and unchanged `aec7d409` HEAD. The command explicitly reused the application worktree's Cargo dependency directory; workspace crates were rebuilt from this worktree. This is a failing regression, not an interoperability success. Next, preserve the single selected owner through the consumer's type aliases while retaining ambiguous-owner and lifetime guards.
