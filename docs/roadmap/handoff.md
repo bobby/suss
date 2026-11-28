@@ -37278,3 +37278,35 @@ canonical async adapter targets on this production source. General resources,
 async suspension, cancellation cleanup, optimization of mapped imports and the
 UserManager application retain separate work; the data-codec baseline on8788d7a7
 continues independently and certifies no later import source.
+
+### 2026-11-27: WIT external-ID metadata
+
+Supported world-function and interface/member import/export annotations are
+forwarded into component extern names. Public paths and source mappings retain
+their declared names. Hosts inspect the metadata to select providers/exports;
+external IDs grant no implicit Runtime or Macro authority. The automatic random
+provider also retains its resolved `implements` and external-ID annotations.
+
+Before implementation, the two new external-ID component controls both failed
+at the explicit unsupported-feature checks. The corrected focused command was:
+
+```
+cargo test -p suss-compile --locked --test portable_aot --test portable_aot_wit_interface_imports external_ids -- --test-threads=2
+```
+
+It returned0: one pure-AOT test (two actual components) and two bidirectional
+host/guest tests passed, zero failed/ignored;236.415s including build. All13,867
+captured inputs and HEAD remained unchanged. Rust selects real world/interface
+functions through their external-ID metadata and executes canonical calls, with
+native `update`/`conj`, exact u64/s64 endpoints, Unicode/NUL and forced GC. The old
+unconditional rejection test now validates, selects and executes both supported
+export forms, preserving its no-silent-loss contract. Raw failed and corrected
+receipts are in `external-id-interface-adapters-before/` and
+`external-id-world-and-interface-adapters/`.
+
+The complete interface target now additionally annotates schema-only and async
+exports, and the randomness control uses an annotated named provider alias.
+Those new combinations and affected existing pure/import/randomness/async tests
+are the next command; the focused three-test receipt does not certify them.
+Resource ownership, general async suspension/cancellation, optimized mapped
+imports and UserManager retain independent implementation/acceptance work.

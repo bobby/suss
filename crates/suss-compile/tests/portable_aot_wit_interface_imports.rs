@@ -301,9 +301,16 @@ fn complete<F: std::future::Future>(future: F) -> F::Output {
 fn asynchronous_export_calls_synchronous_interface_and_returns_nested_owned_values() {
     let component = compile(
         "(ns app) (defn run [xs] (conj (host/echo xs) [42]))",
-        "package test:interface-async; interface operations { echo: func(xs: list<list<s64>>) -> list<list<s64>>; } world api { import operations; export run: async func(xs: list<list<s64>>) -> list<list<s64>>; }",
+        "package test:interface-async; interface operations { echo: func(xs: list<list<s64>>) -> list<list<s64>>; } world api { import operations; @external-id(\"urn:suss:async-run\") export run: async func(xs: list<list<s64>>) -> list<list<s64>>; }",
         &[("test:interface-async/operations#echo", "host/echo")],
     );
+    let public_name = component
+        .component_type()
+        .exports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:async-run")).then(|| name.to_owned())
+        })
+        .expect("async export ID was lost");
     let mut linker = Linker::new(engine());
     linker
         .instance("test:interface-async/operations")
@@ -319,7 +326,7 @@ fn asynchronous_export_calls_synchronous_interface_and_returns_nested_owned_valu
         .unwrap();
     let mut store = store();
     let instance = linker.instantiate(&mut store, &component).unwrap();
-    let run = instance.get_func(&mut store, "run").unwrap();
+    let run = instance.get_func(&mut store, &public_name).unwrap();
     let input = Val::List(vec![
         Val::List(vec![Val::S64(i64::MIN), Val::S64(i64::MAX)]),
         Val::List(vec![]),
@@ -462,7 +469,7 @@ fn imported_provider_and_exported_interface_keep_separate_component_instance_ind
 fn schema_only_interface_data_values_need_no_function_authority_or_runtime_provider() {
     let bytes = suss_compile::Compiler::new().compile(
         "(defn ^:export run [x] (update (assoc x :state :active) :values conj 42))",
-        "package test:types-only@1.2.3; interface model { enum state { idle, active } record row { id: u64, state: state, values: list<s64> } } world api { import model; use model.{row}; export run: func(value: row) -> row; }",
+        "package test:types-only@1.2.3; interface model { enum state { idle, active } record row { id: u64, state: state, values: list<s64> } } world api { @external-id(\"urn:suss:schema\") import model; use model.{row}; export run: func(value: row) -> row; }",
     ).unwrap();
     let component = Component::new(engine(), bytes).unwrap();
     let declared = component
@@ -471,6 +478,11 @@ fn schema_only_interface_data_values_need_no_function_authority_or_runtime_provi
         .map(|(name, _)| name.to_owned())
         .collect::<Vec<_>>();
     assert_eq!(declared, ["test:types-only/model@1.2.3"]);
+    let schema_id = component
+        .component_type()
+        .imports(engine())
+        .find_map(|(_, item)| item.external_id.map(str::to_owned));
+    assert_eq!(schema_id.as_deref(), Some("urn:suss:schema"));
     let mut store = store();
     // Schema-only instance imports carry no runtime function or resource.
     let instance = Linker::new(engine())
@@ -510,7 +522,7 @@ fn schema_only_interface_keeps_automatic_random_provider_and_export_indices() {
     std::fs::create_dir_all(wit.join("deps")).unwrap();
     std::fs::write(&source, "(ns app) (defn run [] (rand))").unwrap();
     std::fs::write(wit.join("deps/random.wit"), "package wasi:random@0.3.1; interface random { get-random-bytes: func(len: u64) -> list<u8>; get-random-u64: func() -> u64; }").unwrap();
-    std::fs::write(wit.join("api.wit"), "package test:typed-random; interface model { enum state { idle, active } } world api { import model; import wasi:random/random@0.3.1; export run: func() -> f64; }").unwrap();
+    std::fs::write(wit.join("api.wit"), "package test:typed-random; interface model { enum state { idle, active } } world api { import model; @external-id(\"urn:suss:entropy\") import entropy: wasi:random/random@0.3.1; export run: func() -> f64; }").unwrap();
     let bytes = compile_file_with_options(
         &source,
         &wit,
@@ -524,7 +536,17 @@ fn schema_only_interface_keeps_automatic_random_provider_and_export_indices() {
     .unwrap();
     let component = Component::new(engine(), bytes).unwrap();
     let mut linker = Linker::new(engine());
-    let mut random = linker.instance("wasi:random/random@0.3.1").unwrap();
+    let (name, implements) = component
+        .component_type()
+        .imports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:entropy"))
+                .then(|| (name.to_owned(), item.implements.map(str::to_owned)))
+        })
+        .expect("automatic provider annotations were lost");
+    assert_eq!(name, "entropy");
+    assert_eq!(implements.as_deref(), Some("wasi:random/random@0.3.1"));
+    let mut random = linker.instance(&name).unwrap();
     random
         .func_wrap(
             "get-random-u64",
@@ -553,4 +575,163 @@ fn schema_only_interface_keeps_automatic_random_provider_and_export_indices() {
         store.gc(None).unwrap();
     }
     assert_eq!(store.data().order, ["random"; 3]);
+}
+
+#[test]
+fn external_ids_on_world_functions_preserve_host_selection_and_native_values() {
+    let component = compile(
+        "(ns app) (defn run [x] (host/echo (update x 1 conj 42)))",
+        r#"package test:external-world; world api {
+            @external-id("urn:suss:host:echo") import provider: func(value: tuple<string, list<u64>>) -> tuple<string, list<u64>>;
+            @external-id("urn:suss:guest:run") export run: func(value: tuple<string, list<u64>>) -> tuple<string, list<u64>>;
+        }"#,
+        &[("provider", "host/echo")],
+    );
+    let host_name = component
+        .component_type()
+        .imports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:host:echo")).then(|| name.to_owned())
+        })
+        .expect("host external ID was lost");
+    assert_eq!(host_name, "provider");
+    let guest_name = component
+        .component_type()
+        .exports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:guest:run")).then(|| name.to_owned())
+        })
+        .expect("guest external ID was lost");
+    assert_eq!(guest_name, "run");
+    let mut linker = Linker::new(engine());
+    linker
+        .root()
+        .func_new(
+            &host_name,
+            |mut context: StoreContextMut<'_, State>, _ty, params, results| {
+                context.data_mut().order.push("echo");
+                results[0] = params[0].clone();
+                Ok(())
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let run = instance.get_func(&mut store, &guest_name).unwrap();
+    let input = Val::Tuple(vec![
+        Val::String("λ\0🦀".into()),
+        Val::List(vec![Val::U64(u64::MAX)]),
+    ]);
+    let expected = Val::Tuple(vec![
+        Val::String("λ\0🦀".into()),
+        Val::List(vec![Val::U64(u64::MAX), Val::U64(42)]),
+    ]);
+    for _ in 0..20 {
+        store.set_fuel(100_000_000).unwrap();
+        let mut output = [Val::Bool(false)];
+        run.call(&mut store, &[input.clone()], &mut output).unwrap();
+        assert_eq!(output[0], expected);
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().order, vec!["echo"; 20]);
+}
+
+#[test]
+fn external_ids_on_imported_exported_interfaces_and_members_survive_actual_calls() {
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("app.sus");
+    let wit = directory.path().join("api.wit");
+    std::fs::write(&source, "(ns app) (defn run [x] (host/echo (conj x 42)))").unwrap();
+    std::fs::write(
+        &wit,
+        r#"package test:external-interfaces; world api {
+        @external-id("urn:suss:host:operations") import operations: interface {
+            @external-id("urn:suss:host:echo") echo: func(xs: list<s64>) -> list<s64>;
+        }
+        @external-id("urn:suss:guest:public") export public: interface {
+            @external-id("urn:suss:guest:run") run: func(xs: list<s64>) -> list<s64>;
+        }
+    }"#,
+    )
+    .unwrap();
+    let bytes = compile_file_with_options(
+        &source,
+        &wit,
+        None,
+        &[],
+        &AotOptions {
+            imports: vec![("operations#echo".into(), Symbol::namespaced("host", "echo"))],
+            exports: vec![("public#run".into(), Symbol::namespaced("app", "run"))],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let component = Component::new(engine(), bytes).unwrap();
+    let (provider, host_type) = component
+        .component_type()
+        .imports(engine())
+        .find(|(_, item)| item.external_id == Some("urn:suss:host:operations"))
+        .map(|(name, item)| (name.to_owned(), item.ty))
+        .expect("host interface ID was lost");
+    assert_eq!(provider, "operations");
+    let ComponentItem::ComponentInstance(host_type) = host_type else {
+        panic!("wrong host type")
+    };
+    let host_function = host_type
+        .exports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:host:echo")).then(|| name.to_owned())
+        })
+        .expect("host member ID was lost");
+    let (public, guest_type) = component
+        .component_type()
+        .exports(engine())
+        .find(|(_, item)| item.external_id == Some("urn:suss:guest:public"))
+        .map(|(name, item)| (name.to_owned(), item.ty))
+        .expect("guest interface ID was lost");
+    assert_eq!(public, "public");
+    let ComponentItem::ComponentInstance(guest_type) = guest_type else {
+        panic!("wrong guest type")
+    };
+    let guest_function = guest_type
+        .exports(engine())
+        .find_map(|(name, item)| {
+            (item.external_id == Some("urn:suss:guest:run")).then(|| name.to_owned())
+        })
+        .expect("guest member ID was lost");
+    assert_eq!(
+        (host_function.as_str(), guest_function.as_str()),
+        ("echo", "run")
+    );
+    let mut linker = Linker::new(engine());
+    linker
+        .instance(&provider)
+        .unwrap()
+        .func_new(
+            &host_function,
+            |mut context: StoreContextMut<'_, State>, _ty, params, results| {
+                context.data_mut().order.push("echo");
+                results[0] = params[0].clone();
+                Ok(())
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let (_, public_index) = instance.get_export(&mut store, None, &public).unwrap();
+    let (_, run_index) = instance
+        .get_export(&mut store, Some(&public_index), &guest_function)
+        .unwrap();
+    let run = instance
+        .get_typed_func::<(Vec<i64>,), (Vec<i64>,)>(&mut store, run_index)
+        .unwrap();
+    for _ in 0..20 {
+        store.set_fuel(100_000_000).unwrap();
+        assert_eq!(
+            run.call(&mut store, (vec![i64::MIN, i64::MAX],)).unwrap().0,
+            [i64::MIN, i64::MAX, 42]
+        );
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().order, vec!["echo"; 20]);
 }

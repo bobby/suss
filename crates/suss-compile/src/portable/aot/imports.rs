@@ -55,9 +55,9 @@ pub(super) fn selected(
                         "WIT import {name} needs an explicit source var mapping"
                     ))
                 })?;
-            if function.kind != FunctionKind::Freestanding || function.external_id.is_some() {
+            if function.kind != FunctionKind::Freestanding {
                 return Err(error(
-                    "Synchronous WIT imports require freestanding functions without external-id",
+                    "Synchronous WIT imports require freestanding functions",
                 ));
             }
             let mut registry = composite::Registry::new(resolve);
@@ -118,14 +118,7 @@ pub(super) fn selected(
             WorldItem::Type { .. } => {}
             WorldItem::Interface { id, .. }
                 if super::random::Capability::supported(resolve, *id) => {}
-            WorldItem::Interface {
-                id, external_id, ..
-            } => {
-                if external_id.is_some() {
-                    return Err(error(
-                        "Imported WIT interface external-id adapters remain unimplemented",
-                    ));
-                }
+            WorldItem::Interface { id, .. } => {
                 let name = resolve.name_world_key(key);
                 for (field, function) in &resolve.interfaces[*id].functions {
                     add(format!("{name}#{field}"), function, Some(*id))?;
@@ -146,13 +139,17 @@ pub(super) struct Provider {
     pub name: String,
     pub id: wit_parser::InterfaceId,
     pub implements: Option<String>,
+    pub external_id: Option<String>,
 }
 fn providers(resolve: &Resolve, world: WorldId) -> Vec<Provider> {
     resolve.worlds[world]
         .imports
         .iter()
         .filter_map(|(key, item)| {
-            let WorldItem::Interface { id, .. } = item else {
+            let WorldItem::Interface {
+                id, external_id, ..
+            } = item
+            else {
                 return None;
             };
             if super::random::Capability::supported(resolve, *id) {
@@ -162,6 +159,7 @@ fn providers(resolve: &Resolve, world: WorldId) -> Vec<Provider> {
                 name: resolve.name_world_key(key),
                 id: *id,
                 implements: resolve.implements_value(key, item),
+                external_id: external_id.clone(),
             })
         })
         .collect()
@@ -211,21 +209,21 @@ pub(super) fn encode_interfaces(
         }
         for (name, function) in &interface.functions {
             let index = instance_types.function(function)?;
-            instance_types
-                .section
-                .export(name.as_str(), ComponentTypeRef::Func(index));
+            instance_types.section.export(
+                super::component_name(name, None, function.external_id.as_deref()),
+                ComponentTypeRef::Func(index),
+            );
         }
         let index = types.len();
         types.section.instance(&instance_types.section);
         types.flush(component);
         let mut section = ComponentImportSection::new();
         section.import(
-            ComponentExternName {
-                name: std::borrow::Cow::Borrowed(&provider.name),
-                implements: provider.implements.clone().map(std::borrow::Cow::Owned),
-                version_suffix: None,
-                external_id: None,
-            },
+            super::component_name(
+                &provider.name,
+                provider.implements.as_deref(),
+                provider.external_id.as_deref(),
+            ),
             ComponentTypeRef::Instance(index),
         );
         component.section(&section);
