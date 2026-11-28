@@ -37744,3 +37744,23 @@ Publish this preflight correction to #526, then restart the required exact
 workspace baseline on its new frozen head. Final-head CI/review, contextual
 resource identities, guest resources, async/cancellation and UserManager remain
 separate gates. The data draft also has its own two independent review fixes.
+
+### Consolidating broad validation on the repaired integration source (2026-11-28)
+
+The exact workspace command in `resource-adapters-workspace-map-domain/` was operationally terminated with
+SIGTERM after 15356.763s. It retains 790 passing tests across
+160 completed successful target summaries; the interrupted target and all
+unreached targets are unknown. This is not a completed workspace pass. The
+recorder retains actual exit-15, raw log, 14,057 unchanged inputs
+and unchanged `aec7d409` HEAD. `operational-termination.json` records
+the actor, reason, exact processes/signals and old/repaired interrupt-test hashes.
+The earlier scheduling suspension, if present, remains recorded separately.
+
+These older runs still used the interrupt-effect harness that had already
+failed when its timer expired during compilation. Broad validation is being
+consolidated on the integrated source with the tested repair, rather than
+recording an obsolete source as current. The repaired `session_interrupt.rs`
+is copied byte-for-byte from import integration ed25ecf1; its earlier executing
+seven-test repair evidence remains on that draft. Run the focused target on
+this checkout next. A successful integrated full baseline, independent review
+and final-head CI are still required; partial capture results do not waive them.
