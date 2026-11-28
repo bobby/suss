@@ -2189,3 +2189,20 @@ escaped owner rejection, destructor-triggered GC, Macro/Runtime authority and
 carrier GC unit also passes. Exported borrow lifetimes, asynchronous suspension/
 cancellation, guest-defined resources and complete interoperability still require
 separate adapters and their acceptance evidence.
+
+
+Synchronous exported functions accept call-scoped borrowed handles, including
+records in exported interfaces. The complete four-test borrow capture passes
+with old-alias expiry during later calls, close/own-transfer rejection, physical
+Rust owner preservation, pointer/float/void results, the pinned uncaught-exception
+barrier plus retained original payload, and10,000 calls with bounded canonical
+transfer memory. Two executing core carrier/finally units also pass. Original
+unsupported, canonical-accounting and fixture-calibration failures remain
+recorded. Earlier resource/foundation captures retain their own sources; affected
+regressions and full resource/final-head acceptance gates remain required.
+
+The affected adapter command on the borrow-enabled source passes39 tests, zero
+failed/ignored, across resource ownership/scopes, composites, world/interface
+imports and public type exports. Its source-frozen receipt preserves the earlier
+unsupported, canonical-accounting and error-boundary calibration failures. The
+full resource baseline and new final-head CI/review remain required.

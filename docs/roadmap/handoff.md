@@ -37525,3 +37525,88 @@ changes. Next implement exported borrow-call tokens, retain unsupported own
 exports/resource-only providers until their adapters execute, and complete the
 remaining cancellation/interoperability/application gates. Full resource baseline,
 final-head CI and independent review remain required.
+
+### 2026-11-28: synchronous exported borrow-call tokens
+
+The first borrow fixture selected both an explicit alias and the canonical
+provider implied by `use`; the contextual identity guard correctly rejected it
+(`exported-resource-borrows-before/`). The corrected single-provider fixture
+then reaches the actual exported-handle unsupported guard
+(`exported-resource-borrows-canonical-provider-before/`). Initial Catch enum/
+instruction shadowing is retained in `exported-resource-borrow-call-tokens/`.
+
+The first executable source-token path fails with the actual canonical error
+`borrow handles still remain at the end of the call`
+(`exported-resource-borrow-catch-type/`). Corrected per-call tokens also track
+copied incoming borrow entries, expire every alias, restore the previous token,
+clear links and call canonical resource.drop for each borrow. This releases
+canonical accounting without invoking a host destructor or moving host ownership.
+The direct call control passes75.90s execution/250.669s capture, all13,973 inputs
+and HEAD fixed (`exported-resource-borrow-canonical-cleanup/`). Old aliases
+remain expired during subsequent active calls borrowing the same Rust owner.
+
+The exported interface fixture first reports memory32 overflow because a
+resource type alias was incorrectly validated as a data value. The corrected
+declaration/value distinction preserves the imported resource identity. Its
+control passes83.50s execution/276.516s capture, all13,979 inputs and HEAD fixed
+(`exported-resource-borrow-interface-type-alias/`); the initial failure remains.
+Nested record borrows of one physical owner, tuple/pointer results, exact
+f64(-0.0/MAX) and void returns execute through the native wrapper.
+
+The first four-test run reports three passed/one failed because its language
+error control assumed direct-core ThrownException behavior at a component
+boundary (`exported-resource-borrows-complete-controls/`). The pinned canonical
+barrier converts uncaught exceptions into Trap::UncaughtException. A second
+wrong assumption that no pending payload survives is also retained
+(`exported-resource-borrows-component-barrier/`, three passed/one failed). Actual
+Store inspection establishes both that trap classification and the retained
+original17 payload. This is a fixture calibration; neither failure is hidden.
+
+The complete corrected command returned0, four passed, zero failed/ignored/filtered:
+`cargo test -p suss-compile --locked --test portable_aot_wit_borrows -- --test-threads=2`.
+160.06s execution/338.915s capture, all13,991 inputs/HEAD fixed
+(`exported-resource-borrows-pending-payload/`). The10,000-call control alternates
+5,000 successes and5,000 caught language failures/typed results with exact u64
+values,10,000 host reads and zero guest constructors, consumption or host
+destructor calls. The single Rust owner stays alive until the host deletes it;
+canonical entries retire before each return, old aliases reject, GC is forced
+and the canonical transfer page is bounded to64KiB.
+
+The production native wrapper is separately exercised without the component
+barrier: `cargo test -p suss-compile --locked --lib portable::aot::resources -- --test-threads=2`
+returns0 with two passed, zero failed/ignored (257 filtered),6.45s execution/
+237.152s capture, all13,988 inputs/HEAD fixed
+(`exported-resource-borrow-private-core-finally/`). Real core Wasm normal and
+exception paths release their recorded canonical-drop callback entries, reject
+retained aliases after GC and rethrow the original17 payload. The drop callback
+is a unit recorder, distinct from the independent Rust component owner/destructor
+observations. The existing opaque-carrier forgery/type/closed-alias unit also passes.
+
+Boundary validation carries the original provider plan through stripped-world
+validation, permits only implemented resource values and skips declared resource
+aliases when requesting data layouts. The wrapper surrounds input copying,
+source invocation and result lowering, saves exact native return bits and expires
+borrow tokens on return or a language exception. It uses private GC types/globals
+and preserves the shared ABI/fixed data-codec width. Contextual provider aliases,
+foreign dependencies, own exports, guest resources, resource-only providers and
+async/cancellation remain gated. Next run affected resource/data/import targets,
+then publish the implementation/evidence to the same draft. Required full resource
+baseline, final-head CI and independent review remain separate gates.
+
+The affected adapter command returned0 with39 passed, zero failed/ignored,
+1050.737s including build; all13,994 inputs and HEAD stayed fixed
+(`exported-resource-borrow-affected-adapters/`). Targets are
+`portable_aot_wit_resources`, `portable_aot_wit_composites`,
+`portable_aot_wit_type_exports`, `portable_aot_wit_imports` and
+`portable_aot_wit_interface_imports`, invoked together with
+`cargo test -p suss-compile --locked --test TARGET` repeated for each target and
+`-- --test-threads=2`. This includes all13 resource controls, six composites,
+eight world imports, ten interface imports and two public type exports on the
+borrow-enabled production sources.
+
+The published preceding scope head2086f24f also has passing final-head CI,
+run46121929414 (foundation, eight integration shards and final test gate). It
+does not certify this later borrow source. Next publish the qualified borrow
+implementation and receipts to the same draft, then implement own exports and
+remaining lifetime/cancellation/interop/application requirements. Required full
+resource baseline, final-head CI and independent review remain separate.

@@ -3,6 +3,8 @@ use crate::runtime_abi;
 use wasm_encoder::*;
 
 use super::VALUE;
+mod borrows;
+pub(super) use borrows::Context as BorrowContext;
 mod scopes;
 pub(super) const API_OPERATIONS: &[&str] = &["close!", "call-with-scope"];
 const TYPE: u32 = 0;
@@ -10,6 +12,7 @@ const HANDLE: u32 = 1;
 const STATUS: u32 = 2;
 const OWNED: u32 = 3;
 const DROP: u32 = 4;
+const SCOPE_OR_TOKEN: u32 = 5;
 const MOVED: i32 = 1;
 const CLOSED: i32 = 2;
 
@@ -26,6 +29,7 @@ fn reference(index: u32) -> ValType {
 pub(super) struct Types {
     pub drop: u32,
     pub state: u32,
+    pub token: u32,
     pub make: u32,
     pub check: u32,
     pub close: u32,
@@ -65,6 +69,17 @@ impl Types {
                 mutable: false,
             },
         ]);
+        let token = next_type(types);
+        types.ty().struct_([
+            FieldType {
+                element_type: StorageType::Val(ValType::I32),
+                mutable: true,
+            },
+            FieldType {
+                element_type: StorageType::Val(VALUE),
+                mutable: true,
+            },
+        ]);
         let make = next_type(types);
         types
             .ty()
@@ -84,6 +99,7 @@ impl Types {
         Self {
             drop,
             state,
+            token,
             make,
             check,
             close,
@@ -109,6 +125,7 @@ pub(super) struct Carrier {
     pub helpers: Helpers,
     pub descriptor: u32,
     pub scope: u32,
+    pub borrow_scope: u32,
     pub check_function: u32,
     pub close_function: u32,
 }
@@ -169,6 +186,12 @@ impl Carrier {
         );
     }
     pub fn make(&self) -> Function {
+        self.make_with_ownership(true)
+    }
+    pub fn make_borrow(&self) -> Function {
+        self.make_with_ownership(false)
+    }
+    fn make_with_ownership(&self, owned: bool) -> Function {
         use Instruction::*;
         let mut body = Function::new([(2, VALUE)]);
         emit(
@@ -178,9 +201,9 @@ impl Carrier {
                 LocalGet(1),
                 LocalGet(0),
                 I32Const(0),
-                I32Const(1),
+                I32Const(i32::from(owned)),
                 LocalGet(2),
-                GlobalGet(self.scope),
+                GlobalGet(if owned { self.scope } else { self.borrow_scope }),
                 StructNew(self.types.state),
                 LocalTee(3),
                 ArrayNewFixed {
@@ -191,7 +214,11 @@ impl Carrier {
                 LocalSet(4),
             ],
         );
-        scopes::register(self, &mut body, 3);
+        if owned {
+            scopes::register(self, &mut body, 3);
+        } else {
+            borrows::register(self, &mut body, 3);
+        }
         emit(&mut body, &[LocalGet(4), End]);
         body
     }
@@ -289,6 +316,37 @@ impl Carrier {
             ],
         );
         self.require(&mut body, "WIT resource handle is closed or moved");
+        self.state(&mut body, 4);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: OWNED,
+                },
+                I32Eqz,
+                If(BlockType::Empty),
+            ],
+        );
+        self.state(&mut body, 4);
+        emit(
+            &mut body,
+            &[
+                StructGet {
+                    struct_type_index: self.types.state,
+                    field_index: SCOPE_OR_TOKEN,
+                },
+                RefCastNonNull(HeapType::Concrete(self.types.token)),
+                StructGet {
+                    struct_type_index: self.types.token,
+                    field_index: 0,
+                },
+                I32Const(1),
+                I32Eq,
+            ],
+        );
+        self.require(&mut body, "Borrowed WIT resource escaped its call");
+        body.instruction(&End);
         emit(&mut body, &[LocalGet(2), If(BlockType::Empty)]);
         self.state(&mut body, 4);
         emit(
@@ -524,6 +582,7 @@ pub(super) struct Codec<'a> {
     pub resolve: &'a wit_parser::Resolve,
     pub drop_calls: &'a [u32],
     pub make_function: u32,
+    pub make_borrow_function: u32,
     pub check_function: u32,
     pub state_type: u32,
 }
@@ -535,10 +594,6 @@ impl Codec<'_> {
     }
     pub fn copy(&self, body: &mut Function, id: wit_parser::TypeId, owned: bool) {
         use Instruction::*;
-        if !owned {
-            body.instruction(&Unreachable);
-            return;
-        }
         let ordinal = self.ordinal(id);
         emit(
             body,
@@ -551,7 +606,11 @@ impl Codec<'_> {
                 }),
                 I32Const(ordinal as i32),
                 RefFunc(self.drop_calls[ordinal as usize]),
-                Call(self.make_function),
+                Call(if owned {
+                    self.make_function
+                } else {
+                    self.make_borrow_function
+                }),
             ],
         );
     }

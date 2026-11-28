@@ -602,7 +602,7 @@ fn unsupported_resource_domains_reject_before_source_macro_effects() {
             "contains a `borrow<T>`",
         ),
         (
-            "interface store { resource item { constructor(); } } world api { import store; use store.{item}; export run: func(x: borrow<item>); }",
+            "interface store { resource item { constructor(); } } world api { import store; use store.{item}; export run: func() -> own<item>; }",
             vec![("test:resource-guards/store#[constructor]item", "host/open")],
             "Exported resource handles",
         ),

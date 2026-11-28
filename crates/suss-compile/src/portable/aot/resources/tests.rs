@@ -51,6 +51,8 @@ fn module() -> Vec<u8> {
     types.ty().function([], []);
     let invoke_wrapper_type = next_type(&types);
     types.ty().function([VALUE], [VALUE]);
+    let borrow_wrapper_type = next_type(&types);
+    types.ty().function([ValType::I32, ValType::I32], [VALUE]);
     let helpers = Helpers {
         object_new: 1,
         string_new: 2,
@@ -63,6 +65,7 @@ fn module() -> Vec<u8> {
         helpers,
         descriptor: 0,
         scope: 1,
+        borrow_scope: 2,
         check_function: 7,
         close_function: 8,
     };
@@ -74,6 +77,8 @@ fn module() -> Vec<u8> {
         runtime_abi::INVOKE,
         init_type,
         invoke_wrapper_type,
+        carrier_types.make,
+        borrow_wrapper_type,
     ] {
         functions.function(ty);
     }
@@ -97,10 +102,33 @@ fn module() -> Vec<u8> {
         },
         &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
     );
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
+    );
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
+    );
     let mut exports = ExportSection::new();
-    for (name, index) in [("make", 6), ("check", 7), ("close", 8), ("invoke", 11)] {
+    for (name, index) in [
+        ("make", 6),
+        ("check", 7),
+        ("close", 8),
+        ("invoke", 11),
+        ("borrow-call", 13),
+    ] {
         exports.export(name, ExportKind::Func, index);
     }
+    exports.export("retained-borrow", ExportKind::Global, 3);
     let mut code = CodeSection::new();
     code.function(&carrier.make())
         .function(&carrier.check())
@@ -133,6 +161,45 @@ fn module() -> Vec<u8> {
         ],
     );
     code.function(&invoke);
+    code.function(&carrier.make_borrow());
+    let context = BorrowContext {
+        previous: 2,
+        token: 3,
+        error: 4,
+        cursor: 5,
+        state: 6,
+        returned: Some(7),
+    };
+    let mut borrow = Function::new([(7, VALUE), (1, ValType::I64)]);
+    carrier.begin_borrow(&mut borrow, &context);
+    emit(
+        &mut borrow,
+        &[
+            LocalGet(0),
+            I32Const(17),
+            RefFunc(5),
+            Call(12),
+            LocalTee(8),
+            GlobalSet(3),
+            LocalGet(8),
+            I32Const(17),
+            I32Const(0),
+            Call(7),
+            Drop,
+            LocalGet(1),
+            If(BlockType::Empty),
+            I64Const(17),
+        ],
+    );
+    for instruction in runtime_abi::long_box_in(9) {
+        borrow.instruction(&instruction);
+    }
+    emit(&mut borrow, &[Throw(0), End, LocalGet(8)]);
+    carrier.finish_borrow(&mut borrow, &context);
+    borrow.instruction(&End);
+    code.function(&borrow);
+    let mut elements = ElementSection::new();
+    elements.declared(Elements::Functions(std::borrow::Cow::Owned(vec![5])));
     let mut module = wasm_encoder::Module::new();
     module
         .section(&types)
@@ -141,6 +208,7 @@ fn module() -> Vec<u8> {
         .section(&globals)
         .section(&exports)
         .section(&StartSection { function_index: 10 })
+        .section(&elements)
         .section(&code);
     module.finish()
 }
@@ -244,4 +312,85 @@ fn opaque_resource_carriers_reject_numeric_wrong_type_and_closed_aliases_after_g
         assert_eq!(store.data().len(), index + 1);
     }
     assert_eq!(store.data(), &[0, 1, u32::MAX]);
+}
+
+#[test]
+fn borrow_call_finally_invalidates_aliases_and_releases_entries_before_rethrowing_the_original_payload()
+ {
+    let mut store = Store::new(engine(), Vec::<u32>::new());
+    store.set_fuel(100_000_000).unwrap();
+    let runtime = Instance::new(
+        &mut store,
+        &Module::new(engine(), runtime_abi::module()).unwrap(),
+        &[],
+    )
+    .unwrap();
+    let mut linker = Linker::new(engine());
+    linker.instance(&mut store, "r", runtime).unwrap();
+    linker
+        .func_wrap(
+            "host",
+            "drop",
+            |mut cx: wasmtime::Caller<'_, Vec<u32>>, handle: u32| {
+                cx.data_mut().push(handle);
+            },
+        )
+        .unwrap();
+    let instance = linker
+        .instantiate(&mut store, &Module::new(engine(), module()).unwrap())
+        .unwrap();
+    let handle = value(
+        &mut store,
+        instance,
+        "borrow-call",
+        &[Val::I32(41), Val::I32(0)],
+    );
+    assert_eq!(store.data(), &[41]);
+    let check = instance.get_func(&mut store, "check").unwrap();
+    assert!(
+        check
+            .call(
+                &mut store,
+                &[handle, Val::I32(17), Val::I32(0)],
+                &mut [Val::null_any_ref()]
+            )
+            .is_err()
+    );
+    assert!(store.take_pending_exception().is_some());
+    store.gc(None).unwrap();
+    let error = instance
+        .get_func(&mut store, "borrow-call")
+        .unwrap()
+        .call(
+            &mut store,
+            &[Val::I32(42), Val::I32(1)],
+            &mut [Val::null_any_ref()],
+        )
+        .unwrap_err();
+    assert!(
+        error.is::<wasmtime::ThrownException>() && !error.is::<wasmtime::Trap>(),
+        "{error:#}"
+    );
+    let exception = store.take_pending_exception().unwrap();
+    let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+    assert_eq!(
+        crate::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(crate::portable_session::RuntimeNumber::Long(17))
+    );
+    assert_eq!(store.data(), &[41, 42]);
+    store.gc(None).unwrap();
+    let alias = instance
+        .get_global(&mut store, "retained-borrow")
+        .unwrap()
+        .get(&mut store);
+    assert!(
+        check
+            .call(
+                &mut store,
+                &[alias, Val::I32(17), Val::I32(0)],
+                &mut [Val::null_any_ref()]
+            )
+            .is_err()
+    );
+    assert_eq!(store.data(), &[41, 42]);
 }

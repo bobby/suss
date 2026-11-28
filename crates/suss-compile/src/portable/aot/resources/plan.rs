@@ -127,12 +127,16 @@ impl Plan {
                 _ => continue,
             };
             for function in funcs {
-                if function
+                let owns = function
                     .params
                     .iter()
-                    .map(|p| p.ty)
-                    .chain(function.result)
-                    .any(|ty| has_handle(resolve, ty, None))
+                    .any(|p| has_handle(resolve, p.ty, Some(true)));
+                let borrows = plan.borrowed_parameters(resolve, function);
+                if owns
+                    || function
+                        .result
+                        .is_some_and(|ty| has_handle(resolve, ty, None))
+                    || borrows && !matches!(function.kind, FunctionKind::Freestanding)
                 {
                     return Err(error(
                         "Exported resource handles require call-scope ownership adapters",
@@ -141,6 +145,12 @@ impl Plan {
             }
         }
         Ok(Some(plan))
+    }
+    pub fn borrowed_parameters(&self, resolve: &Resolve, function: &wit_parser::Function) -> bool {
+        function
+            .params
+            .iter()
+            .any(|p| has_handle(resolve, p.ty, Some(false)))
     }
     pub fn ordinal(&self, resolve: &Resolve, id: TypeId) -> Option<u32> {
         let id = resource_id(resolve, id)?;

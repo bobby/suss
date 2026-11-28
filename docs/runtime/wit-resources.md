@@ -83,9 +83,25 @@ raise a boundary error. Owners created outside the scope keep their explicit
 close/move lifetime. This API executes a synchronous body; it does not extend a
 scope across asynchronous suspension or provide cancellation cleanup.
 
+Synchronous exported functions can receive `borrow<resource>` values, including
+borrows nested in records and other data. The resource keeps its declared
+provider identity. A source borrow is valid through the entire call, including
+result projection. It cannot be closed or passed to an `own` parameter. At call
+end its token expires and the adapter releases the canonical borrow entries;
+the host's owned resource remains alive. Keeping a borrow in an atom or closure
+does not extend its lifetime. It stays expired even during a later call that
+borrows the same host resource again.
+
+Language exceptions run the adapter's cleanup before propagating. At the pinned
+Wasmtime component boundary an uncaught exception becomes `UncaughtException`,
+with its original pending exception available for inspection in the Store.
+Inspect the error, then retire that Store. Ordinary WIT result errors and caught
+language exceptions remain normal values/returns.
+
 This initial route rejects repeated aliases of a resource provider and foreign
 resource dependencies until provider context is represented throughout the
-codec graph. The pinned WIT resolver rejects borrowed results. Exported handles,
-guest-defined resources and generalized async/cancellation lifetimes retain
-separate adapters. Unsupported selected paths are diagnosed before source macro
-effects. Full WIT lifetime interoperability requires those remaining paths.
+codec graph. The pinned WIT resolver rejects borrowed results. Own parameters or
+results of exported functions, guest-defined resources, resource-only providers
+and generalized async/cancellation lifetimes retain separate adapters.
+Unsupported selected paths are diagnosed before source macro effects. Full WIT
+lifetime interoperability requires those remaining paths.

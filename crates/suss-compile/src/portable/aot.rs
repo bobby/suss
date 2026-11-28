@@ -148,7 +148,7 @@ impl Boundary {
     fn uses_strings(self, resolve: &Resolve) -> bool {
         match self {
             Self::Generic(id) => {
-                let mut registry = composite::Registry::new(resolve);
+                let mut registry = composite::Registry::new(resolve).permit_resources();
                 let index = registry.add(Type::Id(id)).expect("validated WIT value");
                 registry
                     .nodes
@@ -191,7 +191,7 @@ impl Boundary {
     }
 }
 
-fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
+fn boundary(resolve: &Resolve, mut ty: Type, resources: bool) -> Result<Boundary, Diagnostic> {
     for _ in 0..64 {
         if let Type::Id(id) = ty {
             match &resolve.types[id].kind {
@@ -213,7 +213,7 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                         }
                         return match scalar(resolve, payload) {
                             Ok(ty) => Ok(Boundary::List(ListElement::Scalar(ty))),
-                            Err(_) => generic_boundary(resolve, ty),
+                            Err(_) => generic_boundary(resolve, ty, resources),
                         };
                     }
                     return Err(error("Portable AOT list element alias depth exceeds64"));
@@ -232,12 +232,12 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
                         }
                         return match scalar(resolve, payload) {
                             Ok(ty) => Ok(Boundary::Option(ty)),
-                            Err(_) => generic_boundary(resolve, ty),
+                            Err(_) => generic_boundary(resolve, ty, resources),
                         };
                     }
                     return Err(error("WIT option payload alias nesting exceeds 64"));
                 }
-                _ => return generic_boundary(resolve, ty),
+                _ => return generic_boundary(resolve, ty, resources),
             }
         }
         if ty == Type::String {
@@ -248,11 +248,15 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
     Err(error("WIT boundary alias nesting exceeds 64"))
 }
 
-fn generic_boundary(resolve: &Resolve, ty: Type) -> Result<Boundary, Diagnostic> {
+fn generic_boundary(resolve: &Resolve, ty: Type, resources: bool) -> Result<Boundary, Diagnostic> {
     let Type::Id(id) = ty else {
         return Err(error("Expected a resolved WIT composite type"));
     };
-    composite::Registry::new(resolve).add(ty)?;
+    let mut registry = composite::Registry::new(resolve);
+    if resources {
+        registry = registry.permit_resources();
+    }
+    registry.add(ty)?;
     Ok(Boundary::Generic(id))
 }
 
@@ -425,21 +429,32 @@ pub(crate) fn validate_import_boundary(
         return validate_boundary(resolve, world);
     }
     imports::selected(resolve, world, mappings)?;
+    let resources = resources::Plan::selected(resolve, world)?;
     let mut values = resolve.clone();
     values.worlds[world]
         .imports
         .retain(|_, item| matches!(item, WorldItem::Type { .. }));
-    validate_boundary(&values, world)
+    validate_boundary_with_resources(&values, world, resources.as_ref())
 }
 
 /// Check only implemented WIT adapter capabilities, before source macro effects.
 /// Source mappings, code generation and artifact validation have separate errors.
 pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(), Diagnostic> {
+    let resources = resources::Plan::selected(resolve, world)?;
+    validate_boundary_with_resources(resolve, world, resources.as_ref())
+}
+fn validate_boundary_with_resources(
+    resolve: &Resolve,
+    world: WorldId,
+    resources: Option<&resources::Plan>,
+) -> Result<(), Diagnostic> {
     let selected = &resolve.worlds[world];
     random::Capability::selected(resolve, world)?;
     for item in selected.imports.values() {
         if let WorldItem::Type { id, .. } = item {
-            boundary(resolve, Type::Id(*id))?;
+            if !resources.is_some_and(|plan| plan.declaration(resolve, *id)) {
+                boundary(resolve, Type::Id(*id), resources.is_some())?;
+            }
         }
     }
     if has_unsupported_imports(resolve, world) {
@@ -461,7 +476,7 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
         }
         let mut flat_parameters = 0;
         for parameter in &function.params {
-            let ty = boundary(resolve, parameter.ty)?;
+            let ty = boundary(resolve, parameter.ty, resources.is_some())?;
             flat_parameters += ty.flat(resolve).len();
         }
         if flat_parameters > Resolve::MAX_FLAT_PARAMS {
@@ -469,7 +484,7 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             parameters::Layout::new(resolve, function)?;
         }
         if let Some(result) = function.result {
-            boundary(resolve, result)?;
+            boundary(resolve, result, resources.is_some())?;
         }
         Ok(())
     };
@@ -479,7 +494,9 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             WorldItem::Interface { id, .. } => {
                 let interface = &resolve.interfaces[*id];
                 for ty in interface.types.values() {
-                    boundary(resolve, Type::Id(*ty))?;
+                    if !resources.is_some_and(|plan| plan.declaration(resolve, *ty)) {
+                        boundary(resolve, Type::Id(*ty), resources.is_some())?;
+                    }
                 }
                 for function in interface.functions.values() {
                     validate_function(function)?;
@@ -665,6 +682,7 @@ pub fn component_with_imports(
         .last()
         .ok_or_else(|| error("AOT needs a prepared source fragment"))?;
     let selected = &resolve.worlds[world];
+    let resource_plan = resources::Plan::selected(resolve, world)?;
     let mut exports = Vec::new();
     let mut public_exports = Vec::new();
     let mut used = std::collections::BTreeSet::new();
@@ -689,7 +707,12 @@ pub fn component_with_imports(
             let params = function
                 .params
                 .iter()
-                .map(|param| Ok((param.name.clone(), boundary(resolve, param.ty)?)))
+                .map(|param| {
+                    Ok((
+                        param.name.clone(),
+                        boundary(resolve, param.ty, resource_plan.is_some())?,
+                    ))
+                })
                 .collect::<Result<Vec<_>, Diagnostic>>()?;
             let indirect_params = if params
                 .iter()
@@ -709,7 +732,7 @@ pub fn component_with_imports(
                 indirect_params,
                 result: function
                     .result
-                    .map(|ty| boundary(resolve, ty))
+                    .map(|ty| boundary(resolve, ty, resource_plan.is_some()))
                     .transpose()?,
                 asynchronous: function.kind == FunctionKind::AsyncFreestanding,
             });
@@ -753,7 +776,6 @@ pub fn component_with_imports(
     if mappings.iter().any(|(name, _)| !used.contains(name)) {
         return Err(error("Unknown WIT export mapping"));
     }
-    let resource_plan = resources::Plan::selected(resolve, world)?;
     let mut registry = composite::Registry::new(resolve);
     if resource_plan.is_some() {
         registry = registry.permit_resources();
@@ -1944,6 +1966,7 @@ fn adapter(
         },
         descriptor: resource_descriptor,
         scope: resource_descriptor + 1,
+        borrow_scope: resource_descriptor + 2,
         check_function: resource_base + 1,
         close_function: resource_base + 2,
     });
@@ -1952,6 +1975,7 @@ fn adapter(
         resolve,
         drop_calls: &resource_wiring.as_ref().unwrap().drop_calls,
         make_function: resource_base,
+        make_borrow_function: resource_base + 9,
         check_function: resource_base + 1,
         state_type: resource_types.unwrap().state,
     });
@@ -1997,7 +2021,40 @@ fn adapter(
         if generic_schema {
             locals.push((export.params.len() as u32, ValType::I32));
         }
+        let borrow_context = resource_plan
+            .filter(|plan| plan.borrowed_parameters(resolve, &export.wit))
+            .map(|_| {
+                let first = unit
+                    + 9
+                    + if generic_schema {
+                        export.params.len() as u32
+                    } else {
+                        0
+                    };
+                locals.push((5, VALUE));
+                let returned = export
+                    .result
+                    .and_then(|ty| ty.core_result(resolve))
+                    .map(|ty| {
+                        locals.push((1, ty));
+                        first + 5
+                    });
+                resources::BorrowContext {
+                    previous: first,
+                    token: first + 1,
+                    error: first + 2,
+                    cursor: first + 3,
+                    state: first + 4,
+                    returned,
+                }
+            });
         let mut body = Function::new(locals);
+        if let Some(context) = &borrow_context {
+            resource_carrier
+                .as_ref()
+                .unwrap()
+                .begin_borrow(&mut body, context);
+        }
         if let Some(layout) = &export.indirect_params {
             layout.read(&mut body, &export.params, resolve);
         }
@@ -2409,6 +2466,12 @@ fn adapter(
                     .instruction(&Instruction::I32Const(0));
             }
         }
+        if let Some(context) = &borrow_context {
+            resource_carrier
+                .as_ref()
+                .unwrap()
+                .finish_borrow(&mut body, context);
+        }
         body.instruction(&Instruction::End);
         code.function(&body);
     }
@@ -2577,7 +2640,7 @@ fn adapter(
             wiring,
             generic_base,
             generic_root,
-            resource_plan.map(|_| (resource_base + 9, resource_base + 5)),
+            resource_plan.map(|_| (resource_base + 10, resource_base + 5)),
         )?;
     }
     if let Some(carrier) = &resource_carrier {
@@ -2602,6 +2665,7 @@ fn adapter(
                     host_wiring.as_ref().unwrap().closure_new,
                 ),
             ),
+            (carrier.types.make, carrier.make_borrow()),
         ] {
             functions.function(ty);
             code.function(&body);
@@ -2610,7 +2674,7 @@ fn adapter(
             &mut functions,
             &mut code,
             carrier.types.gather,
-            resource_base + 9,
+            resource_base + 10,
             resource_base + 4,
             resource_codec.as_ref().unwrap(),
         );
@@ -2645,7 +2709,7 @@ fn adapter(
     }
     if option_schema || list_schema || generic_schema || resource_plan.is_some() {
         let mut globals = GlobalSection::new();
-        for _ in 0..schema_count + 2 * usize::from(resource_plan.is_some()) {
+        for _ in 0..schema_count + 3 * usize::from(resource_plan.is_some()) {
             globals.global(
                 GlobalType {
                     val_type: VALUE,
