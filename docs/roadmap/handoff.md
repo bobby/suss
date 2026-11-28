@@ -37362,3 +37362,30 @@ All13,882 inputs and HEAD remained fixed. Raw output, receipt and publication
 audit are in `import-workspace-interrupt-harness-repair/`. This focused result
 does not convert the earlier full failure into a pass; rerun the full baseline
 on the repaired source. Other worktrees' ongoing captures remain unchanged.
+
+### 2026-11-28: integrate reviewed data codecs with explicit imports
+
+The import draft is rebased onto bd190af1, retaining all original command
+receipts and their recorded heads. The prior06bb5ebf branch is preserved locally
+as codex/m5-import-adapters-before-data-review-rebase-06bb5ebf. Conflicts retain
+both schema-provider type identities and explicit function authority. Both paths
+use the same generic InstanceType encoder; the now-unused separate schema-only
+module is removed. Relative to the previous import production code, the resulting
+semantic addition is the reviewed packed fixed-list support and its six executing
+review regressions. Existing provider encodings/type counts remain unchanged.
+Focused review/import/alias/randomness regressions must execute on this combined
+source before its publication; earlier green CI and the failed full baseline
+retain their original source qualifications.
+
+The rebased import integration executes all six selected targets successfully:
+37passed,0failed,1ordinary Binaryen-dependent ignore, six target summaries.
+`reviewed-data-and-import-integration/` records3,030.473s,13,992 unchanged
+inputs, unchanged e265f9db HEAD and unchanged pinned Binaryen tools. The
+recorded working tree includes removal of the obsolete `mod schemas` declaration;
+that tested removal is committed with this receipt before publication. All
+provider/schema identities use the unified import encoder. The independent data
+review regressions, world/interface imports, public types, full value-shape target
+and ordinary randomness controls execute on the combined source. Execute the
+explicit optimized randomness control and bootstrap checks next. This focused
+pass does not replace a successful required full workspace baseline: the earlier
+full failure and its focused interrupt-harness repair remain recorded.
