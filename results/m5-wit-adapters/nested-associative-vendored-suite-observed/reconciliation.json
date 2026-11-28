@@ -1,0 +1,13 @@
+{
+  "removed_namespace_failure": "clojure.core-test.get-in",
+  "other_baseline_entries_unchanged": true,
+  "actual_counts": {
+    "pass": 5564,
+    "fail": 133,
+    "guest-judged": 107,
+    "namespaces-failed": 57,
+    "not-executed": 1143,
+    "skipped": 0
+  },
+  "qualification": "Actual captured JVM-oracle comparison at2a779949; only the formerly unresolved get-in namespace entry is removed. JVM reference/assertions unchanged. Prior capture exit101 remains a failure. Four concurrently changing evidence-log/receipt paths are preserved in its outer receipt; source/HEAD remained unchanged. Wall time includes the explicit user pause."
+}

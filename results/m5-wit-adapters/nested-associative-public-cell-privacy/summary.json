@@ -1,0 +1,50 @@
+{
+  "prerequisite_tools": {
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-opt": "8f25e9fd5db0fc5f210003aaa432922feb2e52d309e430def2f929e34da9466b",
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-merge": "4b55992e09b833bcc6719dbc0540783dfdb05dba319c03eb1059ade20211c957"
+  },
+  "pinned_clojurescript": "c4295f303100bbf5afac449242d30bca1126f1a1",
+  "cargo_version": "cargo 1.99.1 (5f94df478 2026-08-27)",
+  "rustc_version": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-cli",
+    "--locked",
+    "--test",
+    "clojure_nested_associative",
+    "--test",
+    "clojure_chunk_effects",
+    "--test",
+    "portable_collection_literals",
+    "--test",
+    "portable_object_methods",
+    "--test",
+    "portable_source_apply",
+    "--test",
+    "usermanager_application",
+    "--",
+    "--test-threads=2",
+    "--nocapture"
+  ],
+  "head": "240ad5a0a3e12d2e0e47d0d65efb853187ccd860",
+  "runner_sha256": "6991a43ed741dbe30f455faa7a099c62794b55a086ad983b1af6ab47f1ead8a9",
+  "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/run-p2145919-i106985377.scope\n",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo",
+    "CARGO_BUILD_JOBS": "1",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "SUSS_WASM_OPT": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-opt",
+    "BINARYEN_CORES": "1"
+  },
+  "complete": true,
+  "exit_code": 0,
+  "seconds": 772.6884470740333,
+  "log_sha256": "1f8e7d069a1f70b40d1419ce1a82a6f04d398ca89422bdfd4acfc623005cea29",
+  "changed_inputs": [],
+  "head_unchanged": true,
+  "prerequisites_unchanged": true,
+  "receipt_sha256": "7d7b9a477607ae272a6b9058d2cb9877eb0998f71ab005624314536974f5fb41",
+  "inputs_count": 14218
+}

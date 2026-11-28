@@ -1,0 +1,5 @@
+Running as unit: run-p2054599-i106902104.scope; invocation ID: 6e7dad390aac462796857ce47741a11d
+0 
+{'wasm_encoder': '/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasm_encoder-466802ca2cd9648f.rlib', 'wasmparser': '/home/bobby/.codex-workspaces/worktrees/ios-bc59f46b-2529-47d6-9d06-a888fafcdd03/suss/target/probe/m5-usermanager/target/probe/cargo/debug/deps/libwasmparser-eddac3919ca5b152.rlib'}
+0 read-only component observer validates
+ 

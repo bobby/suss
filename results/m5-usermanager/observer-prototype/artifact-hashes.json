@@ -1,0 +1,10 @@
+[
+  {
+    "path": "../m5-composites/target/probe/review-524-followup/fixed-packed.wasm",
+    "sha256": "5377373dbbfd0fbb941b714fef51b04d9a15d2ed2c2eed6994c1eec158d181ce"
+  },
+  {
+    "path": "target/probe/fixed-packed-canonical-observer.wasm",
+    "sha256": "5d9f1442b9621c445cc651ab989a7398c5100117e9d499e405e96b060a07ecaf"
+  }
+]

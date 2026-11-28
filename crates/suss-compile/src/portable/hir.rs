@@ -3632,6 +3632,42 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            // JVM core callbacks can read a public Var once per invocation
+            // (get-in's reduce1 get). Read its public cell without constructing
+            // a native Var, so ordinary source loading needs no shipped links.
+            if symbol.name == "public-core-value" {
+                if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                    return Err(fail(form.span.clone(), "Public core value adapter requires compiled core"));
+                }
+                if args.len() != 1 {
+                    return Err(fail(form.span.clone(), "Public core value adapter requires one core symbol"));
+                }
+                let Kind::Symbol(target) = &args[0].kind else {
+                    return Err(fail(args[0].span.clone(), "Public core value adapter requires a symbol"));
+                };
+                let binding = self.environment.resolve(self.phase, target, args[0].span.clone())?;
+                let ResolvedBinding::Cell(global) = binding else {
+                    return Err(fail(args[0].span.clone(), "Public core value adapter requires a defined public core cell"));
+                };
+                let metadata = match self.environment.definition_info(&global) {
+                    Some(info) => reader_metadata_pairs(&info.declaration)?,
+                    None => Vec::new(),
+                };
+                let private = metadata.chunks_exact(2).any(|pair| {
+                    matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "private")
+                        && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
+                });
+                if global.namespace() != "suss.core" || private || super::bootstrap::is_core_private(global.name()) {
+                    return Err(fail(args[0].span.clone(), "Public core value adapter requires a public core cell"));
+                }
+                return Ok(Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Value,
+                    kind: std::sync::Arc::new(Expression::Global(global)),
+                });
+            }
             if symbol.name=="decimal-context-getter-install" && !self.privileged
                 && self.environment.current_namespace(self.phase)!="suss.core" {
                 return Err(fail(form.span.clone(),"Math context installation requires compiled core"));

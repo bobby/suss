@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4971ce23e507cf8b933f0346fa51b46d4f19f231e72d38b0e68e3f4607c65f9c",
+  "replacement": "(def get-in\n  \"Returns the value in a nested associative structure,\n  where ks is a sequence of keys. Returns nil if the key is not present,\n  or the not-found value if supplied.\"\n  (let [lookup get same? identical?]\n    (fn\n      ([m ks]\n       (let [step get]\n         (loop [m m ks (seq ks)]\n           (if ks (recur (step m (first ks)) (next ks)) m))))\n      ([m ks not-found]\n       (loop [sentinel (Unique.) m m ks (seq ks)]\n         (if ks\n           (let [value (lookup m (first ks) sentinel)]\n             (if (same? sentinel value) not-found\n                 (recur sentinel value (next ks))))\n           m))))))",
+  "rationale": "Retain the pinned public API, full docstring and path traversal, expanding defn to ordinary def/fn for bootstrap. JVM Clojure1.12.6 is the semantic oracle. Use a fresh original Unique per three-argument invocation, matching JVM Object sentinel identity instead of ClojureScript shared lookup-sentinel. Capture primitive lookup/identity behavior for the three-argument path; capture the live get function once per two-argument invocation, matching JVM reduce1 get and direct RT.get behavior under rebinding. Preserve nil/false/missing distinctions, empty paths and lookup evaluation order."
+}

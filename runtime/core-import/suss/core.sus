@@ -9795,6 +9795,34 @@ reduces them without incurring seq initialization"
 (def parse-long
   "Parse string of decimal digits with optional leading -/+ and return an\n  integer value, or nil if parse fails"
   (fn [s] (suss.bootstrap/parse-decimal-long s)))
+
+(def get-in
+  "Returns the value in a nested associative structure,
+  where ks is a sequence of keys. Returns nil if the key is not present,
+  or the not-found value if supplied."
+  (let [lookup get same? identical?]
+    (fn
+      ([m ks]
+       (let [step (suss.bootstrap/public-core-value get)]
+         (loop [m m ks (seq ks)]
+           (if ks (recur (step m (first ks)) (next ks)) m))))
+      ([m ks not-found]
+       (loop [sentinel (Unique.) m m ks (seq ks)]
+         (if ks
+           (let [value (lookup m (first ks) sentinel)]
+             (if (same? sentinel value) not-found
+                 (recur sentinel value (next ks))))
+           m))))))
+
+(def assoc-in
+  "Associates a value in a nested associative structure, where ks is a
+  sequence of keys and v is the new value and returns a new nested structure.
+  If any levels do not exist, hash-maps will be created."
+  (let [lookup get associate assoc]
+    (fn [m [k & ks] v]
+      (if ks
+        (associate m k (assoc-in (lookup m k) ks v))
+        (associate m k v)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

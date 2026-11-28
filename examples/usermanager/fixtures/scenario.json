@@ -1,0 +1,179 @@
+{
+  "next_id": 9007199254740992,
+  "operations": [
+    {
+      "op": "seed-department",
+      "id": 4,
+      "name": "Development"
+    },
+    {
+      "op": "seed-department",
+      "id": 2,
+      "name": "Accounting"
+    },
+    {
+      "op": "departments"
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "first_name": "λ🦀",
+        "last_name": "Zulu",
+        "email": "λ@example.test",
+        "department_id": "４"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "0",
+        "first_name": "Anne",
+        "last_name": "Alpha",
+        "department_id": "2"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "first_name": "Bob",
+        "last_name": "Alpha",
+        "department_id": "2"
+      }
+    },
+    {
+      "op": "list-users"
+    },
+    {
+      "op": "edit-user",
+      "id": 9007199254740993
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "email": null,
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "edit-user",
+      "id": 9007199254740993
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "bad",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9223372036854775808",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "department_id": "bad"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "-17",
+        "first_name": "No insert",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "first_name": "Failed",
+        "department_id": "4"
+      },
+      "fail_next": "storage unavailable"
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "bad",
+        "department_id": "4"
+      },
+      "fail_next": "retained pending error"
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "first_name": "Still failed",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "first_name": "No department"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "department_id": null
+      }
+    },
+    {
+      "op": "edit-user",
+      "id": 9007199254740993
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "first_name": "Retained",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "id": "9007199254740993",
+        "first_name": "Retained",
+        "department_id": "4"
+      }
+    },
+    {
+      "op": "edit-user",
+      "id": 42
+    },
+    {
+      "op": "save-user",
+      "form": {
+        "first_name": "Orphan",
+        "last_name": "Hidden",
+        "department_id": "999"
+      }
+    },
+    {
+      "op": "list-users"
+    },
+    {
+      "op": "delete-user",
+      "id": 9007199254740994
+    },
+    {
+      "op": "delete-user",
+      "id": 42
+    },
+    {
+      "op": "reset-changes"
+    },
+    {
+      "op": "list-users"
+    }
+  ]
+}

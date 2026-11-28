@@ -54,10 +54,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.format (Some(\"<root>/clojure/core_test/format.cljc\")): Unresolved Runtime name format at bytes 224..1132"
   },
-  "clojure.core-test.get-in": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.get-in (Some(\"<root>/clojure/core_test/get_in.cljc\")): Unresolved Runtime name get-in at bytes 232..1785"
-  },
   "clojure.core-test.identity": {
    "stage": "read",
    "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag inst at bytes 680..717"
