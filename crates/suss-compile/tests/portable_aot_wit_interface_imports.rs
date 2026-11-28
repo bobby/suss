@@ -72,6 +72,16 @@ fn versioned_interface_alias_preserves_nominal_types_and_native_source_updates()
             ("test:service/data@1.2.3#touch", "host/original-touch"),
         ],
     );
+    let annotations = component
+        .component_type()
+        .imports(engine())
+        .map(|(name, item)| (name.to_owned(), item.implements.map(str::to_owned)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    assert_eq!(
+        annotations["operations"].as_deref(),
+        Some("test:service/data@1.2.3")
+    );
+    assert_eq!(annotations["test:service/data@1.2.3"], None);
     let interfaces = component
         .component_type()
         .imports(engine())
@@ -360,6 +370,16 @@ fn interface_authority_and_selected_types_reject_before_source_macro_effects() {
             vec![("unknown", "host/first")],
             "resource",
         ),
+        (
+            "interface operations { type pending = future<string>; } world api { import operations; export run: func(); }",
+            vec![],
+            "future",
+        ),
+        (
+            "interface operations { resource item; } world api { import operations; export run: func(); }",
+            vec![],
+            "resource",
+        ),
     ] {
         std::fs::write(&wit, format!("package test:guards; {declarations}")).unwrap();
         let error = compile_file_with_options(
@@ -436,4 +456,101 @@ fn imported_provider_and_exported_interface_keep_separate_component_instance_ind
         9007199254740994
     );
     assert_eq!(store.data().order, ["step"]);
+}
+
+#[test]
+fn schema_only_interface_data_values_need_no_function_authority_or_runtime_provider() {
+    let bytes = suss_compile::Compiler::new().compile(
+        "(defn ^:export run [x] (update (assoc x :state :active) :values conj 42))",
+        "package test:types-only@1.2.3; interface model { enum state { idle, active } record row { id: u64, state: state, values: list<s64> } } world api { import model; use model.{row}; export run: func(value: row) -> row; }",
+    ).unwrap();
+    let component = Component::new(engine(), bytes).unwrap();
+    let declared = component
+        .component_type()
+        .imports(engine())
+        .map(|(name, _)| name.to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(declared, ["test:types-only/model@1.2.3"]);
+    let mut store = store();
+    // Schema-only instance imports carry no runtime function or resource.
+    let instance = Linker::new(engine())
+        .instantiate(&mut store, &component)
+        .unwrap();
+    let run = instance.get_func(&mut store, "run").unwrap();
+    let input = Val::Record(vec![
+        ("id".into(), Val::U64(u64::MAX)),
+        ("state".into(), Val::Enum("idle".into())),
+        (
+            "values".into(),
+            Val::List(vec![Val::S64(i64::MIN), Val::S64(i64::MAX)]),
+        ),
+    ]);
+    let expected = Val::Record(vec![
+        ("id".into(), Val::U64(u64::MAX)),
+        ("state".into(), Val::Enum("active".into())),
+        (
+            "values".into(),
+            Val::List(vec![Val::S64(i64::MIN), Val::S64(i64::MAX), Val::S64(42)]),
+        ),
+    ]);
+    for _ in 0..20 {
+        store.set_fuel(100_000_000).unwrap();
+        let mut output = [Val::Bool(false)];
+        run.call(&mut store, &[input.clone()], &mut output).unwrap();
+        assert_eq!(output[0], expected);
+        store.gc(None).unwrap();
+    }
+}
+
+#[test]
+fn schema_only_interface_keeps_automatic_random_provider_and_export_indices() {
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("app.sus");
+    let wit = directory.path().join("wit");
+    std::fs::create_dir_all(wit.join("deps")).unwrap();
+    std::fs::write(&source, "(ns app) (defn run [] (rand))").unwrap();
+    std::fs::write(wit.join("deps/random.wit"), "package wasi:random@0.3.1; interface random { get-random-bytes: func(len: u64) -> list<u8>; get-random-u64: func() -> u64; }").unwrap();
+    std::fs::write(wit.join("api.wit"), "package test:typed-random; interface model { enum state { idle, active } } world api { import model; import wasi:random/random@0.3.1; export run: func() -> f64; }").unwrap();
+    let bytes = compile_file_with_options(
+        &source,
+        &wit,
+        Some("api"),
+        &[],
+        &AotOptions {
+            exports: vec![("run".into(), Symbol::namespaced("app", "run"))],
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let component = Component::new(engine(), bytes).unwrap();
+    let mut linker = Linker::new(engine());
+    let mut random = linker.instance("wasi:random/random@0.3.1").unwrap();
+    random
+        .func_wrap(
+            "get-random-u64",
+            |mut context: StoreContextMut<'_, State>, ()| {
+                let index = context.data().order.len();
+                context.data_mut().order.push("random");
+                Ok(([0_u64, 1 << 63, u64::MAX][index],))
+            },
+        )
+        .unwrap();
+    random
+        .func_wrap(
+            "get-random-bytes",
+            |_, (_length,): (u64,)| -> wasmtime::Result<(Vec<u8>,)> {
+                panic!("scalar sampling must request words")
+            },
+        )
+        .unwrap();
+    let mut store = store();
+    let instance = linker.instantiate(&mut store, &component).unwrap();
+    let run = instance
+        .get_typed_func::<(), (f64,)>(&mut store, "run")
+        .unwrap();
+    for bits in [0, 0x3fe0000000000000, 0x3fefffffffffffff] {
+        assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), bits);
+        store.gc(None).unwrap();
+    }
+    assert_eq!(store.data().order, ["random"; 3]);
 }

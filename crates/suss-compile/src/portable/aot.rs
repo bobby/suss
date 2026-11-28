@@ -377,7 +377,10 @@ fn has_unsupported_imports(resolve: &Resolve, world: WorldId) -> bool {
         .values()
         .any(|item| match item {
             WorldItem::Type { .. } => false,
-            WorldItem::Interface { id, .. } => !random::Capability::supported(resolve, *id),
+            WorldItem::Interface { id, .. } => {
+                !random::Capability::supported(resolve, *id)
+                    && !resolve.interfaces[*id].functions.is_empty()
+            }
             WorldItem::Function(_) => true,
         })
 }
@@ -414,6 +417,9 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
             "Portable AOT imported WIT adapters remain unimplemented",
         ));
     }
+    // Schema-only interfaces grant no host call authority. Validate their
+    // complete selected types before source effects, including unused types.
+    imports::selected(resolve, world, &[])?;
     let validate_function = |function: &wit_parser::Function| -> Result<(), Diagnostic> {
         if function.external_id.is_some() {
             return Err(error(
@@ -915,18 +921,14 @@ pub fn component_with_imports(
     let host_count = host_imports.len() as u32;
     let component_function_base = random_count + host_count;
     let mut resolved_types = super::command::shape::Types::new(resolve);
-    let (interface_imports, mut host_functions, mut next_host_function) = if host_imports.is_empty()
-    {
-        (0, Vec::new(), 0)
-    } else {
+    let (interface_imports, mut host_functions, mut next_host_function) =
         imports::encode_interfaces(
             resolve,
             world,
             &host_imports,
             &mut component,
             &mut resolved_types,
-        )?
-    };
+        )?;
     let imported_instance_count = random_count + interface_imports;
     let random_type = randomness
         .as_ref()
@@ -1025,7 +1027,7 @@ pub fn component_with_imports(
         component.section(&imports);
         let mut aliases = ComponentAliasSection::new();
         aliases.alias(Alias::InstanceExport {
-            instance: 0,
+            instance: interface_imports,
             kind: ComponentExportKind::Func,
             name: "get-random-u64",
         });

@@ -37157,3 +37157,33 @@ randomness, general cancellation cleanup or the UserManager application. Next
 run the affected import/pure-interface/command regressions, then continue the
 resource and asynchronous interoperability work. The separate full data-codec
 baseline on8788d7a7 does not certify this import source.
+
+
+### 2026-11-27: schema-only imported interfaces
+
+Schema-only interface imports are validated/encoded without explicit function
+mappings or Runtime provider authority. Their declared instance/type identities
+remain in the actual component. Automatic source export discovery continues to
+work, including record/list values consumed by native source operations. The
+random provider's component-instance index accounts for preceding schema-only
+instances; its core-function wiring and deterministic word consumption are
+unchanged.
+
+The two focused `schema_only` regressions failed on093a5bbd before the change,
+both rejecting the selected imports before compilation. After implementation,
+`cargo test -p suss-compile --locked --test portable_aot_wit_interface_imports -- --test-threads=2`
+returned0: eight tests passed, zero failed/ignored, 354.793s including
+build, conserving all13,861 captured inputs and HEAD. The two new
+actual components instantiate with no schema linker provider. They execute
+native record/flag/list updates on exact u64/s64 extrema with GC, and schema-only
+imports beside actual controlled randomness (zero, half and maximum fraction
+from three provider words). The six interface controls also rerun, with explicit
+assertions for versioned `implements` metadata and added no-mapping future/resource
+rejections before source macro effects. Raw before/after receipts remain in
+`schema-only-interface-imports-before/` and `schema-only-and-function-interface-imports/`.
+
+Next run the affected existing world-import, pure-interface, randomness and
+canonical async adapter targets on this production source. General resources,
+async suspension, cancellation cleanup, optimization of mapped imports and the
+UserManager application retain separate work; the data-codec baseline on8788d7a7
+continues independently and certifies no later import source.
