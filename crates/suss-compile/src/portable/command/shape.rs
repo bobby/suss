@@ -68,6 +68,20 @@ impl<'a> Types<'a> {
         Ok(primitive.into())
     }
 
+    /// A public interface type needs an actual type index, including aliases
+    /// of primitives. Reuse that same identity in its function signatures.
+    pub fn named(&mut self, id: TypeId) -> Result<u32, Diagnostic> {
+        match self.value(Type::Id(id))? {
+            ComponentValType::Type(index) => Ok(index),
+            ComponentValType::Primitive(primitive) => {
+                let index = self.section.len();
+                self.section.defined_type().primitive(primitive);
+                self.defined.insert(id, index);
+                Ok(index)
+            }
+        }
+    }
+
     fn defined(&mut self, id: TypeId) -> Result<ComponentValType, Diagnostic> {
         if let Some(index) = self.defined.get(&id) {
             return Ok(ComponentValType::Type(*index));

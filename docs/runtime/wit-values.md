@@ -58,3 +58,12 @@ The focused regressions are `portable_aot_wit_char` and
 are retained under `results/m5-wit-adapters/`. Full generic imports, composite
 adapters, resources and async suspension have separate acceptance requirements;
 these scalar and argument conversions do not establish those capabilities.
+
+## Public interface type identities
+
+An exported interface includes its named aliases of supported value types.
+Primitive aliases receive a named type index; list and option aliases retain
+one shared resolved definition. Function signatures reference those same types.
+Versioned interface names and selected aliases keep their normal mapping paths
+and implements annotations. A public type alias does not enable an unsupported
+underlying boundary shape.

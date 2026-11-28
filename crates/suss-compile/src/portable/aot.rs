@@ -32,6 +32,7 @@ const HELPERS: u32 = 10;
 
 struct Export {
     name: String,
+    wit: wit_parser::Function,
     global: super::resolve::Global,
     params: Vec<(String, Boundary)>,
     result: Option<Boundary>,
@@ -59,6 +60,7 @@ enum PublicExport {
     Interface {
         name: String,
         implements: Option<String>,
+        types: Vec<(String, wit_parser::TypeId)>,
         functions: Vec<(String, u32)>,
     },
 }
@@ -104,31 +106,6 @@ impl Boundary {
         match self {
             Self::Scalar(ty) => ty.core(),
             Self::Option(_) | Self::String | Self::StringOption | Self::List(_) => ValType::I32,
-        }
-    }
-    fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
-        match self {
-            Self::Scalar(ty) => ty.component(),
-            Self::String => PrimitiveValType::String.into(),
-            Self::List(element) => {
-                let index = types.len();
-                let element = match element {
-                    ListElement::Scalar(ty) => ty.component(),
-                    ListElement::String => PrimitiveValType::String.into(),
-                };
-                types.defined_type().list(element);
-                ComponentValType::Type(index)
-            }
-            Self::StringOption => {
-                let index = types.len();
-                types.defined_type().option(PrimitiveValType::String);
-                ComponentValType::Type(index)
-            }
-            Self::Option(ty) => {
-                let index = types.len();
-                types.defined_type().option(ty.component());
-                ComponentValType::Type(index)
-            }
         }
     }
     fn string(self) -> bool {
@@ -282,28 +259,8 @@ impl Scalar {
             _ => return None,
         })
     }
-    fn component(self) -> ComponentValType {
-        PrimitiveValType::from(self).into()
-    }
 }
-impl From<Scalar> for PrimitiveValType {
-    fn from(value: Scalar) -> Self {
-        match value {
-            Scalar::Bool => Self::Bool,
-            Scalar::Char => Self::Char,
-            Scalar::F32 => Self::F32,
-            Scalar::F64 => Self::F64,
-            Scalar::U8 => Self::U8,
-            Scalar::S8 => Self::S8,
-            Scalar::U16 => Self::U16,
-            Scalar::S16 => Self::S16,
-            Scalar::U32 => Self::U32,
-            Scalar::S32 => Self::S32,
-            Scalar::U64 => Self::U64,
-            Scalar::S64 => Self::S64,
-        }
-    }
-}
+
 fn boundary_description(resolve: &Resolve, ty: Type, depth: usize) -> String {
     if depth >= 64 {
         return "type nesting exceeds 64".into();
@@ -425,10 +382,8 @@ pub(crate) fn validate_boundary(resolve: &Resolve, world: WorldId) -> Result<(),
                     ));
                 }
                 let interface = &resolve.interfaces[*id];
-                if !interface.types.is_empty() {
-                    return Err(error(
-                        "Portable AOT interface type exports remain unimplemented",
-                    ));
+                for ty in interface.types.values() {
+                    boundary(resolve, Type::Id(*ty))?;
                 }
                 for function in interface.functions.values() {
                     validate_function(function)?;
@@ -622,6 +577,7 @@ pub fn component_with(
             } else { None };
             exports.push(Export {
                 name,
+                wit: function.clone(),
                 global,
                 params,
                 indirect_params,
@@ -652,6 +608,7 @@ pub fn component_with(
                 public_exports.push(PublicExport::Interface {
                     name,
                     implements: resolve.implements_value(key, item),
+                    types: interface.types.iter().map(|(name, ty)| (name.clone(), *ty)).collect(),
                     functions,
                 });
             }
@@ -793,25 +750,21 @@ pub fn component_with(
     let mut resolved_types = super::command::shape::Types::new(resolve);
     let random_type = randomness.as_ref()
         .map(|capability| capability.encode(resolve, &mut resolved_types)).transpose()?;
-    let mut types = resolved_types.section;
+    let mut public_types = std::collections::BTreeMap::new();
+    for export in &public_exports {
+        if let PublicExport::Interface { types, .. } = export {
+            for (_, id) in types {
+                public_types.insert(*id, resolved_types.named(*id)?);
+            }
+        }
+    }
     let mut function_types = Vec::new();
     let mut result_types = Vec::new();
     for export in &exports {
-        let params = export
-            .params
-            .iter()
-            .map(|(name, ty)| (name.as_str(), ty.component(&mut types)))
-            .collect::<Vec<_>>();
-        let result = export.result.map(|ty| ty.component(&mut types));
-        function_types.push(types.len());
-        result_types.push(result);
-        types
-            .function()
-            .async_(export.asynchronous)
-            .params(params)
-            .result(result);
+        result_types.push(export.wit.result.map(|ty| resolved_types.value(ty)).transpose()?);
+        function_types.push(resolved_types.function(&export.wit)?);
     }
-    component.section(&types);
+    component.section(&resolved_types.section);
     if let (Some(capability), Some(ty)) = (&randomness, random_type) {
         let mut imports = ComponentImportSection::new();
         imports.import(&capability.name, ComponentTypeRef::Instance(ty));
@@ -1082,13 +1035,16 @@ pub fn component_with(
             PublicExport::Interface {
                 name,
                 implements,
+                types,
                 functions,
             } => {
                 let index = random_count + exported_instances.len();
                 exported_instances.export_items(
-                    functions.iter().map(|(name, function)| {
+                    types.iter().map(|(name, id)| {
+                        (name.as_str(), ComponentExportKind::Type, public_types[id])
+                    }).chain(functions.iter().map(|(name, function)| {
                         (name.as_str(), ComponentExportKind::Func, random_count + *function)
-                    }),
+                    })).collect::<Vec<_>>(),
                 );
                 public.export(
                     ComponentExternName {
