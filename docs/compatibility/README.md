@@ -2146,6 +2146,14 @@ calling synchronous providers. The data-codec baseline and earlier frontend
 commands retain their own source qualifications. Resource lifetimes, general
 async imports and full M5 interoperability retain separate acceptance gates.
 
+The complete affected import-adapter command executes60 passing controls across
+nine targets on bc7ce665. Its one existing Binaryen-dependent case then executes
+successfully in a separate explicit command. Four Java/Node-free bootstrap
+controls also pass on that production source. Source-frozen receipts retain all
+commands, ignored-versus-executed qualifications and earlier failures; these
+focused results do not replace the import head's required full baseline/CI or
+its remaining lifetime and interoperability gates.
+
 The internal resource type encoder has an executing constructor/borrowed-method/
 static/drop control against Rust, with live counters returning to zero. Source
 resource bindings still reject at the explicit lifetime diagnostic; their actual
