@@ -26,6 +26,7 @@ fn engine() -> Engine {
                 .wasm_tail_call(true)
                 .wasm_exceptions(true)
                 .wasm_component_model(true)
+                .wasm_component_model_map(true)
                 .wasm_component_model_async(true)
                 .wasm_component_model_implements(true)
                 .max_wasm_stack(2 * 1024 * 1024)
@@ -138,12 +139,12 @@ fn public_compiler_rejects_unsupported_boundary_before_effectful_macro_expansion
     let error = Compiler::new()
         .compile(
             "(defmacro fail [] (throw 99)) (fail)",
-            "package test:public-unsupported; world api { export echo: func(x: list<map<string, u32>>); }",
+            "package test:public-unsupported; world api { export echo: func(x: list<future<map<string, u32>>>); }",
         )
         .unwrap_err();
     assert!(matches!(error, CompileError::Unsupported(_)), "{error}");
     assert!(
-        error.to_string().contains("list<map<string, u32>>"),
+        error.to_string().contains("future"),
         "{error}"
     );
 }
@@ -156,7 +157,7 @@ fn file_compiler_rejects_unsupported_boundary_before_effectful_macro_expansion()
     std::fs::write(&source, "(defmacro fail [] (throw 99)) (fail)").unwrap();
     std::fs::write(
         &wit,
-        "package test:file-unsupported; world api { export echo: func(x: list<map<string, u32>>); }",
+        "package test:file-unsupported; world api { export echo: func(x: list<future<map<string, u32>>>); }",
     )
     .unwrap();
     let error = suss_compile::portable_aot::compile_file(
@@ -167,7 +168,7 @@ fn file_compiler_rejects_unsupported_boundary_before_effectful_macro_expansion()
         &[],
     )
     .unwrap_err();
-    assert!(error.contains("list<map<string, u32>>"), "{error}");
+    assert!(error.contains("future"), "{error}");
 }
 
 #[test]
@@ -390,7 +391,7 @@ fn public_compiler_compile_fuel_preserves_none_zero_wit_order_and_execution() {
         assert!(matches!(error, CompileError::Wit(_)), "{error}");
         let error = compiler.compile_with_compile_fuel(
             "(defmacro fail [] (throw 99)) (fail)",
-            "package test:public-fuel-unsupported; world api { export echo: func(x: list<map<string, u32>>); }",
+            "package test:public-fuel-unsupported; world api { export echo: func(x: list<future<map<string, u32>>>); }",
             allowance,
         ).unwrap_err();
         assert!(matches!(error, CompileError::Unsupported(_)), "{error}");
@@ -417,4 +418,13 @@ fn public_compiler_compile_fuel_preserves_none_zero_wit_order_and_execution() {
         calculate.post_return(&mut store).unwrap();
         store.gc(None).unwrap();
     }
+}
+
+#[path = "support/wit_map_values.rs"]
+mod wit_map_values;
+
+#[test]
+fn public_compiler_executes_nested_maps_with_native_collection_operations() {
+    let bytes = Compiler::new().compile(wit_map_values::SOURCE, wit_map_values::WIT).unwrap();
+    wit_map_values::exercise(bytes, &engine());
 }

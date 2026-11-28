@@ -37017,3 +37017,40 @@ receipt;17 distinct data/identity regressions have executing positives on this
 production code. The full required workspace command follows on a frozen
 worktree with task-owned workspace TMPDIR and pinned Binaryen; its eventual
 terminal result remains separate evidence.
+
+### 2026-11-27: public map guards and fresh full baseline
+
+Published ab4cbd0e CI run46104514605 failed two completed integration jobs: the
+public file target passed13/14 and the public pipeline target passed10/13. Four
+old guards selected `list<map<string,u32>>`, which now has an adapter, and ran
+their deliberately throwing source macros. Actual complete job logs and hashes
+are retained in `data-codec-ci-ab4/`; other jobs were still pending when fetched.
+A local old-head reproduction failed the first selected file guard and Cargo
+did not run the later target (`data-codec-stale-guards-before/`).
+
+The running exact workspace command was intentionally interrupted after this
+CI finding, while still on clojure_char. Its actual Cargo exit is-2 after
+1,588.593s, with all13,791 inputs, HEAD and pinned Binaryen conserved. It is
+not a passing full run or a local execution of those later stale guards.
+`data-codec-workspace/` includes its raw log, receipt and signal/reason record.
+The separately recorded Java/Node-free bootstrap verification on frozen ab4cbd0e
+returned0 in134.619s: both generated images matched, identity checks passed and
+all four compiled-bootstrap tests passed. Its archived standalone recorder
+tracks committed files and explicitly excludes other untracked live capture
+output (`data-codec-bootstrap/`).
+
+Negative guards now select unsupported future payloads, retaining the original
+macro effects, explicit-zero/default budgets, error categories and recovery
+checks. A shared actual-component fixture executes the newly supported nested
+map shape through public string and file APIs, using native mapv/assoc/inc/get,
+last-duplicate-wins, u32 extrema and retained original maps after GC. The complete
+file/pipeline targets returned0:15+14 tests passed, zero failed/ignored,484.765s
+including build; all13,807 recorded inputs and HEAD stayed unchanged.
+The wider scan also found the old toolchain map-rejection rows; those retain
+unsupported nested future controls and now have an executing direct-map native
+conj/count control. The complete toolchain target returned0: nine passed, no
+failures/ignores,43.997s including build, with13,810 inputs and HEAD conserved.
+These are test/fixture repairs; production data-codec source is unchanged.
+Receipts are `data-codec-public-frontends/` and
+`data-codec-toolchain-map-controls/`. A fresh exact full baseline follows;
+acceptance/review/final-head CI remain required.
