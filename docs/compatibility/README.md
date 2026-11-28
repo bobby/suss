@@ -2221,3 +2221,10 @@ CI/review retain separate acceptance gates; async/cancellation, contextual
 resource identities and complete M5 interoperability are not established.
 
 The complete combined resource capture now passes 24 controls, zero failed/ignored/filtered, including all owned/borrowed exports and13 constructor/move/scope regressions on the same frozen production source. All five 10,000-call resource controls execute. The publication audit records unchanged non-documentation/evidence inputs. Full resource baseline, new final-head CI/review and remaining lifetime/interoperability/application criteria remain open.
+
+
+The resource-only interface authority fixtures now distinguish valid declarations
+from unknown mappings and still-unsupported async borrowed exports. All ten
+interface controls execute and pass on unchanged production code. The original
+CI/old-fixture failures and deliberately interrupted baseline remain recorded;
+they are not passing full-baseline evidence.

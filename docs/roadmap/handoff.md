@@ -37685,3 +37685,32 @@ implementation/evidence to the same draft. Full resource baseline, new final-hea
 CI and independent review remain required. Next implement cancellation/remaining
 interop and the representative application; the separate actual missing
 parse-long prerequisite is tracked in #527.
+
+### 2026-11-28: resource-only interface guard repair
+
+Final-head1d47cff5 CI run46130949511 job140935822568 reports nine passing
+interface controls and one failing authority/type guard. Two negative rows still
+select newly supported resource-only worlds. The unknown mapping now correctly
+reports mapping authority, rather than unsupported resources; the no-mapping
+row now admits its world and must select an actually unsupported async borrowed
+export. Raw job metadata/log/hash are retained in `resource-ci-1d47/`.
+
+The incomplete local exact baseline was intentionally interrupted with SIGINT
+after this confirmed finding. Its actual exit is-2 after1,636.066s, all14,029
+inputs/HEAD/tools conserved (`resource-adapters-workspace/` plus interruption
+record). It is not a passing baseline or local execution of the later failed
+interface target. A focused old-fixture reproduction also fails,7.989s capture,
+14,036 fixed inputs (`resource-only-stale-interface-guards-before/`).
+
+The unknown-mapping row now asserts the proper selected-function diagnostic.
+The unsupported row retains its source macro effects but selects an async
+borrowed resource input, which remains unsupported. Resource-only executing
+positive controls remain in the exported-handle target; nothing is skipped.
+The complete interface target returns0 with ten passed, zero failed/ignored/
+filtered,256.77s execution/265.477s capture,14,039 inputs and HEAD fixed
+(`resource-only-interface-guards-repaired/`):
+`cargo test -p suss-compile --locked --test portable_aot_wit_interface_imports -- --test-threads=2`.
+Production source is unchanged. Publish the repair to #526, investigate the
+independent review's unconfirmed overwritten-own-map concern, and restart the
+required baseline after focused validation. Final-head CI/review and remaining
+M5 lifetime/application gates stay separate.
