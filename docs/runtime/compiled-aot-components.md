@@ -17,8 +17,9 @@ An interface mapping uses the exact resolved world key followed by `#` and the
 function name, for example `test:interfaces/math@1.2.3#calc` or `alias#calc`.
 The emitted component preserves versioned package names and selected aliases,
 including named aliases of an existing interface. Functions stay inside their
-public interface instance; empty interfaces are preserved. Interface type exports
-and external-id annotations currently return explicit unimplemented diagnostics.
+public interface instance; empty interfaces are preserved. Public aliases of supported value types are preserved inside their exported
+interfaces, using the same resolved type identities as their function signatures.
+Unsupported value shapes and external-id annotations receive explicit diagnostics.
 
 The component links every fragment before a private adapter start function calls
 their initializers once in supplied source order. Export wrappers load live cells

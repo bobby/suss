@@ -804,7 +804,7 @@ fn exported_interfaces_keep_names_versions_shared_cells_and_source_effects() {
 }
 
 #[test]
-fn exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupported() {
+fn exported_interface_mapping_paths_are_exact_and_scalar_type_aliases_execute() {
     let fragment = portable::prepare_fragment(
         "(def calc (fn [x] x))",
         &Environment::default(),
@@ -848,17 +848,23 @@ fn exported_interface_mapping_paths_are_exact_and_types_remain_explicitly_unsupp
     let (resolve, selected) = world(
         "package test:types; interface api { type scalar = f64; calc: func(x: scalar) -> scalar; } world api-world { export api; }",
     );
-    let error = portable::aot::component(
+    let bytes = portable::aot::component(
         &[fragment],
         &resolve,
         selected,
         &[("test:types/api#calc".into(), Symbol::new("calc"))],
     )
-    .unwrap_err();
-    assert_eq!(
-        error.message,
-        "Portable AOT interface type exports remain unimplemented"
-    );
+    .unwrap();
+    let engine = engine();
+    let component = Component::new(&engine, bytes).unwrap();
+    let interface = component.get_export_index(None, "test:types/api").unwrap();
+    assert!(component.get_export_index(Some(&interface), "scalar").is_some());
+    let calc = component.get_export_index(Some(&interface), "calc").unwrap();
+    let mut store = Store::new(&engine, ());
+    store.set_fuel(20_000_000).unwrap();
+    let instance = Linker::new(&engine).instantiate(&mut store, &component).unwrap();
+    assert_eq!(instance.get_typed_func::<(f64,), (f64,)>(&mut store, &calc).unwrap()
+        .call(&mut store, (42.5,)).unwrap(), (42.5,));
 }
 
 #[test]
