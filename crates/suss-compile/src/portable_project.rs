@@ -248,7 +248,7 @@ fn compile_project_typed_with_compile_fuel(
             world.wit_world.as_deref(),
             &config.src_paths,
             &portable_aot::AotOptions {
-                exports: world.exports.clone(), compile_fuel, optimize, ..Default::default()
+                exports: world.exports.clone(), imports: world.imports.clone(), compile_fuel, optimize, ..Default::default()
             },
         )?;
         result.insert(name, bytes);

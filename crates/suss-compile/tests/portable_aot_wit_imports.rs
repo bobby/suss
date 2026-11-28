@@ -404,3 +404,55 @@ fn sync_import_nominal_records_flags_variants_and_maps_keep_public_type_identiti
     assert_eq!(store.data().calls, 20);
     assert_eq!(store.data().canonical_peak, 65536);
 }
+
+#[test]
+fn configured_project_import_mappings_select_the_declared_provider_cells() {
+    let directory = tempfile::tempdir().unwrap();
+    std::fs::create_dir(directory.path().join("src")).unwrap();
+    std::fs::write(
+        directory.path().join("src/app.sus"),
+        "(ns app) (defn run [x] (host/step x))",
+    )
+    .unwrap();
+    std::fs::write(directory.path().join("api.wit"), "package test:project-imports; world api { import left: func(x: s64) -> s64; import right: func(x: s64) -> s64; export run: func(x: s64) -> s64; }").unwrap();
+    let mut compiler = suss_compile::Compiler::new();
+    for (mapping, expected) in [
+        ("{\"left\" host/step \"right\" host/spare}", 42_i64),
+        ("{\"left\" host/spare \"right\" host/step}", 141),
+    ] {
+        let configuration = format!(
+            "{{:src-paths [\"src\"] :worlds {{:app {{:namespace app :wit \"api.wit\" :wit-world \"api\" :imports {mapping} :exports {{\"run\" app/run}} :output \"app.wasm\"}}}}}}"
+        );
+        let config =
+            suss_compile::SussConfig::parse(&configuration, directory.path().to_owned()).unwrap();
+        let bytes = compiler
+            .compile_project(&config, Some(":app"))
+            .unwrap()
+            .remove(":app")
+            .unwrap();
+        let component = Component::new(engine(), bytes).unwrap();
+        let mut linker = Linker::new(engine());
+        linker
+            .root()
+            .func_wrap("left", |_: StoreContextMut<'_, State>, (x,): (i64,)| {
+                Ok((x + 1,))
+            })
+            .unwrap();
+        linker
+            .root()
+            .func_wrap("right", |_: StoreContextMut<'_, State>, (x,): (i64,)| {
+                Ok((x + 100,))
+            })
+            .unwrap();
+        let mut store = store();
+        let instance = linker.instantiate(&mut store, &component).unwrap();
+        let run = instance
+            .get_typed_func::<(i64,), (i64,)>(&mut store, "run")
+            .unwrap();
+        assert_eq!(run.call(&mut store, (41,)).unwrap().0, expected);
+        assert!(
+            !directory.path().join("app.wasm").exists(),
+            "library compilation returns bytes without publishing"
+        );
+    }
+}
